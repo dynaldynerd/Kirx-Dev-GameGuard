@@ -30,40 +30,40 @@ bool CMapDataTable::ReadScript(const char *szFileName)
   if (fopen_s(&Stream, szFileName, "rt") != 0 || !Stream)
     return false;
 
-  char Str1[132];
-  unsigned int v8 = 0;
-  while (fscanf_s(Stream, "%s", Str1, (unsigned int)sizeof(Str1)) != -1)
+  char token[132];
+  unsigned int recordCount = 0;
+  while (fscanf_s(Stream, "%s", token, (unsigned int)sizeof(token)) != -1)
   {
-    if (std::strcmp(Str1, "*") == 0)
-      ++v8;
+    if (std::strcmp(token, "*") == 0)
+      ++recordCount;
   }
 
-  this->m_dwRecordNum = v8;
-  this->m_pRecord = new _map_fld[v8];
+  this->m_dwRecordNum = recordCount;
+  this->m_pRecord = new _map_fld[recordCount];
 
   std::rewind(Stream);
-  unsigned int v9 = 0;
-  char v10[16];
-  while (fscanf_s(Stream, "%s", Str1, (unsigned int)sizeof(Str1)) != -1)
+  unsigned int recordIndex = 0;
+  char racePvpFlags[16];
+  while (fscanf_s(Stream, "%s", token, (unsigned int)sizeof(token)) != -1)
   {
-    if (std::strcmp(Str1, "*") == 0)
+    if (std::strcmp(token, "*") == 0)
     {
-      fscanf_s(Stream, "%s", this->m_pRecord[v9].m_strCode, (unsigned int)sizeof(this->m_pRecord[v9].m_strCode));
-      fscanf_s(Stream, "%s", this->m_pRecord[v9].m_strFileName, (unsigned int)sizeof(this->m_pRecord[v9].m_strFileName));
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nMapType);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nMapClass);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nLayerNum);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nRaceVillageCode);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nMonsterSetFileNum);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nRadius);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nLevelLimit);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nUpLevelLim);
-      fscanf_s(Stream, "%d", &this->m_pRecord[v9].m_nPotionLim);
-      fscanf_s(Stream, "%s", v10, (unsigned int)sizeof(v10));
+      fscanf_s(Stream, "%s", this->m_pRecord[recordIndex].m_strCode, (unsigned int)sizeof(this->m_pRecord[recordIndex].m_strCode));
+      fscanf_s(Stream, "%s", this->m_pRecord[recordIndex].m_strFileName, (unsigned int)sizeof(this->m_pRecord[recordIndex].m_strFileName));
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nMapType);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nMapClass);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nLayerNum);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nRaceVillageCode);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nMonsterSetFileNum);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nRadius);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nLevelLimit);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nUpLevelLim);
+      fscanf_s(Stream, "%d", &this->m_pRecord[recordIndex].m_nPotionLim);
+      fscanf_s(Stream, "%s", racePvpFlags, (unsigned int)sizeof(racePvpFlags));
       for (int j = 0; j < 3; ++j)
-        this->m_pRecord[v9].m_nRacePvpUsable[j] = (char)v10[j] - '0';
-      this->m_pRecord[v9].m_dwIndex = v9;
-      ++v9;
+        this->m_pRecord[recordIndex].m_nRacePvpUsable[j] = (char)racePvpFlags[j] - '0';
+      this->m_pRecord[recordIndex].m_dwIndex = recordIndex;
+      ++recordIndex;
     }
   }
   std::fclose(Stream);

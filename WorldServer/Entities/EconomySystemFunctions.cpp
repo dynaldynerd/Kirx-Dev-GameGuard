@@ -43,15 +43,18 @@ char _ReadEconomyIniFile()
   return 0;
 }
 
-int _CalcPayExgRatePerRace(float *pfAvrTradeMoney, int nRaceCode)
+int _CalcPayExgRatePerRace(float *averageTradeMoneyPerRace, int raceCode)
 {
-  const float v5 = pfAvrTradeMoney[nRaceCode];
-  const float v6 = pfAvrTradeMoney[(nRaceCode + 1) % 3];
-  const float v7 = pfAvrTradeMoney[(nRaceCode + 2) % 3];
+  const float currentRaceTradeMoney = averageTradeMoneyPerRace[raceCode];
+  const float nextRaceTradeMoney = averageTradeMoneyPerRace[(raceCode + 1) % 3];
+  const float thirdRaceTradeMoney = averageTradeMoneyPerRace[(raceCode + 2) % 3];
   int result = 0;
-  if ((v5 + v6 + v7) != 0.0f)
+  const float totalTradeMoney = currentRaceTradeMoney + nextRaceTradeMoney + thirdRaceTradeMoney;
+  if (totalTradeMoney != 0.0f)
   {
-    result = static_cast<int>(((v6 + v7) * 0.5f / (v5 + v6 + v7)) * 3000.0f + static_cast<float>(e_nMgrDft));
+    result = static_cast<int>(
+      ((nextRaceTradeMoney + thirdRaceTradeMoney) * 0.5f / totalTradeMoney) * 3000.0f
+      + static_cast<float>(e_nMgrDft));
   }
   if (result < 1)
   {

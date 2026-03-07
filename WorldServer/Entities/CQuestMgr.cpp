@@ -244,27 +244,27 @@ bool CQuestMgr::LoadQuestData()
         MyMessageBox("CQuestMgr Data Load", "Quest.dat Load Error");
         ServerProgramExit("CQuestMgr Data Load", 0);
   }
-    _Quest_fld *Record = 0LL;
-    bool v12 = false;
+    _Quest_fld *questRecord = 0LL;
+    bool hasInvalidRewardMasteryData = false;
   for (int n = 0; ; ++n)
   {
     int RecordNum = CQuestMgr::s_tblQuest->GetRecordNum();
     if (n >= RecordNum)
       break;
-        Record = (_Quest_fld*)CQuestMgr::s_tblQuest->GetRecord(n);
-        if (Record)
+        questRecord = (_Quest_fld*)CQuestMgr::s_tblQuest->GetRecord(n);
+        if (questRecord)
         {
-            if (!CQuestMgr::CheckRewardMasteryData(n, 0, Record->m_RewardMastery))
-                v12 = true;
-            if (!CQuestMgr::CheckRewardMasteryData(n, 1, &Record->m_RewardMastery[1]))
-                v12 = true;
+            if (!CQuestMgr::CheckRewardMasteryData(n, 0, questRecord->m_RewardMastery))
+                hasInvalidRewardMasteryData = true;
+            if (!CQuestMgr::CheckRewardMasteryData(n, 1, &questRecord->m_RewardMastery[1]))
+                hasInvalidRewardMasteryData = true;
         }
     else
     {
       MyMessageBox("Error", "CQuestMgr::LoadQuestData() : s_tblQuest[%d] NULL!", n);
     }
   }
-  if (!v12)
+  if (!hasInvalidRewardMasteryData)
     return CQuestMgr::CalcStartNPCQuestCnt(g_Main.m_dwStartNPCQuestCnt);
     MyMessageBox(
         "Invalid Data",

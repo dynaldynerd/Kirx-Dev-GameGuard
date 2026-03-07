@@ -27,688 +27,703 @@ __int64 CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  unsigned __int8 v11; // [rsp+164h] [rbp-24h]
-  unsigned __int8 v12; // [rsp+165h] [rbp-23h]
-  sprintf_s(Buffer, 0x100uLL, "{ CALL pSelect_FailRaceBattleCount_20070704( %d, %d ) }", dwSerial, byRace);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_FailRaceBattleCount_20070704( %d, %d ) }", dwSerial, byRace);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0LL, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        if (this->m_hStmtSelect)
         {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0LL;
+          SQLCloseCursor(this->m_hStmtSelect);
         }
-        else
+        if (this->m_bSaveDBLog)
         {
-          v12 = 0;
-          if ( v9 == 100 )
-          {
-            v12 = 2;
-          }
-          else
-          {
-            this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            v12 = 1;
-          }
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return v12;
+          this->FmtLog("%s Success", query);
         }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (sqlRet == SQL_NO_DATA)
+      {
+        result = 2;
       }
       else
       {
-        v11 = 0;
-        if ( v9 == 100 )
-        {
-          v11 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        result = 1;
       }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  unsigned __int8 v11; // [rsp+164h] [rbp-24h]
-  unsigned __int8 v12; // [rsp+165h] [rbp-23h]
-  sprintf_s(Buffer, 0x100uLL, "{ CALL pSelect_LoseRaceBattleCount( %d, %d ) }", byRace, dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_LoseRaceBattleCount( %d, %d ) }", byRace, dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0LL, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        if (this->m_hStmtSelect)
         {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0LL;
+          SQLCloseCursor(this->m_hStmtSelect);
         }
-        else
+        if (this->m_bSaveDBLog)
         {
-          v12 = 0;
-          if ( v9 == 100 )
-          {
-            v12 = 2;
-          }
-          else
-          {
-            this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            v12 = 1;
-          }
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return v12;
+          this->FmtLog("%s Success", query);
         }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (sqlRet == SQL_NO_DATA)
+      {
+        result = 2;
       }
       else
       {
-        v11 = 0;
-        if ( v9 == 100 )
-        {
-          v11 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        result = 1;
       }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_OreCutting(unsigned int dwSerial,
         _worlddb_ore_cutting *pOreCutting)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-298h] BYREF
-  char Buffer[536]; // [rsp+40h] [rbp-258h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+258h] [rbp-40h] BYREF
-  SQLRETURN v9; // [rsp+264h] [rbp-34h]
-  unsigned __int8 v10; // [rsp+268h] [rbp-30h]
-  int j; // [rsp+26Ch] [rbp-2Ch]
-  int v12; // [rsp+270h] [rbp-28h]
+  char query[536]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+
   sprintf_s(
-    Buffer,
-    0x200uLL,
+    query,
+    sizeof(query),
     "select K0,D0,K1,D1,K2,D2,K3,D3,K4,D4,K5,D5,K6,D6,K7,D7,K8,D8,K9,D9,K10,D10,K11,D11,K12,D12,K13,D13,K14,D14,K15,D15,K"
     "16,D16,K17,D17,K18,D18,K19,D19 from tbl_OreCutting where serial=%u",
     dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      int columnNumber = 0;
+      for (int oreIndex = 0; oreIndex < 20; ++oreIndex)
       {
-        v12 = 0;
-        for ( j = 0; j < 20; ++j )
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 4, &pOreCutting->List[oreIndex], 0, &indicator);
+        if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
         {
-          v9 = SQLGetData(this->m_hStmtSelect, ++v12, 4, &pOreCutting->List[j], 0LL, &StrLen_or_IndPtr);
-          if ( v9 && v9 != 1 )
+          this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          if (this->m_hStmtSelect)
           {
-            this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            if ( this->m_hStmtSelect )
-              SQLCloseCursor(this->m_hStmtSelect);
-            return 1LL;
+            SQLCloseCursor(this->m_hStmtSelect);
           }
-          v9 = SQLGetData(this->m_hStmtSelect, ++v12, 4, &pOreCutting->List[j].dwDur, 0LL, &StrLen_or_IndPtr);
-          if ( v9 && v9 != 1 )
-          {
-            this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            if ( this->m_hStmtSelect )
-              SQLCloseCursor(this->m_hStmtSelect);
-            return 1LL;
-          }
+          return 1;
         }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0LL;
+
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          4,
+          &pOreCutting->List[oreIndex].dwDur,
+          0,
+          &indicator);
+        if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+        {
+          this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          return 1;
+        }
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v10 = 0;
-        if ( v9 == 100 )
-        {
-          v10 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v10 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v10;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_PcBangFavorItem(unsigned int dwSerial,
         _worlddb_pcbang_favor_item *pPcBangFavorItem)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-498h] BYREF
-  char Buffer[1048]; // [rsp+40h] [rbp-458h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+458h] [rbp-40h] BYREF
-  SQLRETURN v9; // [rsp+464h] [rbp-34h]
-  unsigned __int8 v10; // [rsp+468h] [rbp-30h]
-  int v11; // [rsp+46Ch] [rbp-2Ch]
-  int j; // [rsp+470h] [rbp-28h]
-  sprintf_s(Buffer, 0x400uLL, "{ CALL pSelect_PcbangItem( %d ) }", dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  char query[1048]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_PcbangItem( %d ) }", dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      int columnNumber = 0;
+      for (int itemIndex = 0; itemIndex < 50; ++itemIndex)
       {
-        v11 = 0;
-        for ( j = 0; j < 50; ++j )
-          v9 = SQLGetData(this->m_hStmtSelect, ++v11, 65511, &pPcBangFavorItem->lnUID[j], 0LL, &StrLen_or_IndPtr);
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0LL;
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          65511,
+          &pPcBangFavorItem->lnUID[itemIndex],
+          0,
+          &indicator);
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v10 = 0;
-        if ( v9 == 100 )
-        {
-          v10 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v10 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v10;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
         _worlddb_potion_delay_info *pPotionDelayInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-538h] BYREF
-  char Buffer[1024]; // [rsp+40h] [rbp-4F8h] BYREF
-  char _Source[152]; // [rsp+460h] [rbp-D8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+4F8h] [rbp-40h] BYREF
-  SQLRETURN v11; // [rsp+504h] [rbp-34h]
-  int nIndex; // [rsp+508h] [rbp-30h]
-  unsigned __int8 v13; // [rsp+50Ch] [rbp-2Ch]
-  int v14; // [rsp+510h] [rbp-28h]
-  memset(_Source, 0, 128);
-  sprintf_s(Buffer, 0x400uLL, "select ");
-  for ( nIndex = 0; nIndex < 38; ++nIndex )
+  char query[1024]{};
+  char source[152]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+
+  sprintf_s(query, sizeof(query), "select ");
+  for (int potionIndex = 0; potionIndex < 38; ++potionIndex)
   {
-    if ( g_PotionMgr.IsPotionDelayUseIndex(nIndex) )
+    if (g_PotionMgr.IsPotionDelayUseIndex(potionIndex))
     {
-      sprintf_s(_Source, 0x80uLL, "PD%d,", nIndex);
-      strcat_s(Buffer, _Source);
+      sprintf_s(source, 0x80uLL, "PD%d,", potionIndex);
+      strcat_s(query, source);
     }
   }
-  Buffer[strlen_0(Buffer) - 1] = 32;
-  sprintf_s(_Source, 0x80uLL, "from tbl_potion_delay where serial=%u", dwSerial);
-  strcat_s(Buffer, _Source);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  query[strlen_0(query) - 1] = ' ';
+  sprintf_s(source, 0x80uLL, "from tbl_potion_delay where serial=%u", dwSerial);
+  strcat_s(query, source);
+  if (this->m_bSaveDBLog)
   {
-    v11 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v11 || v11 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v11 = SQLFetch(this->m_hStmtSelect);
-      if ( !v11 || v11 == 1 )
+      int columnNumber = 1;
+      for (int potionIndex = 0; potionIndex < 38; ++potionIndex)
       {
-        v14 = 1;
-        for ( nIndex = 0; nIndex < 38; ++nIndex )
+        if (!g_PotionMgr.IsPotionDelayUseIndex(potionIndex))
         {
-          if ( g_PotionMgr.IsPotionDelayUseIndex(nIndex) )
+          continue;
+        }
+
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          columnNumber,
+          4,
+          &pPotionDelayInfo->dwPotionDelay[potionIndex],
+          0,
+          &indicator);
+        if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+        {
+          this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          if (this->m_hStmtSelect)
           {
-            v11 = SQLGetData(
-                    this->m_hStmtSelect,
-                    v14,
-                    4,
-                    &pPotionDelayInfo->dwPotionDelay[nIndex],
-                    0LL,
-                    &StrLen_or_IndPtr);
-            if ( v11 && v11 != 1 )
-            {
-              this->ErrorMsgLog(v11, Buffer, "SQLGetData", this->m_hStmtSelect);
-              this->ErrorAction(v11, this->m_hStmtSelect);
-              if ( this->m_hStmtSelect )
-                SQLCloseCursor(this->m_hStmtSelect);
-              return 1LL;
-            }
-            ++v14;
+            SQLCloseCursor(this->m_hStmtSelect);
           }
+          return 1;
         }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0LL;
+
+        ++columnNumber;
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v13 = 0;
-        if ( v11 == 100 )
-        {
-          v13 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v11, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v11, this->m_hStmtSelect);
-          v13 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v13;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v11 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v11, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v11, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
         _PCBANG_PLAY_TIME *kInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  char Buffer[280]; // [rsp+40h] [rbp-148h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+158h] [rbp-30h] BYREF
-  SQLRETURN v9; // [rsp+164h] [rbp-24h]
-  int v10; // [rsp+168h] [rbp-20h]
-  unsigned __int8 v11; // [rsp+16Ch] [rbp-1Ch]
-  v10 = 0;
-  sprintf(Buffer, "{ CALL pSelect_PrimiumPlayTime( %u ) }", dwAccSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  char query[280]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+
+  sprintf(query, "{ CALL pSelect_PrimiumPlayTime( %u ) }", dwAccSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, &kInfo->dwLastConnTime, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 4, &kInfo->dwContPlayTime, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 65529, &kInfo->bForcedClose, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 65530, &kInfo->byReceiveCoupon, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 65530, &kInfo->byEnsureTime, 0, &indicator);
+      if (this->m_hStmtSelect)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 4, &kInfo->dwLastConnTime, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 4, &kInfo->dwContPlayTime, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 3u, 65529, &kInfo->bForcedClose, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 4u, 65530, &kInfo->byReceiveCoupon, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 5u, 65530, &kInfo->byEnsureTime, 0LL, &StrLen_or_IndPtr);
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0LL;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
-      else
+      if (this->m_bSaveDBLog)
       {
-        v11 = 0;
-        if ( v9 == 100 )
-        {
-          v11 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        this->FmtLog("%s Success", query);
       }
+      return 0;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
         _pvporderview_info *kInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-208h] BYREF
-  char Buffer[280]; // [rsp+40h] [rbp-1C8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+158h] [rbp-B0h] BYREF
-  SQLRETURN v9; // [rsp+164h] [rbp-A4h]
-  int v10; // [rsp+168h] [rbp-A0h]
-  unsigned __int16 TargetValue[24]; // [rsp+178h] [rbp-90h] BYREF
-  tm _Tm; // [rsp+1A8h] [rbp-60h] BYREF
-  __time64_t v13; // [rsp+1D8h] [rbp-30h]
-  unsigned __int8 v14; // [rsp+1E0h] [rbp-28h]
-  int j; // [rsp+1E4h] [rbp-24h]
-  v10 = 0;
-  sprintf(Buffer, "{ CALL pSelect_PvpOrderView( %u ) }", dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  char query[280]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  unsigned __int16 dateFields[24]{};
+  tm updatedTm{};
+
+  sprintf(query, "{ CALL pSelect_PvpOrderView( %u ) }", dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 93, dateFields, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 4, &kInfo->nDeath, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 4, &kInfo->nKill, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 8, &kInfo->dTodayStacked, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 8, &kInfo->dPvpPoint, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 8, &kInfo->dPvpTempCash, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 8, &kInfo->dPvpCash, 0, &indicator);
+      for (int killerIndex = 0; killerIndex < 10; ++killerIndex)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 93, TargetValue, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 4, &kInfo->nDeath, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 3u, 4, &kInfo->nKill, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 4u, 8, &kInfo->dTodayStacked, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 5u, 8, &kInfo->dPvpPoint, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 6u, 8, &kInfo->dPvpTempCash, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 7u, 8, &kInfo->dPvpCash, 0LL, &StrLen_or_IndPtr);
-        for ( j = 0; j < 10; ++j )
-          v9 = SQLGetData(this->m_hStmtSelect, j + 8, 4, &kInfo->dwKillerSerial[j], 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 0x12u, 65530, &kInfo->byContHaveCash, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 0x13u, 65530, &kInfo->byContLoseCash, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 0x14u, 65529, &kInfo->bRaceWarRecvr, 0LL, &StrLen_or_IndPtr);
-        _Tm.tm_year = TargetValue[0] - 1900;
-        _Tm.tm_mon = TargetValue[1] - 1;
-        _Tm.tm_mday = TargetValue[2];
-        _Tm.tm_hour = TargetValue[3];
-        _Tm.tm_min = TargetValue[4];
-        _Tm.tm_sec = TargetValue[5];
-        _Tm.tm_isdst = -1;
-        v13 = mktime_3(&_Tm);
-        if ( v13 == -1 )
-          v13 = 0LL;
-        kInfo->tUpdatedate = v13;
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0LL;
+        sqlRet = SQLGetData(this->m_hStmtSelect, killerIndex + 8, 4, &kInfo->dwKillerSerial[killerIndex], 0, &indicator);
       }
-      else
+      sqlRet = SQLGetData(this->m_hStmtSelect, 0x12u, 65530, &kInfo->byContHaveCash, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 0x13u, 65530, &kInfo->byContLoseCash, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 0x14u, 65529, &kInfo->bRaceWarRecvr, 0, &indicator);
+
+      updatedTm.tm_year = dateFields[0] - 1900;
+      updatedTm.tm_mon = dateFields[1] - 1;
+      updatedTm.tm_mday = dateFields[2];
+      updatedTm.tm_hour = dateFields[3];
+      updatedTm.tm_min = dateFields[4];
+      updatedTm.tm_sec = dateFields[5];
+      updatedTm.tm_isdst = -1;
+
+      __time64_t updatedTime = mktime_3(&updatedTm);
+      if (updatedTime == -1)
       {
-        v14 = 0;
-        if ( v9 == 100 )
-        {
-          v14 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v14 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v14;
+        updatedTime = 0;
       }
+      kInfo->tUpdatedate = updatedTime;
+
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 __int64 CRFWorldDatabase::Select_WinBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  unsigned __int8 v11; // [rsp+164h] [rbp-24h]
-  unsigned __int8 v12; // [rsp+165h] [rbp-23h]
-  sprintf_s(Buffer, 0x100uLL, "{ CALL pSelect_WinRaceBattleCount( %d, %d ) }", byRace, dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_WinRaceBattleCount( %d, %d ) }", byRace, dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 4, dwCount, 0LL, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        if (this->m_hStmtSelect)
         {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0LL;
+          SQLCloseCursor(this->m_hStmtSelect);
         }
-        else
+        if (this->m_bSaveDBLog)
         {
-          v12 = 0;
-          if ( v9 == 100 )
-          {
-            v12 = 2;
-          }
-          else
-          {
-            this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            v12 = 1;
-          }
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return v12;
+          this->FmtLog("%s Success", query);
         }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (sqlRet == SQL_NO_DATA)
+      {
+        result = 2;
       }
       else
       {
-        v11 = 0;
-        if ( v9 == 100 )
-        {
-          v11 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        result = 1;
       }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 bool CRFWorldDatabase::Insert_ItemCombineEx(unsigned int dwCharacterSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
   sprintf(Buffer, "{ CALL pInsert_CombineEx_Result( %d ) }", dwCharacterSerial);
@@ -717,9 +732,6 @@ bool CRFWorldDatabase::Insert_ItemCombineEx(unsigned int dwCharacterSerial)
 
 bool CRFWorldDatabase::Insert_NpcQuest_History(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
   sprintf(Buffer, "{ CALL pInsert_NpcQuest_History( %d ) }", dwSerial);
@@ -728,9 +740,6 @@ bool CRFWorldDatabase::Insert_NpcQuest_History(unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_OreCutting(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-98h] BYREF
   char Buffer[80]; // [rsp+30h] [rbp-68h] BYREF
 
   memset(Buffer, 0, 64);
@@ -740,9 +749,6 @@ bool CRFWorldDatabase::Insert_OreCutting(unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_PcBangFavorItem(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
 
   memset(Buffer, 0, 1024);
@@ -752,9 +758,6 @@ bool CRFWorldDatabase::Insert_PcBangFavorItem(unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_PotionDelay(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-98h] BYREF
   char Buffer[80]; // [rsp+30h] [rbp-68h] BYREF
 
   memset(Buffer, 0, 64);
@@ -764,9 +767,6 @@ bool CRFWorldDatabase::Insert_PotionDelay(unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_PrimiumPlayTime(unsigned int dwAccSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
   sprintf(Buffer, "{ CALL pInsert_PrimiumPlayTime( %d ) }", dwAccSerial);
@@ -775,9 +775,6 @@ bool CRFWorldDatabase::Insert_PrimiumPlayTime(unsigned int dwAccSerial)
 
 bool CRFWorldDatabase::Insert_PvpOrderViewInfo(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
   sprintf(Buffer, "{ CALL pInsert_PvpOrderView( %d ) }", dwSerial);
@@ -786,9 +783,6 @@ bool CRFWorldDatabase::Insert_PvpOrderViewInfo(unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_PvpPointLimitInfoRecord(unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
   sprintf(Buffer, "{ CALL pInsert_pplirecord( %d ) }", dwSerial);
@@ -798,304 +792,297 @@ bool CRFWorldDatabase::Insert_PvpPointLimitInfoRecord(unsigned int dwSerial)
 char CRFWorldDatabase::Select_ItemCombineEx(unsigned int dwSerial,
         _worlddb_itemcombineex_info *pdbItemCombineExInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int j; // [rsp+164h] [rbp-24h]
-  int v11; // [rsp+168h] [rbp-20h]
-  char v12; // [rsp+16Ch] [rbp-1Ch]
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
 
-  j = 0;
-  v11 = 0;
-  sprintf(Buffer, "{ CALL pSelect_CombineEx_Result_20071010( %d ) }", dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  sprintf(query, "{ CALL pSelect_CombineEx_Result_20071010( %d ) }", dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      int columnNumber = 0;
+      sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 65530, pdbItemCombineExInfo, 0, &indicator);
+      if (pdbItemCombineExInfo->bIsResult)
       {
-        v8 = SQLGetData(this->m_hStmtSelect, ++v11, 65530, pdbItemCombineExInfo, 0LL, &StrLen_or_IndPtr);
-        if ( pdbItemCombineExInfo->bIsResult )
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 65518, &pdbItemCombineExInfo->dwCheckKey, 0, &indicator);
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 65530, &pdbItemCombineExInfo->byDlgType, 0, &indicator);
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 65518, &pdbItemCombineExInfo->dwDalant, 0, &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          65530,
+          &pdbItemCombineExInfo->byItemListCount,
+          0,
+          &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          65530,
+          &pdbItemCombineExInfo->byItemSelectCount,
+          0,
+          &indicator);
+        for (int itemIndex = 0; itemIndex < 24; ++itemIndex)
         {
-          v8 = SQLGetData(
-                 this->m_hStmtSelect,
-                 ++v11,
-                 65518,
-                 &pdbItemCombineExInfo->dwCheckKey,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 65530, &pdbItemCombineExInfo->byDlgType, 0LL, &StrLen_or_IndPtr);
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 65518, &pdbItemCombineExInfo->dwDalant, 0LL, &StrLen_or_IndPtr);
-          v8 = SQLGetData(
-                 this->m_hStmtSelect,
-                 ++v11,
-                 65530,
-                 &pdbItemCombineExInfo->byItemListCount,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v8 = SQLGetData(
-                 this->m_hStmtSelect,
-                 ++v11,
-                 65530,
-                 &pdbItemCombineExInfo->byItemSelectCount,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          for ( j = 0; j < 24; ++j )
+          sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 4, &pdbItemCombineExInfo->invenKey[itemIndex], 0, &indicator);
+          if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
           {
-            v8 = SQLGetData(this->m_hStmtSelect, ++v11, 4, &pdbItemCombineExInfo->invenKey[j], 0LL, &StrLen_or_IndPtr);
-            if ( v8 )
-            {
-              if ( v8 != 1 )
-                break;
-            }
-            v8 = SQLGetData(
-                   this->m_hStmtSelect,
-                   ++v11,
-                   4,
-                   &pdbItemCombineExInfo->invenKey[j].dwD,
-                   0LL,
-                   &StrLen_or_IndPtr);
-            v8 = SQLGetData(
-                   this->m_hStmtSelect,
-                   ++v11,
-                   4,
-                   &pdbItemCombineExInfo->invenKey[j].dwU,
-                   0LL,
-                   &StrLen_or_IndPtr);
+            break;
           }
-          v8 = SQLGetData(
-                 this->m_hStmtSelect,
-                 ++v11,
-                 4,
-                 &pdbItemCombineExInfo->dwResultEffectType,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v8 = SQLGetData(
-                 this->m_hStmtSelect,
-                 ++v11,
-                 4,
-                 &pdbItemCombineExInfo->dwResultEffectMsgCode,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
+          sqlRet = SQLGetData(
+            this->m_hStmtSelect,
+            ++columnNumber,
+            4,
+            &pdbItemCombineExInfo->invenKey[itemIndex].dwD,
+            0,
+            &indicator);
+          sqlRet = SQLGetData(
+            this->m_hStmtSelect,
+            ++columnNumber,
+            4,
+            &pdbItemCombineExInfo->invenKey[itemIndex].dwU,
+            0,
+            &indicator);
         }
-        else
-        {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
-        }
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          4,
+          &pdbItemCombineExInfo->dwResultEffectType,
+          0,
+          &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          4,
+          &pdbItemCombineExInfo->dwResultEffectMsgCode,
+          0,
+          &indicator);
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v12 = 0;
-        if ( v8 == 100 )
-        {
-          v12 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          v12 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v12;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v8 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 char CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
         _worlddb_npc_quest_complete_history *pNpcQHis)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int j; // [rsp+164h] [rbp-24h]
-  int v11; // [rsp+168h] [rbp-20h]
-  char v12; // [rsp+16Ch] [rbp-1Ch]
-  j = 0;
-  v11 = 0;
-  sprintf(Buffer, "{ CALL pSelect_NpcQuest_History_20080811( %d ) }", dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf(query, "{ CALL pSelect_NpcQuest_History_20080811( %d ) }", dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      int columnNumber = 0;
+      for (int historyIndex = 0; historyIndex < 70; ++historyIndex)
       {
-        for ( j = 0; j < 70; ++j )
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 1, &pNpcQHis->List[historyIndex], 8, &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          65530,
+          &pNpcQHis->List[historyIndex].byLevel,
+          0,
+          &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          4,
+          &pNpcQHis->List[historyIndex].dwEventEndTime,
+          0,
+          &indicator);
+        if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
         {
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 1, &pNpcQHis->List[j], 8LL, &StrLen_or_IndPtr);
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 65530, &pNpcQHis->List[j].byLevel, 0LL, &StrLen_or_IndPtr);
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 4, &pNpcQHis->List[j].dwEventEndTime, 0LL, &StrLen_or_IndPtr);
-          if ( v8 )
-          {
-            if ( v8 != 1 )
-              break;
-          }
+          break;
         }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0;
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v12 = 0;
-        if ( v8 == 100 )
-        {
-          v12 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          v12 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v12;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v8 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 char CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
         _pvppointlimit_info *kInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-208h] BYREF
-  char Buffer[280]; // [rsp+40h] [rbp-1C8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+158h] [rbp-B0h] BYREF
-  SQLRETURN v9; // [rsp+164h] [rbp-A4h]
-  int v10; // [rsp+168h] [rbp-A0h]
-  unsigned __int16 TargetValue[24]; // [rsp+178h] [rbp-90h] BYREF
-  tm _Tm; // [rsp+1A8h] [rbp-60h] BYREF
-  __time64_t v13; // [rsp+1D8h] [rbp-30h]
-  char v14; // [rsp+1E0h] [rbp-28h]
-  v10 = 0;
-  sprintf(Buffer, "{ CALL pSelect_ppliinfo( %u ) }", dwSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  char query[280]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  unsigned __int16 dateFields[24]{};
+  tm updatedTm{};
+
+  sprintf(query, "{ CALL pSelect_ppliinfo( %u ) }", dwSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 93, dateFields, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 65529, &kInfo->bUseUp, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 65530, &kInfo->byLimitRate, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 8, &kInfo->dOriginalPoint, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 8, &kInfo->dLimitPoint, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 8, &kInfo->dUsePoint, 0, &indicator);
+
+      updatedTm.tm_year = dateFields[0] - 1900;
+      updatedTm.tm_mon = dateFields[1] - 1;
+      updatedTm.tm_mday = dateFields[2];
+      updatedTm.tm_hour = dateFields[3];
+      updatedTm.tm_min = dateFields[4];
+      updatedTm.tm_sec = dateFields[5];
+      updatedTm.tm_isdst = -1;
+
+      __time64_t updatedTime = mktime_3(&updatedTm);
+      if (updatedTime == -1)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 93, TargetValue, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 65529, &kInfo->bUseUp, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 3u, 65530, &kInfo->byLimitRate, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 4u, 8, &kInfo->dOriginalPoint, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 5u, 8, &kInfo->dLimitPoint, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 6u, 8, &kInfo->dUsePoint, 0LL, &StrLen_or_IndPtr);
-        _Tm.tm_year = TargetValue[0] - 1900;
-        _Tm.tm_mon = TargetValue[1] - 1;
-        _Tm.tm_mday = TargetValue[2];
-        _Tm.tm_hour = TargetValue[3];
-        _Tm.tm_min = TargetValue[4];
-        _Tm.tm_sec = TargetValue[5];
-        _Tm.tm_isdst = -1;
-        v13 = mktime_3(&_Tm);
-        if ( v13 == -1 )
-          v13 = 0LL;
-        kInfo->tUpdatedate = v13;
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
-        return 0;
+        updatedTime = 0;
       }
-      else
+      kInfo->tUpdatedate = updatedTime;
+
+      if (this->m_hStmtSelect)
       {
-        v14 = 0;
-        if ( v9 == 100 )
-        {
-          v14 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v14 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v14;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_rankinguild_info *pGuildMemberRankData)
@@ -1337,34 +1324,30 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
 
 unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-468h] BYREF
-  SQLRETURN v6; // [rsp+20h] [rbp-448h]
-  char Buffer[1040]; // [rsp+40h] [rbp-428h] BYREF
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[1040]{};
 
-  memset(Buffer, 0, 1024);
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step1( DWORD dwGuildSerial(%u) ) Start",
     dwGuildSerial);
-  if ( this->m_hStmtUpdate || this->ReConnectDataBase() )
+  if (this->m_hStmtUpdate || this->ReConnectDataBase())
   {
     sprintf(
-      Buffer,
+      query,
       "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, b.serial, b.lv, g.Pvppoint, g.GuildGrade as"
       " CurGrade into #tbl_RankInGuild from tbl_general as g join tbl_base as b on g.serial = b.serial where g.guildseria"
       "l=%d and b.dck=0 order by g.Pvppoint desc",
       50,
       dwGuildSerial);
-    v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-    if ( !v6 || v6 == 1 )
+    sqlRet = SQLExecDirectA(this->m_hStmtUpdate, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RankInGuild_Step1( DWORD dwGuildSerial(%u) ) End",
         dwGuildSerial);
       return 0;
     }
-    else if ( v6 == 100 )
+    if (sqlRet == SQL_NO_DATA)
     {
       this->ExecUpdateQuery("drop table #tbl_RankInGuild", 0);
       this->FmtLog(
@@ -1372,26 +1355,19 @@ unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildS
         dwGuildSerial);
       return 2;
     }
-    else
-    {
-      this->FmtLog(
-        "CRFWorldDatabase::Update_RankInGuild_Step1( DWORD dwGuildSerial(%u) ) Sql Error!",
-        dwGuildSerial);
-      return 1;
-    }
-  }
-  else
-  {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+
+    this->FmtLog(
+      "CRFWorldDatabase::Update_RankInGuild_Step1( DWORD dwGuildSerial(%u) ) Sql Error!",
+      dwGuildSerial);
     return 1;
   }
+
+  this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
 }
 
 char CRFWorldDatabase::Update_RankInGuild_Step7()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step7() : Start drop #tbl_RankInGuild Table");
   if ( this->ExecUpdateQuery("drop table #tbl_RankInGuild", 0) )
@@ -1403,9 +1379,6 @@ char CRFWorldDatabase::Update_RankInGuild_Step7()
 
 char CRFWorldDatabase::Update_RankInGuild_Step8()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step8() : Start drop #tbl_RankInGuildAll Table");
   if ( this->ExecUpdateQuery("drop table #tbl_RankInGuildAll", 0) )
@@ -1417,9 +1390,6 @@ char CRFWorldDatabase::Update_RankInGuild_Step8()
 
 char CRFWorldDatabase::Update_RankInGuild_Step9()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step9() : Start drop #tbl_RankInGuildCom Table");
   if ( this->ExecUpdateQuery("drop table #tbl_RankInGuildCom", 0) )
@@ -1431,75 +1401,79 @@ char CRFWorldDatabase::Update_RankInGuild_Step9()
 
 unsigned __int8 CRFWorldDatabase::Select_CashLimSale(_worlddb_cash_limited_sale *pcashlimitedsale)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-498h] BYREF
-  char _Dest[1024]; // [rsp+40h] [rbp-458h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+458h] [rbp-40h] BYREF
-  SQLRETURN v8; // [rsp+464h] [rbp-34h]
-  unsigned __int8 v9; // [rsp+468h] [rbp-30h]
-  int j; // [rsp+46Ch] [rbp-2Ch]
-  int v11; // [rsp+470h] [rbp-28h]
+  char query[1024]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
 
-  sprintf_s(_Dest, sizeof(_Dest), "{ CALL pSelect_Cash_LimSale }");
-  if ( this->m_bSaveDBLog )
-    this->Log(_Dest);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  sprintf_s(query, sizeof(query), "{ CALL pSelect_Cash_LimSale }");
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)_Dest, -3);
-    if ( !v8 || v8 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65530, pcashlimitedsale, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 65530, &pcashlimitedsale->byLimited_sale_num, 0, &indicator);
+      int columnNumber = 2;
+      for (int saleIndex = 0; saleIndex < pcashlimitedsale->byLimited_sale_num; ++saleIndex)
       {
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 65530, pcashlimitedsale, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 65530, &pcashlimitedsale->byLimited_sale_num, 0LL, &StrLen_or_IndPtr);
-        v11 = 2;
-        for ( j = 0; j < pcashlimitedsale->byLimited_sale_num; ++j )
-        {
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 4, &pcashlimitedsale->List[j], 0LL, &StrLen_or_IndPtr);
-          v8 = SQLGetData(this->m_hStmtSelect, ++v11, 4, &pcashlimitedsale->List[j].nLimcount, 0LL, &StrLen_or_IndPtr);
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", _Dest);
-        return 0LL;
+        sqlRet = SQLGetData(this->m_hStmtSelect, ++columnNumber, 4, &pcashlimitedsale->List[saleIndex], 0, &indicator);
+        sqlRet = SQLGetData(
+          this->m_hStmtSelect,
+          ++columnNumber,
+          4,
+          &pcashlimitedsale->List[saleIndex].nLimcount,
+          0,
+          &indicator);
       }
-      else
+
+      if (this->m_hStmtSelect)
       {
-        v9 = 0;
-        if ( v8 == 100 )
-        {
-          v9 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, _Dest, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          v9 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v9;
+        SQLCloseCursor(this->m_hStmtSelect);
       }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+      return 0;
     }
-    else if ( v8 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v8, _Dest, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", _Dest);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 bool CRFWorldDatabase::Update_DisappearOwnerRecord()
@@ -1593,11 +1567,11 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
   SQLLEN StrLen_or_IndPtr = 0;
   SQLRETURN ret = 0;
   char Buffer[84]{};
-  unsigned __int8 v11[32]{};
-  unsigned __int8 v12[32]{};
+  unsigned __int8 sendRaceBuffer[32]{};
+  unsigned __int8 senderDgrBuffer[32]{};
   unsigned int TargetValue[8]{};
   int pl_nKey[8]{};
-  unsigned char v15[28]{};
+  unsigned char stateBuffer[28]{};
 
   sprintf_s(Buffer, 0x40u, "select * from tbl_PostRegistry where dck=0");
   if (m_bSaveDBLog)
@@ -1621,7 +1595,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
         ret = SQLGetData(m_hStmtSelect, 1u, 65518, TargetValue, 0, &StrLen_or_IndPtr);
         if (TargetValue[0] < dwMax)
         {
-          ret = SQLGetData(m_hStmtSelect, 2u, 65529, v15, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 2u, 65529, stateBuffer, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(
             m_hStmtSelect,
             3u,
@@ -1661,8 +1635,8 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
           ret = SQLGetData(m_hStmtSelect, 9u, 65511, &pPostData[TargetValue[0]].m_dwDur, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(m_hStmtSelect, 0xAu, 4, &pPostData[TargetValue[0]].m_dwUpt, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(m_hStmtSelect, 0xBu, 4, &pPostData[TargetValue[0]].m_dwGold, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xCu, 5, v11, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xDu, 5, v12, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xCu, 5, sendRaceBuffer, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 0xDu, 5, senderDgrBuffer, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(
             m_hStmtSelect,
             0xEu,
@@ -1670,8 +1644,8 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
             &pPostData[TargetValue[0]].m_lnUID,
             0,
             &StrLen_or_IndPtr);
-          pPostData[TargetValue[0]].m_bySendRace = v11[0];
-          pPostData[TargetValue[0]].m_bySenderDgr = v12[0];
+          pPostData[TargetValue[0]].m_bySendRace = sendRaceBuffer[0];
+          pPostData[TargetValue[0]].m_bySenderDgr = senderDgrBuffer[0];
           pPostData[TargetValue[0]].m_Key.LoadDBKey(pl_nKey[0]);
           pPostData[TargetValue[0]].m_byState = 0;
         }
@@ -3924,229 +3898,221 @@ char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
 unsigned __int8 CRFWorldDatabase::Select_CharNumInWorld(unsigned int dwAccountSerial,
         unsigned __int8 *byCharNum)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int v10; // [rsp+164h] [rbp-24h]
-  int v11; // [rsp+168h] [rbp-20h]
-  char v12; // [rsp+16Ch] [rbp-1Ch]
-  char v13; // [rsp+16Dh] [rbp-1Bh]
-  v10 = 0;
-  v11 = 0;
-  sprintf(Buffer, "{ CALL pSelect_CharNumInWorld( %d ) }", dwAccountSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf(query, "{ CALL pSelect_CharNumInWorld( %d ) }", dwAccountSerial);
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65530, byCharNum, 0, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 65530, byCharNum, 0LL, &StrLen_or_IndPtr);
-        if ( !v8 || v8 == 1 )
+        if (this->m_hStmtSelect)
         {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
+          SQLCloseCursor(this->m_hStmtSelect);
         }
-        else
+        if (this->m_bSaveDBLog)
         {
-          v13 = 0;
-          if ( v8 == 100 )
-          {
-            v13 = 2;
-          }
-          else
-          {
-            this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-            this->ErrorAction(v8, this->m_hStmtSelect);
-            v13 = 1;
-          }
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return v13;
+          this->FmtLog("%s Success", query);
         }
+        return 0;
+      }
+
+      unsigned __int8 result = 0;
+      if (sqlRet == SQL_NO_DATA)
+      {
+        result = 2;
       }
       else
       {
-        v12 = 0;
-        if ( v8 == 100 )
-        {
-          v12 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          v12 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v12;
+        this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        result = 1;
       }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
     }
-    else if ( v8 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_Exist_Economy(
   unsigned int dwDate,
   _worlddb_economy_history_info *pEconomyData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-198h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-160h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-154h]
-  char Buffer[260]; // [rsp+60h] [rbp-138h] BYREF
-  int v10; // [rsp+164h] [rbp-34h]
-  char v11; // [rsp+168h] [rbp-30h]
-  SQLUSMALLINT v12; // [rsp+16Ch] [rbp-2Ch]
-  int j; // [rsp+170h] [rbp-28h]
-  int k; // [rsp+174h] [rbp-24h]
-  int m; // [rsp+178h] [rbp-20h]
-  v10 = 0;
-  sprintf(Buffer, "{ CALL pSelect_Exist_Economy( %d ) }", dwDate);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  sprintf(query, "{ CALL pSelect_Exist_Economy( %d ) }", dwDate);
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 8, pEconomyData->dTradeDalant, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 8, &pEconomyData->dTradeDalant[1], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 8, &pEconomyData->dTradeDalant[2], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 8, pEconomyData, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 8, &pEconomyData->dTradeGold[1], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 8, &pEconomyData->dTradeGold[2], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 4, &pEconomyData->dwManageValue, 0, &indicator);
+
+      SQLUSMALLINT columnNumber = 8;
+      for (int row = 0; row < 3; ++row)
       {
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 8, pEconomyData->dTradeDalant, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 8, &pEconomyData->dTradeDalant[1], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 3u, 8, &pEconomyData->dTradeDalant[2], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 4u, 8, pEconomyData, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 5u, 8, &pEconomyData->dTradeGold[1], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 6u, 8, &pEconomyData->dTradeGold[2], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 7u, 4, &pEconomyData->dwManageValue, 0LL, &StrLen_or_IndPtr);
-        v12 = 8;
-        for ( j = 0; j < 3; ++j )
+        for (int column = 0; column < 3; ++column)
         {
-          for ( k = 0; k < 3; ++k )
+          sqlRet = SQLGetData(this->m_hStmtSelect, columnNumber++, 8, &pEconomyData->dMineOre[column][row], 0, &indicator);
+          if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
           {
-            v8 = SQLGetData(this->m_hStmtSelect, v12++, 8, &pEconomyData->dMineOre[k][j], 0LL, &StrLen_or_IndPtr);
-            if ( v8 )
-            {
-              if ( v8 != 1 )
-                break;
-            }
+            break;
           }
-        }
-        for ( j = 0; j < 3; ++j )
-        {
-          for ( m = 0; m < 3; ++m )
-          {
-            v8 = SQLGetData(this->m_hStmtSelect, v12++, 8, &pEconomyData->dCutOre[m][j], 0LL, &StrLen_or_IndPtr);
-            if ( v8 )
-            {
-              if ( v8 != 1 )
-                break;
-            }
-          }
-        }
-        if ( !v8 || v8 == 1 )
-        {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
-        }
-        else
-        {
-          this->ErrorMsgLog(v8, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return 1;
         }
       }
-      else
+
+      for (int row = 0; row < 3; ++row)
       {
-        v11 = 0;
-        if ( v8 == 100 )
+        for (int column = 0; column < 3; ++column)
         {
-          v11 = 2;
+          sqlRet = SQLGetData(this->m_hStmtSelect, columnNumber++, 8, &pEconomyData->dCutOre[column][row], 0, &indicator);
+          if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+          {
+            break;
+          }
         }
-        else
+      }
+
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+      {
+        if (this->m_hStmtSelect)
         {
-          this->ErrorMsgLog(v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v8, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        }
+        if (this->m_bSaveDBLog)
+        {
+          this->FmtLog("%s Success", query);
+        }
+        return 0;
       }
+
+      this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return 1;
     }
-    else if ( v8 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_Limit_Run_Record()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-4A8h] BYREF
-  char _Dest[1024]; // [rsp+40h] [rbp-468h] BYREF
-  unsigned __int8 v6; // [rsp+444h] [rbp-64h]
-  unsigned int TargetValue[8]; // [rsp+454h] [rbp-54h] BYREF
-  unsigned __int16 ColumnNumber[14]; // [rsp+474h] [rbp-34h] BYREF
+  char query[1024]{};
+  unsigned __int8 result = 0;
+  unsigned int targetValue[8]{};
+  unsigned __int16 columnNumber[14]{};
 
-  memset(_Dest, 0, sizeof(_Dest));
-  sprintf_s(_Dest, sizeof(_Dest), "select [aserial] from [dbo].[tbl_sf_delay] where [aserial] = 0");
-  v6 = this->SQLExecDirect_RetErrCode(_Dest);
-  if ( v6 )
-    return v6;
-  v6 = this->SQLFetch_RetErrCode(_Dest);
-  if ( v6 )
-    return v6;
-  TargetValue[0] = 0;
-  ColumnNumber[0] = 1;
-  v6 = this->SQLGetData_RetErrCode(_Dest, ColumnNumber, 4, TargetValue);
-  if ( v6 )
-    return v6;
-  this->SelectCleanUp(_Dest);
+  sprintf_s(query, sizeof(query), "select [aserial] from [dbo].[tbl_sf_delay] where [aserial] = 0");
+  result = this->SQLExecDirect_RetErrCode(query);
+  if (result)
+  {
+    return result;
+  }
+  result = this->SQLFetch_RetErrCode(query);
+  if (result)
+  {
+    return result;
+  }
+  targetValue[0] = 0;
+  columnNumber[0] = 1;
+  result = this->SQLGetData_RetErrCode(query, columnNumber, 4, targetValue);
+  if (result)
+  {
+    return result;
+  }
+  this->SelectCleanUp(query);
   return 0;
 }
 
@@ -4279,720 +4245,637 @@ unsigned __int8 CRFWorldDatabase::Select_MacroData(unsigned int dwSerial,
 unsigned __int8 CRFWorldDatabase::Select_PatriarchComm(unsigned int dwSerial,
         _patriarch_comm_list *pOutList)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-138h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-100h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-F4h]
-  char szToday[56]; // [rsp+58h] [rbp-E0h] BYREF
-  char Buffer[144]; // [rsp+90h] [rbp-A8h] BYREF
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char today[56]{};
+  char query[144]{};
 
-  GetTodayStr(szToday);
-  sprintf(Buffer, "{ CALL pSelect_PatriarchComm( %d, '%s' ) }", dwSerial, szToday);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( !this->m_hStmtSelect && !this->ReConnectDataBase() )
+  GetTodayStr(today);
+  sprintf(query, "{ CALL pSelect_PatriarchComm( %d, '%s' ) }", dwSerial, today);
+  if (this->m_bSaveDBLog)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1LL;
+    this->Log(query);
   }
-  v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-  if ( v8 && v8 != 1 )
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
   {
-    if ( v8 == 100 )
-      return 2LL;
-    this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-    this->ErrorAction(v8, this->m_hStmtSelect);
-    return 1LL;
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
   }
-  while ( 1 )
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
   {
-    v8 = SQLFetch(this->m_hStmtSelect);
-    if ( v8 && v8 != 1 )
+    if (sqlRet == SQL_NO_DATA)
     {
-      if ( v8 != 100 )
+      return 2;
+    }
+    this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+    this->ErrorAction(sqlRet, this->m_hStmtSelect);
+    return 1;
+  }
+
+  while (true)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+    {
+      if (sqlRet != SQL_NO_DATA)
       {
-        this->ErrorMsgLog(v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-        this->ErrorAction(v8, this->m_hStmtSelect);
-        if ( this->m_hStmtSelect )
+        this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        if (this->m_hStmtSelect)
+        {
           SQLCloseCursor(this->m_hStmtSelect);
-        return 1LL;
+        }
+        return 1;
       }
-      goto LABEL_27;
+      break;
     }
-    v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, &pOutList->List[pOutList->dwCount], 0LL, &StrLen_or_IndPtr);
-    v8 = SQLGetData(this->m_hStmtSelect, 2u, 1, pOutList->List[pOutList->dwCount].pszDepDate, 9LL, &StrLen_or_IndPtr);
-    if ( v8 )
+
+    sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 4, &pOutList->List[pOutList->dwCount], 0, &indicator);
+    sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 1, pOutList->List[pOutList->dwCount].pszDepDate, 9, &indicator);
+    if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
     {
-      if ( v8 != 1 )
-        break;
+      break;
     }
+
     ++pOutList->dwCount;
   }
-  if ( v8 == 100 )
+
+  if (sqlRet == SQL_NO_DATA)
   {
-LABEL_27:
-    if ( this->m_hStmtSelect )
+    if (this->m_hStmtSelect)
+    {
       SQLCloseCursor(this->m_hStmtSelect);
-    if ( this->m_bSaveDBLog )
-      this->FmtLog("%s Success", Buffer);
-    return 0LL;
+    }
+    if (this->m_bSaveDBLog)
+    {
+      this->FmtLog("%s Success", query);
+    }
+    return 0;
   }
-  this->ErrorMsgLog(v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-  this->ErrorAction(v8, this->m_hStmtSelect);
-  if ( this->m_hStmtSelect )
+
+  this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  if (this->m_hStmtSelect)
+  {
     SQLCloseCursor(this->m_hStmtSelect);
-  return 1LL;
+  }
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_PostContent(unsigned int dwPostSerial,
         char *wszContent,
         int nSize)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-108h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-D0h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-C4h]
-  int v10; // [rsp+48h] [rbp-C0h]
-  char Buffer[132]; // [rsp+60h] [rbp-A8h] BYREF
-  char v12; // [rsp+E4h] [rbp-24h]
-  v10 = 0;
-  memset(Buffer, 0, 128);
-  sprintf_s(Buffer, 0x80uLL, "select content from tbl_PostStorage where serial=%d", dwPostSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[132]{};
+
+  sprintf_s(query, 0x80uLL, "select content from tbl_PostStorage where serial=%d", dwPostSerial);
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 1, wszContent, nSize, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 1, wszContent, nSize, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        if (this->m_hStmtSelect)
         {
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          if ( this->m_bSaveDBLog )
-            this->FmtLog("%s Success", Buffer);
-          return 0;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return 1;
-        }
-      }
-      else
-      {
-        v12 = 0;
-        if ( v9 == 100 )
-        {
-          v12 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v12 = 1;
-        }
-        if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
-        return v12;
+        }
+        if (this->m_bSaveDBLog)
+        {
+          this->FmtLog("%s Success", query);
+        }
+        return 0;
       }
+
+      this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return 1;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1;
+      this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 1;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_PostStorageList(unsigned int dwOwner,
         _post_storage_list *pListData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-288h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-250h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-244h]
-  char Buffer[528]; // [rsp+60h] [rbp-228h] BYREF
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[528]{};
 
-  memset(Buffer, 0, 512);
   pListData->dwCount = 0;
   sprintf_s(
-    Buffer,
+    query,
     0x200uLL,
     "select top %d postinx,serial,poststate,sendname,title,k,d,u,gold,uid,sindex from tbl_PostStorage where owner=%d and "
     "poststate<%d and dck=0",
     50,
     dwOwner,
     100);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
-    {
-      while ( 1 )
-      {
-        v8 = SQLFetch(this->m_hStmtSelect);
-        if ( v8 )
-        {
-          if ( v8 != 1 )
-            break;
-        }
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               1u,
-               65530,
-               &pListData->List[pListData->dwCount].byIndex,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 65518, &pListData->List[pListData->dwCount], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               3u,
-               65530,
-               &pListData->List[pListData->dwCount].byState,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               4u,
-               1,
-               pListData->List[pListData->dwCount].wszSendName,
-               17LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               5u,
-               1,
-               pListData->List[pListData->dwCount].wszTitle,
-               21LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 6u, 4, &pListData->List[pListData->dwCount].nK, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               7u,
-               65511,
-               &pListData->List[pListData->dwCount].dwDur,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               8u,
-               4,
-               &pListData->List[pListData->dwCount].dwUpt,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               9u,
-               65518,
-               &pListData->List[pListData->dwCount].dwGold,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               0xAu,
-               65511,
-               &pListData->List[pListData->dwCount].lnUID,
-               0LL,
-               &StrLen_or_IndPtr);
-        v8 = SQLGetData(
-               this->m_hStmtSelect,
-               0xBu,
-               5,
-               &pListData->List[pListData->dwCount].wStorageIndex,
-               0LL,
-               &StrLen_or_IndPtr);
-        ++pListData->dwCount;
-      }
-      if ( this->m_hStmtSelect )
-        SQLCloseCursor(this->m_hStmtSelect);
-      if ( this->m_bSaveDBLog )
-        this->FmtLog("%s Success", Buffer);
-      return 0;
-    }
-    else if ( v8 == 100 )
-    {
-      return 2;
-    }
-    else
-    {
-      this->ErrorMsgLog(v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v8, this->m_hStmtSelect);
-      return 1;
-    }
+    this->Log(query);
   }
-  else
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
     return 1;
   }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    while (true)
+    {
+      sqlRet = SQLFetch(this->m_hStmtSelect);
+      if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65530, &pListData->List[pListData->dwCount].byIndex, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 65518, &pListData->List[pListData->dwCount], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 65530, &pListData->List[pListData->dwCount].byState, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 1, pListData->List[pListData->dwCount].wszSendName, 17, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 1, pListData->List[pListData->dwCount].wszTitle, 21, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 4, &pListData->List[pListData->dwCount].nK, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 65511, &pListData->List[pListData->dwCount].dwDur, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 8u, 4, &pListData->List[pListData->dwCount].dwUpt, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 9u, 65518, &pListData->List[pListData->dwCount].dwGold, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 0xAu, 65511, &pListData->List[pListData->dwCount].lnUID, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 0xBu, 5, &pListData->List[pListData->dwCount].wStorageIndex, 0, &indicator);
+      ++pListData->dwCount;
+    }
+
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    if (this->m_bSaveDBLog)
+    {
+      this->FmtLog("%s Success", query);
+    }
+    return 0;
+  }
+
+  if (sqlRet == SQL_NO_DATA)
+  {
+    return 2;
+  }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_PvpRankInfo(unsigned __int8 byRace,
         char *szDate,
         _PVP_RANK_DATA *rankData)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int v11; // [rsp+164h] [rbp-24h]
-  memset(Buffer, 0, 256);
-  v11 = 0;
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[260]{};
+
+  int rankIndex = 0;
   sprintf(
-    Buffer,
+    query,
     "select top 100 Rank,Lv,Rate,Grade,PvpPoint,Name,GuildName,serial,guildserial from tbl_PvpRank%s where race = %d orde"
     "r by grade desc, rate ",
     szDate,
     byRace);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
-    {
-      do
-      {
-        v9 = SQLFetch(this->m_hStmtSelect);
-        if ( v9 && v9 != 1 )
-          break;
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 65508, &rankData[v11], 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 65508, &rankData[v11].byLv, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 3u, 65519, &rankData[v11].wRate, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 4u, 65508, &rankData[v11].byGrade, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 5u, 8, &rankData[v11].dPvpPoint, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 6u, 1, rankData[v11].wszName, 17LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 7u, 1, rankData[v11].wszGuildName, 17LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 8u, 4, &rankData[v11].dwAvatorSerial, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 9u, 4, &rankData[v11++].dwGuildSerial, 0LL, &StrLen_or_IndPtr);
-        if ( v11 >= 100 )
-          break;
-      }
-      while ( !v9 || v9 == 1 );
-      if ( this->m_hStmtSelect )
-        SQLCloseCursor(this->m_hStmtSelect);
-      if ( this->m_bSaveDBLog )
-        this->FmtLog("%s Success", Buffer);
-      return 0;
-    }
-    else if ( v9 == 100 )
-    {
-      return 2;
-    }
-    else
-    {
-      this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1;
-    }
+    this->Log(query);
   }
-  else
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
     return 1;
   }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    do
+    {
+      sqlRet = SQLFetch(this->m_hStmtSelect);
+      if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65508, &rankData[rankIndex], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 65508, &rankData[rankIndex].byLv, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 65519, &rankData[rankIndex].wRate, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 65508, &rankData[rankIndex].byGrade, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 8, &rankData[rankIndex].dPvpPoint, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 1, rankData[rankIndex].wszName, 17, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 1, rankData[rankIndex].wszGuildName, 17, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 8u, 4, &rankData[rankIndex].dwAvatorSerial, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 9u, 4, &rankData[rankIndex++].dwGuildSerial, 0, &indicator);
+      if (rankIndex >= 100)
+      {
+        break;
+      }
+    } while (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO);
+
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    if (this->m_bSaveDBLog)
+    {
+      this->FmtLog("%s Success", query);
+    }
+    return 0;
+  }
+
+  if (sqlRet == SQL_NO_DATA)
+  {
+    return 2;
+  }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_RegeAvator_For_Lobby_Logout(unsigned int dwAccountSerial,
         _rege_char_data *pRegeCharData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-488h] BYREF
-  char _Dest[1024]; // [rsp+40h] [rbp-448h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+458h] [rbp-30h] BYREF
-  SQLRETURN v9; // [rsp+464h] [rbp-24h]
-  int v10; // [rsp+468h] [rbp-20h]
+  char query[1024]{};
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
 
   sprintf_s(
-    _Dest,
-    sizeof(_Dest),
+    query,
+    sizeof(query),
     "select Serial,Name,Slot,Lv,Dalant,Gold from tbl_base where AccountSerial=%d and DCK=0",
     dwAccountSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(_Dest);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)_Dest, -3);
-    if ( !v9 || v9 == 1 )
-    {
-      v10 = 0;
-      while ( 1 )
-      {
-        v9 = SQLFetch(this->m_hStmtSelect);
-        if ( v9 )
-        {
-          if ( v9 != 1 )
-            break;
-        }
-        v9 = SQLGetData(
-               this->m_hStmtSelect,
-               1u,
-               65518,
-               &pRegeCharData->RegeList[v10].dwCharSerial,
-               0LL,
-               &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 1, pRegeCharData->RegeList[v10].szCharName, 17LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 3u, 65519, &pRegeCharData->RegeList[v10], 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 4u, 4, &pRegeCharData->RegeList[v10].nLevel, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 5u, 4, &pRegeCharData->RegeList[v10].dwDalant, 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 6u, 4, &pRegeCharData->RegeList[v10++].dwGold, 0LL, &StrLen_or_IndPtr);
-        if ( v10 >= 3 )
-          break;
-        if ( v9 && v9 != 1 )
-        {
-          if ( v9 != 100 )
-          {
-            this->ErrorMsgLog(v9, _Dest, "SQLExecDirectA", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            if ( this->m_hStmtSelect )
-              SQLCloseCursor(this->m_hStmtSelect);
-            return 1;
-          }
-          break;
-        }
-      }
-      pRegeCharData->nCharNum = v10;
-      if ( this->m_hStmtSelect )
-        SQLCloseCursor(this->m_hStmtSelect);
-      if ( this->m_bSaveDBLog )
-        this->FmtLog("%s Success", _Dest);
-      return 0;
-    }
-    else if ( v9 == 100 )
-    {
-      return 2;
-    }
-    else
-    {
-      this->ErrorMsgLog(v9, _Dest, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1;
-    }
+    this->Log(query);
   }
-  else
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", _Dest);
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
     return 1;
   }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    int charCount = 0;
+    while (true)
+    {
+      sqlRet = SQLFetch(this->m_hStmtSelect);
+      if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+      {
+        break;
+      }
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65518, &pRegeCharData->RegeList[charCount].dwCharSerial, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 1, pRegeCharData->RegeList[charCount].szCharName, 17, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 65519, &pRegeCharData->RegeList[charCount], 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 4, &pRegeCharData->RegeList[charCount].nLevel, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 4, &pRegeCharData->RegeList[charCount].dwDalant, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 4, &pRegeCharData->RegeList[charCount++].dwGold, 0, &indicator);
+      if (charCount >= 3)
+      {
+        break;
+      }
+      if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+      {
+        if (sqlRet != SQL_NO_DATA)
+        {
+          this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          if (this->m_hStmtSelect)
+          {
+            SQLCloseCursor(this->m_hStmtSelect);
+          }
+          return 1;
+        }
+        break;
+      }
+    }
+
+    pRegeCharData->nCharNum = charCount;
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    if (this->m_bSaveDBLog)
+    {
+      this->FmtLog("%s Success", query);
+    }
+    return 0;
+  }
+
+  if (sqlRet == SQL_NO_DATA)
+  {
+    return 2;
+  }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_ReturnPost(unsigned int dwMax,
         unsigned int dwMasterSerial,
         _return_post_list *pRetData)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-2A8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-270h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-264h]
-  unsigned int TargetValue[11]; // [rsp+54h] [rbp-254h] BYREF
-  char Buffer[516]; // [rsp+80h] [rbp-228h] BYREF
-  char v12; // [rsp+284h] [rbp-24h]
-  TargetValue[0] = 0;
-  memset(Buffer, 0, 512);
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  unsigned int targetValue[11]{};
+  char query[516]{};
+
   pRetData->dwCount = 0;
   pRetData->bContinue = 0;
   sprintf_s(
-    Buffer,
+    query,
     0x200uLL,
     "select count(serial) from tbl_PostStorage where owner=%d and poststate=%d and dck=0",
     dwMasterSerial,
     100);
-  if ( this->m_bSaveDBLog )
-    this->Log(Buffer);
-  if ( !this->m_hStmtSelect && !this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
     return 1;
   }
-  v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-  if ( v9 && v9 != 1 )
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
   {
-    if ( v9 == 100 )
-      return 2;
-    this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-    this->ErrorAction(v9, this->m_hStmtSelect);
-    return 1;
-  }
-  v9 = SQLFetch(this->m_hStmtSelect);
-  if ( !v9 || v9 == 1 )
-  {
-    v9 = SQLGetData(this->m_hStmtSelect, 1u, 65518, TargetValue, 0LL, &StrLen_or_IndPtr);
-    if ( !v9 || v9 == 1 )
+    if (sqlRet == SQL_NO_DATA)
     {
-      if ( this->m_hStmtSelect )
+      return 2;
+    }
+    this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+    this->ErrorAction(sqlRet, this->m_hStmtSelect);
+    return 1;
+  }
+
+  sqlRet = SQLFetch(this->m_hStmtSelect);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65518, targetValue, 0, &indicator);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+    {
+      if (this->m_hStmtSelect)
+      {
         SQLCloseCursor(this->m_hStmtSelect);
-      if ( this->m_bSaveDBLog )
-        this->FmtLog("%s Success", Buffer);
-      if ( TargetValue[0] )
+      }
+      if (this->m_bSaveDBLog)
+      {
+        this->FmtLog("%s Success", query);
+      }
+
+      if (targetValue[0])
       {
         sprintf_s(
-          Buffer,
+          query,
           0x200uLL,
           "select top %d serial,poststate,recvname,title,content,k,d,u,gold,err,uid from tbl_PostStorage where owner=%d a"
           "nd poststate=%d and dck=0",
           dwMax,
           dwMasterSerial,
           100);
-        if ( this->m_bSaveDBLog )
-          this->Log(Buffer);
-        if ( !this->m_hStmtSelect && !this->ReConnectDataBase() )
+        if (this->m_bSaveDBLog)
         {
-          this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
+          this->Log(query);
+        }
+        if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+        {
+          this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
           return 1;
         }
-        v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-        if ( v9 && v9 != 1 )
+
+        sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+        if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
         {
-          if ( v9 == 100 )
-            return 2;
-          this->ErrorMsgLog(v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          return 1;
-        }
-        while ( 1 )
-        {
-          v9 = SQLFetch(this->m_hStmtSelect);
-          if ( v9 )
+          if (sqlRet == SQL_NO_DATA)
           {
-            if ( v9 != 1 )
-              break;
+            return 2;
           }
-          v9 = SQLGetData(this->m_hStmtSelect, 1u, 65518, &pRetData->List[pRetData->dwCount], 0LL, &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 2u,
-                 65530,
-                 &pRetData->List[pRetData->dwCount].byState,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 3u,
-                 1,
-                 pRetData->List[pRetData->dwCount].wszRecvName,
-                 17LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 4u,
-                 1,
-                 pRetData->List[pRetData->dwCount].wszTitle,
-                 21LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 5u,
-                 1,
-                 pRetData->List[pRetData->dwCount].wszContent,
-                 201LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(this->m_hStmtSelect, 6u, 4, &pRetData->List[pRetData->dwCount].nK, 0LL, &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 7u,
-                 65511,
-                 &pRetData->List[pRetData->dwCount].dwDur,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 8u,
-                 65518,
-                 &pRetData->List[pRetData->dwCount].dwUpt,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 9u,
-                 65518,
-                 &pRetData->List[pRetData->dwCount].dwGold,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 0xAu,
-                 65530,
-                 &pRetData->List[pRetData->dwCount].byErr,
-                 0LL,
-                 &StrLen_or_IndPtr);
-          v9 = SQLGetData(
-                 this->m_hStmtSelect,
-                 0xBu,
-                 65511,
-                 &pRetData->List[pRetData->dwCount].lnUID,
-                 0LL,
-                 &StrLen_or_IndPtr);
+          this->ErrorMsgLog(sqlRet, query, "SQLExecDirectA", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          return 1;
+        }
+
+        while (true)
+        {
+          sqlRet = SQLFetch(this->m_hStmtSelect);
+          if (sqlRet && sqlRet != SQL_SUCCESS_WITH_INFO)
+          {
+            break;
+          }
+
+          sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65518, &pRetData->List[pRetData->dwCount], 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 65530, &pRetData->List[pRetData->dwCount].byState, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 3u, 1, pRetData->List[pRetData->dwCount].wszRecvName, 17, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 4u, 1, pRetData->List[pRetData->dwCount].wszTitle, 21, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 5u, 1, pRetData->List[pRetData->dwCount].wszContent, 201, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 6u, 4, &pRetData->List[pRetData->dwCount].nK, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 65511, &pRetData->List[pRetData->dwCount].dwDur, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 8u, 65518, &pRetData->List[pRetData->dwCount].dwUpt, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 9u, 65518, &pRetData->List[pRetData->dwCount].dwGold, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 0xAu, 65530, &pRetData->List[pRetData->dwCount].byErr, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 0xBu, 65511, &pRetData->List[pRetData->dwCount].lnUID, 0, &indicator);
           ++pRetData->dwCount;
         }
-        if ( this->m_hStmtSelect )
+
+        if (this->m_hStmtSelect)
+        {
           SQLCloseCursor(this->m_hStmtSelect);
-        if ( this->m_bSaveDBLog )
-          this->FmtLog("%s Success", Buffer);
+        }
+        if (this->m_bSaveDBLog)
+        {
+          this->FmtLog("%s Success", query);
+        }
       }
       return 0;
     }
-    this->ErrorMsgLog(v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-    this->ErrorAction(v9, this->m_hStmtSelect);
-    if ( this->m_hStmtSelect )
+    this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+    this->ErrorAction(sqlRet, this->m_hStmtSelect);
+    if (this->m_hStmtSelect)
+    {
       SQLCloseCursor(this->m_hStmtSelect);
+    }
     return 1;
+  }
+
+  unsigned __int8 result = 0;
+  if (sqlRet == SQL_NO_DATA)
+  {
+    result = 2;
   }
   else
   {
-    v12 = 0;
-    if ( v9 == 100 )
-    {
-      v12 = 2;
-    }
-    else
-    {
-      this->ErrorMsgLog(v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      v12 = 1;
-    }
-    if ( this->m_hStmtSelect )
-      SQLCloseCursor(this->m_hStmtSelect);
-    return v12;
+    this->ErrorMsgLog(sqlRet, query, "SQLFetch", this->m_hStmtSelect);
+    this->ErrorAction(sqlRet, this->m_hStmtSelect);
+    result = 1;
   }
+  if (this->m_hStmtSelect)
+  {
+    SQLCloseCursor(this->m_hStmtSelect);
+  }
+  return result;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvatorSerial,
         unsigned __int8 *byRefinedCnt,
         unsigned int *dwRefineDate)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char _Dest[256]; // [rsp+60h] [rbp-128h] BYREF
-  unsigned __int8 v11; // [rsp+164h] [rbp-24h]
-  unsigned __int8 v12; // [rsp+165h] [rbp-23h]
-  unsigned __int8 v13; // [rsp+166h] [rbp-22h]
+  SQLLEN indicator = 0;
+  SQLRETURN sqlRet = SQL_ERROR;
+  char query[256]{};
 
-  memset(_Dest, 0, sizeof(_Dest));
   sprintf_s(
-    _Dest,
-    sizeof(_Dest),
+    query,
+    sizeof(query),
     "select ClassRefineCnt,ClassRefineDate from [dbo].[tbl_event] where avatorserial = %d",
     dwAvatorSerial);
-  if ( this->m_bSaveDBLog )
-    this->Log(_Dest);
-  if ( this->m_hStmtSelect || this->ReConnectDataBase() )
+  if (this->m_bSaveDBLog)
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)_Dest, -3);
-    if ( !v9 || v9 == 1 )
+    this->Log(query);
+  }
+  if (!this->m_hStmtSelect && !this->ReConnectDataBase())
+  {
+    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+    return 1;
+  }
+
+  sqlRet = SQLExecDirectA(this->m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+  if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
+  {
+    sqlRet = SQLFetch(this->m_hStmtSelect);
+    if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, 65530, byRefinedCnt, 0, &indicator);
+      if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 65530, byRefinedCnt, 0LL, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 4, dwRefineDate, 0, &indicator);
+        if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
         {
-          v9 = SQLGetData(this->m_hStmtSelect, 2u, 4, dwRefineDate, 0LL, &StrLen_or_IndPtr);
-          if ( !v9 || v9 == 1 )
+          if (this->m_hStmtSelect)
           {
-            if ( this->m_hStmtSelect )
-              SQLCloseCursor(this->m_hStmtSelect);
-            if ( this->m_bSaveDBLog )
-              this->FmtLog("%s Success", _Dest);
-            return 0LL;
+            SQLCloseCursor(this->m_hStmtSelect);
           }
-          else
+          if (this->m_bSaveDBLog)
           {
-            v13 = 0;
-            if ( v9 == 100 )
-            {
-              v13 = 2;
-            }
-            else
-            {
-              this->ErrorMsgLog(v9, _Dest, "SQLGetData", this->m_hStmtSelect);
-              this->ErrorAction(v9, this->m_hStmtSelect);
-              v13 = 1;
-            }
-            if ( this->m_hStmtSelect )
-              SQLCloseCursor(this->m_hStmtSelect);
-            return v13;
+            this->FmtLog("%s Success", query);
           }
+          return 0;
+        }
+
+        unsigned __int8 result = 0;
+        if (sqlRet == SQL_NO_DATA)
+        {
+          result = 2;
         }
         else
         {
-          v12 = 0;
-          if ( v9 == 100 )
-          {
-            v12 = 2;
-          }
-          else
-          {
-            this->ErrorMsgLog(v9, _Dest, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction(v9, this->m_hStmtSelect);
-            v12 = 1;
-          }
-          if ( this->m_hStmtSelect )
-            SQLCloseCursor(this->m_hStmtSelect);
-          return v12;
+          this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction(sqlRet, this->m_hStmtSelect);
+          result = 1;
         }
+        if (this->m_hStmtSelect)
+        {
+          SQLCloseCursor(this->m_hStmtSelect);
+        }
+        return result;
+      }
+
+      unsigned __int8 result = 0;
+      if (sqlRet == SQL_NO_DATA)
+      {
+        result = 2;
       }
       else
       {
-        v11 = 0;
-        if ( v9 == 100 )
-        {
-          v11 = 2;
-        }
-        else
-        {
-          this->ErrorMsgLog(v9, _Dest, "SQLExecDirect", this->m_hStmtSelect);
-          this->ErrorAction(v9, this->m_hStmtSelect);
-          v11 = 1;
-        }
-        if ( this->m_hStmtSelect )
-          SQLCloseCursor(this->m_hStmtSelect);
-        return v11;
+        this->ErrorMsgLog(sqlRet, query, "SQLGetData", this->m_hStmtSelect);
+        this->ErrorAction(sqlRet, this->m_hStmtSelect);
+        result = 1;
       }
+      if (this->m_hStmtSelect)
+      {
+        SQLCloseCursor(this->m_hStmtSelect);
+      }
+      return result;
     }
-    else if ( v9 == 100 )
+
+    unsigned __int8 result = 0;
+    if (sqlRet == SQL_NO_DATA)
     {
-      return 2LL;
+      result = 2;
     }
     else
     {
-      this->ErrorMsgLog(v9, _Dest, "SQLExecDirect", this->m_hStmtSelect);
-      this->ErrorAction(v9, this->m_hStmtSelect);
-      return 1LL;
+      this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+      this->ErrorAction(sqlRet, this->m_hStmtSelect);
+      result = 1;
     }
+    if (this->m_hStmtSelect)
+    {
+      SQLCloseCursor(this->m_hStmtSelect);
+    }
+    return result;
   }
-  else
+
+  if (sqlRet == SQL_NO_DATA)
   {
-    this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", _Dest);
-    return 1LL;
+    return 2;
   }
+
+  this->ErrorMsgLog(sqlRet, query, "SQLExecDirect", this->m_hStmtSelect);
+  this->ErrorAction(sqlRet, this->m_hStmtSelect);
+  return 1;
 }

@@ -15,45 +15,46 @@ CVertexBuffer::~CVertexBuffer()
 {
 }
 
-void CVertexBuffer::InitVertexBuffer(unsigned int a2, unsigned int a3, unsigned int a4)
+void CVertexBuffer::InitVertexBuffer(unsigned int size, unsigned int bufferType, unsigned int fvf)
 {
-  dword_184A7B2D8 += a2;
-  m_Size = a2;
-  if (!a2)
+  dword_184A7B2D8 += size;
+  m_Size = size;
+  if (!size)
   {
     ___u2.m_lpVertexBuffer = nullptr;
     return;
   }
 
   ++dword_184A7B2DC;
-  m_Flag = a3;
+  m_Flag = bufferType;
 
-  IDirect3DVertexBuffer8 *v11 = nullptr;
-  unsigned int v7 = a3 - 1;
-  if (v7)
+  IDirect3DVertexBuffer8 *vertexBuffer = nullptr;
+  const unsigned int lockMode = bufferType - 1;
+  if (lockMode)
   {
-    unsigned int v8 = v7 - 1;
-    if (v8)
+    const unsigned int allocationMode = lockMode - 1;
+    if (allocationMode)
     {
-      if (v8 == 1)
-        v11 = reinterpret_cast<IDirect3DVertexBuffer8 *>(Dmalloc(static_cast<int>(a2)));
-      goto LABEL_10;
+      if (allocationMode == 1)
+        vertexBuffer = reinterpret_cast<IDirect3DVertexBuffer8 *>(Dmalloc(static_cast<int>(size)));
     }
-    IDirect3DDevice8 *D3dDevice = GetD3dDevice();
-    if (D3dDevice)
-      D3dDevice->CreateVertexBuffer(D3dDevice, a2, 8, a4, D3DPOOL_MANAGED, &v11);
+    else
+    {
+      IDirect3DDevice8 *D3dDevice = GetD3dDevice();
+      if (D3dDevice)
+        D3dDevice->CreateVertexBuffer(D3dDevice, size, 8, fvf, D3DPOOL_MANAGED, &vertexBuffer);
+    }
   }
   else
   {
     IDirect3DDevice8 *D3dDevice = GetD3dDevice();
     if (D3dDevice)
-      D3dDevice->CreateVertexBuffer(D3dDevice, a2, 520, a4, D3DPOOL_MANAGED, &v11);
+      D3dDevice->CreateVertexBuffer(D3dDevice, size, 520, fvf, D3DPOOL_MANAGED, &vertexBuffer);
   }
 
-LABEL_10:
-  if (!v11)
+  if (!vertexBuffer)
     Error(byte_140884910, byte_140883769);
-  ___u2.m_lpVertexBuffer = v11;
+  ___u2.m_lpVertexBuffer = vertexBuffer;
 }
 
 void CVertexBuffer::ReleaseVertexBuffer()
@@ -72,32 +73,42 @@ void CVertexBuffer::ReleaseVertexBuffer()
   m_Size = 0;
 }
 
-IDirect3DVertexBuffer8 *CVertexBuffer::VPLock(__int64 a2, __int64 a3, unsigned int a4)
+IDirect3DVertexBuffer8 *CVertexBuffer::VPLock(__int64 offset, __int64 size, unsigned int flags)
 {
   IDirect3DVertexBuffer8 *m_lpVertexBuffer = ___u2.m_lpVertexBuffer;
-  IDirect3DVertexBuffer8 *v6 = nullptr;
+  IDirect3DVertexBuffer8 *lockedBuffer = nullptr;
   if (!m_lpVertexBuffer)
     return nullptr;
 
   switch (m_Flag)
   {
     case 1u:
-      m_lpVertexBuffer->Lock(m_lpVertexBuffer, static_cast<unsigned int>(a2), static_cast<unsigned int>(a3), reinterpret_cast<unsigned char **>(&v6), a4);
+      m_lpVertexBuffer->Lock(
+        m_lpVertexBuffer,
+        static_cast<unsigned int>(offset),
+        static_cast<unsigned int>(size),
+        reinterpret_cast<unsigned char **>(&lockedBuffer),
+        flags);
       break;
     case 2u:
-      m_lpVertexBuffer->Lock(m_lpVertexBuffer, static_cast<unsigned int>(a2), static_cast<unsigned int>(a3), reinterpret_cast<unsigned char **>(&v6), 0);
+      m_lpVertexBuffer->Lock(
+        m_lpVertexBuffer,
+        static_cast<unsigned int>(offset),
+        static_cast<unsigned int>(size),
+        reinterpret_cast<unsigned char **>(&lockedBuffer),
+        0);
       break;
     case 3u:
-      v6 = m_lpVertexBuffer;
+      lockedBuffer = m_lpVertexBuffer;
       break;
     default:
       Error(byte_140884930, byte_140883769);
-      return v6;
+      return lockedBuffer;
   }
 
-  if (!v6)
+  if (!lockedBuffer)
     Error(byte_140884930, byte_140883769);
-  return v6;
+  return lockedBuffer;
 }
 
 void CVertexBuffer::VPUnLock()

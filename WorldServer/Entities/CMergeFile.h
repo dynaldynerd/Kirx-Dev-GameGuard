@@ -17,11 +17,11 @@ public:
 
 public:
   CMergeFile();
-  __int64 LoadMergeFileHeader(char *a2);
+  __int64 LoadMergeFileHeader(char *filePath);
   void ReleaseMergeFileHeader();
-  struct _iobuf *LoadFileOffset(char *a2, const char *a3);
-  unsigned int GetFileOffset(unsigned int a2, char *a3);
-  unsigned int GetFileSize(unsigned int a2, char *a3);
-  __int64 IsExistFile(char *a2);
+  struct _iobuf *LoadFileOffset(char *filePath, const char *mode);
+  unsigned int GetFileOffset(unsigned int parentIndex, char *filePath);
+  unsigned int GetFileSize(unsigned int parentIndex, char *filePath);
+  __int64 IsExistFile(char *filePath);
 };
 

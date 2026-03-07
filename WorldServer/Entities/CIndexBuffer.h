@@ -28,9 +28,9 @@ public:
   CIndexBuffer();
   ~CIndexBuffer();
 
-  void InitIndexBuffer(unsigned int a2, unsigned int a3);
+  void InitIndexBuffer(unsigned int size, unsigned int bufferType);
   void ReleaseIndexBuffer();
-  IDirect3DIndexBuffer8 *VPLock(__int64 a2 = 0, __int64 a3 = 0, unsigned int a4 = 0);
+  IDirect3DIndexBuffer8 *VPLock(__int64 offset = 0, __int64 size = 0, unsigned int flags = 0);
   void VPUnLock();
 };
 

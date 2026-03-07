@@ -1695,7 +1695,7 @@ __int64 CMonster::Attack(CCharacter *pDst, CMonsterSkill *pskill)
       }
       result = 1;
       pskill->Use(GetLoopTime(), true);
-      goto ATTACK_END;
+      break;
     }
     case 1:
     {
@@ -1775,15 +1775,13 @@ __int64 CMonster::Attack(CCharacter *pDst, CMonsterSkill *pskill)
       }
       result = 1;
       pskill->Use(GetLoopTime(), true);
-      goto ATTACK_END;
+      break;
     }
     default:
       break;
   }
 
   pskill->Use(GetLoopTime(), true);
-
-ATTACK_END:
   if (m_bMove && result)
   {
     Stop();

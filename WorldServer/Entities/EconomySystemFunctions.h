@@ -11,7 +11,7 @@ char eInitEconomySystem(
   _economy_history_data *pCurData);
 char _ReadEconomyIniFile();
 void _UpdateNewEconomy(_economy_calc_data *pData);
-int _CalcPayExgRatePerRace(float *pfAvrTradeMoney, int nRaceCode);
+int _CalcPayExgRatePerRace(float *averageTradeMoneyPerRace, int raceCode);
 void eUpdateEconomySystem(bool *pbChangeDay);
 void SendMsg_EconomyDataToWeb();
 void _UpdateRateSendToAllPlayer();

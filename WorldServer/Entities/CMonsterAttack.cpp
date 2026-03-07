@@ -202,11 +202,7 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
     skillType = skillField->m_nAttType[m_pp->nLevel - 2];
   }
 
-  if (!m_pp->pDst)
-  {
-    goto APPLY_DAMAGE;
-  }
-
+  if (m_pp->pDst)
   {
     bool isAvoidState = false;
     if (m_pp->pDst->m_EP.GetEff_State(14))
@@ -251,40 +247,39 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
         return;
       }
     }
-  }
 
-  if (m_pp->pDst->m_EP.GetEff_State(8))
-  {
-    hitSuccess = false;
-  }
-  else
-  {
-    const float accValue = m_pAttChar->m_EP.GetEff_Plus(30) + 150.0f;
-    const int avoidRate = m_pp->pDst->GetAvoidRate();
-    int checkValue = static_cast<int>(accValue - static_cast<float>(avoidRate));
-    if (checkValue <= 0)
-    {
-      checkValue = 0;
-    }
-    if (checkValue >= 100)
-    {
-      checkValue = 100;
-    }
-    if (rand() % 100 >= checkValue)
+    if (m_pp->pDst->m_EP.GetEff_State(8))
     {
       hitSuccess = false;
     }
+    else
+    {
+      const float accValue = m_pAttChar->m_EP.GetEff_Plus(30) + 150.0f;
+      const int avoidRate = m_pp->pDst->GetAvoidRate();
+      int checkValue = static_cast<int>(accValue - static_cast<float>(avoidRate));
+      if (checkValue <= 0)
+      {
+        checkValue = 0;
+      }
+      if (checkValue >= 100)
+      {
+        checkValue = 100;
+      }
+      if (rand() % 100 >= checkValue)
+      {
+        hitSuccess = false;
+      }
+    }
+
+    if (!hitSuccess)
+    {
+      m_DamList[0].m_pChar = m_pp->pDst;
+      m_DamList[0].m_nDamage = 0;
+      m_nDamagedObjNum = 1;
+      return;
+    }
   }
 
-  if (!hitSuccess)
-  {
-    m_DamList[0].m_pChar = m_pp->pDst;
-    m_DamList[0].m_nDamage = 0;
-    m_nDamagedObjNum = 1;
-    return;
-  }
-
-APPLY_DAMAGE:
   {
     const int attackPower = m_pp->nAddAttPnt + static_cast<int>(_CalcMonSkillAttPnt());
     switch (skillType)

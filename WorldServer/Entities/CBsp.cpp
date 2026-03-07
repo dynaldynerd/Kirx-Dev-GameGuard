@@ -1910,16 +1910,16 @@ int CBsp::GetPathFind(float *const a2, float *const a3, float (*const a4)[3], un
 
 float CBsp::GetFirstYpos(float *const a2, float *const a3, float *const a4)
 {
-    __int16 v5[4] = {};
-    __int16 v6[4] = {};
+    __int16 minBounds[4] = {};
+    __int16 maxBounds[4] = {};
 
-    v6[0] = static_cast<int>(*a3);
-    v6[1] = static_cast<int>(a3[1]);
-    v6[2] = static_cast<int>(a3[2]);
-    v5[0] = static_cast<int>(*a4);
-    v5[1] = static_cast<int>(a4[1]);
-    v5[2] = static_cast<int>(a4[2]);
-    return GetFirstYpos(a2, v6, v5);
+    minBounds[0] = static_cast<int>(*a3);
+    minBounds[1] = static_cast<int>(a3[1]);
+    minBounds[2] = static_cast<int>(a3[2]);
+    maxBounds[0] = static_cast<int>(*a4);
+    maxBounds[1] = static_cast<int>(a4[1]);
+    maxBounds[2] = static_cast<int>(a4[2]);
+    return GetFirstYpos(a2, minBounds, maxBounds);
 }
 
 float CBsp::GetFirstYpos(float *const a2, int a3)
@@ -1963,9 +1963,9 @@ float CBsp::GetFirstYpos(float *const a2, int a3)
                 {
                     for (int k = 0; k < vNum; ++k)
                     {
-                        unsigned int v0 = mCVertexId[vStart + k];
-                        unsigned int v1 = mCVertexId[vStart + (k + 1) % vNum];
-                        if (CheckEdgeNoEpsilon(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                        const unsigned int vertex0Index = mCVertexId[vStart + k];
+                        const unsigned int vertex1Index = mCVertexId[vStart + (k + 1) % vNum];
+                        if (CheckEdgeNoEpsilon(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                             ++inside;
                     }
                 }
@@ -2034,9 +2034,9 @@ float CBsp::GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4)
                 {
                     for (int k = 0; k < vNum; ++k)
                     {
-                        unsigned int v0 = mCVertexId[vStart + k];
-                        unsigned int v1 = mCVertexId[vStart + (k + 1) % vNum];
-                        if (CheckEdgeNoEpsilon(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                        const unsigned int vertex0Index = mCVertexId[vStart + k];
+                        const unsigned int vertex1Index = mCVertexId[vStart + (k + 1) % vNum];
+                        if (CheckEdgeNoEpsilon(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                             ++inside;
                     }
                 }
@@ -2159,10 +2159,10 @@ float CBsp::GetYposInLeaf(float *const a2, float *const a3, float a4, float a5, 
         {
             for (int j = 0; j < vNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[vStart + j];
-                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
-                const float *vertex0 = mCVertex[v0];
-                const float *vertex1 = mCVertex[v1];
+                const unsigned int vertex0Index = mCVertexId[vStart + j];
+                const unsigned int vertex1Index = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[vertex0Index];
+                const float *vertex1 = mCVertex[vertex1Index];
                 float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
                 float edgeNormal[4];
                 sub_1404E2FB0(face.Normal, edge, edgeNormal);
@@ -2223,10 +2223,10 @@ float CBsp::GetBestYposInLeaf(float *const a2, float *const a3, float a4, float 
         {
             for (int j = 0; j < vNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[vStart + j];
-                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
-                const float *vertex0 = mCVertex[v0];
-                const float *vertex1 = mCVertex[v1];
+                const unsigned int vertex0Index = mCVertexId[vStart + j];
+                const unsigned int vertex1Index = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[vertex0Index];
+                const float *vertex1 = mCVertex[vertex1Index];
                 float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
                 float edgeNormal[4];
                 sub_1404E2FB0(face.Normal, edge, edgeNormal);
@@ -2363,9 +2363,9 @@ __int64 CBsp::GetLightFromPoint(float *const a2, int a3)
             {
                 for (int k = 0; k < vNum; ++k)
                 {
-                    unsigned int v0 = mCVertexId[vStart + k];
-                    unsigned int v1 = mCVertexId[vStart + (k + 1) % vNum];
-                    if (CheckEdgeNoEpsilon(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                    const unsigned int vertex0Index = mCVertexId[vStart + k];
+                    const unsigned int vertex1Index = mCVertexId[vStart + (k + 1) % vNum];
+                    if (CheckEdgeNoEpsilon(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                         ++inside;
                 }
             }
@@ -2417,73 +2417,73 @@ __int64 CBsp::GetLightFromPoint(float *const a2, int a3)
 __int64 CBsp::GetColorFromPoint(int a2, float *const a3)
 {
     _BSP_C_FACE *face = &mCFace[a2];
-    int v0 = 0;
-    int v1 = 0;
-    int v2 = 0;
-    int r0 = 0;
-    int r1 = 0;
-    int r2 = 0;
+    int triangleVertex0 = 0;
+    int triangleVertex1 = 0;
+    int triangleVertex2 = 0;
+    int baseVertexIndex = 0;
+    int edgeVertexIndex = 0;
+    int farVertexIndex = 0;
 
     int start_v = static_cast<int>(face->VStartId);
     for (int i = 0; i < static_cast<int>(face->VNum) - 2; ++i)
     {
-        v0 = start_v + 0;
-        v1 = start_v + i + 1;
-        v2 = start_v + i + 2;
-        if (CheckEdgeNoEpsilon(mCVertex[mCVertexId[v0]], mCVertex[mCVertexId[v1]], a3, face->Normal) &&
-            CheckEdgeNoEpsilon(mCVertex[mCVertexId[v1]], mCVertex[mCVertexId[v2]], a3, face->Normal) &&
-            CheckEdgeNoEpsilon(mCVertex[mCVertexId[v2]], mCVertex[mCVertexId[v0]], a3, face->Normal))
+        triangleVertex0 = start_v;
+        triangleVertex1 = start_v + i + 1;
+        triangleVertex2 = start_v + i + 2;
+        if (CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex0]], mCVertex[mCVertexId[triangleVertex1]], a3, face->Normal) &&
+            CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex1]], mCVertex[mCVertexId[triangleVertex2]], a3, face->Normal) &&
+            CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex2]], mCVertex[mCVertexId[triangleVertex0]], a3, face->Normal))
         {
             break;
         }
     }
 
     float temp[3];
-    VecSub(mCVertex[mCVertexId[v0]], a3, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex0]], a3, temp);
     float dist0 = VecLen(temp);
-    VecSub(mCVertex[mCVertexId[v1]], a3, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex1]], a3, temp);
     float dist1 = VecLen(temp);
-    VecSub(mCVertex[mCVertexId[v2]], a3, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex2]], a3, temp);
     float dist2 = VecLen(temp);
 
     if (dist0 > dist1)
     {
         if (dist0 > dist2)
         {
-            r0 = v0;
-            r1 = v1;
-            r2 = v2;
+            baseVertexIndex = triangleVertex0;
+            edgeVertexIndex = triangleVertex1;
+            farVertexIndex = triangleVertex2;
         }
         else
         {
-            r0 = v2;
-            r1 = v0;
-            r2 = v1;
+            baseVertexIndex = triangleVertex2;
+            edgeVertexIndex = triangleVertex0;
+            farVertexIndex = triangleVertex1;
         }
     }
     else
     {
         if (dist1 > dist2)
         {
-            r0 = v1;
-            r1 = v2;
-            r2 = v0;
+            baseVertexIndex = triangleVertex1;
+            edgeVertexIndex = triangleVertex2;
+            farVertexIndex = triangleVertex0;
         }
         else
         {
-            r0 = v2;
-            r1 = v0;
-            r2 = v1;
+            baseVertexIndex = triangleVertex2;
+            edgeVertexIndex = triangleVertex0;
+            farVertexIndex = triangleVertex1;
         }
     }
 
     float a[3];
     float b[3];
-    VecSub(mCVertex[mCVertexId[r1]], mCVertex[mCVertexId[r0]], a);
+    VecSub(mCVertex[mCVertexId[edgeVertexIndex]], mCVertex[mCVertexId[baseVertexIndex]], a);
     float leng0 = VecLen(a);
-    VecSub(mCVertex[mCVertexId[r2]], mCVertex[mCVertexId[r0]], b);
+    VecSub(mCVertex[mCVertexId[farVertexIndex]], mCVertex[mCVertexId[baseVertexIndex]], b);
     float leng1 = VecLen(b);
-    VecSub(a3, mCVertex[mCVertexId[r0]], temp);
+    VecSub(a3, mCVertex[mCVertexId[baseVertexIndex]], temp);
     dist2 = VecLen(temp);
 
     VecNormalize(a);
@@ -2498,30 +2498,30 @@ __int64 CBsp::GetColorFromPoint(int a2, float *const a3)
     dist1 *= leng1;
 
     dist0 = dist0 / (dist1 + dist0);
-    VecSub(mCVertex[mCVertexId[r2]], mCVertex[mCVertexId[r1]], a);
+    VecSub(mCVertex[mCVertexId[farVertexIndex]], mCVertex[mCVertexId[edgeVertexIndex]], a);
     a[0] *= dist0;
     a[1] *= dist0;
     a[2] *= dist0;
-    a[0] += mCVertex[mCVertexId[r1]][0];
-    a[1] += mCVertex[mCVertexId[r1]][1];
-    a[2] += mCVertex[mCVertexId[r1]][2];
+    a[0] += mCVertex[mCVertexId[edgeVertexIndex]][0];
+    a[1] += mCVertex[mCVertexId[edgeVertexIndex]][1];
+    a[2] += mCVertex[mCVertexId[edgeVertexIndex]][2];
 
-    VecSub(a, mCVertex[mCVertexId[r0]], b);
+    VecSub(a, mCVertex[mCVertexId[baseVertexIndex]], b);
     dist1 = VecLen(b);
     dist1 = dist2 / dist1;
 
     float red[3];
     float green[3];
     float blue[3];
-    red[0] = static_cast<float>((mVertexColor[mCVertexId[r0]] >> 16) & 0xFF) / 255.0f;
-    red[1] = static_cast<float>((mVertexColor[mCVertexId[r1]] >> 16) & 0xFF) / 255.0f;
-    red[2] = static_cast<float>((mVertexColor[mCVertexId[r2]] >> 16) & 0xFF) / 255.0f;
-    green[0] = static_cast<float>((mVertexColor[mCVertexId[r0]] >> 8) & 0xFF) / 255.0f;
-    green[1] = static_cast<float>((mVertexColor[mCVertexId[r1]] >> 8) & 0xFF) / 255.0f;
-    green[2] = static_cast<float>((mVertexColor[mCVertexId[r2]] >> 8) & 0xFF) / 255.0f;
-    blue[0] = static_cast<float>(mVertexColor[mCVertexId[r0]] & 0xFF) / 255.0f;
-    blue[1] = static_cast<float>(mVertexColor[mCVertexId[r1]] & 0xFF) / 255.0f;
-    blue[2] = static_cast<float>(mVertexColor[mCVertexId[r2]] & 0xFF) / 255.0f;
+    red[0] = static_cast<float>((mVertexColor[mCVertexId[baseVertexIndex]] >> 16) & 0xFF) / 255.0f;
+    red[1] = static_cast<float>((mVertexColor[mCVertexId[edgeVertexIndex]] >> 16) & 0xFF) / 255.0f;
+    red[2] = static_cast<float>((mVertexColor[mCVertexId[farVertexIndex]] >> 16) & 0xFF) / 255.0f;
+    green[0] = static_cast<float>((mVertexColor[mCVertexId[baseVertexIndex]] >> 8) & 0xFF) / 255.0f;
+    green[1] = static_cast<float>((mVertexColor[mCVertexId[edgeVertexIndex]] >> 8) & 0xFF) / 255.0f;
+    green[2] = static_cast<float>((mVertexColor[mCVertexId[farVertexIndex]] >> 8) & 0xFF) / 255.0f;
+    blue[0] = static_cast<float>(mVertexColor[mCVertexId[baseVertexIndex]] & 0xFF) / 255.0f;
+    blue[1] = static_cast<float>(mVertexColor[mCVertexId[edgeVertexIndex]] & 0xFF) / 255.0f;
+    blue[2] = static_cast<float>(mVertexColor[mCVertexId[farVertexIndex]] & 0xFF) / 255.0f;
 
     float rr = (red[2] - red[1]) * dist0 + red[1];
     rr = (rr - red[0]) * dist1 + red[0];
@@ -2539,73 +2539,73 @@ __int64 CBsp::GetColorFromPoint(int a2, float *const a3)
 void CBsp::GetLightMapUVFromPoint(float *const a2, int a3, float *const a4)
 {
     _BSP_C_FACE *face = &mCFace[a3];
-    int v0 = 0;
-    int v1 = 0;
-    int v2 = 0;
-    int r0 = 0;
-    int r1 = 0;
-    int r2 = 0;
+    int triangleVertex0 = 0;
+    int triangleVertex1 = 0;
+    int triangleVertex2 = 0;
+    int baseVertexIndex = 0;
+    int edgeVertexIndex = 0;
+    int farVertexIndex = 0;
 
     int start_v = static_cast<int>(face->VStartId);
     for (int i = 0; i < static_cast<int>(face->VNum) - 2; ++i)
     {
-        v0 = start_v + 0;
-        v1 = start_v + i + 1;
-        v2 = start_v + i + 2;
-        if (CheckEdgeNoEpsilon(mCVertex[mCVertexId[v0]], mCVertex[mCVertexId[v1]], a4, face->Normal) &&
-            CheckEdgeNoEpsilon(mCVertex[mCVertexId[v1]], mCVertex[mCVertexId[v2]], a4, face->Normal) &&
-            CheckEdgeNoEpsilon(mCVertex[mCVertexId[v2]], mCVertex[mCVertexId[v0]], a4, face->Normal))
+        triangleVertex0 = start_v;
+        triangleVertex1 = start_v + i + 1;
+        triangleVertex2 = start_v + i + 2;
+        if (CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex0]], mCVertex[mCVertexId[triangleVertex1]], a4, face->Normal) &&
+            CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex1]], mCVertex[mCVertexId[triangleVertex2]], a4, face->Normal) &&
+            CheckEdgeNoEpsilon(mCVertex[mCVertexId[triangleVertex2]], mCVertex[mCVertexId[triangleVertex0]], a4, face->Normal))
         {
             break;
         }
     }
 
     float temp[3];
-    VecSub(mCVertex[mCVertexId[v0]], a4, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex0]], a4, temp);
     float dist0 = VecLen(temp);
-    VecSub(mCVertex[mCVertexId[v1]], a4, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex1]], a4, temp);
     float dist1 = VecLen(temp);
-    VecSub(mCVertex[mCVertexId[v2]], a4, temp);
+    VecSub(mCVertex[mCVertexId[triangleVertex2]], a4, temp);
     float dist2 = VecLen(temp);
 
     if (dist0 > dist1)
     {
         if (dist0 > dist2)
         {
-            r0 = v0;
-            r1 = v1;
-            r2 = v2;
+            baseVertexIndex = triangleVertex0;
+            edgeVertexIndex = triangleVertex1;
+            farVertexIndex = triangleVertex2;
         }
         else
         {
-            r0 = v2;
-            r1 = v0;
-            r2 = v1;
+            baseVertexIndex = triangleVertex2;
+            edgeVertexIndex = triangleVertex0;
+            farVertexIndex = triangleVertex1;
         }
     }
     else
     {
         if (dist1 > dist2)
         {
-            r0 = v1;
-            r1 = v2;
-            r2 = v0;
+            baseVertexIndex = triangleVertex1;
+            edgeVertexIndex = triangleVertex2;
+            farVertexIndex = triangleVertex0;
         }
         else
         {
-            r0 = v2;
-            r1 = v0;
-            r2 = v1;
+            baseVertexIndex = triangleVertex2;
+            edgeVertexIndex = triangleVertex0;
+            farVertexIndex = triangleVertex1;
         }
     }
 
     float a[3];
     float b[3];
-    VecSub(mCVertex[mCVertexId[r1]], mCVertex[mCVertexId[r0]], a);
+    VecSub(mCVertex[mCVertexId[edgeVertexIndex]], mCVertex[mCVertexId[baseVertexIndex]], a);
     float leng0 = VecLen(a);
-    VecSub(mCVertex[mCVertexId[r2]], mCVertex[mCVertexId[r0]], b);
+    VecSub(mCVertex[mCVertexId[farVertexIndex]], mCVertex[mCVertexId[baseVertexIndex]], b);
     float leng1 = VecLen(b);
-    VecSub(a4, mCVertex[mCVertexId[r0]], temp);
+    VecSub(a4, mCVertex[mCVertexId[baseVertexIndex]], temp);
     dist2 = VecLen(temp);
 
     VecNormalize(a);
@@ -2620,25 +2620,25 @@ void CBsp::GetLightMapUVFromPoint(float *const a2, int a3, float *const a4)
     dist1 *= leng1;
 
     dist0 = dist0 / (dist1 + dist0);
-    VecSub(mCVertex[mCVertexId[r2]], mCVertex[mCVertexId[r1]], a);
+    VecSub(mCVertex[mCVertexId[farVertexIndex]], mCVertex[mCVertexId[edgeVertexIndex]], a);
     a[0] *= dist0;
     a[1] *= dist0;
     a[2] *= dist0;
-    a[0] += mCVertex[mCVertexId[r1]][0];
-    a[1] += mCVertex[mCVertexId[r1]][1];
-    a[2] += mCVertex[mCVertexId[r1]][2];
+    a[0] += mCVertex[mCVertexId[edgeVertexIndex]][0];
+    a[1] += mCVertex[mCVertexId[edgeVertexIndex]][1];
+    a[2] += mCVertex[mCVertexId[edgeVertexIndex]][2];
 
-    VecSub(a, mCVertex[mCVertexId[r0]], b);
+    VecSub(a, mCVertex[mCVertexId[baseVertexIndex]], b);
     dist1 = VecLen(b);
     dist1 = dist2 / dist1;
 
     float l_uv[3][2];
-    l_uv[0][0] = static_cast<float>(mLgtUV[r0][0]) / 32767.0f;
-    l_uv[0][1] = static_cast<float>(mLgtUV[r0][1]) / 32767.0f;
-    l_uv[1][0] = static_cast<float>(mLgtUV[r1][0]) / 32767.0f;
-    l_uv[1][1] = static_cast<float>(mLgtUV[r1][1]) / 32767.0f;
-    l_uv[2][0] = static_cast<float>(mLgtUV[r2][0]) / 32767.0f;
-    l_uv[2][1] = static_cast<float>(mLgtUV[r2][1]) / 32767.0f;
+    l_uv[0][0] = static_cast<float>(mLgtUV[baseVertexIndex][0]) / 32767.0f;
+    l_uv[0][1] = static_cast<float>(mLgtUV[baseVertexIndex][1]) / 32767.0f;
+    l_uv[1][0] = static_cast<float>(mLgtUV[edgeVertexIndex][0]) / 32767.0f;
+    l_uv[1][1] = static_cast<float>(mLgtUV[edgeVertexIndex][1]) / 32767.0f;
+    l_uv[2][0] = static_cast<float>(mLgtUV[farVertexIndex][0]) / 32767.0f;
+    l_uv[2][1] = static_cast<float>(mLgtUV[farVertexIndex][1]) / 32767.0f;
 
     a2[0] = (l_uv[2][0] - l_uv[1][0]) * dist0 + l_uv[1][0];
     a2[1] = (l_uv[2][1] - l_uv[1][1]) * dist0 + l_uv[1][1];
@@ -2661,23 +2661,23 @@ void CBsp::WalkNodeForLeafList(short nNodeId, float *const a3, float *const a4, 
     _BSP_NODE &node = this->mNode[nNodeId];
     float *normal = this->mCNNormal[node.f_normal_id];
     
-    float v11 = DotProduct(normal, a3) - node.d;
-    float v12 = DotProduct(normal, a4) - node.d;
+    const float startDistance = DotProduct(normal, a3) - node.d;
+    const float endDistance = DotProduct(normal, a4) - node.d;
     
-    if ((v11 > 0.0f || v12 <= 0.0f) && (v12 > 0.0f || v11 <= 0.0f))
+    if ((startDistance > 0.0f || endDistance <= 0.0f) && (endDistance > 0.0f || startDistance <= 0.0f))
     {
-        this->SubLeafList(v11, &node, a3, a4, a5, a6);
+        this->SubLeafList(startDistance, &node, a3, a4, a5, a6);
     }
     else
     {
-        float v13 = v11 / (v11 - v12);
+        const float interpolation = startDistance / (startDistance - endDistance);
         float intersection[3];
-        intersection[0] = (a4[0] - a3[0]) * v13 + a3[0];
-        intersection[1] = (a4[1] - a3[1]) * v13 + a3[1];
-        intersection[2] = (a4[2] - a3[2]) * v13 + a3[2];
+        intersection[0] = (a4[0] - a3[0]) * interpolation + a3[0];
+        intersection[1] = (a4[1] - a3[1]) * interpolation + a3[1];
+        intersection[2] = (a4[2] - a3[2]) * interpolation + a3[2];
         
-        this->SubLeafList(v11, &node, a3, intersection, a5, a6);
-        this->SubLeafList(v12, &node, intersection, a4, a5, a6);
+        this->SubLeafList(startDistance, &node, a3, intersection, a5, a6);
+        this->SubLeafList(endDistance, &node, intersection, a4, a5, a6);
     }
 }
 
@@ -2714,108 +2714,85 @@ void CBsp::SubLeafList(float dist, _BSP_NODE *pNode, float *const a4, float *con
 
 __int64 CBsp::IsCollisionFace(float *const a2, float *const a3, float (*a4)[3], float (*a5)[4])
 {
-    float *v5 = a3;
-    float *v6 = a2;
-    float *v61 = reinterpret_cast<float *>(a4);
-    float *v63 = reinterpret_cast<float *>(a5);
-    int v51 = 0;
-    __int16 v66[32000];
+    int leafCount = 0;
+    __int16 leafIds[32000];
+    GetLeafList(a2, a3, &leafCount, leafIds, 0x7D00u);
 
-    GetLeafList(a2, a3, &v51, v66, 0x7D00u);
+    float nearestDistance = 1.0e8f;
+    bool foundCollision = false;
+    int hitFaceId = 0;
 
-    float v8 = 1.0e8f;
-    int v50 = 0;
-    int v53 = 0;
-    if (v51 <= 0)
-        return 0LL;
-
-    __int16 *v10 = v66;
-    unsigned int v11 = static_cast<unsigned int>(v51);
-    do
+    for (int leafIndex = 0; leafIndex < leafCount; ++leafIndex)
     {
-        _BSP_LEAF *mLeaf = this->mLeaf;
-        int v14 = *v10;
-        unsigned short face_num = mLeaf[v14].face_num;
-        int face_start_id = static_cast<int>(mLeaf[v14].face_start_id);
-        if (face_num)
+        const _BSP_LEAF &leaf = mLeaf[leafIds[leafIndex]];
+        for (unsigned int faceOffset = 0; faceOffset < leaf.face_num; ++faceOffset)
         {
-            int v13 = 0;
-            int v17 = face_start_id;
-            do
+            const int faceId = static_cast<int>(mCFaceId[leaf.face_start_id + faceOffset]);
+            _BSP_C_FACE &face = mCFace[faceId];
+            if (face.Attr & 0x40)
             {
-                _BSP_C_FACE *mCFace = this->mCFace;
-                int v55 = this->mCFaceId[v17];
-                if ((mCFace[v55].Attr & 0x40) == 0)
+                continue;
+            }
+
+            float crossPoint[4];
+            if (!GetPlaneCrossPoint(a2, a3, crossPoint, face.Normal, face.Normal[3]))
+            {
+                continue;
+            }
+
+            int insideEdgeCount = 0;
+            for (int vertexOffset = 0; vertexOffset < face.VNum; ++vertexOffset)
+            {
+                const unsigned int startVertexIndex = mCVertexId[face.VStartId + vertexOffset];
+                const unsigned int endVertexIndex = mCVertexId[face.VStartId + (vertexOffset + 1) % face.VNum];
+                const float *startVertex = mCVertex[startVertexIndex];
+                const float *endVertex = mCVertex[endVertexIndex];
+
+                float edgeVector[3] = {
+                    startVertex[0] - endVertex[0],
+                    startVertex[1] - endVertex[1],
+                    startVertex[2] - endVertex[2],
+                };
+                float edgeNormal[4];
+                sub_1404E2FB0(face.Normal, edgeVector, edgeNormal);
+
+                const float distanceToEdge =
+                    ((crossPoint[1] - endVertex[1]) * edgeNormal[1]) + ((crossPoint[0] - endVertex[0]) * edgeNormal[0])
+                    + ((crossPoint[2] - endVertex[2]) * edgeNormal[2]);
+                if (distanceToEdge <= 0.0f)
                 {
-                    float v59[4];
-                    if ((unsigned int)GetPlaneCrossPoint(v6, v5, v59, mCFace[v55].Normal, mCFace[v55].Normal[3]))
-                    {
-                        int v22 = mCFace[v55].VNum;
-                        int v23 = static_cast<int>(mCFace[v55].VStartId);
-                        float v24 = v59[2];
-                        float v25 = v59[1];
-                        float v26 = v59[0];
-                        int v27 = 0;
-                        int v28 = 0;
-                        if (v22)
-                        {
-                            unsigned int *mCVertexId = this->mCVertexId;
-                            float *mCVertex = reinterpret_cast<float *>(this->mCVertex);
-                            float *v35 = mCFace[v55].Normal;
-                            do
-                            {
-                                ++v28;
-                                unsigned int v36 = mCVertexId[v23 + v28 - 1];
-                                unsigned int vNext = mCVertexId[v23 + v28 % v22];
-                                float v37 = mCVertex[3 * vNext];
-                                float v38 = mCVertex[3 * vNext + 1];
-                                float v39 = mCVertex[3 * vNext + 2];
-                                float v40 = mCVertex[3 * v36 + 1] - v38;
-                                float v60[3];
-                                v60[0] = mCVertex[3 * v36] - v37;
-                                float v41 = mCVertex[3 * v36 + 2];
-                                v60[1] = v40;
-                                v60[2] = v41 - v39;
-                                float v58[4];
-                                sub_1404E2FB0(v35, v60, v58);
-                                if ((float)((float)((float)(v25 - v38) * v58[1]) + (float)((float)(v26 - v37) * v58[0]))
-                                        + (float)((float)(v24 - v39) * v58[2])
-                                    <= 0.0f)
-                                    ++v27;
-                            } while (v28 < v22);
-                        }
-                        if (v27 == v22)
-                        {
-                            float dist = (float)((float)((float)(v25 - v6[1]) * (float)(v25 - v6[1]))
-                                                  + (float)((float)(v26 - *v6) * (float)(v26 - *v6)))
-                                        + (float)((float)(v24 - v6[2]) * (float)(v24 - v6[2]));
-                            if (v8 > dist)
-                            {
-                                v8 = dist;
-                                v50 = 1;
-                                v61[0] = v26;
-                                v61[1] = v25;
-                                v61[2] = v24;
-                                v53 = v55;
-                            }
-                        }
-                    }
+                    ++insideEdgeCount;
                 }
-                ++v13;
-                ++v17;
-            } while (v13 < face_num);
+            }
+
+            if (insideEdgeCount == face.VNum)
+            {
+                const float dx = crossPoint[0] - a2[0];
+                const float dy = crossPoint[1] - a2[1];
+                const float dz = crossPoint[2] - a2[2];
+                const float distance = (dy * dy) + (dx * dx) + (dz * dz);
+                if (nearestDistance > distance)
+                {
+                    nearestDistance = distance;
+                    foundCollision = true;
+                    (*a4)[0] = crossPoint[0];
+                    (*a4)[1] = crossPoint[1];
+                    (*a4)[2] = crossPoint[2];
+                    hitFaceId = faceId;
+                }
+            }
         }
-        ++v10;
-        --v11;
-    } while (v11);
+    }
 
-    if (!v50)
+    if (!foundCollision)
+    {
         return 0LL;
+    }
 
-    v63[0] = this->mCFace[v53].Normal[0];
-    v63[1] = this->mCFace[v53].Normal[1];
-    v63[2] = this->mCFace[v53].Normal[2];
-    v63[3] = this->mCFace[v53].Normal[3];
+    (*a5)[0] = mCFace[hitFaceId].Normal[0];
+    (*a5)[1] = mCFace[hitFaceId].Normal[1];
+    (*a5)[2] = mCFace[hitFaceId].Normal[2];
+    (*a5)[3] = mCFace[hitFaceId].Normal[3];
     return 1LL;
 }
 
@@ -2826,16 +2803,15 @@ void CBsp::LoadBsp(char *a2)
 
     SetMergeFileManager(nullptr);
 
-    FILE *fp = fopen(a2, "rb");
-    if (!fp)
+    FILE *stream = fopen(a2, "rb");
+    if (!stream)
         Error(a2, aAaiai_0);
 
-    unsigned int v5 = 0;
     mNowCFaceId = 0;
     mTotalAllocSize = 0;
     ResetTotalVertexBufferInfo();
 
-    fread(&mBSPHeader, 0x2ACu, 1, fp);
+    fread(&mBSPHeader, 0x2ACu, 1, stream);
     if (mBSPHeader.version != 39)
         Error(aBspAai, aAa);
 
@@ -2847,9 +2823,9 @@ void CBsp::LoadBsp(char *a2)
 
     mMatGroupNum = mBSPHeader.ReadMatGroup.size / 42;
 
-    int v10 = 12 * mCVertexNum;
-    unsigned int size = mBSPHeader.VertexId.size;
-    int v12 = 24 * mCFaceNum;
+    const unsigned int collisionVertexSize = 12 * mCVertexNum;
+    const unsigned int collisionVertexIdSize = mBSPHeader.VertexId.size;
+    const unsigned int collisionFaceSize = 24 * mCFaceNum;
 
     if (IsServerMode())
     {
@@ -2860,79 +2836,81 @@ void CBsp::LoadBsp(char *a2)
         mLeafEntityListNum = 0;
     }
 
-    unsigned int v13 = v10 + size;
-    unsigned int v14 = mBSPHeader.ReadMatGroup.size / 42;
-    unsigned int v15 =
-        v12 + v13 + mBSPHeader.CPlanes.size + mBSPHeader.CFaceId.size + mBSPHeader.Node.size + mBSPHeader.Track.size +
+    const unsigned int collisionFaceOffset = collisionVertexSize + collisionVertexIdSize;
+    const unsigned int readMatGroupCount = mBSPHeader.ReadMatGroup.size / 42;
+    const unsigned int staticAllocSize =
+        collisionFaceSize + collisionFaceOffset + mBSPHeader.CPlanes.size + mBSPHeader.CFaceId.size + mBSPHeader.Node.size
+        + mBSPHeader.Track.size +
         mBSPHeader.Leaf.size + mBSPHeader.LgtUV.size + mBSPHeader.MatListInLeaf.size + mBSPHeader.VertexColor.size +
         361 * (mBSPHeader.Object.size / 0x58) +
         2 * (mObjectNum + 29 * mMapEntitiesListNum +
-             43 * v14);
+             43 * readMatGroupCount);
 
-    mStaticAllocSize = v15;
-    mTotalAllocSize += v15;
-    mStaticAlloc = static_cast<unsigned char *>(Dmalloc(v15));
+    mStaticAllocSize = staticAllocSize;
+    mTotalAllocSize += staticAllocSize;
+    mStaticAlloc = static_cast<unsigned char *>(Dmalloc(staticAllocSize));
 
     mCVertex = static_cast<float (*)[3]>(static_cast<void *>(mStaticAlloc));
-    mCVertexId = ByteOffsetPtr<unsigned int>(mStaticAlloc, v10);
-    mCFace = ByteOffsetPtr<_BSP_C_FACE>(mStaticAlloc, v13);
+    mCVertexId = ByteOffsetPtr<unsigned int>(mStaticAlloc, collisionVertexSize);
+    mCFace = ByteOffsetPtr<_BSP_C_FACE>(mStaticAlloc, collisionFaceOffset);
 
-    unsigned int v17 = v12 + v13;
-    mCNNormal = ByteOffsetPtr<float[3]>(mStaticAlloc, v17);
-    fread(mCNNormal, mBSPHeader.CPlanes.size, 1, fp);
+    const unsigned int collisionPlaneOffset = collisionFaceSize + collisionFaceOffset;
+    mCNNormal = ByteOffsetPtr<float[3]>(mStaticAlloc, collisionPlaneOffset);
+    fread(mCNNormal, mBSPHeader.CPlanes.size, 1, stream);
 
-    unsigned int v19 = mBSPHeader.CPlanes.size + v17;
-    mCFaceId = ByteOffsetPtr<unsigned int>(mStaticAlloc, v19);
-    fread(mCFaceId, mBSPHeader.CFaceId.size, 1, fp);
+    const unsigned int collisionFaceIdOffset = mBSPHeader.CPlanes.size + collisionPlaneOffset;
+    mCFaceId = ByteOffsetPtr<unsigned int>(mStaticAlloc, collisionFaceIdOffset);
+    fread(mCFaceId, mBSPHeader.CFaceId.size, 1, stream);
 
-    unsigned int v21 = mBSPHeader.CFaceId.size + v19;
-    mNode = ByteOffsetPtr<_BSP_NODE>(mStaticAlloc, v21);
-    fread(mNode, mBSPHeader.Node.size, 1, fp);
+    const unsigned int nodeOffset = mBSPHeader.CFaceId.size + collisionFaceIdOffset;
+    mNode = ByteOffsetPtr<_BSP_NODE>(mStaticAlloc, nodeOffset);
+    fread(mNode, mBSPHeader.Node.size, 1, stream);
 
-    unsigned int v23 = mBSPHeader.Node.size + v21;
-    mLeaf = ByteOffsetPtr<_BSP_LEAF>(mStaticAlloc, v23);
-    fread(mLeaf, mBSPHeader.Leaf.size, 1, fp);
+    const unsigned int leafOffset = mBSPHeader.Node.size + nodeOffset;
+    mLeaf = ByteOffsetPtr<_BSP_LEAF>(mStaticAlloc, leafOffset);
+    fread(mLeaf, mBSPHeader.Leaf.size, 1, stream);
 
-    unsigned int v25 = mBSPHeader.Leaf.size + v23;
-    MatListInLeafId = ByteOffsetPtr<unsigned short>(mStaticAlloc, v25);
-    fread(MatListInLeafId, mBSPHeader.MatListInLeaf.size, 1, fp);
+    const unsigned int matListInLeafOffset = mBSPHeader.Leaf.size + leafOffset;
+    MatListInLeafId = ByteOffsetPtr<unsigned short>(mStaticAlloc, matListInLeafOffset);
+    fread(MatListInLeafId, mBSPHeader.MatListInLeaf.size, 1, stream);
 
-    unsigned int v27 = mBSPHeader.MatListInLeaf.size + v25;
-    auto *v28 = static_cast<unsigned int *>(Dmalloc(mBSPHeader.Object.size));
-    mObject = ByteOffsetPtr<_ANI_OBJECT>(mStaticAlloc, v27);
-    fread(v28, mBSPHeader.Object.size, 1, fp);
+    const unsigned int objectOffset = mBSPHeader.MatListInLeaf.size + matListInLeafOffset;
+    auto *readAniObjects = static_cast<unsigned int *>(Dmalloc(mBSPHeader.Object.size));
+    mObject = ByteOffsetPtr<_ANI_OBJECT>(mStaticAlloc, objectOffset);
+    fread(readAniObjects, mBSPHeader.Object.size, 1, stream);
 
-    unsigned int v29 = 361 * (mBSPHeader.Object.size / 0x58) + v27;
-    unsigned char *v30 = mStaticAlloc + v29;
-    fread(v30, mBSPHeader.Track.size, 1, fp);
+    const unsigned int trackOffset = 361 * (mBSPHeader.Object.size / 0x58) + objectOffset;
+    unsigned char *trackData = mStaticAlloc + trackOffset;
+    fread(trackData, mBSPHeader.Track.size, 1, stream);
 
-    unsigned int v31 = mBSPHeader.Track.size + v29;
-    mEventObjectID = ByteOffsetPtr<unsigned short>(mStaticAlloc, v31);
-    fread(mEventObjectID, mBSPHeader.EventObjectID.size, 1, fp);
+    const unsigned int eventObjectIdOffset = mBSPHeader.Track.size + trackOffset;
+    mEventObjectID = ByteOffsetPtr<unsigned short>(mStaticAlloc, eventObjectIdOffset);
+    fread(mEventObjectID, mBSPHeader.EventObjectID.size, 1, stream);
 
-    unsigned int v33 = v31 + 2 * mObjectNum;
-    int v34 = 0;
-    unsigned int *p_size = &mBSPHeader.ReadSpare[0].size;
-    __int64 v36 = 35;
-    do
+    const unsigned int matGroupOffset = eventObjectIdOffset + 2 * mObjectNum;
+    int skippedReadSpareSize = 0;
+    unsigned int *readSpareSize = &mBSPHeader.ReadSpare[0].size;
+    for (int spareIndex = 0; spareIndex < 35; ++spareIndex)
     {
-        v34 += *p_size;
-        p_size += 2;
-        --v36;
-    } while (v36);
-    fseek(fp, v34, 1);
+        skippedReadSpareSize += *readSpareSize;
+        readSpareSize += 2;
+    }
+    fseek(stream, skippedReadSpareSize, 1);
 
-    ConvAniObject(static_cast<int>(mBSPHeader.Object.size / 0x58), v30, reinterpret_cast<_READ_ANI_OBJECT *>(v28), mObject);
-    Dfree(v28);
+    ConvAniObject(
+        static_cast<int>(mBSPHeader.Object.size / 0x58),
+        trackData,
+        reinterpret_cast<_READ_ANI_OBJECT *>(readAniObjects),
+        mObject);
+    Dfree(readAniObjects);
 
-    mMatGroup = ByteOffsetPtr<_BSP_MAT_GROUP>(mStaticAlloc, v33);
-    unsigned int v38 = mBSPHeader.ReadMatGroup.size / 42;
-    unsigned int v39 = 86 * v38 + v33;
-    mLgtUV = ByteOffsetPtr<__int16[2]>(mStaticAlloc, v39);
-    mVertexColor = ByteOffsetPtr<unsigned int>(mStaticAlloc, mBSPHeader.LgtUV.size + v39);
+    mMatGroup = ByteOffsetPtr<_BSP_MAT_GROUP>(mStaticAlloc, matGroupOffset);
+    const unsigned int lightUvOffset = 86 * readMatGroupCount + matGroupOffset;
+    mLgtUV = ByteOffsetPtr<__int16[2]>(mStaticAlloc, lightUvOffset);
+    mVertexColor = ByteOffsetPtr<unsigned int>(mStaticAlloc, mBSPHeader.LgtUV.size + lightUvOffset);
 
-    ReadDynamicDataFillVertexBuffer(fp);
-    fclose(fp);
+    ReadDynamicDataFillVertexBuffer(stream);
+    fclose(stream);
 
     mMatGroupCacheSize = static_cast<int>((mBSPHeader.ReadMatGroup.size / 336) + 1);
     mMatGroupCache = static_cast<unsigned char *>(Dmalloc(mMatGroupCacheSize));
@@ -2943,69 +2921,64 @@ void CBsp::LoadBsp(char *a2)
     mMapEntityMFM.InitMergeFile(byte_184A790F0);
     SetMergeFileManager(&mMapEntityMFM);
 
-    unsigned int v42 = 0;
     int *mEnvIDPtr = reinterpret_cast<int *>(mEnvID);
-    do
+    for (unsigned int envIndex = 0; envIndex < 2; ++envIndex)
     {
-        int v46 = unk_184A7999C[v42];
-        mEnvIDPtr[0] = v46;
-        if (v46)
+        const int configuredEnvId = unk_184A7999C[envIndex];
+        mEnvIDPtr[0] = configuredEnvId;
+        if (configuredEnvId)
         {
-            char *v47 = &byte_184A79924[128 * v42];
-            if (IsParticle(v47))
+            char *entityName = &byte_184A79924[128 * envIndex];
+            if (IsParticle(entityName))
                 mEnvIDPtr[0] |= 0x1000u;
             if (_bittest(reinterpret_cast<const LONG *>(mEnvIDPtr), 0xCu))
             {
-                CParticle *v48 = reinterpret_cast<CParticle *>(operator new(0x490ull));
-                CParticle *v49 = v48 ? new (v48) CParticle() : nullptr;
-                ___u21.mEnvEntity[v42] = reinterpret_cast<CEntity *>(v49);
-                if (v49 && v49->LoadParticleSPT(v47, 0))
+                CParticle *particleStorage = reinterpret_cast<CParticle *>(operator new(0x490ull));
+                CParticle *particle = particleStorage ? new (particleStorage) CParticle() : nullptr;
+                ___u21.mEnvEntity[envIndex] = reinterpret_cast<CEntity *>(particle);
+                if (particle && particle->LoadParticleSPT(entityName, 0))
                 {
-                    v49->InitParticle();
-                    v49->SetParticleState(1u);
+                    particle->InitParticle();
+                    particle->SetParticleState(1u);
                 }
                 else
                 {
-                    CParticle *v50 = reinterpret_cast<CParticle *>(___u21.mEnvEntity[v42]);
-                    if (___u21.mEnvEntity[v42])
+                    CParticle *failedParticle = reinterpret_cast<CParticle *>(___u21.mEnvEntity[envIndex]);
+                    if (___u21.mEnvEntity[envIndex])
                     {
-                        v50->~CParticle();
-                        operator delete(v50);
+                        failedParticle->~CParticle();
+                        operator delete(failedParticle);
                     }
                     mEnvIDPtr[0] = 0;
-                    unk_184A7999C[v42] = 0;
+                    unk_184A7999C[envIndex] = 0;
                 }
             }
             else
             {
-                CEntity *v51 = reinterpret_cast<CEntity *>(operator new(0xF4ull));
-                CEntity *v52 = v51 ? new (v51) CEntity() : nullptr;
-                ___u21.mEnvEntity[v42] = v52;
-                if (v52 && !v52->LoadEntity(v47, 0))
+                CEntity *entityStorage = reinterpret_cast<CEntity *>(operator new(0xF4ull));
+                CEntity *entity = entityStorage ? new (entityStorage) CEntity() : nullptr;
+                ___u21.mEnvEntity[envIndex] = entity;
+                if (entity && !entity->LoadEntity(entityName, 0))
                 {
-                    CEntity *v53 = ___u21.mEnvEntity[v42];
-                    if (v53)
+                    CEntity *failedEntity = ___u21.mEnvEntity[envIndex];
+                    if (failedEntity)
                     {
-                        v53->~CEntity();
-                        operator delete(v53);
+                        failedEntity->~CEntity();
+                        operator delete(failedEntity);
                     }
                 }
             }
         }
-        ++v42;
         ++mEnvIDPtr;
-    } while (v42 < 2);
+    }
 
     if (mObjectNum)
     {
-        unsigned int v54 = 0;
-        do
+        for (unsigned int objectIndex = 0; objectIndex < mObjectNum; ++objectIndex)
         {
-            if (mObject[v54].parent >= mObjectNum)
-                mObject[v54].parent = 0;
-            ++v5;
-            ++v54;
-        } while (v5 < mObjectNum);
+            if (mObject[objectIndex].parent >= mObjectNum)
+                mObject[objectIndex].parent = 0;
+        }
     }
 }
 
@@ -3152,264 +3125,188 @@ bool CBsp::CanYouGoThere(float *const a2, float *const a3, float (*a4)[3]) {
 
 int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], int a5, int a6)
 {
-    float v6 = 16.0f;
-    float v7 = 100000.0f;
-    mColFaceId = -1;
-    float *v8 = reinterpret_cast<float *>(a4);
-    float *v64 = reinterpret_cast<float *>(a4);
-    int v9 = 0;
-    a2[1] = a2[1] + 16.0f;
-    float v10 = a3[1];
-    float *v11 = a3;
-    float *v63 = a3;
-    float *v12 = a2;
-    float *v56 = a2;
-    int v52 = 0;
-    a3[1] = v10 + 16.0f;
-    int v14 = 0;
-    int v15 = 0;
-    dword_184A7B2F0 = 0;
-    int v53 = 0;
-    __int16 v66[32000];
-    int v65[10000];
-    int v54 = 0;
-    int v55 = 0;
-    int v21 = 0;
-    int v22 = 0;
-    float v57 = 0.0f;
-    float v58 = 0.0f;
-    float v59 = 0.0f;
-    float v60 = 0.0f;
-    float v61 = 0.0f;
-    float v62 = 0.0f;
+    constexpr float eyePoint = 16.0f;
+    constexpr float maxDistance = 100000.0f;
 
-    GetLeafList(a2, a3, &v53, v66, 0x7D00u);
+    mColFaceId = -1;
+    dword_184A7B2F0 = 0;
+
+    a2[1] += eyePoint;
+    a3[1] += eyePoint;
+
+    int leafCount = 0;
+    __int16 leafIds[32000];
+    int visitedLineIds[10000];
+    GetLeafList(a2, a3, &leafCount, leafIds, 0x7D00u);
+
     if (mCFLineNum < 2)
     {
-        v12[1] = v12[1] - 16.0f;
-        v11[1] = v11[1] - 16.0f;
+        a2[1] -= eyePoint;
+        a3[1] -= eyePoint;
         return 0;
     }
 
-    int v17 = v53;
-    int v18 = a6;
-    int v19 = a5;
-    int v20 = 0;
-    __int16 *v23 = v66;
-    float *mCFNormal = nullptr;
-    float v27 = 0.0f;
-    float v28 = 0.0f;
-    float v29 = 0.0f;
-    float v30 = 0.0f;
-    float v31 = 0.0f;
-    float v32 = 0.0f;
-    float v33 = 0.0f;
-    float v34 = 0.0f;
-    float v35 = 0.0f;
-    float v36 = 0.0f;
-    float v37 = 0.0f;
-    bool v38 = false;
-    float v39 = 0.0f;
-    float v41 = 0.0f;
-    float v42 = 0.0f;
-    float v43 = 0.0f;
-    float v44 = 0.0f;
-    float dx = 0.0f;
-    float dy = 0.0f;
-    float dz = 0.0f;
-    if (v53 <= 0)
-        goto LABEL_52;
-    do
+    bool foundCollision = false;
+    int backCrashCount = 0;
+    int frontCrashCount = 0;
+    int frontEpsilonCount = 0;
+    int lastFrontEpsilonCount = 0;
+    int visitedLineCount = 0;
+    float nearestDistance = maxDistance;
+    float bestCrossPoint[3] = {0.0f, 0.0f, 0.0f};
+
+    for (int leafIndex = 0; leafIndex < leafCount; ++leafIndex)
     {
-        int v24 = 0;
-        if (!mCFLeaf[*v23].line_num)
-            goto LABEL_50;
-        do
+        const _TOOL_COL_LEAF &leaf = mCFLeaf[leafIds[leafIndex]];
+        for (unsigned int lineOffset = 0; lineOffset < leaf.line_num; ++lineOffset)
         {
-            unsigned int v25 = mCFLineId[v24 + mCFLeaf[*v23].start_id];
-            if (v19 == static_cast<int>(v25))
+            const int lineId = static_cast<int>(mCFLineId[leaf.start_id + lineOffset]);
+            if (lineId == a5 || lineId == a6)
             {
-                v9 = v52;
-                goto LABEL_48;
+                continue;
             }
-            if (v18 == static_cast<int>(v25))
+
+            const float frontDistance =
+                (mCFNormal[lineId][0] * a2[0]) + (mCFNormal[lineId][1] * a2[1]) + (mCFNormal[lineId][2] * a2[2])
+                - mCFNormal[lineId][3];
+            const float backDistance =
+                (mCFNormal[lineId][0] * a3[0]) + (mCFNormal[lineId][1] * a3[1]) + (mCFNormal[lineId][2] * a3[2])
+                - mCFNormal[lineId][3];
+
+            if (frontDistance > -0.01f && frontDistance < 0.01f)
             {
-                v9 = v52;
-                goto LABEL_48;
+                lastFrontEpsilonCount = ++frontEpsilonCount;
             }
-            mCFNormal = reinterpret_cast<float *>(this->mCFNormal);
-            v27 = *v12;
-            v28 = v12[1];
-            v29 = v12[2];
-            v30 = mCFNormal[4 * v25];
-            v31 = mCFNormal[4 * v25 + 2];
-            v32 = mCFNormal[4 * v25 + 3];
-            v33 = *v63;
-            v34 = v63[1];
-            v35 = v63[2];
-            v36 = (float)((float)((float)(v27 * v30) + (float)(mCFNormal[4 * v25 + 1] * v28)) + (float)(v29 * v31)) - v32;
-            v37 = (float)((float)((float)(v33 * v30) + (float)(mCFNormal[4 * v25 + 1] * v34)) + (float)(v35 * v31)) - v32;
-            if (v36 > -0.01f && v36 < 0.01f)
-                v55 = ++v21;
-            if (v36 > 0.0f && v37 > 0.0f)
+
+            if ((frontDistance > 0.0f && backDistance > 0.0f) || (frontDistance < -0.01f && backDistance < -0.01f))
             {
-                v9 = v52;
-                goto LABEL_48;
+                continue;
             }
-            if (v36 < -0.01f && v37 < -0.01f)
+
+            bool isBackCollision = false;
+            if (frontDistance <= -0.01f || backDistance > 0.0f)
             {
-                v9 = v52;
-                goto LABEL_48;
-            }
-            if (v36 <= -0.01f || v37 > 0.0f)
-            {
-                if (v36 >= 0.0f || v37 <= 0.0f)
+                if (frontDistance >= 0.0f || backDistance <= 0.0f)
                 {
-                    if (v36 > -0.01f && v37 > -0.01f)
+                    if (frontDistance > -0.01f && backDistance > -0.01f)
                     {
-                        v9 = v52;
-                        goto LABEL_48;
+                        continue;
                     }
-                    v38 = v36 < -0.01f && v37 > -0.01f;
+                    isBackCollision = frontDistance < -0.01f && backDistance > -0.01f;
                 }
                 else
                 {
-                    v38 = true;
+                    isBackCollision = true;
                 }
             }
-            else
+
+            const float ratio = frontDistance / (frontDistance - backDistance);
+            float crossPoint[3];
+            crossPoint[0] = ((a3[0] - a2[0]) * ratio) + a2[0];
+            crossPoint[1] = ((a3[1] - a2[1]) * ratio) + a2[1];
+            crossPoint[2] = ((a3[2] - a2[2]) * ratio) + a2[2];
+
+            if (!EdgeTest(crossPoint, lineId))
             {
-                v38 = false;
+                continue;
             }
-            v39 = v36 / (float)(v36 - v37);
-            v60 = (float)((float)(v33 - v27) * v39) + v27;
-            v61 = (float)((float)(v34 - v28) * v39) + v28;
-            v62 = (float)((float)(v35 - v29) * v39) + v29;
-            if (EdgeTest(&v60, v25))
+
+            bool alreadyVisited = false;
+            for (int visitedIndex = 0; visitedIndex < visitedLineCount; ++visitedIndex)
             {
-                int v40 = 0;
-                if (v22 <= 0)
-                    goto LABEL_31;
-                while (v65[v40] != static_cast<int>(v25))
+                if (visitedLineIds[visitedIndex] == lineId)
                 {
-                    if (++v40 >= v22)
-                        goto LABEL_31;
+                    alreadyVisited = true;
+                    break;
                 }
-                v9 = v52;
-                goto LABEL_AFTER_EDGE;
-LABEL_31:
-                v41 = v60;
-                v42 = v61;
-                v43 = v62;
-                v65[v22++] = static_cast<int>(v25);
-                if (static_cast<int>(v25) >= 10000)
-                    v22 = 9999;
-                dx = v42 - v56[1];
-                dy = v41 - v56[0];
-                dz = v43 - v56[2];
-                v44 = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
-                if (v7 <= v44)
+            }
+            if (alreadyVisited)
+            {
+                continue;
+            }
+
+            visitedLineIds[visitedLineCount++] = lineId;
+            if (lineId >= 10000)
+            {
+                visitedLineCount = 9999;
+            }
+
+            const float dx = crossPoint[1] - a2[1];
+            const float dy = crossPoint[0] - a2[0];
+            const float dz = crossPoint[2] - a2[2];
+            const float distance = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+
+            if (nearestDistance <= distance)
+            {
+                if (isBackCollision)
                 {
-                    v9 = v52;
-                    if (v38)
-                        ++v14;
-                    else
-                        ++v15;
+                    ++backCrashCount;
                 }
                 else
                 {
-                    if (v38)
-                    {
-                        v21 = v55;
-                        v12 = v56;
-                        v18 = a6;
-                        v7 = v44;
-                        v19 = a5;
-                        v9 = 0;
-                        ++v14;
-                        v52 = 0;
-                        goto LABEL_48;
-                    }
-                    this->mColFaceId = v25;
-                    v9 = 1;
-                    v57 = v41;
-                    v58 = v42;
-                    v59 = v43;
-                    v7 = v44;
-                    v52 = 1;
-                    ++v15;
+                    ++frontCrashCount;
                 }
-LABEL_AFTER_EDGE:
-                v21 = v55;
-                v12 = v56;
-                v18 = a6;
-                v19 = a5;
+                continue;
             }
-            else
+
+            if (isBackCollision)
             {
-                v9 = v52;
-                v21 = v55;
-                v12 = v56;
-                v18 = a6;
-                v19 = a5;
+                nearestDistance = distance;
+                foundCollision = false;
+                ++backCrashCount;
+                continue;
             }
-LABEL_48:
-            ++v24;
-        } while (v24 < this->mCFLeaf[*v23].line_num);
-        v17 = v53;
-        v20 = v54;
-LABEL_50:
-        ++v20;
-        ++v23;
-        v54 = v20;
-    } while (v20 < v17);
-    v6 = 16.0f;
-    v11 = v63;
-    v8 = v64;
-LABEL_52:
-    int v45 = dword_184A7B2F0;
-    if (v14 - v15 == 1)
-        v45 = 1;
-    v12[1] = v12[1] - v6;
-    float v46 = v11[1];
-    dword_184A7B2F0 = v45;
-    v11[1] = v46 - v6;
-    if (v9)
-    {
-        sub_14050C650(&v57, v12, v11);
-        float v47 = v57;
-        float v48 = v58;
-        float v49 = v59;
-        v8[0] = v57;
-        v8[1] = v48;
-        v8[2] = v49;
-        if (v15 - v14 > 0 || (v15 && !v14))
-            return 3;
-        int v50 = a6;
-        if (!a5)
-        {
-            if (a6)
-                goto LABEL_63;
-            return 1;
+
+            mColFaceId = lineId;
+            foundCollision = true;
+            bestCrossPoint[0] = crossPoint[0];
+            bestCrossPoint[1] = crossPoint[1];
+            bestCrossPoint[2] = crossPoint[2];
+            nearestDistance = distance;
+            ++frontCrashCount;
+            frontEpsilonCount = lastFrontEpsilonCount;
         }
-LABEL_63:
-        float *v51 = reinterpret_cast<float *>(this->mCFNormal);
-        float vPlaneA = (float)((float)((float)(v48 * v51[4 * a5 + 1]) + (float)(v47 * v51[4 * a5]))
-                              + (float)(v49 * v51[4 * a5 + 2]))
-                       - v51[4 * a5 + 3];
-        float vPlaneB = (float)((float)((float)(v48 * v51[4 * v50 + 1]) + (float)(v47 * v51[4 * v50]))
-                              + (float)(v49 * v51[4 * v50 + 2]))
-                       - v51[4 * v50 + 3];
-        if (vPlaneA >= 0.0f || vPlaneB >= 0.0f)
-            return 1;
-        return 2;
     }
-    else
+
+    dword_184A7B2F0 = (backCrashCount - frontCrashCount == 1) ? 1 : 0;
+    a2[1] -= eyePoint;
+    a3[1] -= eyePoint;
+
+    if (!foundCollision)
     {
-        if ((v19 || v18) && v14)
+        if ((a5 || a6) && backCrashCount)
+        {
             return 2;
+        }
         return 0;
     }
+
+    sub_14050C650(bestCrossPoint, a2, a3);
+    (*a4)[0] = bestCrossPoint[0];
+    (*a4)[1] = bestCrossPoint[1];
+    (*a4)[2] = bestCrossPoint[2];
+
+    if (frontCrashCount > backCrashCount)
+    {
+        return 3;
+    }
+
+    if (!a5 && !a6)
+    {
+        return 1;
+    }
+
+    const float planeDistanceA =
+        (mCFNormal[a5][0] * bestCrossPoint[0]) + (mCFNormal[a5][1] * bestCrossPoint[1])
+        + (mCFNormal[a5][2] * bestCrossPoint[2]) - mCFNormal[a5][3];
+    const float planeDistanceB =
+        (mCFNormal[a6][0] * bestCrossPoint[0]) + (mCFNormal[a6][1] * bestCrossPoint[1])
+        + (mCFNormal[a6][2] * bestCrossPoint[2]) - mCFNormal[a6][3];
+    if (planeDistanceA >= 0.0f || planeDistanceB >= 0.0f)
+    {
+        return 1;
+    }
+    return 2;
 }
 
 void CBsp::LoadEnvironment()
@@ -3507,58 +3404,48 @@ void CBsp::CalcEntitiesMainColor()
 
 void CBsp::SetCFNormal()
 {
-    unsigned int i = 0;
-    if (mCFLineNum)
+    for (unsigned int lineIndex = 0; lineIndex < mCFLineNum; ++lineIndex)
     {
-        __int64 idx = 0;
-        do
-        {
-            _TOOL_COL_LINE &line = mCFLine[idx];
-            float *v = reinterpret_cast<float *>(mCFVertex);
-            float p0[3] = {v[3 * line.start_v], v[3 * line.start_v + 1], v[3 * line.start_v + 2]};
-            float p1[3] = {v[3 * line.end_v], v[3 * line.end_v + 1] + line.height, v[3 * line.end_v + 2]};
-            float p2[3] = {v[3 * line.end_v], v[3 * line.end_v + 1], v[3 * line.end_v + 2]};
-            GetNormal(mCFNormal[i++], p0, p1, p2);
-            ++idx;
-        } while (i < mCFLineNum);
+        const _TOOL_COL_LINE &line = mCFLine[lineIndex];
+        float startVertex[3] = {
+            mCFVertex[line.start_v][0],
+            mCFVertex[line.start_v][1],
+            mCFVertex[line.start_v][2],
+        };
+        float upperEndVertex[3] = {
+            mCFVertex[line.end_v][0],
+            mCFVertex[line.end_v][1] + line.height,
+            mCFVertex[line.end_v][2],
+        };
+        float endVertex[3] = {
+            mCFVertex[line.end_v][0],
+            mCFVertex[line.end_v][1],
+            mCFVertex[line.end_v][2],
+        };
+        GetNormal(mCFNormal[lineIndex], startVertex, upperEndVertex, endVertex);
     }
 
     memset_0(mCFVNormal, 0, 12LL * mCFVertexNum);
-    unsigned int v6 = 1;
-    unsigned int v7 = 1;
-    if (mCFLineNum > 1)
+    for (unsigned int lineIndex = 1; lineIndex < mCFLineNum; ++lineIndex)
     {
-        __int64 v8 = 1;
-        do
-        {
-            ++v7;
-            __int64 start_v = mCFLine[v8++].start_v;
-            mCFVNormal[start_v][0] = mCFNormal[v8 - 1][0] + mCFVNormal[start_v][0];
-            mCFVNormal[start_v][1] = mCFNormal[v8 - 1][1] + mCFVNormal[start_v][1];
-            mCFVNormal[start_v][2] = mCFNormal[v8 - 1][2] + mCFVNormal[start_v][2];
-            __int64 end_v = mCFLine[v8 - 1].end_v;
-            mCFVNormal[end_v][0] = mCFNormal[v8 - 1][0] + mCFVNormal[end_v][0];
-            mCFVNormal[end_v][1] = mCFNormal[v8 - 1][1] + mCFVNormal[end_v][1];
-            mCFVNormal[end_v][2] = mCFNormal[v8 - 1][2] + mCFVNormal[end_v][2];
-        } while (v7 < mCFLineNum);
+        const _TOOL_COL_LINE &line = mCFLine[lineIndex];
+        mCFVNormal[line.start_v][0] += mCFNormal[lineIndex][0];
+        mCFVNormal[line.start_v][1] += mCFNormal[lineIndex][1];
+        mCFVNormal[line.start_v][2] += mCFNormal[lineIndex][2];
+        mCFVNormal[line.end_v][0] += mCFNormal[lineIndex][0];
+        mCFVNormal[line.end_v][1] += mCFNormal[lineIndex][1];
+        mCFVNormal[line.end_v][2] += mCFNormal[lineIndex][2];
     }
 
-    if (mCFVertexNum > 1)
+    for (unsigned int vertexIndex = 1; vertexIndex < mCFVertexNum; ++vertexIndex)
     {
-        __int64 v12 = 3;
-        do
-        {
-            float *norm = reinterpret_cast<float *>(mCFVNormal);
-            float nx = norm[v12];
-            float ny = norm[v12 + 1];
-            float nz = norm[v12 + 2];
-            float len = sqrtf_0((nx * nx) + (ny * ny) + (nz * nz));
-            ++v6;
-            v12 += 3;
-            norm[v12 - 3] = nx / len;
-            norm[v12 - 2] = ny / len;
-            norm[v12 - 1] = nz / len;
-        } while (v6 < mCFVertexNum);
+        const float nx = mCFVNormal[vertexIndex][0];
+        const float ny = mCFVNormal[vertexIndex][1];
+        const float nz = mCFVNormal[vertexIndex][2];
+        const float length = sqrtf_0((nx * nx) + (ny * ny) + (nz * nz));
+        mCFVNormal[vertexIndex][0] = nx / length;
+        mCFVNormal[vertexIndex][1] = ny / length;
+        mCFVNormal[vertexIndex][2] = nz / length;
     }
 }
 
@@ -3836,10 +3723,10 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
     if (matGroupCount > 0)
     {
-        float v65 = FLOAT_0_5;
-        float v66 = FLOAT_32767_0;
-        float v67 = FLOAT_8_0;
-        float v68 = FLOAT_255_0;
+        float halfExtentScale = FLOAT_0_5;
+        float packedLightUvScale = FLOAT_32767_0;
+        float detailUvScale = FLOAT_8_0;
+        float colorByteScale = FLOAT_255_0;
 
         for (int i = 0; i < matGroupCount; ++i)
         {
@@ -3855,11 +3742,12 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
             mMatGroup[i].ObjectId = group.object_id;
             mMatGroup[i].CoronaAlpha = 0.0f;
 
-            float v72 = (mMatGroup[i].BBMax[1] - mMatGroup[i].BBMin[1]) * v65;
-            float v73 = (mMatGroup[i].BBMax[2] - mMatGroup[i].BBMin[2]) * v65;
-            mMatGroup[i].Origin[0] = mMatGroup[i].BBMin[0] + (mMatGroup[i].BBMax[0] - mMatGroup[i].BBMin[0]) * v65;
-            mMatGroup[i].Origin[1] = v72 + mMatGroup[i].BBMin[1];
-            mMatGroup[i].Origin[2] = v73 + mMatGroup[i].BBMin[2];
+            const float halfExtentY = (mMatGroup[i].BBMax[1] - mMatGroup[i].BBMin[1]) * halfExtentScale;
+            const float halfExtentZ = (mMatGroup[i].BBMax[2] - mMatGroup[i].BBMin[2]) * halfExtentScale;
+            mMatGroup[i].Origin[0] =
+                mMatGroup[i].BBMin[0] + (mMatGroup[i].BBMax[0] - mMatGroup[i].BBMin[0]) * halfExtentScale;
+            mMatGroup[i].Origin[1] = halfExtentY + mMatGroup[i].BBMin[1];
+            mMatGroup[i].Origin[2] = halfExtentZ + mMatGroup[i].BBMin[2];
 
             char *vertex = nullptr;
             int function_id = 4;
@@ -4023,46 +3911,49 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
                     unsigned int color = m_ARGB;
                     if (group.mtl_id != -1 && (matFlag & 0x300) != 0)
                     {
-                        float v135 = 0.0f;
-                        float v136 = 0.0f;
-                        float v137 = 0.0f;
-                        float v138 = 0.0f;
-
+                        float uAlpha = FLOAT_1_0;
                         if (matFlag & 0x100)
                         {
-                            v135 = (static_cast<float>(HiByte(static_cast<unsigned int>(MainMaterial[group.mtl_id].m_Layer[0].m_sGradientAlpha))) - 100.0f) / 25.0f;
-                            v136 = uv[2 * v_id] / v135;
-                            if (v135 < 0.0f)
-                                v136 = v136 + (-1.0f / v135);
-                            if (v136 < 1.0f)
+                            const float uGradientScale =
+                                (static_cast<float>(HiByte(static_cast<unsigned int>(MainMaterial[group.mtl_id].m_Layer[0].m_sGradientAlpha)))
+                                 - 100.0f)
+                                / 25.0f;
+                            uAlpha = uv[2 * v_id] / uGradientScale;
+                            if (uGradientScale < 0.0f)
+                                uAlpha = uAlpha + (-1.0f / uGradientScale);
+                            if (uAlpha < 1.0f)
                             {
-                                if (v136 <= 0.0f)
-                                    v136 = 0.0f;
-                                goto LABEL_GRAD_V;
+                                if (uAlpha <= 0.0f)
+                                    uAlpha = 0.0f;
+                            }
+                            else
+                            {
+                                uAlpha = FLOAT_1_0;
                             }
                         }
 
-                        v136 = FLOAT_1_0;
-                        if ((matFlag & 0x200) == 0)
-                            goto LABEL_GRAD_DONE;
-
-LABEL_GRAD_V:
-                        v137 = (static_cast<float>(LoByte(static_cast<unsigned int>(MainMaterial[group.mtl_id].m_Layer[0].m_sGradientAlpha))) - 100.0f) / 25.0f;
-                        v138 = uv[2 * v_id + 1] / v137;
-                        if (v137 < 0.0f)
-                            v138 = v138 + (-1.0f / v137);
-                        if (v138 < 1.0f)
+                        float vAlpha = FLOAT_1_0;
+                        if (matFlag & 0x200)
                         {
-                            if (v138 <= 0.0f)
-                                v138 = 0.0f;
-                        }
-                        else
-                        {
-LABEL_GRAD_DONE:
-                            v138 = FLOAT_1_0;
+                            const float vGradientScale =
+                                (static_cast<float>(LoByte(static_cast<unsigned int>(MainMaterial[group.mtl_id].m_Layer[0].m_sGradientAlpha)))
+                                 - 100.0f)
+                                / 25.0f;
+                            vAlpha = uv[2 * v_id + 1] / vGradientScale;
+                            if (vGradientScale < 0.0f)
+                                vAlpha = vAlpha + (-1.0f / vGradientScale);
+                            if (vAlpha < 1.0f)
+                            {
+                                if (vAlpha <= 0.0f)
+                                    vAlpha = 0.0f;
+                            }
+                            else
+                            {
+                                vAlpha = FLOAT_1_0;
+                            }
                         }
 
-                        float alpha = (v138 * v136) * (static_cast<float>(HiByte(m_ARGB)) / v68) * v68;
+                        float alpha = (vAlpha * uAlpha) * (static_cast<float>(HiByte(m_ARGB)) / colorByteScale) * colorByteScale;
                         color = (static_cast<unsigned int>(alpha) << 24) | (m_ARGB & 0xFFFFFF);
                     }
 
@@ -4077,13 +3968,15 @@ LABEL_GRAD_DONE:
                         || (MainMaterial[group.mtl_id].m_dwFlag & 1) == 0
                         || group.lgt_id != -1)
                     {
-                        static_vertexbp[static_v_cnt].uv[1][0] = static_cast<float>(lgtuv[2 * v_id]) / v66;
-                        static_vertexbp[static_v_cnt].uv[1][1] = static_cast<float>(lgtuv[2 * v_id + 1]) / v66;
+                        static_vertexbp[static_v_cnt].uv[1][0] = static_cast<float>(lgtuv[2 * v_id]) / packedLightUvScale;
+                        static_vertexbp[static_v_cnt].uv[1][1] = static_cast<float>(lgtuv[2 * v_id + 1]) / packedLightUvScale;
                     }
                     else
                     {
-                        static_vertexbp[static_v_cnt].uv[1][0] = MainMaterial[group.mtl_id].m_fDetailScale * uv[2 * v_id] * v67;
-                        static_vertexbp[static_v_cnt].uv[1][1] = MainMaterial[group.mtl_id].m_fDetailScale * uv[2 * v_id + 1] * v67;
+                        static_vertexbp[static_v_cnt].uv[1][0] =
+                            MainMaterial[group.mtl_id].m_fDetailScale * uv[2 * v_id] * detailUvScale;
+                        static_vertexbp[static_v_cnt].uv[1][1] =
+                            MainMaterial[group.mtl_id].m_fDetailScale * uv[2 * v_id + 1] * detailUvScale;
                     }
 
                     if (group.lgt_id == -1)
@@ -4167,44 +4060,46 @@ LABEL_GRAD_DONE:
                             ++uv_used;
                         }
 
-                        float v181 = (tex2temp[8] - tex2temp[2]) * (tex2temp[4] - tex2temp[1])
-                                   - (tex2temp[7] - tex2temp[1]) * (tex2temp[5] - tex2temp[2]);
-                        float v182 = (tex2temp[6] - tex2temp[0]) * (tex2temp[5] - tex2temp[2])
-                                   - (tex2temp[8] - tex2temp[2]) * (tex2temp[3] - tex2temp[0]);
-                        float v183 = (tex2temp[7] - tex2temp[1]) * (tex2temp[3] - tex2temp[0])
-                                   - (tex2temp[6] - tex2temp[0]) * (tex2temp[4] - tex2temp[1]);
-                        float v184 = sqrtf_0((v182 * v182) + (v181 * v181) + (v183 * v183));
-                        float v185 = v183 / v184;
-                        float v186 = v181 / v184;
-                        float v187 = v182 / v184;
+                        const float normalXNumerator = (tex2temp[8] - tex2temp[2]) * (tex2temp[4] - tex2temp[1])
+                                                     - (tex2temp[7] - tex2temp[1]) * (tex2temp[5] - tex2temp[2]);
+                        const float normalYNumerator = (tex2temp[6] - tex2temp[0]) * (tex2temp[5] - tex2temp[2])
+                                                     - (tex2temp[8] - tex2temp[2]) * (tex2temp[3] - tex2temp[0]);
+                        const float normalZNumerator = (tex2temp[7] - tex2temp[1]) * (tex2temp[3] - tex2temp[0])
+                                                     - (tex2temp[6] - tex2temp[0]) * (tex2temp[4] - tex2temp[1]);
+                        const float normalLength = sqrtf_0(
+                            (normalYNumerator * normalYNumerator) + (normalXNumerator * normalXNumerator)
+                            + (normalZNumerator * normalZNumerator));
+                        const float normalZ = normalZNumerator / normalLength;
+                        const float normalX = normalXNumerator / normalLength;
+                        const float normalY = normalYNumerator / normalLength;
 
-                        double v188 = std::fabs(static_cast<double>(v185));
-                        float v189;
-                        float v190;
-                        float v191;
-                        if (v188 <= 0.98)
+                        const double absNormalZ = std::fabs(static_cast<double>(normalZ));
+                        float tangentX;
+                        float tangentY;
+                        float tangentZ;
+                        if (absNormalZ <= 0.98)
                         {
-                            float v192 = sqrtf_0(((0.0f - v187) * (0.0f - v187)) + (v186 * v186));
-                            v189 = (0.0f - v187) / v192;
-                            v190 = v186 / v192;
-                            v191 = 0.0f / v192;
+                            const float tangentLength = sqrtf_0(((0.0f - normalY) * (0.0f - normalY)) + (normalX * normalX));
+                            tangentX = (0.0f - normalY) / tangentLength;
+                            tangentY = normalX / tangentLength;
+                            tangentZ = 0.0f / tangentLength;
                         }
                         else
                         {
-                            v189 = FLOAT_1_0;
-                            v190 = 0.0f;
-                            v191 = 0.0f;
+                            tangentX = FLOAT_1_0;
+                            tangentY = 0.0f;
+                            tangentZ = 0.0f;
                         }
 
                         for (unsigned int k = 0; k < face[faceIdx].v_num; ++k)
                         {
                             float *dst = multiST + 9 * (base_st + static_cast<int>(k));
-                            dst[3] = v189;
-                            dst[4] = v190;
-                            dst[5] = v191;
-                            dst[6] = (v190 * v185) - (v191 * v187);
-                            dst[7] = (v191 * v186) - (v189 * v185);
-                            dst[8] = (v189 * v187) - (v190 * v186);
+                            dst[3] = tangentX;
+                            dst[4] = tangentY;
+                            dst[5] = tangentZ;
+                            dst[6] = (tangentY * normalZ) - (tangentZ * normalY);
+                            dst[7] = (tangentZ * normalX) - (tangentX * normalZ);
+                            dst[8] = (tangentX * normalY) - (tangentY * normalX);
                         }
 
                         st_used += face[faceIdx].v_num;
@@ -4234,10 +4129,10 @@ LABEL_GRAD_DONE:
                 static_v_cnt = 0;
             }
 
-            v66 = FLOAT_32767_0;
-            v67 = FLOAT_8_0;
-            v65 = FLOAT_0_5;
-            v68 = FLOAT_255_0;
+            packedLightUvScale = FLOAT_32767_0;
+            detailUvScale = FLOAT_8_0;
+            halfExtentScale = FLOAT_0_5;
+            colorByteScale = FLOAT_255_0;
         }
     }
 
@@ -4276,11 +4171,11 @@ void CBsp::MakeEdgeNormal()
 
         for (unsigned int j = 0; j < mCFace[i].VNum; ++j)
         {
-            float *v0 = mCVertex[mCVertexId[mCFace[i].VStartId + j]];
-            float *v1 = mCVertex[mCVertexId[mCFace[i].VStartId + (j + 1) % mCFace[i].VNum]];
-            float l = v1[0] - v0[0];
-            float m = v1[1] - v0[1];
-            float n = v1[2] - v0[2];
+            float *startVertex = mCVertex[mCVertexId[mCFace[i].VStartId + j]];
+            float *endVertex = mCVertex[mCVertexId[mCFace[i].VStartId + (j + 1) % mCFace[i].VNum]];
+            float l = endVertex[0] - startVertex[0];
+            float m = endVertex[1] - startVertex[1];
+            float n = endVertex[2] - startVertex[2];
             float len2 = (l * l) + (m * m) + (n * n);
             if (len2 == 0.0f)
             {
@@ -4290,11 +4185,11 @@ void CBsp::MakeEdgeNormal()
                 mCNEdgeNormal[4 * i + j][3] = 0.0f;
                 continue;
             }
-            float t = -((l * (v0[0] - mid[0]) + m * (v0[1] - mid[1]) + n * (v0[2] - mid[2])) / len2);
+            float t = -((l * (startVertex[0] - mid[0]) + m * (startVertex[1] - mid[1]) + n * (startVertex[2] - mid[2])) / len2);
             float edge_n[3];
-            edge_n[0] = mid[0] - (l * t + v0[0]);
-            edge_n[1] = mid[1] - (m * t + v0[1]);
-            edge_n[2] = mid[2] - (n * t + v0[2]);
+            edge_n[0] = mid[0] - (l * t + startVertex[0]);
+            edge_n[1] = mid[1] - (m * t + startVertex[1]);
+            edge_n[2] = mid[2] - (n * t + startVertex[2]);
             if (std::fabs(edge_n[0]) < 0.01f && std::fabs(edge_n[1]) < 0.01f && std::fabs(edge_n[2]) < 0.01f)
             {
                 mCNEdgeNormal[4 * i + j][0] = 0.0f;
@@ -4310,7 +4205,7 @@ void CBsp::MakeEdgeNormal()
             mCNEdgeNormal[4 * i + j][0] = edge_n[0];
             mCNEdgeNormal[4 * i + j][1] = edge_n[1];
             mCNEdgeNormal[4 * i + j][2] = edge_n[2];
-            mCNEdgeNormal[4 * i + j][3] = (edge_n[0] * v1[0]) + (edge_n[1] * v1[1]) + (edge_n[2] * v1[2]);
+            mCNEdgeNormal[4 * i + j][3] = (edge_n[0] * endVertex[0]) + (edge_n[1] * endVertex[1]) + (edge_n[2] * endVertex[2]);
         }
     }
 }
@@ -5023,10 +4918,10 @@ float CBsp::GetYposInLeafNoAttr(float *const a2, float *const a3, float a4, floa
         {
             for (int j = 0; j < vNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[vStart + j];
-                const unsigned int v1 = mCVertexId[vStart + (j + 1) % vNum];
-                const float *vertex0 = mCVertex[v0];
-                const float *vertex1 = mCVertex[v1];
+                const unsigned int startVertexIndex = mCVertexId[vStart + j];
+                const unsigned int endVertexIndex = mCVertexId[vStart + (j + 1) % vNum];
+                const float *vertex0 = mCVertex[startVertexIndex];
+                const float *vertex1 = mCVertex[endVertexIndex];
                 float edge[3] = {vertex0[0] - vertex1[0], vertex0[1] - vertex1[1], vertex0[2] - vertex1[2]};
                 float edgeNormal[4];
                 sub_1404E2FB0(face.Normal, edge, edgeNormal);
@@ -5142,25 +5037,25 @@ void CBsp::RenderCollisionLeaf(__int16 a2)
         {
             const unsigned int tc = ((colorSeed % 256) << 16) | ((colorSeed % 256) << 8) | (colorSeed % 256) | 0xFF000000u;
 
-            const unsigned int v0 = mCVertexId[face.VStartId + 0];
-            const unsigned int v1 = mCVertexId[face.VStartId + j + 1];
-            const unsigned int v2 = mCVertexId[face.VStartId + j + 2];
+            const unsigned int triangleVertex0 = mCVertexId[face.VStartId + 0];
+            const unsigned int triangleVertex1 = mCVertexId[face.VStartId + j + 1];
+            const unsigned int triangleVertex2 = mCVertexId[face.VStartId + j + 2];
 
-            vertices[count].x = mCVertex[v0][0];
-            vertices[count].y = mCVertex[v0][1];
-            vertices[count].z = mCVertex[v0][2];
+            vertices[count].x = mCVertex[triangleVertex0][0];
+            vertices[count].y = mCVertex[triangleVertex0][1];
+            vertices[count].z = mCVertex[triangleVertex0][2];
             vertices[count].color = tc;
             ++count;
 
-            vertices[count].x = mCVertex[v1][0];
-            vertices[count].y = mCVertex[v1][1];
-            vertices[count].z = mCVertex[v1][2];
+            vertices[count].x = mCVertex[triangleVertex1][0];
+            vertices[count].y = mCVertex[triangleVertex1][1];
+            vertices[count].z = mCVertex[triangleVertex1][2];
             vertices[count].color = tc;
             ++count;
 
-            vertices[count].x = mCVertex[v2][0];
-            vertices[count].y = mCVertex[v2][1];
-            vertices[count].z = mCVertex[v2][2];
+            vertices[count].x = mCVertex[triangleVertex2][0];
+            vertices[count].y = mCVertex[triangleVertex2][1];
+            vertices[count].z = mCVertex[triangleVertex2][2];
             vertices[count].color = tc;
             ++count;
 
@@ -5813,9 +5708,9 @@ __int64 CBsp::GetPointFromScreenRay(float a2, float a3, float *const a4, float *
             int inside = 0;
             for (int j = 0; j < face.VNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[face.VStartId + j];
-                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
-                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                const unsigned int vertex0Index = mCVertexId[face.VStartId + j];
+                const unsigned int vertex1Index = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                 {
                     continue;
                 }
@@ -5893,9 +5788,9 @@ __int64 CBsp::GetPointFromScreenRayFar(float a2, float a3, float *const a4, floa
             int inside = 0;
             for (int j = 0; j < face.VNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[face.VStartId + j];
-                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
-                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                const unsigned int vertex0Index = mCVertexId[face.VStartId + j];
+                const unsigned int vertex1Index = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                 {
                     continue;
                 }
@@ -6070,9 +5965,9 @@ __int64 CBsp::IsInWater(float *const a2, float *const a3, float (*a4)[3], float 
             int inside = 0;
             for (int j = 0; j < face.VNum; ++j)
             {
-                const unsigned int v0 = mCVertexId[face.VStartId + j];
-                const unsigned int v1 = mCVertexId[face.VStartId + (j + 1) % face.VNum];
-                if (!CheckEdge(mCVertex[v0], mCVertex[v1], cross, face.Normal))
+                const unsigned int vertex0Index = mCVertexId[face.VStartId + j];
+                const unsigned int vertex1Index = mCVertexId[face.VStartId + (j + 1) % face.VNum];
+                if (!CheckEdge(mCVertex[vertex0Index], mCVertex[vertex1Index], cross, face.Normal))
                 {
                     continue;
                 }

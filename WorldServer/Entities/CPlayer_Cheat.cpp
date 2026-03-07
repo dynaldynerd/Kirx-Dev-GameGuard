@@ -468,35 +468,23 @@ char CPlayer::dev_gold(unsigned int dwGold)
 
 char CPlayer::dev_goto_monster(CMonster *pMon)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    unsigned __int8 MapCode; // al
-    __int64 v6; // [rsp+0h] [rbp-48h] BYREF
-    float *m_fCurPos; // [rsp+30h] [rbp-18h]
   if ( !pMon || !pMon->m_bLive || !pMon->m_bOper )
       return 0;
     this->OutOfMap( pMon->m_pCurMap, pMon->m_wMapLayerIndex, 3u, pMon->m_fCurPos);
-    m_fCurPos = pMon->m_fCurPos;
-    MapCode = this->m_Param.GetMapCode();
-    this->SendMsg_GotoRecallResult(0, MapCode, m_fCurPos, 4u);
+    float *targetPos = pMon->m_fCurPos;
+    const unsigned __int8 mapCode = this->m_Param.GetMapCode();
+    this->SendMsg_GotoRecallResult(0, mapCode, targetPos, 4u);
     return 1;
 }
 
 char CPlayer::dev_goto_npc(CMerchant *pNpc)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    unsigned __int8 MapCode; // al
-    __int64 v6; // [rsp+0h] [rbp-48h] BYREF
-    float *m_fCurPos; // [rsp+30h] [rbp-18h]
   if ( !pNpc || !pNpc->m_bLive || pNpc->m_bCorpse )
       return 0;
     this->OutOfMap( pNpc->m_pCurMap, pNpc->m_wMapLayerIndex, 3u, pNpc->m_fCurPos);
-    m_fCurPos = pNpc->m_fCurPos;
-    MapCode = this->m_Param.GetMapCode();
-    this->SendMsg_GotoRecallResult(0, MapCode, m_fCurPos, 4u);
+    float *targetPos = pNpc->m_fCurPos;
+    const unsigned __int8 mapCode = this->m_Param.GetMapCode();
+    this->SendMsg_GotoRecallResult(0, mapCode, targetPos, 4u);
     return 1;
 }
 
@@ -612,26 +600,20 @@ char CPlayer::dev_item_make_no_use_matrial(bool noUsingMatrial)
 
 char CPlayer::dev_loot_bag()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    int RecordNum; // eax
-    int RaceSexCode; // eax
-    __int64 v6; // [rsp+0h] [rbp-58h] BYREF
-    int nItemIndex; // [rsp+30h] [rbp-28h]
-    char *ItemEquipCivil; // [rsp+38h] [rbp-20h]
-    _base_fld *Record; // [rsp+40h] [rbp-18h]
-  for ( nItemIndex = 0; ; ++nItemIndex )
+    int itemIndex; // [rsp+30h] [rbp-28h]
+    char *itemEquipCivil; // [rsp+38h] [rbp-20h]
+    _base_fld *itemRecord; // [rsp+40h] [rbp-18h]
+  for ( itemIndex = 0; ; ++itemIndex )
     {
-      RecordNum = g_Main.m_tblItemData[12].GetRecordNum();
-      if ( nItemIndex >= RecordNum )
+      const int recordCount = g_Main.m_tblItemData[12].GetRecordNum();
+      if ( itemIndex >= recordCount )
         break;
-      ItemEquipCivil = GetItemEquipCivil(12, nItemIndex);
-      RaceSexCode = this->m_Param.GetRaceSexCode();
-      if ( ItemEquipCivil[RaceSexCode] == 49 )
+      itemEquipCivil = GetItemEquipCivil(12, itemIndex);
+      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      if ( itemEquipCivil[raceSexCode] == '1' )
       {
-        Record = g_Main.m_tblItemData[12].GetRecord( nItemIndex);
-        loot_item(this, Record->m_strCode, 4, 0LL, 0);
+        itemRecord = g_Main.m_tblItemData[12].GetRecord( itemIndex);
+        loot_item(this, itemRecord->m_strCode, 4, 0LL, 0);
         return 1;
       }
     }
@@ -649,24 +631,20 @@ char CPlayer::dev_loot_free(bool bFree)
 
 char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-88h] BYREF
     char Buffer[32]; // [rsp+38h] [rbp-50h] BYREF
-    _EditData_fld *Record; // [rsp+58h] [rbp-30h]
-    int j; // [rsp+60h] [rbp-28h]
+    _EditData_fld *editRecord; // [rsp+58h] [rbp-30h]
+    int nodeIndex; // [rsp+60h] [rbp-28h]
   memset(Buffer, 0, 9);
     sprintf(Buffer, "%s_%d", this->m_Param.m_pClassData->m_strCode, byLv);
-    Record = static_cast<_EditData_fld *>(g_Main.m_tblEditData.GetRecord(Buffer));
-    if ( !Record )
+    editRecord = static_cast<_EditData_fld *>(g_Main.m_tblEditData.GetRecord(Buffer));
+    if ( !editRecord )
       return 0;
-    for ( j = 0; j < 30; ++j )
+    for ( nodeIndex = 0; nodeIndex < 30; ++nodeIndex )
     {
-      if (Record->m_Node[j].m_nEditItemcount > 0)
+      if (editRecord->m_Node[nodeIndex].m_nEditItemcount > 0)
         this->dev_loot_item(
-          Record->m_Node[j].m_strEditItemCode,
-          Record->m_Node[j].m_nEditItemcount,
+          editRecord->m_Node[nodeIndex].m_strEditItemCode,
+          editRecord->m_Node[nodeIndex].m_nEditItemcount,
           0LL,
           0);
     }
@@ -675,126 +653,121 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
 
 bool CPlayer::dev_loot_item(char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum)
 {
-
-    __int64 *v5; // rdi
-    __int64 i; // rcx
-    __int64 v8; // [rsp+0h] [rbp-38h] BYREF
   return loot_item(this, pszItemCode, nNum, pszUpTalCode, nUpNum);
 }
 
 char CPlayer::dev_loot_material()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    int RecordNum; // eax
-    int v5; // eax
-    int v6; // eax
-    __int64 v7; // [rsp+0h] [rbp-158h] BYREF
-    int nIndex; // [rsp+50h] [rbp-108h]
-    _STORAGE_LIST::_db_con pItem; // [rsp+68h] [rbp-F0h] BYREF
-    _STORAGE_LIST::_db_con v10; // [rsp+B8h] [rbp-A0h] BYREF
-    _STORAGE_LIST::_db_con v11; // [rsp+108h] [rbp-50h] BYREF
-  for ( nIndex = 0; ; ++nIndex )
-    {
-      RecordNum = g_Main.m_tblItemData[20].GetRecordNum();
-      if ( nIndex >= RecordNum )
-        break;
-      pItem.Init();
-      pItem.m_byTableCode = 20;
-      pItem.m_wItemIndex = nIndex;
-      pItem.m_dwDur = 99LL;
-      pItem.m_dwLv = 0xFFFFFFF;
-      if ( !CreateItemBox(
-              &pItem,
-              this,
-              0xFFFFFFFF,
-              0,
-              0LL,
-              2u,
-              this->m_pCurMap,
-              this->m_wMapLayerIndex,
-              this->m_fCurPos,
-              1) )
-        return 1;
-    }
-    for ( nIndex = 0; ; ++nIndex )
-    {
-      v5 = g_Main.m_tblItemData[18].GetRecordNum();
-      if ( nIndex >= v5 )
-        break;
-      v10.Init();
-      v10.m_byTableCode = 18;
-      v10.m_wItemIndex = nIndex;
-      v10.m_dwDur = 99LL;
-      v10.m_dwLv = 0xFFFFFFF;
-      if ( !CreateItemBox(&v10, this, 0xFFFFFFFF, 0, 0LL, 2u, this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, 1) )
-        return 1;
-    }
-    for ( nIndex = 0; ; ++nIndex )
-    {
-      v6 = g_Main.m_tblItemData[11].GetRecordNum();
-      if ( nIndex >= v6 )
-        break;
-      v11.Init();
-      v11.m_byTableCode = 11;
-      v11.m_wItemIndex = nIndex;
-      v11.m_dwDur = GetItemDurPoint(11, nIndex);
-      v11.m_dwLv = 0xFFFFFFF;
-      if ( !CreateItemBox(&v11, this, 0xFFFFFFFF, 0, 0LL, 2u, this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, 1) )
-        return 1;
-    }
-    return 1;
+  int recordIndex = 0;
+  _STORAGE_LIST::_db_con materialItem{};
+  _STORAGE_LIST::_db_con upgradeItem{};
+  _STORAGE_LIST::_db_con resourceItem{};
+  for (recordIndex = 0; ; ++recordIndex)
+  {
+    const int recordCount = g_Main.m_tblItemData[20].GetRecordNum();
+    if (recordIndex >= recordCount)
+      break;
+    materialItem.Init();
+    materialItem.m_byTableCode = 20;
+    materialItem.m_wItemIndex = recordIndex;
+    materialItem.m_dwDur = 99LL;
+    materialItem.m_dwLv = 0xFFFFFFF;
+    if (!CreateItemBox(
+          &materialItem,
+          this,
+          0xFFFFFFFF,
+          0,
+          0LL,
+          2u,
+          this->m_pCurMap,
+          this->m_wMapLayerIndex,
+          this->m_fCurPos,
+          1))
+      return 1;
+  }
+  for (recordIndex = 0; ; ++recordIndex)
+  {
+    const int recordCount = g_Main.m_tblItemData[18].GetRecordNum();
+    if (recordIndex >= recordCount)
+      break;
+    upgradeItem.Init();
+    upgradeItem.m_byTableCode = 18;
+    upgradeItem.m_wItemIndex = recordIndex;
+    upgradeItem.m_dwDur = 99LL;
+    upgradeItem.m_dwLv = 0xFFFFFFF;
+    if (!CreateItemBox(
+          &upgradeItem,
+          this,
+          0xFFFFFFFF,
+          0,
+          0LL,
+          2u,
+          this->m_pCurMap,
+          this->m_wMapLayerIndex,
+          this->m_fCurPos,
+          1))
+      return 1;
+  }
+  for (recordIndex = 0; ; ++recordIndex)
+  {
+    const int recordCount = g_Main.m_tblItemData[11].GetRecordNum();
+    if (recordIndex >= recordCount)
+      break;
+    resourceItem.Init();
+    resourceItem.m_byTableCode = 11;
+    resourceItem.m_wItemIndex = recordIndex;
+    resourceItem.m_dwDur = GetItemDurPoint(11, recordIndex);
+    resourceItem.m_dwLv = 0xFFFFFFF;
+    if (!CreateItemBox(
+          &resourceItem,
+          this,
+          0xFFFFFFFF,
+          0,
+          0LL,
+          2u,
+          this->m_pCurMap,
+          this->m_wMapLayerIndex,
+          this->m_fCurPos,
+          1))
+      return 1;
+  }
+  return 1;
 }
 
 char CPlayer::dev_loot_mine()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    int RecordNum; // eax
-    int RaceSexCode; // eax
-    int v5; // eax
-    int v6; // eax
-    __int64 v8; // [rsp+0h] [rbp-68h] BYREF
-    int n; // [rsp+30h] [rbp-38h]
-    _WeaponItem_fld *Record; // [rsp+38h] [rbp-30h]
-    char *ItemEquipCivil; // [rsp+40h] [rbp-28h]
-    _BatteryItem_fld *v12; // [rsp+48h] [rbp-20h]
-    char *v13; // [rsp+50h] [rbp-18h]
-  for ( n = 0; ; ++n )
+  for (int recordIndex = 0; ; ++recordIndex)
+  {
+    const int recordCount = g_Main.m_tblItemData[6].GetRecordNum();
+    if (recordIndex >= recordCount)
+      break;
+    _WeaponItem_fld *weaponRecord = static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(recordIndex));
+    if (weaponRecord && weaponRecord->m_bExist && weaponRecord->m_nType == 10)
     {
-      RecordNum = g_Main.m_tblItemData[6].GetRecordNum();
-      if ( n >= RecordNum )
-        break;
-      Record = static_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(n));
-      if (Record && Record->m_bExist
-           && Record->m_nType == 10)
+      char *equipCivil = GetItemEquipCivil(6, recordIndex);
+      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      if (equipCivil[raceSexCode] == '1')
+        loot_item(this, weaponRecord->m_strCode, 1, 0LL, 0);
+    }
+  }
+  for (int recordIndex = 0; ; ++recordIndex)
+  {
+    const int recordCount = g_Main.m_tblItemData[16].GetRecordNum();
+    if (recordIndex >= recordCount)
+      break;
+    _BatteryItem_fld *batteryRecord = static_cast<_BatteryItem_fld *>(g_Main.m_tblItemData[16].GetRecord(recordIndex));
+    if (batteryRecord && batteryRecord->m_bExist)
+    {
+      char *equipCivil = GetItemEquipCivil(16, recordIndex);
+      if (equipCivil)
       {
-        ItemEquipCivil = GetItemEquipCivil(6, n);
-        RaceSexCode = this->m_Param.GetRaceSexCode();
-        if ( ItemEquipCivil[RaceSexCode] == 49 )
-          loot_item(this, Record->m_strCode, 1, 0LL, 0);
+        const int raceSexCode = this->m_Param.GetRaceSexCode();
+        if (equipCivil[raceSexCode] == '1')
+          loot_item(this, batteryRecord->m_strCode, 1, 0LL, 0);
       }
     }
-    for ( n = 0; ; ++n )
-    {
-      v5 = g_Main.m_tblItemData[16].GetRecordNum();
-      if ( n >= v5 )
-        break;
-      v12 = static_cast<_BatteryItem_fld *>(g_Main.m_tblItemData[16].GetRecord(n));
-      if (v12 && v12->m_bExist)
-      {
-        v13 = GetItemEquipCivil(16, n);
-        if ( v13 )
-        {
-          v6 = this->m_Param.GetRaceSexCode();
-          if ( v13[v6] == 49 )
-            loot_item(this, v12->m_strCode, 1, 0LL, 0);
-        }
-      }
-    }
-    return 1;
+  }
+  return 1;
 }
 
 char CPlayer::dev_loot_tower()
@@ -910,18 +883,12 @@ char CPlayer::dev_make_succ(bool bSucc)
 
 char CPlayer::dev_max_level_ext(unsigned __int8 byMaxLevel)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    int Level; // eax
-    __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-    int v7; // [rsp+20h] [rbp-18h]
   this->m_Param.SetMaxLevel( byMaxLevel);
     if ( this->m_pUserDB )
       this->m_pUserDB->Update_MaxLevel( byMaxLevel);
-    v7 = byMaxLevel;
-    Level = this->m_Param.GetLevel();
-    if ( v7 < Level )
+    const int maxLevel = byMaxLevel;
+    const int currentLevel = this->m_Param.GetLevel();
+    if ( maxLevel < currentLevel )
     {
       this->m_Param.SetExp( 0.0);
       this->m_dwExpRate = 0;
@@ -944,73 +911,65 @@ char CPlayer::dev_never_die(bool bSet)
 
 char CPlayer::dev_quest_complete()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    __int64 v4; // [rsp+0h] [rbp-48h] BYREF
-    int j; // [rsp+20h] [rbp-28h]
-    _QUEST_DB_BASE::_LIST *pSlotData; // [rsp+28h] [rbp-20h]
-    int k; // [rsp+30h] [rbp-18h]
-    _Quest_fld *Record; // [rsp+38h] [rbp-10h]
+    int slotIndex; // [rsp+20h] [rbp-28h]
+    _QUEST_DB_BASE::_LIST *questSlot; // [rsp+28h] [rbp-20h]
+    int objectiveIndex; // [rsp+30h] [rbp-18h]
+    _Quest_fld *questRecord; // [rsp+38h] [rbp-10h]
   if ( !this->m_pUserDB )
       return 0;
-    for ( j = 0; ; ++j )
+    for ( slotIndex = 0; ; ++slotIndex )
     {
-      if ( j >= 30 )
+      if ( slotIndex >= 30 )
         return 0;
-      pSlotData = &this->m_Param.m_QuestDB.m_List[j];
-      if ( pSlotData->byQuestType != 255 )
+      questSlot = &this->m_Param.m_QuestDB.m_List[slotIndex];
+      if ( questSlot->byQuestType != 255 )
         break;
     }
-    for ( k = 0; k < 3; ++k )
-      pSlotData->wNum[k] = -1;
-    pSlotData->dwPassSec = -1;
-    this->m_pUserDB->Update_QuestUpdate( j, pSlotData, 1);
-    Record = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(pSlotData->wIndex));
-    if (Record->m_bSelectConsITMenual
-         || Record->m_bSelectQuestMenual)
-      this->SendMsg_SelectQuestReward( j);
+    for ( objectiveIndex = 0; objectiveIndex < 3; ++objectiveIndex )
+      questSlot->wNum[objectiveIndex] = -1;
+    questSlot->dwPassSec = -1;
+    this->m_pUserDB->Update_QuestUpdate( slotIndex, questSlot, 1);
+    questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(questSlot->wIndex));
+    if (questRecord->m_bSelectConsITMenual
+         || questRecord->m_bSelectQuestMenual)
+      this->SendMsg_SelectQuestReward( slotIndex);
     else
-      this->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
+      this->Emb_CompleteQuest( slotIndex, 0xFFu, 0xFFu);
     return 1;
 }
 
 char CPlayer::dev_quest_complete_other(char *pwszCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-58h] BYREF
-    CUserDB *v6; // [rsp+20h] [rbp-38h]
-    CPlayer *v7; // [rsp+28h] [rbp-30h]
-    int j; // [rsp+30h] [rbp-28h]
-    _QUEST_DB_BASE::_LIST *pSlotData; // [rsp+38h] [rbp-20h]
-    int k; // [rsp+40h] [rbp-18h]
-    _Quest_fld *Record; // [rsp+48h] [rbp-10h]
-  v6 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
-    if ( !v6 )
+    CUserDB *targetUserDb; // [rsp+20h] [rbp-38h]
+    CPlayer *targetPlayer; // [rsp+28h] [rbp-30h]
+    int slotIndex; // [rsp+30h] [rbp-28h]
+    _QUEST_DB_BASE::_LIST *questSlot; // [rsp+38h] [rbp-20h]
+    int objectiveIndex; // [rsp+40h] [rbp-18h]
+    _Quest_fld *questRecord; // [rsp+48h] [rbp-10h]
+  targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
+    if ( !targetUserDb )
       return 0;
-    v7 = &g_Player[v6->m_idWorld.wIndex];
-    if ( !v7 )
+    targetPlayer = &g_Player[targetUserDb->m_idWorld.wIndex];
+    if ( !targetPlayer )
       return 0;
-    for ( j = 0; ; ++j )
+    for ( slotIndex = 0; ; ++slotIndex )
     {
-      if ( j >= 30 )
+      if ( slotIndex >= 30 )
         return 0;
-      pSlotData = &v7->m_Param.m_QuestDB.m_List[j];
-      if ( pSlotData->byQuestType != 255 )
+      questSlot = &targetPlayer->m_Param.m_QuestDB.m_List[slotIndex];
+      if ( questSlot->byQuestType != 255 )
         break;
     }
-    for ( k = 0; k < 3; ++k )
-      pSlotData->wNum[k] = -1;
-    pSlotData->dwPassSec = -1;
-    v6->Update_QuestUpdate( j, pSlotData, 1);
-    Record = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(pSlotData->wIndex));
-    if (Record->m_bSelectConsITMenual
-         || Record->m_bSelectQuestMenual)
-      v7->SendMsg_SelectQuestReward( j);
+    for ( objectiveIndex = 0; objectiveIndex < 3; ++objectiveIndex )
+      questSlot->wNum[objectiveIndex] = -1;
+    questSlot->dwPassSec = -1;
+    targetUserDb->Update_QuestUpdate( slotIndex, questSlot, 1);
+    questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(questSlot->wIndex));
+    if (questRecord->m_bSelectConsITMenual
+         || questRecord->m_bSelectQuestMenual)
+      targetPlayer->SendMsg_SelectQuestReward( slotIndex);
     else
-      v7->Emb_CompleteQuest( j, 0xFFu, 0xFFu);
+      targetPlayer->Emb_CompleteQuest( slotIndex, 0xFFu, 0xFFu);
     return 1;
 }
 
@@ -1177,72 +1136,52 @@ char CPlayer::dev_set_hp(float prob)
 
 char CPlayer::dev_SetGuildGrade(unsigned __int8 byGrade)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-    CGuild *m_pGuild; // [rsp+20h] [rbp-18h]
+    CGuild *guild; // [rsp+20h] [rbp-18h]
   if ( !this->m_Param.m_pGuild )
       return 0;
-    m_pGuild = 0LL;
-    m_pGuild = this->m_Param.m_pGuild;
+    guild = this->m_Param.m_pGuild;
     if ( !byGrade || byGrade > 8u )
       return 0;
-    m_pGuild->UpdateGrade(byGrade);
+    guild->UpdateGrade(byGrade);
     return 1;
 }
 
 char CPlayer::dev_SetGuildGradeByGuildSerial(unsigned int dwGuildSerial, unsigned __int8 byGrade)
 {
-
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-    CGuild *GuildDataFromSerial; // [rsp+20h] [rbp-18h]
-  GuildDataFromSerial = 0LL;
-    GuildDataFromSerial = GetGuildDataFromSerial(g_Guild, 500, dwGuildSerial);
-    if ( !GuildDataFromSerial )
+    CGuild *guildFromSerial; // [rsp+20h] [rbp-18h]
+  guildFromSerial = GetGuildDataFromSerial(g_Guild, 500, dwGuildSerial);
+    if ( !guildFromSerial )
       return 0;
     if ( !byGrade || byGrade > 8u )
       return 0;
     if ( !dwGuildSerial )
       return 0;
-    GuildDataFromSerial->UpdateGrade(byGrade);
+    guildFromSerial->UpdateGrade(byGrade);
     return 1;
 }
 
 char CPlayer::dev_SetGuildGradeByName(char *uszGuildName, unsigned __int8 byGrade)
 {
-
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-    CGuild *GuildPtrFromName; // [rsp+20h] [rbp-18h]
-  GuildPtrFromName = 0LL;
-    GuildPtrFromName = GetGuildPtrFromName(g_Guild, 500, uszGuildName);
-    if ( !GuildPtrFromName )
+    CGuild *guildFromName; // [rsp+20h] [rbp-18h]
+  guildFromName = GetGuildPtrFromName(g_Guild, 500, uszGuildName);
+    if ( !guildFromName )
       return 0;
     if ( !byGrade || byGrade > 8u )
       return 0;
     if ( !uszGuildName )
       return 0;
-    GuildPtrFromName->UpdateGrade(byGrade);
+    guildFromName->UpdateGrade(byGrade);
     return 1;
 }
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
 char CPlayer::dev_trap_attack_grade(int nPoint)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-    int j; // [rsp+20h] [rbp-18h]
   this->m_nTrapMaxAttackPnt = nPoint;
-    for ( j = 0; j < 20; ++j )
+    for ( int trapIndex = 0; trapIndex < 20; ++trapIndex )
     {
-      if (this->m_pmTrp.m_Item[j].isLoad())
-        this->m_pmTrp.m_Item[j].pItem->m_nTrapMaxAttackPnt = nPoint;
+      if (this->m_pmTrp.m_Item[trapIndex].isLoad())
+        this->m_pmTrp.m_Item[trapIndex].pItem->m_nTrapMaxAttackPnt = nPoint;
     }
     return 1;
 }
@@ -1250,24 +1189,20 @@ char CPlayer::dev_trap_attack_grade(int nPoint)
 
 char CPlayer::dev_up_all(int nCum)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-98h] BYREF
-    unsigned int dwStatIndex; // [rsp+20h] [rbp-78h]
-    _DWORD v7[12]; // [rsp+38h] [rbp-60h] BYREF
-    _skill_fld *Record; // [rsp+68h] [rbp-30h]
-    int n; // [rsp+70h] [rbp-28h]
-    _skill_fld *v10; // [rsp+78h] [rbp-20h]
-    unsigned int dwNewCum; // [rsp+80h] [rbp-18h]
-    float fVal; // [rsp+84h] [rbp-14h]
+    unsigned int statIndex; // [rsp+20h] [rbp-78h]
+    unsigned int skillCountByMastery[12]; // [rsp+38h] [rbp-60h] BYREF
+    _skill_fld *skillRecord; // [rsp+68h] [rbp-30h]
+    int skillIndex; // [rsp+70h] [rbp-28h]
+    _skill_fld *masterySkillRecord; // [rsp+78h] [rbp-20h]
+    unsigned int newMasteryCum; // [rsp+80h] [rbp-18h]
+    float masteryShare; // [rsp+84h] [rbp-14h]
   if ( nCum < 0 )
       return 0;
-    for ( dwStatIndex = 0; (int)dwStatIndex < 2; ++dwStatIndex )
+    for ( statIndex = 0; (int)statIndex < 2; ++statIndex )
     {
-      this->Emb_UpdateStat( dwStatIndex, nCum, 0);
-      this->m_pmMst.UpdateCumPerMast(0, dwStatIndex, nCum);
-      this->SendMsg_StatInform( dwStatIndex, nCum, 0);
+      this->Emb_UpdateStat( statIndex, nCum, 0);
+      this->m_pmMst.UpdateCumPerMast(0, statIndex, nCum);
+      this->SendMsg_StatInform( statIndex, nCum, 0);
     }
     this->Emb_UpdateStat( 2u, nCum, 0);
     this->m_pmMst.UpdateCumPerMast(1u, 0, nCum);
@@ -1275,49 +1210,52 @@ char CPlayer::dev_up_all(int nCum)
     this->Emb_UpdateStat( 3u, nCum, 0);
     this->m_pmMst.UpdateCumPerMast(2u, 0, nCum);
     this->SendMsg_StatInform( 3u, nCum, 0);
-    memset(v7, 0, 32);
-    Record = 0LL;
-    for ( n = 0; n < 48; ++n )
+    memset(skillCountByMastery, 0, 32);
+    skillRecord = 0LL;
+    for ( skillIndex = 0; skillIndex < 48; ++skillIndex )
     {
-      Record = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(n));
-      if (Record && static_cast<unsigned int>(Record->m_nMastIndex) < 8u)
+      skillRecord = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(skillIndex));
+      if (skillRecord && static_cast<unsigned int>(skillRecord->m_nMastIndex) < 8u)
       {
-        if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v7[Record->m_nMastIndex];
+        if ( strncmp(skillRecord->m_strCode, "FF", 2uLL) )
+          ++skillCountByMastery[skillRecord->m_nMastIndex];
       }
     }
-    for ( n = 0; n < 8; ++n )
-      this->m_pmMst.m_dwSkillMasteryCum[n] = 0;
-    for ( dwStatIndex = 0; (int)dwStatIndex < 48; ++dwStatIndex )
+    for ( skillIndex = 0; skillIndex < 8; ++skillIndex )
+      this->m_pmMst.m_dwSkillMasteryCum[skillIndex] = 0;
+    for ( statIndex = 0; (int)statIndex < 48; ++statIndex )
     {
-      v10 = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(dwStatIndex));
-      if ( v10 && strncmp(v10->m_strCode, "FF", 2uLL) )
+      masterySkillRecord = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(statIndex));
+      if ( masterySkillRecord && strncmp(masterySkillRecord->m_strCode, "FF", 2uLL) )
       {
-        dwNewCum = nCum;
-        if (v10->m_nMastIndex >= 0 && v10->m_nMastIndex < 8 && (int)v7[v10->m_nMastIndex] > 0)
+        newMasteryCum = nCum;
+        if (masterySkillRecord->m_nMastIndex >= 0
+          && masterySkillRecord->m_nMastIndex < 8
+          && (int)skillCountByMastery[masterySkillRecord->m_nMastIndex] > 0)
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v7[v10->m_nMastIndex];
-          dwNewCum = CalcRoundUp(fVal);
+          masteryShare =
+            (float)(int)newMasteryCum / (float)(int)skillCountByMastery[masterySkillRecord->m_nMastIndex];
+          newMasteryCum = CalcRoundUp(masteryShare);
         }
-        this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);
-        this->m_pmMst.UpdateCumPerMast(3u, dwStatIndex, dwNewCum);
-        this->SendMsg_StatInform( dwStatIndex + 4, dwNewCum, 0);
+        this->Emb_UpdateStat( statIndex + 4, newMasteryCum, 0);
+        this->m_pmMst.UpdateCumPerMast(3u, statIndex, newMasteryCum);
+        this->SendMsg_StatInform( statIndex + 4, newMasteryCum, 0);
       }
     }
-    for ( dwStatIndex = 0; (int)dwStatIndex < 3; ++dwStatIndex )
+    for ( statIndex = 0; (int)statIndex < 3; ++statIndex )
     {
-      this->Emb_UpdateStat( dwStatIndex + 76, nCum, 0);
-      this->m_pmMst.UpdateCumPerMast(5u, dwStatIndex, nCum);
-      this->SendMsg_StatInform( dwStatIndex + 76, nCum, 0);
+      this->Emb_UpdateStat( statIndex + 76, nCum, 0);
+      this->m_pmMst.UpdateCumPerMast(5u, statIndex, nCum);
+      this->SendMsg_StatInform( statIndex + 76, nCum, 0);
     }
     this->Emb_UpdateStat( 0x4Fu, nCum, 0);
     this->m_pmMst.UpdateCumPerMast(6u, 0, nCum);
     this->SendMsg_StatInform( 0x4Fu, nCum, 0);
-    for ( dwStatIndex = 0; (int)dwStatIndex < 24; ++dwStatIndex )
+    for ( statIndex = 0; (int)statIndex < 24; ++statIndex )
     {
-      this->Emb_UpdateStat( dwStatIndex + 52, nCum, 0);
-      this->m_pmMst.UpdateCumPerMast(4u, dwStatIndex, nCum);
-      this->SendMsg_StatInform( dwStatIndex + 52, nCum, 0);
+      this->Emb_UpdateStat( statIndex + 52, nCum, 0);
+      this->m_pmMst.UpdateCumPerMast(4u, statIndex, nCum);
+      this->SendMsg_StatInform( statIndex + 52, nCum, 0);
     }
     this->ReCalcMaxHFSP( 1, 0);
     return 1;
@@ -1325,134 +1263,119 @@ char CPlayer::dev_up_all(int nCum)
 
 char CPlayer::dev_up_all_pt(int nLv)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    float v5; // xmm0_4
-    float v6; // xmm0_4
-    float v7; // xmm0_4
-    float v8; // xmm1_4
-    float v9; // xmm0_4
-    float v10; // xmm0_4
-    float v11; // xmm0_4
-    float v12; // xmm0_4
-    float v13; // xmm0_4
-    float v14; // xmm1_4
-    __int64 v15; // [rsp+0h] [rbp-A8h] BYREF
-    unsigned int dwNewData; // [rsp+20h] [rbp-88h]
-    unsigned int dwStatIndex; // [rsp+24h] [rbp-84h]
-    _DWORD v18[12]; // [rsp+38h] [rbp-70h] BYREF
-    _skill_fld *Record; // [rsp+68h] [rbp-40h]
-    int n; // [rsp+70h] [rbp-38h]
-    _skill_fld *v21; // [rsp+78h] [rbp-30h]
-    unsigned int dwNewCum; // [rsp+80h] [rbp-28h]
-    float fVal; // [rsp+84h] [rbp-24h]
-    float v24; // [rsp+88h] [rbp-20h]
-    float v25; // [rsp+8Ch] [rbp-1Ch]
-    float v26; // [rsp+90h] [rbp-18h]
+    unsigned int newStatValue; // [rsp+20h] [rbp-88h]
+    unsigned int statIndex; // [rsp+24h] [rbp-84h]
+    unsigned int skillCountByMastery[12]; // [rsp+38h] [rbp-70h] BYREF
+    _skill_fld *skillRecord; // [rsp+68h] [rbp-40h]
+    int skillIndex; // [rsp+70h] [rbp-38h]
+    _skill_fld *masterySkillRecord; // [rsp+78h] [rbp-30h]
+    unsigned int newMasteryCum; // [rsp+80h] [rbp-28h]
+    float masteryShare; // [rsp+84h] [rbp-24h]
+    float baseOffsetSquared; // [rsp+88h] [rbp-20h]
+    float forceOffsetSquared; // [rsp+8Ch] [rbp-1Ch]
+    float raceOffsetSquared; // [rsp+90h] [rbp-18h]
   if ( nLv <= 0 || nLv > 99 )
       return 0;
-    v24 = pow(1000.0, 2);
-    v5 = pow((float)nLv, 2);
-    v6 = sqrt(v24 + (float)((float)(4.0 * v5) * 1000.0));
-    dwNewData = (int)pow((float)(v6 + -1000.0) / 2.0, 2);
-    for ( dwStatIndex = 0; (int)dwStatIndex < 2; ++dwStatIndex )
+    baseOffsetSquared = pow(1000.0, 2);
+    const float baseLevelSquared = pow((float)nLv, 2);
+    const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0));
+    newStatValue = (int)pow((float)(baseRoot + -1000.0) / 2.0, 2);
+    for ( statIndex = 0; (int)statIndex < 2; ++statIndex )
     {
-      this->Emb_UpdateStat( dwStatIndex, dwNewData, 0);
-      this->m_pmMst.UpdateCumPerMast(0, dwStatIndex, dwNewData);
-      this->SendMsg_StatInform( dwStatIndex, dwNewData, 0);
+      this->Emb_UpdateStat( statIndex, newStatValue, 0);
+      this->m_pmMst.UpdateCumPerMast(0, statIndex, newStatValue);
+      this->SendMsg_StatInform( statIndex, newStatValue, 0);
     }
-    this->Emb_UpdateStat( 2u, dwNewData, 0);
-    this->m_pmMst.UpdateCumPerMast(1u, 0, dwNewData);
-    this->SendMsg_StatInform( 2u, dwNewData, 0);
-    v25 = pow(100.0, 2);
-    v7 = pow((float)nLv, 2);
-    v8 = sqrt(v25 + (float)((float)(4.0 * v7) * 100.0)) + -100.0;
-    dwNewData = (int)pow(v8 / 2.0, 2);
-    this->Emb_UpdateStat( 3u, dwNewData, 0);
-    this->m_pmMst.UpdateCumPerMast(2u, 0, dwNewData);
-    this->SendMsg_StatInform( 3u, dwNewData, 0);
-    v9 = pow((float)nLv, 2);
-    v10 = pow(v9, 2);
-    dwNewData = (int)(float)((float)(CalcRoundUp(v10 / 10.0) - 1) + 0.0099999998);
-    memset(v18, 0, 32);
-    Record = 0LL;
-    for ( n = 0; n < 48; ++n )
+    this->Emb_UpdateStat( 2u, newStatValue, 0);
+    this->m_pmMst.UpdateCumPerMast(1u, 0, newStatValue);
+    this->SendMsg_StatInform( 2u, newStatValue, 0);
+    forceOffsetSquared = pow(100.0, 2);
+    const float forceLevelSquared = pow((float)nLv, 2);
+    const float forceRoot = sqrt(forceOffsetSquared + (float)((float)(4.0 * forceLevelSquared) * 100.0)) + -100.0;
+    newStatValue = (int)pow(forceRoot / 2.0, 2);
+    this->Emb_UpdateStat( 3u, newStatValue, 0);
+    this->m_pmMst.UpdateCumPerMast(2u, 0, newStatValue);
+    this->SendMsg_StatInform( 3u, newStatValue, 0);
+    const float skillLevelSquared = pow((float)nLv, 2);
+    const float skillLevelPow4 = pow(skillLevelSquared, 2);
+    newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
+    memset(skillCountByMastery, 0, 32);
+    skillRecord = 0LL;
+    for ( skillIndex = 0; skillIndex < 48; ++skillIndex )
     {
-      Record = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(n));
-      if (Record && static_cast<unsigned int>(Record->m_nMastIndex) < 8u)
+      skillRecord = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(skillIndex));
+      if (skillRecord && static_cast<unsigned int>(skillRecord->m_nMastIndex) < 8u)
       {
-        if ( strncmp(Record->m_strCode, "FF", 2uLL) )
-          ++v18[Record->m_nMastIndex];
+        if ( strncmp(skillRecord->m_strCode, "FF", 2uLL) )
+          ++skillCountByMastery[skillRecord->m_nMastIndex];
       }
     }
-    for ( n = 0; n < 8; ++n )
-      this->m_pmMst.m_dwSkillMasteryCum[n] = 0;
-    for ( dwStatIndex = 0; (int)dwStatIndex < 48; ++dwStatIndex )
+    for ( skillIndex = 0; skillIndex < 8; ++skillIndex )
+      this->m_pmMst.m_dwSkillMasteryCum[skillIndex] = 0;
+    for ( statIndex = 0; (int)statIndex < 48; ++statIndex )
     {
-      v21 = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(dwStatIndex));
-      if ( v21 && strncmp(v21->m_strCode, "FF", 2uLL) )
+      masterySkillRecord = static_cast<_skill_fld *>(_MASTERY_PARAM::s_pSkillData->GetRecord(statIndex));
+      if ( masterySkillRecord && strncmp(masterySkillRecord->m_strCode, "FF", 2uLL) )
       {
-        dwNewCum = dwNewData;
-        if (v21->m_nMastIndex >= 0 && v21->m_nMastIndex < 8 && (int)v18[v21->m_nMastIndex] > 0)
+        newMasteryCum = newStatValue;
+        if (masterySkillRecord->m_nMastIndex >= 0
+          && masterySkillRecord->m_nMastIndex < 8
+          && (int)skillCountByMastery[masterySkillRecord->m_nMastIndex] > 0)
         {
-          fVal = (float)(int)dwNewCum / (float)(int)v18[v21->m_nMastIndex];
-          dwNewCum = CalcRoundUp(fVal);
+          masteryShare =
+            (float)(int)newMasteryCum / (float)(int)skillCountByMastery[masterySkillRecord->m_nMastIndex];
+          newMasteryCum = CalcRoundUp(masteryShare);
         }
-        this->Emb_UpdateStat( dwStatIndex + 4, dwNewCum, 0);
-        this->m_pmMst.UpdateCumPerMast(3u, dwStatIndex, dwNewCum);
-        this->SendMsg_StatInform( dwStatIndex + 4, dwNewCum, 0);
+        this->Emb_UpdateStat( statIndex + 4, newMasteryCum, 0);
+        this->m_pmMst.UpdateCumPerMast(3u, statIndex, newMasteryCum);
+        this->SendMsg_StatInform( statIndex + 4, newMasteryCum, 0);
       }
     }
-    v11 = pow((float)nLv, 2);
-    v12 = pow(v11, 2);
-    dwNewData = (int)(float)((float)(CalcRoundUp(v12 / 14.0) - 1) + 0.0099999998);
-    for ( dwStatIndex = 0; (int)dwStatIndex < 24; ++dwStatIndex )
+    const float forceItemLevelSquared = pow((float)nLv, 2);
+    const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
+    newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
+    for ( statIndex = 0; (int)statIndex < 24; ++statIndex )
     {
-      this->Emb_UpdateStat( dwStatIndex + 52, dwNewData, 0);
-      this->m_pmMst.UpdateCumPerMast(4u, dwStatIndex, dwNewData);
-      this->SendMsg_StatInform( dwStatIndex + 52, dwNewData, 0);
+      this->Emb_UpdateStat( statIndex + 52, newStatValue, 0);
+      this->m_pmMst.UpdateCumPerMast(4u, statIndex, newStatValue);
+      this->SendMsg_StatInform( statIndex + 52, newStatValue, 0);
     }
-    for ( dwStatIndex = 0; (int)dwStatIndex < 3; ++dwStatIndex )
+    for ( statIndex = 0; (int)statIndex < 3; ++statIndex )
     {
-      if ( dwStatIndex > 1 )
+      if ( statIndex > 1 )
       {
-        if ( dwStatIndex == 2 )
-          dwNewData = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 10.0) + 0.89999998);
+        if ( statIndex == 2 )
+          newStatValue = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 10.0) + 0.89999998);
       }
       else
       {
-        dwNewData = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 1.1) + 0.89999998);
+        newStatValue = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 1.1) + 0.89999998);
       }
-      this->Emb_UpdateStat( dwStatIndex + 76, dwNewData, 0);
-      this->m_pmMst.UpdateCumPerMast(5u, dwStatIndex, dwNewData);
-      this->SendMsg_StatInform( dwStatIndex + 76, dwNewData, 0);
+      this->Emb_UpdateStat( statIndex + 76, newStatValue, 0);
+      this->m_pmMst.UpdateCumPerMast(5u, statIndex, newStatValue);
+      this->SendMsg_StatInform( statIndex + 76, newStatValue, 0);
     }
     if ( !(unsigned int)this->m_Param.GetRaceCode()
       || (unsigned int)this->m_Param.GetRaceCode() == 1 )
     {
-      dwNewData = (int)(float)(pow((float)(nLv - 1), 2) * 15000.0);
+      newStatValue = (int)(float)(pow((float)(nLv - 1), 2) * 15000.0);
     }
     else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
     {
-      v26 = pow(1000.0, 2);
-      v13 = pow((float)nLv, 2);
-      v14 = sqrt(v26 + (float)((float)(4.0 * v13) * 1000.0)) + -1000.0;
-      dwNewData = (int)pow(v14 / 2.0, 2);
+      raceOffsetSquared = pow(1000.0, 2);
+      const float raceLevelSquared = pow((float)nLv, 2);
+      const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+      newStatValue = (int)pow(raceRoot / 2.0, 2);
     }
-    this->Emb_UpdateStat( 0x4Fu, dwNewData, 0);
-    this->m_pmMst.UpdateCumPerMast(6u, 0, dwNewData);
-    this->SendMsg_StatInform( 0x4Fu, dwNewData, 0);
+    this->Emb_UpdateStat( 0x4Fu, newStatValue, 0);
+    this->m_pmMst.UpdateCumPerMast(6u, 0, newStatValue);
+    this->SendMsg_StatInform( 0x4Fu, newStatValue, 0);
     this->ReCalcMaxHFSP( 1, 0);
     return 1;
 }
 
 char CPlayer::dev_up_cashbag(long double dPoint)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-28h] BYREF
   if (this->GetLevel() < 39)
       return 0;
     if ( this->m_Param.m_pClassData->m_nGrade < 1 )
@@ -1463,31 +1386,27 @@ char CPlayer::dev_up_cashbag(long double dPoint)
 
 char CPlayer::dev_up_forceitem(int nCum)
 {
+    int slotIndex; // [rsp+30h] [rbp-18h]
+    _STORAGE_LIST::_db_con *forceItem; // [rsp+38h] [rbp-10h]
+    int clampedCum; // [rsp+58h] [rbp+10h]
 
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-48h] BYREF
-    int n; // [rsp+30h] [rbp-18h]
-    _STORAGE_LIST::_db_con *v7; // [rsp+38h] [rbp-10h]
-    int nUpdate; // [rsp+58h] [rbp+10h]
-
-    nUpdate = nCum;
+    clampedCum = nCum;
   if ( nCum < 0 )
       return 0;
     if ( !this->m_pUserDB )
       return 0;
     if ( nCum > 0xFFFFFF )
-      nUpdate = 0xFFFFFF;
-    for ( n = 0; n < 88; ++n )
+      clampedCum = 0xFFFFFF;
+    for ( slotIndex = 0; slotIndex < 88; ++slotIndex )
     {
-      v7 = &this->m_Param.m_dbForce.m_pStorageList[n];
-      if ( v7->m_bLoad )
+      forceItem = &this->m_Param.m_dbForce.m_pStorageList[slotIndex];
+      if ( forceItem->m_bLoad )
       {
-        if ( !v7->m_bLock )
+        if ( !forceItem->m_bLock )
         {
-          this->m_pUserDB->Update_ItemDur( 3u, n, nUpdate, 0);
-          this->m_Param.m_pStoragePtr[3]->UpdateCurDur(n, nUpdate);
-          this->SendMsg_FcitemInform( v7->m_wSerial, nUpdate);
+          this->m_pUserDB->Update_ItemDur( 3u, slotIndex, clampedCum, 0);
+          this->m_Param.m_pStoragePtr[3]->UpdateCurDur(slotIndex, clampedCum);
+          this->SendMsg_FcitemInform( forceItem->m_wSerial, clampedCum);
         }
       }
     }
@@ -1496,45 +1415,24 @@ char CPlayer::dev_up_forceitem(int nCum)
 
 char CPlayer::dev_up_forcemastery(unsigned int nCum)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-    int j; // [rsp+20h] [rbp-18h]
-  for ( j = 0; j < 24; ++j )
-      this->Emb_UpdateStat( j + 52, nCum, 0);
+  for ( int forceMasteryIndex = 0; forceMasteryIndex < 24; ++forceMasteryIndex )
+      this->Emb_UpdateStat( forceMasteryIndex + 52, nCum, 0);
     return 1;
 }
 
 char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int nLv)
 {
-
-    __int64 *v4; // rdi
-    __int64 i; // rcx
-    float v7; // xmm0_4
-    float v8; // xmm1_4
-    float v9; // xmm0_4
-    float v10; // xmm1_4
-    float v11; // xmm0_4
-    float v12; // xmm1_4
-    float v13; // xmm0_4
-    float v14; // xmm0_4
-    float v15; // xmm0_4
-    float v16; // xmm0_4
-    float v17; // xmm0_4
-    float v18; // xmm1_4
-    __int64 v19; // [rsp+0h] [rbp-58h] BYREF
-    unsigned int dwNewData; // [rsp+20h] [rbp-38h]
-    unsigned int dwStatIndex; // [rsp+24h] [rbp-34h]
-    unsigned int dwNewStat; // [rsp+28h] [rbp-30h]
-    int j; // [rsp+2Ch] [rbp-2Ch]
-    int v24; // [rsp+30h] [rbp-28h]
-    unsigned int StatIndex; // [rsp+34h] [rbp-24h]
-    float v26; // [rsp+38h] [rbp-20h]
-    float v27; // [rsp+3Ch] [rbp-1Ch]
-    float v28; // [rsp+40h] [rbp-18h]
-    float v29; // [rsp+44h] [rbp-14h]
-    unsigned __int64 v30; // [rsp+48h] [rbp-10h]
+    unsigned int newStatValue; // [rsp+20h] [rbp-38h]
+    unsigned int statIndex; // [rsp+24h] [rbp-34h]
+    unsigned int newSkillStatValue; // [rsp+28h] [rbp-30h]
+    int skillIndexOffset; // [rsp+2Ch] [rbp-2Ch]
+    int masterySkillIndex; // [rsp+30h] [rbp-28h]
+    unsigned int skillStatIndex; // [rsp+34h] [rbp-24h]
+    float baseOffsetSquared; // [rsp+38h] [rbp-20h]
+    float weaponOffsetSquared; // [rsp+3Ch] [rbp-1Ch]
+    float classOffsetSquared; // [rsp+40h] [rbp-18h]
+    float raceOffsetSquared; // [rsp+44h] [rbp-14h]
+    unsigned __int64 masterySkillGroupOffset; // [rsp+48h] [rbp-10h]
   if ( nMasteryCode == 3 )
     {
       if ( (int)nMasteryIndex >= 8 )
@@ -1548,89 +1446,90 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
       return 0;
     if ( nLv < 1 )
       return 0;
-    dwNewData = 0;
+    newStatValue = 0;
     if ( nMasteryCode )
     {
       switch ( nMasteryCode )
       {
         case 1:
-          v27 = pow(1000.0, 2);
-          v9 = pow((float)nLv, 2);
-          v10 = sqrt(v27 + (float)((float)(4.0 * v9) * 1000.0)) + -1000.0;
-          dwNewData = (int)pow(v10 / 2.0, 2);
+          weaponOffsetSquared = pow(1000.0, 2);
+          const float weaponLevelSquared = pow((float)nLv, 2);
+          const float weaponRoot = sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0;
+          newStatValue = (int)pow(weaponRoot / 2.0, 2);
           break;
         case 2:
-          v28 = pow(1000.0, 2);
-          v11 = pow((float)nLv, 2);
-          v12 = sqrt(v28 + (float)((float)(4.0 * v11) * 1000.0)) + -1000.0;
-          dwNewData = (int)pow(v12 / 2.0, 2);
+          classOffsetSquared = pow(1000.0, 2);
+          const float classLevelSquared = pow((float)nLv, 2);
+          const float classRoot = sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0;
+          newStatValue = (int)pow(classRoot / 2.0, 2);
           break;
         case 4:
-          v13 = pow((float)nLv, 2);
-          v14 = pow(v13, 2);
-          dwNewData = (int)(float)((float)(CalcRoundUp(v14 / 14.0) - 1) + 0.0099999998);
+          const float forceItemLevelSquared = pow((float)nLv, 2);
+          const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
+          newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
           break;
         case 3:
-          v15 = pow((float)nLv, 2);
-          v16 = pow(v15, 2);
-          dwNewData = (int)(float)((float)(CalcRoundUp(v16 / 10.0) - 1) + 0.0099999998);
+          const float skillLevelSquared = pow((float)nLv, 2);
+          const float skillLevelPow4 = pow(skillLevelSquared, 2);
+          newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
           break;
         case 5:
           if ( nMasteryIndex > 1 )
           {
             if ( nMasteryIndex == 2 )
-              dwNewData = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 10.0) + 0.89999998);
+              newStatValue = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 10.0) + 0.89999998);
           }
           else
           {
-            dwNewData = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 1.1) + 0.89999998);
+            newStatValue = (int)(float)((float)((float)((float)(pow((float)nLv, 2) - 1.0) / 3.0) * 1.1) + 0.89999998);
           }
           break;
         case 6:
           if ( !(unsigned int)this->m_Param.GetRaceCode()
             || (unsigned int)this->m_Param.GetRaceCode() == 1 )
           {
-            dwNewData = (int)(float)(pow((float)nLv - 1.0, 2) * 15000.0);
+            newStatValue = (int)(float)(pow((float)nLv - 1.0, 2) * 15000.0);
           }
           else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
           {
-            v29 = pow(1000.0, 2);
-            v17 = pow((float)nLv, 2);
-            v18 = sqrt(v29 + (float)((float)(4.0 * v17) * 1000.0)) + -1000.0;
-            dwNewData = (int)pow(v18 / 2.0, 2);
+            raceOffsetSquared = pow(1000.0, 2);
+            const float raceLevelSquared = pow((float)nLv, 2);
+            const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+            newStatValue = (int)pow(raceRoot / 2.0, 2);
           }
           break;
       }
     }
     else
     {
-      v26 = pow(1000.0, 2);
-      v7 = pow((float)nLv, 2);
-      v8 = sqrt(v26 + (float)((float)(4.0 * v7) * 1000.0)) + -1000.0;
-      dwNewData = (int)pow(v8 / 2.0, 2);
+      baseOffsetSquared = pow(1000.0, 2);
+      const float baseLevelSquared = pow((float)nLv, 2);
+      const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0)) + -1000.0;
+      newStatValue = (int)pow(baseRoot / 2.0, 2);
     }
-    if ( !dwNewData )
+    if ( !newStatValue )
       return 0;
     if ( nMasteryCode == 3 )
     {
-      v30 = 196LL * (int)nMasteryIndex;
-      dwNewStat = dwNewData / CPlayer::s_SkillIndexPerMastery[v30 / 0xC4].m_nSkillIndexNum + 1;
-      for ( j = 0; j < CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndexNum; ++j )
+      masterySkillGroupOffset = 196LL * (int)nMasteryIndex;
+      newSkillStatValue =
+        newStatValue / CPlayer::s_SkillIndexPerMastery[masterySkillGroupOffset / 0xC4].m_nSkillIndexNum + 1;
+      for ( skillIndexOffset = 0; skillIndexOffset < CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndexNum; ++skillIndexOffset )
       {
-        v24 = CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndex[j];
-        if ( dwNewStat )
+        masterySkillIndex = CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndex[skillIndexOffset];
+        if ( newSkillStatValue )
         {
-          StatIndex = _STAT_DB_BASE::GetStatIndex(3u, v24);
-          this->Emb_UpdateStat( StatIndex, dwNewStat, 0);
-          this->SendMsg_StatInform( StatIndex, dwNewStat, 0);
+          skillStatIndex = _STAT_DB_BASE::GetStatIndex(3u, masterySkillIndex);
+          this->Emb_UpdateStat( skillStatIndex, newSkillStatValue, 0);
+          this->SendMsg_StatInform( skillStatIndex, newSkillStatValue, 0);
         }
       }
     }
     else
     {
-      dwStatIndex = _STAT_DB_BASE::GetStatIndex(nMasteryCode, nMasteryIndex);
-      this->Emb_UpdateStat( dwStatIndex, dwNewData, 0);
-      this->SendMsg_StatInform( dwStatIndex, dwNewData, 0);
+      statIndex = _STAT_DB_BASE::GetStatIndex(nMasteryCode, nMasteryIndex);
+      this->Emb_UpdateStat( statIndex, newStatValue, 0);
+      this->SendMsg_StatInform( statIndex, newStatValue, 0);
     }
     return 1;
 }
@@ -1643,15 +1542,11 @@ char CPlayer::dev_up_pvp(long double dPoint)
 
 char CPlayer::dev_up_skill(char *pszSkillCode, unsigned int nCum)
 {
-
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-    _base_fld *Record; // [rsp+20h] [rbp-18h]
-  Record = g_Main.m_tblEffectData[0].GetRecord( pszSkillCode);
-    if ( !Record )
+    _base_fld *skillRecord; // [rsp+20h] [rbp-18h]
+  skillRecord = g_Main.m_tblEffectData[0].GetRecord( pszSkillCode);
+    if ( !skillRecord )
       return 0;
-    this->Emb_UpdateStat( Record->m_dwIndex + 4, nCum, 0);
+    this->Emb_UpdateStat( skillRecord->m_dwIndex + 4, nCum, 0);
     return 1;
 }
 
@@ -1771,39 +1666,34 @@ char CPlayer::dev_view_method(char *pwszDstName)
 
 char CPlayer::mgr_all_item_muzi(unsigned int nLv)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    unsigned __int8 BagNum; // al
-    __int64 v6; // [rsp+0h] [rbp-58h] BYREF
-    int j; // [rsp+30h] [rbp-28h]
-    _STORAGE_LIST::_db_con *pItem; // [rsp+38h] [rbp-20h]
-    unsigned __int8 ItemUpgLimSocket; // [rsp+40h] [rbp-18h]
-    unsigned int dwCurBit; // [rsp+44h] [rbp-14h]
-    signed int k; // [rsp+48h] [rbp-10h]
+    int slotIndex; // [rsp+30h] [rbp-28h]
+    _STORAGE_LIST::_db_con *item; // [rsp+38h] [rbp-20h]
+    unsigned __int8 upgradeSocketLimit; // [rsp+40h] [rbp-18h]
+    unsigned int upgradeState; // [rsp+44h] [rbp-14h]
+    signed int upgradeStep; // [rsp+48h] [rbp-10h]
   if ( nLv >= 8 )
       return 0;
-    for ( j = 0; ; ++j )
+    for ( slotIndex = 0; ; ++slotIndex )
     {
-      BagNum = this->m_Param.GetBagNum();
-      if ( j >= 20 * BagNum )
+      const unsigned __int8 bagNum = this->m_Param.GetBagNum();
+      if ( slotIndex >= 20 * bagNum )
         break;
-      if ( this->m_Param.m_dbInven.m_pStorageList[j].m_bLoad )
+      if ( this->m_Param.m_dbInven.m_pStorageList[slotIndex].m_bLoad )
       {
-        pItem = &this->m_Param.m_dbInven.m_pStorageList[j];
-        if ( pItem->m_bLoad )
+        item = &this->m_Param.m_dbInven.m_pStorageList[slotIndex];
+        if ( item->m_bLoad )
         {
-          if ( pItem->m_byTableCode == 6 )
+          if ( item->m_byTableCode == 6 )
           {
-            ItemUpgLimSocket = GetItemUpgLimSocket(pItem->m_dwLv);
-            if ( ItemUpgLimSocket >= (int)nLv )
+            upgradeSocketLimit = GetItemUpgLimSocket(item->m_dwLv);
+            if ( upgradeSocketLimit >= (int)nLv )
             {
-              dwCurBit = GetBitAfterSetLimSocket(ItemUpgLimSocket);
-              for ( k = 0; k < (int)nLv; ++k )
-                dwCurBit = GetBitAfterUpgrade(dwCurBit, 0, k);
-              this->Emb_ItemUpgrade( 0, 0, j, dwCurBit);
-              this->SendMsg_DeleteStorageInform( 0, pItem->m_wSerial);
-              this->SendMsg_RewardAddItem( pItem, 0);
+              upgradeState = GetBitAfterSetLimSocket(upgradeSocketLimit);
+              for ( upgradeStep = 0; upgradeStep < (int)nLv; ++upgradeStep )
+                upgradeState = GetBitAfterUpgrade(upgradeState, 0, upgradeStep);
+              this->Emb_ItemUpgrade( 0, 0, slotIndex, upgradeState);
+              this->SendMsg_DeleteStorageInform( 0, item->m_wSerial);
+              this->SendMsg_RewardAddItem( item, 0);
             }
           }
         }
@@ -1814,11 +1704,6 @@ char CPlayer::mgr_all_item_muzi(unsigned int nLv)
 
 char CPlayer::mgr_change_degree(unsigned __int8 nDegree)
 {
-
-    unsigned __int8 *v2; // rdi
-    __int64 i; // rcx
-    unsigned __int8 m_byUserDgr; // [rsp+0h] [rbp-18h] BYREF
-  m_byUserDgr = this->m_byUserDgr;
     this->m_byUserDgr = nDegree;
     this->m_pUserDB->m_byUserDgr = nDegree;
     return 1;
@@ -1826,53 +1711,48 @@ char CPlayer::mgr_change_degree(unsigned __int8 nDegree)
 
 char CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nLv)
 {
-
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    unsigned __int8 BagNum; // al
-    __int64 v7; // [rsp+0h] [rbp-58h] BYREF
-    int j; // [rsp+30h] [rbp-28h]
-    _STORAGE_LIST::_db_con *pItem; // [rsp+38h] [rbp-20h]
-    unsigned __int8 ItemUpgLimSocket; // [rsp+40h] [rbp-18h]
-    unsigned int dwCurBit; // [rsp+44h] [rbp-14h]
-    signed int k; // [rsp+48h] [rbp-10h]
+    int slotIndex; // [rsp+30h] [rbp-28h]
+    _STORAGE_LIST::_db_con *item; // [rsp+38h] [rbp-20h]
+    unsigned __int8 upgradeSocketLimit; // [rsp+40h] [rbp-18h]
+    unsigned int upgradeState; // [rsp+44h] [rbp-14h]
+    signed int upgradeStep; // [rsp+48h] [rbp-10h]
   if ( nLv >= 8 )
       return 0;
-    pItem = 0LL;
-    for ( j = 0; ; ++j )
+    item = 0LL;
+    for ( slotIndex = 0; ; ++slotIndex )
     {
-      BagNum = this->m_Param.GetBagNum();
-      if ( j >= 20 * BagNum )
+      const unsigned __int8 bagNum = this->m_Param.GetBagNum();
+      if ( slotIndex >= 20 * bagNum )
         break;
-      pItem = &this->m_Param.m_dbInven.m_pStorageList[j];
-      if ( pItem && pItem->m_bLoad )
+      item = &this->m_Param.m_dbInven.m_pStorageList[slotIndex];
+      if ( item && item->m_bLoad )
       {
         if ( byItemCode == 37 )
         {
-          if ( pItem->m_byTableCode
-            && pItem->m_byTableCode != 1
-            && pItem->m_byTableCode != 2
-            && pItem->m_byTableCode != 3
-            && pItem->m_byTableCode != 4
-            && pItem->m_byTableCode != 5
-            && pItem->m_byTableCode != 7 )
+          if ( item->m_byTableCode
+            && item->m_byTableCode != 1
+            && item->m_byTableCode != 2
+            && item->m_byTableCode != 3
+            && item->m_byTableCode != 4
+            && item->m_byTableCode != 5
+            && item->m_byTableCode != 7 )
           {
             continue;
           }
         }
-        else if ( pItem->m_byTableCode != byItemCode )
+        else if ( item->m_byTableCode != byItemCode )
         {
           continue;
         }
-        ItemUpgLimSocket = GetItemUpgLimSocket(pItem->m_dwLv);
-        if ( ItemUpgLimSocket >= (int)nLv )
+        upgradeSocketLimit = GetItemUpgLimSocket(item->m_dwLv);
+        if ( upgradeSocketLimit >= (int)nLv )
         {
-          dwCurBit = GetBitAfterSetLimSocket(ItemUpgLimSocket);
-          for ( k = 0; k < (int)nLv; ++k )
-            dwCurBit = GetBitAfterUpgrade(dwCurBit, 5u, k);
-          this->Emb_ItemUpgrade( 0, 0, j, dwCurBit);
-          this->SendMsg_DeleteStorageInform( 0, pItem->m_wSerial);
-          this->SendMsg_RewardAddItem( pItem, 0);
+          upgradeState = GetBitAfterSetLimSocket(upgradeSocketLimit);
+          for ( upgradeStep = 0; upgradeStep < (int)nLv; ++upgradeStep )
+            upgradeState = GetBitAfterUpgrade(upgradeState, 5u, upgradeStep);
+          this->Emb_ItemUpgrade( 0, 0, slotIndex, upgradeState);
+          this->SendMsg_DeleteStorageInform( 0, item->m_wSerial);
+          this->SendMsg_RewardAddItem( item, 0);
         }
       }
     }
@@ -1881,62 +1761,56 @@ char CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nL
 
 char CPlayer::mgr_destroy_system_tower()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    int CurSecNum; // eax
-    _sec_info *SecInfo; // rax
-    __int64 v6; // [rsp+0h] [rbp-208h] BYREF
     _pnt_rect pRect; // [rsp+28h] [rbp-1E0h] BYREF
-    int j; // [rsp+44h] [rbp-1C4h]
-    int k; // [rsp+48h] [rbp-1C0h]
+    int secY; // [rsp+44h] [rbp-1C4h]
+    int secX; // [rsp+48h] [rbp-1C0h]
     unsigned int dwSecIndex; // [rsp+4Ch] [rbp-1BCh]
-    CObjectList *SectorListObj; // [rsp+50h] [rbp-1B8h]
-    _object_list_point *m_pNext; // [rsp+58h] [rbp-1B0h]
-    CGuardTower *m_pItem; // [rsp+60h] [rbp-1A8h]
-    _object_id *p_m_ObjID; // [rsp+68h] [rbp-1A0h]
-    CGuardTower *v15; // [rsp+70h] [rbp-198h]
+    CObjectList *sectorList; // [rsp+50h] [rbp-1B8h]
+    _object_list_point *node; // [rsp+58h] [rbp-1B0h]
+    CGuardTower *guardTower; // [rsp+60h] [rbp-1A8h]
+    _object_id *objectId; // [rsp+68h] [rbp-1A0h]
+    CGuardTower *systemTower; // [rsp+70h] [rbp-198h]
     char wszTran[152]; // [rsp+90h] [rbp-178h] BYREF
-    LPCSTR lpAppName[7]; // [rsp+128h] [rbp-E0h]
+    LPCSTR appNameByRace[7]; // [rsp+128h] [rbp-E0h]
     char Buffer[144]; // [rsp+160h] [rbp-A8h] BYREF
-  CurSecNum = this->GetCurSecNum();
-    this->m_pCurMap->GetRectInRadius( &pRect, 1, CurSecNum);
-    for ( j = pRect.nStarty; j <= pRect.nEndy; ++j )
+  const int curSecNum = this->GetCurSecNum();
+    this->m_pCurMap->GetRectInRadius( &pRect, 1, curSecNum);
+    for ( secY = pRect.nStarty; secY <= pRect.nEndy; ++secY )
     {
-      for ( k = pRect.nStartx; k <= pRect.nEndx; ++k )
+      for ( secX = pRect.nStartx; secX <= pRect.nEndx; ++secX )
       {
-        SecInfo = this->m_pCurMap->GetSecInfo();
-        dwSecIndex = SecInfo->m_nSecNumW * j + k;
-        SectorListObj = this->m_pCurMap->GetSectorListObj(this->m_wMapLayerIndex, dwSecIndex);
-        if ( SectorListObj )
+        _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
+        dwSecIndex = secInfo->m_nSecNumW * secY + secX;
+        sectorList = this->m_pCurMap->GetSectorListObj(this->m_wMapLayerIndex, dwSecIndex);
+        if ( sectorList )
         {
-          m_pNext = SectorListObj->m_Head.m_pNext;
-          while ( m_pNext != &SectorListObj->m_Tail )
+          node = sectorList->m_Head.m_pNext;
+          while ( node != &sectorList->m_Tail )
           {
-            m_pItem = (CGuardTower *)m_pNext->m_pItem;
-            m_pNext = m_pNext->m_pNext;
-            p_m_ObjID = &m_pItem->m_ObjID;
-            if ( !m_pItem->m_ObjID.m_byKind && p_m_ObjID->m_byID == 4 )
+            guardTower = (CGuardTower *)node->m_pItem;
+            node = node->m_pNext;
+            objectId = &guardTower->m_ObjID;
+            if ( !guardTower->m_ObjID.m_byKind && objectId->m_byID == 4 )
             {
-              v15 = m_pItem;
-              if ( m_pItem->m_bSystemStruct
-                && abs(m_pItem->m_fCurPos[1] - this->m_fCurPos[1]) <= 100.0
-                && GetSqrt(m_pItem->m_fCurPos, this->m_fCurPos) < 20.0 )
+              systemTower = guardTower;
+              if ( guardTower->m_bSystemStruct
+                && abs(guardTower->m_fCurPos[1] - this->m_fCurPos[1]) <= 100.0
+                && GetSqrt(guardTower->m_fCurPos, this->m_fCurPos) < 20.0 )
               {
-                M2W(v15->m_pRecordSet->m_strCode, wszTran, 0x80u);
-                if ( v15->m_nIniIndex != -1 )
+                M2W(systemTower->m_pRecordSet->m_strCode, wszTran, 0x80u);
+                if ( systemTower->m_nIniIndex != -1 )
                 {
-                  lpAppName[0] = "BELLATO";
-                  lpAppName[1] = "CORA";
-                  lpAppName[2] = "ACCRETIA";
-                  sprintf(Buffer, "Map%d", v15->m_nIniIndex);
+                  appNameByRace[0] = "BELLATO";
+                  appNameByRace[1] = "CORA";
+                  appNameByRace[2] = "ACCRETIA";
+                  sprintf(Buffer, "Map%d", systemTower->m_nIniIndex);
                   WritePrivateProfileStringA(
-                    lpAppName[v15->m_byRaceCode],
+                    appNameByRace[systemTower->m_byRaceCode],
                     Buffer,
                     "NULL",
                     ".\\Script\\SystemGuardTower.ini");
                 }
-                v15->Destroy(0, true);
+                systemTower->Destroy(0, true);
                 return 1;
               }
             }
@@ -2013,52 +1887,47 @@ char CPlayer::mgr_goto_mine()
 
 char CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
 {
-
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    unsigned __int8 MapCode; // al
-    __int64 v7; // [rsp+0h] [rbp-88h] BYREF
-    CTransportShip *v8; // [rsp+30h] [rbp-58h]
-    _portal_dummy *Portal; // [rsp+38h] [rbp-50h]
-    CMapData *pIntoMap; // [rsp+40h] [rbp-48h]
-    _portal_dummy *v11; // [rsp+48h] [rbp-40h]
-    float pNewPos[12]; // [rsp+58h] [rbp-30h] BYREF
+    CTransportShip *transportShip; // [rsp+30h] [rbp-58h]
+    _portal_dummy *sourcePortal; // [rsp+38h] [rbp-50h]
+    CMapData *destinationMap; // [rsp+40h] [rbp-48h]
+    _portal_dummy *destinationPortal; // [rsp+48h] [rbp-40h]
+    float newPos[12]; // [rsp+58h] [rbp-30h] BYREF
   if ( nRaceCode >= 3 )
       return 0;
     if ( this->GetCurSecNum() == -1 || this->m_bMapLoading )
       return 0;
-    v8 = &g_TransportShip[nRaceCode];
-    Portal = v8->m_pLinkShipMap->GetPortal( 3 * nPort + nRaceCode);
-    if ( !Portal )
+    transportShip = &g_TransportShip[nRaceCode];
+    sourcePortal = transportShip->m_pLinkShipMap->GetPortal( 3 * nPort + nRaceCode);
+    if ( !sourcePortal )
       return 0;
-    if ( !Portal->m_pPortalRec )
+    if ( !sourcePortal->m_pPortalRec )
       return 0;
-    pIntoMap = g_MapOper.GetMap( Portal->m_pPortalRec->m_strLinkMapCode);
-    if ( !pIntoMap )
+    destinationMap = g_MapOper.GetMap( sourcePortal->m_pPortalRec->m_strLinkMapCode);
+    if ( !destinationMap )
       return 0;
-    v11 = pIntoMap->GetPortal( Portal->m_pPortalRec->m_strLinkPortalCode);
-    if ( !v11 )
+    destinationPortal = destinationMap->GetPortal( sourcePortal->m_pPortalRec->m_strLinkPortalCode);
+    if ( !destinationPortal )
       return 0;
-    if ( !pIntoMap->GetRandPosInDummy( v11->m_pDumPos, pNewPos, 1) )
-      memcpy_0(pNewPos, v11->m_pDumPos->m_fCenterPos, 0xCuLL);
-    this->OutOfMap( pIntoMap, 0, 4u, pNewPos);
-    MapCode = this->m_Param.GetMapCode();
-    this->SendMsg_GotoRecallResult( 0, MapCode, pNewPos, 4u);
+    if ( !destinationMap->GetRandPosInDummy( destinationPortal->m_pDumPos, newPos, 1) )
+      memcpy_0(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 0xCuLL);
+    this->OutOfMap( destinationMap, 0, 4u, newPos);
+    const unsigned __int8 mapCode = this->m_Param.GetMapCode();
+    this->SendMsg_GotoRecallResult( 0, mapCode, newPos, 4u);
     return 1;
 }
 
 char CPlayer::mgr_goto_stone(unsigned __int8 byRaceCode)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-48h] BYREF
-    __holy_stone_data *v6; // [rsp+30h] [rbp-18h]
+    __holy_stone_data *holyStoneData; // [rsp+30h] [rbp-18h]
   if ( byRaceCode >= 3u )
       return 0;
-    v6 = &g_HolySys.m_HolyStoneData[byRaceCode];
-    this->OutOfMap( v6->pCreateMap, 0, 4u, v6->CreateDummy.m_fCenterPos);
-    this->SendMsg_GotoRecallResult( 0, v6->pCreateMap->m_pMapSet->m_dwIndex, v6->CreateDummy.m_fCenterPos, 4u);
+    holyStoneData = &g_HolySys.m_HolyStoneData[byRaceCode];
+    this->OutOfMap( holyStoneData->pCreateMap, 0, 4u, holyStoneData->CreateDummy.m_fCenterPos);
+    this->SendMsg_GotoRecallResult(
+      0,
+      holyStoneData->pCreateMap->m_pMapSet->m_dwIndex,
+      holyStoneData->CreateDummy.m_fCenterPos,
+      4u);
     return 1;
 }
 
@@ -2115,40 +1984,32 @@ char CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
 
 char CPlayer::mgr_gotoCoordinates(char *pszMapCode, float fX, float fY, float fZ)
 {
-
-    __int64 *v5; // rdi
-    __int64 i; // rcx
-    __int64 v8; // [rsp+0h] [rbp-78h] BYREF
-    CMapData *pIntoMap; // [rsp+30h] [rbp-48h]
-    float fPos[12]; // [rsp+48h] [rbp-30h] BYREF
-  pIntoMap = g_MapOper.GetMap( pszMapCode);
-    if ( !pIntoMap )
+    CMapData *destinationMap; // [rsp+30h] [rbp-48h]
+    float targetPos[12]; // [rsp+48h] [rbp-30h] BYREF
+  destinationMap = g_MapOper.GetMap( pszMapCode);
+    if ( !destinationMap )
       return 0;
-    if ( pIntoMap->m_pMapSet->m_nMapType )
+    if ( destinationMap->m_pMapSet->m_nMapType )
       return 0;
-    fPos[0] = fX;
-    fPos[1] = fY;
-    fPos[2] = fZ;
-    if ( !pIntoMap->IsMapIn( fPos) )
+    targetPos[0] = fX;
+    targetPos[1] = fY;
+    targetPos[2] = fZ;
+    if ( !destinationMap->IsMapIn( targetPos) )
       return 0;
-    this->OutOfMap( pIntoMap, 0, 4u, fPos);
-    this->SendMsg_GotoRecallResult( 0, pIntoMap->m_pMapSet->m_dwIndex, fPos, 4u);
+    this->OutOfMap( destinationMap, 0, 4u, targetPos);
+    this->SendMsg_GotoRecallResult( 0, destinationMap->m_pMapSet->m_dwIndex, targetPos, 4u);
     return 1;
 }
 
 char CPlayer::mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float fX, float fY, float fZ)
 {
-
-    __int64 *v6; // rdi
-    __int64 i; // rcx
-    __int64 v9; // [rsp+0h] [rbp-78h] BYREF
-    CPlayer *PtrPlayerFromName; // [rsp+30h] [rbp-48h]
-    CMapData *pIntoMap; // [rsp+38h] [rbp-40h]
-    float fPos[12]; // [rsp+48h] [rbp-30h] BYREF
-  PtrPlayerFromName = 0LL;
+    CPlayer *targetPlayer; // [rsp+30h] [rbp-48h]
+    CMapData *destinationMap; // [rsp+38h] [rbp-40h]
+    float targetPos[12]; // [rsp+48h] [rbp-30h] BYREF
+  targetPlayer = 0LL;
     if ( pwszDstName )
     {
-    PtrPlayerFromName = GetPtrPlayerFromName(g_Player, MAX_PLAYER, pwszDstName);
+    targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, pwszDstName);
     }
     else
     {
@@ -2163,22 +2024,22 @@ char CPlayer::mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float 
       {
         return 0;
       }
-      PtrPlayerFromName = (CPlayer *)this->m_TargetObject.pObject;
+      targetPlayer = (CPlayer *)this->m_TargetObject.pObject;
     }
-    if ( !PtrPlayerFromName )
+    if ( !targetPlayer )
       return 0;
-    pIntoMap = g_MapOper.GetMap( pszMapCode);
-    if ( !pIntoMap )
+    destinationMap = g_MapOper.GetMap( pszMapCode);
+    if ( !destinationMap )
       return 0;
-    if ( pIntoMap->m_pMapSet->m_nMapType )
+    if ( destinationMap->m_pMapSet->m_nMapType )
       return 0;
-    fPos[0] = fX;
-    fPos[1] = fY;
-    fPos[2] = fZ;
-    if ( !pIntoMap->IsMapIn( fPos) )
+    targetPos[0] = fX;
+    targetPos[1] = fY;
+    targetPos[2] = fZ;
+    if ( !destinationMap->IsMapIn( targetPos) )
       return 0;
-    PtrPlayerFromName->OutOfMap( pIntoMap, 0, 4u, fPos);
-    PtrPlayerFromName->SendMsg_GotoRecallResult( 0, pIntoMap->m_pMapSet->m_dwIndex, fPos, 4u);
+    targetPlayer->OutOfMap( destinationMap, 0, 4u, targetPos);
+    targetPlayer->SendMsg_GotoRecallResult( 0, destinationMap->m_pMapSet->m_dwIndex, targetPos, 4u);
     return 1;
 }
 
@@ -2357,17 +2218,13 @@ char CPlayer::mgr_item_telekinesis()
 
 char CPlayer::mgr_kick(char *pwszCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-48h] BYREF
-    CUserDB *v6; // [rsp+30h] [rbp-18h]
+    CUserDB *targetUserDb; // [rsp+30h] [rbp-18h]
   if ( pwszCharName )
     {
-      v6 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
-      if ( v6 )
+      targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
+      if ( targetUserDb )
       {
-        v6->ForceCloseCommand( 0, 0, 1, "Kick By GM");
+        targetUserDb->ForceCloseCommand( 0, 0, 1, "Kick By GM");
         return 1;
       }
       else
@@ -2412,75 +2269,77 @@ char CPlayer::mgr_kick(char *pwszCharName)
 
 char CPlayer::mgr_make_system_tower(char *pszTowerCode)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-3D8h] BYREF
     char wszTran[136]; // [rsp+40h] [rbp-398h] BYREF
-    _GuardTowerItem_fld *Record; // [rsp+C8h] [rbp-310h]
-    int v8; // [rsp+D0h] [rbp-308h]
-    int j; // [rsp+D4h] [rbp-304h]
-    LPCSTR lpAppName[9]; // [rsp+E8h] [rbp-2F0h]
+    _GuardTowerItem_fld *towerRecord; // [rsp+C8h] [rbp-310h]
+    int raceIndex; // [rsp+D0h] [rbp-308h]
+    int iniSlotIndex; // [rsp+D4h] [rbp-304h]
+    LPCSTR appNameByRace[9]; // [rsp+E8h] [rbp-2F0h]
     int nIniIndex; // [rsp+134h] [rbp-2A4h]
     char ReturnedString[160]; // [rsp+150h] [rbp-288h] BYREF
     char Buffer[160]; // [rsp+1F0h] [rbp-1E8h] BYREF
     char KeyName[160]; // [rsp+290h] [rbp-148h] BYREF
     char String[144]; // [rsp+330h] [rbp-A8h] BYREF
   M2W(pszTowerCode, wszTran, 0x80u);
-    Record = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(pszTowerCode));
-    if ( !Record )
+    towerRecord = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(pszTowerCode));
+    if ( !towerRecord )
       return 0;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
       return 0;
-    v8 = -1;
-    for ( j = 0; j < 3; ++j )
+    raceIndex = -1;
+    for ( iniSlotIndex = 0; iniSlotIndex < 3; ++iniSlotIndex )
     {
-      if (Record->m_strCivil[2 * j] == 49)
+      if (towerRecord->m_strCivil[2 * iniSlotIndex] == '1')
       {
-        v8 = j;
+        raceIndex = iniSlotIndex;
         break;
       }
     }
-    if ( v8 == -1 )
+    if ( raceIndex == -1 )
       return 0;
-    lpAppName[0] = "BELLATO";
-    lpAppName[1] = "CORA";
-    lpAppName[2] = "ACCRETIA";
-    lpAppName[6] = "BELLATO";
-    lpAppName[7] = "CORA";
-    lpAppName[8] = "ACCRETIA";
+    appNameByRace[0] = "BELLATO";
+    appNameByRace[1] = "CORA";
+    appNameByRace[2] = "ACCRETIA";
+    appNameByRace[6] = "BELLATO";
+    appNameByRace[7] = "CORA";
+    appNameByRace[8] = "ACCRETIA";
     nIniIndex = -1;
-    for ( j = 0; j < 50; ++j )
+    for ( iniSlotIndex = 0; iniSlotIndex < 50; ++iniSlotIndex )
     {
-      sprintf(Buffer, "Map%d", j);
-      GetPrivateProfileStringA(lpAppName[v8], Buffer, "NULL", ReturnedString, 0x80u, ".\\Script\\SystemGuardTower.ini");
+      sprintf(Buffer, "Map%d", iniSlotIndex);
+      GetPrivateProfileStringA(
+        appNameByRace[raceIndex],
+        Buffer,
+        "NULL",
+        ReturnedString,
+        0x80u,
+        ".\\Script\\SystemGuardTower.ini");
       if ( !strcmp_0(ReturnedString, "NULL") )
       {
-        nIniIndex = j;
+        nIniIndex = iniSlotIndex;
         break;
       }
     }
     if ( nIniIndex == -1 )
       return 0;
-    if ( !CreateSystemTower(this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, Record->m_dwIndex, v8, nIniIndex) )
+    if ( !CreateSystemTower(this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, towerRecord->m_dwIndex, raceIndex, nIniIndex) )
       return 0;
     sprintf(KeyName, "Map%d", nIniIndex);
     WritePrivateProfileStringA(
-      lpAppName[v8],
+      appNameByRace[raceIndex],
       KeyName,
       this->m_pCurMap->m_pMapSet->m_strCode,
       ".\\Script\\SystemGuardTower.ini");
     sprintf(KeyName, "Pos%d_x", nIniIndex);
     _itoa((int)this->m_fCurPos[0], String, 10);
-    WritePrivateProfileStringA(lpAppName[v8], KeyName, String, ".\\Script\\SystemGuardTower.ini");
+    WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
     sprintf(KeyName, "Pos%d_y", nIniIndex);
     _itoa((int)this->m_fCurPos[1], String, 10);
-    WritePrivateProfileStringA(lpAppName[v8], KeyName, String, ".\\Script\\SystemGuardTower.ini");
+    WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
     sprintf(KeyName, "Pos%d_z", nIniIndex);
     _itoa((int)this->m_fCurPos[2], String, 10);
-    WritePrivateProfileStringA(lpAppName[v8], KeyName, String, ".\\Script\\SystemGuardTower.ini");
+    WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
     sprintf(KeyName, "Code%d", nIniIndex);
-    WritePrivateProfileStringA(lpAppName[v8], KeyName, Record->m_strCode, ".\\Script\\SystemGuardTower.ini");
+    WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, towerRecord->m_strCode, ".\\Script\\SystemGuardTower.ini");
     return 1;
 }
 
@@ -2512,46 +2371,46 @@ char CPlayer::mgr_pass_sch_one_step()
 
 char CPlayer::mgr_recall_guild_player(char *wszDestCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-58h] BYREF
-    CPlayer *PtrPlayerFromName; // [rsp+30h] [rbp-28h]
-    CPlayer *pPlayer; // [rsp+38h] [rbp-20h]
-    int j; // [rsp+40h] [rbp-18h]
-    _guild_member_info *v9; // [rsp+48h] [rbp-10h]
+    CPlayer *targetPlayer; // [rsp+30h] [rbp-28h]
+    CPlayer *guildMemberPlayer; // [rsp+38h] [rbp-20h]
+    int memberIndex; // [rsp+40h] [rbp-18h]
+    _guild_member_info *memberInfo; // [rsp+48h] [rbp-10h]
   if ( !wszDestCharName )
       return 0;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
       return 0;
-    PtrPlayerFromName = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
-    if ( !PtrPlayerFromName )
+    targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
+    if ( !targetPlayer )
       return 0;
-    if ( PtrPlayerFromName->m_Param.m_pGuild )
+    if ( targetPlayer->m_Param.m_pGuild )
     {
-      pPlayer = 0LL;
-      for ( j = 0; j < 50; ++j )
+      guildMemberPlayer = 0LL;
+      for ( memberIndex = 0; memberIndex < 50; ++memberIndex )
       {
-        v9 = &PtrPlayerFromName->m_Param.m_pGuild->m_MemberData[j];
-        if ( v9->IsFill() )
+        memberInfo = &targetPlayer->m_Param.m_pGuild->m_MemberData[memberIndex];
+        if ( memberInfo->IsFill() )
         {
-          if ( v9->pPlayer )
+          if ( memberInfo->pPlayer )
           {
-            pPlayer = v9->pPlayer;
-            if ( pPlayer->m_bLive && this->m_dwObjSerial != pPlayer->m_dwObjSerial )
-              pPlayer->RecallRandomPositionInRange( this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, 200);
+            guildMemberPlayer = memberInfo->pPlayer;
+            if ( guildMemberPlayer->m_bLive && this->m_dwObjSerial != guildMemberPlayer->m_dwObjSerial )
+              guildMemberPlayer->RecallRandomPositionInRange(
+                this->m_pCurMap,
+                this->m_wMapLayerIndex,
+                this->m_fCurPos,
+                200);
           }
         }
       }
       return 1;
     }
-    else if ( this->m_dwObjSerial == PtrPlayerFromName->m_dwObjSerial )
+    else if ( this->m_dwObjSerial == targetPlayer->m_dwObjSerial )
     {
       return 0;
     }
     else
     {
-      PtrPlayerFromName->RecallRandomPositionInRange(
+      targetPlayer->RecallRandomPositionInRange(
         
         this->m_pCurMap,
         this->m_wMapLayerIndex,
@@ -2563,58 +2422,51 @@ char CPlayer::mgr_recall_guild_player(char *wszDestCharName)
 
 char CPlayer::mgr_recall_mon(char *pszMonCode, int nCreateNum)
 {
+    int createIndex; // [rsp+54h] [rbp-14h]
+    int createCount; // [rsp+80h] [rbp+18h]
 
-    __int64 *v3; // rdi
-    __int64 i; // rcx
-    __int64 v6; // [rsp+0h] [rbp-68h] BYREF
-    int v7; // [rsp+50h] [rbp-18h]
-    int j; // [rsp+54h] [rbp-14h]
-    int v11; // [rsp+80h] [rbp+18h]
-
-    v11 = nCreateNum;
+    createCount = nCreateNum;
   if ( this->m_pCurMap->m_pMapSet->m_nMapType == 1 )
       return 0;
     if ( nCreateNum > 100 )
-      v11 = 100;
-    v7 = 0;
-    for ( j = 0;
-          j < v11
+      createCount = 100;
+    for ( createIndex = 0;
+          createIndex < createCount
        && CreateRepMonster(this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, pszMonCode, 0LL, 0, 1, 0, 0, 1);
-          ++j )
+          ++createIndex )
     {
-      ++v7;
     }
     return 1;
 }
 
 char CPlayer::mgr_recall_party_player(char *wszDestCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-58h] BYREF
-    CPlayer *PtrPlayerFromName; // [rsp+30h] [rbp-28h]
-    CPartyPlayer **PtrPartyMember; // [rsp+38h] [rbp-20h]
-    CPlayer *v8; // [rsp+40h] [rbp-18h]
-    int j; // [rsp+48h] [rbp-10h]
+    CPlayer *targetPlayer; // [rsp+30h] [rbp-28h]
+    CPartyPlayer **partyMembers; // [rsp+38h] [rbp-20h]
+    CPlayer *partyMemberPlayer; // [rsp+40h] [rbp-18h]
+    int memberIndex; // [rsp+48h] [rbp-10h]
   if ( !wszDestCharName )
       return 0;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
       return 0;
-    PtrPlayerFromName = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
-    if ( !PtrPlayerFromName )
+    targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
+    if ( !targetPlayer )
       return 0;
-    if ( PtrPlayerFromName->m_pPartyMgr->IsPartyMode() )
+    if ( targetPlayer->m_pPartyMgr->IsPartyMode() )
     {
-      PtrPartyMember = PtrPlayerFromName->m_pPartyMgr->GetPtrPartyMember();
-      if ( PtrPartyMember )
+      partyMembers = targetPlayer->m_pPartyMgr->GetPtrPartyMember();
+      if ( partyMembers )
       {
-        v8 = 0LL;
-        for ( j = 0; j < 8 && PtrPartyMember[j]; ++j )
+        partyMemberPlayer = 0LL;
+        for ( memberIndex = 0; memberIndex < 8 && partyMembers[memberIndex]; ++memberIndex )
         {
-          v8 = &g_Player[PtrPartyMember[j]->m_wZoneIndex];
-          if ( v8->m_bLive && this->m_dwObjSerial != v8->m_dwObjSerial )
-            v8->RecallRandomPositionInRange( this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, 120);
+          partyMemberPlayer = &g_Player[partyMembers[memberIndex]->m_wZoneIndex];
+          if ( partyMemberPlayer->m_bLive && this->m_dwObjSerial != partyMemberPlayer->m_dwObjSerial )
+            partyMemberPlayer->RecallRandomPositionInRange(
+              this->m_pCurMap,
+              this->m_wMapLayerIndex,
+              this->m_fCurPos,
+              120);
         }
         return 1;
       }
@@ -2623,13 +2475,13 @@ char CPlayer::mgr_recall_party_player(char *wszDestCharName)
         return 0;
       }
     }
-    else if ( this->m_dwObjSerial == PtrPlayerFromName->m_dwObjSerial )
+    else if ( this->m_dwObjSerial == targetPlayer->m_dwObjSerial )
     {
       return 0;
     }
     else
     {
-      PtrPlayerFromName->RecallRandomPositionInRange(
+      targetPlayer->RecallRandomPositionInRange(
         
         this->m_pCurMap,
         this->m_wMapLayerIndex,
@@ -2641,39 +2493,31 @@ char CPlayer::mgr_recall_party_player(char *wszDestCharName)
 
 char CPlayer::mgr_recall_player(char *pwszCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    const char *CharNameW; // rax
-    __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-    CUserDB *v7; // [rsp+20h] [rbp-18h]
-    CPlayer *v8; // [rsp+28h] [rbp-10h]
+    const char *sourceCharacterName; // rax
+    CUserDB *targetUserDb; // [rsp+20h] [rbp-18h]
+    CPlayer *targetPlayer; // [rsp+28h] [rbp-10h]
   if ( this->m_pCurMap->m_pMapSet->m_nMapType )
       return 0;
-    v7 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
-    if ( !v7 )
+    targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
+    if ( !targetUserDb )
       return 0;
-    v8 = &g_Player[v7->m_idWorld.wIndex];
-    if ( !v8->m_bLive )
+    targetPlayer = &g_Player[targetUserDb->m_idWorld.wIndex];
+    if ( !targetPlayer->m_bLive )
       return 0;
-    CharNameW = this->m_Param.GetCharNameW();
-    v8->pc_GotoAvatorRequest( CharNameW);
+    sourceCharacterName = this->m_Param.GetCharNameW();
+    targetPlayer->pc_GotoAvatorRequest( sourceCharacterName);
     return 1;
 }
 
 bool CPlayer::mgr_resurrect_player(char *pwszCharName)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    __int64 v5; // [rsp+0h] [rbp-38h] BYREF
-    CUserDB *v6; // [rsp+20h] [rbp-18h]
-    CPlayer *v7; // [rsp+28h] [rbp-10h]
-  v6 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
-    if ( !v6 )
+    CUserDB *targetUserDb; // [rsp+20h] [rbp-18h]
+    CPlayer *targetPlayer; // [rsp+28h] [rbp-10h]
+  targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
+    if ( !targetUserDb )
       return 0;
-    v7 = &g_Player[v6->m_idWorld.wIndex];
-    return v7->m_bLive && v7->pc_Resurrect( 0);
+    targetPlayer = &g_Player[targetUserDb->m_idWorld.wIndex];
+    return targetPlayer->m_bLive && targetPlayer->pc_Resurrect( 0);
 }
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
@@ -2693,111 +2537,92 @@ char CPlayer::mgr_set_animus_attack_point(int nPoint)
 
 char CPlayer::mgr_TrunkInit()
 {
-
-    __int64 *v1; // rdi
-    __int64 i; // rcx
-    unsigned __int8 TrunkSlotNum; // al
-    unsigned __int8 v5; // al
-    unsigned __int8 ExtTrunkSlotNum; // al
-    unsigned __int8 v7; // al
-    __int64 v8; // [rsp+0h] [rbp-48h] BYREF
-    int j; // [rsp+30h] [rbp-18h]
-    int k; // [rsp+34h] [rbp-14h]
-  for ( j = 0; ; ++j )
+    int trunkSlotIndex; // [rsp+30h] [rbp-18h]
+    int extTrunkSlotIndex; // [rsp+34h] [rbp-14h]
+  for ( trunkSlotIndex = 0; ; ++trunkSlotIndex )
     {
-      TrunkSlotNum = this->m_Param.GetTrunkSlotNum();
-      if ( j >= TrunkSlotNum )
+      const unsigned __int8 trunkSlotCount = this->m_Param.GetTrunkSlotNum();
+      if ( trunkSlotIndex >= trunkSlotCount )
         break;
-      if ( this->m_Param.m_pStoragePtr[5]->m_pStorageList[j].m_bLoad
-        && !this->Emb_DelStorage( 5u, j, 0, 0, "CPlayer::mgr_TrunkInit()") )
+      if ( this->m_Param.m_pStoragePtr[5]->m_pStorageList[trunkSlotIndex].m_bLoad
+        && !this->Emb_DelStorage( 5u, trunkSlotIndex, 0, 0, "CPlayer::mgr_TrunkInit()") )
       {
         return 0;
       }
     }
     this->m_Param.m_byTrunkSlotNum = 0;
     this->m_Param.m_dbTrunk.SetUseListNum(0);
-    v5 = this->m_Param.GetTrunkSlotNum();
-    this->m_pUserDB->Update_TrunkSlotNum( v5);
-    for ( k = 0; ; ++k )
+    this->m_pUserDB->Update_TrunkSlotNum(this->m_Param.GetTrunkSlotNum());
+    for ( extTrunkSlotIndex = 0; ; ++extTrunkSlotIndex )
     {
-      ExtTrunkSlotNum = this->m_Param.GetExtTrunkSlotNum();
-      if ( k >= ExtTrunkSlotNum )
+      const unsigned __int8 extTrunkSlotCount = this->m_Param.GetExtTrunkSlotNum();
+      if ( extTrunkSlotIndex >= extTrunkSlotCount )
         break;
-      if ( this->m_Param.m_pStoragePtr[7]->m_pStorageList[k].m_bLoad )
-        this->Emb_DelStorage( 7u, k, 0, 0, "CPlayer::mgr_TrunkInit()");
+      if ( this->m_Param.m_pStoragePtr[7]->m_pStorageList[extTrunkSlotIndex].m_bLoad )
+        this->Emb_DelStorage( 7u, extTrunkSlotIndex, 0, 0, "CPlayer::mgr_TrunkInit()");
     }
     this->m_Param.m_byExtTrunkSlotNum = 0;
     this->m_Param.m_dbExtTrunk.SetUseListNum(0);
-    v7 = this->m_Param.GetExtTrunkSlotNum();
-    this->m_pUserDB->Update_ExtTrunkSlotNum( v7);
+    this->m_pUserDB->Update_ExtTrunkSlotNum(this->m_Param.GetExtTrunkSlotNum());
     return 1;
 }
 
 char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char byBlockType)
 {
-
-    __int64 *v5; // rdi
-    __int64 i; // rcx
-    const char *CharNameW; // rax
-    __int64 v9; // [rsp+0h] [rbp-1A8h] BYREF
-    CUserDB *v10; // [rsp+40h] [rbp-168h]
-    char szMsg; // [rsp+60h] [rbp-148h] BYREF
-    int v12; // [rsp+61h] [rbp-147h]
-    _BYTE v13[8]; // [rsp+65h] [rbp-143h] BYREF
-    _BYTE v14[6]; // [rsp+6Dh] [rbp-13Bh] BYREF
-    char Destination[32]; // [rsp+73h] [rbp-135h] BYREF
-    char v16[32]; // [rsp+93h] [rbp-115h] BYREF
-    unsigned int m_dwAccountSerial; // [rsp+B3h] [rbp-F5h]
-    unsigned __int8 pbyType[44]; // [rsp+D4h] [rbp-D4h] BYREF
-    char _Dest[128]; // [rsp+100h] [rbp-A8h] BYREF
-  v10 = SearchAvatorWithName(g_UserDB, MAX_PLAYER, uszCharName);
-    if ( v10 )
+    const char *gmCharacterName; // rax
+    CUserDB *targetUserDb; // [rsp+40h] [rbp-168h]
+    char blockType; // [rsp+60h] [rbp-148h] BYREF
+    int blockPeriod; // [rsp+61h] [rbp-147h]
+    _BYTE targetGlobalId[8]; // [rsp+65h] [rbp-143h] BYREF
+    _BYTE gmWorldId[6]; // [rsp+6Dh] [rbp-13Bh] BYREF
+    char reasonText[32]; // [rsp+73h] [rbp-135h] BYREF
+    char gmName[32]; // [rsp+93h] [rbp-115h] BYREF
+    unsigned int accountSerial; // [rsp+B3h] [rbp-F5h]
+    unsigned __int8 messageType[44]; // [rsp+D4h] [rbp-D4h] BYREF
+    char chatMessage[128]; // [rsp+100h] [rbp-A8h] BYREF
+  targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, uszCharName);
+    if ( targetUserDb )
     {
-      v10->SetChatLock( 1);
-      szMsg = byBlockType;
-      v12 = iPeriod;
-      m_dwAccountSerial = v10->m_dwAccountSerial;
-      memcpy_0(v13, &v10->m_gidGlobal, sizeof(v13));
-      memcpy_0(v14, &this->m_pUserDB->m_idWorld, sizeof(v14));
-      strncpy(Destination, uszReason, 0x1FuLL);
-      CharNameW = this->m_Param.GetCharNameW();
-      strncpy(v16, CharNameW, 0x1FuLL);
-      memcpy_0(pbyType, "2n", 2);
-      g_Network.m_pProcess[1]->LoadSendMsg( 0, pbyType, &szMsg, 0x57u);
+      targetUserDb->SetChatLock( 1);
+      blockType = byBlockType;
+      blockPeriod = iPeriod;
+      accountSerial = targetUserDb->m_dwAccountSerial;
+      memcpy_0(targetGlobalId, &targetUserDb->m_gidGlobal, sizeof(targetGlobalId));
+      memcpy_0(gmWorldId, &this->m_pUserDB->m_idWorld, sizeof(gmWorldId));
+      strncpy(reasonText, uszReason, 0x1FuLL);
+      gmCharacterName = this->m_Param.GetCharNameW();
+      strncpy(gmName, gmCharacterName, 0x1FuLL);
+      memcpy_0(messageType, "2n", 2);
+      g_Network.m_pProcess[1]->LoadSendMsg( 0, messageType, &blockType, 0x57u);
       return 1;
     }
     else
     {
-      sprintf_s(_Dest, sizeof(_Dest), "%s is not connected", uszCharName);
-      this->SendData_ChatTrans( 0, 0xFFFFFFFF, 0xFFu, 0, _Dest, 0xFFu, 0LL);
+      sprintf_s(chatMessage, sizeof(chatMessage), "%s is not connected", uszCharName);
+      this->SendData_ChatTrans( 0, 0xFFFFFFFF, 0xFFu, 0, chatMessage, 0xFFu, 0LL);
       return 0;
     }
 }
 
 char CPlayer::mgr_whisper(char *pwszMsg)
 {
-
-    __int64 *v2; // rdi
-    __int64 i; // rcx
-    unsigned __int8 RaceCode; // al
-    __int64 v6; // [rsp+0h] [rbp-58h] BYREF
-    int j; // [rsp+40h] [rbp-18h]
-    char *pwszSender; // [rsp+48h] [rbp-10h]
-  for ( j = 0; j < MAX_PLAYER; ++j )
+    int playerIndex; // [rsp+40h] [rbp-18h]
+    char *senderName; // [rsp+48h] [rbp-10h]
+  for ( playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex )
     {
-      if ( g_UserDB[j].m_bActive && g_UserDB[j].m_byUserDgr >= 2u )
+      if ( g_UserDB[playerIndex].m_bActive && g_UserDB[playerIndex].m_byUserDgr >= 2u )
       {
-        pwszSender = this->m_Param.GetCharNameW();
-        RaceCode = this->m_Param.GetRaceCode();
-        g_Player[j].SendData_ChatTrans(
+        senderName = this->m_Param.GetCharNameW();
+        const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+        g_Player[playerIndex].SendData_ChatTrans(
           
           5u,
           this->m_dwObjSerial,
-          RaceCode,
+          raceCode,
           0,
           pwszMsg,
           this->m_Param.m_byPvPGrade,
-          pwszSender);
+          senderName);
       }
     }
     return 1;
@@ -2805,86 +2630,83 @@ char CPlayer::mgr_whisper(char *pwszMsg)
 
 char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum)
 {
-
-    __int64 *v5; // rdi
-    __int64 i; // rcx
-    __int64 v8; // [rsp+0h] [rbp-108h] BYREF
     int nTableCode; // [rsp+50h] [rbp-B8h]
-    _base_fld *Record; // [rsp+58h] [rbp-B0h]
-    unsigned int dwExp; // [rsp+60h] [rbp-A8h]
-    unsigned int dwExp_4; // [rsp+64h] [rbp-A4h]
-    unsigned __int8 DefItemUpgSocketNum; // [rsp+68h] [rbp-A0h]
-    unsigned __int8 ItemKindCode; // [rsp+69h] [rbp-9Fh]
-    _ItemUpgrade_fld *RecordFromRes; // [rsp+70h] [rbp-98h]
-    int ItemTableCode; // [rsp+78h] [rbp-90h]
-    _base_fld *v17; // [rsp+80h] [rbp-88h]
-    int j; // [rsp+88h] [rbp-80h]
+    _base_fld *itemRecord; // [rsp+58h] [rbp-B0h]
+    unsigned int itemDurability; // [rsp+60h] [rbp-A8h]
+    unsigned int itemUpgradeState; // [rsp+64h] [rbp-A4h]
+    unsigned __int8 upgradeSocketLimit; // [rsp+68h] [rbp-A0h]
+    unsigned __int8 itemKindCode; // [rsp+69h] [rbp-9Fh]
+    _ItemUpgrade_fld *upgradeRecord; // [rsp+70h] [rbp-98h]
+    int upgradeTableCode; // [rsp+78h] [rbp-90h]
+    _base_fld *upgradeItemRecord; // [rsp+80h] [rbp-88h]
+    int createIndex; // [rsp+88h] [rbp-80h]
     _STORAGE_LIST::_db_con pItem; // [rsp+98h] [rbp-70h] BYREF
-    const _TimeItem_fld *TimeRec; // [rsp+D8h] [rbp-30h]
-    __time32_t Time[4]; // [rsp+E4h] [rbp-24h] BYREF
-    int k; // [rsp+F4h] [rbp-14h]
+    const _TimeItem_fld *timeRecord; // [rsp+D8h] [rbp-30h]
+    __time32_t currentTime[4]; // [rsp+E4h] [rbp-24h] BYREF
+    int upgradeStep; // [rsp+F4h] [rbp-14h]
   nTableCode = GetItemTableCode(pszItemCode);
     if ( nTableCode == -1 )
       return 0;
     if ( nTableCode == 19 )
       return 0;
-    Record = g_Main.m_tblItemData[nTableCode].GetRecord( pszItemCode);
-    if ( !Record )
+    itemRecord = g_Main.m_tblItemData[nTableCode].GetRecord( pszItemCode);
+    if ( !itemRecord )
       return 0;
-    dwExp = 0;
+    itemDurability = 0;
+    upgradeSocketLimit = 0;
     if ( IsOverLapItem(nTableCode) )
-      dwExp = 99;
+      itemDurability = 99;
     else
-      dwExp = GetItemDurPoint(nTableCode, Record->m_dwIndex);
+      itemDurability = GetItemDurPoint(nTableCode, itemRecord->m_dwIndex);
     if ( nNum > 100 )
       nNum = 100;
-    ItemKindCode = GetItemKindCode(nTableCode);
-    if ( ItemKindCode )
+    itemKindCode = GetItemKindCode(nTableCode);
+    if ( itemKindCode )
     {
-      if ( ItemKindCode != 1 )
+      if ( itemKindCode != 1 )
         return 0;
-      dwExp_4 = GetMaxParamFromExp(Record->m_dwIndex, dwExp);
+      itemUpgradeState = GetMaxParamFromExp(itemRecord->m_dwIndex, itemDurability);
     }
     else
     {
-      DefItemUpgSocketNum = GetDefItemUpgSocketNum(nTableCode, Record->m_dwIndex);
-      dwExp_4 = GetBitAfterSetLimSocket(DefItemUpgSocketNum);
+      upgradeSocketLimit = GetDefItemUpgSocketNum(nTableCode, itemRecord->m_dwIndex);
+      itemUpgradeState = GetBitAfterSetLimSocket(upgradeSocketLimit);
     }
-    RecordFromRes = 0LL;
-    if ( !DefItemUpgSocketNum || !pszUpTalCode )
-      goto LABEL_29;
-    ItemTableCode = GetItemTableCode(pszUpTalCode);
-    if ( ItemTableCode != 18 )
-      return 0;
-    v17 = g_Main.m_tblItemData[18].GetRecord( pszUpTalCode);
-    if ( !v17 )
-      return 0;
-    RecordFromRes = g_Main.m_tblItemUpgrade.GetRecordFromRes(v17->m_dwIndex);
-    if ( !RecordFromRes || RecordFromRes->m_dwIndex >= 0xD )
-      return 0;
-  LABEL_29:
-    for ( j = 0; j < nNum; ++j )
+    upgradeRecord = 0LL;
+    if ( upgradeSocketLimit && pszUpTalCode )
+    {
+      upgradeTableCode = GetItemTableCode(pszUpTalCode);
+      if ( upgradeTableCode != 18 )
+        return 0;
+      upgradeItemRecord = g_Main.m_tblItemData[18].GetRecord( pszUpTalCode);
+      if ( !upgradeItemRecord )
+        return 0;
+      upgradeRecord = g_Main.m_tblItemUpgrade.GetRecordFromRes(upgradeItemRecord->m_dwIndex);
+      if ( !upgradeRecord || upgradeRecord->m_dwIndex >= 0xD )
+        return 0;
+    }
+    for ( createIndex = 0; createIndex < nNum; ++createIndex )
     {
       pItem.Init();
       pItem.m_byTableCode = nTableCode;
-      pItem.m_wItemIndex = Record->m_dwIndex;
-      pItem.m_dwDur = dwExp;
-      TimeRec = TimeItem::FindTimeRec(nTableCode, Record->m_dwIndex);
-      if ( TimeRec && TimeRec->m_nCheckType )
+      pItem.m_wItemIndex = itemRecord->m_dwIndex;
+      pItem.m_dwDur = itemDurability;
+      timeRecord = TimeItem::FindTimeRec(nTableCode, itemRecord->m_dwIndex);
+      if ( timeRecord && timeRecord->m_nCheckType )
       {
-        _time32(Time);
-        pItem.m_byCsMethod = TimeRec->m_nCheckType;
-        pItem.m_dwT = TimeRec->m_nUseTime + Time[0];
-        pItem.m_dwLendRegdTime = Time[0];
+        _time32(currentTime);
+        pItem.m_byCsMethod = timeRecord->m_nCheckType;
+        pItem.m_dwT = timeRecord->m_nUseTime + currentTime[0];
+        pItem.m_dwLendRegdTime = currentTime[0];
       }
-      if ( RecordFromRes )
+      if ( upgradeRecord )
       {
-        if ( nUpNum > DefItemUpgSocketNum )
-          nUpNum = DefItemUpgSocketNum;
-        for ( k = 0; k < nUpNum; ++k )
-          dwExp_4 = GetBitAfterUpgrade(dwExp_4, RecordFromRes->m_dwIndex, k);
+        if ( nUpNum > upgradeSocketLimit )
+          nUpNum = upgradeSocketLimit;
+        for ( upgradeStep = 0; upgradeStep < nUpNum; ++upgradeStep )
+          itemUpgradeState = GetBitAfterUpgrade(itemUpgradeState, upgradeRecord->m_dwIndex, upgradeStep);
       }
-      pItem.m_dwLv = dwExp_4;
+      pItem.m_dwLv = itemUpgradeState;
       if ( !CreateItemBox(
               &pItem,
               pOwner,

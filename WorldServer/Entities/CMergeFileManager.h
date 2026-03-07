@@ -15,10 +15,10 @@ class  CMergeFileManager
 public:
   CMergeFileManager();
   ~CMergeFileManager();
-  void InitMergeFile(char *a2);
+  void InitMergeFile(char *directoryPath);
   void ReleaseMergeFile();
-  unsigned int GetFileSize(char *a2);
-  __int64 IsExistFile(char *a2);
-  struct _iobuf *LoadFileOffset(char *a2, const char *a3);
+  unsigned int GetFileSize(char *filePath);
+  __int64 IsExistFile(char *filePath);
+  struct _iobuf *LoadFileOffset(char *filePath, const char *mode);
 };
 

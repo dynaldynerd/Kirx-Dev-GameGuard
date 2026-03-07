@@ -19,30 +19,30 @@ CIndexBuffer::~CIndexBuffer()
   }
 }
 
-void CIndexBuffer::InitIndexBuffer(unsigned int a2, unsigned int a3)
+void CIndexBuffer::InitIndexBuffer(unsigned int size, unsigned int bufferType)
 {
-  dword_184A7B2D8 += a2;
-  m_Size = a2;
-  if (a2)
+  dword_184A7B2D8 += size;
+  m_Size = size;
+  if (size)
   {
     ++dword_184A7B2DC;
-    m_Flag = a3;
-    IDirect3DIndexBuffer8 *v7 = nullptr;
-    if (a3 == 3)
+    m_Flag = bufferType;
+    IDirect3DIndexBuffer8 *indexBuffer = nullptr;
+    if (bufferType == 3)
     {
-      v7 = reinterpret_cast<IDirect3DIndexBuffer8 *>(Dmalloc(static_cast<int>(a2)));
+      indexBuffer = reinterpret_cast<IDirect3DIndexBuffer8 *>(Dmalloc(static_cast<int>(size)));
     }
     else
     {
       IDirect3DDevice8 *D3dDevice = GetD3dDevice();
       if (D3dDevice)
-        D3dDevice->CreateIndexBuffer(D3dDevice, a2, 8, D3DFMT_INDEX16, D3DPOOL_MANAGED, &v7);
+        D3dDevice->CreateIndexBuffer(D3dDevice, size, 8, D3DFMT_INDEX16, D3DPOOL_MANAGED, &indexBuffer);
     }
-    if (!v7)
+    if (!indexBuffer)
     {
       Error(aAiu, byte_140883769);
     }
-    ___u2.m_lpIndexBuffer = v7;
+    ___u2.m_lpIndexBuffer = indexBuffer;
   }
   else
   {
@@ -65,31 +65,41 @@ void CIndexBuffer::ReleaseIndexBuffer()
   m_Size = 0;
 }
 
-IDirect3DIndexBuffer8 *CIndexBuffer::VPLock(__int64 a2, __int64 a3, unsigned int a4)
+IDirect3DIndexBuffer8 *CIndexBuffer::VPLock(__int64 offset, __int64 size, unsigned int flags)
 {
   IDirect3DIndexBuffer8 *m_lpIndexBuffer = ___u2.m_lpIndexBuffer;
-  IDirect3DIndexBuffer8 *v6 = nullptr;
+  IDirect3DIndexBuffer8 *lockedBuffer = nullptr;
   if (!m_lpIndexBuffer)
     return nullptr;
 
   switch (m_Flag)
   {
     case 1u:
-      m_lpIndexBuffer->Lock(m_lpIndexBuffer, static_cast<unsigned int>(a2), static_cast<unsigned int>(a3), reinterpret_cast<unsigned char **>(&v6), a4);
+      m_lpIndexBuffer->Lock(
+        m_lpIndexBuffer,
+        static_cast<unsigned int>(offset),
+        static_cast<unsigned int>(size),
+        reinterpret_cast<unsigned char **>(&lockedBuffer),
+        flags);
       break;
     case 2u:
-      m_lpIndexBuffer->Lock(m_lpIndexBuffer, static_cast<unsigned int>(a2), static_cast<unsigned int>(a3), reinterpret_cast<unsigned char **>(&v6), 0);
+      m_lpIndexBuffer->Lock(
+        m_lpIndexBuffer,
+        static_cast<unsigned int>(offset),
+        static_cast<unsigned int>(size),
+        reinterpret_cast<unsigned char **>(&lockedBuffer),
+        0);
       break;
     case 3u:
-      v6 = m_lpIndexBuffer;
+      lockedBuffer = m_lpIndexBuffer;
       break;
     default:
       Error(aAiao, byte_140883769);
-      return v6;
+      return lockedBuffer;
   }
-  if (!v6)
+  if (!lockedBuffer)
     Error(aAiao, byte_140883769);
-  return v6;
+  return lockedBuffer;
 }
 
 void CIndexBuffer::VPUnLock()

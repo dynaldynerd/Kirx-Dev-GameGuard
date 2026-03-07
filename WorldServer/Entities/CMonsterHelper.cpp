@@ -282,7 +282,7 @@ unsigned int CMonsterHelper::SearchNearMonster(
                       }
                       NearChar[n].fLen = static_cast<float>(lenInt);
                       NearChar[n].pChar = mon;
-                      goto next_node;
+                      break;
                     }
                   }
                 }
@@ -295,8 +295,6 @@ unsigned int CMonsterHelper::SearchNearMonster(
             }
           }
         }
-      next_node:
-        continue;
       }
     }
   }
@@ -458,7 +456,7 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
                         }
                         nearData[m].fLen = distanceValue;
                         nearData[m].pChar = selected;
-                        goto next_node;
+                        break;
                       }
                     }
                   }
@@ -472,8 +470,6 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
             }
           }
         }
-      next_node:
-        continue;
       }
     }
   }

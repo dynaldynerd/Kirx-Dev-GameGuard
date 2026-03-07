@@ -1,0 +1,36 @@
+﻿file	class	function	function_line	first_hit_line	last_hit_line	goto_count	label_count	total_hits	distinct_label_count	labels	sample_line
+WorldServer\Entities\CPlayer_Guild.cpp	CPlayer	pc_GuildEstablishRequest	820	842	1016	21	1	22	1	SEND_RESULT	goto SEND_RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_MovePortal	3608	3653	3901	19	1	20	1	Result	goto Result;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_ExchangeItem	24481	24499	24686	15	1	16	1	RESULT_EXCHANGE	goto RESULT_EXCHANGE;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_MakeItem	23265	23293	23511	15	1	16	1	RESULT	goto RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_EmbellishPart	22979	22992	23124	13	2	15	2	LABEL_EMBEL_FAIL, RESULT	goto RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	SF_TeleportToDestination	6796	6810	6912	12	1	13	1	RESULT	goto RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_TakeGroundingItem	22373	22385	22483	11	1	12	1	RESULT	goto RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_CombineItem	24178	24243	24470	9	3	12	3	APPLY_COMBINE_COST, RESULT_COMBINE, SEND_COMBINE_RESULT	goto RESULT_COMBINE;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_SellItemStore	12313	12329	12428	10	1	11	1	Result	goto Result;
+WorldServer\Entities\CParticle.cpp	CParticle	LoadParticleSPT	632	735	927	8	2	10	2	LABEL_INVALID_TRACK_USAGE, LABEL_NEXT_TOKEN	goto LABEL_NEXT_TOKEN;
+WorldServer\Entities\CheatCommands.cpp		ct_manage_guild	4113	4134	4178	6	3	9	3	LABEL_18, LABEL_27, LABEL_28	goto LABEL_28;
+WorldServer\Entities\CPlayer_Animus.cpp	CPlayer	pc_AnimusInvenChange	488	535	624	7	1	8	1	SEND_ANIMUS_CHANGE_RESULT	goto SEND_ANIMUS_CHANGE_RESULT;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_UpgradeItem	23623	23702	23802	6	1	7	1	RESULT_UPGRADE	goto RESULT_UPGRADE;
+WorldServer\Entities\CBsp.cpp	CBsp	FrameMoveEnvironment	433	466	544	4	1	5	1	NEXT_ENV	goto NEXT_ENV;
+WorldServer\Entities\CUserDB.cpp	CUserDB	Insert_Char_Request	2349	2377	2447	4	1	5	1	invalid_name	goto invalid_name;
+WorldServer\Entities\CUserDB_InitValidate.cpp	CUserDB	DataValidCheckRevise	133	313	623	3	2	5	2	LABEL_166, LABEL_208	goto LABEL_208;
+WorldServer\Entities\CAttack.cpp	CAttack	AreaDamageProc	1128	1193	1219	3	1	4	1	CHECK_AREA_DAMAGE	goto CHECK_AREA_DAMAGE;
+WorldServer\Entities\CAttack.cpp	CAttack	FlashDamageProc	938	1020	1043	3	1	4	1	CHECK_FLASH_DAMAGE	goto CHECK_FLASH_DAMAGE;
+WorldServer\Entities\CAttack.cpp	CAttack	SectorDamageProc	1296	1373	1396	3	1	4	1	CHECK_SECTOR_DAMAGE	goto CHECK_SECTOR_DAMAGE;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_BuyItemStore	11958	11993	12181	3	1	4	1	Result	goto Result;
+WorldServer\Entities\CPlayer_Storage.cpp	CPlayer	pc_ForceInvenChange	551	593	637	3	1	4	1	SEND_FORCE_CHANGE_RESULT	goto SEND_FORCE_CHANGE_RESULT;
+WorldServer\Entities\WorldServerUtil.cpp		sub_1404FFF30	5991	5998	6020	3	1	4	1	LABEL_10	goto LABEL_10;
+WorldServer\Entities\CAggroNode.cpp	CAggroNode	SetAggro	36	68	218	2	1	3	1	APPLY_AGGRO	goto APPLY_AGGRO;
+WorldServer\Entities\CMainThread.cpp	CMainThread	pc_TransIPKeyInform	4676	4713	4764	2	1	3	1	RESULT_125	goto RESULT_125;
+WorldServer\Entities\CMonster.cpp	CMonster	Attack	1657	1698	1786	2	1	3	1	ATTACK_END	goto ATTACK_END;
+WorldServer\Entities\AutominePersonal.cpp	AutominePersonal	do_automine	1094	1172	1200	1	1	2	1	RESULT_DONE	goto RESULT_DONE;
+WorldServer\Entities\CheatCommands.cpp		ct_elect_info_player	3166	3207	3234	1	1	2	1	$RESULT_128	goto $RESULT_128;
+WorldServer\Entities\CheatCommands.cpp		ct_tl_info_view	3339	3373	3396	1	1	2	1	$RESULT_129	goto $RESULT_129;
+WorldServer\Entities\CMonsterAttack.cpp	CMonsterAttack	AttackMonsterSkill	181	207	287	1	1	2	1	APPLY_DAMAGE	goto APPLY_DAMAGE;
+WorldServer\Entities\CMonsterHelper.cpp	CMonsterHelper	SearchNearMonster	212	285	298	1	1	2	1	next_node	goto next_node;
+WorldServer\Entities\CMonsterHelper.cpp	CMonsterHelper	SearchNearPlayer	326	461	475	1	1	2	1	next_node	goto next_node;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_ChatAllRequest	16033	16079	16090	1	1	2	1	LABEL_AFTER_ITEM	goto LABEL_AFTER_ITEM;
+WorldServer\Entities\CPlayer.cpp	CPlayer	pc_EquipPart	22870	22953	22972	1	1	2	1	LABEL_EQUIP_FAIL	LABEL_EQUIP_FAIL:
+WorldServer\Entities\CRFWorldDatabase_Ranking.cpp	CRFWorldDatabase	Update_RaceRank_Step2	2166	2219	2225	1	1	2	1	LABEL_21	goto LABEL_21;
+WorldServer\Entities\CRFWorldDatabase_Ranking.cpp	CRFWorldDatabase	Update_RaceRank_Step3	2244	2300	2306	1	1	2	1	LABEL_25	goto LABEL_25;

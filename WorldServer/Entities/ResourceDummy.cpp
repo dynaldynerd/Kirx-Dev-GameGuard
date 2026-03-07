@@ -30,10 +30,10 @@ bool _res_dummy::SetDummy(_dummy_position *pDumPos, unsigned char byQualityGrade
         float dx = (float)(this->m_pDumPos->m_zLocalMax[0] - this->m_pDumPos->m_zLocalMin[0]);
         float dz = (float)(this->m_pDumPos->m_zLocalMax[2] - this->m_pDumPos->m_zLocalMin[2]);
 
-        float v10 = sqrtf((2.0f * (dx * dx)) / 3.0f);
-        float v12 = sqrtf((2.0f * (dz * dz)) / 3.0f);
-        float v13 = sqrtf((dx * dx) / 3.0f);
-        float v15 = sqrtf((dz * dz) / 3.0f);
+        const float middleWidth = sqrtf((2.0f * (dx * dx)) / 3.0f);
+        const float middleDepth = sqrtf((2.0f * (dz * dz)) / 3.0f);
+        const float innerWidth = sqrtf((dx * dx) / 3.0f);
+        const float innerDepth = sqrtf((dz * dz) / 3.0f);
 
         for (int j = 0; j < 3; ++j)
         {
@@ -41,19 +41,19 @@ bool _res_dummy::SetDummy(_dummy_position *pDumPos, unsigned char byQualityGrade
             this->m_fMaxLocal[2][j] = (float)this->m_pDumPos->m_zLocalMax[j];
         }
 
-        this->m_fMinLocal[1][0] = this->m_fMinLocal[2][0] + (float)((dx - v10) / 2.0);
+        this->m_fMinLocal[1][0] = this->m_fMinLocal[2][0] + (float)((dx - middleWidth) / 2.0);
         this->m_fMinLocal[1][1] = this->m_fMinLocal[2][1];
-        this->m_fMinLocal[1][2] = this->m_fMinLocal[2][2] + (float)((dz - v12) / 2.0);
-        this->m_fMaxLocal[1][0] = this->m_fMaxLocal[2][0] - (float)((dx - v10) / 2.0);
+        this->m_fMinLocal[1][2] = this->m_fMinLocal[2][2] + (float)((dz - middleDepth) / 2.0);
+        this->m_fMaxLocal[1][0] = this->m_fMaxLocal[2][0] - (float)((dx - middleWidth) / 2.0);
         this->m_fMaxLocal[1][1] = this->m_fMaxLocal[2][1];
-        this->m_fMaxLocal[1][2] = this->m_fMaxLocal[2][2] - (float)((dz - v12) / 2.0);
+        this->m_fMaxLocal[1][2] = this->m_fMaxLocal[2][2] - (float)((dz - middleDepth) / 2.0);
 
-        this->m_fMinLocal[0][0] = this->m_fMinLocal[2][0] + (float)((dx - v13) / 2.0);
+        this->m_fMinLocal[0][0] = this->m_fMinLocal[2][0] + (float)((dx - innerWidth) / 2.0);
         this->m_fMinLocal[0][1] = this->m_fMinLocal[2][1];
-        this->m_fMinLocal[0][2] = this->m_fMinLocal[2][2] + (float)((dz - v15) / 2.0);
-        this->m_fMaxLocal[0][0] = this->m_fMaxLocal[2][0] - (float)((dx - v13) / 2.0);
+        this->m_fMinLocal[0][2] = this->m_fMinLocal[2][2] + (float)((dz - innerDepth) / 2.0);
+        this->m_fMaxLocal[0][0] = this->m_fMaxLocal[2][0] - (float)((dx - innerWidth) / 2.0);
         this->m_fMaxLocal[0][1] = this->m_fMaxLocal[2][1];
-        this->m_fMaxLocal[0][2] = this->m_fMaxLocal[2][2] - (float)((dz - v15) / 2.0);
+        this->m_fMaxLocal[0][2] = this->m_fMaxLocal[2][2] - (float)((dz - innerDepth) / 2.0);
 
         for (int i = 0; i < 10; ++i)
             this->SetRangeGrade();
@@ -65,13 +65,13 @@ void _res_dummy::SetRangeGrade()
 {
     if (!this->m_byQualityGrade)
     {
-        unsigned char v5 = rand() % 3;
-        int v3 = rand();
-        char v6 = (char)((v3 % 2) + 1); // Simplified from (v3 >> 31) ^ v3 & 1
+        unsigned char gradeIndex = rand() % 3;
+        int randomValue = rand();
+        const char alternateGrade = static_cast<char>((randomValue % 2) + 1);
         
-        this->m_byGrade[v5++] = 0;
-        this->m_byGrade[v5++ % 3] = v6;
-        this->m_byGrade[v5 % 3] = (v6 == 1) ? 2 : 1;
+        this->m_byGrade[gradeIndex++] = 0;
+        this->m_byGrade[gradeIndex++ % 3] = alternateGrade;
+        this->m_byGrade[gradeIndex % 3] = (alternateGrade == 1) ? 2 : 1;
     }
 }
 

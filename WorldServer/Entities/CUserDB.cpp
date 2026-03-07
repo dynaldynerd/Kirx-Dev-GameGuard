@@ -2370,37 +2370,46 @@ bool CUserDB::Insert_Char_Request(
     return false;
   }
 
+  bool invalidName = false;
   for (char *cursor = pwszCharName; ; ++cursor)
   {
     if (*cursor == 32 || *cursor == 39)
     {
-      goto invalid_name;
+      invalidName = true;
+      break;
     }
     if (!*cursor)
     {
       break;
     }
   }
-  if (*pwszCharName == 42)
+  if (!invalidName && *pwszCharName == 42)
   {
-    goto invalid_name;
+    invalidName = true;
   }
-  for (int k = 0; k < 3; ++k)
+  for (int k = 0; !invalidName && k < 3; ++k)
   {
     if (!strcmp_0(pwszCharName, wszNonMakeName_0[k]))
     {
-      goto invalid_name;
+      invalidName = true;
+      break;
     }
   }
 
+  if (!invalidName)
   {
     CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
     if ((m_byUserDgr != 2 && strlen_0(pwszCharName) >= nGMCmpLen
          && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
         || !manager->IsNormalString(pwszCharName))
     {
-      goto invalid_name;
+      invalidName = true;
     }
+  }
+  if (invalidName)
+  {
+    Insert_Char_Complete(0x2Fu, nullptr);
+    return true;
   }
 
   if (IsSQLValidString(pwszCharName))
@@ -2441,10 +2450,6 @@ bool CUserDB::Insert_Char_Request(
     m_szAccountID,
     m_dwAccountSerial,
     pwszCharName);
-  Insert_Char_Complete(0x2Fu, nullptr);
-  return true;
-
-invalid_name:
   Insert_Char_Complete(0x2Fu, nullptr);
   return true;
 }

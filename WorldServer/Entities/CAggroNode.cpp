@@ -65,10 +65,8 @@ void CAggroNode::SetAggro(
     {
       defaultValue = specialValue;
     }
-    goto APPLY_AGGRO;
   }
-
-  if (nAttackType == -1)
+  else if (nAttackType == -1)
   {
     if (m_pCharacter->m_ObjID.m_byID == 3)
     {
@@ -104,118 +102,117 @@ void CAggroNode::SetAggro(
     {
       defaultValue = g_AggroCaculateData.GetDefault(0);
     }
-    goto APPLY_AGGRO;
   }
-
-  switch (nAttackType)
+  else
   {
-    case 0:
+    switch (nAttackType)
     {
-      const int specialValue = g_AggroCaculateData.GetSpecialData(0, static_cast<unsigned __int16>(dwAttackSerial));
-      if (specialValue)
+      case 0:
       {
-        defaultValue = specialValue;
-        break;
-      }
-
-      _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(static_cast<int>(dwAttackSerial)));
-      if (!record)
-      {
-        break;
-      }
-
-      if (record->m_nContEffectType)
-      {
-        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
+        const int specialValue = g_AggroCaculateData.GetSpecialData(0, static_cast<unsigned __int16>(dwAttackSerial));
+        if (specialValue)
         {
-          if (record->m_nClass)
+          defaultValue = specialValue;
+          break;
+        }
+
+        _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[0].GetRecord(static_cast<int>(dwAttackSerial)));
+        if (!record)
+        {
+          break;
+        }
+
+        if (record->m_nContEffectType)
+        {
+          if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
           {
-            if (record->m_nClass == 1)
+            if (record->m_nClass)
             {
-              defaultValue = g_AggroCaculateData.GetDefault(2u);
+              if (record->m_nClass == 1)
+              {
+                defaultValue = g_AggroCaculateData.GetDefault(2u);
+              }
+              else
+              {
+                defaultValue = g_AggroCaculateData.GetDefault(1u);
+              }
             }
             else
             {
-              defaultValue = g_AggroCaculateData.GetDefault(1u);
+              defaultValue = g_AggroCaculateData.GetDefault(3u);
             }
+            break;
           }
-          else
+
+          defaultValue = g_AggroCaculateData.GetDefault(6u);
+          break;
+        }
+
+        defaultValue = g_AggroCaculateData.GetDefault(5u);
+        break;
+      }
+      case 1:
+      {
+        const int specialValue = g_AggroCaculateData.GetSpecialData(1u, static_cast<unsigned __int16>(dwAttackSerial));
+        if (specialValue)
+        {
+          defaultValue = specialValue;
+          break;
+        }
+
+        _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[1].GetRecord(static_cast<int>(dwAttackSerial)));
+        if (!record)
+        {
+          break;
+        }
+
+        if (record->m_nContEffectType)
+        {
+          if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
           {
-            defaultValue = g_AggroCaculateData.GetDefault(3u);
+            defaultValue = g_AggroCaculateData.GetDefault(1u);
+            break;
           }
+
+          defaultValue = g_AggroCaculateData.GetDefault(6u);
           break;
         }
 
-        defaultValue = g_AggroCaculateData.GetDefault(6u);
+        defaultValue = g_AggroCaculateData.GetDefault(5u);
         break;
       }
-
-      defaultValue = g_AggroCaculateData.GetDefault(5u);
-      break;
-    }
-    case 1:
-    {
-      const int specialValue = g_AggroCaculateData.GetSpecialData(1u, static_cast<unsigned __int16>(dwAttackSerial));
-      if (specialValue)
+      case 2:
       {
-        defaultValue = specialValue;
-        break;
-      }
-
-      _force_fld *record = static_cast<_force_fld *>(g_Main.m_tblEffectData[1].GetRecord(static_cast<int>(dwAttackSerial)));
-      if (!record)
-      {
-        break;
-      }
-
-      if (record->m_nContEffectType)
-      {
-        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
+        const int specialValue = g_AggroCaculateData.GetSpecialData(2u, static_cast<unsigned __int16>(dwAttackSerial));
+        if (specialValue)
         {
-          defaultValue = g_AggroCaculateData.GetDefault(1u);
+          defaultValue = specialValue;
           break;
         }
 
-        defaultValue = g_AggroCaculateData.GetDefault(6u);
+        _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(static_cast<int>(dwAttackSerial)));
+        if (record)
+        {
+          if (!record->m_nContEffectType)
+          {
+            defaultValue = g_AggroCaculateData.GetDefault(5u);
+            break;
+          }
+
+          if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
+          {
+            defaultValue = g_AggroCaculateData.GetDefault(4u);
+            break;
+          }
+
+          defaultValue = g_AggroCaculateData.GetDefault(6u);
+        }
         break;
       }
-
-      defaultValue = g_AggroCaculateData.GetDefault(5u);
-      break;
-    }
-    case 2:
-    {
-      const int specialValue = g_AggroCaculateData.GetSpecialData(2u, static_cast<unsigned __int16>(dwAttackSerial));
-      if (specialValue)
-      {
-        defaultValue = specialValue;
+      default:
         break;
-      }
-
-      _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(static_cast<int>(dwAttackSerial)));
-      if (record)
-      {
-        if (!record->m_nContEffectType)
-        {
-          defaultValue = g_AggroCaculateData.GetDefault(5u);
-          break;
-        }
-
-        if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
-        {
-          defaultValue = g_AggroCaculateData.GetDefault(4u);
-          break;
-        }
-
-        defaultValue = g_AggroCaculateData.GetDefault(6u);
-      }
-      break;
     }
-    default:
-      break;
   }
-
-APPLY_AGGRO:
   m_nAggroData += defaultValue;
   if (bFirstAttack)
   {

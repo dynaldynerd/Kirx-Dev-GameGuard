@@ -1169,7 +1169,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     minedOre = true;
     memcpy_0(&minedItem, inventoryItem, sizeof(minedItem));
     minedItem.m_dwDur = 1;
-    goto RESULT_DONE;
+    break;
   }
 
   if (m_pOwner->m_Param.m_dbPersonalAmineInven.GetIndexEmptyCon() != 255)
@@ -1197,7 +1197,6 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     minedItem.m_dwDur = 1;
   }
 
-RESULT_DONE:
   if (selectedGoldenBox)
   {
     if (goldBoxMgr->Get_Event_Status() == 2)

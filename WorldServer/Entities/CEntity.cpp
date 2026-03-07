@@ -80,20 +80,20 @@ static void ExtractVertex(
   {
     if ((type & 0x4000) != 0)
     {
-      __int64 v16 = 0;
+      __int64 processedVertexCount = 0;
       if (count >= 4)
       {
         float *dst = &(*outVertex)[2];
         char *src = compVertex + 4;
         unsigned __int64 blocks = ((count - 4) >> 2) + 1;
-        v16 = 4 * blocks;
+        processedVertexCount = 4 * blocks;
         do
         {
-          int v = *reinterpret_cast<short *>(src - 4);
+          const int packedX = *reinterpret_cast<short *>(src - 4);
           dst += 12;
           src += 24;
           --blocks;
-          *(dst - 14) = (static_cast<float>(v) / 32767.0f) * scale + pos[0];
+          *(dst - 14) = (static_cast<float>(packedX) / 32767.0f) * scale + pos[0];
           *(dst - 13) = (static_cast<float>(*reinterpret_cast<short *>(src - 26)) / 32767.0f) * scale + pos[1];
           *(dst - 12) = (static_cast<float>(*reinterpret_cast<short *>(src - 24)) / 32767.0f) * scale + pos[2];
           *(dst - 11) = (static_cast<float>(*reinterpret_cast<short *>(src - 22)) / 32767.0f) * scale + pos[0];
@@ -107,18 +107,18 @@ static void ExtractVertex(
           *(dst - 3) = (static_cast<float>(*reinterpret_cast<short *>(src - 6)) / 32767.0f) * scale + pos[2];
         } while (blocks);
       }
-      if (v16 < count)
+      if (processedVertexCount < count)
       {
-        __int64 remain = count - v16;
-        float *dst = &(*outVertex)[3 * v16 + 2];
-        char *src = &compVertex[6 * v16 + 4];
+        __int64 remain = count - processedVertexCount;
+        float *dst = &(*outVertex)[3 * processedVertexCount + 2];
+        char *src = &compVertex[6 * processedVertexCount + 4];
         do
         {
-          int v = *reinterpret_cast<short *>(src - 4);
+          const int packedX = *reinterpret_cast<short *>(src - 4);
           dst += 3;
           src += 6;
           --remain;
-          *(dst - 5) = (static_cast<float>(v) / 32767.0f) * scale + pos[0];
+          *(dst - 5) = (static_cast<float>(packedX) / 32767.0f) * scale + pos[0];
           *(dst - 4) = (static_cast<float>(*reinterpret_cast<short *>(src - 8)) / 32767.0f) * scale + pos[1];
           *(dst - 3) = (static_cast<float>(*reinterpret_cast<short *>(src - 6)) / 32767.0f) * scale + pos[2];
         } while (remain);
@@ -131,20 +131,20 @@ static void ExtractVertex(
   }
   else
   {
-    __int64 v7 = 0;
+    __int64 processedVertexCount = 0;
     if (count >= 4)
     {
       float *dst = &(*outVertex)[2];
       char *src = compVertex + 2;
       unsigned __int64 blocks = ((count - 4) >> 2) + 1;
-      v7 = 4 * blocks;
+      processedVertexCount = 4 * blocks;
       do
       {
-        int v = *(src - 2);
+        const int packedX = *(src - 2);
         dst += 12;
         src += 12;
         --blocks;
-        *(dst - 14) = (static_cast<float>(v) / 127.0f) * scale + pos[0];
+        *(dst - 14) = (static_cast<float>(packedX) / 127.0f) * scale + pos[0];
         *(dst - 13) = (static_cast<float>(*(src - 13)) / 127.0f) * scale + pos[1];
         *(dst - 12) = (static_cast<float>(*(src - 12)) / 127.0f) * scale + pos[2];
         *(dst - 11) = (static_cast<float>(*(src - 11)) / 127.0f) * scale + pos[0];
@@ -158,18 +158,18 @@ static void ExtractVertex(
         *(dst - 3) = (static_cast<float>(*(src - 3)) / 127.0f) * scale + pos[2];
       } while (blocks);
     }
-    if (v7 < count)
+    if (processedVertexCount < count)
     {
-      __int64 remain = count - v7;
-      float *dst = &(*outVertex)[3 * v7 + 2];
-      char *src = &compVertex[3 * v7 + 2];
+      __int64 remain = count - processedVertexCount;
+      float *dst = &(*outVertex)[3 * processedVertexCount + 2];
+      char *src = &compVertex[3 * processedVertexCount + 2];
       do
       {
-        int v = *(src - 2);
+        const int packedX = *(src - 2);
         dst += 3;
         src += 3;
         --remain;
-        *(dst - 5) = (static_cast<float>(v) / 127.0f) * scale + pos[0];
+        *(dst - 5) = (static_cast<float>(packedX) / 127.0f) * scale + pos[0];
         *(dst - 4) = (static_cast<float>(*(src - 4)) / 127.0f) * scale + pos[1];
         *(dst - 3) = (static_cast<float>(*(src - 3)) / 127.0f) * scale + pos[2];
       } while (remain);

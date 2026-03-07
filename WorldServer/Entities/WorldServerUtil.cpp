@@ -1674,35 +1674,35 @@ int CalcMastery(int nMasteryCode, int nMasteryIndex, int dwMasteryCum, unsigned 
   {
     case 0:
     {
-      const float v16 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
-      const float v6 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
-      mastery = std::sqrt(v16 + v6);
+      const float baseTerm = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+      const float sqrtTerm = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(baseTerm + sqrtTerm);
       break;
     }
     case 1:
     {
-      const float v17 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
-      const float v7 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
-      mastery = std::sqrt(v17 + v7);
+      const float baseTerm = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+      const float sqrtTerm = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(baseTerm + sqrtTerm);
       break;
     }
     case 2:
     {
-      const float v18 = (static_cast<float>(dwMasteryCum) + 1.0f) / 100.0f;
-      const float v8 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
-      mastery = std::sqrt(v18 + v8);
+      const float baseTerm = (static_cast<float>(dwMasteryCum) + 1.0f) / 100.0f;
+      const float sqrtTerm = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+      mastery = std::sqrt(baseTerm + sqrtTerm);
       break;
     }
     case 3:
     {
-      const float v9 = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 10.0f);
-      mastery = std::sqrt(v9);
+      const float scaledRoot = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 10.0f);
+      mastery = std::sqrt(scaledRoot);
       break;
     }
     case 4:
     {
-      const float v10 = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 14.0f);
-      mastery = std::sqrt(v10);
+      const float scaledRoot = std::sqrt((static_cast<float>(dwMasteryCum) + 1.0f) * 14.0f);
+      mastery = std::sqrt(scaledRoot);
       break;
     }
     case 5:
@@ -1721,9 +1721,9 @@ int CalcMastery(int nMasteryCode, int nMasteryIndex, int dwMasteryCum, unsigned 
     {
       if (nRaceCode > 1)
       {
-        const float v20 = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
-        const float v11 = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
-        mastery = std::sqrt(v20 + v11);
+        const float baseTerm = (static_cast<float>(dwMasteryCum) + 1.0f) / 1000.0f;
+        const float sqrtTerm = std::sqrt(static_cast<float>(dwMasteryCum) + 1.0f);
+        mastery = std::sqrt(baseTerm + sqrtTerm);
       }
       else
       {
@@ -1774,9 +1774,9 @@ int GetStaffMastery(unsigned int *pdwForceLvCum)
                             + (static_cast<float>(static_cast<int>(pdwForceLvCum[1])) * 2.25f)
                             + (static_cast<float>(static_cast<int>(pdwForceLvCum[2])) * 3.375f)
                             + (static_cast<float>(static_cast<int>(pdwForceLvCum[3])) * 4.5f);
-  const float v7 = (weightedSum + 1.0f) / 1000.0f;
-  const float v3 = std::sqrt(weightedSum + 1.0f);
-  const int mastery = static_cast<int>(std::sqrt(v7 + v3));
+  const float baseTerm = (weightedSum + 1.0f) / 1000.0f;
+  const float sqrtTerm = std::sqrt(weightedSum + 1.0f);
+  const int mastery = static_cast<int>(std::sqrt(baseTerm + sqrtTerm));
   if (mastery <= 99)
   {
     if (mastery < 1)
@@ -4611,15 +4611,15 @@ __int64 CalcFileSize(char *pszFileName)
   if (hFile == reinterpret_cast<HANDLE>(-1))
     return 0;
 
-  DWORD v6 = SetFilePointer(hFile, 0, nullptr, 0);
-  DWORD v7 = SetFilePointer(hFile, 0, nullptr, 2u);
+  const DWORD startOffset = SetFilePointer(hFile, 0, nullptr, 0);
+  const DWORD endOffset = SetFilePointer(hFile, 0, nullptr, 2u);
   CloseHandle(hFile);
-  return static_cast<__int64>(v7 - v6);
+  return static_cast<__int64>(endOffset - startOffset);
 }
 _R3MATERIAL *LoadMainR3M(char *szFileName)
 {
-  char *v1 = szFileName;
-  char v5[256]{};
+  char *sourceFileName = szFileName;
+  char r3xPath[256]{};
 
   reinterpret_cast<unsigned int *>(&qword_184A79818)[1] = 0xFF000000u;
   dword_184A79920 = 1;
@@ -4631,16 +4631,16 @@ _R3MATERIAL *LoadMainR3M(char *szFileName)
   dword_184A79A24 = 0;
   dword_184A79A28 = 0;
 
-  char *dst = v5;
+  char *dst = r3xPath;
   while ((*dst++ = *szFileName++) != '\0')
     ;
-  StripEXT(v5);
-  strcat(v5, ".r3x");
-  LoadR3X(v5);
+  StripEXT(r3xPath);
+  strcat(r3xPath, ".r3x");
+  LoadR3X(r3xPath);
   if (qword_184A79DA8)
     ReleaseMainMaterial();
 
-  _R3MATERIAL *result = LoadIndependenceR3M(v1);
+  _R3MATERIAL *result = LoadIndependenceR3M(sourceFileName);
   qword_184A79DA8 = result;
   if (result)
     dword_184A79DB0 = *reinterpret_cast<unsigned int *>(result);
@@ -4708,19 +4708,19 @@ _R3MATERIAL *LoadIndependenceR3M(char *szFileName)
 _R3MATERIAL *LoadSubMaterial(char *szFileName)
 {
   char String[256]{};
-  char v62[256]{};
+  char materialPath[256]{};
 
   char *src = szFileName;
   char *dst = aTexture;
   while ((*dst++ = *src++) != '\0')
     ;
-  strcpy_s(v62, szFileName);
-  strcat(v62, "MainMaterial.mst");
+  strcpy_s(materialPath, szFileName);
+  strcat(materialPath, "MainMaterial.mst");
 
-  FILE *fp = fopenMFM(v62, "rt");
+  FILE *fp = fopenMFM(materialPath, "rt");
   if (!fp)
   {
-    Warning(v62, aAiAaiai_3);
+    Warning(materialPath, aAiAaiai_3);
     return nullptr;
   }
 
@@ -4751,14 +4751,14 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
           }
           for (int i = 0; i < matNum; ++i)
           {
-            strcpy_s(v62, szFileName);
+            strcpy_s(materialPath, szFileName);
             fscanf(fp, "%s", String);
-            strcat(v62, String);
+            strcat(materialPath, String);
             strcpy_s(mat[i].m_name, sizeof(mat[i].m_name), String);
-            strcat(v62, ".mst");
+            strcat(materialPath, ".mst");
             fscanf(fp, "%s", String);
             int matIdx = atoi(String);
-            sub_140503190(v62, &mat[matIdx]);
+            sub_140503190(materialPath, &mat[matIdx]);
           }
         }
       }
@@ -4767,10 +4767,10 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
       {
         dword_184A79808 = 1;
         fscanf(fp, "%s", String);
-        float v = static_cast<float>(atof(String));
-        dword_184A79844 = *reinterpret_cast<unsigned int *>(&v);
-        float v2 = static_cast<float>(atof(String));
-        dword_184A79814 = *reinterpret_cast<unsigned int *>(&v2);
+        const float fogStart = static_cast<float>(atof(String));
+        dword_184A79844 = *reinterpret_cast<const unsigned int *>(&fogStart);
+        const float fogEnd = static_cast<float>(atof(String));
+        dword_184A79814 = *reinterpret_cast<const unsigned int *>(&fogEnd);
         dword_184A7982C = dword_184A79814;
       }
 
@@ -4778,12 +4778,12 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
       {
         dword_184A79808 = 1;
         fscanf(fp, "%s", String);
-        float v = static_cast<float>(atof(String));
-        *reinterpret_cast<float *>(&qword_184A79848) = v;
-        float v2 = static_cast<float>(atof(String));
-        *reinterpret_cast<float *>(&qword_184A79818) = v2;
-        dword_184A79834 = *reinterpret_cast<unsigned int *>(&v2);
-        dword_184A79778 = *reinterpret_cast<unsigned int *>(&v2);
+        const float fogStart = static_cast<float>(atof(String));
+        *reinterpret_cast<float *>(&qword_184A79848) = fogStart;
+        const float fogEnd = static_cast<float>(atof(String));
+        *reinterpret_cast<float *>(&qword_184A79818) = fogEnd;
+        dword_184A79834 = *reinterpret_cast<const unsigned int *>(&fogEnd);
+        dword_184A79778 = *reinterpret_cast<const unsigned int *>(&fogEnd);
       }
 
       if (!strcmp(String, "*FOG_COLOR"))
@@ -4858,15 +4858,15 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
       if (!strcmp(String, "*LENS_FLARE"))
       {
         fscanf(fp, "%s", String);
-        strcpy_s(v62, szFileName);
-        strcat(v62, String);
-        dword_184A798D0 = R3GetPreTextureId(v62);
+        strcpy_s(materialPath, szFileName);
+        strcat(materialPath, String);
+        dword_184A798D0 = R3GetPreTextureId(materialPath);
         char *state = reinterpret_cast<char *>(&stState);
         size_t idx = 0;
         do
         {
-          state[idx + 2143] = v62[idx];
-        } while (v62[idx++]);
+          state[idx + 2143] = materialPath[idx];
+        } while (materialPath[idx++]);
       }
 
       if (!strcmp(String, "*LENS_FLARE_POS"))
@@ -4985,165 +4985,124 @@ void AdjustIndependenceR3M(struct _R3MATERIAL *mat, int startId, int newStartId)
     }
   }
 }
-struct R3Texture *R3GetTexInfoR3T(char *szFileName, int a2)
+struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
 {
-  R3Texture *v2 = GetTextureTable();
+  R3Texture *textureTable = GetTextureTable();
   if (!qword_184A79D70)
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
     memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
     qword_184A79D68 = Dmalloc(16 * dword_140978960);
     memset_0(qword_184A79D68, 0, 16LL * dword_140978960);
-    v2 = GetTextureTable();
+    textureTable = GetTextureTable();
   }
 
-  int v5 = dword_140978964;
-  if (dword_140978964 >= dword_140978968)
+  int textureCount = dword_140978964;
+  if (textureCount >= dword_140978968)
   {
-    v2 = static_cast<R3Texture *>(ReAlloc(v2, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
-    int v7 = dword_140978968;
-    qword_184A79D70 = v2;
-    memset_0(&v2[dword_140978968], 0, 144uLL * 16);
-    v5 = dword_140978964;
-    dword_140978968 = v7 + 16;
+    textureTable =
+      static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
+    const int oldMaxCount = dword_140978968;
+    qword_184A79D70 = textureTable;
+    memset_0(&textureTable[dword_140978968], 0, 144uLL * 16);
+    textureCount = dword_140978964;
+    dword_140978968 = oldMaxCount + 16;
   }
 
-  if ((stR3TexManageFlag & 1) != 0 || v5 <= 1)
+  if ((stR3TexManageFlag & 1) == 0 && textureCount > 1)
   {
-    if (std::strlen(szFileName) < 0x7F)
+    for (int textureIndex = 1; textureIndex < textureCount; ++textureIndex)
     {
-      FILE *fp = fopenMFM(szFileName, "rb");
-      if (fp)
+      if (std::strcmp(textureTable[textureIndex].mName, szFileName) == 0)
       {
-        char Buffer[12]{};
-        int texNum = 0;
-        fread(Buffer, 4, 1, fp);
-        fread(&texNum, 4, 1, fp);
-        fclose(fp);
-
-        R3Texture *const entry = &v2[dword_140978964];
-        entry->mFlag = static_cast<unsigned int>(a2);
-        entry->mStartID = dword_14097895C;
-        entry->mTexNum = static_cast<unsigned int>(texNum);
-        char *dst = entry->mName;
-        while ((*dst++ = *szFileName++) != '\0')
-          ;
-
-        if (dword_14097895C + static_cast<unsigned int>(texNum) >= dword_140978960)
-        {
-          unsigned int *newArr =
-            static_cast<unsigned int *>(ReAlloc(qword_184A79D68, 16 * dword_140978960, 16 * (dword_140978960 + texNum)));
-          int old = dword_140978960;
-          qword_184A79D68 = newArr;
-          memset_0(&newArr[4 * old], 0, 16LL * texNum);
-          dword_140978960 = old + texNum;
-        }
-        dword_14097895C += texNum;
-        ++dword_140978964;
-        return entry;
+        ++textureTable[textureIndex].mSameCnt;
+        return &textureTable[textureIndex];
       }
-
-      char String[256]{};
-      strcpy_s(String, szFileName);
-      _strlwr(String);
-      StripEXT(String);
-      size_t len = std::strlen(String);
-      if (len < 3 || String[len - 3] != 'l' || String[len - 2] != 'g' || String[len - 1] != 't')
-        Warning(szFileName, aAiAaiai_4);
-      return nullptr;
     }
+  }
+
+  if (std::strlen(szFileName) >= 0x7F)
+  {
     Warning(aA_3, byte_140883769);
     return nullptr;
   }
 
-  for (int idx = 1; idx < v5; ++idx)
+  FILE *fp = fopenMFM(szFileName, "rb");
+  if (!fp)
   {
-    if (std::strcmp(v2[idx].mName, szFileName) == 0)
-    {
-      ++v2[idx].mSameCnt;
-      return &v2[idx];
-    }
-  }
-
-  if (std::strlen(szFileName) < 0x7F)
-  {
-    FILE *fp = fopenMFM(szFileName, "rb");
-    if (fp)
-    {
-      char Buffer[12]{};
-      int texNum = 0;
-      fread(Buffer, 4, 1, fp);
-      fread(&texNum, 4, 1, fp);
-      fclose(fp);
-
-      R3Texture *const entry = &v2[dword_140978964];
-      entry->mFlag = static_cast<unsigned int>(a2);
-      entry->mStartID = dword_14097895C;
-      entry->mTexNum = static_cast<unsigned int>(texNum);
-      char *dst = entry->mName;
-      while ((*dst++ = *szFileName++) != '\0')
-        ;
-
-      if (dword_14097895C + static_cast<unsigned int>(texNum) >= dword_140978960)
-      {
-        unsigned int *newArr =
-          static_cast<unsigned int *>(ReAlloc(qword_184A79D68, 16 * dword_140978960, 16 * (dword_140978960 + texNum)));
-        int old = dword_140978960;
-        qword_184A79D68 = newArr;
-        memset_0(&newArr[4 * old], 0, 16LL * texNum);
-        dword_140978960 = old + texNum;
-      }
-      dword_14097895C += texNum;
-      ++dword_140978964;
-      return entry;
-    }
-
-    char String[256]{};
-    strcpy_s(String, szFileName);
-    _strlwr(String);
-    StripEXT(String);
-    size_t len = std::strlen(String);
-    if (len < 3 || String[len - 3] != 'l' || String[len - 2] != 'g' || String[len - 1] != 't')
+    char normalizedName[256]{};
+    strcpy_s(normalizedName, szFileName);
+    _strlwr(normalizedName);
+    StripEXT(normalizedName);
+    const size_t len = std::strlen(normalizedName);
+    if (len < 3 || normalizedName[len - 3] != 'l' || normalizedName[len - 2] != 'g' || normalizedName[len - 1] != 't')
       Warning(szFileName, aAiAaiai_4);
     return nullptr;
   }
-  Warning(aA_3, byte_140883769);
-  return nullptr;
+
+  char header[12]{};
+  int texNum = 0;
+  fread(header, 4, 1, fp);
+  fread(&texNum, 4, 1, fp);
+  fclose(fp);
+
+  R3Texture *const entry = &textureTable[dword_140978964];
+  entry->mFlag = static_cast<unsigned int>(flag);
+  entry->mStartID = dword_14097895C;
+  entry->mTexNum = static_cast<unsigned int>(texNum);
+  char *dst = entry->mName;
+  while ((*dst++ = *szFileName++) != '\0')
+    ;
+
+  if (dword_14097895C + static_cast<unsigned int>(texNum) >= dword_140978960)
+  {
+    unsigned int *newSlots =
+      static_cast<unsigned int *>(ReAlloc(qword_184A79D68, 16 * dword_140978960, 16 * (dword_140978960 + texNum)));
+    const int oldSlotCount = dword_140978960;
+    qword_184A79D68 = newSlots;
+    memset_0(&newSlots[4 * oldSlotCount], 0, 16LL * texNum);
+    dword_140978960 = oldSlotCount + texNum;
+  }
+
+  dword_14097895C += texNum;
+  ++dword_140978964;
+  return entry;
 }
 
 int R3GetPreTextureId(char *szFileName)
 {
-  R3Texture *v1 = GetTextureTable();
-  R3TextureSlot *v5 = nullptr;
-  int v4 = 0;
+  R3Texture *textureTable = GetTextureTable();
+  R3TextureSlot *textureSlots = nullptr;
+  int textureSlotCount = 0;
 
   if (qword_184A79D70)
   {
-    v5 = GetTextureSlots();
-    v4 = dword_140978960;
+    textureSlots = GetTextureSlots();
+    textureSlotCount = dword_140978960;
   }
   else
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
     memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
-    v5 = static_cast<R3TextureSlot *>(Dmalloc(16 * dword_140978960));
-    qword_184A79D68 = v5;
-    memset_0(v5, 0, 16LL * dword_140978960);
-    v1 = GetTextureTable();
-    v4 = dword_140978960;
+    textureSlots = static_cast<R3TextureSlot *>(Dmalloc(16 * dword_140978960));
+    qword_184A79D68 = textureSlots;
+    memset_0(textureSlots, 0, 16LL * dword_140978960);
+    textureTable = GetTextureTable();
+    textureSlotCount = dword_140978960;
   }
 
-  int v6 = dword_140978964;
-  if (dword_140978964 >= dword_140978968)
+  int textureCount = dword_140978964;
+  if (textureCount >= dword_140978968)
   {
-    v1 = static_cast<R3Texture *>(ReAlloc(v1, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
-    int v8 = dword_140978968;
-    qword_184A79D70 = v1;
-    memset_0(&v1[dword_140978968], 0, 144uLL * 16);
-    v5 = GetTextureSlots();
-    v4 = dword_140978960;
-    v6 = dword_140978964;
-    dword_140978968 = v8 + 16;
+    textureTable =
+      static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
+    const int oldMaxCount = dword_140978968;
+    qword_184A79D70 = textureTable;
+    memset_0(&textureTable[dword_140978968], 0, 144uLL * 16);
+    textureSlots = GetTextureSlots();
+    textureSlotCount = dword_140978960;
+    textureCount = dword_140978964;
+    dword_140978968 = oldMaxCount + 16;
   }
 
   if (std::strlen(szFileName) >= 0x7F)
@@ -5152,111 +5111,84 @@ int R3GetPreTextureId(char *szFileName)
     return 0;
   }
 
-  if ((stR3TexManageFlag & 1) == 0 && v6 > 1)
+  if ((stR3TexManageFlag & 1) == 0 && textureCount > 1)
   {
-    for (int i = 1; i < v6; ++i)
+    for (int textureIndex = 1; textureIndex < textureCount; ++textureIndex)
     {
-      if (std::strcmp(v1[i].mName, szFileName) == 0)
+      if (std::strcmp(textureTable[textureIndex].mName, szFileName) == 0)
       {
-        ++v1[i].mSameCnt;
-        return static_cast<int>(v1[i].mStartID);
+        ++textureTable[textureIndex].mSameCnt;
+        return static_cast<int>(textureTable[textureIndex].mStartID);
       }
     }
   }
 
-  char *dst = v1[v6].mName;
+  char *dst = textureTable[textureCount].mName;
   while ((*dst++ = *szFileName++) != '\0')
     ;
 
-  if ((stR3TexManageFlag & 1) != 0 || v6 <= 1)
+  if ((stR3TexManageFlag & 1) == 0 && textureCount > 1)
   {
-    v1[v6].mFlag = 40960;
-    v1[v6].mStartID = dword_14097895C;
-    v1[v6].mTexNum = 1;
-    int id = dword_14097895C + 1;
-    dword_14097895C = id;
-    dword_140978964 = v6 + 1;
-    if (id >= v4)
+    for (int emptySlotIndex = 1; emptySlotIndex < textureCount; ++emptySlotIndex)
     {
-      R3TextureSlot *v20 = static_cast<R3TextureSlot *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
-      qword_184A79D68 = v20;
-      memset_0(&v20[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
-      dword_140978960 += 16;
-      id = dword_14097895C;
+      if (!textureTable[emptySlotIndex].mTexNum && !textureTable[emptySlotIndex].mName[0])
+      {
+        textureTable[emptySlotIndex].mFlag = 40960;
+        textureTable[emptySlotIndex].mStartID = static_cast<unsigned int>(emptySlotIndex);
+        textureTable[emptySlotIndex].mTexNum = 1;
+        return emptySlotIndex;
+      }
     }
-    return id - 1;
   }
 
-  int v16 = 1;
-  R3Texture *v17 = &v1[1];
-  while (v17->mTexNum || v17->mName[0])
+  textureTable[textureCount].mFlag = 40960;
+  textureTable[textureCount].mStartID = dword_14097895C;
+  textureTable[textureCount].mTexNum = 1;
+  int nextTextureId = dword_14097895C + 1;
+  dword_14097895C = nextTextureId;
+  dword_140978964 = textureCount + 1;
+  if (nextTextureId >= textureSlotCount)
   {
-    ++v16;
-    ++v17;
-    if (v16 >= v6)
-      break;
-  }
-  if (v16 >= v6)
-  {
-    v1[v6].mFlag = 40960;
-    v1[v6].mStartID = dword_14097895C;
-    v1[v6].mTexNum = 1;
-    int id = dword_14097895C + 1;
-    dword_14097895C = id;
-    dword_140978964 = v6 + 1;
-    if (id >= v4)
-    {
-      R3TextureSlot *v20 = static_cast<R3TextureSlot *>(ReAlloc(v5, 16 * v4, 16 * (v4 + 16)));
-      qword_184A79D68 = v20;
-      memset_0(&v20[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
-      dword_140978960 += 16;
-      id = dword_14097895C;
-    }
-    return id - 1;
+    R3TextureSlot *expandedSlots =
+      static_cast<R3TextureSlot *>(ReAlloc(textureSlots, 16 * textureSlotCount, 16 * (textureSlotCount + 16)));
+    qword_184A79D68 = expandedSlots;
+    memset_0(&expandedSlots[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
+    dword_140978960 += 16;
+    nextTextureId = dword_14097895C;
   }
 
-  R3Texture *const entry = &v1[v16];
-  entry->mFlag = 40960;
-  entry->mStartID = static_cast<unsigned int>(v16);
-  entry->mTexNum = 1;
-  return v16;
+  return nextTextureId - 1;
 }
 
 void R3GetPreAniTextureId(char *path, char *name, int *startId, int *num)
 {
-  int v6 = 0;
-  __int64 v7 = 0;
-  char *v9 = name;
-  char v18[128]{};
-  char v17[32]{};
-  char Buffer[256]{};
+  int prefixLength = 0;
+  char prefix[128]{};
+  char extension[32]{};
+  char texturePath[256]{};
 
   do
   {
-    if (*v9 == '.')
+    if (name[prefixLength] == '.')
       break;
-    char v10 = 0;
-    if (*v9 != '$')
-      v10 = *v9;
-    ++v7;
-    ++v9;
-    v18[v6++] = v10;
-  } while (v7 < 128);
+    prefix[prefixLength] = name[prefixLength] == '$' ? '\0' : name[prefixLength];
+    ++prefixLength;
+  } while (prefixLength < 128);
 
-  v17[0] = '.';
-  v17[1] = name[v6 + 1];
-  v17[2] = name[v6 + 2];
-  v17[3] = name[v6 + 3];
-  v17[4] = 0;
+  extension[0] = '.';
+  extension[1] = name[prefixLength + 1];
+  extension[2] = name[prefixLength + 2];
+  extension[3] = name[prefixLength + 3];
+  extension[4] = '\0';
 
-  *num = sub_140501380(path, v18, v17);
-  for (int i = 1; i < *num + 1; ++i)
+  *num = sub_140501380(path, prefix, extension);
+  for (int textureIndex = 1; textureIndex < *num + 1; ++textureIndex)
   {
-    strcpy_s(Buffer, path);
-    sprintf(Buffer, "%s%s%04d%s", path, v18, i, v17);
-    int preId = R3GetPreTextureId(Buffer);
-    if (i == 1)
-      *startId = preId;
+    strcpy_s(texturePath, path);
+    sprintf(texturePath, "%s%s%04d%s", path, prefix, textureIndex, extension);
+    const int textureId = R3GetPreTextureId(texturePath);
+    if (textureIndex == 1)
+      *startId = textureId;
   }
 }
 
@@ -5367,14 +5299,13 @@ void SetNowR3TexCnt(int cnt)
 {
   if (cnt < dword_140978964)
   {
-    R3Texture *v1 = &GetTextureTable()[cnt];
-    __int64 v2 = dword_140978964 - cnt;
+    R3Texture *texture = &GetTextureTable()[cnt];
+    __int64 clearCount = dword_140978964 - cnt;
     do
     {
-      ++v1;
-      --v2;
-      std::memset(v1 - 1, 0, sizeof(R3Texture));
-    } while (v2);
+      std::memset(texture++, 0, sizeof(R3Texture));
+      --clearCount;
+    } while (clearCount);
   }
   dword_140978964 = cnt;
 }
@@ -5395,24 +5326,23 @@ void R3LoadTextureMem(int id)
   R3Texture *const textures = GetTextureTable();
   if (!slots[id].mTexture && dword_140978964 > 1)
   {
-    int v2 = 1;
-    R3Texture *v3 = &textures[1];
+    int ownerIndex = 1;
+    R3Texture *texture = &textures[1];
     do
     {
-      if (v3->mStartID > static_cast<unsigned int>(id))
+      if (texture->mStartID > static_cast<unsigned int>(id))
         break;
-      ++v2;
-      ++v3;
-    } while (v2 < dword_140978964);
+      ++ownerIndex;
+      ++texture;
+    } while (ownerIndex < dword_140978964);
 
-    if (_bittest(reinterpret_cast<const long *>(&textures[v2].mFlag), 0xF))
+    if (_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 0xF))
     {
-      if (!textures[v2].mSameCnt)
+      if (!textures[ownerIndex].mSameCnt)
       {
-        unsigned int mip = _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F)
-                             ? 0
-                             : dword_184A797D0;
-        slots[id].mTexture = R3LoadDDS(textures[v2].mName, mip, 0x800, 0x800);
+        const unsigned int mipLevel =
+          _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F) ? 0 : dword_184A797D0;
+        slots[id].mTexture = R3LoadDDS(textures[ownerIndex].mName, mipLevel, 0x800, 0x800);
       }
     }
     else
@@ -5431,31 +5361,31 @@ void R3ReleaseTextureMem(int id)
   if (!slots[id].mTexture)
     return;
 
-  int v5 = 1;
+  int ownerIndex = 1;
   if (dword_140978964 > 1)
   {
-    R3Texture *v6 = &textures[1];
+    R3Texture *texture = &textures[1];
     do
     {
-      if (v6->mStartID > static_cast<unsigned int>(id))
+      if (texture->mStartID > static_cast<unsigned int>(id))
         break;
-      ++v5;
-      ++v6;
-    } while (v5 < dword_140978964);
+      ++ownerIndex;
+      ++texture;
+    } while (ownerIndex < dword_140978964);
   }
 
-  int refCnt = static_cast<int>(textures[v5].mSameCnt);
+  const int refCnt = static_cast<int>(textures[ownerIndex].mSameCnt);
   if (refCnt)
   {
-    textures[v5].mSameCnt = static_cast<unsigned int>(refCnt - 1);
+    textures[ownerIndex].mSameCnt = static_cast<unsigned int>(refCnt - 1);
   }
   else
   {
-    if (!_bittest(reinterpret_cast<const long *>(&textures[v5].mFlag), 0xF))
+    if (!_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 0xF))
     {
       Warning(aR3tAaia, byte_140883769);
     }
-    textures[v5].mName[0] = '\0';
+    textures[ownerIndex].mName[0] = '\0';
     if (slots[id].mTexture)
     {
       IDirect3DTexture8 *const tex = slots[id].mTexture;
@@ -5577,11 +5507,11 @@ void SetMergeFileManager(CMergeFileManager *pMgr)
 
 void LoadLightMap(char *szFileName)
 {
-  char v10[256]{};
-  char *dst = v10;
+  char lightmapPath[256]{};
+  char *dst = lightmapPath;
   while ((*dst++ = *szFileName++) != '\0')
     ;
-  qword_184A79DA0 = reinterpret_cast<unsigned long long>(R3GetTexInfoR3T(v10, 0));
+  qword_184A79DA0 = reinterpret_cast<unsigned long long>(R3GetTexInfoR3T(lightmapPath, 0));
   stLightmap = LoadR3TLightMap(reinterpret_cast<R3Texture *>(qword_184A79DA0), static_cast<D3DFORMAT>(D3DFMT_R5G6B5));
   if (stLightmap)
   {
@@ -5590,12 +5520,8 @@ void LoadLightMap(char *szFileName)
     LightmapTexID = static_cast<int *>(Dmalloc(4 * dword_184A79D88));
     if (dword_184A79D88 > 0)
     {
-      int v5 = 0;
-      for (int i = 0; i < static_cast<int>(dword_184A79D88); ++i)
-      {
-        LightmapTexID[i] = v5 + static_cast<int>(lightmapTexture->mStartID);
-        ++v5;
-      }
+      for (int textureIndex = 0; textureIndex < static_cast<int>(dword_184A79D88); ++textureIndex)
+        LightmapTexID[textureIndex] = static_cast<int>(lightmapTexture->mStartID) + textureIndex;
     }
   }
 }
@@ -5665,33 +5591,33 @@ void CN_SetEnableSky(int bEnable)
 
 void R3RestoreAllTextures()
 {
-  int v0 = 1;
+  int textureIndex = 1;
   if (dword_140978964 > 1)
   {
-    R3Texture *v1 = GetTextureTable();
+    R3Texture *textureTable = GetTextureTable();
     do
     {
-      if (_bittest(reinterpret_cast<const long *>(&v1[v0].mFlag), 0xF))
+      if (_bittest(reinterpret_cast<const long *>(&textureTable[textureIndex].mFlag), 0xF))
       {
-        if (v1[v0].mTexNum != 1)
+        if (textureTable[textureIndex].mTexNum != 1)
         {
           Error(aAo_1, byte_140883769);
-          v1 = GetTextureTable();
+          textureTable = GetTextureTable();
         }
-        const unsigned int id = v1[v0].mStartID;
+        const unsigned int startId = textureTable[textureIndex].mStartID;
         R3TextureSlot *const slots = GetTextureSlots();
-        if (!slots[id].mTexture)
+        if (!slots[startId].mTexture)
         {
           IDirect3DTexture8 *dds =
-            _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F)
-              ? R3LoadDDS(v1[v0].mName, 0, 0x800, 0x800)
-              : R3LoadDDS(v1[v0].mName, dword_184A797D0, 0x800, 0x800);
-          v1 = GetTextureTable();
-          slots[id].mTexture = dds;
+            _bittest(reinterpret_cast<const long *>(&slots[startId].mFlag), 0x1F)
+              ? R3LoadDDS(textureTable[textureIndex].mName, 0, 0x800, 0x800)
+              : R3LoadDDS(textureTable[textureIndex].mName, dword_184A797D0, 0x800, 0x800);
+          textureTable = GetTextureTable();
+          slots[startId].mTexture = dds;
         }
       }
-      ++v0;
-    } while (v0 < dword_140978964);
+      ++textureIndex;
+    } while (textureIndex < dword_140978964);
   }
   RestoreSystemTexture();
 }
@@ -5717,36 +5643,36 @@ void ClearDynamicLight()
 }
 void Error(char *source, char *msg)
 {
-  const char *v3 = source;
-  char Text[256]{};
+  const char *sourceText = source;
+  char fullMessage[256]{};
 
-  char *dst = Text;
+  char *dst = fullMessage;
   while ((*dst++ = *source++) != '\0')
     ;
 
-  char *v6 = &Text[std::strlen(Text) + 1];
+  char *msgDst = &fullMessage[std::strlen(fullMessage) + 1];
   size_t idx = 0;
-  while ((v6[idx++] = msg[idx - 1]) != '\0')
+  while ((msgDst[idx++] = msg[idx - 1]) != '\0')
     ;
 
-  FILE *v9 = nullptr;
-  if (fopen_s(&v9, "error_message.txt", "wt") == 0 && v9)
+  FILE *errorFile = nullptr;
+  if (fopen_s(&errorFile, "error_message.txt", "wt") == 0 && errorFile)
   {
-    fprintf(v9, "%s%s", v3, msg);
-    fclose(v9);
+    fprintf(errorFile, "%s%s", sourceText, msg);
+    fclose(errorFile);
   }
 
-  void (*v10)(char *) = ErrorMessageProc;
-  if (!v10)
+  void (*errorHandler)(char *) = ErrorMessageProc;
+  if (!errorHandler)
   {
-    MessageBoxA(nullptr, Text, "message", MB_ICONERROR);
+    MessageBoxA(nullptr, fullMessage, "message", MB_ICONERROR);
     exit(1);
   }
 
   static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-에서"
-  char *v11 = &Text[std::strlen(Text) + 1];
-  memcpy_0(v11 - 1, asc_140884708, sizeof(asc_140884708));
-  v10(Text);
+  char *suffixDst = &fullMessage[std::strlen(fullMessage) + 1];
+  memcpy_0(suffixDst - 1, asc_140884708, sizeof(asc_140884708));
+  errorHandler(fullMessage);
 }
 
 void Warning(char *source, char *msg)
@@ -5754,25 +5680,25 @@ void Warning(char *source, char *msg)
   if (No_warning)
     return;
 
-  char Text[256]{};
-  char *dst = Text;
+  char fullMessage[256]{};
+  char *dst = fullMessage;
   while ((*dst++ = *source++) != '\0')
     ;
-  char *v5 = &Text[std::strlen(Text) + 1];
+  char *msgDst = &fullMessage[std::strlen(fullMessage) + 1];
   size_t idx = 0;
-  while ((v5[idx++] = msg[idx - 1]) != '\0')
+  while ((msgDst[idx++] = msg[idx - 1]) != '\0')
     ;
 
-  void (*v8)(char *) = WarningMessageProc;
-  if (v8)
+  void (*warningHandler)(char *) = WarningMessageProc;
+  if (warningHandler)
   {
     static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-에러"
-    strcat_s(Text, kSuffix);
-    v8(Text);
+    strcat_s(fullMessage, kSuffix);
+    warningHandler(fullMessage);
   }
   else
   {
-    MessageBoxA(nullptr, Text, "message", 0);
+    MessageBoxA(nullptr, fullMessage, "message", 0);
   }
 }
 
@@ -5799,11 +5725,11 @@ void *Dmalloc(int size)
 
   dword_184A78FD4 += static_cast<unsigned int>(size);
   ++dword_184A78FD8;
-  auto *v3 = static_cast<unsigned int *>(malloc(static_cast<size_t>(size) + 4));
-  if (!v3)
+  auto *allocationBase = static_cast<unsigned int *>(malloc(static_cast<size_t>(size) + 4));
+  if (!allocationBase)
     return nullptr;
-  *v3 = static_cast<unsigned int>(size);
-  return v3 + 1;
+  *allocationBase = static_cast<unsigned int>(size);
+  return allocationBase + 1;
 }
 
 void Dfree(void *ptr)
@@ -5811,11 +5737,11 @@ void Dfree(void *ptr)
   if (!ptr)
     return;
 
-  auto *base = static_cast<unsigned int *>(ptr) - 1;
-  unsigned int v1 = *base;
+  auto *allocationBase = static_cast<unsigned int *>(ptr) - 1;
+  const unsigned int allocationSize = *allocationBase;
   --dword_184A78FD8;
-  dword_184A78FD4 -= v1;
-  free(base);
+  dword_184A78FD4 -= allocationSize;
+  free(allocationBase);
 }
 
 void *ReAlloc(void *ptr, unsigned int oldSize, unsigned int newSize)
@@ -5854,119 +5780,97 @@ CMergeFileManager *GetMergeFileManager()
 
 FILE *fopenMFM(char *a1, const char *Mode)
 {
-  const char *v2 = Mode;
-  char *v3 = a1;
+  const char *mode = Mode;
+  char *fileName = a1;
   if (qword_184A7B208)
   {
     CMergeFileManager *mgr = GetMergeFileManager();
-    FILE *result = mgr ? mgr->LoadFileOffset(v3, v2) : nullptr;
+    FILE *result = mgr ? mgr->LoadFileOffset(fileName, mode) : nullptr;
     if (result)
       return result;
-    Mode = v2;
-    a1 = v3;
+    Mode = mode;
+    a1 = fileName;
   }
   return fopen(a1, Mode);
 }
 
 unsigned int GetFileSize(char *a1)
 {
-  FILE *v2 = fopen(a1, "rb");
-  if (v2)
+  FILE *fp = fopen(a1, "rb");
+  if (fp)
   {
-    long v3 = ftell(v2);
-    fseek(v2, 0, SEEK_END);
-    long v4 = ftell(v2);
-    fclose(v2);
-    return static_cast<unsigned int>(v4 - v3);
+    const long startOffset = ftell(fp);
+    fseek(fp, 0, SEEK_END);
+    const long endOffset = ftell(fp);
+    fclose(fp);
+    return static_cast<unsigned int>(endOffset - startOffset);
   }
   return 0;
 }
 
 __int64 GetTokenFloat(char *a1, float *a2)
 {
-  int v4 = 0;
-  int v5 = 0;
-  __int64 v6 = 0;
-  int v7 = static_cast<int>(std::strlen(a1));
-  __int64 v8 = 0;
-  char String[256]{};
+  const int tokenLength = static_cast<int>(std::strlen(a1));
+  char buffer[256]{};
+  int bufferLength = 0;
 
-  if (v7 <= 0)
+  for (int tokenIndex = 0; tokenIndex < tokenLength; ++tokenIndex)
   {
-    *a2 = 0.0f;
-    return static_cast<unsigned int>(v7);
-  }
-
-  char v9 = 0;
-  while (true)
-  {
-    v9 = a1[v6];
-    if (v9 != '(')
-      break;
-    v5 = 0;
-    v8 = 0;
-LABEL_7:
-    ++v6;
-    ++v4;
-    if (v6 >= v7)
+    const char ch = a1[tokenIndex];
+    if (ch == '(')
     {
-      *a2 = 0.0f;
-      return static_cast<unsigned int>(v7);
+      bufferLength = 0;
+      continue;
     }
+    if (ch == ',' || ch == ')')
+    {
+      buffer[bufferLength] = '\0';
+      *a2 = static_cast<float>(std::atof(buffer));
+      return tokenIndex + 1;
+    }
+    buffer[bufferLength++] = ch;
   }
-  if (v9 != ',' && v9 != ')')
-  {
-    String[v8] = v9;
-    ++v5;
-    ++v8;
-    goto LABEL_7;
-  }
-  String[v5] = 0;
-  *a2 = static_cast<float>(std::atof(String));
-  return static_cast<unsigned int>(v4 + 1);
+
+  *a2 = 0.0f;
+  return static_cast<unsigned int>(tokenLength);
 }
 
 __int64 GetRandOrNum(FILE *Stream, float *a2, float *a3)
 {
-  char String[256]{};
-  char v17[256]{};
+  char token[256]{};
+  char nextToken[256]{};
 
-  fscanf(Stream, "%s", String);
-  if (String[0] == 'r' && String[1] == 'a' && String[2] == 'n' && String[3] == 'd')
+  fscanf(Stream, "%s", token);
+  if (token[0] == 'r' && token[1] == 'a' && token[2] == 'n' && token[3] == 'd')
   {
-    int v6 = static_cast<int>(std::strlen(String));
-    int v7 = 0;
-    while (true)
+    int tokenLength = static_cast<int>(std::strlen(token));
+    bool hasClosingParen = false;
+    while (!hasClosingParen)
     {
-      if (v6 > 0)
+      for (int charIndex = 0; charIndex < tokenLength; ++charIndex)
       {
-        for (__int64 v8 = 0; v8 < v6; ++v8)
+        if (token[charIndex] == ')')
         {
-          if (String[v8] == ')')
-            v7 = 1;
-        }
-        if (v7)
+          hasClosingParen = true;
           break;
+        }
       }
-      if (fscanf(Stream, "%s", v17) == -1 || !std::strcmp(String, "end"))
+      if (hasClosingParen)
+        break;
+      if (fscanf(Stream, "%s", nextToken) == -1 || !std::strcmp(token, "end"))
         Error(byte_140884F48, asc_140884F60);
-      char *v9 = &String[std::strlen(String) + 1];
-      __int64 v10 = 0;
-      char v11 = 0;
-      do
-      {
-        v11 = v17[v10];
-        v9[v10++ - 1] = v11;
-      } while (v11);
-      v6 = static_cast<int>(std::strlen(String));
+      strcat_s(token, nextToken);
+      tokenLength = static_cast<int>(std::strlen(token));
     }
-    int TokenFloat = static_cast<int>(GetTokenFloat(String, a2));
-    GetTokenFloat(&String[TokenFloat], a3);
+
+    const int firstTokenLength = static_cast<int>(GetTokenFloat(token, a2));
+    GetTokenFloat(&token[firstTokenLength], a3);
     return 1;
   }
-  float v15 = static_cast<float>(std::atof(String));
-  *a2 = v15;
-  *a3 = v15;
+
+  const float numericValue = static_cast<float>(std::atof(token));
+  *a2 = numericValue;
+  *a3 = numericValue;
   return 0;
 }
 
@@ -6069,51 +5973,52 @@ if (!outTex)
 static __int64 sub_1404FFFB0(__int64 a1)
 {
   auto *data = reinterpret_cast<unsigned int *>(a1);
-  __int64 v6 = 8;
+  __int64 roundIndex = 8;
   __int64 result = 0;
   do
   {
-    const unsigned int baseIndex = static_cast<unsigned int>(8 - v6) * 4;
+    const unsigned int baseIndex = static_cast<unsigned int>(8 - roundIndex) * 4;
     data[baseIndex] ^= pass_word[baseIndex];
     data[baseIndex + 1] ^= pass_word[baseIndex + 1];
     data[baseIndex + 2] ^= unk_1409788D4[baseIndex];
     result = unk_1409788D8[baseIndex];
     data[baseIndex + 3] ^= static_cast<unsigned int>(result);
-    --v6;
-  } while (v6);
+    --roundIndex;
+  } while (roundIndex);
   return result;
 }
 
 static __int64 sub_1404FFF30(unsigned int *a1)
 {
-  int v1 = a1[23];
+  const int fourCc = a1[23];
   __int64 result = 1;
-  if (v1 == 5)
+  if (fourCc == 5)
   {
     a1[23] = 4;
-    goto LABEL_10;
   }
-  if (v1 == 65)
+  else if (fourCc == 65)
   {
-    int v3 = a1[25];
-    if (v3 == 16)
+    const int rgbBitCount = a1[25];
+    if (rgbBitCount == 16)
     {
-      if (a1[29] == 0x8000)
-        goto LABEL_10;
-      a1[26] = 3840;
+      if (a1[29] != 0x8000)
+      {
+        a1[26] = 3840;
+        result = 0;
+      }
     }
     else
     {
-      if (v3 != 32)
-        goto LABEL_10;
-      a1[26] = 16711680;
-      a1[27] = 65280;
-      a1[28] = 255;
-      a1[29] = 0xFF000000;
+      if (rgbBitCount == 32)
+      {
+        a1[26] = 16711680;
+        a1[27] = 65280;
+        a1[28] = 255;
+        a1[29] = 0xFF000000;
+        result = 0;
+      }
     }
-    result = 0;
   }
-LABEL_10:
   if (!a1[22])
   {
     a1[22] = 32;
@@ -6132,20 +6037,20 @@ static unsigned __int16 sub_1405005A0(unsigned __int16 a1)
 
 static int sub_140501380(char *a1, const char *a2, const char *a3)
 {
-  int v6 = 1;
-  char Buffer[256]{};
+  int textureCount = 1;
+  char buffer[256]{};
   while (true)
   {
-    strcpy_s(Buffer, a1);
-    sprintf(Buffer, "%s%s%04d%s", a1, a2, v6, a3);
-    FILE *fp = fopen(Buffer, "rb");
+    strcpy_s(buffer, a1);
+    sprintf(buffer, "%s%s%04d%s", a1, a2, textureCount, a3);
+    FILE *fp = fopen(buffer, "rb");
     if (!fp)
       break;
     fclose(fp);
-    if (++v6 >= 65)
+    if (++textureCount >= 65)
       return 65;
   }
-  return v6 - 1;
+  return textureCount - 1;
 }
 
 static void sub_140502610(_R3MATERIAL *material)
@@ -6170,8 +6075,8 @@ static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex)
   layer->m_ARGB = static_cast<unsigned int>(-1);
 
   char String[256]{};
-  char v55[256]{};
-  int v53[4]{};
+  char texturePath[256]{};
+  int tileAnimationCounts[4]{};
 
   int result = fscanf(Stream, "%s", String);
   while (strcmp(String, "}"))
@@ -6179,8 +6084,8 @@ static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex)
     if (!strcmp(String, "map_name") && !dword_184A79DB4)
     {
       fscanf(Stream, "%s", String);
-      strcpy_s(v55, aTexture);
-      strcat_s(v55, String);
+      strcpy_s(texturePath, aTexture);
+      strcat_s(texturePath, String);
       if (!String[0] || !strcmp(String, "NULL"))
       {
         layer->m_iSurface = 0;
@@ -6188,12 +6093,12 @@ static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex)
       else if (IsAniTex(String))
       {
         layer->m_dwFlag |= 0x1000u;
-        R3GetPreAniTextureId(aTexture, String, &layer->m_iSurface, v53);
-        layer->m_iTileAniTexNum = static_cast<unsigned short>(v53[0]);
+        R3GetPreAniTextureId(aTexture, String, &layer->m_iSurface, tileAnimationCounts);
+        layer->m_iTileAniTexNum = static_cast<unsigned short>(tileAnimationCounts[0]);
       }
       else
       {
-        layer->m_iSurface = R3GetPreTextureId(v55);
+        layer->m_iSurface = R3GetPreTextureId(texturePath);
       }
     }
     if (!strcmp(String, "uv_scroll_u"))
@@ -6353,7 +6258,7 @@ static int sub_140502690(FILE *Stream, _R3MATERIAL *material, int layerIndex)
 
 static void sub_140503190(char *a1, _R3MATERIAL *material)
 {
-  char v4 = 0;
+  char inLayerBlock = 0;
   FILE *fp = fopenMFM(a1, "rt");
   if (fp)
   {
@@ -6365,8 +6270,7 @@ static void sub_140503190(char *a1, _R3MATERIAL *material)
       material->m_dwFlag = 0;
     }
 
-    unsigned int v8 = dword_184A797D0;
-    unsigned int v16 = dword_184A797D0;
+    const unsigned int savedTextureDetail = dword_184A797D0;
     char String[256]{};
     if (fscanf(fp, "%s", String) != -1)
     {
@@ -6376,9 +6280,9 @@ static void sub_140503190(char *a1, _R3MATERIAL *material)
           break;
         if (!strcmp(String, "}"))
         {
-          if (!v4)
+          if (!inLayerBlock)
             break;
-          v4 = 0;
+          inLayerBlock = 0;
         }
         if (!strcmp(String, "light_map"))
         {
@@ -6431,12 +6335,11 @@ static void sub_140503190(char *a1, _R3MATERIAL *material)
           fscanf(fp, "%s", String);
           const int layerIndex = atoi(String);
           sub_140502690(fp, material, layerIndex);
-          v4 = 1;
+          inLayerBlock = 1;
         }
       } while (fscanf(fp, "%s", String) != -1);
-      v8 = v16;
     }
-    dword_184A797D0 = v8;
+    dword_184A797D0 = savedTextureDetail;
     fclose(fp);
   }
   else
@@ -6520,8 +6423,8 @@ static void LoadR3X(char *a1)
 
 static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2)
 {
-unsigned int v2 = 0;
-  unsigned int v19 = 0;
+  unsigned int lightmapIndex = 0;
+  unsigned int lightmapCount = 0;
   dword_184A79C54 = 0;
   if (!a1)
     return nullptr;
@@ -6532,7 +6435,7 @@ unsigned int v2 = 0;
 
   float version = 0.0f;
   fread(&version, 4, 1, fp);
-  fread(&v19, 4, 1, fp);
+  fread(&lightmapCount, 4, 1, fp);
   if (version != 1.1f && version != 1.2f)
   {
     Warning(a1->mName, aAiAaiaiAiau);
@@ -6540,14 +6443,14 @@ unsigned int v2 = 0;
     return nullptr;
   }
 
-  auto **list = static_cast<_LIGHTMAP **>(Dmalloc(sizeof(_LIGHTMAP *) * v19));
+  auto **list = static_cast<_LIGHTMAP **>(Dmalloc(sizeof(_LIGHTMAP *) * lightmapCount));
   if (!list)
   {
     fclose(fp);
     return nullptr;
   }
 
-  if (v19)
+  if (lightmapCount)
   {
     auto **cur = list;
     while (true)
@@ -6563,8 +6466,8 @@ unsigned int v2 = 0;
         fclose(fp);
         return nullptr;
       }
-      const unsigned short v10 = ReadWordAt(buf, 10);
-      const unsigned short v11 = ReadWordAt(buf, 8);
+      const unsigned short width = ReadWordAt(buf, 10);
+      const unsigned short height = ReadWordAt(buf, 8);
       if (ReadDwordAt(buf, 24))
       {
         Error(a1->mName, aAi);
@@ -6572,47 +6475,47 @@ unsigned int v2 = 0;
         fclose(fp);
         return nullptr;
       }
-      const int v12 = static_cast<int>(ReadDwordAt(buf, 25));
-      int v13 = 0;
-      if (v12 == 16)
+      const int rgbBitCount = static_cast<int>(ReadDwordAt(buf, 25));
+      int d3dFormat = 0;
+      if (rgbBitCount == 16)
       {
-        v13 = 23;
+        d3dFormat = 23;
       }
       else
       {
-        if (v12 != 32)
+        if (rgbBitCount != 32)
         {
           Error(a1->mName, aAi);
           Dfree(buf);
           fclose(fp);
           return nullptr;
         }
-        v13 = 21;
+        d3dFormat = 21;
       }
-      if (v10 > 0x800u || v11 > 0x800u)
+      if (width > 0x800u || height > 0x800u)
         Error(byte_140883FF8, byte_140883769);
-      dword_184A79C54 += v10 * v11 * (static_cast<unsigned int>(v12) >> 3);
-      int v14 = sub_1405005A0(v10);
-      int v15 = sub_1405005A0(v11);
+      dword_184A79C54 += width * height * (static_cast<unsigned int>(rgbBitCount) >> 3);
+      const int mipWidth = sub_1405005A0(width);
+      const int mipHeight = sub_1405005A0(height);
       auto *lm = static_cast<_LIGHTMAP *>(Dmalloc(sizeof(_LIGHTMAP)));
       *cur = lm;
-      lm->xl = static_cast<unsigned short>(v14);
-      lm->yl = static_cast<unsigned short>(v15);
-      lm->buf = static_cast<unsigned short *>(Dmalloc(2 * v14 * v15));
+      lm->xl = static_cast<unsigned short>(mipWidth);
+      lm->yl = static_cast<unsigned short>(mipHeight);
+      lm->buf = static_cast<unsigned short *>(Dmalloc(2 * mipWidth * mipHeight));
       dword_184A79D60 += static_cast<unsigned int>(elementSize);
-      if (v13 == 21)
+      if (d3dFormat == 21)
         MakeMipMap(lm->xl, lm->yl, lm->buf,
                    reinterpret_cast<unsigned char *>(buf) + 144);
       else
         MakeMipMap(lm->xl, lm->yl, lm->buf,
                    reinterpret_cast<unsigned short *>(reinterpret_cast<unsigned char *>(buf) + 72));
 
-      GetTextureSlots()[v2 + a1->mStartID].mTexture =
+      GetTextureSlots()[lightmapIndex + a1->mStartID].mTexture =
         GetD3DTextureFromBuffer(reinterpret_cast<unsigned char *>(buf), elementSize);
       Dfree(buf);
-      ++v2;
+      ++lightmapIndex;
       ++cur;
-      if (v2 >= v19)
+      if (lightmapIndex >= lightmapCount)
         break;
     }
   }
@@ -6623,21 +6526,21 @@ unsigned int v2 = 0;
 
 static void RestoreSystemTexture()
 {
-  unsigned long long v0 = qword_184A79C20;
+  unsigned long long dlightTexture = qword_184A79C20;
   if (qword_184A79C20)
   {
     auto *tex = reinterpret_cast<IDirect3DTexture8 *>(qword_184A79C20);
     if (tex && tex->__vftable && tex->__vftable->Release)
       tex->__vftable->Release(reinterpret_cast<IDA_IUnknown *>(tex));
-    v0 = qword_184A79C20;
+    dlightTexture = qword_184A79C20;
   }
   if (qword_184A79C18)
   {
     char logoPath[] = ".\\system\\logo.dds";
     qword_184A79C18 = reinterpret_cast<unsigned long long>(R3LoadDDS(logoPath, 2, 0x800, 0x800));
-    v0 = qword_184A79C20;
+    dlightTexture = qword_184A79C20;
   }
-  if (v0)
+  if (dlightTexture)
   {
     char dlightPath[] = ".\\system\\dlight.dds";
     qword_184A79C20 = reinterpret_cast<unsigned long long>(R3LoadDDS(dlightPath, 2, 0x800, 0x800));
@@ -6654,154 +6557,98 @@ static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned 
 
 static int GetMipMapSkipSize(IDA_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4)
 {
-  unsigned int v4 = 0;
+  unsigned int skipSize = 0;
   if (a3 < 0x100 || a4 < 0x100)
     Error(aAi_1, byte_140883769);
-  unsigned int i = 0;
-  for (i = 0; i < a2 || a1->dwWidth > a3 || a1->dwHeight > a4; ++i)
+  unsigned int mipIndex = 0;
+  for (mipIndex = 0; mipIndex < a2 || a1->dwWidth > a3 || a1->dwHeight > a4; ++mipIndex)
   {
-    if (i >= a1->dwMipMapCount)
+    if (mipIndex >= a1->dwMipMapCount)
       break;
-    int lPitch = a1->lPitch;
-    unsigned int dwHeight = a1->dwHeight;
-    v4 += lPitch;
-    if (dwHeight <= 4)
+    const int pitch = a1->lPitch;
+    const unsigned int height = a1->dwHeight;
+    skipSize += pitch;
+    if (height <= 4)
       break;
-    a1->dwHeight = dwHeight >> 1;
-    unsigned int dwWidth = a1->dwWidth;
-    if (dwWidth <= 4)
+    a1->dwHeight = height >> 1;
+    const unsigned int width = a1->dwWidth;
+    if (width <= 4)
       break;
-    a1->dwWidth = dwWidth >> 1;
-    a1->lPitch = lPitch / 4;
+    a1->dwWidth = width >> 1;
+    a1->lPitch = pitch / 4;
   }
-  a1->dwMipMapCount -= i;
-  return static_cast<int>(v4);
+  a1->dwMipMapCount -= mipIndex;
+  return static_cast<int>(skipSize);
 }
 
-static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned short *a4)
+static void MakeMipMap(unsigned short xl, unsigned short yl, unsigned short *dstBuf, unsigned short *srcBuf)
 {
-  __int64 v4 = 0;
-  unsigned short *v5 = a3;
-  unsigned short v6 = a1;
-  int v8 = 2 * a1;
-  int v9 = a1;
-  int v36 = a1;
-  __int64 v32 = 0;
-  if (a2)
+  const int sourceWidth = xl << 1;
+  for (int y = 0; y < yl; ++y)
   {
-    __int64 v10 = a2;
-    unsigned short *v11 = &a4[v8];
-    __int64 v12 = 8LL * a1;
-    __int64 v34 = v12;
-    __int64 v33 = a2;
-    unsigned short *v13 = &a4[v8 + 1];
-    do
+    for (int x = 0; x < xl; ++x)
     {
-      if (v9 > 0)
-      {
-        unsigned short *v14 = v11;
-        unsigned short *v15 = a4;
-        unsigned short *v16 = a4 + 1;
-        __int64 v17 = v4 * v6;
-        __int64 v18 = static_cast<unsigned int>(v9);
-        unsigned short *v19 = &v5[v17];
-        unsigned short *v20 = v13;
-        do
-        {
-          unsigned int v21 = *v15;
-          int v22 = (*v16 >> 11) + (v21 >> 11);
-          unsigned int v23 = *v16;
-          int v24 = v23 & 0x1F;
-          int v25 = ((v23 >> 5) & 0x3F) + ((v21 >> 5) & 0x3F);
-          ++v19;
-          v15 += 2;
-          v16 += 2;
-          int v26 = (*v14 >> 11) + v22;
-          unsigned int v27 = *v14;
-          int v28 = (v27 & 0x1F) + v24 + (v21 & 0x1F);
-          v14 += 2;
-          unsigned int v29 = (((v27 >> 5) & 0x3F) + v25 + ((*v20 >> 5) & 0x3F)) >> 2;
-          unsigned int v30 = (unsigned int)(v26 + (*v20 >> 11)) >> 2;
-          unsigned int v31 = (v28 + (*v20 & 0x1Fu)) >> 2;
-          v20 += 2;
-          --v18;
-          *(v19 - 1) = static_cast<unsigned short>(v31 | (32 * ((v30 << 6) | v29)));
-        } while (v18);
-        v12 = v34;
-        v4 = v32;
-        v9 = v36;
-        v10 = v33;
-        v6 = a1;
-        v5 = a3;
-      }
-      ++v4;
-      v11 = reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(v11) + v12);
-      v13 = reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(v13) + v12);
-      a4 = reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(a4) + v12);
-      --v10;
-      v32 = v4;
-      v33 = v10;
-    } while (v10);
+      int sourceIndex = (y * 2) * sourceWidth + (x << 1);
+      unsigned int red = srcBuf[sourceIndex] >> 11;
+      unsigned int green = (srcBuf[sourceIndex] >> 5) & 63;
+      unsigned int blue = srcBuf[sourceIndex] & 31;
+
+      sourceIndex = (y * 2) * sourceWidth + (x << 1) + 1;
+      red += srcBuf[sourceIndex] >> 11;
+      green += (srcBuf[sourceIndex] >> 5) & 63;
+      blue += srcBuf[sourceIndex] & 31;
+
+      sourceIndex = (y * 2 + 1) * sourceWidth + (x << 1);
+      red += srcBuf[sourceIndex] >> 11;
+      green += (srcBuf[sourceIndex] >> 5) & 63;
+      blue += srcBuf[sourceIndex] & 31;
+
+      sourceIndex = (y * 2 + 1) * sourceWidth + (x << 1) + 1;
+      red += srcBuf[sourceIndex] >> 11;
+      green += (srcBuf[sourceIndex] >> 5) & 63;
+      blue += srcBuf[sourceIndex] & 31;
+
+      red >>= 2;
+      green >>= 2;
+      blue >>= 2;
+      dstBuf[y * xl + x] = static_cast<unsigned short>((red << 11) | (green << 5) | blue);
+    }
   }
 }
 
-static void MakeMipMap(unsigned short a1, unsigned short a2, unsigned short *a3, unsigned char *a4)
+static void MakeMipMap(unsigned short xl, unsigned short yl, unsigned short *dstBuf, unsigned char *srcBuf)
 {
-  unsigned short *v4 = a3;
-  int v5 = a1;
-  __int64 v6 = 0;
-  int v7 = 2 * a1;
-  int v30 = v5;
-  if (a2)
+  const int sourceWidth = xl << 1;
+  for (int y = 0; y < yl; ++y)
   {
-    unsigned char *v9 = a4 + 2;
-    unsigned char *v10 = &a4[4 * v7 + 2];
-    __int64 v11 = 8LL * v7;
-    __int64 v28 = v11;
-    __int64 v12 = a2;
-    unsigned char *v13 = &a4[4 * v7 + 5];
-    __int64 v27 = a2;
-    do
+    for (int x = 0; x < xl; ++x)
     {
-      if (v5 > 0)
-      {
-        unsigned char *v14 = v9;
-        unsigned char *v15 = v13;
-        unsigned char *v16 = v9 + 4;
-        unsigned short *v17 = &v4[v6 * static_cast<unsigned short>(v5)];
-        __int64 v8 = static_cast<unsigned int>(v5);
-        unsigned char *v18 = v10;
-        do
-        {
-          int v19 = *(v14 - 1);
-          int v20 = *v14;
-          int v21 = v15[1];
-          int v22 = *(v16 - 2) + *(v14 - 2);
-          ++v17;
-          v14 += 8;
-          int v23 = *(v16 - 1) + v19;
-          int v24 = *v16;
-          v16 += 8;
-          int v25 = v24 + v20;
-          int v26 = *(v18 - 2);
-          v18 += 8;
-          v15 += 8;
-          --v8;
-          *(v17 - 1) = static_cast<unsigned short>(((v26 + v22 + *(v15 - 9)) >> 5) |
-                                                  (32 * (((*(v18 - 9) + v23 + *(v15 - 8)) >> 4) |
-                                                          (static_cast<unsigned short>((( *(v18 - 8) + v25 + v21) >> 5)) << 6))));
-        } while (v8);
-        v11 = v28;
-        v5 = v30;
-        v12 = v27;
-        v4 = a3;
-      }
-      v10 += v11;
-      v13 += v11;
-      v9 += v11;
-      ++v6;
-      v27 = --v12;
-    } while (v12);
+      int sourceIndex = (y * 2) * sourceWidth + (x << 1);
+      unsigned int red = srcBuf[sourceIndex * 4];
+      unsigned int green = srcBuf[sourceIndex * 4 + 1];
+      unsigned int blue = srcBuf[sourceIndex * 4 + 2];
+
+      sourceIndex = (y * 2) * sourceWidth + (x << 1) + 1;
+      red += srcBuf[sourceIndex * 4];
+      green += srcBuf[sourceIndex * 4 + 1];
+      blue += srcBuf[sourceIndex * 4 + 2];
+
+      sourceIndex = (y * 2 + 1) * sourceWidth + (x << 1);
+      red += srcBuf[sourceIndex * 4];
+      green += srcBuf[sourceIndex * 4 + 1];
+      blue += srcBuf[sourceIndex * 4 + 2];
+
+      sourceIndex = (y * 2 + 1) * sourceWidth + (x << 1) + 1;
+      red += srcBuf[sourceIndex * 4];
+      green += srcBuf[sourceIndex * 4 + 1];
+      blue += srcBuf[sourceIndex * 4 + 2];
+
+      red >>= 5;
+      green >>= 4;
+      blue >>= 5;
+      dstBuf[y * xl + x] =
+        static_cast<unsigned short>(blue | (32 * (green | (static_cast<unsigned short>(red) << 6))));
+    }
   }
 }
 bool IsProtectItem(int nTableCode)

@@ -66,95 +66,78 @@ unsigned __int8 CMainThread::_db_Check_NpcData(unsigned int dwSerial, _AVATOR_DA
 
 unsigned __int8 CMainThread::_db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-138h] BYREF
-  _worlddb_character_base_info pCharacterData; // [rsp+30h] [rbp-108h] BYREF
-  unsigned __int8 v8; // [rsp+114h] [rbp-24h]
-  int j; // [rsp+118h] [rbp-20h]
+  _worlddb_character_base_info characterData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&pCharacterData, 0, sizeof(pCharacterData));
-  v8 = this->m_pWorldDB->Select_CharacterBaseInfo(dwSerial, &pCharacterData);
-  if ( v8 == 1 )
+  memset_0(&characterData, 0, sizeof(characterData));
+  dbResult = this->m_pWorldDB->Select_CharacterBaseInfo(dwSerial, &characterData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 == 2 )
+  if ( dbResult == 2 )
     return 24;
-  strcpy_0(pCon->dbAvator.m_wszAvatorName, pCharacterData.wszName);
+  strcpy_0(pCon->dbAvator.m_wszAvatorName, characterData.wszName);
   pCon->dbAvator.m_dwRecordNum = dwSerial;
-  pCon->dbAvator.m_byRaceSexCode = pCharacterData.byRace;
-  strcpy_0(pCon->dbAvator.m_szClassCode, pCharacterData.szClassCode);
-  pCon->dbAvator.m_bySlotIndex = pCharacterData.bySlotIndex;
-  pCon->dbAvator.m_byLevel = pCharacterData.byLevel;
-  pCon->dbAvator.m_dwDalant = pCharacterData.dwDalant;
-  pCon->dbAvator.m_dwGold = pCharacterData.dwGold;
-  pCon->dbAvator.m_dwBaseShape = pCharacterData.dwBaseShape;
-  pCon->dbAvator.m_dwLastConnTime = pCharacterData.dwLastConnTime;
-  for ( j = 0; j < 8; ++j )
+  pCon->dbAvator.m_byRaceSexCode = characterData.byRace;
+  strcpy_0(pCon->dbAvator.m_szClassCode, characterData.szClassCode);
+  pCon->dbAvator.m_bySlotIndex = characterData.bySlotIndex;
+  pCon->dbAvator.m_byLevel = characterData.byLevel;
+  pCon->dbAvator.m_dwDalant = characterData.dwDalant;
+  pCon->dbAvator.m_dwGold = characterData.dwGold;
+  pCon->dbAvator.m_dwBaseShape = characterData.dwBaseShape;
+  pCon->dbAvator.m_dwLastConnTime = characterData.dwLastConnTime;
+  for ( int equipIndex = 0; equipIndex < 8; ++equipIndex )
   {
-    pCon->dbAvator.m_EquipKey[j].LoadDBKey(pCharacterData.shEKArray[j]);
-    pCon->dbAvator.m_dwFixEquipLv[j] = pCharacterData.dwEUArray[j];
-    pCon->dbAvator.m_lnUID[j] = pCharacterData.lnUIDArray[j];
-    pCon->dbAvator.m_dwET[j] = pCharacterData.dwETArray[j];
+    pCon->dbAvator.m_EquipKey[equipIndex].LoadDBKey(characterData.shEKArray[equipIndex]);
+    pCon->dbAvator.m_dwFixEquipLv[equipIndex] = characterData.dwEUArray[equipIndex];
+    pCon->dbAvator.m_lnUID[equipIndex] = characterData.lnUIDArray[equipIndex];
+    pCon->dbAvator.m_dwET[equipIndex] = characterData.dwETArray[equipIndex];
   }
   return 0;
 }
 
 unsigned __int8 CMainThread::_db_Load_Buddy(unsigned int dwSerial, _BUDDY_DB_BASE *pBuddy)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-508h] BYREF
-  _worlddb_buddy_info pBuddyData; // [rsp+30h] [rbp-4D8h] BYREF
-  unsigned __int8 v8; // [rsp+4E4h] [rbp-24h]
-  char v9; // [rsp+4E5h] [rbp-23h]
-  int j; // [rsp+4E8h] [rbp-20h]
+  _worlddb_buddy_info buddyData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&pBuddyData, 0, sizeof(pBuddyData));
-  v8 = this->m_pWorldDB->Select_Buddy(dwSerial, &pBuddyData);
-  if ( v8 == 1 )
+  memset_0(&buddyData, 0, sizeof(buddyData));
+  dbResult = this->m_pWorldDB->Select_Buddy(dwSerial, &buddyData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_Buddy(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_Buddy(dwSerial, &pBuddyData) )
-    return 24;
-LABEL_11:
-  v9 = 0;
-  for ( j = 0; j < 50; ++j )
+  if ( dbResult == 2 )
   {
-    pBuddy->m_List[j].dwSerial = pBuddyData.BuddyData[j].dwSerial;
-    if ( pBuddyData.BuddyData[j].dwSerial != -1 )
-      strcpy_0(pBuddy->m_List[j].wszName, pBuddyData.BuddyData[j].wszName);
+    if ( !this->m_pWorldDB->Insert_Buddy(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_Buddy(dwSerial, &buddyData) )
+      return 24;
+  }
+  for ( int buddyIndex = 0; buddyIndex < 50; ++buddyIndex )
+  {
+    pBuddy->m_List[buddyIndex].dwSerial = buddyData.BuddyData[buddyIndex].dwSerial;
+    if ( buddyData.BuddyData[buddyIndex].dwSerial != -1 )
+      strcpy_0(pBuddy->m_List[buddyIndex].wszName, buddyData.BuddyData[buddyIndex].wszName);
   }
   return 0;
 }
 
 unsigned __int8 CMainThread::_db_Load_CryMsg(unsigned int dwSerial, _CRYMSG_DB_BASE *pBossCry)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-2E8h] BYREF
-  _worlddb_crymsg_info pCryMsg; // [rsp+30h] [rbp-2B8h] BYREF
-  unsigned __int8 v8; // [rsp+2C4h] [rbp-24h]
-  int j; // [rsp+2C8h] [rbp-20h]
+  _worlddb_crymsg_info cryMessageData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&pCryMsg, 0, sizeof(pCryMsg));
-  v8 = this->m_pWorldDB->Select_BossCryMsg(dwSerial, &pCryMsg);
-  if ( v8 == 1 )
+  memset_0(&cryMessageData, 0, sizeof(cryMessageData));
+  dbResult = this->m_pWorldDB->Select_BossCryMsg(dwSerial, &cryMessageData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_BossCryRecord(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_BossCryMsg(dwSerial, &pCryMsg) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 10; ++j )
-    strcpy_0(pBossCry->m_List[j].wszCryMsg, pCryMsg.CryMsgData[j].wszCryMsg);
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_BossCryRecord(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_BossCryMsg(dwSerial, &cryMessageData) )
+      return 24;
+  }
+  for ( int cryIndex = 0; cryIndex < 10; ++cryIndex )
+    strcpy_0(pBossCry->m_List[cryIndex].wszCryMsg, cryMessageData.CryMsgData[cryIndex].wszCryMsg);
   return 0;
 }
 
@@ -302,33 +285,28 @@ unsigned __int8 CMainThread::_db_Load_Inven(
   unsigned __int8 byBagNum,
   _INVEN_DB_BASE *pCon)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-CC8h] BYREF
-  _worlddb_inven_info pInvenData; // [rsp+30h] [rbp-C98h] BYREF
-  unsigned __int8 v9; // [rsp+CB4h] [rbp-14h]
-  int j; // [rsp+CB8h] [rbp-10h]
+  _worlddb_inven_info invenData;
+  unsigned __int8 dbResult;
 
-  v4 = &v7;
-  memset_0(&pInvenData, 0, sizeof(pInvenData));
-  v9 = this->m_pWorldDB->Select_Inven(dwSerial, byBagNum, &pInvenData);
-  if ( v9 == 1 )
+  memset_0(&invenData, 0, sizeof(invenData));
+  dbResult = this->m_pWorldDB->Select_Inven(dwSerial, byBagNum, &invenData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v9 == 2 )
+  if ( dbResult == 2 )
     return 37;
-  for ( j = 0; j < 100; ++j )
+  for ( int itemIndex = 0; itemIndex < 100; ++itemIndex )
   {
-    if ( j >= 20 * static_cast<int>(byBagNum) )
+    if ( itemIndex >= 20 * static_cast<int>(byBagNum) )
     {
-      pCon->m_List[j].Key.SetRelease();
+      pCon->m_List[itemIndex].Key.SetRelease();
     }
     else
     {
-      pCon->m_List[j].Key.LoadDBKey(pInvenData.invenKey[j].lK);
-      pCon->m_List[j].dwDur = pInvenData.invenKey[j].dwD;
-      pCon->m_List[j].dwUpt = pInvenData.invenKey[j].dwU;
-      pCon->m_List[j].dwT = pInvenData.invenKey[j].dwT;
-      pCon->m_List[j].lnUID = pInvenData.invenKey[j].lnUID;
+      pCon->m_List[itemIndex].Key.LoadDBKey(invenData.invenKey[itemIndex].lK);
+      pCon->m_List[itemIndex].dwDur = invenData.invenKey[itemIndex].dwD;
+      pCon->m_List[itemIndex].dwUpt = invenData.invenKey[itemIndex].dwU;
+      pCon->m_List[itemIndex].dwT = invenData.invenKey[itemIndex].dwT;
+      pCon->m_List[itemIndex].lnUID = invenData.invenKey[itemIndex].lnUID;
     }
   }
   return 0;
@@ -336,50 +314,45 @@ unsigned __int8 CMainThread::_db_Load_Inven(
 
 unsigned __int8 CMainThread::_db_Load_ItemCombineEx(unsigned int dwSerial, _ITEMCOMBINE_DB_BASE *pCombineEx)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  _worlddb_itemcombineex_info pdbItemCombineExInfo; // [rsp+30h] [rbp-158h] BYREF
-  unsigned __int8 v8; // [rsp+174h] [rbp-14h]
-  int j; // [rsp+178h] [rbp-10h]
+  _worlddb_itemcombineex_info itemCombineExInfo;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&pdbItemCombineExInfo, 0, sizeof(pdbItemCombineExInfo));
-  v8 = this->m_pWorldDB->Select_ItemCombineEx(dwSerial, &pdbItemCombineExInfo);
-  if ( v8 == 1 )
+  memset_0(&itemCombineExInfo, 0, sizeof(itemCombineExInfo));
+  dbResult = this->m_pWorldDB->Select_ItemCombineEx(dwSerial, &itemCombineExInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_ItemCombineEx(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_ItemCombineEx(dwSerial, &pdbItemCombineExInfo) )
-    return 24;
-LABEL_11:
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_ItemCombineEx(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_ItemCombineEx(dwSerial, &itemCombineExInfo) )
+      return 24;
+  }
   pCombineEx->Init();
-  pCombineEx->m_bIsResult = pdbItemCombineExInfo.bIsResult;
+  pCombineEx->m_bIsResult = itemCombineExInfo.bIsResult;
   if ( !pCombineEx->m_bIsResult )
     return 0;
-  pCombineEx->m_dwCheckKey = pdbItemCombineExInfo.dwCheckKey;
-  pCombineEx->m_byDlgType = pdbItemCombineExInfo.byDlgType;
-  pCombineEx->m_dwDalant = pdbItemCombineExInfo.dwDalant;
-  pCombineEx->m_byItemListNum = pdbItemCombineExInfo.byItemListCount;
-  pCombineEx->m_bySelectItemCount = pdbItemCombineExInfo.byItemSelectCount;
-  for ( j = 0; j < 24; ++j )
+  pCombineEx->m_dwCheckKey = itemCombineExInfo.dwCheckKey;
+  pCombineEx->m_byDlgType = itemCombineExInfo.byDlgType;
+  pCombineEx->m_dwDalant = itemCombineExInfo.dwDalant;
+  pCombineEx->m_byItemListNum = itemCombineExInfo.byItemListCount;
+  pCombineEx->m_bySelectItemCount = itemCombineExInfo.byItemSelectCount;
+  for ( int itemIndex = 0; itemIndex < 24; ++itemIndex )
   {
-    if ( j >= pdbItemCombineExInfo.byItemListCount )
+    if ( itemIndex >= itemCombineExInfo.byItemListCount )
     {
-      pCombineEx->m_List[j].Key.SetRelease();
+      pCombineEx->m_List[itemIndex].Key.SetRelease();
     }
     else
     {
-      _COMBINEKEY combineKey = CombineKeyFromDb(pdbItemCombineExInfo.invenKey[j].lK);
-      pCombineEx->m_List[j].Key.LoadDBKey(combineKey);
-      pCombineEx->m_List[j].dwDur = pdbItemCombineExInfo.invenKey[j].dwD;
-      pCombineEx->m_List[j].dwUpt = pdbItemCombineExInfo.invenKey[j].dwU;
+      _COMBINEKEY combineKey = CombineKeyFromDb(itemCombineExInfo.invenKey[itemIndex].lK);
+      pCombineEx->m_List[itemIndex].Key.LoadDBKey(combineKey);
+      pCombineEx->m_List[itemIndex].dwDur = itemCombineExInfo.invenKey[itemIndex].dwD;
+      pCombineEx->m_List[itemIndex].dwUpt = itemCombineExInfo.invenKey[itemIndex].dwU;
     }
   }
-  pCombineEx->m_dwResultEffectType = pdbItemCombineExInfo.dwResultEffectType;
-  pCombineEx->m_dwResultEffectMsgCode = pdbItemCombineExInfo.dwResultEffectMsgCode;
+  pCombineEx->m_dwResultEffectType = itemCombineExInfo.dwResultEffectType;
+  pCombineEx->m_dwResultEffectMsgCode = itemCombineExInfo.dwResultEffectMsgCode;
   return 0;
 }
 
@@ -387,90 +360,72 @@ unsigned __int8 CMainThread::_db_load_losebattlecount(
         unsigned int dwSerial,
         _AVATOR_DATA *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-48h] BYREF
-  int v7; // [rsp+20h] [rbp-28h]
-  unsigned int *dwCount; // [rsp+28h] [rbp-20h]
-  unsigned int *v9; // [rsp+30h] [rbp-18h]
-  unsigned int *v10; // [rsp+38h] [rbp-10h]
-
-  v3 = &v6;
-  dwCount = pCon->dbAvator.m_dwRaceBattleRecord;
-  v7 = this->m_pWorldDB->Select_WinBattleCount(
-         pCon->dbAvator.m_byRaceSexCode / 2,
-         dwSerial,
-         pCon->dbAvator.m_dwRaceBattleRecord);
-  if ( v7 == 1 )
+  const unsigned __int8 race = pCon->dbAvator.m_byRaceSexCode / 2;
+  int selectResult = this->m_pWorldDB->Select_WinBattleCount(
+    race,
+    dwSerial,
+    pCon->dbAvator.m_dwRaceBattleRecord);
+  if ( selectResult == 1 )
     return 24;
-  v9 = &pCon->dbAvator.m_dwRaceBattleRecord[1];
-  v7 = this->m_pWorldDB->Select_FailBattleCount(
-         pCon->dbAvator.m_byRaceSexCode / 2,
-         dwSerial,
-         &pCon->dbAvator.m_dwRaceBattleRecord[1]);
-  if ( v7 == 1 )
+  selectResult = this->m_pWorldDB->Select_FailBattleCount(
+    race,
+    dwSerial,
+    &pCon->dbAvator.m_dwRaceBattleRecord[1]);
+  if ( selectResult == 1 )
     return 24;
-  v10 = &pCon->dbAvator.m_dwRaceBattleRecord[2];
-  v7 = this->m_pWorldDB->Select_LoseBattleCount(
-         pCon->dbAvator.m_byRaceSexCode / 2,
-         dwSerial,
-         &pCon->dbAvator.m_dwRaceBattleRecord[2]);
-  if ( v7 == 1 )
+  selectResult = this->m_pWorldDB->Select_LoseBattleCount(
+    race,
+    dwSerial,
+    &pCon->dbAvator.m_dwRaceBattleRecord[2]);
+  if ( selectResult == 1 )
     return 24;
-  else
-    return 0;
+  return 0;
 }
 
 unsigned __int8 CMainThread::_db_Load_MacroData(
         unsigned int dwSerial,
         _AIOC_A_MACRODATA *pMacro)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-  unsigned __int8 v7; // [rsp+20h] [rbp-18h]
-  int j; // [rsp+24h] [rbp-14h]
+  unsigned __int8 dbResult = 0;
 
-  v3 = &v6;
-  v7 = 0;
   memset_0(pMacro, 0, sizeof(_AIOC_A_MACRODATA));
-  v7 = this->m_pWorldDB->Select_MacroData(dwSerial, pMacro);
-  if ( v7 == 2 )
+  dbResult = this->m_pWorldDB->Select_MacroData(dwSerial, pMacro);
+  if ( dbResult == 2 )
   {
     if ( !this->m_pWorldDB->Insert_MacroData( dwSerial) )
       return 24;
-    for ( j = 0; j < 1; ++j )
+    for ( int potionIndex = 0; potionIndex < 1; ++potionIndex )
     {
-      pMacro->mcr_Potion[j].Potion[0] = -1;
-      pMacro->mcr_Potion[j].Potion[1] = -1;
-      pMacro->mcr_Potion[j].Potion[2] = -1;
-      pMacro->mcr_Potion[j].PotionValue[0] = 0;
-      pMacro->mcr_Potion[j].PotionValue[1] = 0;
-      pMacro->mcr_Potion[j].PotionValue[2] = 0;
+      pMacro->mcr_Potion[potionIndex].Potion[0] = -1;
+      pMacro->mcr_Potion[potionIndex].Potion[1] = -1;
+      pMacro->mcr_Potion[potionIndex].Potion[2] = -1;
+      pMacro->mcr_Potion[potionIndex].PotionValue[0] = 0;
+      pMacro->mcr_Potion[potionIndex].PotionValue[1] = 0;
+      pMacro->mcr_Potion[potionIndex].PotionValue[2] = 0;
     }
-    for ( j = 0; j < 3; ++j )
+    for ( int actionIndex = 0; actionIndex < 3; ++actionIndex )
     {
-      pMacro->mcr_Action[j].Action[0] = -1;
-      pMacro->mcr_Action[j].Action[1] = -1;
-      pMacro->mcr_Action[j].Action[2] = -1;
-      pMacro->mcr_Action[j].Action[3] = -1;
-      pMacro->mcr_Action[j].Action[4] = -1;
-      pMacro->mcr_Action[j].Action[5] = -1;
-      pMacro->mcr_Action[j].Action[6] = -1;
-      pMacro->mcr_Action[j].Action[7] = -1;
-      pMacro->mcr_Action[j].Action[8] = -1;
-      pMacro->mcr_Action[j].Action[9] = -1;
+      pMacro->mcr_Action[actionIndex].Action[0] = -1;
+      pMacro->mcr_Action[actionIndex].Action[1] = -1;
+      pMacro->mcr_Action[actionIndex].Action[2] = -1;
+      pMacro->mcr_Action[actionIndex].Action[3] = -1;
+      pMacro->mcr_Action[actionIndex].Action[4] = -1;
+      pMacro->mcr_Action[actionIndex].Action[5] = -1;
+      pMacro->mcr_Action[actionIndex].Action[6] = -1;
+      pMacro->mcr_Action[actionIndex].Action[7] = -1;
+      pMacro->mcr_Action[actionIndex].Action[8] = -1;
+      pMacro->mcr_Action[actionIndex].Action[9] = -1;
     }
-    for ( j = 0; j < 2; ++j )
+    for ( int chatIndex = 0; chatIndex < 2; ++chatIndex )
     {
-      memset_0(&pMacro->mcr_Chat[j], 0, 0x100uLL);
-      memset_0(pMacro->mcr_Chat[j].Chat[1], 0, sizeof(pMacro->mcr_Chat[j].Chat[1]));
-      memset_0(pMacro->mcr_Chat[j].Chat[2], 0, sizeof(pMacro->mcr_Chat[j].Chat[2]));
-      memset_0(pMacro->mcr_Chat[j].Chat[3], 0, sizeof(pMacro->mcr_Chat[j].Chat[3]));
-      memset_0(pMacro->mcr_Chat[j].Chat[4], 0, sizeof(pMacro->mcr_Chat[j].Chat[4]));
+      memset_0(&pMacro->mcr_Chat[chatIndex], 0, 0x100uLL);
+      memset_0(pMacro->mcr_Chat[chatIndex].Chat[1], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[1]));
+      memset_0(pMacro->mcr_Chat[chatIndex].Chat[2], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[2]));
+      memset_0(pMacro->mcr_Chat[chatIndex].Chat[3], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[3]));
+      memset_0(pMacro->mcr_Chat[chatIndex].Chat[4], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[4]));
     }
   }
-  else if ( v7 == 1 )
+  else if ( dbResult == 1 )
   {
     return 24;
   }
@@ -481,29 +436,24 @@ unsigned __int8 CMainThread::_db_Load_NpcQuest_History(
         unsigned int dwSerial,
         _QUEST_DB_BASE *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-4B8h] BYREF
-  _worlddb_npc_quest_complete_history pNpcQHis; // [rsp+30h] [rbp-488h] BYREF
-  unsigned __int8 v8; // [rsp+494h] [rbp-24h]
-  int j; // [rsp+498h] [rbp-20h]
+  _worlddb_npc_quest_complete_history npcQuestHistory;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  v8 = this->m_pWorldDB->Select_NpcQuest_History(dwSerial, &pNpcQHis);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_NpcQuest_History(dwSerial, &npcQuestHistory);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_NpcQuest_History(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_NpcQuest_History(dwSerial, &pNpcQHis) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 70; ++j )
+  if ( dbResult == 2 )
   {
-    strcpy_0(pCon->m_History[j].szQuestCode, pNpcQHis.List[j].szQuestCode);
-    pCon->m_History[j].byLevel = pNpcQHis.List[j].byLevel;
-    pCon->m_History[j].dwEventEndTime = pNpcQHis.List[j].dwEventEndTime;
+    if ( !this->m_pWorldDB->Insert_NpcQuest_History(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_NpcQuest_History(dwSerial, &npcQuestHistory) )
+      return 24;
+  }
+  for ( int historyIndex = 0; historyIndex < 70; ++historyIndex )
+  {
+    strcpy_0(pCon->m_History[historyIndex].szQuestCode, npcQuestHistory.List[historyIndex].szQuestCode);
+    pCon->m_History[historyIndex].byLevel = npcQuestHistory.List[historyIndex].byLevel;
+    pCon->m_History[historyIndex].dwEventEndTime = npcQuestHistory.List[historyIndex].dwEventEndTime;
   }
   return 0;
 }
@@ -512,33 +462,28 @@ unsigned __int8 CMainThread::_db_Load_OreCutting(
         unsigned int dwSerial,
         _CUTTING_DB_BASE *pDbCutting)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-E8h] BYREF
-  _worlddb_ore_cutting pOreCutting; // [rsp+30h] [rbp-B8h] BYREF
-  char v8; // [rsp+D4h] [rbp-14h]
-  int j; // [rsp+D8h] [rbp-10h]
+  _worlddb_ore_cutting oreCuttingData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  v8 = this->m_pWorldDB->Select_OreCutting(dwSerial, &pOreCutting);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_OreCutting(dwSerial, &oreCuttingData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_21;
-  if ( !this->m_pWorldDB->Insert_OreCutting(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_OreCutting(dwSerial, &pOreCutting) )
-    return 24;
-LABEL_21:
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_OreCutting(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_OreCutting(dwSerial, &oreCuttingData) )
+      return 24;
+  }
   if ( pDbCutting->m_bOldDataLoad )
     return 0;
   pDbCutting->Init();
-  for ( j = 0; j < 20; ++j )
+  for ( int cutIndex = 0; cutIndex < 20; ++cutIndex )
   {
-    if ( pOreCutting.List[j].nKey != -1 )
+    if ( oreCuttingData.List[cutIndex].nKey != -1 )
     {
-      pDbCutting->m_List[j].Key.LoadDBKey(pOreCutting.List[j].nKey);
-      pDbCutting->m_List[j].dwDur = pOreCutting.List[j].dwDur;
+      pDbCutting->m_List[cutIndex].Key.LoadDBKey(oreCuttingData.List[cutIndex].nKey);
+      pDbCutting->m_List[cutIndex].dwDur = oreCuttingData.List[cutIndex].dwDur;
       ++pDbCutting->m_byLeftNum;
     }
   }
@@ -549,26 +494,21 @@ unsigned __int8 CMainThread::_db_Load_PcBangFavor(
         unsigned int dwSerial,
         _PCBANG_FAVOR_ITEM_DB_BASE *pDbPcBangFavor)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-1D8h] BYREF
-  _worlddb_pcbang_favor_item pPcBangFavorItem; // [rsp+30h] [rbp-1A8h] BYREF
-  char v8; // [rsp+1C4h] [rbp-14h]
-  int j; // [rsp+1C8h] [rbp-10h]
+  _worlddb_pcbang_favor_item favorItemData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  v8 = this->m_pWorldDB->Select_PcBangFavorItem(dwSerial, &pPcBangFavorItem);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_PcBangFavorItem(dwSerial, &favorItemData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_PcBangFavorItem(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_PcBangFavorItem(dwSerial, &pPcBangFavorItem) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 50; ++j )
-    pDbPcBangFavor->lnUID[j] = pPcBangFavorItem.lnUID[j];
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_PcBangFavorItem(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_PcBangFavorItem(dwSerial, &favorItemData) )
+      return 24;
+  }
+  for ( int itemIndex = 0; itemIndex < 50; ++itemIndex )
+    pDbPcBangFavor->lnUID[itemIndex] = favorItemData.lnUID[itemIndex];
   return 0;
 }
 
@@ -576,28 +516,23 @@ unsigned __int8 CMainThread::_db_Load_PotionDelay(
         unsigned int dwSerial,
         _POTION_NEXT_USE_TIME_DB_BASE *pDbPotionDelay)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-E8h] BYREF
-  _worlddb_potion_delay_info pPotionDelayInfo; // [rsp+30h] [rbp-B8h] BYREF
-  char v8; // [rsp+D4h] [rbp-14h]
-  DWORD Time; // [rsp+D8h] [rbp-10h]
-  int j; // [rsp+DCh] [rbp-Ch]
+  _worlddb_potion_delay_info potionDelayInfo;
+  unsigned __int8 dbResult;
+  DWORD currentTime;
 
-  v3 = &v6;
-  v8 = this->m_pWorldDB->Select_PotionDelay(dwSerial, &pPotionDelayInfo);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_PotionDelay(dwSerial, &potionDelayInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_PotionDelay(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_PotionDelay(dwSerial, &pPotionDelayInfo) )
-    return 24;
-LABEL_11:
-  Time = timeGetTime();
-  for ( j = 0; j < 38; ++j )
-    pDbPotionDelay->dwPotionNextUseTime[j] = Time + pPotionDelayInfo.dwPotionDelay[j];
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_PotionDelay(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_PotionDelay(dwSerial, &potionDelayInfo) )
+      return 24;
+  }
+  currentTime = timeGetTime();
+  for ( int delayIndex = 0; delayIndex < 38; ++delayIndex )
+    pDbPotionDelay->dwPotionNextUseTime[delayIndex] = currentTime + potionDelayInfo.dwPotionDelay[delayIndex];
   return 0;
 }
 
@@ -605,16 +540,11 @@ unsigned __int8 CMainThread::_db_Load_PrimiumPlayTime(
         unsigned int dwAccSerial,
         _PCBANG_PLAY_TIME *kData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-  char v7; // [rsp+20h] [rbp-18h]
+  unsigned __int8 dbResult = this->m_pWorldDB->Select_PrimiumPlayTime(dwAccSerial, kData);
 
-  v3 = &v6;
-  v7 = this->m_pWorldDB->Select_PrimiumPlayTime(dwAccSerial, kData);
-  if ( v7 == 1 )
+  if ( dbResult == 1 )
     return 24;
-  if ( v7 == 2 )
+  if ( dbResult == 2 )
   {
     if ( !this->m_pWorldDB->Insert_PrimiumPlayTime(dwAccSerial) )
       return 24;
@@ -630,39 +560,27 @@ unsigned __int8 CMainThread::_db_load_punishment(
         unsigned int dwSerial,
         _AVATOR_DATA *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-  int v7; // [rsp+20h] [rbp-18h]
-
-  v3 = &v6;
-  v7 = this->m_pWorldDB->Select_Punishment(
-         dwSerial,
-         pCon->dbAvator.m_dwElectSerial,
-         pCon->dbAvator.m_dwPunishment);
-  if ( v7 == 1 )
+  const int selectResult = this->m_pWorldDB->Select_Punishment(
+    dwSerial,
+    pCon->dbAvator.m_dwElectSerial,
+    pCon->dbAvator.m_dwPunishment);
+  if ( selectResult == 1 )
     return 24;
-  else
-    return 0;
+  return 0;
 }
 
 unsigned __int8 CMainThread::_db_Load_PvpOrderView(
         unsigned int dwSerial,
         _PVP_ORDER_VIEW_DB_BASE *kData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-A8h] BYREF
-  _pvporderview_info kInfo; // [rsp+30h] [rbp-78h] BYREF
-  char v8; // [rsp+94h] [rbp-14h]
-  int j; // [rsp+98h] [rbp-10h]
+  _pvporderview_info orderViewInfo;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&kInfo, 0, sizeof(kInfo));
-  v8 = this->m_pWorldDB->Select_PvpOrderViewInfo(dwSerial, &kInfo);
-  if ( v8 == 1 )
+  memset_0(&orderViewInfo, 0, sizeof(orderViewInfo));
+  dbResult = this->m_pWorldDB->Select_PvpOrderViewInfo(dwSerial, &orderViewInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 == 2 )
+  if ( dbResult == 2 )
   {
     if ( this->m_pWorldDB->Insert_PvpOrderViewInfo(dwSerial) )
       return 0;
@@ -671,18 +589,18 @@ unsigned __int8 CMainThread::_db_Load_PvpOrderView(
   }
   else
   {
-    kData->tUpdatedate = kInfo.tUpdatedate;
-    kData->nDeath = kInfo.nDeath;
-    kData->nKill = kInfo.nKill;
-    kData->dTodayStacked = kInfo.dTodayStacked;
-    kData->dPvpPoint = kInfo.dPvpPoint;
-    kData->dPvpTempCash = kInfo.dPvpTempCash;
-    kData->dPvpCash = kInfo.dPvpCash;
-    for ( j = 0; j < 10; ++j )
-      kData->dwKillerSerial[j] = kInfo.dwKillerSerial[j];
-    kData->byContHaveCash = kInfo.byContHaveCash;
-    kData->byContLoseCash = kInfo.byContLoseCash;
-    kData->bRaceWarRecvr = kInfo.bRaceWarRecvr;
+    kData->tUpdatedate = orderViewInfo.tUpdatedate;
+    kData->nDeath = orderViewInfo.nDeath;
+    kData->nKill = orderViewInfo.nKill;
+    kData->dTodayStacked = orderViewInfo.dTodayStacked;
+    kData->dPvpPoint = orderViewInfo.dPvpPoint;
+    kData->dPvpTempCash = orderViewInfo.dPvpTempCash;
+    kData->dPvpCash = orderViewInfo.dPvpCash;
+    for ( int killerIndex = 0; killerIndex < 10; ++killerIndex )
+      kData->dwKillerSerial[killerIndex] = orderViewInfo.dwKillerSerial[killerIndex];
+    kData->byContHaveCash = orderViewInfo.byContHaveCash;
+    kData->byContLoseCash = orderViewInfo.byContLoseCash;
+    kData->bRaceWarRecvr = orderViewInfo.bRaceWarRecvr;
     return 0;
   }
 }
@@ -691,18 +609,14 @@ unsigned __int8 CMainThread::_db_Load_PvpPointLimitData(
         unsigned int dwSerial,
         _PVPPOINT_LIMIT_DB_BASE *kData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-68h] BYREF
-  _pvppointlimit_info kInfo; // [rsp+28h] [rbp-40h] BYREF
-  unsigned __int8 v8; // [rsp+54h] [rbp-14h]
+  _pvppointlimit_info limitInfo;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&kInfo, 0, sizeof(kInfo));
-  v8 = this->m_pWorldDB->Select_PvpPointLimitInfo(dwSerial, &kInfo);
-  if ( v8 == 1 )
+  memset_0(&limitInfo, 0, sizeof(limitInfo));
+  dbResult = this->m_pWorldDB->Select_PvpPointLimitInfo(dwSerial, &limitInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 == 2 )
+  if ( dbResult == 2 )
   {
     if ( this->m_pWorldDB->Insert_PvpPointLimitInfoRecord(dwSerial) )
       return 0;
@@ -711,72 +625,58 @@ unsigned __int8 CMainThread::_db_Load_PvpPointLimitData(
   }
   else
   {
-    kData->tUpdatedate = kInfo.tUpdatedate;
-    kData->bUseUp = kInfo.bUseUp;
-    kData->byLimitRate = kInfo.byLimitRate;
-    kData->dOriginalPoint = kInfo.dOriginalPoint;
-    kData->dLimitPoint = kInfo.dLimitPoint;
-    kData->dUsePoint = kInfo.dUsePoint;
+    kData->tUpdatedate = limitInfo.tUpdatedate;
+    kData->bUseUp = limitInfo.bUseUp;
+    kData->byLimitRate = limitInfo.byLimitRate;
+    kData->dOriginalPoint = limitInfo.dOriginalPoint;
+    kData->dLimitPoint = limitInfo.dLimitPoint;
+    kData->dUsePoint = limitInfo.dUsePoint;
     return 0;
   }
 }
 
 unsigned __int8 CMainThread::_db_Load_Quest( unsigned int dwSerial, _QUEST_DB_BASE *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-238h] BYREF
-  _worlddb_quest_array questData; // [rsp+30h] [rbp-208h] BYREF
-  unsigned __int8 v8; // [rsp+214h] [rbp-24h]
-  int j; // [rsp+218h] [rbp-20h]
+  _worlddb_quest_array questData;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
   memset_0(&questData, 0, sizeof(questData));
-  v8 = this->m_pWorldDB->Select_Quest(dwSerial, &questData);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_Quest(dwSerial, &questData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_Quest(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_Quest(dwSerial, &questData) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 30; ++j )
+  if ( dbResult == 2 )
   {
-    pCon->m_List[j].byQuestType = questData.questList[j].byQuestType;
-    pCon->m_List[j].wIndex = questData.questList[j].wIndex;
-    pCon->m_List[j].dwPassSec = questData.questList[j].dwPassSec;
-    pCon->m_List[j].wNum[0] = questData.questList[j].wNum[0];
-    pCon->m_List[j].wNum[1] = questData.questList[j].wNum[1];
-    pCon->m_List[j].wNum[2] = questData.questList[j].wNum[2];
+    if ( !this->m_pWorldDB->Insert_Quest(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_Quest(dwSerial, &questData) )
+      return 24;
+  }
+  for ( int questIndex = 0; questIndex < 30; ++questIndex )
+  {
+    pCon->m_List[questIndex].byQuestType = questData.questList[questIndex].byQuestType;
+    pCon->m_List[questIndex].wIndex = questData.questList[questIndex].wIndex;
+    pCon->m_List[questIndex].dwPassSec = questData.questList[questIndex].dwPassSec;
+    pCon->m_List[questIndex].wNum[0] = questData.questList[questIndex].wNum[0];
+    pCon->m_List[questIndex].wNum[1] = questData.questList[questIndex].wNum[1];
+    pCon->m_List[questIndex].wNum[2] = questData.questList[questIndex].wNum[2];
   }
   return 0;
 }
 
 unsigned __int8 CMainThread::_db_load_raceboss( unsigned int dwSerial, _AVATOR_DATA *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-48h] BYREF
-  int v7; // [rsp+20h] [rbp-28h]
-  bool *bOverlapVote; // [rsp+28h] [rbp-20h]
-  unsigned int *dwCnt; // [rsp+30h] [rbp-18h]
-
-  v3 = &v6;
-  bOverlapVote = &pCon->dbAvator.m_bOverlapVote;
-  v7 = this->m_pWorldDB->Select_PatriarchVoted(
-         pCon->dbAvator.m_byRaceSexCode / 2,
-         dwSerial,
-         &pCon->dbAvator.m_bOverlapVote);
-  if ( v7 == 1 )
+  const unsigned __int8 race = pCon->dbAvator.m_byRaceSexCode / 2;
+  int selectResult = this->m_pWorldDB->Select_PatriarchVoted(
+    race,
+    dwSerial,
+    &pCon->dbAvator.m_bOverlapVote);
+  if ( selectResult == 1 )
     return 24;
-  dwCnt = &pCon->dbAvator.m_dwGivebackCount;
-  v7 = this->m_pWorldDB->Select_PatriarchRefundCount(
-         pCon->dbAvator.m_byRaceSexCode / 2,
-         dwSerial,
-         &pCon->dbAvator.m_dwGivebackCount);
-  if ( v7 )
+  selectResult = this->m_pWorldDB->Select_PatriarchRefundCount(
+    race,
+    dwSerial,
+    &pCon->dbAvator.m_dwGivebackCount);
+  if ( selectResult )
     pCon->dbAvator.m_dwGivebackCount = 0;
   return 0;
 }
@@ -785,16 +685,11 @@ unsigned __int8 CMainThread::_db_Load_SFDelayData(
         unsigned int dwSerial,
         _worlddb_sf_delay_info *pDbSFDelayInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-38h] BYREF
-  unsigned __int8 v7; // [rsp+20h] [rbp-18h]
+  const unsigned __int8 dbResult = this->m_pWorldDB->Select_SFDelayInfo(dwSerial, pDbSFDelayInfo);
 
-  v3 = &v6;
-  v7 = this->m_pWorldDB->Select_SFDelayInfo(dwSerial, pDbSFDelayInfo);
-  if ( v7 == 1 )
+  if ( dbResult == 1 )
     return 24;
-  if ( v7 != 2 || this->m_pWorldDB->Insert_SFDelayInfo(dwSerial, pDbSFDelayInfo) )
+  if ( dbResult != 2 || this->m_pWorldDB->Insert_SFDelayInfo(dwSerial, pDbSFDelayInfo) )
     return 0;
   return 24;
 }
@@ -849,60 +744,54 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
         unsigned int dwSerial,
         _SUPPLEMENT_DB_BASE *pDbSupplement)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  size_t v6; // rax
-  __int64 v7; // [rsp+0h] [rbp-118h] BYREF
-  _worlddb_character_supplement_info pSupplement; // [rsp+28h] [rbp-F0h] BYREF
-  char v9; // [rsp+64h] [rbp-B4h]
-  unsigned __int64 dwScanerCnt; // [rsp+68h] [rbp-B0h]
-  char Buffer[88]; // [rsp+80h] [rbp-98h] BYREF
-  char String[28]; // [rsp+D8h] [rbp-40h] BYREF
-  int j; // [rsp+F4h] [rbp-24h]
+  _worlddb_character_supplement_info supplementInfo;
+  unsigned __int8 dbResult;
+  unsigned __int64 scannerCounter;
+  char scannerBuffer[88];
+  char scannerCountString[28];
 
-  v3 = &v7;
-  v9 = this->m_pWorldDB->Select_Supplement(dwSerial, &pSupplement);
-  if ( v9 == 1 )
+  dbResult = this->m_pWorldDB->Select_Supplement(dwSerial, &supplementInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v9 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_Supplement(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_Supplement(dwSerial, &pSupplement) )
-    return 24;
-LABEL_11:
-  pDbSupplement->dPvpPointLeak = pSupplement.dPvpPointLeak;
-  pDbSupplement->bLastAttBuff = pSupplement.bLastAttBuff;
-  pDbSupplement->dwBufPotionEndTime = pSupplement.dwBufPotionEndTime;
-  pDbSupplement->dwRaceBuffClear = pSupplement.dwRaceBuffClear;
-  if ( this->m_pWorldDB->Select_Supplement_Ex(dwSerial, &pSupplement) )
-    return 24;
-  pDbSupplement->byVoted = pSupplement.byVoted;
-  pDbSupplement->dwAccumPlayTime = pSupplement.dwAccumPlayTime;
-  pDbSupplement->dwLastResetDate = pSupplement.dwLastResetDate;
-  pDbSupplement->VoteEnable = pSupplement.VoteEnable;
-  dwScanerCnt = pSupplement.dwScanerCnt;
-  if ( pSupplement.dwScanerCnt )
+  if ( dbResult == 2 )
   {
-    memset(Buffer, 0, 64);
-    memset(String, 0, 10);
-    sprintf_s(Buffer, 0x40uLL, "%I64u", dwScanerCnt);
-    memcpy_0(String, Buffer, 9uLL);
-    pDbSupplement->dwScanerGetDate = atoi(String);
-    memset_0(String, 0, 0xAuLL);
-    v6 = strlen_0(Buffer);
-    memcpy_0(String, &Buffer[9], v6 - 9);
-    pDbSupplement->wScanerCnt = atoi(String);
+    if ( !this->m_pWorldDB->Insert_Supplement(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_Supplement(dwSerial, &supplementInfo) )
+      return 24;
+  }
+  pDbSupplement->dPvpPointLeak = supplementInfo.dPvpPointLeak;
+  pDbSupplement->bLastAttBuff = supplementInfo.bLastAttBuff;
+  pDbSupplement->dwBufPotionEndTime = supplementInfo.dwBufPotionEndTime;
+  pDbSupplement->dwRaceBuffClear = supplementInfo.dwRaceBuffClear;
+  if ( this->m_pWorldDB->Select_Supplement_Ex(dwSerial, &supplementInfo) )
+    return 24;
+  pDbSupplement->byVoted = supplementInfo.byVoted;
+  pDbSupplement->dwAccumPlayTime = supplementInfo.dwAccumPlayTime;
+  pDbSupplement->dwLastResetDate = supplementInfo.dwLastResetDate;
+  pDbSupplement->VoteEnable = supplementInfo.VoteEnable;
+  scannerCounter = supplementInfo.dwScanerCnt;
+  if ( supplementInfo.dwScanerCnt )
+  {
+    memset(scannerBuffer, 0, 64);
+    memset(scannerCountString, 0, 10);
+    sprintf_s(scannerBuffer, 0x40uLL, "%I64u", scannerCounter);
+    memcpy_0(scannerCountString, scannerBuffer, 9uLL);
+    pDbSupplement->dwScanerGetDate = atoi(scannerCountString);
+    memset_0(scannerCountString, 0, 0xAuLL);
+    const size_t scannerBufferLength = strlen_0(scannerBuffer);
+    memcpy_0(scannerCountString, &scannerBuffer[9], scannerBufferLength - 9);
+    pDbSupplement->wScanerCnt = atoi(scannerCountString);
   }
   else
   {
     pDbSupplement->wScanerCnt = 0;
     pDbSupplement->dwScanerGetDate = 199001010;
   }
-  if ( this->m_pWorldDB->Select_Supplement_ActPoint(dwSerial, &pSupplement) )
+  if ( this->m_pWorldDB->Select_Supplement_ActPoint(dwSerial, &supplementInfo) )
     return 24;
-  for ( j = 0; j < 3; ++j )
-    pDbSupplement->dwActionPoint[j] = pSupplement.dwActionPoint[j];
+  for ( int actionPointIndex = 0; actionPointIndex < 3; ++actionPointIndex )
+    pDbSupplement->dwActionPoint[actionPointIndex] = supplementInfo.dwActionPoint[actionPointIndex];
   return 0;
 }
 
@@ -910,27 +799,23 @@ unsigned __int8 CMainThread::_db_Load_TimeLimitInfo(
         unsigned int dwAccSerial,
         _TIMELIMITINFO_DB_BASE *pDbTimeLimitInfo)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-58h] BYREF
-  _worlddb_time_limit_info pTimeLimiInfo; // [rsp+28h] [rbp-30h] BYREF
-  char v8; // [rsp+44h] [rbp-14h]
+  _worlddb_time_limit_info timeLimitInfo;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  v8 = this->m_pWorldDB->Select_PlayerTimeLimitInfo(dwAccSerial, &pTimeLimiInfo);
-  if ( v8 == 1 )
+  dbResult = this->m_pWorldDB->Select_PlayerTimeLimitInfo(dwAccSerial, &timeLimitInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_PlayerTimeLimitInfo(dwAccSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_PlayerTimeLimitInfo(dwAccSerial, &pTimeLimiInfo) )
-    return 24;
-LABEL_11:
+  if ( dbResult == 2 )
+  {
+    if ( !this->m_pWorldDB->Insert_PlayerTimeLimitInfo(dwAccSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_PlayerTimeLimitInfo(dwAccSerial, &timeLimitInfo) )
+      return 24;
+  }
   pDbTimeLimitInfo->dwAccSerial = dwAccSerial;
-  pDbTimeLimitInfo->dwFatigue = pTimeLimiInfo.dwFatigue;
-  pDbTimeLimitInfo->byTLStatus = pTimeLimiInfo.byTLStatus;
-  pDbTimeLimitInfo->dwLastLogoutTime = pTimeLimiInfo.dwLastLogoutTime;
+  pDbTimeLimitInfo->dwFatigue = timeLimitInfo.dwFatigue;
+  pDbTimeLimitInfo->byTLStatus = timeLimitInfo.byTLStatus;
+  pDbTimeLimitInfo->dwLastLogoutTime = timeLimitInfo.dwLastLogoutTime;
   return 0;
 }
 
@@ -939,33 +824,28 @@ unsigned __int8 CMainThread::_db_Load_Trade(
         unsigned int dwSerial,
         _TRADE_DB_BASE *pTrade)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-6B8h] BYREF
-  _worlddb_trade_info pTradeData; // [rsp+40h] [rbp-678h] BYREF
-  unsigned __int8 v9; // [rsp+694h] [rbp-24h]
-  int j; // [rsp+698h] [rbp-20h]
+  _worlddb_trade_info tradeData;
+  unsigned __int8 dbResult;
 
-  v4 = &v7;
-  memset_0(&pTradeData, 0, sizeof(pTradeData));
-  v9 = this->m_pWorldDB->Select_Trade(0, dwSerial, byRace, &pTradeData);
-  if ( v9 == 1 )
+  memset_0(&tradeData, 0, sizeof(tradeData));
+  dbResult = this->m_pWorldDB->Select_Trade(0, dwSerial, byRace, &tradeData);
+  if ( dbResult == 1 )
     return 24;
-  if ( v9 == 2 )
+  if ( dbResult == 2 )
     return 0;
-  for ( j = 0; j < 20; ++j )
+  for ( int tradeIndex = 0; tradeIndex < 20; ++tradeIndex )
   {
-    pTrade->m_List[j].byState = pTradeData.list[j].byState;
-    pTrade->m_List[j].dwRegistSerial = pTradeData.list[j].dwRegistSerial;
-    pTrade->m_List[j].byInvenIndex = pTradeData.list[j].byInvenIndex;
-    pTrade->m_List[j].dwPrice = pTradeData.list[j].dwPrice;
-    pTrade->m_List[j].tStartTime = pTradeData.list[j].tStartTime;
-    pTrade->m_List[j].bySellTurm = pTradeData.list[j].bySellTurm;
-    pTrade->m_List[j].dwBuyerSerial = pTradeData.list[j].dwBuyerSerial;
-    pTrade->m_List[j].dwTax = pTradeData.list[j].dwTax;
-    pTrade->m_List[j].tResultTime = pTradeData.list[j].tResultTime;
-    strcpy_s(pTrade->m_List[j].wszBuyerName, 0x11uLL, pTradeData.list[j].wszBuyerName);
-    strcpy_s(pTrade->m_List[j].szBuyerAccount, 0xDuLL, pTradeData.list[j].szBuyerAccount);
+    pTrade->m_List[tradeIndex].byState = tradeData.list[tradeIndex].byState;
+    pTrade->m_List[tradeIndex].dwRegistSerial = tradeData.list[tradeIndex].dwRegistSerial;
+    pTrade->m_List[tradeIndex].byInvenIndex = tradeData.list[tradeIndex].byInvenIndex;
+    pTrade->m_List[tradeIndex].dwPrice = tradeData.list[tradeIndex].dwPrice;
+    pTrade->m_List[tradeIndex].tStartTime = tradeData.list[tradeIndex].tStartTime;
+    pTrade->m_List[tradeIndex].bySellTurm = tradeData.list[tradeIndex].bySellTurm;
+    pTrade->m_List[tradeIndex].dwBuyerSerial = tradeData.list[tradeIndex].dwBuyerSerial;
+    pTrade->m_List[tradeIndex].dwTax = tradeData.list[tradeIndex].dwTax;
+    pTrade->m_List[tradeIndex].tResultTime = tradeData.list[tradeIndex].tResultTime;
+    strcpy_s(pTrade->m_List[tradeIndex].wszBuyerName, 0x11uLL, tradeData.list[tradeIndex].wszBuyerName);
+    strcpy_s(pTrade->m_List[tradeIndex].szBuyerAccount, 0xDuLL, tradeData.list[tradeIndex].szBuyerAccount);
   }
   return 0;
 }
@@ -976,73 +856,68 @@ unsigned __int8 CMainThread::_db_Load_Trunk(
         unsigned __int8 byRace,
         _TRUNK_DB_BASE *pTrunk)
 {
-  __int64 *v5; // rdi
-  __int64 i; // rcx
-  __int64 v8; // [rsp+0h] [rbp-1678h] BYREF
-  _worlddb_trunk_info pTrunkData; // [rsp+30h] [rbp-1648h] BYREF
-  unsigned __int8 v10; // [rsp+1654h] [rbp-24h]
-  int j; // [rsp+1658h] [rbp-20h]
-  unsigned __int8 v12; // [rsp+165Ch] [rbp-1Ch]
+  _worlddb_trunk_info trunkData;
+  unsigned __int8 trunkResult;
+  unsigned __int8 trunkExtendResult;
 
-  v5 = &v8;
-  memset_0(&pTrunkData, 0, sizeof(pTrunkData));
-  v10 = this->m_pWorldDB->Select_AccountTrunk(dwAccountSerial, byRace, &pTrunkData);
-  if ( v10 == 1 )
+  memset_0(&trunkData, 0, sizeof(trunkData));
+  trunkResult = this->m_pWorldDB->Select_AccountTrunk(dwAccountSerial, byRace, &trunkData);
+  if ( trunkResult == 1 )
     return 24;
-  if ( v10 == 2 )
+  if ( trunkResult == 2 )
   {
     if ( !this->m_pWorldDB->Insert_AccountTrunk(dwAccountSerial) )
       return 24;
-    if ( this->m_pWorldDB->Select_AccountTrunk(dwAccountSerial, byRace, &pTrunkData) )
+    if ( this->m_pWorldDB->Select_AccountTrunk(dwAccountSerial, byRace, &trunkData) )
       return 24;
   }
-  pTrunk->bySlotNum = pTrunkData.bySlotNum;
-  strcpy_0(pTrunk->wszPasswd, pTrunkData.wszPasswd);
-  pTrunk->dDalant = pTrunkData.dDalant;
-  pTrunk->dGold = pTrunkData.dGold;
-  pTrunk->byHintIndex = pTrunkData.byHintIndex;
-  strcpy_0(pTrunk->wszHintAnswer, pTrunkData.wszHintAnswer);
-  for ( j = 0; j < 100; ++j )
+  pTrunk->bySlotNum = trunkData.bySlotNum;
+  strcpy_0(pTrunk->wszPasswd, trunkData.wszPasswd);
+  pTrunk->dDalant = trunkData.dDalant;
+  pTrunk->dGold = trunkData.dGold;
+  pTrunk->byHintIndex = trunkData.byHintIndex;
+  strcpy_0(pTrunk->wszHintAnswer, trunkData.wszHintAnswer);
+  for ( int slotIndex = 0; slotIndex < 100; ++slotIndex )
   {
-    if ( j >= pTrunkData.bySlotNum )
+    if ( slotIndex >= trunkData.bySlotNum )
     {
-      pTrunk->m_List[j].Key.SetRelease();
+      pTrunk->m_List[slotIndex].Key.SetRelease();
     }
     else
     {
-      pTrunk->m_List[j].Key.LoadDBKey(pTrunkData.trunkKey[j].lK);
-      pTrunk->m_List[j].dwDur = pTrunkData.trunkKey[j].dwD;
-      pTrunk->m_List[j].dwUpt = pTrunkData.trunkKey[j].dwU;
-      pTrunk->m_List[j].byRace = pTrunkData.trunkKey[j].byRace;
-      pTrunk->m_List[j].dwT = pTrunkData.trunkKey[j].dwT;
-      pTrunk->m_List[j].lnUID = pTrunkData.trunkKey[j].lnUID;
+      pTrunk->m_List[slotIndex].Key.LoadDBKey(trunkData.trunkKey[slotIndex].lK);
+      pTrunk->m_List[slotIndex].dwDur = trunkData.trunkKey[slotIndex].dwD;
+      pTrunk->m_List[slotIndex].dwUpt = trunkData.trunkKey[slotIndex].dwU;
+      pTrunk->m_List[slotIndex].byRace = trunkData.trunkKey[slotIndex].byRace;
+      pTrunk->m_List[slotIndex].dwT = trunkData.trunkKey[slotIndex].dwT;
+      pTrunk->m_List[slotIndex].lnUID = trunkData.trunkKey[slotIndex].lnUID;
     }
   }
-  v12 = this->m_pWorldDB->Select_AccountTrunkExtend(dwAccountSerial, &pTrunkData);
-  if ( v12 == 1 )
+  trunkExtendResult = this->m_pWorldDB->Select_AccountTrunkExtend(dwAccountSerial, &trunkData);
+  if ( trunkExtendResult == 1 )
     return 24;
-  if ( v12 != 2 )
-    goto LABEL_24;
-  if ( !this->m_pWorldDB->Insert_AccountTrunkExtend(dwAccountSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_AccountTrunkExtend(dwAccountSerial, &pTrunkData) )
-    return 24;
-LABEL_24:
-  pTrunk->byExtSlotNum = pTrunkData.byExtSlotNum;
-  for ( j = 0; j < 40; ++j )
+  if ( trunkExtendResult == 2 )
   {
-    if ( j >= pTrunkData.byExtSlotNum )
+    if ( !this->m_pWorldDB->Insert_AccountTrunkExtend(dwAccountSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_AccountTrunkExtend(dwAccountSerial, &trunkData) )
+      return 24;
+  }
+  pTrunk->byExtSlotNum = trunkData.byExtSlotNum;
+  for ( int extSlotIndex = 0; extSlotIndex < 40; ++extSlotIndex )
+  {
+    if ( extSlotIndex >= trunkData.byExtSlotNum )
     {
-      pTrunk->m_ExtList[j].Key.SetRelease();
+      pTrunk->m_ExtList[extSlotIndex].Key.SetRelease();
     }
     else
     {
-      pTrunk->m_ExtList[j].Key.LoadDBKey(pTrunkData.ExttrunkKey[j].lK);
-      pTrunk->m_ExtList[j].dwDur = pTrunkData.ExttrunkKey[j].dwD;
-      pTrunk->m_ExtList[j].dwUpt = pTrunkData.ExttrunkKey[j].dwU;
-      pTrunk->m_ExtList[j].byRace = pTrunkData.ExttrunkKey[j].byRace;
-      pTrunk->m_ExtList[j].dwT = pTrunkData.ExttrunkKey[j].dwT;
-      pTrunk->m_ExtList[j].lnUID = pTrunkData.ExttrunkKey[j].lnUID;
+      pTrunk->m_ExtList[extSlotIndex].Key.LoadDBKey(trunkData.ExttrunkKey[extSlotIndex].lK);
+      pTrunk->m_ExtList[extSlotIndex].dwDur = trunkData.ExttrunkKey[extSlotIndex].dwD;
+      pTrunk->m_ExtList[extSlotIndex].dwUpt = trunkData.ExttrunkKey[extSlotIndex].dwU;
+      pTrunk->m_ExtList[extSlotIndex].byRace = trunkData.ExttrunkKey[extSlotIndex].byRace;
+      pTrunk->m_ExtList[extSlotIndex].dwT = trunkData.ExttrunkKey[extSlotIndex].dwT;
+      pTrunk->m_ExtList[extSlotIndex].lnUID = trunkData.ExttrunkKey[extSlotIndex].lnUID;
     }
   }
   return 0;
@@ -1053,82 +928,71 @@ unsigned __int8 CMainThread::_db_Load_UI(
         _LINK_DB_BASE *pLink,
         _SFCONT_DB_BASE *pSfcont)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-138h] BYREF
-  _worlddb_userinterface_info pUserinterfaceInfo; // [rsp+30h] [rbp-108h] BYREF
-  unsigned __int8 v9; // [rsp+114h] [rbp-24h]
-  int j; // [rsp+118h] [rbp-20h]
+  _worlddb_userinterface_info userInterfaceInfo;
+  unsigned __int8 dbResult;
 
-  v4 = &v7;
-  memset_0(&pUserinterfaceInfo, 0, sizeof(pUserinterfaceInfo));
-  v9 = this->m_pWorldDB->Select_UserInterface(dwSerial, &pUserinterfaceInfo);
-  if ( v9 == 1 )
+  memset_0(&userInterfaceInfo, 0, sizeof(userInterfaceInfo));
+  dbResult = this->m_pWorldDB->Select_UserInterface(dwSerial, &userInterfaceInfo);
+  if ( dbResult == 1 )
     return 24;
-  if ( v9 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_UserInterface(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_UserInterface(dwSerial, &pUserinterfaceInfo) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 50; ++j )
-    pLink->m_LinkList[j].Key.wEffectCode = pUserinterfaceInfo.wLinkBoard[j];
-  for ( j = 0; j < 8; ++j )
+  if ( dbResult == 2 )
   {
-    pSfcont->m_List[0][j].dwKey = pUserinterfaceInfo.dwDamageCForce[j];
-    pSfcont->m_List[1][j].dwKey = pUserinterfaceInfo.dwHelpCForce[j];
+    if ( !this->m_pWorldDB->Insert_UserInterface(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_UserInterface(dwSerial, &userInterfaceInfo) )
+      return 24;
   }
-  memcpy_0(pLink->m_dwSkill, pUserinterfaceInfo.dwSkill, sizeof(pLink->m_dwSkill));
-  memcpy_0(pLink->m_dwForce, pUserinterfaceInfo.dwForce, sizeof(pLink->m_dwForce));
-  memcpy_0(pLink->m_dwCharacter, pUserinterfaceInfo.dwCharacter, sizeof(pLink->m_dwCharacter));
-  memcpy_0(pLink->m_dwAnimus, pUserinterfaceInfo.dwAnimus, sizeof(pLink->m_dwAnimus));
-  memcpy_0(pLink->m_dwInvenBag, pUserinterfaceInfo.dwInvenBag, sizeof(pLink->m_dwInvenBag));
-  pLink->m_dwInven = pUserinterfaceInfo.dwInven;
-  pLink->m_byLinkBoardLock = pUserinterfaceInfo.byLinkBoardLock;
+  for ( int linkIndex = 0; linkIndex < 50; ++linkIndex )
+    pLink->m_LinkList[linkIndex].Key.wEffectCode = userInterfaceInfo.wLinkBoard[linkIndex];
+  for ( int forceIndex = 0; forceIndex < 8; ++forceIndex )
+  {
+    pSfcont->m_List[0][forceIndex].dwKey = userInterfaceInfo.dwDamageCForce[forceIndex];
+    pSfcont->m_List[1][forceIndex].dwKey = userInterfaceInfo.dwHelpCForce[forceIndex];
+  }
+  memcpy_0(pLink->m_dwSkill, userInterfaceInfo.dwSkill, sizeof(pLink->m_dwSkill));
+  memcpy_0(pLink->m_dwForce, userInterfaceInfo.dwForce, sizeof(pLink->m_dwForce));
+  memcpy_0(pLink->m_dwCharacter, userInterfaceInfo.dwCharacter, sizeof(pLink->m_dwCharacter));
+  memcpy_0(pLink->m_dwAnimus, userInterfaceInfo.dwAnimus, sizeof(pLink->m_dwAnimus));
+  memcpy_0(pLink->m_dwInvenBag, userInterfaceInfo.dwInvenBag, sizeof(pLink->m_dwInvenBag));
+  pLink->m_dwInven = userInterfaceInfo.dwInven;
+  pLink->m_byLinkBoardLock = userInterfaceInfo.byLinkBoardLock;
   return 0;
 }
 
 unsigned __int8 CMainThread::_db_Load_Unit( unsigned int dwSerial, _UNIT_DB_BASE *pCon)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-168h] BYREF
-  _worlddb_unit_info_array pUnitInfo; // [rsp+30h] [rbp-138h] BYREF
-  unsigned __int8 v8; // [rsp+144h] [rbp-24h]
-  int j; // [rsp+148h] [rbp-20h]
-  int k; // [rsp+14Ch] [rbp-1Ch]
+  _worlddb_unit_info_array unitInfoArray;
+  unsigned __int8 dbResult;
 
-  v3 = &v6;
-  memset_0(&pUnitInfo, 0, sizeof(pUnitInfo));
-  v8 = this->m_pWorldDB->Select_Unit(dwSerial, &pUnitInfo);
-  if ( v8 == 1 )
+  memset_0(&unitInfoArray, 0, sizeof(unitInfoArray));
+  dbResult = this->m_pWorldDB->Select_Unit(dwSerial, &unitInfoArray);
+  if ( dbResult == 1 )
     return 24;
-  if ( v8 != 2 )
-    goto LABEL_11;
-  if ( !this->m_pWorldDB->Insert_Unit(dwSerial) )
-    return 24;
-  if ( this->m_pWorldDB->Select_Unit(dwSerial, &pUnitInfo) )
-    return 24;
-LABEL_11:
-  for ( j = 0; j < 4; ++j )
+  if ( dbResult == 2 )
   {
-    pCon->m_List[j].byFrame = pUnitInfo.UnitInfo[j].byFrame;
-    if ( pCon->m_List[j].byFrame != 255 )
+    if ( !this->m_pWorldDB->Insert_Unit(dwSerial) )
+      return 24;
+    if ( this->m_pWorldDB->Select_Unit(dwSerial, &unitInfoArray) )
+      return 24;
+  }
+  for ( int unitIndex = 0; unitIndex < 4; ++unitIndex )
+  {
+    pCon->m_List[unitIndex].byFrame = unitInfoArray.UnitInfo[unitIndex].byFrame;
+    if ( pCon->m_List[unitIndex].byFrame != 255 )
     {
-      pCon->m_List[j].byPart[0] = pUnitInfo.UnitInfo[j].byPart[0];
-      pCon->m_List[j].byPart[1] = pUnitInfo.UnitInfo[j].byPart[1];
-      pCon->m_List[j].byPart[2] = pUnitInfo.UnitInfo[j].byPart[2];
-      pCon->m_List[j].byPart[3] = pUnitInfo.UnitInfo[j].byPart[3];
-      pCon->m_List[j].byPart[4] = pUnitInfo.UnitInfo[j].byPart[4];
-      pCon->m_List[j].byPart[5] = pUnitInfo.UnitInfo[j].byPart[5];
-      pCon->m_List[j].dwGauge = pUnitInfo.UnitInfo[j].dwGauge;
-      pCon->m_List[j].dwBullet[0] = pUnitInfo.UnitInfo[j].dwBullet[0];
-      pCon->m_List[j].dwBullet[1] = pUnitInfo.UnitInfo[j].dwBullet[1];
-      pCon->m_List[j].nPullingFee = pUnitInfo.UnitInfo[j].nPullingFee;
-      pCon->m_List[j].dwCutTime = pUnitInfo.UnitInfo[j].dwCutTime;
-      for ( k = 0; k < 8; ++k )
-        pCon->m_List[j].dwSpare[k] = pUnitInfo.UnitInfo[j].dwSpare[k];
+      pCon->m_List[unitIndex].byPart[0] = unitInfoArray.UnitInfo[unitIndex].byPart[0];
+      pCon->m_List[unitIndex].byPart[1] = unitInfoArray.UnitInfo[unitIndex].byPart[1];
+      pCon->m_List[unitIndex].byPart[2] = unitInfoArray.UnitInfo[unitIndex].byPart[2];
+      pCon->m_List[unitIndex].byPart[3] = unitInfoArray.UnitInfo[unitIndex].byPart[3];
+      pCon->m_List[unitIndex].byPart[4] = unitInfoArray.UnitInfo[unitIndex].byPart[4];
+      pCon->m_List[unitIndex].byPart[5] = unitInfoArray.UnitInfo[unitIndex].byPart[5];
+      pCon->m_List[unitIndex].dwGauge = unitInfoArray.UnitInfo[unitIndex].dwGauge;
+      pCon->m_List[unitIndex].dwBullet[0] = unitInfoArray.UnitInfo[unitIndex].dwBullet[0];
+      pCon->m_List[unitIndex].dwBullet[1] = unitInfoArray.UnitInfo[unitIndex].dwBullet[1];
+      pCon->m_List[unitIndex].nPullingFee = unitInfoArray.UnitInfo[unitIndex].nPullingFee;
+      pCon->m_List[unitIndex].dwCutTime = unitInfoArray.UnitInfo[unitIndex].dwCutTime;
+      for ( int spareIndex = 0; spareIndex < 8; ++spareIndex )
+        pCon->m_List[unitIndex].dwSpare[spareIndex] = unitInfoArray.UnitInfo[unitIndex].dwSpare[spareIndex];
     }
   }
   return 0;

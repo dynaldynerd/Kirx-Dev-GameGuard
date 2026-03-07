@@ -48,14 +48,14 @@ void AreaList::ExtractData()
     if (!pRealData && pData)
     {
         pRealData = new char[Height * Width];
-        int v4 = 0;
+        int outputIndex = 0;
         for (unsigned int j = 0; j < DataEnd; j += 3)
         {
-            unsigned short v6 = *reinterpret_cast<unsigned short *>(&pData[j]);
-            char v7 = pData[j + 2];
-            for (int k = 0; k < v6 + 1; ++k)
+            unsigned short repeatCount = *reinterpret_cast<unsigned short *>(&pData[j]);
+            char areaValue = pData[j + 2];
+            for (int k = 0; k < repeatCount + 1; ++k)
             {
-                pRealData[v4++] = v7;
+                pRealData[outputIndex++] = areaValue;
             }
         }
     }

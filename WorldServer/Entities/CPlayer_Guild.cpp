@@ -839,25 +839,25 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
   if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(this->m_id.wIndex) == 99)
   {
     resultCode = 106;
-    goto SEND_RESULT;
   }
-
-  for (char *cursor = pwszGuildName; *cursor; ++cursor)
+  if (!resultCode)
   {
-    if (*cursor == ' ' || *cursor == '\'')
+    for (char *cursor = pwszGuildName; *cursor; ++cursor)
     {
-      resultCode = 15;
-      goto SEND_RESULT;
+      if (*cursor == ' ' || *cursor == '\'')
+      {
+        resultCode = 15;
+        break;
+      }
     }
   }
 
-  if (!CTSingleton<CNationSettingManager>::Instance()->IsNormalString(pwszGuildName))
+  if (!resultCode && !CTSingleton<CNationSettingManager>::Instance()->IsNormalString(pwszGuildName))
   {
     resultCode = 15;
-    goto SEND_RESULT;
   }
 
-  if (!IsSQLValidString(pwszGuildName))
+  if (!resultCode && !IsSQLValidString(pwszGuildName))
   {
     g_Main.m_logSystemError.Write(
       "CPlayer::pc_GuildEstablishRequest() : %u(%s) ::IsSQLValidString(pwszGuildName(%s)) Invalid!",
@@ -865,7 +865,6 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
       this->m_Param.GetCharNameA(),
       pwszGuildName);
     resultCode = 15;
-    goto SEND_RESULT;
   }
 
   if (this->IsPunished(1u, true))
@@ -873,147 +872,145 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
     return;
   }
 
-  if (!party || !party->IsPartyMode())
+  if (!resultCode && (!party || !party->IsPartyMode()))
   {
     resultCode = 1;
-    goto SEND_RESULT;
   }
 
-  if (!party->IsPartyBoss())
+  if (!resultCode && !party->IsPartyBoss())
   {
     resultCode = 2;
-    goto SEND_RESULT;
   }
 
-  if (g_Main.IsReleaseServiceMode() && this->m_byUserDgr)
+  if (!resultCode && g_Main.IsReleaseServiceMode() && this->m_byUserDgr)
   {
     resultCode = 13;
-    goto SEND_RESULT;
   }
 
-  if (this->m_Param.GetDalant() < g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant())
+  if (!resultCode && this->m_Param.GetDalant() < g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant())
   {
     resultCode = 12;
-    goto SEND_RESULT;
   }
 
-  for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+  if (!resultCode)
   {
-    if (!g_Guild[guildIndex].IsFill() && !g_Guild[guildIndex].m_bDBWait)
+    for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
     {
-      reservedGuild = &g_Guild[guildIndex];
-      break;
+      if (!g_Guild[guildIndex].IsFill() && !g_Guild[guildIndex].m_bDBWait)
+      {
+        reservedGuild = &g_Guild[guildIndex];
+        break;
+      }
+    }
+    if (!reservedGuild)
+    {
+      resultCode = 10;
     }
   }
 
-  if (!reservedGuild)
-  {
-    resultCode = 10;
-    goto SEND_RESULT;
-  }
-
-  if (!partyMembers)
+  if (!resultCode && !partyMembers)
   {
     resultCode = 1;
-    goto SEND_RESULT;
   }
 
-  for (int partySlot = 0; partySlot < 8 && partyMembers[partySlot]; ++partySlot)
+  if (!resultCode)
   {
-    CPlayer *member = &g_Player[partyMembers[partySlot]->m_wZoneIndex];
-    if (!member->m_bLive)
+    for (int partySlot = 0; partySlot < 8 && partyMembers[partySlot]; ++partySlot)
     {
-      resultCode = 9;
-      goto SEND_RESULT;
-    }
+      CPlayer *member = &g_Player[partyMembers[partySlot]->m_wZoneIndex];
+      if (!member->m_bLive)
+      {
+        resultCode = 9;
+        break;
+      }
 
-    if (member->IsPunished(1u, true))
-    {
-      resultCode = 70;
-      goto SEND_RESULT;
-    }
+      if (member->IsPunished(1u, true))
+      {
+        resultCode = 70;
+        break;
+      }
 
-    if (member->m_Param.m_pGuild || member->m_Param.m_bGuildLock)
-    {
-      resultCode = 7;
-      goto SEND_RESULT;
-    }
+      if (member->m_Param.m_pGuild || member->m_Param.m_bGuildLock)
+      {
+        resultCode = 7;
+        break;
+      }
 
-    if (member->m_Param.m_pApplyGuild)
-    {
-      resultCode = 8;
-      goto SEND_RESULT;
-    }
+      if (member->m_Param.m_pApplyGuild)
+      {
+        resultCode = 8;
+        break;
+      }
 
-    if (!member->m_Param.m_pClassHistory[0])
-    {
-      resultCode = 11;
-      goto SEND_RESULT;
-    }
+      if (!member->m_Param.m_pClassHistory[0])
+      {
+        resultCode = 11;
+        break;
+      }
 
-    if (member->m_Param.GetRaceCode() != this->m_Param.GetRaceCode())
-    {
-      resultCode = 70;
-      goto SEND_RESULT;
-    }
+      if (member->m_Param.GetRaceCode() != this->m_Param.GetRaceCode())
+      {
+        resultCode = 70;
+        break;
+      }
 
-    memberIndices[partySlot] = member->m_id.wIndex;
-    memberSerials[partySlot] = member->m_id.dwSerial;
-    memberPvpPoints[partySlot] = static_cast<unsigned int>(static_cast<int>(member->m_Param.GetPvPPoint()));
-    memberLevels[partySlot] = static_cast<unsigned __int8>(member->m_Param.GetLevel());
-    memberGrades[partySlot] = member->m_Param.m_byPvPGrade;
-    strcpy_0(&memberNames[17 * partySlot], member->m_Param.GetCharNameW());
-    ++memberCount;
+      memberIndices[partySlot] = member->m_id.wIndex;
+      memberSerials[partySlot] = member->m_id.dwSerial;
+      memberPvpPoints[partySlot] = static_cast<unsigned int>(static_cast<int>(member->m_Param.GetPvPPoint()));
+      memberLevels[partySlot] = static_cast<unsigned __int8>(member->m_Param.GetLevel());
+      memberGrades[partySlot] = member->m_Param.m_byPvPGrade;
+      strcpy_0(&memberNames[17 * partySlot], member->m_Param.GetCharNameW());
+      ++memberCount;
+    }
   }
 
-  if (g_Main.IsReleaseServiceMode())
+  if (!resultCode && g_Main.IsReleaseServiceMode())
   {
     if (this->m_byUserDgr)
     {
       resultCode = 13;
-      goto SEND_RESULT;
     }
-
-    if (memberCount < 8u)
+    else if (memberCount < 8u)
     {
       resultCode = 9;
-      goto SEND_RESULT;
     }
   }
-  else if (!this->m_byUserDgr && memberCount < 8u)
+  else if (!resultCode && !this->m_byUserDgr && memberCount < 8u)
   {
     resultCode = 9;
-    goto SEND_RESULT;
   }
 
-  for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+  if (!resultCode)
   {
-    if ((g_Guild[guildIndex].IsFill() || g_Guild[guildIndex].m_bDBWait)
-        && !strcmp_0(pwszGuildName, g_Guild[guildIndex].m_wszName))
+    for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
     {
-      resultCode = 4;
-      goto SEND_RESULT;
+      if ((g_Guild[guildIndex].IsFill() || g_Guild[guildIndex].m_bDBWait)
+          && !strcmp_0(pwszGuildName, g_Guild[guildIndex].m_wszName))
+      {
+        resultCode = 4;
+        break;
+      }
     }
   }
 
-  for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
+  if (!resultCode)
   {
-    if (!g_Guild[guildIndex].IsFill() && !g_Guild[guildIndex].m_bDBWait)
+    for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
     {
-      g_Guild[guildIndex].m_nIndex = guildIndex;
-      g_Guild[guildIndex].SetTemp(pwszGuildName);
-      selectedGuildIndex = guildIndex;
-      break;
+      if (!g_Guild[guildIndex].IsFill() && !g_Guild[guildIndex].m_bDBWait)
+      {
+        g_Guild[guildIndex].m_nIndex = guildIndex;
+        g_Guild[guildIndex].SetTemp(pwszGuildName);
+        selectedGuildIndex = guildIndex;
+        break;
+      }
+    }
+    if (selectedGuildIndex == -1)
+    {
+      resultCode = 10;
     }
   }
 
-  if (selectedGuildIndex == -1)
-  {
-    resultCode = 10;
-    goto SEND_RESULT;
-  }
-
-SEND_RESULT:
   if (resultCode)
   {
     this->SendMsg_GuildEstablishFail(static_cast<char>(resultCode));

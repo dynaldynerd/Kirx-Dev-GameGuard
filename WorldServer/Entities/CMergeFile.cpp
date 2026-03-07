@@ -5,38 +5,38 @@
 #include "R3EngineGlobals.h"
 #include "CMainThread.h"
 
-static unsigned int GetOneNameFromPath(char *a1, char *a2, unsigned int *a3)
+static unsigned int GetOneNameFromPath(char *outName, char *path, unsigned int *consumedLength)
 {
-  unsigned int v3 = 0;
-  unsigned int i = 0;
-  char *v7 = a2;
-  for (i = 0; i < 0x80; ++i)
+  unsigned int nameLength = 0;
+  unsigned int pathIndex = 0;
+  char *pathCursor = path;
+  for (pathIndex = 0; pathIndex < 0x80; ++pathIndex)
   {
-    if (*v7 != '\\')
+    if (*pathCursor != '\\')
       break;
-    ++v7;
+    ++pathCursor;
   }
-  if (i < 0x80)
+  if (pathIndex < 0x80)
   {
-    char *v9 = a1;
-    char *v10 = &a2[i];
-    while (i < 0x80)
+    char *nameCursor = outName;
+    char *componentCursor = &path[pathIndex];
+    while (pathIndex < 0x80)
     {
-      char v11 = *v10;
-      if (!v11 || v11 == '\\')
+      const char currentCharacter = *componentCursor;
+      if (!currentCharacter || currentCharacter == '\\')
         break;
-      ++i;
-      *v9++ = v11;
-      ++v3;
-      ++v10;
+      ++pathIndex;
+      *nameCursor++ = currentCharacter;
+      ++nameLength;
+      ++componentCursor;
     }
   }
-  a1[v3] = 0;
-  a1[v3 + 1] = 0;
-  a1[v3 + 2] = 0;
-  a1[v3 + 3] = 0;
-  *a3 = i;
-  return v3;
+  outName[nameLength] = 0;
+  outName[nameLength + 1] = 0;
+  outName[nameLength + 2] = 0;
+  outName[nameLength + 3] = 0;
+  *consumedLength = pathIndex;
+  return nameLength;
 }
 
 CMergeFile::CMergeFile()
@@ -49,33 +49,33 @@ CMergeFile::CMergeFile()
   mHeaderSize = 0;
 }
 
-__int64 CMergeFile::LoadMergeFileHeader(char *a2)
+__int64 CMergeFile::LoadMergeFileHeader(char *filePath)
 {
   char *dst = mFileName;
-  while ((*dst++ = *a2++) != '\0')
+  while ((*dst++ = *filePath++) != '\0')
     ;
 
-  FILE *v6 = fopen(mFileName, "rb");
-  if (v6)
+  FILE *mergeFile = fopen(mFileName, "rb");
+  if (mergeFile)
   {
-    float Buffer = 0.0f;
-    fread(&Buffer, 4, 1, v6);
-    if (Buffer == 1.0f)
+    float version = 0.0f;
+    fread(&version, 4, 1, mergeFile);
+    if (version == 1.0f)
     {
-      fread(&mCnt, 4, 1, v6);
-      int v7 = 72 * mCnt;
-      mHeaderSize = v7 + 8;
-      unsigned int *v8 = static_cast<unsigned int *>(Dmalloc(v7));
-      mIndex = v8;
-      mOffset = &v8[mCnt];
+      fread(&mCnt, 4, 1, mergeFile);
+      const int headerBytes = 72 * mCnt;
+      mHeaderSize = headerBytes + 8;
+      unsigned int *headerData = static_cast<unsigned int *>(Dmalloc(headerBytes));
+      mIndex = headerData;
+      mOffset = &headerData[mCnt];
       mMergeFNF = reinterpret_cast<_MERGE_FILE *>(mOffset + mCnt);
-      fread(v8, 4 * mCnt, 1, v6);
-      fread(mOffset, 4ULL * mCnt, 1, v6);
-      fread(mMergeFNF, static_cast<unsigned long long>(mCnt) << 6, 1, v6);
-      fclose(v6);
+      fread(headerData, 4 * mCnt, 1, mergeFile);
+      fread(mOffset, 4ULL * mCnt, 1, mergeFile);
+      fread(mMergeFNF, static_cast<unsigned long long>(mCnt) << 6, 1, mergeFile);
+      fclose(mergeFile);
       return 1;
     }
-    fclose(v6);
+    fclose(mergeFile);
     Warning(const_cast<char *>("name"), const_cast<char *>(asc_140884778));
   }
   return 0;
@@ -92,93 +92,93 @@ void CMergeFile::ReleaseMergeFileHeader()
   }
 }
 
-struct _iobuf *CMergeFile::LoadFileOffset(char *a2, const char *Mode)
+struct _iobuf *CMergeFile::LoadFileOffset(char *filePath, const char *mode)
 {
-  unsigned int FileOffset = GetFileOffset(0, a2);
-  if (FileOffset == static_cast<unsigned int>(-1))
+  const unsigned int fileOffset = GetFileOffset(0, filePath);
+  if (fileOffset == static_cast<unsigned int>(-1))
     return nullptr;
-  FILE *v6 = fopen(mFileName, Mode);
-  if (!v6)
+  FILE *mergeFile = fopen(mFileName, mode);
+  if (!mergeFile)
     return nullptr;
-  fseek(v6, FileOffset + mHeaderSize, 0);
-  return v6;
+  fseek(mergeFile, fileOffset + mHeaderSize, 0);
+  return mergeFile;
 }
 
-unsigned int CMergeFile::GetFileOffset(unsigned int a2, char *a3)
+unsigned int CMergeFile::GetFileOffset(unsigned int parentIndex, char *filePath)
 {
-  if (!a3 || !*a3)
+  if (!filePath || !*filePath)
     return 0;
 
-  unsigned int v20[3]{};
-  char v22[128]{};
-  int v19 = static_cast<int>(GetOneNameFromPath(v22, a3, v20));
-  _MERGE_FILE *mMerge = mMergeFNF;
-  unsigned int v7 = 0;
-  const _MERGE_FILE &parentEntry = mMerge[a2];
+  unsigned int consumedLength[3]{};
+  char pathName[128]{};
+  const int nameLength = static_cast<int>(GetOneNameFromPath(pathName, filePath, consumedLength));
+  _MERGE_FILE *mergeFileEntries = mMergeFNF;
+  unsigned int childIndex = 0;
+  const _MERGE_FILE &parentEntry = mergeFileEntries[parentIndex];
   if (parentEntry.cnt)
   {
-    const unsigned int compareDwordCount = (static_cast<unsigned int>(v19) + 3) >> 2;
+    const unsigned int compareDwordCount = (static_cast<unsigned int>(nameLength) + 3) >> 2;
     do
     {
-      const int v11 = static_cast<int>(mIndex[v7 + parentEntry.start_index]);
-      if (mMerge[v11].name_cnt == v19)
+      const int mergeEntryIndex = static_cast<int>(mIndex[childIndex + parentEntry.start_index]);
+      if (mergeFileEntries[mergeEntryIndex].name_cnt == nameLength)
       {
         if (compareDwordCount == 0
-            || memcmp_0(mMerge[v11].___u0.name_cmp, v22, sizeof(unsigned int) * compareDwordCount) == 0)
+            || memcmp_0(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
         {
-          if (mOffset[v11] != static_cast<unsigned int>(-1))
-            return mOffset[v11];
-          unsigned int result = GetFileOffset(v11, &a3[v20[0] + 1]);
+          if (mOffset[mergeEntryIndex] != static_cast<unsigned int>(-1))
+            return mOffset[mergeEntryIndex];
+          const unsigned int result = GetFileOffset(mergeEntryIndex, &filePath[consumedLength[0] + 1]);
           if (result != static_cast<unsigned int>(-1))
             return result;
         }
       }
-      ++v7;
-    } while (v7 < parentEntry.cnt);
+      ++childIndex;
+    } while (childIndex < parentEntry.cnt);
   }
   return static_cast<unsigned int>(-1);
 }
 
-unsigned int CMergeFile::GetFileSize(unsigned int a2, char *a3)
+unsigned int CMergeFile::GetFileSize(unsigned int parentIndex, char *filePath)
 {
-  if (!a3 || !*a3)
+  if (!filePath || !*filePath)
     return 0;
 
-  unsigned int v18[4]{};
-  char v19[128]{};
-  int v9 = static_cast<int>(GetOneNameFromPath(v19, a3, v18));
-  _MERGE_FILE *mMerge = mMergeFNF;
-  unsigned int v8 = 0;
-  const _MERGE_FILE &parentEntry = mMerge[a2];
+  unsigned int consumedLength[4]{};
+  char pathName[128]{};
+  const int nameLength = static_cast<int>(GetOneNameFromPath(pathName, filePath, consumedLength));
+  _MERGE_FILE *mergeFileEntries = mMergeFNF;
+  unsigned int childIndex = 0;
+  const _MERGE_FILE &parentEntry = mergeFileEntries[parentIndex];
   if (parentEntry.cnt)
   {
-    unsigned int v10 = v18[0];
-    const unsigned int compareDwordCount = (static_cast<unsigned int>(v9) + 3) >> 2;
+    const unsigned int nextPathOffset = consumedLength[0];
+    const unsigned int compareDwordCount = (static_cast<unsigned int>(nameLength) + 3) >> 2;
     do
     {
-      const int v13 = static_cast<int>(mIndex[v8 + parentEntry.start_index]);
-      if (mMerge[v13].name_cnt == v9)
+      const int mergeEntryIndex = static_cast<int>(mIndex[childIndex + parentEntry.start_index]);
+      if (mergeFileEntries[mergeEntryIndex].name_cnt == nameLength)
       {
         if (compareDwordCount == 0
-            || memcmp_0(mMerge[v13].___u0.name_cmp, v19, sizeof(unsigned int) * compareDwordCount) == 0)
+            || memcmp_0(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
         {
-          if (mOffset[v13] != static_cast<unsigned int>(-1))
-            return mMerge[v13].file_length;
-          unsigned int result = GetFileOffset(v13, &a3[v10 + 1]);
+          if (mOffset[mergeEntryIndex] != static_cast<unsigned int>(-1))
+            return mergeFileEntries[mergeEntryIndex].file_length;
+          const unsigned int result = GetFileOffset(mergeEntryIndex, &filePath[nextPathOffset + 1]);
           if (result != static_cast<unsigned int>(-1))
             return result;
         }
       }
-      ++v8;
-    } while (v8 < parentEntry.cnt);
+      ++childIndex;
+    } while (childIndex < parentEntry.cnt);
   }
   return 0;
 }
 
-__int64 CMergeFile::IsExistFile(char *a2)
+__int64 CMergeFile::IsExistFile(char *filePath)
 {
-  if (!a2 || !*a2)
+  if (!filePath || !*filePath)
     return 0;
-  _strlwr(a2);
-  return GetFileOffset(0, a2) != static_cast<unsigned int>(-1);
+  _strlwr(filePath);
+  return GetFileOffset(0, filePath) != static_cast<unsigned int>(-1);
 }

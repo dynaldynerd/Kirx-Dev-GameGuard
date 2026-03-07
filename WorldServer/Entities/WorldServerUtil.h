@@ -179,8 +179,13 @@ float GetAngle(float *mon, float *plr);
 void Normalize(float *v);
 void ShortToFloat(__int16 *pShort, float *pFloat, int size);
 void FloatToShort(float *pFloat, short *pShort, int size);
-void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4);
-int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *const a3, const float *const a4, float a5);
+void GetNormal(float *const outPlane, const float *const point1, const float *const point2, const float *const point3);
+int GetPlaneCrossPoint(
+  const float *const startPoint,
+  const float *const endPoint,
+  float *const crossPoint,
+  const float *const planeNormal,
+  float planeDistance);
 void CrossProduct(const float *a1, const float *a2, float *a3);
 void sub_1404E2FB0(float *a1, float *a2, float *a3);
 bool CheckEdgeEpsilon(const float *const a1, const float *const a2, const float *const a3, const float *const a4);
@@ -192,45 +197,45 @@ void GetVertexFromBVertex(float *const a1, char *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromWVertex(float *const a1, short *a2, _BSP_READ_M_GROUP *a3);
 void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3);
 bool IsParticle(char *a1);
-void sub_14050C650(float *a1, float *a2, float *a3);
+void sub_14050C650(float *destination, float *source, float *target);
 void Vector3fTransform(float *const a1, float *const a2, float (*const a3)[4]);
 
 unsigned int sub_1404E1570(float a1, float a2, float a3);
 unsigned int sub_1404E46E0(float a1, float a2, float a3);
 
 // Matrix/animation helpers (R3 engine).
-float GetFloatMod(float a1, float a2);
-void MatrixIdentity(float (*const a1)[4]);
-void MatrixCopy(float (*const a1)[4], float (*const a2)[4]);
-void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4]);
-int MatrixInvert(float (*const a1)[4], float (*const a2)[4]);
-void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, float a5);
-void MatrixScale(float (*const a1)[4], float a2, float a3, float a4);
-void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4);
-void MatrixRotateX(float (*const a1)[4], float a2);
-void MatrixRotateY(float (*const a1)[4], float a2);
-void MatrixRotateZ(float (*const a1)[4], float a2);
+float GetFloatMod(float value, float modulus);
+void MatrixIdentity(float (*const outMatrix)[4]);
+void MatrixCopy(float (*const outMatrix)[4], float (*const sourceMatrix)[4]);
+void MatrixMultiply(float (*outMatrix)[4], float (*const leftMatrix)[4], float (*const rightMatrix)[4]);
+int MatrixInvert(float (*const outMatrix)[4], float (*const inputMatrix)[4]);
+void MatrixFromQuaternion(float (*const outMatrix)[4], float x, float y, float z, float w);
+void MatrixScale(float (*const outMatrix)[4], float scaleX, float scaleY, float scaleZ);
+void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rotationYDegrees, float rotationZDegrees);
+void MatrixRotateX(float (*const outMatrix)[4], float rotationDegrees);
+void MatrixRotateY(float (*const outMatrix)[4], float rotationDegrees);
+void MatrixRotateZ(float (*const outMatrix)[4], float rotationDegrees);
 void D3DXMatrixIdentity_0(D3DXMATRIX *out);
 __int64 D3DXMatrixMultiply_0(D3DXMATRIX *out, const D3DXMATRIX *a, const D3DXMATRIX *b);
 __int64 D3DXMatrixInverse_0(D3DXMATRIX *out, void *det, const D3DXMATRIX *in);
 void GetYBillboardMatrix(D3DXMATRIX *out, float *const src, float *const dst);
 void QuaternionSlerp(
-  float *a1,
-  float *a2,
-  float *a3,
-  float *a4,
-  float a5,
-  float a6,
-  float a7,
-  float a8,
-  float a9,
-  float a10,
-  float a11,
-  float a12,
-  float a13);
-void GetMatrixFrom3DSMAXMatrix(float (*const a1)[4]);
-void GetAniMatrix(float (*const a1)[4], _ANI_OBJECT *a2, double a3);
-void GetObjectMatrix(float (*a1)[4], unsigned short a2, _ANI_OBJECT *a3, double a4);
+  float *outX,
+  float *outY,
+  float *outZ,
+  float *outW,
+  float startX,
+  float startY,
+  float startZ,
+  float startW,
+  float endX,
+  float endY,
+  float endZ,
+  float endW,
+  float blendFactor);
+void GetMatrixFrom3DSMAXMatrix(float (*const matrix)[4]);
+void GetAniMatrix(float (*const outMatrix)[4], _ANI_OBJECT *animationObject, double animationTime);
+void GetObjectMatrix(float (*outMatrix)[4], unsigned short objectIndex, _ANI_OBJECT *animationObjects, double animationTime);
 void ConvAniObject(int a1, unsigned __int8 *a2, _READ_ANI_OBJECT *a3, _ANI_OBJECT *a4);
 
 // Vertex/Index buffer tracking.

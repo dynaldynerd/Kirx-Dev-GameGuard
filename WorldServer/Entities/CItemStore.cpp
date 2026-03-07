@@ -75,7 +75,7 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
         m_pStorageItem = new _good_storage_info[216];
         m_pLimitStorageItem = new _limit_item_info[16];
 
-        int v22 = 0;
+        int limitItemCount = 0;
         for (int j = 0; j < 16; ++j)
         {
           int nTableCode = GetItemTableCode(m_pRec->m_sellLimitList[j].m_strItemCode);
@@ -149,13 +149,13 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
           m_pLimitStorageItem[j].Key.wItemIndex = static_cast<unsigned __int16>(Record->m_dwIndex);
           m_pLimitStorageItem[j].nLimitNum = m_pRec->m_sellLimitList[j].m_nMaxCount;
           ++m_nLimitStorageItemNum;
-          ++v22;
+          ++limitItemCount;
         }
         if (m_nLimitStorageItemNum > 0)
         {
           SetLimitItemInitTime();
         }
-        for (int j = v22; j < 216; ++j)
+        for (int j = limitItemCount; j < 216; ++j)
         {
           int nTableCode = GetItemTableCode(m_pRec->m_strItemlist[j]);
           if (nTableCode == -1)
@@ -163,9 +163,9 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
             break;
           }
           m_pStorageItem[j].byItemTableCode = static_cast<unsigned __int8>(nTableCode);
-          _ItemExist_fld *v25 = static_cast<_ItemExist_fld *>(
+          _ItemExist_fld *itemRecord = static_cast<_ItemExist_fld *>(
             g_Main.m_tblItemData[nTableCode].GetRecord(m_pRec->m_strItemlist[j]));
-          if (!v25)
+          if (!itemRecord)
           {
             MyMessageBox(
               "CItemStore::Init error",
@@ -174,29 +174,31 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
               m_pRec->m_strItemlist[j]);
             break;
           }
-          m_pStorageItem[j].wItemIndex = static_cast<unsigned __int16>(v25->m_dwIndex);
-          int v14 = GetItemStdPrice(nTableCode, v25->m_dwIndex, m_byNpcRaceCode, &m_pStorageItem[j].byMoneyUnit);
-          m_pStorageItem[j].nStdPrice = v14;
-          int v15 = GetItemStdPoint(nTableCode, v25->m_dwIndex, m_byNpcRaceCode, &m_pStorageItem[j].byMoneyUnit);
-          m_pStorageItem[j].nStdPoint = v15;
-          int v16 = GetItemProcPoint(
+          m_pStorageItem[j].wItemIndex = static_cast<unsigned __int16>(itemRecord->m_dwIndex);
+          int itemStdPrice =
+            GetItemStdPrice(nTableCode, itemRecord->m_dwIndex, m_byNpcRaceCode, &m_pStorageItem[j].byMoneyUnit);
+          m_pStorageItem[j].nStdPrice = itemStdPrice;
+          int itemStdPoint =
+            GetItemStdPoint(nTableCode, itemRecord->m_dwIndex, m_byNpcRaceCode, &m_pStorageItem[j].byMoneyUnit);
+          m_pStorageItem[j].nStdPoint = itemStdPoint;
+          int itemProcPoint = GetItemProcPoint(
             nTableCode,
-            v25->m_dwIndex,
+            itemRecord->m_dwIndex,
             m_byNpcRaceCode,
             &m_pStorageItem[j].byMoneyUnit);
-          m_pStorageItem[j].nResPoint = v16;
-          int v17 = GetItemKillPoint(
+          m_pStorageItem[j].nResPoint = itemProcPoint;
+          int itemKillPoint = GetItemKillPoint(
             nTableCode,
-            v25->m_dwIndex,
+            itemRecord->m_dwIndex,
             m_byNpcRaceCode,
             &m_pStorageItem[j].byMoneyUnit);
-          m_pStorageItem[j].nKillPoint = v17;
-          int v18 = GetItemGoldPoint(
+          m_pStorageItem[j].nKillPoint = itemKillPoint;
+          int itemGoldPoint = GetItemGoldPoint(
             nTableCode,
-            v25->m_dwIndex,
+            itemRecord->m_dwIndex,
             m_byNpcRaceCode,
             &m_pStorageItem[j].byMoneyUnit);
-          m_pStorageItem[j].nGoldPoint = v18;
+          m_pStorageItem[j].nGoldPoint = itemGoldPoint;
           m_pStorageItem[j].nStdPrice *= m_pRec->m_nPriceSet;
           m_pStorageItem[j].dwUpCode = m_pRec->m_nItemUpCode;
           if (m_pStorageItem[j].nStdPrice == -1)
@@ -205,12 +207,12 @@ bool CItemStore::Init(int nIndex, CMapData *pExistMap, _store_dummy *pDum, _Stor
               "CItemStore::Init error",
               "price load error..(nTable: %d, pFld->m_dwIndex: %d)",
               nTableCode,
-              v25->m_dwIndex);
+              itemRecord->m_dwIndex);
             break;
           }
-          m_pStorageItem[j].bExist = static_cast<signed char>(v25->m_bExist);
-          unsigned int v19 = GetItemDurPoint(nTableCode, v25->m_dwIndex);
-          m_pStorageItem[j].dwDurPoint = v19;
+          m_pStorageItem[j].bExist = static_cast<signed char>(itemRecord->m_bExist);
+          unsigned int itemDurPoint = GetItemDurPoint(nTableCode, itemRecord->m_dwIndex);
+          m_pStorageItem[j].dwDurPoint = itemDurPoint;
           ++m_nStorageItemNum;
         }
       }
@@ -253,24 +255,24 @@ bool CItemStore::GetNpcRaceCode(unsigned __int8 *pbyRaceCode)
 
 unsigned int CItemStore::CalcSecIndex(float x, float z)
 {
-  _bsp_info *BspInfo = &m_pExistMap->m_BspInfo;
-  float v9 = static_cast<float>(-BspInfo->m_nMapMinSize[0]) + x;
-  float v10 = static_cast<float>(BspInfo->m_nMapMaxSize[2]) - z;
-  int v11 = static_cast<int>(v9) / 100;
-  int v12 = static_cast<int>(v10) / 100;
-  _sec_info *SecInfo = &m_pExistMap->m_SecInfo;
-  return static_cast<unsigned int>(SecInfo->m_nSecNumW * v12 + v11);
+  _bsp_info *bspInfo = &m_pExistMap->m_BspInfo;
+  const float localX = static_cast<float>(-bspInfo->m_nMapMinSize[0]) + x;
+  const float localZ = static_cast<float>(bspInfo->m_nMapMaxSize[2]) - z;
+  const int secX = static_cast<int>(localX) / 100;
+  const int secY = static_cast<int>(localZ) / 100;
+  _sec_info *secInfo = &m_pExistMap->m_SecInfo;
+  return static_cast<unsigned int>(secInfo->m_nSecNumW * secY + secX);
 }
 
 void CItemStore::SetLimitItemInitTime()
 {
-  unsigned __int64 v9 = 60000LL * m_pRec->m_nLimitItem_InitTime;
-  int lDays = static_cast<int>(v9 / 0x5265C00);
-  __int64 nowSec = static_cast<__int64>(time(nullptr));
+  const unsigned __int64 initIntervalMs = 60000LL * m_pRec->m_nLimitItem_InitTime;
+  const int totalDays = static_cast<int>(initIntervalMs / 0x5265C00);
+  const __int64 nowSec = static_cast<__int64>(time(nullptr));
 
-  if (lDays > 0)
+  if (totalDays > 0)
   {
-    CTimeSpan span(lDays, 0, 0, 0);
+    CTimeSpan span(totalDays, 0, 0, 0);
     CTime base = CTime::GetCurrentTime();
     CTime target = base + span;
     CTime midnight(target.GetYear(), target.GetMonth(), target.GetDay(), 0, 0, 0);
@@ -278,7 +280,7 @@ void CItemStore::SetLimitItemInitTime()
   }
   else
   {
-    m_dwLimitInitTime = v9 + nowSec;
+    m_dwLimitInitTime = initIntervalMs + nowSec;
   }
 }
 

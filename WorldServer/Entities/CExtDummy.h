@@ -21,8 +21,8 @@ public:
   void GetDummyList(int flagMask, unsigned int *outCount, unsigned int *outIndices);
   void DrawDummyBBox(unsigned int nDummyIndex);
   void DrawAllDummyBBox();
-  bool GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, float *v7);
-  bool GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7);
+  bool GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, float *worldPos);
+  bool GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *localPos);
   bool IsInBBox(unsigned int nDummyIndex, float *const pos);
 };
 

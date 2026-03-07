@@ -303,7 +303,7 @@ void CExtDummy::DrawAllDummyBBox()
   }
 }
 
-bool CExtDummy::GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, float *v7)
+bool CExtDummy::GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, float *worldPos)
 {
   if (!mDummy)
   {
@@ -314,18 +314,18 @@ bool CExtDummy::GetLocalFromWorld(float *fOutPos, unsigned int nDummyIndex, floa
     return false;
   }
 
-  Vector3fTransform(fOutPos, v7, mDummy[nDummyIndex].mInvMat);
+  Vector3fTransform(fOutPos, worldPos, mDummy[nDummyIndex].mInvMat);
   return true;
 }
 
-bool CExtDummy::GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *v7)
+bool CExtDummy::GetWorldFromLocal(float *fOutPos, unsigned int nDummyIndex, float *localPos)
 {
   if (!mDummy)
     return false;
   if (!mNum || nDummyIndex >= mNum)
     return false;
 
-  Vector3fTransform(fOutPos, v7, mDummy[nDummyIndex].mMat);
+  Vector3fTransform(fOutPos, localPos, mDummy[nDummyIndex].mMat);
   return true;
 }
 

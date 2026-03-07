@@ -21,12 +21,7 @@ bool CRFWorldDatabase::Add_PvpPoint(
         unsigned int dwPoint,
         unsigned int dwCashBag)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   memset(Buffer, 0, 256);
   sprintf(Buffer, "{ CALL pAdd_PvpPoint( %d, %d, %d ) }", dwSerial, dwPoint, dwCashBag);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -34,38 +29,33 @@ bool CRFWorldDatabase::Add_PvpPoint(
 
 bool CRFWorldDatabase::Check_GuildMemberCount( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-1A8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-170h] BYREF
-  SQLRETURN v7; // [rsp+44h] [rbp-164h]
-  char Buffer[276]; // [rsp+60h] [rbp-148h] BYREF
-  int TargetValue[7]; // [rsp+174h] [rbp-34h] BYREF
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[276];
+  int memberCount = 0;
 
-  v2 = &v5;
-  TargetValue[0] = 0;
-  sprintf(Buffer, "select MemberCount from tbl_guild where serial = %d", dwGuildSerial);
+  sprintf(queryBuffer, "select MemberCount from tbl_guild where serial = %d", dwGuildSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v7 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v7 || v7 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v7 = SQLFetch(this->m_hStmtSelect);
-      if ( !v7 || v7 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v7 = SQLGetData(this->m_hStmtSelect, 1u, 5, TargetValue, 0LL, &StrLen_or_IndPtr);
-        if ( !v7 || v7 == 1 )
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 5, &memberCount, 0LL, &strLenOrIndPtr);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
-          return TargetValue[0] < 50;
+          return memberCount < 50;
         }
         else
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           return 0;
@@ -73,10 +63,10 @@ bool CRFWorldDatabase::Check_GuildMemberCount( unsigned int dwGuildSerial)
       }
       else
       {
-        if ( v7 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -85,29 +75,24 @@ bool CRFWorldDatabase::Check_GuildMemberCount( unsigned int dwGuildSerial)
     }
     else
     {
-      if ( v7 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v7, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-        this->ErrorAction( v7, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
 
 bool CRFWorldDatabase::CreateCharacterSelectLogTable(const char *szTableName)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-CA8h] BYREF
   char Buffer[3088]; // [rsp+80h] [rbp-C28h] BYREF
-
-  v2 = &v5;
   memset_0(Buffer, 0, 0xC00uLL);
   sprintf(
     Buffer,
@@ -135,29 +120,25 @@ bool CRFWorldDatabase::CreateCharacterSelectLogTable(const char *szTableName)
 
 bool CRFWorldDatabase::Delete_CharacterData( unsigned int dwCharacterSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-168h] BYREF
-  char Buffer[260]; // [rsp+40h] [rbp-128h] BYREF
-  SQLRETURN v7; // [rsp+144h] [rbp-24h]
+  char queryBuffer[260];
+  SQLRETURN sqlStatus;
 
-  v2 = &v5;
-  sprintf(Buffer, "{ CALL pDelete_Base( %d ) }", dwCharacterSerial);
+  sprintf(queryBuffer, "{ CALL pDelete_Base( %d ) }", dwCharacterSerial);
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "Query : %s", Buffer);
+    this->FmtLog( "Query : %s", queryBuffer);
   if ( this->m_hStmtUpdate || this->ReConnectDataBase() )
   {
-    v7 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-    if ( !v7 || v7 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
       this->SetAutoCommitMode( 0);
-      sprintf(Buffer, "{ CALL pUpdate_DeleteName_Step1( %d ) }", dwCharacterSerial);
-      v7 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-      if ( !v7 || v7 == 1 )
+      sprintf(queryBuffer, "{ CALL pUpdate_DeleteName_Step1( %d ) }", dwCharacterSerial);
+      sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        sprintf(Buffer, "{ CALL pUpdate_DeleteName_Step2( %d ) }", dwCharacterSerial);
-        v7 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-        if ( !v7 || v7 == 1 )
+        sprintf(queryBuffer, "{ CALL pUpdate_DeleteName_Step2( %d ) }", dwCharacterSerial);
+        sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
           this->CommitTransaction();
           this->SetAutoCommitMode( 1);
@@ -167,44 +148,39 @@ bool CRFWorldDatabase::Delete_CharacterData( unsigned int dwCharacterSerial)
         }
         else
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLExecDirectA", this->m_hStmtUpdate);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtUpdate);
           this->RollbackTransaction();
           this->SetAutoCommitMode( 1);
-          this->ErrorAction( v7, this->m_hStmtUpdate);
+          this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
           return 0;
         }
       }
       else
       {
-        this->ErrorMsgLog( v7, Buffer, "SQLExecDirectA", this->m_hStmtUpdate);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtUpdate);
         this->RollbackTransaction();
         this->SetAutoCommitMode( 1);
-        this->ErrorAction( v7, this->m_hStmtUpdate);
+        this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
         return 0;
       }
     }
     else
     {
-      this->ErrorMsgLog( v7, Buffer, "SQLExecDirectA", this->m_hStmtUpdate);
-      this->ErrorAction( v7, this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtUpdate);
+      this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
 
 bool CRFWorldDatabase::Delete_Guild( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v2 = &v5;
   memset(Buffer, 0, 256);
   sprintf(Buffer, "{ CALL pUpdate_DeleteGuild(%d) }", dwGuildSerial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -212,24 +188,14 @@ bool CRFWorldDatabase::Delete_Guild( unsigned int dwGuildSerial)
 
 bool CRFWorldDatabase::Delete_PatriarchComm( unsigned int dwSerial, char *pszDepDate)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-D8h] BYREF
   char Buffer[144]; // [rsp+30h] [rbp-A8h] BYREF
-
-  v3 = &v6;
   sprintf(Buffer, "{ CALL pDelete_PatriarchComm( %d, '%s') }", dwSerial, pszDepDate);
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
 bool CRFWorldDatabase::Insert_CashLimSale()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
-
-  v1 = &v4;
   memset(Buffer, 0, 1024);
   sprintf_s(Buffer, 0x400uLL, "{ CALL pInsert_CashLimSale( %d ) }", 0);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -246,16 +212,12 @@ bool CRFWorldDatabase::Insert_CharacterData(
         int nMapIndex,
         unsigned int *pDwSerial)
 {
-  __int64 *v10; // rdi
-  __int64 i; // rcx
-  __int64 v13; // [rsp+0h] [rbp-2B8h] BYREF
-  SQLRETURN v14; // [rsp+50h] [rbp-268h]
-  char Buffer[288]; // [rsp+70h] [rbp-248h] BYREF
-  char szLog[272]; // [rsp+190h] [rbp-128h] BYREF
+  SQLRETURN sqlStatus;
+  char queryBuffer[288];
+  char stepQuery[272];
 
-  v10 = &v13;
   sprintf(
-    Buffer,
+    queryBuffer,
     "{ CALL pInsert_Base(N'%s', '%s', %d, '%s', %d, %d, %d ) }",
     pwszCharacterName,
     wszClassCode,
@@ -265,166 +227,161 @@ bool CRFWorldDatabase::Insert_CharacterData(
     byRaceSexCode,
     dwBaseShape);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
     this->ErrLog( "ReConnectDataBase Fail. Query : Insert_CharacterData");
     return 0;
   }
   this->SetAutoCommitMode( 0);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v14 && v14 != 1 )
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, Buffer, "_SQLExecDirect", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, queryBuffer, "_SQLExecDirect", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", Buffer);
+    this->FmtLog( "%s Success", queryBuffer);
   if ( !this->Select_CharacterSerial( pwszCharacterName, pDwSerial) )
   {
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
     return 0;
   }
-  sprintf(szLog, "{ CALL pInsert_General( %d, %d ) }", *pDwSerial, nMapIndex);
+  sprintf(stepQuery, "{ CALL pInsert_General( %d, %d ) }", *pDwSerial, nMapIndex);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( v14 && v14 != 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", szLog);
-  sprintf(szLog, "{ CALL pInsert_supplement( %d ) }", *pDwSerial);
+    this->FmtLog( "%s Success", stepQuery);
+  sprintf(stepQuery, "{ CALL pInsert_supplement( %d ) }", *pDwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( v14 && v14 != 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", szLog);
-  sprintf(szLog, "{ CALL pInsert_inven( %d ) }", *pDwSerial);
+    this->FmtLog( "%s Success", stepQuery);
+  sprintf(stepQuery, "{ CALL pInsert_inven( %d ) }", *pDwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( v14 && v14 != 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", szLog);
-  sprintf(szLog, "{ CALL pInsert_Quest( %d ) }", *pDwSerial);
+    this->FmtLog( "%s Success", stepQuery);
+  sprintf(stepQuery, "{ CALL pInsert_Quest( %d ) }", *pDwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( v14 && v14 != 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", szLog);
-  sprintf(szLog, "{ CALL pInsert_UserInterface( %d ) }", *pDwSerial);
+    this->FmtLog( "%s Success", stepQuery);
+  sprintf(stepQuery, "{ CALL pInsert_UserInterface( %d ) }", *pDwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( v14 && v14 != 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
   if ( this->m_bSaveDBLog )
-    this->FmtLog( "%s Success", szLog);
+    this->FmtLog( "%s Success", stepQuery);
   if ( !((int)byRaceSexCode >> 1) )
   {
-    sprintf(szLog, "{ CALL pInsert_Unit( %d ) }", *pDwSerial);
+    sprintf(stepQuery, "{ CALL pInsert_Unit( %d ) }", *pDwSerial);
     if ( this->m_bSaveDBLog )
-      this->Log( szLog);
-    v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-    if ( v14 && v14 != 1 )
+      this->Log( stepQuery);
+    sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+    if ( sqlStatus && sqlStatus != 1 )
     {
-      this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      this->ErrorAction( v14, this->m_hStmtUpdate);
+      this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
       return 0;
     }
     if ( this->m_bSaveDBLog )
-      this->FmtLog( "%s Success", szLog);
+      this->FmtLog( "%s Success", stepQuery);
   }
-  sprintf(szLog, "{ CALL pInsert_CombineEx_Result( %d ) }", *pDwSerial);
+  sprintf(stepQuery, "{ CALL pInsert_CombineEx_Result( %d ) }", *pDwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( szLog);
-  v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-  if ( !v14 || v14 == 1 )
+    this->Log( stepQuery);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+  if ( !sqlStatus || sqlStatus == 1 )
   {
     if ( this->m_bSaveDBLog )
-      this->FmtLog( "%s Success", szLog);
-    sprintf(szLog, "{ CALL pInsert_OreCutting( %d ) }", *pDwSerial);
+      this->FmtLog( "%s Success", stepQuery);
+    sprintf(stepQuery, "{ CALL pInsert_OreCutting( %d ) }", *pDwSerial);
     if ( this->m_bSaveDBLog )
-      this->Log( szLog);
-    v14 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)szLog, -3);
-    if ( !v14 || v14 == 1 )
+      this->Log( stepQuery);
+    sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)stepQuery, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
       if ( this->m_bSaveDBLog )
-        this->FmtLog( "%s Success", szLog);
+        this->FmtLog( "%s Success", stepQuery);
       this->CommitTransaction();
       this->SetAutoCommitMode( 1);
       return 1;
     }
     else
     {
-      this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      this->ErrorAction( v14, this->m_hStmtUpdate);
+      this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
       return 0;
     }
   }
   else
   {
-    this->ErrorMsgLog( v14, szLog, "SQLExecDirectA", this->m_hStmtUpdate);
+    this->ErrorMsgLog( sqlStatus, stepQuery, "SQLExecDirectA", this->m_hStmtUpdate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    this->ErrorAction( v14, this->m_hStmtUpdate);
+    this->ErrorAction( sqlStatus, this->m_hStmtUpdate);
     return 0;
   }
 }
 
 bool CRFWorldDatabase::Insert_Economy_History(unsigned int dwDate, _worlddb_economy_history_info *pEconomyData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-408h] BYREF
   char Buffer[544]; // [rsp+F0h] [rbp-318h] BYREF
   _worlddb_economy_history_info pEconomyDataa; // [rsp+310h] [rbp-F8h] BYREF
   unsigned __int8 exist; // [rsp+3E4h] [rbp-24h]
-
-  v3 = &v6;
   memset(Buffer, 0, 512);
   exist = this->Select_Exist_Economy( dwDate, &pEconomyDataa);
   if ( exist == 2 )
@@ -506,10 +463,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
         unsigned __int8 byRoomType,
         unsigned __int8 byRace)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
   int Year; // eax
-  __int64 v8; // [rsp+0h] [rbp-1C8h] BYREF
   char Buffer[280]; // [rsp+70h] [rbp-158h] BYREF
   ATL::CTime result;
   int Second; // [rsp+1A0h] [rbp-28h]
@@ -517,8 +471,6 @@ bool CRFWorldDatabase::Insert_GuidRoom(
   int Hour; // [rsp+1A8h] [rbp-20h]
   int Day; // [rsp+1ACh] [rbp-1Ch]
   int Month; // [rsp+1B0h] [rbp-18h]
-
-  v4 = &v8;
   memset_0(Buffer, 0, 0x100uLL);
   result = ATL::CTime::GetCurrentTime();
   Second = result.GetSecond();
@@ -545,12 +497,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
 
 bool CRFWorldDatabase::Insert_Guild( char *pwszGuildName, unsigned __int8 byRace)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-258h] BYREF
   char Buffer[528]; // [rsp+30h] [rbp-228h] BYREF
-
-  v3 = &v6;
   memset_0(Buffer, 0, 0x200uLL);
   sprintf(Buffer, "{ CALL pInsert_Guild('%s', %d) }", pwszGuildName, byRace);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -566,12 +513,7 @@ bool CRFWorldDatabase::Insert_GuildMoneyHistory(
         unsigned int dwAvatorSerial,
         const char *pwszName)
 {
-  __int64 *v9; // rdi
-  __int64 i; // rcx
-  __int64 v12; // [rsp+0h] [rbp-488h] BYREF
   char Buffer[1040]; // [rsp+60h] [rbp-428h] BYREF
-
-  v9 = &v12;
   memset(Buffer, 0, 1024);
   sprintf(
     Buffer,
@@ -594,12 +536,7 @@ bool CRFWorldDatabase::Insert_ItemChargeInGame(
         unsigned int dwItemCode_U,
         unsigned __int8 byType)
 {
-  __int64 *v6; // rdi
-  __int64 i; // rcx
-  __int64 v9; // [rsp+0h] [rbp-478h] BYREF
   char Buffer[1040]; // [rsp+50h] [rbp-428h] BYREF
-
-  v6 = &v9;
   sprintf_s(
     Buffer,
     0x400uLL,
@@ -617,26 +554,16 @@ bool CRFWorldDatabase::Insert_Level_Log(
         unsigned __int8 byLevel,
         unsigned int dwTotalPlayMin)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   sprintf(Buffer, "{ CALL pInsert_Level_Log( %d, %d, %d ) }", dwCharacterSerial, byLevel, dwTotalPlayMin);
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
 bool CRFWorldDatabase::Insert_MacroData( unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-4D8h] BYREF
   int j; // [rsp+90h] [rbp-448h]
   bool updated; // [rsp+94h] [rbp-444h]
   char Buffer[1040]; // [rsp+B0h] [rbp-428h] BYREF
-
-  v2 = &v5;
   updated = 0;
   memset(Buffer, 0, 1024);
   for ( j = 0; j < 3; ++j )
@@ -669,12 +596,7 @@ bool CRFWorldDatabase::Insert_MacroData( unsigned int dwSerial)
 
 bool CRFWorldDatabase::Insert_RFEvent_ClassRefine( unsigned int dwAvatorSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v2 = &v5;
   memset(Buffer, 0, 256);
   sprintf_s(Buffer, 0x100uLL, "insert [dbo].[tbl_event] (avatorserial) values (%u)", dwAvatorSerial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -682,12 +604,7 @@ bool CRFWorldDatabase::Insert_RFEvent_ClassRefine( unsigned int dwAvatorSerial)
 
 bool CRFWorldDatabase::Insert_Set_Limit_Run( unsigned __int8 *pData, int iSize)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-468h] BYREF
   char _Dest[1024]; // [rsp+40h] [rbp-428h] BYREF
-
-  v3 = &v6;
   memset(_Dest, 0, sizeof(_Dest));
   sprintf_s(_Dest, sizeof(_Dest), "insert into [dbo].[tbl_sf_delay] ( [aserial], [effect] ) values (0, ?)");
   return this->ExecUpdateBinaryQuery(_Dest, reinterpret_cast<char *>(pData), iSize, 1);
@@ -695,24 +612,14 @@ bool CRFWorldDatabase::Insert_Set_Limit_Run( unsigned __int8 *pData, int iSize)
 
 bool CRFWorldDatabase::Insert_UserNum_Log( int nAvgUserNum, int nMaxUserNum)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v3 = &v6;
   sprintf(Buffer, "{ CALL pInsert_UserNum_Log( %d, %d ) }", nAvgUserNum, nMaxUserNum);
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
 bool CRFWorldDatabase::Insert_WeeklyGuildPvpPointSum( unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v2 = &v5;
   memset_0(Buffer, 0, 0x100uLL);
   sprintf(Buffer, "{ CALL pInsert_WeeklyGuildPVPPointSum(%u) }", dwSerial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -732,12 +639,7 @@ bool CRFWorldDatabase::InsertChangeClassLogAfterInitClass(
         unsigned __int8 byMin,
         unsigned __int8 bySec)
 {
-  __int64 *v13; // rdi
-  __int64 i; // rcx
-  __int64 v16; // [rsp+0h] [rbp-4B8h] BYREF
   char Buffer[1040]; // [rsp+80h] [rbp-438h] BYREF
-
-  v13 = &v16;
   sprintf(
     Buffer,
     "{ CALL pInsert_ClassLogAfterInitClass ( %d, %d, '%s', '%s', %d, %d, '%04d-%02d-%02d %02d:%02d:%02d' ) }",
@@ -768,12 +670,7 @@ bool CRFWorldDatabase::InsertCharacterSelectLog(
         unsigned __int8 byMin,
         unsigned __int8 bySec)
 {
-  __int64 *v11; // rdi
-  __int64 i; // rcx
-  __int64 v14; // [rsp+0h] [rbp-4B8h] BYREF
   char Buffer[1040]; // [rsp+80h] [rbp-438h] BYREF
-
-  v11 = &v14;
   memset_0(Buffer, 0, 0x400uLL);
   sprintf(
     Buffer,
@@ -796,42 +693,35 @@ bool CRFWorldDatabase::InsertCharacterSelectLog(
 
 bool CRFWorldDatabase::Select_ArrangeInfo( unsigned int dwSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-1A8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-170h] BYREF
-  SQLRETURN v7; // [rsp+44h] [rbp-164h]
-  char Buffer[260]; // [rsp+60h] [rbp-148h] BYREF
-  int v9; // [rsp+164h] [rbp-44h]
-  unsigned __int8 TargetValue[28]; // [rsp+174h] [rbp-34h] BYREF
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[260];
+  unsigned __int8 arrangeInfo[28] = {};
 
-  v2 = &v5;
-  v9 = 0;
-  TargetValue[0] = 0;
-  sprintf(Buffer, "{ CALL pSelect_ArrangeInfo( %d ) }", dwSerial);
+  sprintf(queryBuffer, "{ CALL pSelect_ArrangeInfo( %d ) }", dwSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v7 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v7 || v7 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v7 = SQLFetch(this->m_hStmtSelect);
-      if ( !v7 || v7 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v7 = SQLGetData(this->m_hStmtSelect, 1u, 65530, TargetValue, 0LL, &StrLen_or_IndPtr);
-        if ( !v7 || v7 == 1 )
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65530, arrangeInfo, 0LL, &strLenOrIndPtr);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           if ( this->m_bSaveDBLog )
-            this->FmtLog( "%s Success", Buffer);
-          return TargetValue[0] == 0;
+            this->FmtLog( "%s Success", queryBuffer);
+          return arrangeInfo[0] == 0;
         }
         else
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           return 0;
@@ -839,10 +729,10 @@ bool CRFWorldDatabase::Select_ArrangeInfo( unsigned int dwSerial)
       }
       else
       {
-        if ( v7 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -851,17 +741,17 @@ bool CRFWorldDatabase::Select_ArrangeInfo( unsigned int dwSerial)
     }
     else
     {
-      if ( v7 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v7, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-        this->ErrorAction( v7, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
@@ -871,43 +761,37 @@ bool CRFWorldDatabase::Select_ChracterSerialRace(
         unsigned int *pSerial,
         unsigned __int8 *pbyRace)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int v11; // [rsp+164h] [rbp-24h]
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[260];
 
-  v4 = &v7;
-  v11 = 0;
-  sprintf(Buffer, "{ CALL pSelect_CharacterSerialRace('%s') }", pwszCharacterName);
+  sprintf(queryBuffer, "{ CALL pSelect_CharacterSerialRace('%s') }", pwszCharacterName);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v9 = SQLFetch(this->m_hStmtSelect);
-      if ( !v9 || v9 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 65518, pSerial, 0LL, &StrLen_or_IndPtr);
-        if ( !v9 || v9 == 1 )
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, pSerial, 0LL, &strLenOrIndPtr);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
-          v9 = SQLGetData(this->m_hStmtSelect, 2u, 65530, pbyRace, 0LL, &StrLen_or_IndPtr);
-          if ( !v9 || v9 == 1 )
+          sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65530, pbyRace, 0LL, &strLenOrIndPtr);
+          if ( !sqlStatus || sqlStatus == 1 )
           {
             if ( this->m_hStmtSelect )
               SQLCloseCursor(this->m_hStmtSelect);
             if ( this->m_bSaveDBLog )
-              this->FmtLog( "%s Success", Buffer);
+              this->FmtLog( "%s Success", queryBuffer);
             return 1;
           }
           else
           {
-            this->ErrorMsgLog( v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-            this->ErrorAction( v9, this->m_hStmtSelect);
+            this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+            this->ErrorAction( sqlStatus, this->m_hStmtSelect);
             if ( this->m_hStmtSelect )
               SQLCloseCursor(this->m_hStmtSelect);
             return 0;
@@ -915,8 +799,8 @@ bool CRFWorldDatabase::Select_ChracterSerialRace(
         }
         else
         {
-          this->ErrorMsgLog( v9, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction( v9, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           return 0;
@@ -924,10 +808,10 @@ bool CRFWorldDatabase::Select_ChracterSerialRace(
       }
       else
       {
-        if ( v9 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v9, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v9, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -936,17 +820,17 @@ bool CRFWorldDatabase::Select_ChracterSerialRace(
     }
     else
     {
-      if ( v9 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v9, Buffer, "_SQLExecDirect", this->m_hStmtSelect);
-        this->ErrorAction( v9, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "_SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
@@ -955,40 +839,34 @@ bool CRFWorldDatabase::Select_GuildSerial(
         char *pwszGuildName,
         unsigned int *pdwGuildSerial)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int v10; // [rsp+164h] [rbp-24h]
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[260];
 
-  v3 = &v6;
-  v10 = 0;
-  sprintf(Buffer, "{ CALL pSelect_GuildSerial('%s') }", pwszGuildName);
+  sprintf(queryBuffer, "{ CALL pSelect_GuildSerial('%s') }", pwszGuildName);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 65518, pdwGuildSerial, 0LL, &StrLen_or_IndPtr);
-        if ( !v8 || v8 == 1 )
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, pdwGuildSerial, 0LL, &strLenOrIndPtr);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           if ( this->m_bSaveDBLog )
-            this->FmtLog( "%s Success", Buffer);
+            this->FmtLog( "%s Success", queryBuffer);
           return 1;
         }
         else
         {
-          this->ErrorMsgLog( v8, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction( v8, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           return 0;
@@ -996,10 +874,10 @@ bool CRFWorldDatabase::Select_GuildSerial(
       }
       else
       {
-        if ( v8 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v8, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -1008,29 +886,24 @@ bool CRFWorldDatabase::Select_GuildSerial(
     }
     else
     {
-      if ( v8 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v8, Buffer, "_SQLExecDirect", this->m_hStmtSelect);
-        this->ErrorAction( v8, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "_SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
 
 bool CRFWorldDatabase::Update_Dalant( unsigned int dwSerial, unsigned int dwDalant)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-D8h] BYREF
   char Buffer[144]; // [rsp+30h] [rbp-A8h] BYREF
-
-  v3 = &v6;
   memset(Buffer, 0, 128);
   sprintf(Buffer, "UPDATE tbl_base SET Dalant = %d WHERE Serial = %d", dwDalant, dwSerial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -1038,12 +911,7 @@ bool CRFWorldDatabase::Update_Dalant( unsigned int dwSerial, unsigned int dwDala
 
 bool CRFWorldDatabase::Update_GmGreet( _qry_case_gm_greetingmsg *pSheet)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
-
-  v2 = &v5;
   memset(Buffer, 0, 1024);
   sprintf(
     Buffer,
@@ -1055,12 +923,7 @@ bool CRFWorldDatabase::Update_GmGreet( _qry_case_gm_greetingmsg *pSheet)
 
 bool CRFWorldDatabase::Update_Gold( unsigned int dwSerial, unsigned int dwGold)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-D8h] BYREF
   char Buffer[144]; // [rsp+30h] [rbp-A8h] BYREF
-
-  v3 = &v6;
   memset(Buffer, 0, 128);
   sprintf(Buffer, "UPDATE tbl_base SET Gold = %d WHERE Serial = %d", dwGold, dwSerial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -1072,12 +935,7 @@ bool CRFWorldDatabase::Update_GuildEmblem(
         unsigned int dwEmblemBack,
         unsigned int dwEmblemMark)
 {
-  __int64 *v5; // rdi
-  __int64 i; // rcx
-  __int64 v8; // [rsp+0h] [rbp-178h] BYREF
   char Buffer[272]; // [rsp+50h] [rbp-128h] BYREF
-
-  v5 = &v8;
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
@@ -1092,12 +950,7 @@ bool CRFWorldDatabase::Update_GuildEmblem(
 
 bool CRFWorldDatabase::Update_GuildGrade()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v1 = &v4;
   memset(Buffer, 0, 256);
   sprintf(
     Buffer,
@@ -1107,12 +960,7 @@ bool CRFWorldDatabase::Update_GuildGrade()
 
 bool CRFWorldDatabase::Update_GuildGreet( _qry_case_guild_greetingmsg *pSheet)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
-
-  v2 = &v5;
   memset(Buffer, 0, 1024);
   sprintf(Buffer, "update tbl_guild set GMsg='%s' where Serial=%d", pSheet->in_guildgreetingmsg, pSheet->in_guildserial);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -1123,12 +971,7 @@ bool CRFWorldDatabase::Update_GuildMaster(
         unsigned int dwGuildMaster_Serial,
         unsigned __int8 byGuildMaster_PrevGrade)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   sprintf(
     Buffer,
     "{ CALL pUpdate_GuildMaster(%d, %d, %d) }",
@@ -1142,12 +985,7 @@ bool CRFWorldDatabase::Update_GuildMemberCount(
         unsigned int dwGuildSerial,
         unsigned __int16 wMemberNum)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v3 = &v6;
   memset(Buffer, 0, 256);
   sprintf(Buffer, "update tbl_Guild set MemberCount = %d where serial = %d", wMemberNum, dwGuildSerial);
   return this->ExecUpdateQuery( Buffer, 0);
@@ -1155,12 +993,7 @@ bool CRFWorldDatabase::Update_GuildMemberCount(
 
 bool CRFWorldDatabase::Update_GuildRoom( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-158h] BYREF
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-
-  v2 = &v5;
   memset_0(Buffer, 0, 0x100uLL);
   sprintf(
     Buffer,
@@ -1174,12 +1007,7 @@ bool CRFWorldDatabase::Update_InputGuildMoney(
         unsigned int dwDalant,
         unsigned int dwGold)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   memset(Buffer, 0, 256);
   sprintf(
     Buffer,
@@ -1194,171 +1022,83 @@ bool CRFWorldDatabase::Update_MacroData(
         unsigned int dwSerial,
         _AIOC_A_MACRODATA *pMacro)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-B18h] BYREF
-  SQLRETURN v7; // [rsp+40h] [rbp-AD8h]
-  char Buffer[2080]; // [rsp+60h] [rbp-AB8h] BYREF
-  char Source[516]; // [rsp+880h] [rbp-298h] BYREF
-  int j; // [rsp+A84h] [rbp-94h]
-  unsigned int v11; // [rsp+A90h] [rbp-88h]
-  unsigned int v12; // [rsp+A94h] [rbp-84h]
-  unsigned int v13; // [rsp+A98h] [rbp-80h]
-  unsigned int v14; // [rsp+A9Ch] [rbp-7Ch]
-  unsigned int v15; // [rsp+AA0h] [rbp-78h]
-  unsigned int v16; // [rsp+AA4h] [rbp-74h]
-  unsigned int v17; // [rsp+AA8h] [rbp-70h]
-  unsigned int v18; // [rsp+AACh] [rbp-6Ch]
-  unsigned int v19; // [rsp+AB0h] [rbp-68h]
-  unsigned int v20; // [rsp+AB4h] [rbp-64h]
-  unsigned int v21; // [rsp+AB8h] [rbp-60h]
-  unsigned int v22; // [rsp+ABCh] [rbp-5Ch]
-  unsigned int v23; // [rsp+AC0h] [rbp-58h]
-  const char *v24; // [rsp+AC8h] [rbp-50h]
-  const char *v25; // [rsp+AD0h] [rbp-48h]
-  const char *v26; // [rsp+AD8h] [rbp-40h]
-  const char *v27; // [rsp+AE0h] [rbp-38h]
-  const char *v28; // [rsp+AE8h] [rbp-30h]
-  unsigned int v29; // [rsp+AF0h] [rbp-28h]
-  unsigned int v30; // [rsp+AF4h] [rbp-24h]
-  unsigned int v31; // [rsp+AF8h] [rbp-20h]
+  SQLRETURN sqlStatus = 0;
+  char queryBuffer[2080];
+  char queryFragment[516];
 
-  v3 = &v6;
-  for ( j = 0; j < 3; ++j )
+  for ( int beltIndex = 0; beltIndex < 3; ++beltIndex )
   {
-    memset_0(Buffer, 0, 0x800uLL);
-    if ( j >= 1 )
-      v11 = 0;
-    else
-      v11 = pMacro->mcr_Potion[j].Potion[2];
-    if ( j >= 1 )
-      v12 = 0;
-    else
-      v12 = pMacro->mcr_Potion[j].Potion[1];
-    if ( j >= 1 )
-      v13 = 0;
-    else
-      v13 = pMacro->mcr_Potion[j].Potion[0];
-    sprintf(Buffer, " Update tbl_Macro Set hp=%d, fp=%d, sp=%d,", v13, v12, v11);
-    memset_0(Source, 0, 0x200uLL);
-    if ( j >= 3 )
-      v14 = 0;
-    else
-      v14 = pMacro->mcr_Action[j].Action[3];
-    if ( j >= 3 )
-      v15 = 0;
-    else
-      v15 = pMacro->mcr_Action[j].Action[2];
-    if ( j >= 3 )
-      v16 = 0;
-    else
-      v16 = pMacro->mcr_Action[j].Action[1];
-    if ( j >= 3 )
-      v17 = 0;
-    else
-      v17 = pMacro->mcr_Action[j].Action[0];
-    sprintf(Source, " action0=%d, action1=%d, action2=%d, action3=%d,", v17, v16, v15, v14);
-    strcat_0(Buffer, Source);
-    memset_0(Source, 0, 0x200uLL);
-    if ( j >= 3 )
-      v18 = 0;
-    else
-      v18 = pMacro->mcr_Action[j].Action[7];
-    if ( j >= 3 )
-      v19 = 0;
-    else
-      v19 = pMacro->mcr_Action[j].Action[6];
-    if ( j >= 3 )
-      v20 = 0;
-    else
-      v20 = pMacro->mcr_Action[j].Action[5];
-    if ( j >= 3 )
-      v21 = 0;
-    else
-      v21 = pMacro->mcr_Action[j].Action[4];
-    sprintf(Source, " action4=%d, action5=%d, action6=%d, action7=%d,", v21, v20, v19, v18);
-    strcat_0(Buffer, Source);
-    memset_0(Source, 0, 0x200uLL);
-    if ( j >= 3 )
-      v22 = 0;
-    else
-      v22 = pMacro->mcr_Action[j].Action[9];
-    if ( j >= 3 )
-      v23 = 0;
-    else
-      v23 = pMacro->mcr_Action[j].Action[8];
-    sprintf(Source, " action8=%d, action9=%d,", v23, v22);
-    strcat_0(Buffer, Source);
-    memset_0(Source, 0, 0x200uLL);
-    if ( j >= 2 )
-      v24 = "";
-    else
-      v24 = pMacro->mcr_Chat[j].Chat[4];
-    if ( j >= 2 )
-      v25 = "";
-    else
-      v25 = pMacro->mcr_Chat[j].Chat[3];
-    if ( j >= 2 )
-      v26 = "";
-    else
-      v26 = pMacro->mcr_Chat[j].Chat[2];
-    if ( j >= 2 )
-      v27 = "";
-    else
-      v27 = pMacro->mcr_Chat[j].Chat[1];
-    if ( j >= 2 )
-      v28 = "";
-    else
-      v28 = pMacro->mcr_Chat[j].Chat[0];
+    const unsigned int spPotionCode = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].Potion[2];
+    const unsigned int fpPotionCode = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].Potion[1];
+    const unsigned int hpPotionCode = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].Potion[0];
+    const unsigned int action3 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[3];
+    const unsigned int action2 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[2];
+    const unsigned int action1 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[1];
+    const unsigned int action0 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[0];
+    const unsigned int action7 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[7];
+    const unsigned int action6 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[6];
+    const unsigned int action5 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[5];
+    const unsigned int action4 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[4];
+    const unsigned int action9 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[9];
+    const unsigned int action8 = beltIndex >= 3 ? 0 : pMacro->mcr_Action[beltIndex].Action[8];
+    const char *chat4 = beltIndex >= 2 ? "" : pMacro->mcr_Chat[beltIndex].Chat[4];
+    const char *chat3 = beltIndex >= 2 ? "" : pMacro->mcr_Chat[beltIndex].Chat[3];
+    const char *chat2 = beltIndex >= 2 ? "" : pMacro->mcr_Chat[beltIndex].Chat[2];
+    const char *chat1 = beltIndex >= 2 ? "" : pMacro->mcr_Chat[beltIndex].Chat[1];
+    const char *chat0 = beltIndex >= 2 ? "" : pMacro->mcr_Chat[beltIndex].Chat[0];
+    const unsigned int spPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[2];
+    const unsigned int fpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[1];
+    const unsigned int hpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[0];
+
+    memset_0(queryBuffer, 0, 0x800uLL);
+    sprintf(queryBuffer, " Update tbl_Macro Set hp=%d, fp=%d, sp=%d,", hpPotionCode, fpPotionCode, spPotionCode);
+    memset_0(queryFragment, 0, 0x200uLL);
+    sprintf(queryFragment, " action0=%d, action1=%d, action2=%d, action3=%d,", action0, action1, action2, action3);
+    strcat_0(queryBuffer, queryFragment);
+    memset_0(queryFragment, 0, 0x200uLL);
+    sprintf(queryFragment, " action4=%d, action5=%d, action6=%d, action7=%d,", action4, action5, action6, action7);
+    strcat_0(queryBuffer, queryFragment);
+    memset_0(queryFragment, 0, 0x200uLL);
+    sprintf(queryFragment, " action8=%d, action9=%d,", action8, action9);
+    strcat_0(queryBuffer, queryFragment);
+    memset_0(queryFragment, 0, 0x200uLL);
     sprintf(
-      Source,
+      queryFragment,
       " chat0='%s', chat1='%s', chat2='%s', chat3='%s', chat4='%s',",
-      v28,
-      v27,
-      v26,
-      v25,
-      v24);
-    strcat_0(Buffer, Source);
-    memset_0(Source, 0, 0x200uLL);
-    if ( j >= 1 )
-      v29 = 0;
-    else
-      v29 = pMacro->mcr_Potion[j].PotionValue[2];
-    if ( j >= 1 )
-      v30 = 0;
-    else
-      v30 = pMacro->mcr_Potion[j].PotionValue[1];
-    if ( j >= 1 )
-      v31 = 0;
-    else
-      v31 = pMacro->mcr_Potion[j].PotionValue[0];
-    sprintf(Source, " hpvalue=%d, fpvalue=%d, spvalue=%d", v31, v30, v29);
-    strcat_0(Buffer, Source);
-    memset_0(Source, 0, 0x200uLL);
-    sprintf(Source, " where serial=%d and belt=%d", dwSerial, j);
-    strcat_0(Buffer, Source);
+      chat0,
+      chat1,
+      chat2,
+      chat3,
+      chat4);
+    strcat_0(queryBuffer, queryFragment);
+    memset_0(queryFragment, 0, 0x200uLL);
+    sprintf(queryFragment, " hpvalue=%d, fpvalue=%d, spvalue=%d", hpPotionValue, fpPotionValue, spPotionValue);
+    strcat_0(queryBuffer, queryFragment);
+    memset_0(queryFragment, 0, 0x200uLL);
+    sprintf(queryFragment, " where serial=%d and belt=%d", dwSerial, beltIndex);
+    strcat_0(queryBuffer, queryFragment);
     if ( this->m_bSaveDBLog )
-      this->Log( Buffer);
+      this->Log( queryBuffer);
     if ( !this->m_hStmtSelect && !this->ReConnectDataBase() )
     {
-      this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+      this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
       return 0;
     }
-    v7 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( v7 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( sqlStatus )
     {
-      if ( v7 != 1 )
+      if ( sqlStatus != 1 )
         break;
     }
     if ( this->m_bSaveDBLog )
-      this->FmtLog( (wchar_t *)L"%s Success", Buffer);
+      this->FmtLog( (wchar_t *)L"%s Success", queryBuffer);
   }
-  if ( !v7 || v7 == 1 )
+  if ( !sqlStatus || sqlStatus == 1 )
     return 1;
-  if ( v7 != 100 )
+  if ( sqlStatus != 100 )
   {
-    this->ErrorMsgLog( v7, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-    this->ErrorAction( v7, this->m_hStmtSelect);
+    this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
+    this->ErrorAction( sqlStatus, this->m_hStmtSelect);
   }
   return 0;
 }
@@ -1368,12 +1108,7 @@ bool CRFWorldDatabase::Update_PvpPointInfo(
         __int16 *zClass,
         long double dPvpPoint)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-178h] BYREF
   char Buffer[272]; // [rsp+50h] [rbp-128h] BYREF
-
-  v4 = &v7;
   sprintf(
     Buffer,
     "{ CALL pUpdate_PvpPointInfo( %d, %d, %d, %d, %f ) }",
@@ -1387,12 +1122,7 @@ bool CRFWorldDatabase::Update_PvpPointInfo(
 
 bool CRFWorldDatabase::Update_RaceGreet( _qry_case_race_greetingmsg *pSheet)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-468h] BYREF
   char Buffer[1040]; // [rsp+40h] [rbp-428h] BYREF
-
-  v2 = &v5;
   memset(Buffer, 0, 1024);
   sprintf(
     Buffer,
@@ -1408,12 +1138,7 @@ bool CRFWorldDatabase::Update_RFEvent_ClassRefine(
         unsigned __int8 byRefineCnt,
         unsigned int dwRefineDate)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
@@ -1427,12 +1152,7 @@ bool CRFWorldDatabase::Update_RFEvent_ClassRefine(
 
 bool CRFWorldDatabase::Update_Set_Limit_Run( unsigned __int8 *pData, int iSize)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-468h] BYREF
   char _Dest[1024]; // [rsp+40h] [rbp-428h] BYREF
-
-  v3 = &v6;
   memset(_Dest, 0, sizeof(_Dest));
   sprintf_s(_Dest, sizeof(_Dest), "update [dbo].[tbl_sf_delay] set [effect] = ? where [aserial] = 0");
   return this->ExecUpdateBinaryQuery(_Dest, reinterpret_cast<char *>(pData), iSize, 1);
@@ -1443,12 +1163,7 @@ bool CRFWorldDatabase::Update_SetActive(
         char *pwszActiveName,
         unsigned __int8 bySlot)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   sprintf(Buffer, "{ CALL pUpdate_SetActive( %d, '%s', %d ) }", dwSerial, pwszActiveName, bySlot);
   return this->ExecUpdateQuery( Buffer, 1);
 }
@@ -1458,12 +1173,7 @@ bool CRFWorldDatabase::Update_SetGuildMoney(
         long double dDalant,
         long double dGold)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
@@ -1479,12 +1189,7 @@ bool CRFWorldDatabase::Update_SFDelayInfo(
         unsigned int dwSerial,
         _worlddb_sf_delay_info *pSFDelay)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v3 = &v6;
   sprintf(Buffer, "{ CALL pUpdate_SFDelay( %d, ? ) }", dwSerial);
   return this->ExecUpdateBinaryQuery(Buffer, reinterpret_cast<char *>(pSFDelay), 130, 0);
 }
@@ -1494,12 +1199,7 @@ bool CRFWorldDatabase::Update_UserGuildData(
         unsigned int dwGuildSerial,
         unsigned __int8 byGrade)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-168h] BYREF
   char Buffer[272]; // [rsp+40h] [rbp-128h] BYREF
-
-  v4 = &v7;
   memset(Buffer, 0, 256);
   sprintf(Buffer, "{ CALL pUpdate_UserGuildData_20070614( %d, %d, %d ) }", dwAvatorSerial, dwGuildSerial, byGrade);
   return this->ExecUpdateQuery( Buffer, 1);
@@ -1785,44 +1485,38 @@ char CRFWorldDatabase::Select_GuildData(
         unsigned int dwGuildSerial,
         _worlddb_guild_info::__guild_info *pGuildData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-188h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-150h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-144h]
-  char Buffer[260]; // [rsp+60h] [rbp-128h] BYREF
-  int v10; // [rsp+164h] [rbp-24h]
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[260];
 
-  v3 = &v6;
-  v10 = 0;
-  sprintf(Buffer, "select serial, grade, id, dalant, gold from tbl_guild where serial = %d", dwGuildSerial);
+  sprintf(queryBuffer, "select serial, grade, id, dalant, gold from tbl_guild where serial = %d", dwGuildSerial);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v8 = SQLFetch(this->m_hStmtSelect);
-      if ( !v8 || v8 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, pGuildData, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 5, &pGuildData->byGuildGrade, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 3u, 1, pGuildData->wszGuildName, 17LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 4u, 8, &pGuildData->dDalant, 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 5u, 8, &pGuildData->dGold, 0LL, &StrLen_or_IndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, pGuildData, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 5, &pGuildData->byGuildGrade, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 3u, 1, pGuildData->wszGuildName, 17LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 4u, 8, &pGuildData->dDalant, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 5u, 8, &pGuildData->dGold, 0LL, &strLenOrIndPtr);
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
         if ( this->m_bSaveDBLog )
-          this->FmtLog( "%s Success", Buffer);
+          this->FmtLog( "%s Success", queryBuffer);
         return 1;
       }
       else
       {
-        if ( v8 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v8, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v8, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -1831,17 +1525,17 @@ char CRFWorldDatabase::Select_GuildData(
     }
     else
     {
-      if ( v8 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-        this->ErrorAction( v8, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
@@ -1850,54 +1544,50 @@ char CRFWorldDatabase::SelectAllGuildSerial(
         unsigned int *pdwCount,
         unsigned int *pdwSerial)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-2888h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-2850h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-2844h]
-  char Buffer[10256]; // [rsp+60h] [rbp-2828h] BYREF
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[10256];
 
-  v3 = &v6;
   *pdwCount = 0;
-  sprintf(Buffer, "select top %u [Serial] from [dbo].[tbl_guild] where [DCK]=0 order by serial", 500);
+  sprintf(queryBuffer, "select top %u [Serial] from [dbo].[tbl_guild] where [DCK]=0 order by serial", 500);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
       while ( 1 )
       {
-        v8 = SQLFetch(this->m_hStmtSelect);
-        if ( v8 )
+        sqlStatus = SQLFetch(this->m_hStmtSelect);
+        if ( sqlStatus )
         {
-          if ( v8 != 1 )
+          if ( sqlStatus != 1 )
             break;
         }
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &StrLen_or_IndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &strLenOrIndPtr);
         ++*pdwCount;
       }
       if ( this->m_hStmtSelect )
         SQLCloseCursor(this->m_hStmtSelect);
       if ( this->m_bSaveDBLog )
-        this->FmtLog( "%s Success", Buffer);
+        this->FmtLog( "%s Success", queryBuffer);
       return 1;
     }
-    else if ( v8 == 100 )
+    else if ( sqlStatus == 100 )
     {
       return 1;
     }
     else
     {
-      this->ErrorMsgLog( v8, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction( v8, this->m_hStmtSelect);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
+      this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
@@ -1907,113 +1597,104 @@ char CRFWorldDatabase::SelectAllGuildSerialGrade(
         unsigned int *pdwSerial,
         unsigned __int8 *pbyGrade)
 {
-  __int64 *v4; // rdi
-  __int64 i; // rcx
-  __int64 v7; // [rsp+0h] [rbp-2888h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-2850h] BYREF
-  SQLRETURN v9; // [rsp+44h] [rbp-2844h]
-  char Buffer[10256]; // [rsp+60h] [rbp-2828h] BYREF
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[10256];
 
-  v4 = &v7;
   *pdwCount = 0;
-  sprintf(Buffer, "select top %u [Serial], [Grade] from [dbo].[tbl_guild] where [DCK]=0 order by serial", 500);
+  sprintf(queryBuffer, "select top %u [Serial], [Grade] from [dbo].[tbl_guild] where [DCK]=0 order by serial", 500);
   if ( this->m_bSaveDBLog )
-    this->Log( Buffer);
+    this->Log( queryBuffer);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v9 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v9 || v9 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
       while ( 1 )
       {
-        v9 = SQLFetch(this->m_hStmtSelect);
-        if ( v9 )
+        sqlStatus = SQLFetch(this->m_hStmtSelect);
+        if ( sqlStatus )
         {
-          if ( v9 != 1 )
+          if ( sqlStatus != 1 )
             break;
         }
-        v9 = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &StrLen_or_IndPtr);
-        v9 = SQLGetData(this->m_hStmtSelect, 2u, 65521, &pbyGrade[*pdwCount], 0LL, &StrLen_or_IndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65521, &pbyGrade[*pdwCount], 0LL, &strLenOrIndPtr);
         ++*pdwCount;
       }
       if ( this->m_hStmtSelect )
         SQLCloseCursor(this->m_hStmtSelect);
       if ( this->m_bSaveDBLog )
-        this->FmtLog( "%s Success", Buffer);
+        this->FmtLog( "%s Success", queryBuffer);
       return 1;
     }
-    else if ( v9 == 100 )
+    else if ( sqlStatus == 100 )
     {
       return 1;
     }
     else
     {
-      this->ErrorMsgLog( v9, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-      this->ErrorAction( v9, this->m_hStmtSelect);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
+      this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
 
 char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-1D8h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-1A0h] BYREF
-  SQLRETURN v7; // [rsp+44h] [rbp-194h]
-  char Buffer[276]; // [rsp+60h] [rbp-178h] BYREF
-  unsigned int TargetValue[9]; // [rsp+174h] [rbp-64h] BYREF
-  unsigned int v10[7]; // [rsp+198h] [rbp-40h] BYREF
-  int j; // [rsp+1B4h] [rbp-24h]
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[276];
+  unsigned int accountSerial = 0;
+  unsigned int characterSerialBySlot[3];
+  int slotIndex;
 
-  v2 = &v5;
-  memset(Buffer, 0, 256);
-  TargetValue[0] = 0;
-  sprintf(Buffer, "select AccountSerial from tbl_base where serial=%d and dck=0", dwAvatorSerial);
+  memset(queryBuffer, 0, 256);
+  sprintf(queryBuffer, "select AccountSerial from tbl_base where serial=%d and dck=0", dwAvatorSerial);
   if ( this->m_bSaveDBLog )
     this->Log( "Update_CharSlot");
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v7 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v7 || v7 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      v7 = SQLFetch(this->m_hStmtSelect);
-      if ( !v7 || v7 == 1 )
+      sqlStatus = SQLFetch(this->m_hStmtSelect);
+      if ( !sqlStatus || sqlStatus == 1 )
       {
-        v7 = SQLGetData(this->m_hStmtSelect, 1u, 65518, TargetValue, 0LL, &StrLen_or_IndPtr);
-        if ( !v7 || v7 == 1 )
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, &accountSerial, 0LL, &strLenOrIndPtr);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
-          memset(v10, 0, 12);
-          sprintf(Buffer, "select serial from tbl_base where AccountSerial=%d and dck=0 order by slot", TargetValue[0]);
-          v7 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-          if ( !v7 || v7 == 1 )
+          memset(characterSerialBySlot, 0, sizeof(characterSerialBySlot));
+          sprintf(queryBuffer, "select serial from tbl_base where AccountSerial=%d and dck=0 order by slot", accountSerial);
+          sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+          if ( !sqlStatus || sqlStatus == 1 )
           {
-            for ( j = 0; j < 3; ++j )
+            for ( slotIndex = 0; slotIndex < 3; ++slotIndex )
             {
-              v7 = SQLFetch(this->m_hStmtSelect);
-              if ( v7 )
+              sqlStatus = SQLFetch(this->m_hStmtSelect);
+              if ( sqlStatus )
               {
-                if ( v7 != 1 )
+                if ( sqlStatus != 1 )
                   break;
               }
-              v7 = SQLGetData(this->m_hStmtSelect, 1u, 65518, &v10[j], 0LL, &StrLen_or_IndPtr);
+              sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, &characterSerialBySlot[slotIndex], 0LL, &strLenOrIndPtr);
             }
             if ( this->m_hStmtSelect )
               SQLCloseCursor(this->m_hStmtSelect);
-            for ( j = 0; j < 3; ++j )
+            for ( slotIndex = 0; slotIndex < 3; ++slotIndex )
             {
-              if ( v10[j] )
+              if ( characterSerialBySlot[slotIndex] )
               {
-                sprintf(Buffer, "update tbl_base set slot=%d where serial=%d", j, v10[j]);
-                this->ExecUpdateQuery( Buffer, 1);
+                sprintf(queryBuffer, "update tbl_base set slot=%d where serial=%d", slotIndex, characterSerialBySlot[slotIndex]);
+                this->ExecUpdateQuery( queryBuffer, 1);
               }
             }
             if ( this->m_bSaveDBLog )
@@ -2022,18 +1703,18 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
           }
           else
           {
-            if ( v7 != 100 )
+            if ( sqlStatus != 100 )
             {
-              this->ErrorMsgLog( v7, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-              this->ErrorAction( v7, this->m_hStmtSelect);
+              this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
+              this->ErrorAction( sqlStatus, this->m_hStmtSelect);
             }
             return 0;
           }
         }
         else
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLGetData", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLGetData", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           return 0;
@@ -2041,10 +1722,10 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
       }
       else
       {
-        if ( v7 != 100 )
+        if ( sqlStatus != 100 )
         {
-          this->ErrorMsgLog( v7, Buffer, "SQLFetch", this->m_hStmtSelect);
-          this->ErrorAction( v7, this->m_hStmtSelect);
+          this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLFetch", this->m_hStmtSelect);
+          this->ErrorAction( sqlStatus, this->m_hStmtSelect);
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
@@ -2053,17 +1734,17 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
     }
     else
     {
-      if ( v7 != 100 )
+      if ( sqlStatus != 100 )
       {
-        this->ErrorMsgLog( v7, Buffer, "SQLExecDirectA", this->m_hStmtSelect);
-        this->ErrorAction( v7, this->m_hStmtSelect);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->FmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->FmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
@@ -2083,22 +1764,18 @@ char CRFWorldDatabase::Update_GuildRank(char *szDate)
 
 char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-478h] BYREF
-  SQLRETURN v6; // [rsp+30h] [rbp-448h]
-  char Buffer[1040]; // [rsp+50h] [rbp-428h] BYREF
+  SQLRETURN sqlStatus;
+  char queryBuffer[1040];
 
-  v2 = &v5;
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   this->FmtLog(
     "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Update_GuildRank Start!",
     szDate);
-  sprintf_s(Buffer, 0x400uLL, "tbl_GuildRank%s", szDate);
-  if ( this->TableExist( Buffer) )
+  sprintf_s(queryBuffer, 0x400uLL, "tbl_GuildRank%s", szDate);
+  if ( this->TableExist( queryBuffer) )
   {
-    sprintf_s(Buffer, 0x400uLL, "drop table [dbo].[tbl_GuildRank%s]", szDate);
-    if ( !this->ExecUpdateQuery( Buffer, 1) )
+    sprintf_s(queryBuffer, 0x400uLL, "drop table [dbo].[tbl_GuildRank%s]", szDate);
+    if ( !this->ExecUpdateQuery( queryBuffer, 1) )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step1(szDate(%s)) : Drop tbl_GuildRank%s Table Fail!",
@@ -2112,20 +1789,20 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
     "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Start Create #tbl_GuildRankTemp Table",
     szDate);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "select top %d g.GuildSerial as serial, sum(b.lv) + sum(g.pvppoint)/10000 as GuildPower into #tbl_GuildRankTemp from "
     "tbl_general as g join tbl_base as b on g.serial = b.serial group by g.GuildSerial having g.guildserial >= 0",
     500);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Create #tbl_GuildRankTemp Table Fail SQL_ERROR!",
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       return 0;
@@ -2142,21 +1819,21 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
     szDate,
     szDate);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "select IDENTITY(int, 1, 1) AS Rank, serial, GuildPower, -1 as Rate, 1 as Grade into [dbo].[tbl_GuildRank%s] from #tb"
     "l_GuildRankTemp order by GuildPower desc",
     szDate);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Create tbl_GuildRank%s Table Fail SQL_ERROR!",
         szDate,
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       return 0;
@@ -2173,8 +1850,8 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
   this->FmtLog(
     "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Start drop table #tbl_GuildRankTemp",
     szDate);
-  sprintf(Buffer, "drop table #tbl_GuildRankTemp");
-  if ( this->ExecUpdateQuery( Buffer, 1) )
+  sprintf(queryBuffer, "drop table #tbl_GuildRankTemp");
+  if ( this->ExecUpdateQuery( queryBuffer, 1) )
   {
     this->CommitTransaction();
     this->SetAutoCommitMode( 1);
@@ -2196,59 +1873,55 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
 
 char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-468h] BYREF
-  char Buffer[1040]; // [rsp+40h] [rbp-428h] BYREF
+  char queryBuffer[1040];
 
-  v2 = &v5;
   this->FmtLog( "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : Start Update Rate", szDate);
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "update tbl_GuildRank%s set Rate = ( (Rank*100)/(select count(*) from tbl_GuildRank%s) )",
     szDate,
     szDate);
-  if ( this->ExecUpdateQuery( Buffer, 0) )
+  if ( this->ExecUpdateQuery( queryBuffer, 0) )
   {
-    sprintf_s(Buffer, 0x400uLL, "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= 300", szDate);
-    if ( this->ExecUpdateQuery( Buffer, 0) )
+    sprintf_s(queryBuffer, 0x400uLL, "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= 300", szDate);
+    if ( this->ExecUpdateQuery( queryBuffer, 0) )
     {
       sprintf_s(
-        Buffer,
+        queryBuffer,
         0x400uLL,
         "update tbl_GuildRank%s set Grade = 3 where rate <= 85 and GuildPower >= 1500",
         szDate);
-      if ( this->ExecUpdateQuery( Buffer, 0) )
+      if ( this->ExecUpdateQuery( queryBuffer, 0) )
       {
         sprintf_s(
-          Buffer,
+          queryBuffer,
           0x400uLL,
           "update tbl_GuildRank%s set Grade = 4 where rate <= 65 and GuildPower >= 3000",
           szDate);
-        if ( this->ExecUpdateQuery( Buffer, 0) )
+        if ( this->ExecUpdateQuery( queryBuffer, 0) )
         {
           sprintf_s(
-            Buffer,
+            queryBuffer,
             0x400uLL,
             "update tbl_GuildRank%s set Grade = 5 where rate <= 35 and GuildPower >= 10000",
             szDate);
-          if ( this->ExecUpdateQuery( Buffer, 0) )
+          if ( this->ExecUpdateQuery( queryBuffer, 0) )
           {
             sprintf_s(
-              Buffer,
+              queryBuffer,
               0x400uLL,
               "update tbl_GuildRank%s set Grade = 6 where rate <= 15 and GuildPower >= 25000",
               szDate);
-            if ( this->ExecUpdateQuery( Buffer, 0) )
+            if ( this->ExecUpdateQuery( queryBuffer, 0) )
             {
               sprintf_s(
-                Buffer,
+                queryBuffer,
                 0x400uLL,
                 "update tbl_GuildRank%s set Grade = 7 where rate <= 5 and GuildPower >= 30000",
                 szDate);
-              if ( this->ExecUpdateQuery( Buffer, 0) )
+              if ( this->ExecUpdateQuery( queryBuffer, 0) )
               {
                 this->FmtLog(
                   "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : End Update Rate",
@@ -2260,7 +1933,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
                 this->FmtLog(
                   "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
                   szDate,
-                  Buffer);
+                  queryBuffer);
                 return 0;
               }
             }
@@ -2269,7 +1942,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
               this->FmtLog(
                 "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
                 szDate,
-                Buffer);
+                queryBuffer);
               return 0;
             }
           }
@@ -2278,7 +1951,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
             this->FmtLog(
               "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
               szDate,
-              Buffer);
+              queryBuffer);
             return 0;
           }
         }
@@ -2287,7 +1960,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
           this->FmtLog(
             "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
             szDate,
-            Buffer);
+            queryBuffer);
           return 0;
         }
       }
@@ -2296,7 +1969,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
         this->FmtLog(
           "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
           szDate,
-          Buffer);
+          queryBuffer);
         return 0;
       }
     }
@@ -2305,7 +1978,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
         szDate,
-        Buffer);
+        queryBuffer);
       return 0;
     }
   }
@@ -2314,25 +1987,21 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
       szDate,
-      Buffer);
+      queryBuffer);
     return 0;
   }
 }
 
 char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
-  char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
+  char queryBuffer[1040];
 
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : Start Drop tbl_GuildRankToday Table",
     szDate);
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   if ( !this->TableExist( "tbl_GuildRankToday")
-    || (sprintf_s(Buffer, 0x400uLL, "Drop Table tbl_GuildRankToday"), this->ExecUpdateQuery( Buffer, 1)) )
+    || (sprintf_s(queryBuffer, 0x400uLL, "Drop Table tbl_GuildRankToday"), this->ExecUpdateQuery( queryBuffer, 1)) )
   {
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : End Drop tbl_GuildRankToday Table",
@@ -2341,11 +2010,11 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : Start Create tbl_GuildRankToday Table",
       szDate);
     sprintf_s(
-      Buffer,
+      queryBuffer,
       0x400uLL,
       "select Rank, Rate, Serial, GuildPower, Grade into [dbo].[tbl_GuildRankToday] from tbl_GuildRank%s",
       szDate);
-    if ( this->ExecUpdateQuery( Buffer, 0) )
+    if ( this->ExecUpdateQuery( queryBuffer, 0) )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : End Create tbl_GuildRankToday Table",
@@ -2360,7 +2029,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : %s Fail!",
         szDate,
-        Buffer);
+        queryBuffer);
       return 0;
     }
   }
@@ -2369,7 +2038,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : %s Fail!",
       szDate,
-      Buffer);
+      queryBuffer);
     return 0;
   }
 }
@@ -2421,43 +2090,39 @@ char CRFWorldDatabase::Update_RaceRank(char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-478h] BYREF
-  SQLRETURN v6; // [rsp+30h] [rbp-448h]
-  char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  SQLRETURN sqlStatus;
+  char queryBuffer[1028];
+  unsigned long long connectTimeAddBySec;
 
-  v2 = &v5;
   this->FmtLog( "CRFWorldDatabase Update_RaceRank(szDate(%s)) Start!", szDate);
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Start Create #tbl_PvpRankB Table",
     szDate);
   this->SetAutoCommitMode( 0);
-  ConnectTime_AddBySec = GetConnectTime_AddBySec(-2592000);
+  connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 0 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankB from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial < 200000000 and tbl_general.class0 <> -1 and tbl_base.race in (0"
     ",1) and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
-    ConnectTime_AddBySec);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+    connectTimeAddBySec);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Create #tbl_PvpRankB Table Fail SQL_ERROR!",
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       return 0;
@@ -2472,16 +2137,16 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Start Set Rate #tbl_PvpRankB Table",
     szDate);
-  sprintf(Buffer, "update #tbl_PvpRankB set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankB) )");
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+  sprintf(queryBuffer, "update #tbl_PvpRankB set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankB) )");
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankB Table Fail SQL_ERROR!",
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       return 0;
@@ -2500,42 +2165,38 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-478h] BYREF
-  SQLRETURN v6; // [rsp+30h] [rbp-448h]
-  char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  SQLRETURN sqlStatus;
+  char queryBuffer[1028];
+  unsigned long long connectTimeAddBySec;
 
-  v2 = &v5;
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Start Create #tbl_PvpRankC Table",
     szDate);
   this->SetAutoCommitMode( 0);
-  ConnectTime_AddBySec = GetConnectTime_AddBySec(-2592000);
+  connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 1 as Race, tbl_base.name, tbl_base.lv, tbl_general."
     "PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankC from tbl_general, tbl_base where tbl_base.serial=tbl_general.se"
     "rial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (2,3)"
     " and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
-    ConnectTime_AddBySec);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+    connectTimeAddBySec);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Create #tbl_PvpRankB Table Fail SQL_ERROR!",
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       if ( !this->Update_RaceRank_Step_6_1( szDate) )
@@ -2552,16 +2213,16 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Start Set Rate #tbl_PvpRankC Table",
     szDate);
-  sprintf(Buffer, "update #tbl_PvpRankC set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankC) )");
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( !v6 || v6 == 1 )
-    goto LABEL_21;
-  if ( v6 == 100 )
+  sprintf(queryBuffer, "update #tbl_PvpRankC set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankC) )");
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( !sqlStatus || sqlStatus == 1 || sqlStatus == 100 )
   {
-    this->FmtLog(
-      "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankC Table Fail NO_DATA!",
-      szDate);
-LABEL_21:
+    if ( sqlStatus == 100 )
+    {
+      this->FmtLog(
+        "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankC Table Fail NO_DATA!",
+        szDate);
+    }
     this->CommitTransaction();
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : End Set Rate #tbl_PvpRankC Table",
@@ -2572,7 +2233,7 @@ LABEL_21:
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankC Table Fail SQL_ERROR!",
     szDate);
-  this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+  this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
   this->RollbackTransaction();
   this->SetAutoCommitMode( 1);
   if ( !this->Update_RaceRank_Step_6_1( szDate) )
@@ -2582,42 +2243,38 @@ LABEL_21:
 
 char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-478h] BYREF
-  SQLRETURN v6; // [rsp+30h] [rbp-448h]
-  char Buffer[1028]; // [rsp+50h] [rbp-428h] BYREF
-  unsigned long long ConnectTime_AddBySec; // [rsp+454h] [rbp-24h]
+  SQLRETURN sqlStatus;
+  char queryBuffer[1028];
+  unsigned long long connectTimeAddBySec;
 
-  v2 = &v5;
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Start Create #tbl_PvpRankC Table",
     szDate);
   this->SetAutoCommitMode( 0);
-  ConnectTime_AddBySec = GetConnectTime_AddBySec(-2592000);
+  connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 2 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankA from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (4) "
     "and tbl_base.LastConnTime > %llu order by tbl_general.PvpPoint desc",
-    ConnectTime_AddBySec);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+    connectTimeAddBySec);
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Create #tbl_PvpRankB Table Fail SQL_ERROR!",
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       if ( !this->Update_RaceRank_Step_6_1( szDate) )
@@ -2637,16 +2294,16 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step3(szDate(%s)) : Start Set Rate #tbl_PvpRankA Table",
     szDate);
-  sprintf(Buffer, "update #tbl_PvpRankA set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankA) )");
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( !v6 || v6 == 1 )
-    goto LABEL_25;
-  if ( v6 == 100 )
+  sprintf(queryBuffer, "update #tbl_PvpRankA set Rate = ( (Rank*10000)/(select count(*) from #tbl_PvpRankA) )");
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( !sqlStatus || sqlStatus == 1 || sqlStatus == 100 )
   {
-    this->FmtLog(
-      "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankA Table Fail NO_DATA!",
-      szDate);
-LABEL_25:
+    if ( sqlStatus == 100 )
+    {
+      this->FmtLog(
+        "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankA Table Fail NO_DATA!",
+        szDate);
+    }
     this->CommitTransaction();
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step3(szDate(%s)) : End Set Rate #tbl_PvpRankA Table",
@@ -2656,7 +2313,7 @@ LABEL_25:
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankA Table Fail SQL_ERROR!",
     szDate);
-  this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+  this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
   this->RollbackTransaction();
   this->SetAutoCommitMode( 1);
   if ( !this->Update_RaceRank_Step_6_1( szDate) )
@@ -2668,23 +2325,19 @@ LABEL_25:
 
 char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-478h] BYREF
-  SQLRETURN v6; // [rsp+30h] [rbp-448h]
-  char Buffer[1040]; // [rsp+50h] [rbp-428h] BYREF
+  SQLRETURN sqlStatus;
+  char queryBuffer[1040];
 
-  v2 = &v5;
-  memset(Buffer, 0, 1024);
+  memset(queryBuffer, 0, 1024);
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : Start Create tbl_PvpRank%s Table",
     szDate,
     szDate);
-  sprintf_s(Buffer, 0x400uLL, "tbl_PvpRank%s", szDate);
-  if ( this->TableExist( Buffer) )
+  sprintf_s(queryBuffer, 0x400uLL, "tbl_PvpRank%s", szDate);
+  if ( this->TableExist( queryBuffer) )
   {
-    sprintf_s(Buffer, 0x400uLL, "drop table [dbo].[tbl_PvpRank%s]", szDate);
-    if ( !this->ExecUpdateQuery( Buffer, 1) )
+    sprintf_s(queryBuffer, 0x400uLL, "drop table [dbo].[tbl_PvpRank%s]", szDate);
+    if ( !this->ExecUpdateQuery( queryBuffer, 1) )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : Drop tbl_PvpRank%s Table Fail!",
@@ -2695,7 +2348,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
   }
   this->SetAutoCommitMode( 0);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "CREATE TABLE [dbo].[tbl_PvpRank%s] ( [Rank] [int] NOT NULL, [Rate] [int] NOT NULL, [serial] [int] NOT NULL ,[name] ["
     "varchar] (17) NOT NULL ,[lv] [int] NOT NULL, [Race] [int] NOT NULL, [Grade] [smallint] NOT NULL ,[PvpPoint] [float] "
@@ -2703,7 +2356,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
     "  CLUSTERED ( [serial] ) on [PRIMARY] ) ON [PRIMARY]",
     szDate,
     szDate);
-  if ( !this->ExecUpdateQuery( Buffer, 1) )
+  if ( !this->ExecUpdateQuery( queryBuffer, 1) )
   {
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : Create tbl_PvpRank%s Table Fail!",
@@ -2722,23 +2375,23 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
     szDate,
     szDate);
   sprintf_s(
-    Buffer,
+    queryBuffer,
     0x400uLL,
     "insert tbl_PvpRank%s(Rank, Rate, Serial, Name, lv, race, PvpPoint, Grade, GuildSerial, GuildName) select 0, rate, se"
     "rial, name, lv, race, PvpPoint, 0, GuildSerial, '*' from #tbl_PvpRankB union select 0, rate, serial, name, lv, race,"
     " PvpPoint, 0, GuildSerial, '*' from #tbl_PvpRankC union select 0, rate, serial, name, lv, race, PvpPoint, 0, GuildSe"
     "rial, '*' from #tbl_PvpRankA ",
     szDate);
-  v6 = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)Buffer, -3);
-  if ( v6 && v6 != 1 )
+  sqlStatus = SQLExecDirectA(this->m_hStmtUpdate, (SQLCHAR *)queryBuffer, -3);
+  if ( sqlStatus && sqlStatus != 1 )
   {
-    if ( v6 != 100 )
+    if ( sqlStatus != 100 )
     {
       this->FmtLog(
         "CRFWorldDatabase::Update_RaceRank(szDate(%s)) : Union #tbl_PvpRankB,C,A To tbl_PvpRank%s Fail SQL_ERROR!",
         szDate,
         szDate);
-      this->ErrorMsgLog( v6, Buffer, "SQLExecDirect", this->m_hStmtUpdate);
+      this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       this->Update_RaceRank_Step6( szDate);
@@ -2760,12 +2413,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step5(szDate(%s)) : Start Set Grade tbl_PvpRank%s",
     szDate,
@@ -3266,11 +2914,6 @@ char CRFWorldDatabase::Update_RaceRank_Step_6_3( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step6( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step6(szDate(%s)) : Start drop #tbl_PvpRankB,C,A Table",
     szDate);
@@ -3306,13 +2949,8 @@ char CRFWorldDatabase::Update_RaceRank_Step6( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1028]; // [rsp+30h] [rbp-428h] BYREF
   int j; // [rsp+434h] [rbp-24h]
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step7(szDate(%s)) : Start Update Rank tbl_PvpRank%s Table",
     szDate,
@@ -3356,12 +2994,7 @@ char CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-468h] BYREF
   char Buffer[1040]; // [rsp+40h] [rbp-428h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step8(szDate(%s)) : Start Set GuildName tbl_PvpRank%s Table",
     szDate,
@@ -3392,12 +3025,7 @@ char CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
 
 char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-458h] BYREF
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step9(szDate(%s)) : Start Drop tbl_PvpRankToday Table",
     szDate);
@@ -3440,11 +3068,6 @@ char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
 
 char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  v2 = &v5;
   this->FmtLog( "CRFWorldDatabase::Update_RankInGuild_Step2( dwGuildSerial(%u) ) Start!", dwGuildSerial);
   if ( this->ExecUpdateQuery(
          "update #tbl_RankInGuild set Rate = ( (Rank*10000)/(select count(*) from #tbl_RankInGuild) )",
@@ -3872,11 +3495,6 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
 
 char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step3( dwGuildSerial(%u) ) : Start!",
     dwGuildSerial);
@@ -3937,11 +3555,6 @@ char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
 
 char CRFWorldDatabase::Update_RankInGuild_Step4( unsigned int dwGuildSerial)
 {
-  __int64 *v2; // rdi
-  __int64 i; // rcx
-  __int64 v5; // [rsp+0h] [rbp-28h] BYREF
-
-  v2 = &v5;
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step4( dwGuildSerial(%u) ) : Start Apply tb_gneral!",
     dwGuildSerial);
@@ -3970,47 +3583,42 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
         unsigned int dwGuildSerial,
         _worlddb_rankinguild_info *pGuildMemberRankData)
 {
-  __int64 *v3; // rdi
-  __int64 i; // rcx
-  __int64 v6; // [rsp+0h] [rbp-768h] BYREF
-  SQLLEN StrLen_or_IndPtr; // [rsp+38h] [rbp-730h] BYREF
-  SQLRETURN v8; // [rsp+44h] [rbp-724h]
-  char Buffer[1028]; // [rsp+60h] [rbp-708h] BYREF
-  int j; // [rsp+464h] [rbp-304h]
-  int v11[11]; // [rsp+474h] [rbp-2F4h] BYREF
-  unsigned int TargetValue[157]; // [rsp+4A0h] [rbp-2C8h] BYREF
-  unsigned int v13[9]; // [rsp+714h] [rbp-54h] BYREF
-  double v14; // [rsp+738h] [rbp-30h] BYREF
-  int k; // [rsp+744h] [rbp-24h]
+  SQLLEN strLenOrIndPtr;
+  SQLRETURN sqlStatus;
+  char queryBuffer[1028];
+  int memberIndex;
+  int fetchedGrade = 2;
+  unsigned int gradeBySerial[157];
+  unsigned int memberLevel = 0;
+  double memberPvpPoint = 0.0;
+  int gradeIndex;
 
-  v3 = &v6;
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : Start Set Return Result!",
     dwGuildSerial);
-  memset(Buffer, 0, 1024);
-  j = 0;
-  v11[0] = 2;
-  memset_0(TargetValue, 0, 0x258uLL);
+  memset(queryBuffer, 0, 1024);
+  memberIndex = 0;
+  memset_0(gradeBySerial, 0, 0x258uLL);
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : Start Get Grade from #tbl_RankInGuildCom",
     dwGuildSerial);
-  sprintf_s(Buffer, 0x400uLL, "select top %u serial, Grade from #tbl_RankInGuildCom order by Grade", 50);
+  sprintf_s(queryBuffer, 0x400uLL, "select top %u serial, Grade from #tbl_RankInGuildCom order by Grade", 50);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
-    v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-    if ( !v8 || v8 == 1 )
+    sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+    if ( !sqlStatus || sqlStatus == 1 )
     {
-      for ( j = 0; ; ++j )
+      for ( memberIndex = 0; ; ++memberIndex )
       {
-        v8 = SQLFetch(this->m_hStmtSelect);
-        if ( v8 )
+        sqlStatus = SQLFetch(this->m_hStmtSelect);
+        if ( sqlStatus )
         {
-          if ( v8 != 1 )
+          if ( sqlStatus != 1 )
             break;
         }
-        v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, &TargetValue[3 * j], 0LL, &StrLen_or_IndPtr);
-        v8 = SQLGetData(this->m_hStmtSelect, 2u, 4, v11, 0LL, &StrLen_or_IndPtr);
-        TargetValue[3 * j + 1] = static_cast<unsigned int>(v11[0] & 0xFF);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &gradeBySerial[3 * memberIndex], 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 4, &fetchedGrade, 0LL, &strLenOrIndPtr);
+        gradeBySerial[3 * memberIndex + 1] = static_cast<unsigned int>(fetchedGrade & 0xFF);
       }
       if ( this->m_hStmtSelect )
         SQLCloseCursor(this->m_hStmtSelect);
@@ -4022,52 +3630,52 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
         "l_RankInGuildAll",
         dwGuildSerial);
       sprintf_s(
-        Buffer,
-        sizeof(Buffer),
+        queryBuffer,
+        sizeof(queryBuffer),
         "select serial, lv, Pvppoint, CurGrade from #tbl_RankInGuildAll order by NewRank");
       if ( this->m_hStmtSelect || this->ReConnectDataBase() )
       {
-        v8 = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)Buffer, -3);
-        if ( !v8 || v8 == 1 )
+        sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);
+        if ( !sqlStatus || sqlStatus == 1 )
         {
-          j = 0;
-          v13[0] = 0;
-          v14 = 0.0;
+          memberIndex = 0;
+          memberLevel = 0;
+          memberPvpPoint = 0.0;
           while ( 1 )
           {
-            v8 = SQLFetch(this->m_hStmtSelect);
-            if ( v8 )
+            sqlStatus = SQLFetch(this->m_hStmtSelect);
+            if ( sqlStatus )
             {
-              if ( v8 != 1 )
+              if ( sqlStatus != 1 )
                 break;
             }
-            v8 = SQLGetData(this->m_hStmtSelect, 1u, 4, &pGuildMemberRankData->MemberData[j], 0LL, &StrLen_or_IndPtr);
-            v8 = SQLGetData(this->m_hStmtSelect, 2u, 65518, v13, 0LL, &StrLen_or_IndPtr);
-            v8 = SQLGetData(this->m_hStmtSelect, 3u, 8, &v14, 0LL, &StrLen_or_IndPtr);
-            v8 = SQLGetData(
+            sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pGuildMemberRankData->MemberData[memberIndex], 0LL, &strLenOrIndPtr);
+            sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65518, &memberLevel, 0LL, &strLenOrIndPtr);
+            sqlStatus = SQLGetData(this->m_hStmtSelect, 3u, 8, &memberPvpPoint, 0LL, &strLenOrIndPtr);
+            sqlStatus = SQLGetData(
                    this->m_hStmtSelect,
                    4u,
                    4,
-                   &pGuildMemberRankData->MemberData[j].byGrade,
+                   &pGuildMemberRankData->MemberData[memberIndex].byGrade,
                    0LL,
-                   &StrLen_or_IndPtr);
-            pGuildMemberRankData->MemberData[j].byLv = v13[0];
-            pGuildMemberRankData->MemberData[j].dwPvpPoint = (int)v14;
-            if ( pGuildMemberRankData->MemberData[j].byGrade == 2 )
-              pGuildMemberRankData->MemberData[j].byGrade = 2;
+                   &strLenOrIndPtr);
+            pGuildMemberRankData->MemberData[memberIndex].byLv = memberLevel;
+            pGuildMemberRankData->MemberData[memberIndex].dwPvpPoint = (int)memberPvpPoint;
+            if ( pGuildMemberRankData->MemberData[memberIndex].byGrade == 2 )
+              pGuildMemberRankData->MemberData[memberIndex].byGrade = 2;
             else
-              pGuildMemberRankData->MemberData[j].byGrade = 0;
-            for ( k = 0; k < 50; ++k )
+              pGuildMemberRankData->MemberData[memberIndex].byGrade = 0;
+            for ( gradeIndex = 0; gradeIndex < 50; ++gradeIndex )
             {
-              if ( pGuildMemberRankData->MemberData[j].dwSerial == TargetValue[3 * k] )
+              if ( pGuildMemberRankData->MemberData[memberIndex].dwSerial == gradeBySerial[3 * gradeIndex] )
               {
-                pGuildMemberRankData->MemberData[j].byGrade = TargetValue[3 * k + 1];
+                pGuildMemberRankData->MemberData[memberIndex].byGrade = gradeBySerial[3 * gradeIndex + 1];
                 break;
               }
             }
-            ++j;
+            ++memberIndex;
           }
-          pGuildMemberRankData->wRecordCount = j;
+          pGuildMemberRankData->wRecordCount = memberIndex;
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
           this->FmtLog(
@@ -4078,67 +3686,62 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
         else
         {
           this->Update_RankInGuild_Step6();
-          if ( v8 == 100 )
+          if ( sqlStatus == 100 )
           {
             this->FmtLog(
               "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : %s : NO_DATA!",
               dwGuildSerial,
-              Buffer);
+              queryBuffer);
           }
           else
           {
             this->FmtLog(
               "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : %s : Sql Error!",
               dwGuildSerial,
-              Buffer);
-            this->ErrorMsgLog( v8, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-            this->ErrorAction( v8, this->m_hStmtSelect);
+              queryBuffer);
+            this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
+            this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           }
           return 0;
         }
       }
       else
       {
-        this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+        this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
         return 0;
       }
     }
     else
     {
       this->Update_RankInGuild_Step6();
-      if ( v8 == 100 )
+      if ( sqlStatus == 100 )
       {
         this->FmtLog(
           "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : %s : NO_DATA!",
           dwGuildSerial,
-          Buffer);
+          queryBuffer);
       }
       else
       {
         this->FmtLog(
           "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : %s : Sql Error!",
           dwGuildSerial,
-          Buffer);
-        this->ErrorMsgLog( v8, Buffer, "SQLExecDirect", this->m_hStmtSelect);
-        this->ErrorAction( v8, this->m_hStmtSelect);
+          queryBuffer);
+        this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
+        this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
       return 0;
     }
   }
   else
   {
-    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", Buffer);
+    this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
     return 0;
   }
 }
 
 char CRFWorldDatabase::Update_RankInGuild_Step6()
 {
-  __int64 *v1; // rdi
-  __int64 i; // rcx
-  __int64 v4; // [rsp+0h] [rbp-28h] BYREF
-
-  v1 = &v4;
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step6() : Start drop #tbl_RankInGuild, #tbl_RankInGuildAll, #tbl_RankInGuildCom Table");
   if ( this->Update_RankInGuild_Step7() )

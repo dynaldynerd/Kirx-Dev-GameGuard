@@ -96,47 +96,48 @@ void Normalize(float *v)
     v[2] = v[2] / static_cast<float>(len);
 }
 
-void GetNormal(float *const a1, const float *const a2, const float *const a3, const float *const a4)
+void GetNormal(float *const outPlane, const float *const point1, const float *const point2, const float *const point3)
 {
-    float v6 = a4[2] - a2[2];
-    float v7 = a3[2] - a2[2];
-    float v8 = a3[1] - a2[1];
-    float v9 = *a3 - *a2;
-    float v10 = *a4 - *a2;
-    float v11 = a4[1] - a2[1];
+    const float edge1X = point2[0] - point1[0];
+    const float edge1Y = point2[1] - point1[1];
+    const float edge1Z = point2[2] - point1[2];
+    const float edge2X = point3[0] - point1[0];
+    const float edge2Y = point3[1] - point1[1];
+    const float edge2Z = point3[2] - point1[2];
 
-    float v12 = (v7 - v6) * 0.0f + (v6 - 0.0f) * v8 + (0.0f - v7) * v11; // Simplified: Cross product
-    float v13 = (v9 - v10) * 0.0f + (v10 - 0.0f) * v7 + (0.0f - v9) * v6;
-    float v14 = (v8 - v11) * 0.0f + (v11 - 0.0f) * v9 + (0.0f - v8) * v10;
+    outPlane[0] = edge1Y * edge2Z - edge1Z * edge2Y;
+    outPlane[1] = edge1Z * edge2X - edge1X * edge2Z;
+    outPlane[2] = edge1X * edge2Y - edge1Y * edge2X;
 
-    // Direct cross product (a3-a2) x (a4-a2)
-    float ux = a3[0] - a2[0], uy = a3[1] - a2[1], uz = a3[2] - a2[2];
-    float vx = a4[0] - a2[0], vy = a4[1] - a2[1], vz = a4[2] - a2[2];
-    
-    a1[0] = uy * vz - uz * vy;
-    a1[1] = uz * vx - ux * vz;
-    a1[2] = ux * vy - uy * vx;
-
-    float mag = sqrtf(a1[0]*a1[0] + a1[1]*a1[1] + a1[2]*a1[2]);
-    if (mag > 0.00001f) {
-        a1[0] /= mag;
-        a1[1] /= mag;
-        a1[2] /= mag;
+    const float magnitude = sqrtf(outPlane[0] * outPlane[0] + outPlane[1] * outPlane[1] + outPlane[2] * outPlane[2]);
+    if (magnitude > 0.00001f)
+    {
+        outPlane[0] /= magnitude;
+        outPlane[1] /= magnitude;
+        outPlane[2] /= magnitude;
     }
-    a1[3] = (a1[0] * a2[0]) + (a1[1] * a2[1]) + (a1[2] * a2[2]);
+
+    outPlane[3] = outPlane[0] * point1[0] + outPlane[1] * point1[1] + outPlane[2] * point1[2];
 }
 
-int GetPlaneCrossPoint(const float *const a1, const float *const a2, float *const a3, const float *const a4, float a5)
+int GetPlaneCrossPoint(
+    const float *const startPoint,
+    const float *const endPoint,
+    float *const crossPoint,
+    const float *const planeNormal,
+    float planeDistance)
 {
-    float v6 = (a4[0] * a1[0] + a4[1] * a1[1] + a4[2] * a1[2]) - a5;
-    float v7 = (a4[0] * a2[0] + a4[1] * a2[1] + a4[2] * a2[2]) - a5;
-    
-    if ((v6 < 0.0f && v7 > 0.0f) || (v6 >= 0.0f && v7 < 0.0f))
+    const float startDistance =
+        (planeNormal[0] * startPoint[0] + planeNormal[1] * startPoint[1] + planeNormal[2] * startPoint[2]) - planeDistance;
+    const float endDistance =
+        (planeNormal[0] * endPoint[0] + planeNormal[1] * endPoint[1] + planeNormal[2] * endPoint[2]) - planeDistance;
+
+    if ((startDistance < 0.0f && endDistance > 0.0f) || (startDistance >= 0.0f && endDistance < 0.0f))
     {
-        float v9 = v6 / (v6 - v7);
-        a3[0] = (a2[0] - a1[0]) * v9 + a1[0];
-        a3[1] = (a2[1] - a1[1]) * v9 + a1[1];
-        a3[2] = (a2[2] - a1[2]) * v9 + a1[2];
+        const float blend = startDistance / (startDistance - endDistance);
+        crossPoint[0] = (endPoint[0] - startPoint[0]) * blend + startPoint[0];
+        crossPoint[1] = (endPoint[1] - startPoint[1]) * blend + startPoint[1];
+        crossPoint[2] = (endPoint[2] - startPoint[2]) * blend + startPoint[2];
         return 1;
     }
     return 0;
@@ -223,15 +224,15 @@ bool IsCollisionBBoxPoint(short *const a1, short *const a2, float *const a3)
     return false;
 }
 
-void sub_14050C650(float *a1, float *a2, float *a3)
+void sub_14050C650(float *destination, float *source, float *target)
 {
-    float v3 = *a2 - *a3;
-    float v5 = a2[1] - a3[1];
-    float v6 = a2[2] - a3[2];
-    float v7 = sqrtf_0((v5 * v5) + (v3 * v3) + (v6 * v6));
-    a1[0] = (v3 / v7) * 2.0f + a1[0];
-    a1[1] = (v5 / v7) * 2.0f + a1[1];
-    a1[2] = (v6 / v7) * 2.0f + a1[2];
+    const float deltaX = source[0] - target[0];
+    const float deltaY = source[1] - target[1];
+    const float deltaZ = source[2] - target[2];
+    const float distance = sqrtf_0((deltaY * deltaY) + (deltaX * deltaX) + (deltaZ * deltaZ));
+    destination[0] += (deltaX / distance) * 2.0f;
+    destination[1] += (deltaY / distance) * 2.0f;
+    destination[2] += (deltaZ / distance) * 2.0f;
 }
 
 unsigned int sub_1404E1570(float a1, float a2, float a3)
@@ -275,582 +276,546 @@ void GetVertexFromFVertex(float *const a1, float *a2, _BSP_READ_M_GROUP *a3)
     a1[2] = a2[2];
 }
 
-float GetFloatMod(float a1, float a2)
+float GetFloatMod(float value, float modulus)
 {
-    float v2 = a1;
-    if (a2 == 0.0f)
+    float modValue = value;
+    if (modulus == 0.0f)
         return 0.0f;
-    if (a1 < 0.0f)
-        v2 = -a1;
-    for (; v2 >= 32768.0f; v2 -= 32768.0f)
-        ;
-    return (static_cast<int>(v2 * 32768.0f) % static_cast<int>(a2 * 32768.0f)) * 0.000030517578f;
+    if (value < 0.0f)
+        modValue = -value;
+    while (modValue >= 32768.0f)
+        modValue -= 32768.0f;
+    return (static_cast<int>(modValue * 32768.0f) % static_cast<int>(modulus * 32768.0f)) * 0.000030517578f;
 }
 
-void MatrixIdentity(float (*const a1)[4])
+void MatrixIdentity(float (*const outMatrix)[4])
 {
-    memset_0(a1, 0, 0x40u);
-    (*a1)[0] = 1.0f;
-    (*a1)[5] = 1.0f;
-    (*a1)[10] = 1.0f;
-    (*a1)[15] = 1.0f;
+    memset_0(outMatrix, 0, 0x40u);
+    (*outMatrix)[0] = 1.0f;
+    (*outMatrix)[5] = 1.0f;
+    (*outMatrix)[10] = 1.0f;
+    (*outMatrix)[15] = 1.0f;
 }
 
-void MatrixCopy(float (*const a1)[4], float (*const a2)[4])
+void MatrixCopy(float (*const outMatrix)[4], float (*const sourceMatrix)[4])
 {
-    memcpy_0(a1, a2, 0x40u);
+    memcpy_0(outMatrix, sourceMatrix, 0x40u);
 }
 
-void MatrixMultiply(float (*a1)[4], float (*const a2)[4], float (*const a3)[4])
+void MatrixMultiply(float (*outMatrix)[4], float (*const leftMatrix)[4], float (*const rightMatrix)[4])
 {
-    float *v3 = &(*a3)[8];
-    float *v4 = &(*a2)[2];
-    __int64 v5 = 4;
-    do
+    float result[4][4]{};
+    for (int row = 0; row < 4; ++row)
     {
-        float *v6 = v3;
-        __int64 v7 = 4;
-        do
+        const int rowOffset = 4 * row;
+        for (int column = 0; column < 4; ++column)
         {
-            float v8 = *(v6 - 8);
-            a1 = reinterpret_cast<float (*)[4]>(reinterpret_cast<char *>(a1) + 4);
-            ++v6;
-            --v7;
-            float v9 = (v8 * *(v4 - 2)) + (*a1)[-1];
-            (*a1)[-1] = v9;
-            float v10 = (*(v6 - 5) * *(v4 - 1)) + v9;
-            (*a1)[-1] = v10;
-            float v11 = (*(v6 - 1) * *v4) + v10;
-            (*a1)[-1] = v11;
-            (*a1)[-1] = (v6[3] * v4[1]) + v11;
-        } while (v7);
-        v4 += 4;
-        --v5;
-    } while (v5);
+            result[row][column] = ((*leftMatrix)[rowOffset] * (*rightMatrix)[column])
+                                + ((*leftMatrix)[rowOffset + 1] * (*rightMatrix)[column + 4])
+                                + ((*leftMatrix)[rowOffset + 2] * (*rightMatrix)[column + 8])
+                                + ((*leftMatrix)[rowOffset + 3] * (*rightMatrix)[column + 12]);
+        }
+    }
+
+    MatrixCopy(outMatrix, result);
 }
 
-int MatrixInvert(float (*const a1)[4], float (*const a2)[4])
+int MatrixInvert(float (*const outMatrix)[4], float (*const inputMatrix)[4])
 {
-    if (std::fabs((*a2)[15] - 1.0f) > 0.001f)
+    if (std::fabs((*inputMatrix)[15] - 1.0f) > 0.001f)
         return 0;
-    if (std::fabs((*a2)[3]) > 0.001f)
+    if (std::fabs((*inputMatrix)[3]) > 0.001f)
         return 0;
-    if (std::fabs((*a2)[7]) > 0.001f)
+    if (std::fabs((*inputMatrix)[7]) > 0.001f)
         return 0;
-    if (std::fabs((*a2)[11]) > 0.001f)
+    if (std::fabs((*inputMatrix)[11]) > 0.001f)
         return 0;
 
-    float v6 = (*a2)[6];
-    float v7 = (*a2)[5];
-    float v8 = (v7 * (*a2)[10]) - (v6 * (*a2)[9]);
-    float v9 = 1.0f
-             / ((v8 * (*a2)[0])
-                - (((*a2)[4] * (*a2)[10]) - ((*a2)[8] * v6)) * (*a2)[1]
-                + (((*a2)[4] * (*a2)[9]) - ((*a2)[8] * v7)) * (*a2)[2]);
-    float v10 = v8 * v9;
-    (*a1)[0] = v10;
-    float v11 = -(((((*a2)[1] * (*a2)[10]) - ((*a2)[2] * (*a2)[9])) * v9));
-    (*a1)[1] = v11;
-    float v12 = (*a2)[2] * (*a2)[5];
-    float v13 = (*a2)[1] * (*a2)[6];
-    (*a1)[3] = 0.0f;
-    float v14 = (v13 - v12) * v9;
-    (*a1)[2] = v14;
-    float v15 = -(((((*a2)[10] * (*a2)[4]) - ((*a2)[6] * (*a2)[8])) * v9));
-    (*a1)[4] = v15;
-    float v16 = (((*a2)[10] * (*a2)[0]) - ((*a2)[2] * (*a2)[8])) * v9;
-    (*a1)[5] = v16;
-    float v17 = (*a2)[2] * (*a2)[4];
-    float v18 = (*a2)[6] * (*a2)[0];
-    (*a1)[7] = 0.0f;
-    float v19 = -((v18 - v17) * v9);
-    (*a1)[6] = v19;
-    float v20 = (((*a2)[9] * (*a2)[4]) - ((*a2)[5] * (*a2)[8])) * v9;
-    (*a1)[8] = v20;
-    float v21 = -(((((*a2)[0] * (*a2)[9]) - ((*a2)[1] * (*a2)[8])) * v9));
-    (*a1)[9] = v21;
-    float v22 = (*a2)[1] * (*a2)[4];
-    float v23 = (*a2)[5] * (*a2)[0];
-    (*a1)[11] = 0.0f;
-    float v25 = (v23 - v22) * v9;
-    (*a1)[10] = v25;
-    (*a1)[12] = -((v15 * (*a2)[13]) + ((*a2)[12] * v10) + (v20 * (*a2)[14]));
-    (*a1)[13] = -(((*a2)[12] * v11) + ((*a2)[13] * v16) + (v21 * (*a2)[14]));
-    float v26 = (*a2)[13];
-    float v27 = (*a2)[12];
-    float v28 = v25 * (*a2)[14];
-    (*a1)[15] = 1.0f;
-    (*a1)[14] = -((v26 * v19) + (v27 * v14) + v28);
+    const float m00 = (*inputMatrix)[0];
+    const float m01 = (*inputMatrix)[1];
+    const float m02 = (*inputMatrix)[2];
+    const float m10 = (*inputMatrix)[4];
+    const float m11 = (*inputMatrix)[5];
+    const float m12 = (*inputMatrix)[6];
+    const float m20 = (*inputMatrix)[8];
+    const float m21 = (*inputMatrix)[9];
+    const float m22 = (*inputMatrix)[10];
+    const float tx = (*inputMatrix)[12];
+    const float ty = (*inputMatrix)[13];
+    const float tz = (*inputMatrix)[14];
+
+    const float cofactor00 = m11 * m22 - m12 * m21;
+    const float inverseDeterminant =
+        1.0f / (cofactor00 * m00 - (m10 * m22 - m20 * m12) * m01 + (m10 * m21 - m20 * m11) * m02);
+    const float inverse00 = cofactor00 * inverseDeterminant;
+    const float inverse01 = -((m01 * m22 - m02 * m21) * inverseDeterminant);
+    const float inverse02 = (m01 * m12 - m02 * m11) * inverseDeterminant;
+    const float inverse10 = -((m22 * m10 - m12 * m20) * inverseDeterminant);
+    const float inverse11 = (m22 * m00 - m02 * m20) * inverseDeterminant;
+    const float inverse12 = -((m12 * m00 - m02 * m10) * inverseDeterminant);
+    const float inverse20 = (m21 * m10 - m11 * m20) * inverseDeterminant;
+    const float inverse21 = -((m00 * m21 - m01 * m20) * inverseDeterminant);
+    const float inverse22 = (m00 * m11 - m01 * m10) * inverseDeterminant;
+
+    (*outMatrix)[0] = inverse00;
+    (*outMatrix)[1] = inverse01;
+    (*outMatrix)[2] = inverse02;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[4] = inverse10;
+    (*outMatrix)[5] = inverse11;
+    (*outMatrix)[6] = inverse12;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[8] = inverse20;
+    (*outMatrix)[9] = inverse21;
+    (*outMatrix)[10] = inverse22;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[12] = -((inverse10 * ty) + (tx * inverse00) + (inverse20 * tz));
+    (*outMatrix)[13] = -((tx * inverse01) + (ty * inverse11) + (inverse21 * tz));
+    (*outMatrix)[14] = -((ty * inverse12) + (tx * inverse02) + (inverse22 * tz));
+    (*outMatrix)[15] = 1.0f;
     return 1;
 }
 
-void MatrixFromQuaternion(float (*const a1)[4], float a2, float a3, float a4, float a5)
+void MatrixFromQuaternion(float (*const outMatrix)[4], float x, float y, float z, float w)
 {
-    (*a1)[15] = 1.0f;
-    (*a1)[11] = 0.0f;
-    (*a1)[7] = 0.0f;
-    (*a1)[3] = 0.0f;
-    (*a1)[14] = 0.0f;
-    (*a1)[13] = 0.0f;
-    (*a1)[12] = 0.0f;
-    (*a1)[0] = 1.0f - (((a4 * a4) + (a3 * a3)) * 2.0f);
-    (*a1)[1] = ((a2 * a3) - (a4 * a5)) * 2.0f;
-    (*a1)[2] = ((a3 * a5) + (a2 * a4)) * 2.0f;
-    (*a1)[4] = ((a4 * a5) + (a2 * a3)) * 2.0f;
-    (*a1)[9] = ((a2 * a5) + (a3 * a4)) * 2.0f;
-    (*a1)[8] = ((a2 * a4) - (a3 * a5)) * 2.0f;
-    (*a1)[5] = 1.0f - (((a4 * a4) + (a2 * a2)) * 2.0f);
-    (*a1)[6] = ((a3 * a4) - (a2 * a5)) * 2.0f;
-    (*a1)[10] = 1.0f - (((a3 * a3) + (a2 * a2)) * 2.0f);
+    (*outMatrix)[15] = 1.0f;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[14] = 0.0f;
+    (*outMatrix)[13] = 0.0f;
+    (*outMatrix)[12] = 0.0f;
+    (*outMatrix)[0] = 1.0f - (((z * z) + (y * y)) * 2.0f);
+    (*outMatrix)[1] = ((x * y) - (z * w)) * 2.0f;
+    (*outMatrix)[2] = ((y * w) + (x * z)) * 2.0f;
+    (*outMatrix)[4] = ((z * w) + (x * y)) * 2.0f;
+    (*outMatrix)[9] = ((x * w) + (y * z)) * 2.0f;
+    (*outMatrix)[8] = ((x * z) - (y * w)) * 2.0f;
+    (*outMatrix)[5] = 1.0f - (((z * z) + (x * x)) * 2.0f);
+    (*outMatrix)[6] = ((y * z) - (x * w)) * 2.0f;
+    (*outMatrix)[10] = 1.0f - (((y * y) + (x * x)) * 2.0f);
 }
 
-void MatrixScale(float (*const a1)[4], float a2, float a3, float a4)
+void MatrixScale(float (*const outMatrix)[4], float scaleX, float scaleY, float scaleZ)
 {
-    (*a1)[0] = a2;
-    (*a1)[5] = a3;
-    (*a1)[15] = 1.0f;
-    (*a1)[1] = 0.0f;
-    (*a1)[2] = 0.0f;
-    (*a1)[10] = a4;
-    (*a1)[3] = 0.0f;
-    (*a1)[4] = 0.0f;
-    (*a1)[6] = 0.0f;
-    (*a1)[7] = 0.0f;
-    (*a1)[8] = 0.0f;
-    (*a1)[9] = 0.0f;
-    (*a1)[11] = 0.0f;
-    (*a1)[12] = 0.0f;
-    (*a1)[13] = 0.0f;
-    (*a1)[14] = 0.0f;
+    (*outMatrix)[0] = scaleX;
+    (*outMatrix)[5] = scaleY;
+    (*outMatrix)[15] = 1.0f;
+    (*outMatrix)[1] = 0.0f;
+    (*outMatrix)[2] = 0.0f;
+    (*outMatrix)[10] = scaleZ;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[4] = 0.0f;
+    (*outMatrix)[6] = 0.0f;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[8] = 0.0f;
+    (*outMatrix)[9] = 0.0f;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[12] = 0.0f;
+    (*outMatrix)[13] = 0.0f;
+    (*outMatrix)[14] = 0.0f;
 }
 
-void MatrixRotate(float (*const a1)[4], float a2, float a3, float a4)
+void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rotationYDegrees, float rotationZDegrees)
 {
-    const double v5 = a3 * 6.283184 / 360.0;
-    const double v6 = a2 * 6.283184 / 360.0;
-    const double v7 = a4 * 6.283184 / 360.0;
+    const double rotationYRadians = rotationYDegrees * 6.283184 / 360.0;
+    const double rotationXRadians = rotationXDegrees * 6.283184 / 360.0;
+    const double rotationZRadians = rotationZDegrees * 6.283184 / 360.0;
 
-    float v16[4]{};
-    int v17 = 0;
-    float v18 = FLOAT_1_0;
-    int v19 = 0;
-    int v20 = 0;
-    float v21 = 0.0f;
-    int v22 = 0;
-    float v23 = 0.0f;
-    int v24 = 0;
-    int v25 = 0;
-    int v26 = 0;
-    int v27 = 0;
-    float v28 = FLOAT_1_0;
-    float v29[16]{};
-    float v30[44]{};
+    float rotationYMatrix[4][4]{};
+    const float rotationYCos = static_cast<float>(cos_0(rotationYRadians));
+    const float rotationYSin = static_cast<float>(sin_0(rotationYRadians));
+    rotationYMatrix[0][0] = rotationYCos;
+    rotationYMatrix[0][2] = -rotationYSin;
+    rotationYMatrix[1][1] = FLOAT_1_0;
+    rotationYMatrix[2][0] = rotationYSin;
+    rotationYMatrix[2][2] = rotationYCos;
+    rotationYMatrix[3][3] = FLOAT_1_0;
 
-    float v8 = static_cast<float>(cos_0(v5));
-    v16[0] = v8;
-    v16[1] = 0.0f;
-    v16[2] = -static_cast<float>(sin_0(v5));
-    v16[3] = 0.0f;
-    v17 = 0;
-    v18 = FLOAT_1_0;
-    v19 = 0;
-    v20 = 0;
-    v21 = static_cast<float>(sin_0(v5));
-    v22 = 0;
-    v23 = v8;
-    v24 = 0;
-    v25 = 0;
-    v26 = 0;
-    v27 = 0;
-    v28 = FLOAT_1_0;
+    float rotationXMatrix[4][4]{};
+    const float rotationXCos = static_cast<float>(cos_0(rotationXRadians));
+    const float rotationXSin = static_cast<float>(sin_0(rotationXRadians));
+    rotationXMatrix[0][0] = FLOAT_1_0;
+    rotationXMatrix[1][1] = rotationXCos;
+    rotationXMatrix[1][2] = rotationXSin;
+    rotationXMatrix[2][1] = -rotationXSin;
+    rotationXMatrix[2][2] = rotationXCos;
+    rotationXMatrix[3][3] = FLOAT_1_0;
 
-    v29[0] = FLOAT_1_0;
-    v29[1] = 0.0f;
-    v29[2] = 0.0f;
-    v29[3] = 0.0f;
-    v29[4] = 0.0f;
-    const float cos_v6 = static_cast<float>(cos_0(v6));
-    v29[5] = cos_v6;
-    const float sin_v6 = static_cast<float>(sin_0(v6));
-    v29[7] = 0.0f;
-    v29[8] = 0.0f;
-    v29[10] = cos_v6;
-    v29[11] = 0.0f;
-    v29[12] = 0.0f;
-    v29[6] = sin_v6;
-    v29[13] = 0.0f;
-    v29[14] = 0.0f;
-    v29[15] = FLOAT_1_0;
-    v29[9] = -sin_v6;
+    float combinedRotationMatrix[4][4]{};
+    MatrixMultiply(combinedRotationMatrix, rotationYMatrix, rotationXMatrix);
 
-    MatrixMultiply(reinterpret_cast<float (*)[4]>(v30), reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v29));
+    float rotationZMatrix[4][4]{};
+    const float rotationZCos = static_cast<float>(cos_0(rotationZRadians));
+    const float rotationZSin = static_cast<float>(sin_0(rotationZRadians));
+    rotationZMatrix[0][0] = rotationZCos;
+    rotationZMatrix[0][1] = rotationZSin;
+    rotationZMatrix[1][0] = -rotationZSin;
+    rotationZMatrix[1][1] = rotationZCos;
+    rotationZMatrix[2][2] = FLOAT_1_0;
+    rotationZMatrix[3][3] = FLOAT_1_0;
 
-    const float cos_v7 = static_cast<float>(cos_0(v7));
-    v16[0] = cos_v7;
-    v16[1] = static_cast<float>(sin_0(v7));
-    v16[2] = 0.0f;
-    v16[3] = 0.0f;
-    float neg_sin_v7 = -static_cast<float>(sin_0(v7));
-    v17 = *reinterpret_cast<int *>(&neg_sin_v7);
-    v18 = cos_v7;
-    v19 = 0;
-    v20 = 0;
-    v21 = 0.0f;
-    v22 = 0;
-    v23 = FLOAT_1_0;
-    v24 = 0;
-    v25 = 0;
-    v26 = 0;
-    v27 = 0;
-    v28 = FLOAT_1_0;
-
-    MatrixMultiply(a1, reinterpret_cast<float (*)[4]>(v16), reinterpret_cast<float (*)[4]>(v30));
+    MatrixMultiply(outMatrix, rotationZMatrix, combinedRotationMatrix);
 }
 
-void MatrixRotateX(float (*const a1)[4], float a2)
+void MatrixRotateX(float (*const outMatrix)[4], float rotationDegrees)
 {
-    const double v3 = a2 * 6.283184 / 360.0;
-    const float v4 = static_cast<float>(cos_0(v3));
-    const float v6 = static_cast<float>(sin_0(v3));
+    const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
+    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
+    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
 
-    (*a1)[0] = 1.0f;
-    (*a1)[1] = 0.0f;
-    (*a1)[2] = 0.0f;
-    (*a1)[3] = 0.0f;
-    (*a1)[4] = 0.0f;
-    (*a1)[5] = v4;
-    (*a1)[10] = v4;
-    (*a1)[7] = 0.0f;
-    (*a1)[8] = 0.0f;
-    (*a1)[11] = 0.0f;
-    (*a1)[12] = 0.0f;
-    (*a1)[13] = 0.0f;
-    (*a1)[6] = v6;
-    (*a1)[14] = 0.0f;
-    (*a1)[15] = 1.0f;
-    (*a1)[9] = -v6;
+    (*outMatrix)[0] = 1.0f;
+    (*outMatrix)[1] = 0.0f;
+    (*outMatrix)[2] = 0.0f;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[4] = 0.0f;
+    (*outMatrix)[5] = rotationCos;
+    (*outMatrix)[10] = rotationCos;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[8] = 0.0f;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[12] = 0.0f;
+    (*outMatrix)[13] = 0.0f;
+    (*outMatrix)[6] = rotationSin;
+    (*outMatrix)[14] = 0.0f;
+    (*outMatrix)[15] = 1.0f;
+    (*outMatrix)[9] = -rotationSin;
 }
 
-void MatrixRotateY(float (*const a1)[4], float a2)
+void MatrixRotateY(float (*const outMatrix)[4], float rotationDegrees)
 {
-    const double v3 = a2 * 6.283184 / 360.0;
-    const float v5 = static_cast<float>(cos_0(v3));
-    const float v6 = static_cast<float>(sin_0(v3));
+    const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
+    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
+    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
 
-    (*a1)[1] = 0.0f;
-    (*a1)[0] = v5;
-    (*a1)[3] = 0.0f;
-    (*a1)[4] = 0.0f;
-    (*a1)[5] = 1.0f;
-    (*a1)[10] = v5;
-    (*a1)[6] = 0.0f;
-    (*a1)[7] = 0.0f;
-    (*a1)[9] = 0.0f;
-    (*a1)[11] = 0.0f;
-    (*a1)[12] = 0.0f;
-    (*a1)[13] = 0.0f;
-    (*a1)[8] = v6;
-    (*a1)[14] = 0.0f;
-    (*a1)[15] = 1.0f;
-    (*a1)[2] = -v6;
+    (*outMatrix)[1] = 0.0f;
+    (*outMatrix)[0] = rotationCos;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[4] = 0.0f;
+    (*outMatrix)[5] = 1.0f;
+    (*outMatrix)[10] = rotationCos;
+    (*outMatrix)[6] = 0.0f;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[9] = 0.0f;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[12] = 0.0f;
+    (*outMatrix)[13] = 0.0f;
+    (*outMatrix)[8] = rotationSin;
+    (*outMatrix)[14] = 0.0f;
+    (*outMatrix)[15] = 1.0f;
+    (*outMatrix)[2] = -rotationSin;
 }
 
-void MatrixRotateZ(float (*const a1)[4], float a2)
+void MatrixRotateZ(float (*const outMatrix)[4], float rotationDegrees)
 {
-    const double v3 = a2 * 6.283184 / 360.0;
-    const float v4 = static_cast<float>(cos_0(v3));
-    const float v6 = static_cast<float>(sin_0(v3));
+    const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
+    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
+    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
 
-    (*a1)[0] = v4;
-    (*a1)[5] = v4;
-    (*a1)[10] = 1.0f;
-    (*a1)[2] = 0.0f;
-    (*a1)[3] = 0.0f;
-    (*a1)[6] = 0.0f;
-    (*a1)[7] = 0.0f;
-    (*a1)[8] = 0.0f;
-    (*a1)[1] = v6;
-    (*a1)[9] = 0.0f;
-    (*a1)[11] = 0.0f;
-    (*a1)[12] = 0.0f;
-    (*a1)[13] = 0.0f;
-    (*a1)[14] = 0.0f;
-    (*a1)[4] = -v6;
-    (*a1)[15] = 1.0f;
+    (*outMatrix)[0] = rotationCos;
+    (*outMatrix)[5] = rotationCos;
+    (*outMatrix)[10] = 1.0f;
+    (*outMatrix)[2] = 0.0f;
+    (*outMatrix)[3] = 0.0f;
+    (*outMatrix)[6] = 0.0f;
+    (*outMatrix)[7] = 0.0f;
+    (*outMatrix)[8] = 0.0f;
+    (*outMatrix)[1] = rotationSin;
+    (*outMatrix)[9] = 0.0f;
+    (*outMatrix)[11] = 0.0f;
+    (*outMatrix)[12] = 0.0f;
+    (*outMatrix)[13] = 0.0f;
+    (*outMatrix)[14] = 0.0f;
+    (*outMatrix)[4] = -rotationSin;
+    (*outMatrix)[15] = 1.0f;
 }
 
 void QuaternionSlerp(
-    float *a1,
-    float *a2,
-    float *a3,
-    float *a4,
-    float a5,
-    float a6,
-    float a7,
-    float a8,
-    float a9,
-    float a10,
-    float a11,
-    float a12,
-    float a13)
+    float *outX,
+    float *outY,
+    float *outZ,
+    float *outW,
+    float startX,
+    float startY,
+    float startZ,
+    float startW,
+    float endX,
+    float endY,
+    float endZ,
+    float endW,
+    float blendFactor)
 {
-    float v13 = a5;
-    float v18 = a6;
-    float v19 = a7;
-    float v20 = a8;
-    float v21 = a9;
-    float v22 = a11;
-    float v23 = (((a5 * a9) + (a6 * a10)) + (a7 * a11)) + (a8 * a12);
-    if (v23 < 0.0f)
+    float blendedStartX = startX;
+    float blendedStartY = startY;
+    float blendedStartZ = startZ;
+    float blendedStartW = startW;
+    float blendedEndX = endX;
+    float blendedEndZ = endZ;
+    float dotProduct = (((startX * endX) + (startY * endY)) + (startZ * endZ)) + (startW * endW);
+    if (dotProduct < 0.0f)
     {
-        v13 = -a5;
-        v18 = -a6;
-        v19 = -a7;
-        v20 = -a8;
-        v23 = -v23;
+        blendedStartX = -startX;
+        blendedStartY = -startY;
+        blendedStartZ = -startZ;
+        blendedStartW = -startW;
+        dotProduct = -dotProduct;
     }
-    float v24 = 0.0f;
-    float v25 = 0.0f;
-    if ((v23 + 1.0f) <= 0.050000001f)
+
+    float endWeight = 0.0f;
+    float startWeight = 0.0f;
+    if ((dotProduct + 1.0f) <= 0.050000001f)
     {
-        a10 = v13;
-        a12 = v19;
-        v21 = -v18;
-        v22 = -v20;
-        v25 = static_cast<float>(sin_0((0.5f - a13) * 3.141592f));
-        v24 = static_cast<float>(sin_0(a13 * 3.141592f));
+        endY = blendedStartX;
+        endW = blendedStartZ;
+        blendedEndX = -blendedStartY;
+        blendedEndZ = -blendedStartW;
+        startWeight = static_cast<float>(sin_0((0.5f - blendFactor) * 3.141592f));
+        endWeight = static_cast<float>(sin_0(blendFactor * 3.141592f));
     }
-    else if ((1.0f - v23) >= 0.050000001f)
+    else if ((1.0f - dotProduct) >= 0.050000001f)
     {
-        float v26 = acosf_0(v23);
-        float v27 = sinf_0(v26);
-        v25 = sinf_0((1.0f - a13) * v26) / v27;
-        v24 = sinf_0(v26 * a13) / v27;
+        const float angle = acosf_0(dotProduct);
+        const float sineAngle = sinf_0(angle);
+        startWeight = sinf_0((1.0f - blendFactor) * angle) / sineAngle;
+        endWeight = sinf_0(angle * blendFactor) / sineAngle;
     }
     else
     {
-        v24 = a13;
-        v25 = 1.0f - a13;
+        endWeight = blendFactor;
+        startWeight = 1.0f - blendFactor;
     }
-    *a1 = (v25 * v13) + (v24 * v21);
-    *a2 = (v25 * v18) + (v24 * a10);
-    *a3 = (v25 * v19) + (v24 * v22);
-    *a4 = (v25 * v20) + (v24 * a12);
+
+    *outX = (startWeight * blendedStartX) + (endWeight * blendedEndX);
+    *outY = (startWeight * blendedStartY) + (endWeight * endY);
+    *outZ = (startWeight * blendedStartZ) + (endWeight * blendedEndZ);
+    *outW = (startWeight * blendedStartW) + (endWeight * endW);
 }
 
-void GetMatrixFrom3DSMAXMatrix(float (*const a1)[4])
+void GetMatrixFrom3DSMAXMatrix(float (*const matrix)[4])
 {
-    float v1 = (*a1)[1];
-    float v2 = (*a1)[5];
-    (*a1)[1] = (*a1)[2];
-    float v3 = (*a1)[6];
-    (*a1)[2] = v1;
-    float v4 = (*a1)[9];
-    (*a1)[6] = v2;
-    (*a1)[5] = v3;
-    float v5 = (*a1)[13];
-    (*a1)[9] = (*a1)[10];
-    float v6 = (*a1)[14];
-    (*a1)[10] = v4;
-    (*a1)[14] = v5;
-    (*a1)[13] = v6;
+    const float yx = (*matrix)[1];
+    const float yy = (*matrix)[5];
+    (*matrix)[1] = (*matrix)[2];
+    const float yz = (*matrix)[6];
+    (*matrix)[2] = yx;
+    const float zy = (*matrix)[9];
+    (*matrix)[6] = yy;
+    (*matrix)[5] = yz;
+    const float ty = (*matrix)[13];
+    (*matrix)[9] = (*matrix)[10];
+    const float tz = (*matrix)[14];
+    (*matrix)[10] = zy;
+    (*matrix)[14] = ty;
+    (*matrix)[13] = tz;
 }
 
-static __m128 sub_14051F9D0(int a1, float *a2, int a3, double a4)
+static __m128 sub_14051F9D0(int keyframeCount, float *trackData, int trackStride, double animationTime)
 {
-    int v4 = a1 - 1;
-    int v5 = 0;
-    if (a1 - 1 > 0)
+    const int lastKeyframeIndex = keyframeCount - 1;
+    if (lastKeyframeIndex > 0)
     {
-        __int64 v6 = a3;
-        float *v7 = a2;
-        unsigned __int64 v8 = 4ULL * a3;
-        float *v9 = &a2[v8 / 4];
-        while (*(float *)&a4 < *v7 || *v9 <= *(float *)&a4)
+        const float currentFrame = static_cast<float>(animationTime);
+        for (int keyframeIndex = 0; keyframeIndex < lastKeyframeIndex; ++keyframeIndex)
         {
-            ++v5;
-            v7 = (float *)((char *)v7 + v8);
-            v9 = (float *)((char *)v9 + v8);
-            if (v5 >= v4)
-                goto LABEL_6;
+            const float startFrame = trackData[trackStride * keyframeIndex];
+            const float endFrame = trackData[trackStride * (keyframeIndex + 1)];
+            if (currentFrame >= startFrame && currentFrame < endFrame)
+            {
+                dword_184A893FC = keyframeIndex;
+                dword_184A89400 = keyframeIndex + 1;
+                return _mm_set_ps1((currentFrame - startFrame) / (endFrame - startFrame));
+            }
         }
-        dword_184A893FC = v5;
-        dword_184A89400 = v5 + 1;
-        if (v5 == -1)
-        {
-            dword_184A893FC = v4;
-            dword_184A89400 = v4;
-            return _mm_setzero_ps();
-        }
-        float v11 = a2[v6 * v5];
-        *(float *)&a4 = (float)(*(float *)&a4 - v11) / (float)(a2[v6 * (v5 + 1)] - v11);
-        return _mm_set_ps1(*(float *)&a4);
     }
-LABEL_6:
-    dword_184A893FC = v4;
-    dword_184A89400 = v4;
+
+    dword_184A893FC = lastKeyframeIndex;
+    dword_184A89400 = lastKeyframeIndex;
     return _mm_setzero_ps();
 }
 
-void GetAniMatrix(float (*const a1)[4], _ANI_OBJECT *a2, double a3)
+void GetAniMatrix(float (*const outMatrix)[4], _ANI_OBJECT *animationObject, double animationTime)
 {
-    float v17 = 0.0f;
-    float v18[3]{};
-    float v19[16]{};
-    float v20[16]{};
-    float v21[16]{};
-    float v22[16]{};
-    float v23 = 0.0f;
-    float v24 = 0.0f;
+    float interpolatedQuatX = 0.0f;
+    float interpolatedQuatY = 0.0f;
+    float interpolatedQuatZ = 0.0f;
+    float interpolatedQuatW = 0.0f;
+    float interpolatedScaleMatrix[4][4]{};
+    float composedScaleMatrix[4][4]{};
+    float scaleAxisMatrix[4][4]{};
+    float inverseScaleAxisMatrix[4][4]{};
 
-    MatrixIdentity(a1);
-    if (!*reinterpret_cast<unsigned long long *>(&a2->Pos_cnt) && !a2->Scale_cnt)
+    MatrixIdentity(outMatrix);
+    if (animationObject->Pos_cnt == 0 && animationObject->Rot_cnt == 0 && animationObject->Scale_cnt == 0)
     {
-        MatrixFromQuaternion(a1, a2->quat[0], a2->quat[1], a2->quat[2], a2->quat[3]);
-        MatrixMultiply(a1, a1, a2->s_matrix);
-        (*a1)[12] = a2->pos[0];
-        (*a1)[13] = a2->pos[1];
-        (*a1)[14] = a2->pos[2];
+        MatrixFromQuaternion(
+            outMatrix,
+            animationObject->quat[0],
+            animationObject->quat[1],
+            animationObject->quat[2],
+            animationObject->quat[3]);
+        MatrixMultiply(outMatrix, outMatrix, animationObject->s_matrix);
+        (*outMatrix)[12] = animationObject->pos[0];
+        (*outMatrix)[13] = animationObject->pos[1];
+        (*outMatrix)[14] = animationObject->pos[2];
         return;
     }
 
-    int Rot_cnt = a2->Rot_cnt;
-    if (Rot_cnt)
+    if (animationObject->Rot_cnt)
     {
-        __m128 v6 = sub_14051F9D0(Rot_cnt, &a2->Rot->frame, 5, a3);
+        const float rotationBlendFactor =
+            _mm_cvtss_f32(sub_14051F9D0(animationObject->Rot_cnt, &animationObject->Rot->frame, 5, animationTime));
+        const int currentRotationIndex = dword_184A893FC;
+        const int nextRotationIndex = dword_184A89400;
         QuaternionSlerp(
-            v18,
-            &v17,
-            &v24,
-            &v23,
-            a2->Rot[dword_184A893FC].quat[0],
-            a2->Rot[dword_184A893FC].quat[1],
-            a2->Rot[dword_184A893FC].quat[2],
-            a2->Rot[dword_184A893FC].quat[3],
-            a2->Rot[dword_184A89400].quat[0],
-            a2->Rot[dword_184A89400].quat[1],
-            a2->Rot[dword_184A89400].quat[2],
-            a2->Rot[dword_184A89400].quat[3],
-            _mm_cvtss_f32(v6));
-        MatrixFromQuaternion(a1, v18[0], v17, v24, v23);
+            &interpolatedQuatX,
+            &interpolatedQuatY,
+            &interpolatedQuatZ,
+            &interpolatedQuatW,
+            animationObject->Rot[currentRotationIndex].quat[0],
+            animationObject->Rot[currentRotationIndex].quat[1],
+            animationObject->Rot[currentRotationIndex].quat[2],
+            animationObject->Rot[currentRotationIndex].quat[3],
+            animationObject->Rot[nextRotationIndex].quat[0],
+            animationObject->Rot[nextRotationIndex].quat[1],
+            animationObject->Rot[nextRotationIndex].quat[2],
+            animationObject->Rot[nextRotationIndex].quat[3],
+            rotationBlendFactor);
+        MatrixFromQuaternion(outMatrix, interpolatedQuatX, interpolatedQuatY, interpolatedQuatZ, interpolatedQuatW);
     }
     else
     {
-        MatrixFromQuaternion(a1, a2->quat[0], a2->quat[1], a2->quat[2], a2->quat[3]);
+        MatrixFromQuaternion(
+            outMatrix,
+            animationObject->quat[0],
+            animationObject->quat[1],
+            animationObject->quat[2],
+            animationObject->quat[3]);
     }
 
-    int Scale_cnt = a2->Scale_cnt;
-    if (Scale_cnt)
+    if (animationObject->Scale_cnt)
     {
-        __m128 v9 = sub_14051F9D0(Scale_cnt, &a2->Scale->frame, 8, a3);
-        MatrixIdentity(reinterpret_cast<float (*)[4]>(v19));
-        _SCALE_TRACK *Scale = a2->Scale;
-        __int64 v11 = dword_184A893FC;
-        __int64 v12 = dword_184A89400;
-        v19[0] = ((Scale[v12].scale[0] - Scale[v11].scale[0]) * _mm_cvtss_f32(v9)) + Scale[v11].scale[0];
-        v19[5] = ((Scale[v12].scale[1] - Scale[v11].scale[1]) * _mm_cvtss_f32(v9)) + Scale[v11].scale[1];
-        v19[10] = ((Scale[v12].scale[2] - Scale[v11].scale[2]) * _mm_cvtss_f32(v9)) + Scale[v11].scale[2];
+        const float scaleBlendFactor =
+            _mm_cvtss_f32(sub_14051F9D0(animationObject->Scale_cnt, &animationObject->Scale->frame, 8, animationTime));
+        MatrixIdentity(interpolatedScaleMatrix);
+
+        _SCALE_TRACK *scaleTrack = animationObject->Scale;
+        const int currentScaleIndex = dword_184A893FC;
+        const int nextScaleIndex = dword_184A89400;
+        interpolatedScaleMatrix[0][0] =
+            ((scaleTrack[nextScaleIndex].scale[0] - scaleTrack[currentScaleIndex].scale[0]) * scaleBlendFactor)
+            + scaleTrack[currentScaleIndex].scale[0];
+        interpolatedScaleMatrix[1][1] =
+            ((scaleTrack[nextScaleIndex].scale[1] - scaleTrack[currentScaleIndex].scale[1]) * scaleBlendFactor)
+            + scaleTrack[currentScaleIndex].scale[1];
+        interpolatedScaleMatrix[2][2] =
+            ((scaleTrack[nextScaleIndex].scale[2] - scaleTrack[currentScaleIndex].scale[2]) * scaleBlendFactor)
+            + scaleTrack[currentScaleIndex].scale[2];
+
         QuaternionSlerp(
-            v18,
-            &v17,
-            &v24,
-            &v23,
-            Scale[v11].scale_axis[0],
-            Scale[v11].scale_axis[1],
-            Scale[v11].scale_axis[2],
-            Scale[v11].scale_axis[3],
-            Scale[v12].scale_axis[0],
-            Scale[v12].scale_axis[1],
-            Scale[v12].scale_axis[2],
-            Scale[v12].scale_axis[3],
-            _mm_cvtss_f32(v9));
-        MatrixFromQuaternion(reinterpret_cast<float (*)[4]>(v21), v18[0], v17, v24, v23);
-        MatrixInvert(reinterpret_cast<float (*)[4]>(v22), reinterpret_cast<float (*)[4]>(v21));
-        MatrixMultiply(reinterpret_cast<float (*)[4]>(v20), reinterpret_cast<float (*)[4]>(v19), reinterpret_cast<float (*)[4]>(v22));
-        MatrixMultiply(reinterpret_cast<float (*)[4]>(v20), reinterpret_cast<float (*)[4]>(v21), reinterpret_cast<float (*)[4]>(v20));
-        MatrixMultiply(a1, a1, reinterpret_cast<float (*)[4]>(v20));
+            &interpolatedQuatX,
+            &interpolatedQuatY,
+            &interpolatedQuatZ,
+            &interpolatedQuatW,
+            scaleTrack[currentScaleIndex].scale_axis[0],
+            scaleTrack[currentScaleIndex].scale_axis[1],
+            scaleTrack[currentScaleIndex].scale_axis[2],
+            scaleTrack[currentScaleIndex].scale_axis[3],
+            scaleTrack[nextScaleIndex].scale_axis[0],
+            scaleTrack[nextScaleIndex].scale_axis[1],
+            scaleTrack[nextScaleIndex].scale_axis[2],
+            scaleTrack[nextScaleIndex].scale_axis[3],
+            scaleBlendFactor);
+        MatrixFromQuaternion(scaleAxisMatrix, interpolatedQuatX, interpolatedQuatY, interpolatedQuatZ, interpolatedQuatW);
+        MatrixInvert(inverseScaleAxisMatrix, scaleAxisMatrix);
+        MatrixMultiply(composedScaleMatrix, interpolatedScaleMatrix, inverseScaleAxisMatrix);
+        MatrixMultiply(composedScaleMatrix, scaleAxisMatrix, composedScaleMatrix);
+        MatrixMultiply(outMatrix, outMatrix, composedScaleMatrix);
     }
     else
     {
-        MatrixMultiply(a1, a1, a2->s_matrix);
+        MatrixMultiply(outMatrix, outMatrix, animationObject->s_matrix);
     }
 
-    int Pos_cnt = a2->Pos_cnt;
-    if (!Pos_cnt)
+    if (!animationObject->Pos_cnt)
     {
-        (*a1)[12] = a2->pos[0];
-        (*a1)[13] = a2->pos[1];
-        (*a1)[14] = a2->pos[2];
+        (*outMatrix)[12] = animationObject->pos[0];
+        (*outMatrix)[13] = animationObject->pos[1];
+        (*outMatrix)[14] = animationObject->pos[2];
         return;
     }
-    __m128 v14 = sub_14051F9D0(Pos_cnt, &a2->Pos->frame, 4, a3);
-    __int64 v15 = dword_184A89400;
-    __int64 v16 = dword_184A893FC;
-    (*a1)[12] = ((a2->Pos[dword_184A89400].pos[0] - a2->Pos[dword_184A893FC].pos[0]) * _mm_cvtss_f32(v14))
-              + a2->Pos[dword_184A893FC].pos[0];
-    (*a1)[13] = ((a2->Pos[v15].pos[1] - a2->Pos[v16].pos[1]) * _mm_cvtss_f32(v14)) + a2->Pos[v16].pos[1];
-    (*a1)[14] = ((a2->Pos[v15].pos[2] - a2->Pos[v16].pos[2]) * _mm_cvtss_f32(v14)) + a2->Pos[v16].pos[2];
+
+    const float positionBlendFactor =
+        _mm_cvtss_f32(sub_14051F9D0(animationObject->Pos_cnt, &animationObject->Pos->frame, 4, animationTime));
+    const int currentPositionIndex = dword_184A893FC;
+    const int nextPositionIndex = dword_184A89400;
+    (*outMatrix)[12] =
+        ((animationObject->Pos[nextPositionIndex].pos[0] - animationObject->Pos[currentPositionIndex].pos[0])
+         * positionBlendFactor)
+        + animationObject->Pos[currentPositionIndex].pos[0];
+    (*outMatrix)[13] =
+        ((animationObject->Pos[nextPositionIndex].pos[1] - animationObject->Pos[currentPositionIndex].pos[1])
+         * positionBlendFactor)
+        + animationObject->Pos[currentPositionIndex].pos[1];
+    (*outMatrix)[14] =
+        ((animationObject->Pos[nextPositionIndex].pos[2] - animationObject->Pos[currentPositionIndex].pos[2])
+         * positionBlendFactor)
+        + animationObject->Pos[currentPositionIndex].pos[2];
 }
 
-static void sub_14051FF20(float (*a1)[4], unsigned short a2, __int64 a3, double a4)
+static void sub_14051FF20(float (*outMatrix)[4], unsigned short objectIndex, _ANI_OBJECT *animationObjects, double animationTime)
 {
-    float v7[16]{};
-    float v8[16]{};
-    if (a2)
+    float localMatrix[4][4]{};
+    float parentMatrix[4][4]{};
+    if (objectIndex)
     {
-        sub_14051FF20(reinterpret_cast<float (*)[4]>(v8), *reinterpret_cast<unsigned short *>(361LL * a2 + a3 - 231), a3, a4);
-        GetAniMatrix(reinterpret_cast<float (*)[4]>(v7), reinterpret_cast<_ANI_OBJECT *>(a3 + 361LL * (a2 - 1)), a4);
-        MatrixMultiply(a1, reinterpret_cast<float (*)[4]>(v8), reinterpret_cast<float (*)[4]>(v7));
+        _ANI_OBJECT *animationObject = &animationObjects[objectIndex - 1];
+        sub_14051FF20(parentMatrix, animationObject->parent, animationObjects, animationTime);
+        GetAniMatrix(localMatrix, animationObject, animationTime);
+        MatrixMultiply(outMatrix, parentMatrix, localMatrix);
     }
     else
     {
-        MatrixIdentity(a1);
+        MatrixIdentity(outMatrix);
     }
 }
 
-void GetObjectMatrix(float (*f_matrix)[4], unsigned short a2, _ANI_OBJECT *a3, double a4)
+void GetObjectMatrix(float (*outMatrix)[4], unsigned short objectIndex, _ANI_OBJECT *animationObjects, double animationTime)
 {
-    double v4 = 0.0;
-    double v5 = a4;
-    float *v8 = (float *)f_matrix;
-    double v9 = 0.0;
-    if (a2)
+    if (!objectIndex)
     {
-        __int64 v10 = a2;
-        float *v11 = nullptr;
-        if (a3[v10 - 1].AniFrameCache)
-        {
-            v11 = a3[a2 - 1].f_matrix[0];
-        }
-        else
-        {
-            unsigned short parent = a3[v10 - 1].parent;
-            a3[v10 - 1].AniFrameCache = 1;
-            if (parent)
-            {
-                int frames = a3[parent - 1].frames;
-                if (frames)
-                    v9 = GetFloatMod(static_cast<float>(a4), static_cast<float>(frames));
-            }
-            int v15 = a3[v10 - 1].frames;
-            if (v15)
-                v4 = GetFloatMod(static_cast<float>(v5), static_cast<float>(v15));
-            float v19[16]{};
-            float v18[16]{};
-            sub_14051FF20(reinterpret_cast<float (*)[4]>(v19), parent, reinterpret_cast<__int64>(a3), v9);
-            _ANI_OBJECT *v17 = &a3[a2 - 1];
-            GetAniMatrix(reinterpret_cast<float (*)[4]>(v18), v17, v4);
-            MatrixMultiply(reinterpret_cast<float (*)[4]>(v8), reinterpret_cast<float (*)[4]>(v19), reinterpret_cast<float (*)[4]>(v18));
-            GetMatrixFrom3DSMAXMatrix(reinterpret_cast<float (*)[4]>(v8));
-            f_matrix = v17->f_matrix;
-            v11 = v8;
-        }
-        MatrixCopy(f_matrix, reinterpret_cast<float (*)[4]>(v11));
+        MatrixIdentity(outMatrix);
+        return;
     }
-    else
+
+    _ANI_OBJECT *animationObject = &animationObjects[objectIndex - 1];
+    if (animationObject->AniFrameCache)
     {
-        MatrixIdentity(f_matrix);
+        MatrixCopy(outMatrix, animationObject->f_matrix);
+        return;
     }
+
+    const unsigned short parentIndex = animationObject->parent;
+    animationObject->AniFrameCache = 1;
+
+    double parentAnimationTime = 0.0;
+    if (parentIndex)
+    {
+        const int parentFrameCount = animationObjects[parentIndex - 1].frames;
+        if (parentFrameCount)
+            parentAnimationTime = GetFloatMod(static_cast<float>(animationTime), static_cast<float>(parentFrameCount));
+    }
+
+    double objectAnimationTime = 0.0;
+    if (animationObject->frames)
+        objectAnimationTime = GetFloatMod(static_cast<float>(animationTime), static_cast<float>(animationObject->frames));
+
+    float parentMatrix[4][4]{};
+    float localMatrix[4][4]{};
+    sub_14051FF20(parentMatrix, parentIndex, animationObjects, parentAnimationTime);
+    GetAniMatrix(localMatrix, animationObject, objectAnimationTime);
+    MatrixMultiply(outMatrix, parentMatrix, localMatrix);
+    GetMatrixFrom3DSMAXMatrix(outMatrix);
+    MatrixCopy(animationObject->f_matrix, outMatrix);
 }
 
 void ConvAniObject(int a1, unsigned __int8 *a2, _READ_ANI_OBJECT *a3, _ANI_OBJECT *a4)

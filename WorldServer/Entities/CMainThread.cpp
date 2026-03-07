@@ -4710,48 +4710,54 @@ void CMainThread::pc_TransIPKeyInform(
       {
         user->ForceCloseCommand(1u, dwClientIP, false, "Duplicate Account Login");
         retCode = 2;
-        goto RESULT_125;
-      }
-    }
-
-    for (int index = 0; index < MAX_PLAYER; ++index)
-    {
-      _WAIT_ENTER_ACCOUNT *entry = &m_WaitEnterAccount[index];
-      if (!entry->m_bLoad)
-      {
-        entry->SetData(dwAccountSerial, pszAccountID, byUserDgr, bySubDgr, pgidGlobal, pdwKey, bChatLock);
-        entry->SetBillingInfo(iType, szCMS, lRemainTime, pstEndDate);
-        entry->SetPcBangFlag(bIsPcBang);
-        entry->SetTransFlag(nTrans);
-        entry->SetAgeLimitFlag(bAgeLimit);
-        if (!byUserDgr)
-        {
-          entry->SetUILock(
-            byUILock,
-            szUILockPW,
-            byUILockFailCnt,
-            szAccountPW,
-            byUILock_HintIndex,
-            uszUILock_HintAnswer,
-            byUILockFindPassFailCount);
-        }
-        for (int j = 0; j < 3; ++j)
-        {
-          entry->m_dwRequestMoveCharacterSerialList[j] = pdwRequestMoveCharacterSerialList[j];
-          entry->m_dwTournamentCharacterSerialList[j] = pdwTournamentCharacterSerialList[j];
-        }
-        m_logBillCheck.Write("id:%s Bill:%d bAgeLimit:%d", pszAccountID, iType, bAgeLimit);
-        if (g_Network.m_Process[0].m_Type.m_bAcceptIPCheck
-            && !g_Network.m_Process[0].m_NetSocket.PushIPCheckList(dwClientIP))
-        {
-          retCode = 8;
-          goto RESULT_125;
-        }
         slotFound = true;
         break;
       }
     }
-    if (!slotFound)
+
+    if (!retCode)
+    {
+      for (int index = 0; index < MAX_PLAYER; ++index)
+      {
+        _WAIT_ENTER_ACCOUNT *entry = &m_WaitEnterAccount[index];
+        if (!entry->m_bLoad)
+        {
+          entry->SetData(dwAccountSerial, pszAccountID, byUserDgr, bySubDgr, pgidGlobal, pdwKey, bChatLock);
+          entry->SetBillingInfo(iType, szCMS, lRemainTime, pstEndDate);
+          entry->SetPcBangFlag(bIsPcBang);
+          entry->SetTransFlag(nTrans);
+          entry->SetAgeLimitFlag(bAgeLimit);
+          if (!byUserDgr)
+          {
+            entry->SetUILock(
+              byUILock,
+              szUILockPW,
+              byUILockFailCnt,
+              szAccountPW,
+              byUILock_HintIndex,
+              uszUILock_HintAnswer,
+              byUILockFindPassFailCount);
+          }
+          for (int j = 0; j < 3; ++j)
+          {
+            entry->m_dwRequestMoveCharacterSerialList[j] = pdwRequestMoveCharacterSerialList[j];
+            entry->m_dwTournamentCharacterSerialList[j] = pdwTournamentCharacterSerialList[j];
+          }
+          m_logBillCheck.Write("id:%s Bill:%d bAgeLimit:%d", pszAccountID, iType, bAgeLimit);
+          if (g_Network.m_Process[0].m_Type.m_bAcceptIPCheck
+              && !g_Network.m_Process[0].m_NetSocket.PushIPCheckList(dwClientIP))
+          {
+            retCode = 8;
+          }
+          else
+          {
+            slotFound = true;
+          }
+          break;
+        }
+      }
+    }
+    if (!slotFound && !retCode)
     {
       retCode = 8;
     }
@@ -4761,7 +4767,6 @@ void CMainThread::pc_TransIPKeyInform(
     retCode = 8;
   }
 
-RESULT_125:
   _trans_account_report_wrac report{};
   report.byRetCode = retCode;
   memcpy_0(&report, pgidGlobal, 8uLL);
