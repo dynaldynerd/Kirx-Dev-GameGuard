@@ -195,7 +195,7 @@ char AutominePersonalMgr::make_storagebox(int n, const _personal_amine_make_stor
 
   if (player->m_Param.BeHaveBoxOfAMP())
   {
-    send_ecode(n, 0x13u);
+    send_ecode(n, 19u);
     return 1;
   }
 
@@ -207,13 +207,13 @@ char AutominePersonalMgr::make_storagebox(int n, const _personal_amine_make_stor
 
   if (!request || request->dwAvatorSerial != player->m_dwObjSerial)
   {
-    send_ecode(n, 0x16u);
+    send_ecode(n, 22u);
     return 1;
   }
 
   if (player->m_Param.GetGold() < 250u)
   {
-    send_ecode(n, 0x17u);
+    send_ecode(n, 23u);
     return 1;
   }
 
@@ -229,7 +229,7 @@ _qry_case_make_storage qry{};
   qry.dwAvatorSerial = dwAvatorSerial;
 
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x38u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 56u, reinterpret_cast<char *>(&qry), size);
 }
 
 unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage *query)
@@ -300,7 +300,7 @@ void AutominePersonalMgr::pop_dqs_makestorage(unsigned __int8 byRet, const _qry_
       if (byRet == 24)
       {
         player->AlterGold(250.0);
-        send_ecode(player->m_ObjID.m_wIndex, 0x11u);
+        send_ecode(player->m_ObjID.m_wIndex, 17u);
       }
       else
       {
@@ -360,7 +360,7 @@ char AutominePersonalMgr::check_machine(
 
   if (pMachine->get_objserial() != dwSerial)
   {
-    send_ecode(n, 0x12u);
+    send_ecode(n, 18u);
     return 0;
   }
 
@@ -398,13 +398,13 @@ char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *
 
   if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(player->m_id.wIndex) == 99)
   {
-    send_ecode(n, 0x21u);
+    send_ecode(n, 33u);
     return 1;
   }
 
   if (!player->m_Param.BeHaveBoxOfAMP())
   {
-    send_ecode(n, 0x14u);
+    send_ecode(n, 20u);
     return 1;
   }
 
@@ -423,7 +423,7 @@ char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *
 
   if (!COreAmountMgr::Instance()->IsOreRemain())
   {
-    send_ecode(n, 0x1Bu);
+    send_ecode(n, 27u);
     return 1;
   }
 
@@ -436,7 +436,7 @@ char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *
   _res_dummy *resDummy = &player->m_pCurMap->m_pResDummy[static_cast<unsigned __int8>(request->byMineDummyIndex)];
   if (resDummy->GetQualityGrade() != 2 && !player->IsMiningByMinigTicket())
   {
-    send_ecode(n, 0x1Au);
+    send_ecode(n, 26u);
     return 1;
   }
 
@@ -462,7 +462,7 @@ char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *
   }
   else
   {
-    send_ecode(n, 0xFu);
+    send_ecode(n, 15u);
   }
 
   return 1;
@@ -485,7 +485,7 @@ char AutominePersonalMgr::uninstall(int n, const _personal_automine_uninstall_cl
 
   if (!machine->unregist_from_map(0))
   {
-    send_ecode(n, 0x10u);
+    send_ecode(n, 16u);
     m_logError.Write("AutominePersonalMgr::uninstall() [LINE:%d]", 314);
   }
   return 1;
@@ -514,7 +514,7 @@ char AutominePersonalMgr::uninstall(int n)
 
   if (!machine->unregist_from_map(0))
   {
-    send_ecode(n, 0x10u);
+    send_ecode(n, 16u);
     m_logError.Write("AutominePersonalMgr::uninstall() [LINE:%d]", 548);
   }
   return 1;
@@ -574,7 +574,7 @@ char AutominePersonalMgr::insert_battery(unsigned int n, const _personal_automin
         static_cast<unsigned __int8>(request->byInPos),
         request->wItemSerial))
   {
-    send_ecode(n, 0x18u);
+    send_ecode(n, 24u);
     return 1;
   }
 
@@ -775,7 +775,7 @@ char AutominePersonalMgr::pop_ore(unsigned int n, const _personal_automine_popor
 
   if (player->m_Param.m_pStoragePtr[0]->GetIndexEmptyCon() == 255)
   {
-    send_ecode(n, 0x15u);
+    send_ecode(n, 21u);
     return 1;
   }
 

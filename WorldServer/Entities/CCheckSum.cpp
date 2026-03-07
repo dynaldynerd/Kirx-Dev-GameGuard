@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCheckSum.h"
 
@@ -37,11 +37,11 @@ char CCheckSum::Init()
 unsigned int CCheckSum::EncodeValue(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue)
 {
   const unsigned int *keys = check_key_value[byIndex];
-  return keys[dwSerial % 0x0A] ^ dwValue;
+  return keys[dwSerial % 10] ^ dwValue;
 }
 
 unsigned int CCheckSum::DecodeValue(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue)
 {
   const unsigned int *keys = check_key_value[byIndex];
-  return keys[dwSerial % 0x0A] ^ dwValue;
+  return keys[dwSerial % 10] ^ dwValue;
 }

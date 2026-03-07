@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "UIDGenerator.h"
 
@@ -28,7 +28,7 @@ unsigned __int64 UIDGenerator::getuid(unsigned __int8 n)
   }
 
   const unsigned __int64 base = static_cast<unsigned __int64>(g_t32Old) << 16;
-  unsigned __int64 uid = (g_uidIndex % 0xFFFFFF) | base;
+  unsigned __int64 uid = (g_uidIndex % 16777215) | base;
   reinterpret_cast<unsigned char *>(&uid)[7] = n;
   ++g_uidIndex;
 
@@ -53,7 +53,7 @@ unsigned __int64 UIDGenerator::getuid(unsigned __int8 n, unsigned __int8 ncode)
   }
 
   const unsigned __int64 base = static_cast<unsigned __int64>(g_t32Old) << 24;
-  unsigned __int64 uid = (g_uidIndex % 0xFFFFFF) | base;
+  unsigned __int64 uid = (g_uidIndex % 16777215) | base;
   reinterpret_cast<unsigned char *>(&uid)[7] = n;
   ++g_uidIndex;
 
@@ -76,7 +76,7 @@ void UIDGenerator::tmuid(unsigned __int64 uid, char *szBuf)
   {
     sprintf_s(
       szBuf,
-      0x28u,
+      40,
       "[%03d] %04d-%02d-%02d %02d:%02d:%02d %d",
       static_cast<int>(reinterpret_cast<unsigned char *>(&uid)[7]),
       tmValue.tm_year + 1900,

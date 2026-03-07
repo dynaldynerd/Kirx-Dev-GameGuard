@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCollLineDraw.h"
 
@@ -38,7 +38,7 @@ CCollLineDraw::~CCollLineDraw()
 
 void CCollLineDraw::InitPen()
 {
-  HPEN pen = CreatePen(PS_SOLID, 1, 0x787878u);
+  HPEN pen = CreatePen(PS_SOLID, 1, 7895160);
   if (pen)
   {
     s_hPen = pen;

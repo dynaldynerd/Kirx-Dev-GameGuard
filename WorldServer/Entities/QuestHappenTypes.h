@@ -1,20 +1,20 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "QuestHappenEvent_fld.h"
 
 enum QUEST_HAPPEN : __int32
 {
-  quest_happen_type_dummy = 0x0,
-  quest_happen_type_npc = 0x1,
-  quest_happen_type_pk = 0x2,
-  quest_happen_type_lv = 0x3,
-  quest_happen_type_class = 0x4,
-  quest_happen_type_grade = 0x5,
-  quest_happen_type_item = 0x6,
-  quest_happen_type_mastery = 0x7,
-  quest_happen_type_maxlevel = 0x8,
-  QUEST_HAPPEN_TYPE_NUM = 0x9,
+  quest_happen_type_dummy = 0,
+  quest_happen_type_npc = 1,
+  quest_happen_type_pk = 2,
+  quest_happen_type_lv = 3,
+  quest_happen_type_class = 4,
+  quest_happen_type_grade = 5,
+  quest_happen_type_item = 6,
+  quest_happen_type_mastery = 7,
+  quest_happen_type_maxlevel = 8,
+  QUEST_HAPPEN_TYPE_NUM = 9,
 };
 
 struct _happen_event_cont

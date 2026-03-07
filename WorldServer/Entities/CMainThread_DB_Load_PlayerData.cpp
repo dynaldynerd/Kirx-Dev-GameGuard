@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -153,7 +153,7 @@ unsigned __int8 CMainThread::_db_Load_General(
   int leftResOffset = 0;
 
   memset(parseBuffer, 0, 128);
-  memset_0(parseBuffer, 0, 0x80uLL);
+  memset_0(parseBuffer, 0, 128);
   memset_0(&characterData, 0, sizeof(characterData));
 
   const unsigned __int8 dbResult = this->m_pWorldDB->Select_CharacterGeneralInfo(dwSerial, &characterData);
@@ -177,7 +177,7 @@ unsigned __int8 CMainThread::_db_Load_General(
 
   strcpy_0(leftResListBuffer, characterData.szLeftResList);
   pCon->dbCutting.Init();
-  if ( leftResListBuffer[0] != 42 )
+  if ( leftResListBuffer[0] != '*' )
   {
     leftResLength = static_cast<int>(strlen_0(leftResListBuffer));
     if ( !(leftResLength % 5) )
@@ -418,7 +418,7 @@ unsigned __int8 CMainThread::_db_Load_MacroData(
     }
     for ( int chatIndex = 0; chatIndex < 2; ++chatIndex )
     {
-      memset_0(&pMacro->mcr_Chat[chatIndex], 0, 0x100uLL);
+      memset_0(&pMacro->mcr_Chat[chatIndex], 0, 256);
       memset_0(pMacro->mcr_Chat[chatIndex].Chat[1], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[1]));
       memset_0(pMacro->mcr_Chat[chatIndex].Chat[2], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[2]));
       memset_0(pMacro->mcr_Chat[chatIndex].Chat[3], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[3]));
@@ -775,10 +775,10 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
   {
     memset(scannerBuffer, 0, 64);
     memset(scannerCountString, 0, 10);
-    sprintf_s(scannerBuffer, 0x40uLL, "%I64u", scannerCounter);
+    sprintf_s(scannerBuffer, 64, "%I64u", scannerCounter);
     memcpy_0(scannerCountString, scannerBuffer, 9uLL);
     pDbSupplement->dwScanerGetDate = atoi(scannerCountString);
-    memset_0(scannerCountString, 0, 0xAuLL);
+    memset_0(scannerCountString, 0, 10);
     const size_t scannerBufferLength = strlen_0(scannerBuffer);
     memcpy_0(scannerCountString, &scannerBuffer[9], scannerBufferLength - 9);
     pDbSupplement->wScanerCnt = atoi(scannerCountString);
@@ -844,8 +844,8 @@ unsigned __int8 CMainThread::_db_Load_Trade(
     pTrade->m_List[tradeIndex].dwBuyerSerial = tradeData.list[tradeIndex].dwBuyerSerial;
     pTrade->m_List[tradeIndex].dwTax = tradeData.list[tradeIndex].dwTax;
     pTrade->m_List[tradeIndex].tResultTime = tradeData.list[tradeIndex].tResultTime;
-    strcpy_s(pTrade->m_List[tradeIndex].wszBuyerName, 0x11uLL, tradeData.list[tradeIndex].wszBuyerName);
-    strcpy_s(pTrade->m_List[tradeIndex].szBuyerAccount, 0xDuLL, tradeData.list[tradeIndex].szBuyerAccount);
+    strcpy_s(pTrade->m_List[tradeIndex].wszBuyerName, 17, tradeData.list[tradeIndex].wszBuyerName);
+    strcpy_s(pTrade->m_List[tradeIndex].szBuyerAccount, 13, tradeData.list[tradeIndex].szBuyerAccount);
   }
   return 0;
 }

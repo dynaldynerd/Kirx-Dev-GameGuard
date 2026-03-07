@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -167,7 +167,7 @@ void HACKSHEILD_PARAM_ANTICP::Init()
 
 void HACKSHEILD_PARAM_ANTICP::CheckClient()
 {
-  char reqPayload[0xA0]{};
+  char reqPayload[160]{};
   unsigned int reqType = (m_byVerifyState == 2) ? 15u : 1u;
   AntiCpMakeReqMsgFn makeReqMsg = _ResolveMakeReqMsg();
   const int reqResult = makeReqMsg ? makeReqMsg(&m_CrcInfo, reqPayload, m_byGUIDClientInfo, reqType) : -1;
@@ -232,13 +232,13 @@ void HACKSHEILD_PARAM_ANTICP::Kick(unsigned __int8 byReason, unsigned int dwRet)
       type,
       reinterpret_cast<char *>(&result),
       static_cast<unsigned __int16>(result.size()));
-    user->ForceCloseCommand(0xEu, 0xFFFFFFFFu, true, "HackShield Kick");
+    user->ForceCloseCommand(14, -1, true, "HackShield Kick");
     return;
   }
 
   if (m_byVerifyState && user->m_bActive)
   {
-    user->ForceCloseCommand(0xEu, 0xFFFFFFFFu, false, "HackShield Kick");
+    user->ForceCloseCommand(14, -1, false, "HackShield Kick");
   }
 }
 
@@ -312,7 +312,7 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __i
     return 1;
   }
 
-  Kick(2u, 0xFFFFFFFFu);
+  Kick(2u, -1);
   return 1;
 }
 
@@ -412,6 +412,6 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 
     return 1;
   }
 
-  Kick(3u, 0xFFFFFFFFu);
+  Kick(3u, -1);
   return 1;
 }

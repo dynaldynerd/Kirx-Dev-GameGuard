@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -32,7 +32,7 @@ bool CSUItemSystem::SUItemSystem_Init()
   char pszErrMsg[144] = {};
 
   Class_Init();
-  if (m_SUOrigin[0].ReadRecord(".\\script\\SetItemEff.dat", 0x404u, pszErrMsg))
+  if (m_SUOrigin[0].ReadRecord(".\\script\\SetItemEff.dat", 1028, pszErrMsg))
   {
     m_bLoadData[0] = true;
     if (m_SetItemType.SetItemType_Init(m_SUOrigin))
@@ -77,7 +77,7 @@ bool CSUItemSystem::SUItemSystem_CheckData()
     }
     for (int idx = 0; idx < count; ++idx)
     {
-      if (interpret->GetCountOfItem(static_cast<unsigned int>(idx)) > 0xCu)
+      if (interpret->GetCountOfItem(static_cast<unsigned int>(idx)) > 12)
       {
         return false;
       }

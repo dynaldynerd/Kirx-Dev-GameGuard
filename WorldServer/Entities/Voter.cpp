@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "Voter.h"
 
@@ -25,7 +25,7 @@ bool Voter::Initialize()
 
   PatriarchElectProcessor::Instance()->PushDQSCheckInvalidChar();
   ElectProcessor::Initialize();
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, false);
+  g_Main.PushDQSData(-1, nullptr, 120, nullptr, false);
   return true;
 }
 
@@ -236,16 +236,16 @@ int Voter::_Vote(CPlayer *player, char *payload)
     _qry_case_update_vote_time voteTimeQuery{};
     voteTimeQuery.dwSerial = player->m_Param.GetCharSerial();
     g_Main.PushDQSData(
-      0xFFFFFFFF,
+      -1,
       nullptr,
-      0x8Bu,
+      139,
       reinterpret_cast<char *>(&voteTimeQuery),
       static_cast<int>(voteTimeQuery.size()));
 
     if (!PatriarchElectProcessor::Instance()->GetTimeCheck())
     {
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x73u, nullptr, 0);
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, 0);
+      g_Main.PushDQSData(-1, nullptr, 115, nullptr, 0);
+      g_Main.PushDQSData(-1, nullptr, 120, nullptr, 0);
     }
 
     _SetVoteScoreInfo(raceCode, payload + 1, abstention);

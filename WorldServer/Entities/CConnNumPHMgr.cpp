@@ -43,7 +43,7 @@ _USER_NUM_SHEET *CConnNumPHMgr::Check(int nLoginNum)
 {
   bool hasResult = false;
   const DWORD currentTime = timeGetTime();
-  if (currentTime - m_dwCheckLastTime > 0xEA60)
+  if (currentTime - m_dwCheckLastTime > 60000)
   {
     m_dwCheckLastTime = currentTime;
     m_cph.nUserCumPerMin += nLoginNum;

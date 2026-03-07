@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "ZoneClientPacket.h"
 
 _alter_cont_effect_time_zocl::_alter_cont_effect_time_zocl() : byEffectNum(0)
@@ -20,7 +20,7 @@ _attack_gen_result_zocl::_attack_gen_result_zocl() : byListNum(0)
 
 int _attack_gen_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -33,7 +33,7 @@ _buy_store_success_zocl::_buy_store_success_zocl() : byBuyNum(0)
 
 unsigned __int16 _buy_store_success_zocl::size()
 {
-  if (byBuyNum > 0x64u)
+  if (byBuyNum > 100)
   {
     byBuyNum = 0;
   }
@@ -62,7 +62,7 @@ _limit_item_num_info_zocl::_limit_item_num_info_zocl()
 
 unsigned __int16 _limit_item_num_info_zocl::size()
 {
-  if (byLimitItemNum > 0x10u)
+  if (byLimitItemNum > 16)
   {
     byLimitItemNum = 0;
   }
@@ -120,7 +120,7 @@ _store_list_result_zocl::_store_list_result_zocl() : byStoreNum(0)
 
 unsigned __int16 _store_list_result_zocl::size()
 {
-  if (byStoreNum > 0x64u)
+  if (byStoreNum > 100)
   {
     byStoreNum = 0;
   }
@@ -143,7 +143,7 @@ _attack_count_result_zocl::_attack_count_result_zocl() : byListNum(0)
 
 int _attack_count_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -156,7 +156,7 @@ _attack_force_result_zocl::_attack_force_result_zocl() : byListNum(0)
 
 int _attack_force_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -169,7 +169,7 @@ _attack_selfdestruction_result_zocl::_attack_selfdestruction_result_zocl() : byL
 
 int _attack_selfdestruction_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -182,7 +182,7 @@ _attack_siege_result_zocl::_attack_siege_result_zocl() : byListNum(0)
 
 int _attack_siege_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -195,7 +195,7 @@ _attack_skill_result_zocl::_attack_skill_result_zocl() : byListNum(0)
 
 int _attack_skill_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -208,7 +208,7 @@ _attack_unit_result_zocl::_attack_unit_result_zocl() : byListNum(0)
 
 int _attack_unit_result_zocl::size()
 {
-  if (byListNum > 0x20u)
+  if (byListNum > 32)
   {
     byListNum = 0;
   }
@@ -264,7 +264,7 @@ _chat_multi_far_trans_zocl::_chat_multi_far_trans_zocl()
 
 unsigned __int16 _chat_multi_far_trans_zocl::size()
 {
-  if (wSize > 0x1F4u)
+  if (wSize > 500)
   {
     wSize = 0;
   }
@@ -333,7 +333,7 @@ unsigned __int16 _darkhole_job_pass_inform_zocl::size() const
 
 unsigned __int16 _darkhole_member_info_inform_zocl::size()
 {
-  if (wMemberNum > 0x20u)
+  if (wMemberNum > 32)
   {
     wMemberNum = 32;
   }
@@ -342,7 +342,7 @@ unsigned __int16 _darkhole_member_info_inform_zocl::size()
 
 unsigned __int16 _darkhole_mission_info_inform_zocl::size()
 {
-  if (byJobNum > 0x80u)
+  if (byJobNum > 128)
   {
     byJobNum = 0;
   }
@@ -431,7 +431,7 @@ _not_arranged_char_inform_zocl::_not_arranged_char_inform_zocl() : byCharNum(0)
 
 __int64 _not_arranged_char_inform_zocl::size()
 {
-  if (byCharNum > 0x32u)
+  if (byCharNum > 50)
   {
     byCharNum = 0;
   }
@@ -752,11 +752,11 @@ _unmannedtrader_buy_item_result_zocl::_unmannedtrader_buy_item_result_zocl()
 
 __int64 _unmannedtrader_buy_item_result_zocl::size() const
 {
-  if (byRetCode && byRetCode != 0xFF)
+  if (byRetCode && byRetCode != 255)
   {
     return 1;
   }
-  if (byNum <= 0xAu)
+  if (byNum <= 10)
   {
     return 230 - 22LL * (10 - byNum);
   }
@@ -770,7 +770,7 @@ __int64 _unmannedtrader_close_item_inform_zocl::size() const
 
 __int64 _unmannedtrader_continue_item_inform_zocl::size() const
 {
-  if (byNum > 0xAu)
+  if (byNum > 10)
   {
     const_cast<_unmannedtrader_continue_item_inform_zocl *>(this)->byNum = 0;
   }
@@ -779,7 +779,7 @@ __int64 _unmannedtrader_continue_item_inform_zocl::size() const
 
 __int64 _unmannedtrader_re_regist_result_zocl::size()
 {
-  if (byNum > 0xAu)
+  if (byNum > 10)
   {
     byNum = 0;
   }
@@ -793,7 +793,7 @@ _unmannedtrader_Regist_item_inform_zocl::_unmannedtrader_Regist_item_inform_zocl
 
 __int64 _unmannedtrader_Regist_item_inform_zocl::size()
 {
-  if (byNum > 0xAu)
+  if (byNum > 10)
   {
     byNum = 0;
   }

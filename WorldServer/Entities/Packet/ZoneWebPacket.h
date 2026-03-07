@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "../IdaCompat.h"
 
@@ -96,7 +96,7 @@ struct _money_supply_gatering_inform_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_money_supply_gatering_inform_zowb) == 0x4CC, "money supply packet size mismatch");
+static_assert(sizeof(_money_supply_gatering_inform_zowb) == 1228, "money supply packet size mismatch");
 
 // guild_battle_complete_msg_zowb.h
 
@@ -128,7 +128,7 @@ struct _guild_battle_complete_msg_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_guild_battle_complete_msg_zowb) == 0xA8, "guild battle complete packet size mismatch");
+static_assert(sizeof(_guild_battle_complete_msg_zowb) == 168, "guild battle complete packet size mismatch");
 
 // guild_battle_reserve_msg_zowb.h
 
@@ -149,7 +149,7 @@ struct _guild_battle_reserve_msg_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_guild_battle_reserve_msg_zowb) == 0x3F, "guild battle reserve packet size mismatch");
+static_assert(sizeof(_guild_battle_reserve_msg_zowb) == 63, "guild battle reserve packet size mismatch");
 
 // economy_data_inform_zowb.h
 
@@ -165,7 +165,7 @@ struct _economy_data_inform_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_economy_data_inform_zowb) == 0x22, "economy data packet size mismatch");
+static_assert(sizeof(_economy_data_inform_zowb) == 34, "economy data packet size mismatch");
 
 // confirm_sms_infom_zoct.h
 
@@ -180,7 +180,7 @@ struct _confirm_sms_infom_zoct
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_confirm_sms_infom_zoct) == 0x119, "confirm sms packet size mismatch");
+static_assert(sizeof(_confirm_sms_infom_zoct) == 281, "confirm sms packet size mismatch");
 
 // send_raceboss_msg_request_zowb.h
 
@@ -249,7 +249,7 @@ struct _last_attacker_for_the_keeper_inform_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_last_attacker_for_the_keeper_inform_zowb) == 0x1E, "keeper attacker packet size mismatch");
+static_assert(sizeof(_last_attacker_for_the_keeper_inform_zowb) == 30, "keeper attacker packet size mismatch");
 
 // holy_minetime_extend_inform_zowb.h
 
@@ -295,7 +295,7 @@ struct _holy_complete_quest_inform_zowb
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_holy_complete_quest_inform_zowb) == 0xD5, "holy complete quest packet size mismatch");
+static_assert(sizeof(_holy_complete_quest_inform_zowb) == 213, "holy complete quest packet size mismatch");
 
 // world_user_num_zowb.h
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "TimeItem.h"
 
@@ -27,7 +27,7 @@ TimeItem *TimeItem::Instance()
 
 const _TimeItem_fld *TimeItem::FindTimeRec(unsigned int nTbl, int nIdx)
 {
-  if (nTbl > 0x24)
+  if (nTbl > 36)
   {
     return nullptr;
   }
@@ -55,7 +55,7 @@ bool TimeItem::Init()
 bool TimeItem::ReadGoods()
 {
   char errMsg[144]{};
-  if (!_kRecTimeItem.ReadRecord(".\\Script\\TimerItem.dat", 0x8C, errMsg))
+  if (!_kRecTimeItem.ReadRecord(".\\Script\\TimerItem.dat", 140, errMsg))
   {
     MyMessageBox("TimeItem", errMsg);
     return false;

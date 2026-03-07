@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "TRC_AutoTrade.h"
 #include "atrade_taxrate_result_zocl.h"
@@ -161,7 +161,7 @@ void TRC_AutoTrade::set_suggested(
   this->m_suggested.dwMatterDst = dwMatterDst;
   strcpy_0(this->m_suggested.wszMatterDst, wszMatterDst);
 
-  if (dwNext < 5 || dwNext > 0x14)
+  if (dwNext < 5 || dwNext > 20)
   {
     dwNext = 5;
   }
@@ -201,7 +201,7 @@ void TRC_AutoTrade::ChangeTaxRate()
     {
       char payload[4]{};
       *reinterpret_cast<unsigned int *>(payload) = raceBoss->m_Param.GetCharSerial();
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x82u, payload, sizeof(payload));
+      g_Main.PushDQSData(-1, nullptr, 130, payload, sizeof(payload));
     }
 
     CHonorGuild::Instance()->ChangeHonorGuild(m_byRace);
@@ -266,7 +266,7 @@ void TRC_AutoTrade::PushDQSData()
   query.dwGSerial = static_cast<unsigned int>(-1);
   strcpy_0(query.szGuildName, "*");
 
-  if (this->m_suggested.dwNext < 5 || this->m_suggested.dwNext > 0x14)
+  if (this->m_suggested.dwNext < 5 || this->m_suggested.dwNext > 20)
   {
     this->m_suggested.dwNext = 5;
   }
@@ -274,7 +274,7 @@ void TRC_AutoTrade::PushDQSData()
   query.dwNext = this->m_suggested.dwNext;
   query.byCurrTax = static_cast<unsigned __int8>(this->get_taxrate() * 100.0f);
   const int size = static_cast<int>(query.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x33u, reinterpret_cast<char *>(&query), size);
+  g_Main.PushDQSData(-1, nullptr, 51, reinterpret_cast<char *>(&query), size);
 }
 
 void TRC_AutoTrade::PushDQSData_GuildInMoney(unsigned int dwRetPrice, unsigned int dwSeller)
@@ -292,9 +292,9 @@ void TRC_AutoTrade::PushDQSData_GuildInMoney(unsigned int dwRetPrice, unsigned i
   query.out_totaldalant = 0.0;
   query.in_dalant = dwRetPrice;
   g_Main.PushDQSData(
-    0xFFFFFFFF,
+    -1,
     nullptr,
-    0x34u,
+    52,
     reinterpret_cast<char *>(&query),
     static_cast<int>(query.size()));
 }
@@ -431,7 +431,7 @@ void TRC_AutoTrade::SetPatriarchTaxMoney(int dwTax)
   qry.dwSerial = ranking->GetCurrentRaceBossSerial(m_byRace, 0);
   GetTodayStr(qry.szDepDate);
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x83u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 131, reinterpret_cast<char *>(&qry), size);
   ++m_dwTrade;
   m_dIncomeMoney = m_dIncomeMoney + static_cast<double>(dwTax);
 }
@@ -453,11 +453,11 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
     return 0;
   }
 
-  if (byCurrTax[0] < 5u || byCurrTax[0] > 0x14u)
+  if (byCurrTax[0] < 5u || byCurrTax[0] > 20)
   {
     byCurrTax[0] = 5;
   }
-  if (byNextTax[0] < 5u || byNextTax[0] > 0x14u)
+  if (byNextTax[0] < 5u || byNextTax[0] > 20)
   {
     byNextTax[0] = 5;
   }

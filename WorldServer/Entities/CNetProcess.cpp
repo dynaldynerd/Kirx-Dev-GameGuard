@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -209,14 +209,14 @@ _FORCE_CLOSE::~_FORCE_CLOSE()
 
 bool _FORCE_CLOSE::Init(unsigned int dwNodeNum)
 {
-  if (!dwNodeNum || dwNodeNum > 0xFFFF)
+  if (!dwNodeNum || dwNodeNum > 65535)
   {
     return false;
   }
 
   m_dwNodeNum = dwNodeNum;
-  m_pFDData = static_cast<__FD_NODE *>(operator new(saturated_mul(dwNodeNum, 0xCuLL)));
-  m_tmFD.BeginTimer(0x9C4u);
+  m_pFDData = static_cast<__FD_NODE *>(operator new(saturated_mul(dwNodeNum, 12)));
+  m_tmFD.BeginTimer(2500);
   m_listFD.SetList(dwNodeNum);
   m_listFDEmpty.SetList(dwNodeNum);
   for (unsigned int index = 0; index < dwNodeNum; ++index)
@@ -1078,7 +1078,7 @@ int CNetProcess::LoadSendMsg(
     return 1;
   }
 
-  if (Src[0] > 0x4E20u)
+  if (Src[0] > 20000)
   {
     m_LogFile[2].Write(
       "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) Max(%u)",
@@ -1216,7 +1216,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     korLocalTime);
   m_LogHack.SetWriteLogFile(szFileName, 1, 0, 1, 1);
 
-  if (m_Type.m_wSocketMaxNum > 0x1400u)
+  if (m_Type.m_wSocketMaxNum > 5120)
   {
     m_LogFile[2].Write("%d > %d Over Socket Num", m_Type.m_wSocketMaxNum, 5120);
     return false;
@@ -1240,7 +1240,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
   }
 
   strcpy_s(pszErrMsg, sizeof(pszErrMsg), "null");
-  memset_0(&pszErrMsg[5], 0, 0x7BuLL);
+  memset_0(&pszErrMsg[5], 0, 123);
 
   if (!m_NetSocket.SetSocket(&m_Type, pszErrMsg))
   {
@@ -1287,7 +1287,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
 
     m_nKeyCheckNodeNum = 10 * pType->m_wSocketMaxNum;
     m_ndKeyCheck =
-      static_cast<_KEY_CHECK_NODE *>(operator new(saturated_mul(m_nKeyCheckNodeNum, 0x1CuLL)));
+      static_cast<_KEY_CHECK_NODE *>(operator new(saturated_mul(m_nKeyCheckNodeNum, 28)));
     m_dwKeyCheckBufferList =
       static_cast<unsigned int *>(operator new(saturated_mul(m_nKeyCheckNodeNum, 4uLL)));
     if (!m_ndKeyCheck)
@@ -1340,7 +1340,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     else
     {
       m_AnsyncConnectData =
-        static_cast<_ANSYNC_CONNECT_DATA *>(operator new(saturated_mul(socketCount, 0x14uLL)));
+        static_cast<_ANSYNC_CONNECT_DATA *>(operator new(saturated_mul(socketCount, 20)));
       m_listAnsyncConnect.SetList(m_Type.m_wSocketMaxNum);
       m_listAnsyncConnectComplete.SetList(m_Type.m_wSocketMaxNum);
       m_pmConnectThread.SetParameter(1, this, 0);
@@ -1349,9 +1349,9 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
   }
 
   m_FC.Init(10 * m_Type.m_wSocketMaxNum);
-  m_tmrCheckResSH.BeginTimer(0x3E8u);
-  m_tmrCheckKeyCT.BeginTimer(0x3E8u);
-  m_tmrCheckRecvBreak.BeginTimer(0x3E8u);
+  m_tmrCheckResSH.BeginTimer(1000);
+  m_tmrCheckKeyCT.BeginTimer(1000);
+  m_tmrCheckRecvBreak.BeginTimer(1000);
   m_nOddMsgNum = 0;
   m_nTryConnectCount = 0;
   m_bSetProcess = true;
@@ -1401,7 +1401,7 @@ void CNetProcess::Release()
     m_pmConnectThread.EndThread();
   }
 
-  Sleep(0xBB8u);
+  Sleep(3000);
 
   if (m_ndKeyCheck)
   {
@@ -1555,7 +1555,7 @@ bool CNetProcess::StartSpeedHackCheck(unsigned int dwClientIndex, char *pszID)
   memcpy_0(msg, code, sizeof(msg));
 
   unsigned __int8 type[2]{102, 2};
-  if (!LoadSendMsg(dwClientIndex, type, msg, 0x10u))
+  if (!LoadSendMsg(dwClientIndex, type, msg, 16))
   {
     return false;
   }
@@ -1581,7 +1581,7 @@ bool CNetProcess::PushAnsyncConnect(unsigned int dwSocketIndex, sockaddr_in *pAd
     return false;
   }
 
-  memcpy_0(&m_AnsyncConnectData[dwSocketIndex], pAddr, 0x10uLL);
+  memcpy_0(&m_AnsyncConnectData[dwSocketIndex], pAddr, 16);
   return m_listAnsyncConnect.PushNode_Back(dwSocketIndex);
 }
 
@@ -1787,7 +1787,7 @@ void CNetProcess::_Receipt()
   {
     _socket *socket = m_NetSocket.GetSocket(outIndex[0]);
     const unsigned int elapsed = now - socket->m_dwConnectTime;
-    if (elapsed <= 0x3E8)
+    if (elapsed <= 1000)
     {
       break;
     }
@@ -1823,7 +1823,7 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
         if (socket->m_dwRecvPopMissTime)
         {
           const unsigned int elapsed = now - socket->m_dwRecvPopMissTime;
-          if (elapsed > 0x1388)
+          if (elapsed > 5000)
           {
             PushCloseNode(wSocketIndex);
             m_LogFile[2].Write("Socket(%d): _PopRecvMsg : bMiss = close", wSocketIndex);
@@ -1884,7 +1884,7 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
     }
 
     bool ok = true;
-    if (msgHeader->m_byType[0] <= 0x64u)
+    if (msgHeader->m_byType[0] <= 100)
     {
       ok = m_pNetwork->DataAnalysis(m_nIndex, wSocketIndex, msgHeader, popPoint + 4);
     }
@@ -1926,12 +1926,12 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
 
 bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER *pMsgHeader, char *pMsg)
 {
-  if (pMsgHeader->m_byType[0] == 101)
+  if (pMsgHeader->m_byType[0] == 'e')
   {
     return pMsgHeader->m_byType[1] == 1 || pMsgHeader->m_byType[1] == 2 || pMsgHeader->m_byType[1] == 3;
   }
 
-  if (pMsgHeader->m_byType[0] != 102)
+  if (pMsgHeader->m_byType[0] != 'f')
   {
     return false;
   }
@@ -1950,7 +1950,7 @@ bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER
       _socket *socket = m_NetSocket.GetSocket(dwSocketIndex);
       if (socket)
       {
-        if (memcmp_0(pMsg, socket->m_dwSpeedHackKey, 0x10uLL))
+        if (memcmp_0(pMsg, socket->m_dwSpeedHackKey, 16uLL))
         {
           m_LogHack.Write("SH: %s (key)", socket->m_szID);
           PushCloseNode(dwSocketIndex);
@@ -1958,11 +1958,11 @@ bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER
         }
 
         const DWORD elapsed = timeGetTime() - socket->m_dwSendSpeedHackTime;
-        if (elapsed < 0x1388)
+        if (elapsed < 5000)
         {
           if (++socket->m_bySpeedHackContCount > 5u)
           {
-            if (elapsed >= 0x125C)
+            if (elapsed >= 4700)
             {
               m_LogHack.Write("SH: %s (T:%d) O", socket->m_szID, elapsed);
             }
@@ -1974,7 +1974,7 @@ bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER
             return true;
           }
 
-          if (elapsed < 0x1194)
+          if (elapsed < 4500)
           {
             m_LogHack.Write("SH %s (T:%d) XX", socket->m_szID, elapsed);
             PushCloseNode(dwSocketIndex);
@@ -2072,7 +2072,7 @@ void CNetProcess::_ForceCloseLoop()
   {
     _FORCE_CLOSE::__FD_NODE *node = &m_FC.m_pFDData[outIndex[0]];
     const unsigned int elapsed = m_dwCurTime - node->dwEventCreateTime;
-    if (elapsed <= 0x1388)
+    if (elapsed <= 5000)
     {
       break;
     }
@@ -2093,7 +2093,7 @@ void CNetProcess::_CheckSend(unsigned __int16 wSocketIndex)
   if (socket->m_bAccept)
   {
     const unsigned int elapsed = m_dwCurTime - socket->m_dwLastSendTime;
-    if (elapsed > 0x9C4)
+    if (elapsed > 2500)
     {
       const unsigned __int16 nLen = static_cast<unsigned __int16>(sQry.size());
       LoadSendMsg(wSocketIndex, sbyQryType, &sQry.sDum, nLen);
@@ -2137,7 +2137,7 @@ void CNetProcess::_CkeckKeyCertifyDeley()
     if (socket->m_bAccept && !socket->m_bEnterCheck)
     {
       const unsigned int elapsed = now - socket->m_dwConnectTime;
-      if (elapsed >= 0x1D4C0)
+      if (elapsed >= 120000)
       {
         m_pNetwork->ExpulsionSocket(m_nIndex, dwIndex, 2, nullptr);
       }
@@ -2210,7 +2210,7 @@ void CNetProcess::_ResponSpeedHack()
     if (socket->m_dwResponSpeedHackTime)
     {
       const unsigned int elapsed = now - socket->m_dwResponSpeedHackTime;
-      if (elapsed > 0x1388)
+      if (elapsed > 5000)
       {
         _check_speed_hack_ans ans{};
         unsigned int *key = CalcCodeKey(socket->m_dwSpeedHackKey);
@@ -2242,7 +2242,7 @@ void CNetProcess::_SendSpeedHackCheckMsg(unsigned int n)
   char msg[16]{};
   memcpy_0(msg, code, sizeof(msg));
   unsigned __int8 type[2]{102, 2};
-  LoadSendMsg(n, type, msg, 0x10u);
+  LoadSendMsg(n, type, msg, 16);
   socket->m_dwSendSpeedHackTime = timeGetTime();
   ++socket->m_dwSpeedHackCount;
 }
@@ -2255,7 +2255,7 @@ void CNetProcess::AcceptThread(void *pv)
 
   while (param->m_bStart)
   {
-    const DWORD waitResult = WSAWaitForMultipleEvents(1u, events, 0, 0xFFFFFFFF, 0);
+    const DWORD waitResult = WSAWaitForMultipleEvents(1u, events, 0, -1, 0);
     if (!waitResult)
     {
       WSANETWORKEVENTS networkEvents{};
@@ -2288,12 +2288,12 @@ void CNetProcess::NetEventThread(void *pv)
 
   while (param->m_bStart)
   {
-    const DWORD waitResult = WSAWaitForMultipleEvents(eventCount, events, 0, 0xFFFFFFFF, 0);
-    if (waitResult == 0xFFFFFFFF)
+    const DWORD waitResult = WSAWaitForMultipleEvents(eventCount, events, 0, -1, 0);
+    if (waitResult == -1)
     {
       ResetEvent(*(events - 1));
     }
-    else if (waitResult < 0x40)
+    else if (waitResult < 64)
     {
       const unsigned int socketIndex = (threadIndex << 6) + waitResult;
       WSANETWORKEVENTS networkEvents{};
@@ -2322,7 +2322,7 @@ void CNetProcess::NetEventThread(void *pv)
     }
   }
 
-  _endthreadex(0x16u);
+  _endthreadex(22);
 }
 
 void CNetProcess::RecvThread(void *pv)
@@ -2414,7 +2414,7 @@ void CNetProcess::SendThread(void *pv)
       if (!socket->m_bSendable)
       {
         const unsigned int elapsed = now - socket->m_dwSendBlockTime;
-        if (elapsed <= 0x3E8)
+        if (elapsed <= 1000)
         {
           continue;
         }
@@ -2422,7 +2422,7 @@ void CNetProcess::SendThread(void *pv)
       }
 
       process->_SendLoop(dwIndex);
-      if (!(dwIndex % 0x64))
+      if (!(dwIndex % 100))
       {
         Sleep(0);
       }
@@ -2457,7 +2457,7 @@ void CNetProcess::ConnectThread(void *pv)
         process->m_listAnsyncConnectComplete.PushNode_Back(outIndex[0]);
       }
     }
-    Sleep(0xAu);
+    Sleep(10);
   }
 
   _endthreadex(0);

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMonster.h"
 #include "ObjectCreateSetData.h"
@@ -1293,7 +1293,7 @@ bool CMonster::ConvertTargetPlayer(CPlayer *pTar)
     CheckEventEmotionPresentation(7u, pTar);
     m_AI.SendExternMsg(0, pTar, 1);
     SetAttackTarget(pTar);
-    m_AggroMgr.ShortRankDelay(0xBB8u);
+    m_AggroMgr.ShortRankDelay(3000);
   }
   return true;
 }
@@ -1316,7 +1316,7 @@ bool CMonster::FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond)
     CheckEventEmotionPresentation(7u, pkTarget);
     m_AI.SendExternMsg(0, pkTarget, 1);
     SetAttackTarget(pkTarget);
-    m_AggroMgr.ShortRankDelay(0x1388u);
+    m_AggroMgr.ShortRankDelay(5000);
   }
 
   return true;
@@ -2571,7 +2571,7 @@ char CMonster::_LootItem_Qst(CPlayer *pOwner)
   {
     _event_loot_item *loot = &m_eventItem[j];
     unsigned int durPoint = GetItemDurPoint(loot->byItemTable, m_eventItem[j].wItemIndex);
-    unsigned int durValue = 0xFFFFFFF;
+    unsigned int durValue = 268435455;
     const unsigned __int8 itemKind = GetItemKindCode(loot->byItemTable);
     if (itemKind)
     {
@@ -2754,7 +2754,7 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
           {
             monsterDropRate = 1;
           }
-          lootRate = monsterDropRate * (lootRate / 0x64);
+          lootRate = monsterDropRate * (lootRate / 100);
         }
 
         if (isLootFree || randValue < lootRate)

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "../CPlayer.h"
 #include "../DB_LOAD_AUTOMINE_MACHINE.h"
@@ -791,7 +791,7 @@ struct _gm_msg_gmcall_list_response_zocl
   }
 };
 #pragma pack(pop)
-static_assert(sizeof(_gm_msg_gmcall_list_response_zocl) == 0xE2, "gm call list packet size mismatch");
+static_assert(sizeof(_gm_msg_gmcall_list_response_zocl) == 226, "gm call list packet size mismatch");
 
 // moved from ZoneServer-GU.h (4975)
 struct _gm_msg_gmcall_response_zocl

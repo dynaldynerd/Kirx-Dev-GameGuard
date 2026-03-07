@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CItemBox.h"
 
@@ -43,7 +43,7 @@ CItemBox::CItemBox()
     m_Item(),
     m_bHide(false)
 {
-  m_szThrowerItemHistoryFileName = new (std::nothrow) char[0x40];
+  m_szThrowerItemHistoryFileName = new (std::nothrow) char[64];
 }
 
 CItemBox::~CItemBox()
@@ -66,7 +66,7 @@ void CItemBox::Init(_object_id *pID)
   std::memset(m_szThrowerID, 0, sizeof(m_szThrowerID));
   if (m_szThrowerItemHistoryFileName != nullptr)
   {
-    std::memset(m_szThrowerItemHistoryFileName, 0, 0x40);
+    std::memset(m_szThrowerItemHistoryFileName, 0, 64);
   }
   m_byCreateCode = static_cast<unsigned __int8>(-1);
   m_bCompDgr = false;
@@ -220,7 +220,7 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
       CPlayer *throwerPlayer = static_cast<CPlayer *>(pParam->pThrower);
       const char *charNameW = throwerPlayer->m_Param.GetCharNameW();
       strcpy_0(m_wszThrowerName, charNameW);
-      W2M(m_wszThrowerName, m_aszThrowerName, 0x11u);
+      W2M(m_wszThrowerName, m_aszThrowerName, 17);
       m_dwThrowerCharSerial = throwerPlayer->m_Param.GetCharSerial();
       if (throwerPlayer->m_pUserDB)
       {
@@ -323,9 +323,9 @@ void CItemBox::SendMsg_Create()
   unsigned __int8 pbyType[2] = {3, 20};
   if (m_bHide)
   {
-    if (m_wOwnerIndex != 0xFFFF)
+    if (m_wOwnerIndex != 65535)
     {
-      g_Network.m_pProcess[0]->LoadSendMsg(m_wOwnerIndex, pbyType, reinterpret_cast<char *>(&msg), 0x19u);
+      g_Network.m_pProcess[0]->LoadSendMsg(m_wOwnerIndex, pbyType, reinterpret_cast<char *>(&msg), 25);
     }
   }
   else
@@ -377,7 +377,7 @@ void CItemBox::SendMsg_FixPosition(unsigned int n)
   FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 pbyType[2] = {4, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&msg), 0x12u);
+  g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&msg), 18);
 }
 
 void CItemBox::Loop()

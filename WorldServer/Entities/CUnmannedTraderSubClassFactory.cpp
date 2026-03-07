@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderSubClassFactory.h"
 #include "CUnmannedTraderSubClassInfoCode.h"
@@ -9,17 +9,17 @@
 CUnmannedTraderSubClassFactory::CUnmannedTraderSubClassFactory()
   : m_vecTable()
 {
-  CUnmannedTraderSubClassInfoDefault *defaultInfo = new CUnmannedTraderSubClassInfoDefault(0xFFFFFFFF);
+  CUnmannedTraderSubClassInfoDefault *defaultInfo = new CUnmannedTraderSubClassInfoDefault(-1);
   Regist(defaultInfo);
 
-  CUnmannedTraderSubClassInfoLevel *levelInfo = new CUnmannedTraderSubClassInfoLevel(0xFFFFFFFF);
+  CUnmannedTraderSubClassInfoLevel *levelInfo = new CUnmannedTraderSubClassInfoLevel(-1);
   Regist(levelInfo);
 
-  CUnmannedTraderSubClassInfoCode *codeInfo = new CUnmannedTraderSubClassInfoCode(0xFFFFFFFF);
+  CUnmannedTraderSubClassInfoCode *codeInfo = new CUnmannedTraderSubClassInfoCode(-1);
   Regist(codeInfo);
 
   CUnmannedTraderSubClassInfoForceLiverGrade *forceInfo =
-    new CUnmannedTraderSubClassInfoForceLiverGrade(0xFFFFFFFF);
+    new CUnmannedTraderSubClassInfoForceLiverGrade(-1);
   Regist(forceInfo);
 }
 

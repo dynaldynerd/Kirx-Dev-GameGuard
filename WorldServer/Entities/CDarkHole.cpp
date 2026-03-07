@@ -60,7 +60,7 @@ char CDarkHole::Create(_darkhole_create_setdata *pParam)
   m_dwOpenerSerial = pParam->pOpener->m_dwObjSerial;
   const char *openerName = pParam->pOpener->m_Param.GetCharNameW();
   strcpy_0(m_wszOpenerName, openerName);
-  W2M(m_wszOpenerName, m_aszOpenerName, 0x11u);
+  W2M(m_wszOpenerName, m_aszOpenerName, 17u);
 
   const DWORD now = timeGetTime();
   m_dwNextCloseTime = now + 15000;

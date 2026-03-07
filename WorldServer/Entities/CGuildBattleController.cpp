@@ -293,7 +293,7 @@ unsigned __int8 CGuildBattleController::IsAvailableSuggest(
   {
     return 118;
   }
-  if (10 * (dwNumber + 1) > 0x32)
+  if (10 * (dwNumber + 1) > 50)
   {
     return 126;
   }

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMonsterSkillPool.h"
 
@@ -49,7 +49,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
     return 0;
   }
 
-  if (spGroup->m_wCount > 0xF)
+  if (spGroup->m_wCount > 15)
   {
     return 0;
   }

@@ -49,7 +49,7 @@ void CLuaEventNode::SetCallFun(const char *strCallFunName, unsigned long dwTime)
   }
 
   unsigned int termTime = static_cast<unsigned int>(dwTime);
-  if (dwTime < 0x1388u)
+  if (dwTime < 5000u)
   {
     termTime = 5000;
   }

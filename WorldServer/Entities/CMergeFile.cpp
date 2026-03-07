@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMergeFile.h"
 #include "WorldServerUtil.h"
@@ -10,17 +10,17 @@ static unsigned int GetOneNameFromPath(char *outName, char *path, unsigned int *
   unsigned int nameLength = 0;
   unsigned int pathIndex = 0;
   char *pathCursor = path;
-  for (pathIndex = 0; pathIndex < 0x80; ++pathIndex)
+  for (pathIndex = 0; pathIndex < 128; ++pathIndex)
   {
     if (*pathCursor != '\\')
       break;
     ++pathCursor;
   }
-  if (pathIndex < 0x80)
+  if (pathIndex < 128)
   {
     char *nameCursor = outName;
     char *componentCursor = &path[pathIndex];
-    while (pathIndex < 0x80)
+    while (pathIndex < 128)
     {
       const char currentCharacter = *componentCursor;
       if (!currentCharacter || currentCharacter == '\\')

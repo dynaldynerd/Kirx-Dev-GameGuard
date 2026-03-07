@@ -146,6 +146,7 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "trans_gm_msg_inform_zocl.h"
 
 #include <mmsystem.h>
+#include <limits>
 #include "CMainThreadLocalStructs.h"
 
 namespace
@@ -153,7 +154,7 @@ namespace
 unsigned int g_dwTimeAliveMonNum = 0;
 unsigned int g_dwMaxDeadMonNum = 0;
 constexpr const char kCandidateMgrInitFailFmt[] = "CandidateMgr::Instance()->Initialize(%d) Fail!";
-constexpr DWORD kHalfDays = 0x02932E00u;
+constexpr DWORD kHalfDays = 43200000;
 }
 
 unsigned int TimeLimitMgr::m_dwCnt;
@@ -244,7 +245,7 @@ void _WAIT_ENTER_ACCOUNT::SetUILock(
 
   if (szAccountPW)
   {
-    M2W(szAccountPW, wszTran, 0xDu);
+    M2W(szAccountPW, wszTran, 13);
     strcpy_s(m_szAccount_PW, sizeof(m_szAccount_PW), wszTran);
   }
   else
@@ -266,7 +267,7 @@ void _WAIT_ENTER_ACCOUNT::SetUILock(
 
 _server_rate_realtime_load::_server_rate_realtime_load()
 {
-  Init(0x2710u);
+  Init(10000);
 }
 
 void _server_rate_realtime_load::Init(unsigned int dwReadTerm)
@@ -286,7 +287,7 @@ void CMainThread::Release()
 {
   m_bRuleThread = false;
   m_bDQSThread = false;
-  Sleep(0xBB8u);
+  Sleep(3000);
 
   if (m_pWorldDB)
   {
@@ -387,7 +388,7 @@ void CMainThread::gm_ServerClose()
   if (!m_bServerClosing)
   {
     m_bServerClosing = true;
-    m_tmForceUserExit.BeginTimer(0x32u);
+    m_tmForceUserExit.BeginTimer(50);
     m_nForceExitSocketIndexOffset = 0;
   }
 }
@@ -447,7 +448,7 @@ void CMainThread::gm_ObjectSelect()
     CGameObject::s_pSelectObject = selected;
     if (g_pDoc->m_InfoSheet.GetActiveIndex() == 3)
     {
-      m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+      m_GameMsg.PackingMsg(1006, 0, 0, 0);
     }
   }
 }
@@ -496,7 +497,14 @@ void CMainThread::gm_PreCloseAnn()
   {
     if (g_Player[index].m_bLive)
     {
-      g_Player[index].SendData_ChatTrans(0, 0xFFFFFFFFu, 0xFFu, 0, buffer, 0xFFu, nullptr);
+      g_Player[index].SendData_ChatTrans(
+        0,
+        -1,
+        static_cast<unsigned __int8>(-1),
+        0,
+        buffer,
+        static_cast<unsigned __int8>(-1),
+        nullptr);
     }
   }
 }
@@ -511,7 +519,7 @@ void CMainThread::gm_UserExit()
 
   if (selectedObject->m_ObjID.m_byID == 1)
   {
-    reinterpret_cast<CMonster *>(selectedObject)->Destroy(1u, nullptr);
+    reinterpret_cast<CMonster *>(selectedObject)->Destroy(1, nullptr);
   }
   else if (selectedObject->m_ObjID.m_byID == 0 && selectedObject->m_bLive)
   {
@@ -544,14 +552,14 @@ bool CMainThread::gm_MonsterInit(CMonster *pExt)
     {
       if (g_Monster[j].m_bLive && pExt != &g_Monster[j])
       {
-        g_Monster[j].Destroy(1u, nullptr);
+        g_Monster[j].Destroy(1, nullptr);
       }
     }
   }
 
   if (g_pDoc->m_InfoSheet.GetActiveIndex() == 3)
   {
-    g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
   }
 
   return g_MapOper.m_bReSpawnMonster;
@@ -565,7 +573,7 @@ char CMainThread::check_item_code_index()
 void CMainThread::CheckServiceableTime()
 {
   const DWORD currentTick = timeGetTime();
-  if ((0xFFFFFFFFu - currentTick) < kHalfDays)
+  if (((std::numeric_limits<DWORD>::max)() - currentTick) < kHalfDays)
   {
     m_bCheckOverTickCount = true;
     SerivceSelfStop();
@@ -696,7 +704,14 @@ void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, 
       sprintf(buffer, "Kick - Failed");
     }
 
-    gameMaster->SendData_ChatTrans(0, 0xFFFFFFFFu, 0xFFu, false, buffer, 0xFFu, nullptr);
+    gameMaster->SendData_ChatTrans(
+      0,
+      -1,
+      static_cast<unsigned __int8>(-1),
+      false,
+      buffer,
+      static_cast<unsigned __int8>(-1),
+      nullptr);
   }
 }
 
@@ -706,7 +721,7 @@ void CMainThread::QryCaseAddpvppoint(_DB_QRY_SYN_DATA *pData)
   CPlayer *player = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, query->dwSerial);
   if (player && player->m_bLoad)
   {
-    player->AlterPvPPoint(static_cast<double>(static_cast<int>(query->dwPoint)), logoff_inc, 0xFFFFFFFFu);
+    player->AlterPvPPoint(static_cast<double>(static_cast<int>(query->dwPoint)), logoff_inc, -1);
   }
 }
 
@@ -854,7 +869,7 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
 unsigned int CMainThread::CreateDataResetToken(_SYSTEMTIME *tm)
 {
   char buffer[40]{};
-  sprintf_s(buffer, 0x14u, "%04d%02d%0d", tm->wYear, tm->wMonth, tm->wDay);
+  sprintf_s(buffer, 20, "%04d%02d%0d", tm->wYear, tm->wMonth, tm->wDay);
   return static_cast<unsigned int>(atoi(buffer));
 }
 
@@ -872,7 +887,7 @@ void CMainThread::PushResetServerToken()
   queryData.wProcType = processor->GetProcessorType();
 
   const int querySize = static_cast<int>(sizeof(queryData));
-  PushDQSData(0xFFFFFFFF, nullptr, 0x98u, reinterpret_cast<char *>(&queryData), querySize);
+  PushDQSData(-1, nullptr, 152, reinterpret_cast<char *>(&queryData), querySize);
 }
 
 bool CMainThread::Push_ChargeItem(
@@ -902,7 +917,7 @@ bool CMainThread::Push_ChargeItem(
   }
 
   const int size = static_cast<int>(qry.size());
-  return PushDQSData(0xFFFFFFFF, nullptr, 0xEu, reinterpret_cast<char *>(&qry), size) != nullptr;
+  return PushDQSData(-1, nullptr, 14, reinterpret_cast<char *>(&qry), size) != nullptr;
 }
 
 char CMainThread::ms_szClientVerCheck[33];
@@ -1236,16 +1251,16 @@ void TimeLimitMgr::Chack_Time()
       continue;
     }
 
-    if (m_lstTLStaus[playerIndex].m_dwFatigue >= 0x63)
+    if (m_lstTLStaus[playerIndex].m_dwFatigue >= 99)
     {
-      if (m_lstTLStaus[playerIndex].m_dwFatigue < 0x64)
+      if (m_lstTLStaus[playerIndex].m_dwFatigue < 100)
       {
         ++m_lstTLStaus[playerIndex].m_dwFatigue;
       }
 
       player->m_pUserDB->Update_UserFatigue(m_lstTLStaus[playerIndex].m_dwFatigue);
       m_lstTLStaus[playerIndex].m_byTL_Status = 99;
-      player->m_pUserDB->Update_UserTLStatus(0x63u);
+      player->m_pUserDB->Update_UserTLStatus(99);
       m_lstTLStaus[playerIndex].m_dPercent = 0.0;
     }
     else
@@ -1385,7 +1400,7 @@ void TimeLimitMgr::InsertPlayerStatus(
 __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 0xFu, "%d", dwLastConnTime);
+  sprintf_s(buffer, 15, "%d", dwLastConnTime);
   const int len = static_cast<int>(strlen_0(buffer));
 
   tm tmLast{};
@@ -1406,30 +1421,30 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 8], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 8], 2);
   tmLast.tm_mon = atoi(temp) - 1;
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 6], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 6], 2);
   tmLast.tm_mday = atoi(temp);
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 4], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 4], 2);
   tmLast.tm_hour = atoi(temp);
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 2], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 2], 2);
   tmLast.tm_min = atoi(temp);
 
-  memset_0(temp, 0, 3u);
+  memset_0(temp, 0, 3);
   return SumMinuteBetweenSec(&tmLast);
 }
 
 __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 0xFu, "%d", dwLastConnTime);
+  sprintf_s(buffer, 15, "%d", dwLastConnTime);
   const int len = static_cast<int>(strlen_0(buffer));
 
   tm tmLast{};
@@ -1450,23 +1465,23 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 8], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 8], 2);
   tmLast.tm_mon = atoi(temp) - 1;
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 6], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 6], 2);
   tmLast.tm_mday = atoi(temp);
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 4], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 4], 2);
   tmLast.tm_hour = atoi(temp);
 
-  memset_0(temp, 0, 3u);
-  memcpy_0(temp, &buffer[len - 2], 2u);
+  memset_0(temp, 0, 3);
+  memcpy_0(temp, &buffer[len - 2], 2);
   tmLast.tm_min = atoi(temp);
 
-  memset_0(temp, 0, 3u);
+  memset_0(temp, 0, 3);
   const unsigned int minutes = static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
   if (minutes)
   {
@@ -1552,9 +1567,9 @@ void TimeLimitMgr::ReSetPercent(unsigned __int16 wIndex)
   CPlayer *player = &g_Player[wIndex];
   if (player && player->m_bOper && m_lstTLStaus[wIndex].m_bUse && m_lstTLStaus[wIndex].m_bAgeLimit)
   {
-    if (m_lstTLStaus[wIndex].m_dwFatigue > 0x63)
+    if (m_lstTLStaus[wIndex].m_dwFatigue > 99)
     {
-      if (m_lstTLStaus[wIndex].m_dwFatigue > 0x64)
+      if (m_lstTLStaus[wIndex].m_dwFatigue > 100)
       {
         m_lstTLStaus[wIndex].m_dwFatigue = 100;
       }
@@ -1643,12 +1658,12 @@ bool CMainThread::Init()
   m_bWorldService = false;
   m_bCheckOverTickCount = false;
 
-  m_tmServerState.BeginTimer(0x2710);
-  m_tmrStateMsgGotoWeb.BeginTimer(0xEA60);
+  m_tmServerState.BeginTimer(10000);
+  m_tmrStateMsgGotoWeb.BeginTimer(60000);
   m_dwCheckAccountOldTick = GetLoopTime();
 
   const DWORD nowTick = GetTickCount();
-  if ((0xFFFFFFFFu - nowTick) < 0x2932E000u)
+  if (((std::numeric_limits<DWORD>::max)() - nowTick) < 691200000)
   {
     MyMessageBox("Start Error", "Must Reboot OS To Service");
     return false;
@@ -1656,21 +1671,21 @@ bool CMainThread::Init()
 
   CreateDirectoryA("..\\ZoneServerLog\\", nullptr);
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog", nullptr);
-  clear_file("..\\ZoneServerLog\\Systemlog", 0xF);
+  clear_file("..\\ZoneServerLog\\Systemlog", 15);
   CreateDirectoryA("..\\ZoneServerLog\\ServiceLog", nullptr);
-  clear_file("..\\ZoneServerLog\\ServiceLog", 0xF);
+  clear_file("..\\ZoneServerLog\\ServiceLog", 15);
   CreateDirectoryA("..\\ZoneServerLog\\DBLog", nullptr);
-  clear_file("..\\ZoneServerLog\\DBLog", 0xF);
+  clear_file("..\\ZoneServerLog\\DBLog", 15);
   CreateDirectoryA("..\\ZoneServerLog\\CharLog", nullptr);
-  clear_file("..\\ZoneServerLog\\CharLog", 0xF);
+  clear_file("..\\ZoneServerLog\\CharLog", 15);
   CreateDirectoryA("..\\SystemSave", nullptr);
-  clear_file("..\\SystemSave", 0xF);
+  clear_file("..\\SystemSave", 15);
   CreateDirectoryA("..\\ZoneServerLog\\BillingLog", nullptr);
-  clear_file("..\\ZoneServerLog\\BillingLog", 0xF);
+  clear_file("..\\ZoneServerLog\\BillingLog", 15);
   CreateDirectoryA("..\\ZoneServerLog\\NetLog", nullptr);
-  clear_file("..\\ZoneServerLog\\NetLog", 0xF);
+  clear_file("..\\ZoneServerLog\\NetLog", 15);
   CreateDirectoryA("..\\ZoneServerLog\\ServerExitLog", nullptr);
-  clear_file("..\\ZoneServerLog\\ServerExitLog", 0xF);
+  clear_file("..\\ZoneServerLog\\ServerExitLog", 15);
 
   const unsigned int korLocalTime = GetKorLocalTime();
   _CrtSetReportHook(MyCrtDebugReportHook);
@@ -1716,31 +1731,31 @@ bool CMainThread::Init()
     "..\\ZoneServerLog\\SystemLog\\HacShiled",
     "HS_System",
     1,
-    0x36EE80u);
+    3600000);
   CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_APEX_SYSTEM_LOG,
     "..\\ZoneServerLog\\SystemLog\\Apex",
     "Apex_System",
     1,
-    0x36EE80u);
+    3600000);
   CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_FIREGUARD_DETECT_LOG,
     "..\\ZoneServerLog\\SystemLog\\fireguard",
     "CCRFG_SystemLog",
     1,
-    0x36EE80u);
+    3600000);
   CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_HONOR_GUILD_LOG,
     "..\\ZoneServerLog\\SystemLog\\HonorGuild",
     "HonorGuild_SysLog",
     1,
-    0x5265C00u);
+    86400000);
   CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_BUY_CASH_ITEM_LOG,
     "..\\ZoneServerLog\\ServiceLog\\PartiallyPaid",
     "BuyCashItemHistory",
     1,
-    0x36EE80u);
+    3600000);
 
   m_logLoadingError.Write("Server Load Start!!");
 
@@ -1953,10 +1968,10 @@ bool CMainThread::Init()
 
   m_GuildCreateEventInfo.Init();
   m_GameMsg.Init(100);
-  m_tmrCheckAvator.BeginTimer(0x3E8);
-  m_tmrCheckLoop.BeginTimer(0x3E8);
-  m_tmrAccountPing.BeginTimer(0x3E8);
-  m_tmrCheckRadarDelay.BeginTimer(0x2710);
+  m_tmrCheckAvator.BeginTimer(1000);
+  m_tmrCheckLoop.BeginTimer(1000);
+  m_tmrAccountPing.BeginTimer(1000);
+  m_tmrCheckRadarDelay.BeginTimer(10000);
 
   if (!CLuaScriptMgr::Instance()->InitSDM())
   {
@@ -2006,7 +2021,7 @@ bool CMainThread::Init()
   }
   if (g_pFrame != nullptr)
   {
-    g_pFrame->SendMessage(0x000C, 0, 0);
+    g_pFrame->SendMessage(12, 0, 0);
   }
 
   MakeSystemTower();
@@ -2328,29 +2343,29 @@ bool CMainThread::DataFileInit()
     return false;
   }
 
-  if (!m_tblClass.ReadRecord(".\\Script\\Class.dat", 0x8D0, szErrCode))
+  if (!m_tblClass.ReadRecord(".\\Script\\Class.dat", 2256, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblGrade.ReadRecord(".\\Script\\Grade.dat", 0x4C, szErrCode))
+  if (!m_tblGrade.ReadRecord(".\\Script\\Grade.dat", 76, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblPlayer.ReadRecord(".\\Script\\PlayerCharacter.dat", 0xA8, szErrCode))
+  if (!m_tblPlayer.ReadRecord(".\\Script\\PlayerCharacter.dat", 168, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblMonster.ReadRecord(".\\Script\\MonsterCharacter.dat", 0x9B4, szErrCode))
+  if (!m_tblMonster.ReadRecord(".\\Script\\MonsterCharacter.dat", 2484, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
 
   CRecordData mobMessage;
-  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", 0x44C48, szErrCode))
+  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", 281672, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2372,17 +2387,17 @@ bool CMainThread::DataFileInit()
     }
   }
 
-  if (!m_tblNPC.ReadRecord(".\\Script\\NPCharacter.dat", 0x1E8, szErrCode))
+  if (!m_tblNPC.ReadRecord(".\\Script\\NPCharacter.dat", 488, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblAnimus.ReadRecord(".\\Script\\AnimusItem.dat", 0x188, szErrCode))
+  if (!m_tblAnimus.ReadRecord(".\\Script\\AnimusItem.dat", 392, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblExp.ReadRecord(".\\Script\\Exp.dat", 0x104, szErrCode))
+  if (!m_tblExp.ReadRecord(".\\Script\\Exp.dat", 260, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2401,17 +2416,17 @@ bool CMainThread::DataFileInit()
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemMakeData.ReadRecord(".\\Script\\ItemMakeData.dat", 0x22C, szErrCode))
+  if (!m_tblItemMakeData.ReadRecord(".\\Script\\ItemMakeData.dat", 556, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemCombineData.ReadRecord(".\\Script\\ItemCombine.dat", 0xD0, szErrCode))
+  if (!m_tblItemCombineData.ReadRecord(".\\Script\\ItemCombine.dat", 208, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemExchangeData.ReadRecord(".\\Script\\BoxItemOut.dat", 0x414, szErrCode))
+  if (!m_tblItemExchangeData.ReadRecord(".\\Script\\BoxItemOut.dat", 1044, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2433,29 +2448,29 @@ bool CMainThread::DataFileInit()
   };
   for (int i = 0; i < 6; ++i)
   {
-    if (!m_tblUnitPart[i].ReadRecord(unitPartFiles[i], 0x204, szErrCode))
+    if (!m_tblUnitPart[i].ReadRecord(unitPartFiles[i], 516, szErrCode))
     {
       MyMessageBox("DatafileInit", szErrCode);
       return false;
     }
   }
 
-  if (!m_tblUnitBullet.ReadRecord(".\\script\\UnitBullet.dat", 0x164, szErrCode))
+  if (!m_tblUnitBullet.ReadRecord(".\\script\\UnitBullet.dat", 356, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblUnitFrame.ReadRecord(".\\script\\UnitFrame.dat", 0x288, szErrCode))
+  if (!m_tblUnitFrame.ReadRecord(".\\script\\UnitFrame.dat", 648, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblEditData.ReadRecord(".\\script\\EditData.dat", 0x83C, szErrCode))
+  if (!m_tblEditData.ReadRecord(".\\script\\EditData.dat", 2108, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_MonsterBaseSPData.ReadRecord(".\\script\\MonsterCharacterAI.dat", 0xB0, szErrCode))
+  if (!m_MonsterBaseSPData.ReadRecord(".\\script\\MonsterCharacterAI.dat", 176, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2559,7 +2574,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData itemNameTables[37];
   for (int j = 0; j < 37; ++j)
   {
-    if (!itemNameTables[j].ReadRecord(itemNameFiles[j], 0x304, errMsg))
+    if (!itemNameTables[j].ReadRecord(itemNameFiles[j], 772, errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -2714,7 +2729,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-      strcpy_s(destination, 0x40, name);
+      strcpy_s(destination, 64, name);
     }
   }
 
@@ -2729,7 +2744,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData effectNameTables[4];
   for (int j = 0; j < 4; ++j)
   {
-    if (!effectNameTables[j].ReadRecord(effectNameFiles[j], 0x304, errMsg))
+    if (!effectNameTables[j].ReadRecord(effectNameFiles[j], 772, errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -2770,7 +2785,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-      strcpy_s(record->m_strKorName, 0x40, name);
+      strcpy_s(record->m_strKorName, 64, name);
     }
   }
 
@@ -2787,7 +2802,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData classNames;
-  if (!classNames.ReadRecord(".\\Script\\Class_str.dat", 0x304, errMsg))
+  if (!classNames.ReadRecord(".\\Script\\Class_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Class Name Data Load Error");
     return false;
@@ -2812,7 +2827,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strKorName, 0x40, name);
+    strcpy_s(record->m_strKorName, 64, name);
   }
 
   if (!m_tblPlayer.IsTableOpen())
@@ -2822,7 +2837,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData playerNames;
-  if (!playerNames.ReadRecord(".\\Script\\PlayerCharacter_str.dat", 0x304, errMsg))
+  if (!playerNames.ReadRecord(".\\Script\\PlayerCharacter_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Player Character Name Data Load Error");
     return false;
@@ -2847,7 +2862,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strName, 0x40, name);
+    strcpy_s(record->m_strName, 64, name);
   }
 
   if (!m_tblMonster.IsTableOpen())
@@ -2857,7 +2872,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData monsterNames;
-  if (!monsterNames.ReadRecord(".\\Script\\MonsterCharacter_str.dat", 0x304, errMsg))
+  if (!monsterNames.ReadRecord(".\\Script\\MonsterCharacter_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Monster Character Name Data Load Error");
     return false;
@@ -2882,7 +2897,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strName, 0x40, name);
+    strcpy_s(record->m_strName, 64, name);
   }
 
   if (!m_tblNPC.IsTableOpen())
@@ -2892,7 +2907,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData npcNames;
-  if (!npcNames.ReadRecord(".\\Script\\NPCharacter_str.dat", 0x304, errMsg))
+  if (!npcNames.ReadRecord(".\\Script\\NPCharacter_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "NPC Name Data Load Error");
     return false;
@@ -2917,7 +2932,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strName, 0x40, name);
+    strcpy_s(record->m_strName, 64, name);
   }
 
   if (!m_tblAnimus.IsTableOpen())
@@ -2927,7 +2942,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData animusNames;
-  if (!animusNames.ReadRecord(".\\Script\\AnimusItem_str.dat", 0x304, errMsg))
+  if (!animusNames.ReadRecord(".\\Script\\AnimusItem_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Animus Item Name Data Load Error");
     return false;
@@ -2952,7 +2967,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strName, 0x40, name);
+    strcpy_s(record->m_strName, 64, name);
   }
 
   const char *unitPartFiles[6] =
@@ -2968,7 +2983,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData unitPartNames[6];
   for (int j = 0; j < 6; ++j)
   {
-    if (!unitPartNames[j].ReadRecord(unitPartFiles[j], 0x304, errMsg))
+    if (!unitPartNames[j].ReadRecord(unitPartFiles[j], 772, errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -3011,7 +3026,7 @@ bool CMainThread::SetGlobalDataName()
       }
 
       const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-      strcpy_s(record->m_strName, 0x40, name);
+      strcpy_s(record->m_strName, 64, name);
     }
   }
 
@@ -3022,7 +3037,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData unitBulletNames;
-  if (!unitBulletNames.ReadRecord(".\\Script\\UnitBullet_str.dat", 0x304, errMsg))
+  if (!unitBulletNames.ReadRecord(".\\Script\\UnitBullet_str.dat", 772, errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Unit Bullet Name Data Load Error");
     return false;
@@ -3047,7 +3062,7 @@ bool CMainThread::SetGlobalDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strName, 0x40, name);
+    strcpy_s(record->m_strName, 64, name);
   }
 
   return true;
@@ -3124,7 +3139,7 @@ bool CMainThread::check_loaded_data()
       break;
     }
     _force_fld *record = reinterpret_cast<_force_fld *>(m_tblEffectData[1].GetRecord(n));
-    if (record->m_nMastIndex >= 0x18u)
+    if (record->m_nMastIndex >= 24)
     {
       dataError = true;
       MyMessageBox("date error", "force mastery error( %s : %d)", record->m_strCode, record->m_nMastIndex);
@@ -3339,7 +3354,7 @@ bool CMainThread::check_loaded_data()
       break;
     }
     _BulletItem_fld *record = reinterpret_cast<_BulletItem_fld *>(m_tblItemData[10].GetRecord(n));
-    if (record->m_nDurUnit > 0xFFFF || record->m_nDurUnit < 1)
+    if (record->m_nDurUnit > (std::numeric_limits<unsigned __int16>::max)() || record->m_nDurUnit < 1)
     {
       MyMessageBox("data error", "bullet's duration error(1~65535).., %s : %d", record->m_strCode, record->m_nDurUnit);
       dataError = true;
@@ -3422,7 +3437,7 @@ void CMainThread::gm_MainThreadControl()
 
   if (g_pFrame != nullptr)
   {
-    g_pFrame->SendMessage(0x000C, 0, 0);
+    g_pFrame->SendMessage(12, 0, 0);
   }
 }
 
@@ -3562,8 +3577,8 @@ bool CMainThread::ObjectInit()
   }
 
   CRaceBossMsgController::Instance()->Init();
-  CReturnGateController::Instance()->Init(0x7E);
-  CRecallEffectController::Instance()->Init(0xFD);
+  CReturnGateController::Instance()->Init(126);
+  CRecallEffectController::Instance()->Init(253);
 
   CPlayer::SetStaticMember();
   CAnimus::SetStaticMember();
@@ -3706,7 +3721,7 @@ void CMainThread::MakeSystemTower()
       char keyName[160]{};
       char mapCode[152]{};
       sprintf_s(keyName, sizeof(keyName), "Map%d", iniIndex);
-      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", mapCode, 0x80u, ".\\Script\\SystemGuardTower.ini");
+      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", mapCode, 128, ".\\Script\\SystemGuardTower.ini");
       if (!strcmp_0(mapCode, "NULL"))
       {
         continue;
@@ -3724,7 +3739,7 @@ void CMainThread::MakeSystemTower()
       float towerPosition[3]{};
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_x", iniIndex);
-      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 0x80u, ".\\Script\\SystemGuardTower.ini");
+      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
       if (!strcmp_0(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
@@ -3736,7 +3751,7 @@ void CMainThread::MakeSystemTower()
       towerPosition[0] = static_cast<float>(atof(valueBuffer));
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_y", iniIndex);
-      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 0x80u, ".\\Script\\SystemGuardTower.ini");
+      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
       if (!strcmp_0(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
@@ -3748,7 +3763,7 @@ void CMainThread::MakeSystemTower()
       towerPosition[1] = static_cast<float>(atof(valueBuffer));
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_z", iniIndex);
-      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 0x80u, ".\\Script\\SystemGuardTower.ini");
+      GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
       if (!strcmp_0(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
@@ -3781,7 +3796,7 @@ void CMainThread::MakeSystemTower()
         keyName,
         "NULL",
         recordCode,
-        0x80u,
+        128,
         ".\\Script\\SystemGuardTower.ini");
       if (!strcmp_0(recordCode, "NULL"))
       {
@@ -3815,51 +3830,51 @@ void CMainThread::MakeSystemTower()
 
 void CMainThread::AddPassablePacket()
 {
-  g_Network.SetPassablePacket(0, 4u, 3u);
-  g_Network.SetPassablePacket(0, 4u, 4u);
-  g_Network.SetPassablePacket(0, 4u, 5u);
-  g_Network.SetPassablePacket(0, 4u, 6u);
-  g_Network.SetPassablePacket(0, 4u, 7u);
-  g_Network.SetPassablePacket(0, 4u, 0xB1u);
-  g_Network.SetPassablePacket(0, 4u, 0x12u);
-  g_Network.SetPassablePacket(0, 4u, 0x14u);
-  g_Network.SetPassablePacket(0, 4u, 0x19u);
-  g_Network.SetPassablePacket(0, 4u, 0x1Eu);
-  g_Network.SetPassablePacket(0, 5u, 7u);
-  g_Network.SetPassablePacket(0, 5u, 8u);
-  g_Network.SetPassablePacket(0, 5u, 9u);
-  g_Network.SetPassablePacket(0, 5u, 0xAu);
-  g_Network.SetPassablePacket(0, 5u, 0xBu);
-  g_Network.SetPassablePacket(0, 5u, 0xCu);
-  g_Network.SetPassablePacket(0, 5u, 0xDu);
-  g_Network.SetPassablePacket(0, 5u, 0xEu);
-  g_Network.SetPassablePacket(0, 5u, 0xFu);
-  g_Network.SetPassablePacket(0, 5u, 0x97u);
-  g_Network.SetPassablePacket(0, 5u, 0x98u);
-  g_Network.SetPassablePacket(0, 2u, 0xAu);
-  g_Network.SetPassablePacket(0, 2u, 0xBu);
-  g_Network.SetPassablePacket(0, 2u, 0xBu);
-  g_Network.SetPassablePacket(0, 0xDu, 0x1Du);
-  g_Network.SetPassablePacket(0, 0xEu, 7u);
-  g_Network.SetPassablePacket(0, 0xEu, 8u);
-  g_Network.SetPassablePacket(0, 0xEu, 0x19u);
-  g_Network.SetPassablePacket(0, 0xEu, 0x3Cu);
-  g_Network.SetPassablePacket(0, 0xEu, 0x42u);
-  g_Network.SetPassablePacket(0, 0xEu, 0x37u);
-  g_Network.SetPassablePacket(0, 0xEu, 0x44u);
-  g_Network.SetPassablePacket(0, 0x38u, 6u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x14u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x15u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x16u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x18u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x19u);
-  g_Network.SetPassablePacket(0, 0x10u, 0x19u);
-  g_Network.SetPassablePacket(0, 0x11u, 3u);
-  g_Network.SetPassablePacket(0, 0x11u, 6u);
-  g_Network.SetPassablePacket(0, 0x11u, 9u);
-  g_Network.SetPassablePacket(0, 0x11u, 9u);
-  g_Network.SetPassablePacket(0, 0x11u, 0x11u);
-  g_Network.SetPassablePacket(0, 0x11u, 0x1Au);
+  g_Network.SetPassablePacket(0, 4, 3);
+  g_Network.SetPassablePacket(0, 4, 4);
+  g_Network.SetPassablePacket(0, 4, 5);
+  g_Network.SetPassablePacket(0, 4, 6);
+  g_Network.SetPassablePacket(0, 4, 7);
+  g_Network.SetPassablePacket(0, 4, 177);
+  g_Network.SetPassablePacket(0, 4, 18);
+  g_Network.SetPassablePacket(0, 4, 20);
+  g_Network.SetPassablePacket(0, 4, 25);
+  g_Network.SetPassablePacket(0, 4, 30);
+  g_Network.SetPassablePacket(0, 5, 7);
+  g_Network.SetPassablePacket(0, 5, 8);
+  g_Network.SetPassablePacket(0, 5, 9);
+  g_Network.SetPassablePacket(0, 5, 10);
+  g_Network.SetPassablePacket(0, 5, 11);
+  g_Network.SetPassablePacket(0, 5, 12);
+  g_Network.SetPassablePacket(0, 5, 13);
+  g_Network.SetPassablePacket(0, 5, 14);
+  g_Network.SetPassablePacket(0, 5, 15);
+  g_Network.SetPassablePacket(0, 5, 151);
+  g_Network.SetPassablePacket(0, 5, 152);
+  g_Network.SetPassablePacket(0, 2, 10);
+  g_Network.SetPassablePacket(0, 2, 11);
+  g_Network.SetPassablePacket(0, 2, 11);
+  g_Network.SetPassablePacket(0, 13, 29);
+  g_Network.SetPassablePacket(0, 14, 7);
+  g_Network.SetPassablePacket(0, 14, 8);
+  g_Network.SetPassablePacket(0, 14, 25);
+  g_Network.SetPassablePacket(0, 14, 60);
+  g_Network.SetPassablePacket(0, 14, 66);
+  g_Network.SetPassablePacket(0, 14, 55);
+  g_Network.SetPassablePacket(0, 14, 68);
+  g_Network.SetPassablePacket(0, 56, 6);
+  g_Network.SetPassablePacket(0, 16, 20);
+  g_Network.SetPassablePacket(0, 16, 21);
+  g_Network.SetPassablePacket(0, 16, 22);
+  g_Network.SetPassablePacket(0, 16, 24);
+  g_Network.SetPassablePacket(0, 16, 25);
+  g_Network.SetPassablePacket(0, 16, 25);
+  g_Network.SetPassablePacket(0, 17, 3);
+  g_Network.SetPassablePacket(0, 17, 6);
+  g_Network.SetPassablePacket(0, 17, 9);
+  g_Network.SetPassablePacket(0, 17, 9);
+  g_Network.SetPassablePacket(0, 17, 17);
+  g_Network.SetPassablePacket(0, 17, 26);
 }
 
 void CMainThread::OnRun()
@@ -3910,7 +3925,7 @@ void CMainThread::OnRun()
   AutoMineMachineMng::Instance()->Loop();
 
   const DWORD currentTime = timeGetTime();
-  if (currentTime - g_dwTimeAliveMonNum > 0xEA60)
+  if (currentTime - g_dwTimeAliveMonNum > 60000)
   {
     g_dwTimeAliveMonNum = currentTime;
     unsigned int deadMonsterCount = 0;
@@ -3971,7 +3986,7 @@ void CMainThread::CheckAvatorState()
 
       if (user->m_dwSerial == static_cast<unsigned int>(-1))
       {
-        if (currentTime - user->m_dwOperLobbyTime > 0x1B7740 && !user->m_byUserDgr)
+        if (currentTime - user->m_dwOperLobbyTime > 1800000 && !user->m_byUserDgr)
         {
           g_Network.Close(0, socketIndex, false, nullptr);
         }
@@ -3992,7 +4007,7 @@ void CMainThread::CheckAvatorState()
       if (waitAccount->m_bLoad)
       {
         const unsigned int elapsed = currentTime - waitAccount->m_dwLoadTime;
-        if (elapsed > 0x1D4C0)
+        if (elapsed > 120000)
         {
           waitAccount->Release();
         }
@@ -4016,16 +4031,16 @@ void CMainThread::CheckAccountLineState()
     return;
   }
 
-  _socket *accountSocket = g_Network.GetSocket(1u, 0);
+  _socket *accountSocket = g_Network.GetSocket(1, 0);
   if (!accountSocket->m_bAccept)
   {
     const unsigned int loopTime = GetLoopTime();
-    if (loopTime - m_dwCheckAccountOldTick > 0x2EE0)
+    if (loopTime - m_dwCheckAccountOldTick > 12000)
     {
       m_dwCheckAccountOldTick = loopTime;
       in_addr accountAddress{};
       accountAddress.S_un.S_addr = m_dwAccountIP;
-      g_Network.Connect(1u, 0, accountAddress, 0x7148u);
+      g_Network.Connect(1, 0, accountAddress, 29000);
     }
   }
 }
@@ -4042,7 +4057,7 @@ void CMainThread::ForceCloseUserInTiming()
        socketIndex < MAX_PLAYER;
        ++socketIndex)
   {
-    _socket *socket = g_Network.GetSocket(0u, socketIndex);
+    _socket *socket = g_Network.GetSocket(0, socketIndex);
     if (socket->m_bAccept)
     {
       foundSocketIndex = static_cast<int>(socketIndex);
@@ -4058,7 +4073,7 @@ void CMainThread::ForceCloseUserInTiming()
     return;
   }
 
-  g_UserDB[foundSocketIndex].ForceCloseCommand(2u, 0, true, "Kick");
+  g_UserDB[foundSocketIndex].ForceCloseCommand(2, 0, true, "Kick");
   m_nForceExitSocketIndexOffset = foundSocketIndex + 1;
 }
 
@@ -4074,7 +4089,7 @@ void CMainThread::CheckConnNumLog()
       qryData.nAveragePerHour = sheet->nAveragePerHour;
       qryData.nMaxPerHour = sheet->nMaxPerHour;
       qryData.nCount = sheet->nCount;
-      PushDQSData(0xFFFFFFFFu, nullptr, 8u, reinterpret_cast<char *>(&qryData), qryData.size());
+      PushDQSData(-1, nullptr, 8, reinterpret_cast<char *>(&qryData), qryData.size());
 
       _user_num_report_wrac userNumReport{};
       userNumReport.dwAveragePerHour = static_cast<unsigned int>(sheet->nAveragePerHour);
@@ -4312,7 +4327,7 @@ void CMainThread::CheckForceClose()
   }
   else if (randomValue == 1)
   {
-    memset_0(g_Monster, 0, 8uLL);
+    memset_0(g_Monster, 0, 8);
   }
   else if (randomValue == 2)
   {
@@ -4406,10 +4421,10 @@ char CMainThread::LoadServerRateINIFile()
 
   char returnedString[40]{};
 
-  GetPrivateProfileStringA("Server Rate", "ItemRootRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "ItemRootRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.ItemRootRate = static_cast<float>(atof(returnedString));
 
-  GetPrivateProfileStringA("Server Rate", "MineSpeedRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "MineSpeedRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.MineSpeedRate = static_cast<float>(atof(returnedString));
 
   GetPrivateProfileStringA(
@@ -4417,20 +4432,20 @@ char CMainThread::LoadServerRateINIFile()
     "ForceLiverAccumRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.ForceLiverAccumRate = static_cast<float>(atof(returnedString));
 
-  GetPrivateProfileStringA("Server Rate", "MasteryGetRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "MasteryGetRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.MasteryGetRate = static_cast<float>(atof(returnedString));
 
-  GetPrivateProfileStringA("Server Rate", "AnimusExpRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "AnimusExpRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.AnimusExpRate = static_cast<float>(atof(returnedString));
 
-  GetPrivateProfileStringA("Server Rate", "PlayerExpRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "PlayerExpRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PlayerExpRate = static_cast<float>(atof(returnedString));
 
-  GetPrivateProfileStringA("Server Rate", "PlayerDieExpRate", "1.0", returnedString, 0x10u, "./initialize/ServerRate.ini");
+  GetPrivateProfileStringA("Server Rate", "PlayerDieExpRate", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PlayerLostExp = static_cast<float>(atof(returnedString));
 
   GetPrivateProfileStringA(
@@ -4438,7 +4453,7 @@ char CMainThread::LoadServerRateINIFile()
     "DarkHoleRewardRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.DarkHoleRewardRate = static_cast<float>(atof(returnedString));
 
@@ -4447,7 +4462,7 @@ char CMainThread::LoadServerRateINIFile()
     "ItemRootRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumItemDrop = static_cast<float>(atof(returnedString));
 
@@ -4456,7 +4471,7 @@ char CMainThread::LoadServerRateINIFile()
     "MineSpeedRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumMiningSpeed = static_cast<float>(atof(returnedString));
 
@@ -4465,7 +4480,7 @@ char CMainThread::LoadServerRateINIFile()
     "ForceLiverAccumRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumSkillForceMastery = static_cast<float>(atof(returnedString));
 
@@ -4474,7 +4489,7 @@ char CMainThread::LoadServerRateINIFile()
     "MasteryGetRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumBasseMastery = static_cast<float>(atof(returnedString));
 
@@ -4483,7 +4498,7 @@ char CMainThread::LoadServerRateINIFile()
     "AnimusExpRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumAnimusExp = static_cast<float>(atof(returnedString));
 
@@ -4492,7 +4507,7 @@ char CMainThread::LoadServerRateINIFile()
     "PlayerExpRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumPlayerExp = static_cast<float>(atof(returnedString));
 
@@ -4501,7 +4516,7 @@ char CMainThread::LoadServerRateINIFile()
     "PlayerDieExpRate",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumPlayerLostExp = static_cast<float>(atof(returnedString));
 
@@ -4510,7 +4525,7 @@ char CMainThread::LoadServerRateINIFile()
     "PvpPointRate ",
     "1.0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.PremiumPvpPointRate = static_cast<float>(atof(returnedString));
 
@@ -4519,7 +4534,7 @@ char CMainThread::LoadServerRateINIFile()
     "Major_Bind_HQ",
     "0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.byBindHQ = static_cast<unsigned __int8>(atoi(returnedString));
 
@@ -4528,7 +4543,7 @@ char CMainThread::LoadServerRateINIFile()
     "Major_Sette_Mine_Elan_Map",
     "0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.bySetteMineElanMap = static_cast<unsigned __int8>(atoi(returnedString));
 
@@ -4537,7 +4552,7 @@ char CMainThread::LoadServerRateINIFile()
     "Major_Scroll_Item",
     "0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.byScrollItem = static_cast<unsigned __int8>(atoi(returnedString));
 
@@ -4546,7 +4561,7 @@ char CMainThread::LoadServerRateINIFile()
     "Major_Cash_Item",
     "0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.byCashItem = static_cast<unsigned __int8>(atoi(returnedString));
 
@@ -4555,7 +4570,7 @@ char CMainThread::LoadServerRateINIFile()
     "Major_Add_Character",
     "0",
     returnedString,
-    0x10u,
+    16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.byAddCharacter = static_cast<unsigned __int8>(atoi(returnedString));
   return 1;
@@ -4650,14 +4665,14 @@ void CMainThread::pc_OpenWorldSuccessResult(unsigned __int8 byWorldCode, char *p
   {
     WriteServerStartHistory("DBInit Fail >>");
     m_logSystemError.WriteString("init DB fail");
-    g_pFrame->SendMessage(0x10u, 0, 0);
+    g_pFrame->SendMessage(16, 0, 0);
   }
 }
 
 void CMainThread::pc_OpenWorldFailureResult(char *szMsg)
 {
 MyMessageBox("pc_OpenWorldFailureResult", "request world-open fail");
-  g_pFrame->SendMessage(0x10u, 0, 0);
+  g_pFrame->SendMessage(16, 0, 0);
 }
 
 void CMainThread::pc_ForceCloseCommand(
@@ -4769,7 +4784,7 @@ void CMainThread::pc_TransIPKeyInform(
 
   _trans_account_report_wrac report{};
   report.byRetCode = retCode;
-  memcpy_0(&report, pgidGlobal, 8uLL);
+  memcpy_0(&report, pgidGlobal, 8);
   unsigned __int8 pbyType[2]{1, 9};
   const unsigned __int16 len = report.size();
   g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&report), len);
@@ -4782,7 +4797,7 @@ void CMainThread::pc_EnterWorldResult(unsigned __int8 byRetCode, _CLID *pidWorld
     CUserDB *user = &g_UserDB[pidWorld->wIndex];
     if (user->m_bActive && user->m_idWorld.dwSerial == pidWorld->dwSerial)
     {
-      user->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Enter world False");
+      user->ForceCloseCommand(1, -1, false, "Enter world False");
     }
   }
 }
@@ -4862,16 +4877,16 @@ void CMainThread::pc_SetMainGreetingMsg(char *pwszGMName, char *pwszMsg)
 {
   if (*pwszMsg)
   {
-    if (strlen_0(pwszMsg) <= 0xFF)
+    if (strlen_0(pwszMsg) <= 255)
     {
-      strcpy_s(m_wszGMName, 0x11u, pwszGMName);
-      strcpy_s(m_wszMainGreetingMsg, 0x100u, pwszMsg);
+      strcpy_s(m_wszGMName, 17, pwszGMName);
+      strcpy_s(m_wszMainGreetingMsg, 256, pwszMsg);
 
       _qry_case_gm_greetingmsg qry{};
-      strcpy_s(qry.in_gmgreetingmsg, 0x100u, m_wszMainGreetingMsg);
-      strcpy_s(qry.in_gmname, 0x11u, m_wszGMName);
+      strcpy_s(qry.in_gmgreetingmsg, 256, m_wszMainGreetingMsg);
+      strcpy_s(qry.in_gmname, 17, m_wszGMName);
       const int size = qry.size();
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Au, reinterpret_cast<char *>(&qry), size);
+      g_Main.PushDQSData(-1, nullptr, 74, reinterpret_cast<char *>(&qry), size);
     }
   }
 }
@@ -4880,17 +4895,17 @@ void CMainThread::pc_SetRaceGreetingMsg(int racenum, char *pwszBossName, char *p
 {
   if (*pwszMsg)
   {
-    if (strlen_0(pwszMsg) <= 0xFF)
+    if (strlen_0(pwszMsg) <= 255)
     {
-      strcpy_s(m_wszBossName[racenum], 0x11u, pwszBossName);
-      strcpy_s(m_wszRaceGreetingMsg[racenum], 0x100u, pwszMsg);
+      strcpy_s(m_wszBossName[racenum], 17, pwszBossName);
+      strcpy_s(m_wszRaceGreetingMsg[racenum], 256, pwszMsg);
 
       _qry_case_race_greetingmsg qry{};
-      strcpy_s(qry.in_racegreetingmsg, 0x100u, pwszMsg);
-      strcpy_s(qry.in_bossname, 0x11u, pwszBossName);
+      strcpy_s(qry.in_racegreetingmsg, 256, pwszMsg);
+      strcpy_s(qry.in_bossname, 17, pwszBossName);
       qry.type = racenum;
       const int size = qry.size();
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Bu, reinterpret_cast<char *>(&qry), size);
+      g_Main.PushDQSData(-1, nullptr, 75, reinterpret_cast<char *>(&qry), size);
     }
   }
 }
@@ -4900,7 +4915,7 @@ void CMainThread::pc_AllUserKickInform()
   if (!m_bServerClosing)
   {
     m_bServerClosing = true;
-    m_tmForceUserExit.BeginTimer(0x32u);
+    m_tmForceUserExit.BeginTimer(50);
     m_nForceExitSocketIndexOffset = 0;
   }
 }
@@ -4999,7 +5014,7 @@ void CMainThread::ManageClientLimitRunRequest(const _manage_client_limit_run_req
 {
   OutputDebugLog("ManageClientLimitRunRequest Start");
 
-  if (!PushDQSData(0xFFFFFFFF, nullptr, 0xA1u, reinterpret_cast<char *>(const_cast<_manage_client_limit_run_request_acwr *>(request)), 7))
+  if (!PushDQSData(-1, nullptr, 161, reinterpret_cast<char *>(const_cast<_manage_client_limit_run_request_acwr *>(request)), 7))
   {
     _manage_client_limit_run_result_wrac result{};
     result.byRet = 24;
@@ -5189,7 +5204,7 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     sizeof(trustedConnectionValue));
   const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
   strcpy_0(m_szWorldDBName, pszDBName);
-  g_pFrame->SendMessage(0xCu, 0, 0);
+  g_pFrame->SendMessage(12, 0, 0);
 
   if (!m_pWorldDB)
   {
@@ -5256,7 +5271,7 @@ void CMainThread::SerivceSelfStart()
   {
     m_bWorldService = true;
     char returnedString[148]{};
-    GetPrivateProfileStringA("System", "GateIP", "X", returnedString, 0x80u, "..\\WorldInfo\\WorldInfo.ini");
+    GetPrivateProfileStringA("System", "GateIP", "X", returnedString, 128, "..\\WorldInfo\\WorldInfo.ini");
     _start_world_request_wrac request{};
     if (!strcmp_0(returnedString, "X"))
     {

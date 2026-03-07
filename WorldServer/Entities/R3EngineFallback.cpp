@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -172,7 +172,7 @@ __int64 CN_MixDayColor()
   {
     return dword_184A7981C;
   }
-  return 0xFFFFFFFF;
+  return -1;
 }
 
 __int64 IsBBoxInFrustum(float *const bbMin, float *const bbMax)

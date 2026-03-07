@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef _DUMMY_POSITION_H_
 #define _DUMMY_POSITION_H_
@@ -44,9 +44,9 @@ struct  _store_dummy
 };
 #pragma pack(pop)
 
-static_assert(sizeof(_dummy_position) == 0x9C, "_dummy_position size must match IDA (0x9C)");
+static_assert(sizeof(_dummy_position) == 156, "_dummy_position size must match IDA (156)");
 static_assert(alignof(_dummy_position) == 4, "_dummy_position alignment must match IDA (4)");
-static_assert(sizeof(_store_dummy) == 0x18, "_store_dummy size must match IDA (0x18)");
+static_assert(sizeof(_store_dummy) == 24, "_store_dummy size must match IDA (24)");
 
 #endif // _DUMMY_POSITION_H_
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
@@ -9,11 +9,11 @@
 #endif
 
 #ifndef WINVER
-#define WINVER 0x0A00
+#define WINVER 2560
 #endif
 
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0A00
+#define _WIN32_WINNT 2560
 #endif
 
 #include "framework.h"

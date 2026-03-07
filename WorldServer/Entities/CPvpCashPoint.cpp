@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPvpCashPoint.h"
 
@@ -13,7 +13,7 @@
 
 CPvpCashPoint::CPvpCashPoint()
 {
-  m_KillerList.SetList(0xAu, 0xF8u, false);
+  m_KillerList.SetList(10, 248, false);
 }
 
 CPvpCashPoint::~CPvpCashPoint()

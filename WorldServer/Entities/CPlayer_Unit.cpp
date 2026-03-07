@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -203,7 +203,7 @@ void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
   if (record
       && (!record->m_bRepair || record->m_bDestroy))
   {
-    unitData->Init(0xFFu);
+    unitData->Init(255);
     _DeleteUnitKey(byUnitSlot);
     if (m_pUserDB)
     {
@@ -623,7 +623,7 @@ void CPlayer::pc_ReleaseSiegeModeRequest()
   }
 
   this->m_bIsSiegeActing = true;
-  this->m_tmrSiegeTime.BeginTimer(0x7D0u);
+  this->m_tmrSiegeTime.BeginTimer(2000);
   this->SetSiege(nullptr);
 }
 
@@ -697,7 +697,7 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
   }
 
   this->m_bIsSiegeActing = true;
-  this->m_tmrSiegeTime.BeginTimer(0x7D0u);
+  this->m_tmrSiegeTime.BeginTimer(2000);
   this->SetSiege(pInvenItem);
 }
 
@@ -770,11 +770,11 @@ void CPlayer::pc_UnitBulletReplaceRequest(
 
   unsigned __int8 result = 0;
   _UNIT_DB_BASE::_LIST *unitData = &this->m_Param.m_UnitDB.m_List[bySlotIndex];
-  if (unitData->byFrame == 0xFF)
+  if (unitData->byFrame == 255)
   {
     result = 5;
   }
-  else if (unitData->dwSpare[byPackIndex] == 0xFFFFFFFFu)
+  else if (unitData->dwSpare[byPackIndex] == -1)
   {
     result = 25;
   }
@@ -782,7 +782,7 @@ void CPlayer::pc_UnitBulletReplaceRequest(
   if (!result)
   {
     unitData->dwBullet[byBulletPart] = unitData->dwSpare[byPackIndex];
-    unitData->dwSpare[byPackIndex] = 0xFFFFFFFFu;
+    unitData->dwSpare[byPackIndex] = -1;
     this->m_pUserDB->Update_UnitData(bySlotIndex, unitData);
   }
 
@@ -803,7 +803,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
   unsigned __int8 emptyUnitSlot = static_cast<unsigned __int8>(-1);
   unsigned int consumeMoney[12] = {};
   unsigned __int8 defaultParts[6];
-  std::memset(defaultParts, 0xFF, sizeof(defaultParts));
+  std::memset(defaultParts, 255, sizeof(defaultParts));
 
   _UnitFrame_fld *frameRecord = reinterpret_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(byFrameCode));
   _UnitKeyItem_fld *unitKeyRecord = nullptr;
@@ -835,14 +835,14 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
     {
       for (int slotIndex = 0; slotIndex < 4; ++slotIndex)
       {
-        if (m_Param.m_UnitDB.m_List[slotIndex].byFrame == 0xFF)
+        if (m_Param.m_UnitDB.m_List[slotIndex].byFrame == 255)
         {
           emptyUnitSlot = static_cast<unsigned __int8>(slotIndex);
           break;
         }
       }
 
-      if (emptyUnitSlot == 0xFF)
+      if (emptyUnitSlot == 255)
       {
         resultCode = 3;
       }
@@ -929,7 +929,7 @@ void CPlayer::pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLin
 
     if (!Emb_AddStorage(0, &keyItem, false, true))
     {
-      this->SendMsg_UnitFrameBuyResult(static_cast<char>(0xFF), static_cast<char>(byFrameCode), static_cast<char>(emptyUnitSlot), keyIndex, keySerial, consumeMoney);
+      this->SendMsg_UnitFrameBuyResult(static_cast<char>(255), static_cast<char>(byFrameCode), static_cast<char>(emptyUnitSlot), keyIndex, keySerial, consumeMoney);
       return;
     }
 
@@ -1005,7 +1005,7 @@ void CPlayer::pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkInt
   {
     resultCode = 2;
   }
-  else if (frameCode == 0xFF)
+  else if (frameCode == 255)
   {
     resultCode = 5;
   }
@@ -1107,7 +1107,7 @@ void CPlayer::pc_UnitPartTuningRequest(
   {
     resultCode = 2;
   }
-  else if (frameCode == 0xFF)
+  else if (frameCode == 255)
   {
     resultCode = 5;
   }
@@ -1201,7 +1201,7 @@ void CPlayer::pc_UnitPartTuningRequest(
         {
           for (int spareSlot = 0; spareSlot < 8; ++spareSlot)
           {
-            if (unitData->dwSpare[spareSlot] != 0xFFFFFFFFu)
+            if (unitData->dwSpare[spareSlot] != -1)
             {
               _UnitBullet_fld *spareBullet =
                 reinterpret_cast<_UnitBullet_fld *>(
@@ -1245,7 +1245,7 @@ void CPlayer::pc_UnitPartTuningRequest(
       unitData->byPart[partCode] = partIndex;
       if (partCode == 5)
       {
-        std::memset(unitData->dwSpare, 0xFF, sizeof(unitData->dwSpare));
+        std::memset(unitData->dwSpare, 255, sizeof(unitData->dwSpare));
       }
 
       if (partCode == 3 || partCode == 4)
@@ -1255,7 +1255,7 @@ void CPlayer::pc_UnitPartTuningRequest(
         {
           unsigned int &bulletData = unitData->dwBullet[bulletSlot];
           const unsigned __int16 bulletItemIndex = static_cast<unsigned __int16>((bulletData >> 16) & 0xFFFF);
-          if (bulletItemIndex && bulletItemIndex != 0xFFFF)
+          if (bulletItemIndex && bulletItemIndex != 65535)
           {
             _UnitBullet_fld *bulletRecord =
               reinterpret_cast<_UnitBullet_fld *>(g_Main.m_tblUnitBullet.GetRecord(bulletItemIndex));
@@ -1265,7 +1265,7 @@ void CPlayer::pc_UnitPartTuningRequest(
                 && partRecord
                 && bulletRecord->m_nWPType != partRecord->m_nWPType)
             {
-              bulletData = 0xFFFFFFFFu;
+              bulletData = -1;
             }
           }
         }
@@ -1358,7 +1358,7 @@ void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPC
     {
       resultCode = 9;
     }
-    else if (frameCode == 0xFF)
+    else if (frameCode == 255)
     {
       resultCode = 5;
     }
@@ -1475,7 +1475,7 @@ void CPlayer::pc_UnitBulletFillRequest(
   {
     resultCode = 2;
   }
-  else if (frameCode == 0xFF)
+  else if (frameCode == 255)
   {
     resultCode = 5;
   }
@@ -1622,7 +1622,7 @@ void CPlayer::pc_UnitPackFillRequest(
   {
     resultCode = 1;
   }
-  else if (frameCode == 0xFF)
+  else if (frameCode == 255)
   {
     resultCode = 5;
   }
@@ -1757,7 +1757,7 @@ void CPlayer::pc_UnitDeliveryRequest(
     {
       resultCode = 1;
     }
-    else if (unitData->byFrame == 0xFF)
+    else if (unitData->byFrame == 255)
     {
       resultCode = 5;
     }

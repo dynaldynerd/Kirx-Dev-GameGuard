@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -221,7 +221,7 @@ int CPlayer::GetRewardItems_DarkDungeon(
     return 0;
   }
 
-  unsigned int minMatchedPercent = 0x7FFF8000u;
+  unsigned int minMatchedPercent = 2147450880;
   int rewardCount = 0;
 
   const int high = rand() << 16;
@@ -283,7 +283,7 @@ void CPlayer::Reward_DarkDungeon(
     const int pick = rand() % rewardCandidateCount;
     memcpy_0(&rewardItem, &rewardCandidates[pick], sizeof(rewardItem));
 
-    if (m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+    if (m_Param.m_dbInven.GetIndexEmptyCon() == 255)
     {
       CreateItemBox(
         &rewardItem,

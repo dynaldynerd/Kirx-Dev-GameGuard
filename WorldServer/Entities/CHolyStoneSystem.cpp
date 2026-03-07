@@ -87,8 +87,8 @@ CHolyStoneSystem::CHolyStoneSystem()
     m_bConsumable(false),
     m_pMentalPass(true)
 {
-  m_tmrCumPlayer.BeginTimer(0xEA60u);
-  m_tmrHSKSystem.BeginTimer(0x3E8u);
+  m_tmrCumPlayer.BeginTimer(60000);
+  m_tmrHSKSystem.BeginTimer(1000);
 }
 
 CHolyStoneSystem::~CHolyStoneSystem() = default;
@@ -143,7 +143,7 @@ bool CHolyStoneSystem::InitHolySystem()
     WritePrivateProfileStringA("Schedule", "ScheduleInit", "0", ".\\Initialize\\WorldSystem.ini");
     this->m_SaveData.DefaultInit(firstSchedule);
     oreMgr = COreAmountMgr::Instance();
-    oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+    oreMgr->InitRemainOreAmount(-1, -1);
     oreMgr->InitTransferOre(0, 0);
   }
 
@@ -152,7 +152,7 @@ bool CHolyStoneSystem::InitHolySystem()
   {
     this->m_SaveData.DefaultInit(firstSchedule);
     oreMgr = COreAmountMgr::Instance();
-    oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+    oreMgr->InitRemainOreAmount(-1, -1);
     oreMgr->InitTransferOre(0, 0);
     scheduleInit = true;
   }
@@ -233,7 +233,7 @@ void CHolyStoneSystem::UpdateNotifyHolyStoneHPToRaceBoss()
 {
   for (int stoneIndex = 0; stoneIndex < MAX_STONE; ++stoneIndex)
   {
-    if (g_Stone[stoneIndex].m_bLive && g_Stone[stoneIndex].IsChangedHP(1u))
+    if (g_Stone[stoneIndex].m_bLive && g_Stone[stoneIndex].IsChangedHP(1))
     {
       SendHolyStoneHPToRaceBoss();
       return;
@@ -283,7 +283,7 @@ void CHolyStoneSystem::CheckDestroyerIsArriveMine()
   m_dwCheckTime[5] = m_SaveData.m_dwTerm[1] + m_SaveData.m_dwTerm[0] + m_dwCheckTime[3];
   m_SaveData.m_eDestroyerState = 1;
   CHolyStoneSystemDataMgr::SaveStateData(&m_SaveData);
-  SendIsArriveDestroyer(1u);
+  SendIsArriveDestroyer(1);
   m_logQuestDestroy.Write(">> Arrive!");
 
   const unsigned int loopTime = GetLoopTime();
@@ -315,7 +315,7 @@ void CHolyStoneSystem::SendSMS_MineTimeExtend(int nControlSec)
   unsigned __int8 type[2]{51, 2};
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, reinterpret_cast<char *>(&msg), 7u);
+    g_Network.m_pProcess[2]->LoadSendMsg(g_Main.m_byWebAgentServerNetInx, type, reinterpret_cast<char *>(&msg), 7);
   }
 }
 
@@ -607,25 +607,25 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
 
   char chat[2000]{};
   sprintf(chat, "HolySchedule %u/%u/%u %u:%u (%u)", startYear, startMonth, startDay, startHour, startMin, numOfTime);
-  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+  pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
 
   const int sceneCode = GetSceneCode();
   switch (sceneCode)
   {
     case 0:
       sprintf(chat, "Scene 0");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       break;
     case 1:
       sprintf(chat, "Scene 1");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage1 = true;
       showStage2 = true;
       showStage6 = true;
       break;
     case 2:
       sprintf(chat, "Scene 2");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage1 = true;
       showStage3 = true;
       showStage4 = true;
@@ -634,26 +634,26 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
       break;
     case 3:
       sprintf(chat, "Scene 3");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage4 = true;
       showStage5 = true;
       showStage6 = true;
       break;
     case 4:
       sprintf(chat, "Scene 4");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage5 = true;
       showStage6 = true;
       break;
     case 5:
       sprintf(chat, "Scene 5");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage5 = true;
       showStage6 = true;
       break;
     case 6:
       sprintf(chat, "Scene 6");
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+      pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage6 = true;
       break;
     default:
@@ -664,37 +664,37 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[0]));
     sprintf(chat, "    1. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage2)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[1]));
     sprintf(chat, "    2. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage3)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[2]));
     sprintf(chat, "    3. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage4)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[3]));
     sprintf(chat, "    4. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage5)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[5]));
     sprintf(chat, "    5. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage6)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[6]));
     sprintf(chat, "    6. %u:%u", remainMinute / 60, remainMinute % 60);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, chat, 0xFFu, nullptr);
+    pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
 
   return 1;
@@ -723,7 +723,7 @@ CMapData *CHolyStoneSystem::GetMapData()
 
 _portal_dummy *CHolyStoneSystem::GetPortalDummy(unsigned __int8 byRace)
 {
-  if (byRace < 3u)
+  if (byRace < 3)
   {
     return m_pPortalDummy[byRace];
   }
@@ -898,10 +898,10 @@ void CHolyStoneSystem::CreateHolyStone()
   sprintf_s(iniKey, "CrystalHPMultiple_%d", m_SaveData.m_byNumOfTime);
 
   char result[132]{};
-  GetPrivateProfileStringA("Rule", iniKey, "0", result, 0x80u, "..\\WorldInfo\\WorldInfo.ini");
+  GetPrivateProfileStringA("Rule", iniKey, "0", result, 128, "..\\WorldInfo\\WorldInfo.ini");
   if (!strcmp_0(result, "0"))
   {
-    GetPrivateProfileStringA("Rule", "CrystalHPMultiple", "1", result, 0x80u, "..\\WorldInfo\\WorldInfo.ini");
+    GetPrivateProfileStringA("Rule", "CrystalHPMultiple", "1", result, 128, "..\\WorldInfo\\WorldInfo.ini");
   }
 
   float multiple = static_cast<float>(std::atof(result));
@@ -937,7 +937,7 @@ void CHolyStoneSystem::DestroyHolyStone()
   {
     if (g_Player[j].m_bLive)
     {
-      g_Player[j].RecvHSKQuest(0x64u, 1u, 0, 0, 0, 0xFFu);
+      g_Player[j].RecvHSKQuest(100, 1, 0, 0, 0, static_cast<unsigned __int8>(-1));
     }
   }
 }
@@ -1101,7 +1101,7 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
   msg.byArrive = byArrive;
   msg.byRaceCode = static_cast<char>(m_pkDestroyer->m_Param.GetRaceCode());
   const char *charName = m_pkDestroyer->m_Param.GetCharNameW();
-  memcpy_0(msg.wszCharName, charName, 0x10u);
+  memcpy_0(msg.wszCharName, charName, 16);
   msg.wszCharName[16] = 0;
   msg.dwObjSerial = m_SaveData.m_dwDestroyerSerial;
 
@@ -1234,7 +1234,7 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
   strcpy_0(msg.wszMasterName, pwszMasterName);
   msg.byMasterLv = byMasterLv;
 
-  memcpy_0(msg.szMasterClass, szMasterClass, 4u);
+  memcpy_0(msg.szMasterClass, szMasterClass, 4);
   msg.szMasterClass[4] = 0;
 
   const int holyMasterRace = GetHolyMasterRace();
@@ -1320,7 +1320,7 @@ void CHolyStoneSystem::SendMsg_HolyStoneSystemState(int nPlayerIndex)
       SendMsg_EnterKeeper(nPlayerIndex);
       break;
     case 5:
-      SendMsg_WaitKeeper(nPlayerIndex, 1u);
+      SendMsg_WaitKeeper(nPlayerIndex, 1);
       break;
     default:
       break;
@@ -1664,7 +1664,7 @@ void CHolyStoneSystem::GiveHSKQuest()
   {
     if (g_Player[j].m_bLive)
     {
-      g_Player[j].RecvHSKQuest(0x64u, 3u, 0, 0, 0, 0xFFu);
+      g_Player[j].RecvHSKQuest(100, 3, 0, 0, 0, static_cast<unsigned __int8>(-1));
     }
   }
 
@@ -1677,7 +1677,7 @@ void CHolyStoneSystem::GiveHSKQuest()
     {
       if (player->GetLevel() < 25)
       {
-        player->RecvHSKQuest(0x64u, 3u, 0, 0, 0, 0xFFu);
+        player->RecvHSKQuest(100, 3, 0, 0, 0, static_cast<unsigned __int8>(-1));
       }
       else if (player->m_pPartyMgr && player->m_pPartyMgr->IsPartyMode())
       {
@@ -1945,9 +1945,9 @@ void CHolyStoneSystem::ReceiveDestroyKeeper(CCharacter *pCharacter)
     }
 
     COreAmountMgr *oreMgr = COreAmountMgr::Instance();
-    oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+    oreMgr->InitRemainOreAmount(-1, -1);
     oreMgr = COreAmountMgr::Instance();
-    oreMgr->InsertOreLog(1u);
+    oreMgr->InsertOreLog(1);
     oreMgr = COreAmountMgr::Instance();
     oreMgr->IncreaseOreAmount();
     oreMgr = COreAmountMgr::Instance();
@@ -2035,7 +2035,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
       const long double pvpLeak = player->GetPvpPointLeak();
       if (pvpLeak < 0.0)
       {
-        player->AlterPvPPoint(-static_cast<double>(pvpLeak), holy_award, 0xFFFFFFFFu);
+        player->AlterPvPPoint(-static_cast<double>(pvpLeak), holy_award, -1);
       }
     }
     player->SetPvpPointLeak(0.0);
@@ -2085,7 +2085,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
   qryData.dwBossSerilal0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
   qryData.dwBossSerilal1 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
   qryData.dwBossSerilal2 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x89u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+  g_Main.PushDQSData(-1, nullptr, 137, reinterpret_cast<char *>(&qryData), sizeof(qryData));
 
   if (g_Main.IsReleaseServiceMode())
   {
@@ -2095,7 +2095,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
     report.byDestroyedRaceCode = byDestroyStoneRaceCode;
 
     unsigned __int8 type[2]{};
-    memcpy_0(type, "2e", 2u);
+    memcpy_0(type, "2e", 2);
     g_Network.m_pProcess[1]->LoadSendMsg(
       0,
       type,
@@ -2135,7 +2135,7 @@ void CHolyStoneSystem::PeneltyLoseRace(unsigned __int8 byDestroyedRace)
       alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
     }
 
-    player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
+    player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, -1);
     player->SendMsg_RaceBattlePenelty(alterPoint, 0);
   }
 }
@@ -2169,7 +2169,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
           {
             alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
           }
-          player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
+          player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, -1);
           player->SendMsg_RaceBattlePenelty(alterPoint, 0);
         }
         else
@@ -2180,7 +2180,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
           {
             alterPoint = static_cast<int>(-0.0 - player->m_Param.GetPvPPoint());
           }
-          player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, 0xFFFFFFFF);
+          player->AlterPvPPoint(static_cast<double>(alterPoint), holy_dec, -1);
           player->SendMsg_RaceBattlePenelty(alterPoint, 0);
         }
       }
@@ -2190,7 +2190,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
 
 void CHolyStoneSystem::On_HS_SCENE_BATTLE_TIME()
 {
-  g_Keeper->Destroy(1u, nullptr);
+  g_Keeper->Destroy(1, nullptr);
   m_dwNextStartTime = 0;
   m_pkDestroyer = nullptr;
   m_SaveData.m_nHolyMasterRace = -1;
@@ -2243,7 +2243,7 @@ void CHolyStoneSystem::On_HS_SCENE_BATTLE_END_WAIT_TIME()
   if (GetHolyMasterRace() == -1)
   {
     SendMsg_ExitStone();
-    SendMsg_EndBattle(static_cast<char>(0xFF));
+    SendMsg_EndBattle(static_cast<char>(-1));
     CRaceBossWinRate::Instance()->UpdateTotalCnt();
     if (g_Main.m_bWorldOpen)
     {
@@ -2254,7 +2254,7 @@ void CHolyStoneSystem::On_HS_SCENE_BATTLE_END_WAIT_TIME()
       const unsigned int raceBossSerial0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
       const unsigned int raceBossSerial1 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(1, 0);
       const unsigned int raceBossSerial2 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(2, 0);
-g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x89u, qryData, 24);
+g_Main.PushDQSData(-1, nullptr, 137, qryData, 24);
       for (int j = 0; j < 3; ++j)
       {
         PeneltyFailRace(static_cast<unsigned __int8>(j));
@@ -2280,7 +2280,7 @@ void CHolyStoneSystem::On_HS_SCENE_KEEPER_ATTACKABLE_TIME()
 
   if (GetHolyMasterRace() != -1)
   {
-    SetKeeperDestroyRace(0xFFu);
+    SetKeeperDestroyRace(static_cast<unsigned __int8>(-1));
     CreateHolyKeeper(0);
     g_Keeper->SetDamageAbleState(1);
     SendMsg_EnterKeeper(static_cast<unsigned int>(-1));
@@ -2299,9 +2299,9 @@ void CHolyStoneSystem::On_HS_SCENE_KEEPER_DEATTACKABLE_TIME()
   COreAmountMgr *oreMgr = COreAmountMgr::Instance();
   oreMgr->ReLoad();
   oreMgr = COreAmountMgr::Instance();
-  oreMgr->InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+  oreMgr->InitRemainOreAmount(-1, -1);
   oreMgr = COreAmountMgr::Instance();
-  oreMgr->InsertOreLog(1u);
+  oreMgr->InsertOreLog(1);
 
   oreMgr = COreAmountMgr::Instance();
   const unsigned int remainOre = oreMgr->GetRemainOre();
@@ -2319,7 +2319,7 @@ void CHolyStoneSystem::On_HS_SCENE_KEEPER_DEATTACKABLE_TIME()
 void CHolyStoneSystem::On_HS_SCENE_KEEPER_DIE_TIME()
 {
   DestroyHolyKeeper();
-  SendMsg_WaitKeeper(static_cast<unsigned int>(-1), 1u);
+  SendMsg_WaitKeeper(static_cast<unsigned int>(-1), 1);
 }
 
 void CHolyStoneSystem::On_HS_SCENE_KEEPER_CHAOS_TIME()

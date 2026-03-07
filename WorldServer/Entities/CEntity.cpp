@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CEntity.h"
 #include "CMainThread.h"
@@ -179,7 +179,7 @@ static void ExtractVertex(
 
 __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
 {
-  mMapColor = 0xFF808080;
+  mMapColor = 4286611584;
   mStartTime = 0.0f;
   mFlag = a3;
 
@@ -320,9 +320,9 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
   fclose(fp);
 
   unsigned int vertexNum = 0;
-  if (compHeader->type == 0x8000)
+  if (compHeader->type == 32768)
     vertexNum = mHeader.Vertex.size / 3;
-  else if (compHeader->type == 0x4000)
+  else if (compHeader->type == 16384)
     vertexNum = mHeader.Vertex.size / 6;
   else
     vertexNum = mHeader.Vertex.size / 12;
@@ -360,7 +360,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
   if (mFlag & 2)
     mStaticVertexBuffer.InitVertexBuffer(staticVertNum * sizeof(_D3DR3VERTEX_TEX1), loadOption, 0);
   else
-    mStaticVertexBuffer.InitVertexBuffer(staticVertNum * sizeof(_D3DR3VERTEX_TEX1), loadOption, 0x152u);
+    mStaticVertexBuffer.InitVertexBuffer(staticVertNum * sizeof(_D3DR3VERTEX_TEX1), loadOption, 338);
   mStaticIndexedBuffer.InitIndexBuffer(staticTriNum * 3 * sizeof(unsigned __int16), loadOption);
 
   auto *staticVertex = reinterpret_cast<_D3DR3VERTEX_TEX1 *>(mStaticVertexBuffer.VPLock());
@@ -440,7 +440,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
     mBBMax[2] = (std::max)(mBBMax[2], mMatGroup[i].BBMax[2]);
 
     mMatGroup[i].Type = 1;
-    unsigned int alpha = 0xFF000000;
+    unsigned int alpha = 4278190080;
     bool lightEnable = false;
     if (mMatGroup[i].MtlId != -1)
     {
@@ -452,7 +452,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
       }
       alpha = mat->m_Layer[0].m_ARGB & 0xFF000000;
       lightEnable = (mat->m_dwFlag & 1) != 0;
-      if (alpha != 0xFF000000)
+      if (alpha != 4278190080)
         mIsAlpha = 1;
     }
 
@@ -500,7 +500,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
         staticVertex[staticVertCnt].v = mOrgUV[staticVertCnt][1];
 
         if (lightEnable)
-          staticVertex[staticVertCnt].color = 0xFF808080;
+          staticVertex[staticVertCnt].color = 4286611584;
         else
           staticVertex[staticVertCnt].color = color[vid];
         staticVertex[staticVertCnt].color |= alpha;
@@ -839,7 +839,7 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     material.Diffuse.g = diffuseGreen / diffuseGreen;
     material.Diffuse.b = diffuseBlue / diffuseBlue;
 
-    if ((a2 & 0xFFFFFF) == 0xFFFFFF)
+    if ((a2 & 16777215) == 16777215)
     {
       d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 1u);
       d3dDevice->LightEnable(d3dDevice, 0, 0);
@@ -972,7 +972,7 @@ __int64 CEntity::DrawEntity(float (*const a2)[4], unsigned int a3, double a4)
   d3dDevice->SetRenderState(d3dDevice, D3DRS_ALPHABLENDENABLE, 0);
   d3dDevice->SetRenderState(d3dDevice, D3DRS_LIGHTING, 0);
   d3dDevice->SetRenderState(d3dDevice, D3DRS_DIFFUSEMATERIALSOURCE, 1u);
-  if ((mFlag & 0x40) == 0 && (a3 & 0xFFFFFF) == 0xFFFFFF)
+  if ((mFlag & 0x40) == 0 && (a3 & 16777215) == 16777215)
     d3dDevice->SetRenderState(d3dDevice, D3DRS_EMISSIVEMATERIALSOURCE, 0);
   if (mFlag & 0x10)
     d3dDevice->SetRenderState(d3dDevice, D3DRS_ZENABLE, 1u);

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "COreAmountMgr.h"
 
@@ -291,7 +291,7 @@ void COreAmountMgr::IncreaseOreAmount()
 {
   if (m_byOreTransferCount >= 10)
   {
-    InitRemainOreAmount(0xFFFFFFFF, 0xFFFFFFFF);
+    InitRemainOreAmount(-1, -1);
     SetOreTransferAmount();
   }
   else
@@ -353,7 +353,7 @@ void COreAmountMgr::InsertOreLog(unsigned __int8 byType)
   qryData.dwOreRemain = m_dwRemainOreAmount;
   qryData.dwTAmount = m_dwTotalOreAmount;
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0xACu, reinterpret_cast<char *>(&qryData), 32);
+  g_Main.PushDQSData(-1, nullptr, 172, reinterpret_cast<char *>(&qryData), 32);
 }
 
 void COreAmountMgr::Loop()

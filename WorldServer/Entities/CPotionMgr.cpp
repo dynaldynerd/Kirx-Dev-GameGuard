@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -59,9 +59,9 @@ bool CPotionMgr::DatafileInit()
 {
     char pszErrMsg[144]; // [rsp+30h] [rbp-A8h] BYREF
 
-    if (m_tblPotionEffectData.ReadRecord(".\\script\\PotionItemEffect.dat", 0x490u, pszErrMsg))
+    if (m_tblPotionEffectData.ReadRecord(".\\script\\PotionItemEffect.dat", 1168, pszErrMsg))
     {
-        if (m_tblPotionCheckData.ReadRecord(".\\script\\CheckPotionEffect.dat", 0xDCu, pszErrMsg))
+        if (m_tblPotionCheckData.ReadRecord(".\\script\\CheckPotionEffect.dat", 220, pszErrMsg))
         {
             return true;
         }
@@ -88,7 +88,7 @@ bool CPotionMgr::SetPotionDataName()
 
   char errMsg[160]{};
   CRecordData potionEffectNames;
-  if (!potionEffectNames.ReadRecord(".\\script\\PotionItemEffect_str.dat", 0x304, errMsg))
+  if (!potionEffectNames.ReadRecord(".\\script\\PotionItemEffect_str.dat", 772, errMsg))
   {
     MyMessageBox("CPotionMgr::SetPotionDataName()", "PotionItemEffect Name Data Load Error, ErrorMsg(%s)", errMsg);
     return false;
@@ -113,11 +113,11 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strKorName, 0x40, name);
+    strcpy_s(record->m_strKorName, 64, name);
   }
 
   CRecordData checkEffectNames;
-  if (!checkEffectNames.ReadRecord(".\\script\\CheckPotionEffect_str.dat", 0x304, errMsg))
+  if (!checkEffectNames.ReadRecord(".\\script\\CheckPotionEffect_str.dat", 772, errMsg))
   {
     MyMessageBox(
       "CPotionMgr::SetPotionDataName()",
@@ -148,7 +148,7 @@ bool CPotionMgr::SetPotionDataName()
       return false;
     }
     const char *name = CNationSettingManager::Instance()->GetItemName(nameRecord);
-    strcpy_s(record->m_strKOR_name, 0x40, name);
+    strcpy_s(record->m_strKOR_name, 64, name);
   }
 
   return true;
@@ -529,7 +529,7 @@ unsigned int CPotionMgr::PreCheckPotion(
     {
       return 33;
     }
-    if (targetPlayer->m_Param.GetExtTrunkSlotNum() >= 0x28u)
+    if (targetPlayer->m_Param.GetExtTrunkSlotNum() >= 40)
     {
       return 34;
     }
@@ -1011,7 +1011,7 @@ void CPotionMgr::InsertMovePotionStoneEffect(CPlayer *pApplyPlayer)
 
   pApplyPlayer->m_EP.SetEff_State(28, true);
   const unsigned int now = _sf_continous::GetSFContCurTime();
-  pApplyPlayer->m_PotionParam.m_StoneOfMovePotionData.Set(0x1B8u, now, 0xAu);
+  pApplyPlayer->m_PotionParam.m_StoneOfMovePotionData.Set(440, now, 10);
 }
 
 bool CPotionMgr::InsertRenamePotion(CRFWorldDatabase *pkWorldDB, char *pData)
@@ -1033,7 +1033,7 @@ void CPotionMgr::Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p)
   {
     if (byRet)
     {
-      player->SendMsg_CharacterRenameCashResult(0, 0x1Au);
+      player->SendMsg_CharacterRenameCashResult(0, 26);
     }
     else if (query->dwAlreadySerial == static_cast<unsigned int>(-1))
     {
@@ -1046,7 +1046,7 @@ void CPotionMgr::Complete_RenameChar_DB_Select(unsigned __int8 byRet, char *p)
     }
     else
     {
-      player->SendMsg_CharacterRenameCashResult(0, 0xAu);
+      player->SendMsg_CharacterRenameCashResult(0, 10);
     }
   }
 }
@@ -1165,11 +1165,11 @@ void CPotionMgr::PushRenamePotionDBLog(char *pInfo)
   const auto *query = reinterpret_cast<const _qry_case_character_rename *>(pInfo);
   char data[40]{};
   *reinterpret_cast<unsigned int *>(data) = query->dwCharSerial;
-  strcpy_s(data + 4, 0x11u, query->wszOldName);
-  strcpy_s(data + 21, 0x11u, query->wszCharName);
+  strcpy_s(data + 4, 17, query->wszOldName);
+  strcpy_s(data + 21, 17, query->wszCharName);
 
   CLogTypeDBTaskManager *mgr = CLogTypeDBTaskManager::Instance();
-  mgr->Push(2, data, 0x28u);
+  mgr->Push(2, data, 40);
   g_Main.m_logRename.Write("CPotionMgr::PushRenamePotionDBLog()!");
 }
 
@@ -1196,7 +1196,7 @@ bool __fastcall DE_Potion_CharReName(
   memcpy_0(&query.ItemInfo, &player->m_ReNamePotionUseInfo.ItemInfo, sizeof(query.ItemInfo));
   strcpy_s(query.wszCharName, sizeof(query.wszCharName), player->m_ReNamePotionUseInfo.wszChangeName);
   strcpy_s(query.wszOldName, sizeof(query.wszOldName), player->m_Param.GetCharNameW());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x92u, reinterpret_cast<char *>(&query), sizeof(query));
+  g_Main.PushDQSData(-1, nullptr, 146, reinterpret_cast<char *>(&query), sizeof(query));
   return true;
 }
 

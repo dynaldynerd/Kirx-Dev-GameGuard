@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -18,10 +18,10 @@ char CUserDB::UpdateContUserSave(bool bDirect)
   DWORD timeNow = timeGetTime();
   if ( !bDirect )
   {
-    if ( timeNow - this->m_dwTermContSaveTime < 0x493E0 )
+    if ( timeNow - this->m_dwTermContSaveTime < 300000 )
       return 0;
     this->m_dwTermContSaveTime = timeNow;
-    if ( !this->m_bDataUpdate && timeNow - this->m_dwLastContSaveTime < 0x927C0 )
+    if ( !this->m_bDataUpdate && timeNow - this->m_dwLastContSaveTime < 600000 )
       return 0;
   }
 
@@ -54,7 +54,7 @@ char CUserDB::UpdateContUserSave(bool bDirect)
   _DB_QRY_SYN_DATA *pushData = g_Main.PushDQSData(
     this->m_dwAccountSerial,
     &this->m_idWorld,
-    0xCu,
+    12,
     reinterpret_cast<char *>(&pQryData),
     nSize);
 

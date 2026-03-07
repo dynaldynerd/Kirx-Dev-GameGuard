@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNationSettingFactoryKR.h"
 
@@ -22,7 +22,7 @@ CNationSettingData *CNationSettingFactoryKR::Create(
   bool bServiceMode)
 {
   CNationSettingData *created = nullptr;
-  auto *data = static_cast<CNationSettingDataKR *>(operator new(0x1C0uLL));
+  auto *data = static_cast<CNationSettingDataKR *>(operator new(448));
   if (data)
   {
     new (data) CNationSettingDataKR();

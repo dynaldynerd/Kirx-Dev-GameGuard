@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "base_fld.h"
@@ -12,5 +12,5 @@ struct _ItemExist_fld : _base_fld
 
 #pragma pack(pop)
 
-static_assert(sizeof(_ItemExist_fld) == 0x48, "_ItemExist_fld size must match IDA layout (0x48)");
+static_assert(sizeof(_ItemExist_fld) == 72, "_ItemExist_fld size must match IDA layout (72)");
 

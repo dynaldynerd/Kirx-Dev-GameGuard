@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CItemStoreManager.h"
 #include "CItemStore.h"
@@ -97,7 +97,7 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
   this->m_MapItemStoreList = new (std::nothrow) CMapItemStoreList[nNormalListNum];
 
   char pszErrMsg[144]{};
-  if (this->m_tblItemStore.ReadRecord(".\\Script\\StoreList.dat", 0x37CC, pszErrMsg))
+  if (this->m_tblItemStore.ReadRecord(".\\Script\\StoreList.dat", 14284, pszErrMsg))
   {
     if (nInstanceListNum > 0)
     {
@@ -350,7 +350,7 @@ void CItemStoreManager::Loop()
   if (hasUpdate && g_Main.m_pWorldDB)
   {
     m_Sheet.dwCount = updateCount;
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x70u, nullptr, 0);
+    g_Main.PushDQSData(-1, nullptr, 112, nullptr, 0);
   }
 }
 
@@ -405,12 +405,12 @@ void CItemStoreManager::MakeLimitItemUpdateQuery(
   for (int j = 0; j < 16; ++j)
   {
     int key = static_cast<int>(pItemData[j].Key.CovDBKey());
-    sprintf_s(buffer, 0x80u, "k%d=%d,num%d=%d,", j, key, j, pItemData[j].nLimitNum);
+    sprintf_s(buffer, 128, "k%d=%d,num%d=%d,", j, key, j, pItemData[j].nLimitNum);
     strcat_s(pszQuery, nBufSize, buffer);
   }
 
   pszQuery[strlen_0(pszQuery) - 1] = 32;
-  sprintf_s(buffer, 0x80u, "where serial=%d", dwSerial);
+  sprintf_s(buffer, 128, "where serial=%d", dwSerial);
   strcat_s(pszQuery, nBufSize, buffer);
   strlen_0(pszQuery);
 }
@@ -710,7 +710,7 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
     return 0;
   }
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x71u, reinterpret_cast<char *>(&query), sizeof(query));
+  g_Main.PushDQSData(-1, nullptr, 113, reinterpret_cast<char *>(&query), sizeof(query));
   return 1;
 }
 

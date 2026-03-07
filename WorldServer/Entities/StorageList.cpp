@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "StorageList.h"
 
@@ -36,7 +36,7 @@ void _STORAGE_LIST::SetMemory(_db_con *pList, int nListName, int nListNum, int n
 void _STORAGE_LIST::_storage_con::Init()
 {
   memset_0(this, 0, sizeof(_STORAGE_LIST::_storage_con));
-  m_dwLv = 0xFFFFFFF;
+  m_dwLv = 268435455;
 }
 
 void _STORAGE_LIST::_db_con::Init()
@@ -66,11 +66,11 @@ unsigned int _STORAGE_LIST::_db_con::GetSerialNumber() const
 unsigned int _STORAGE_LIST::_db_con::CalcNewSerialNumber()
 {
   const int firstRand = rand();
-  const int firstHighBit = (rand() % 2) ? 0 : 0x8000;
+  const int firstHighBit = (rand() % 2) ? 0 : 32768;
   const int first = firstHighBit | firstRand;
   const int firstShift = first << 16;
   const int secondRand = rand();
-  const int secondHighBit = (rand() % 2) ? 0 : 0x8000;
+  const int secondHighBit = (rand() % 2) ? 0 : 32768;
   const unsigned int serial = static_cast<unsigned int>(secondHighBit | secondRand | firstShift);
   return (serial == 1u) ? 0u : serial;
 }
@@ -139,7 +139,7 @@ int _STORAGE_LIST::TransInCon(_storage_con *pCon)
     }
   }
 
-  memcpy_0(&m_pStorageList[slotIndex], pCon, 0x29u);
+  memcpy_0(&m_pStorageList[slotIndex], pCon, 41);
   m_pStorageList[slotIndex].m_pInList = this;
   m_pStorageList[slotIndex].m_byStorageIndex = static_cast<unsigned __int8>(slotIndex);
   m_pStorageList[slotIndex].m_bLoad = 1;
@@ -310,7 +310,7 @@ m_pStorageList[n].m_dwLv = dwUptInfo;
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex)
 {
   unsigned int dwExp = GetItemDurPoint(byTableCode, wItemIndex);
-  unsigned int dwExpLevel = 0xFFFFFFF;
+  unsigned int dwExpLevel = 268435455;
 
   const unsigned __int8 itemKindCode = GetItemKindCode(byTableCode);
   if (itemKindCode)

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -2229,22 +2229,22 @@ void CMainThread::UpdateGuildBattleWinLoseRankInfo(_DB_QRY_SYN_DATA *pData)
     _qry_case_loadguildbattlerank qry{};
     qry.byRace = winLoseRankQuery->byWinRace;
     int size = static_cast<int>(qry.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x21u, reinterpret_cast<char *>(&qry), size);
+    PushDQSData(-1, nullptr, 33, reinterpret_cast<char *>(&qry), size);
     if (winLoseRankQuery->byWinRace != winLoseRankQuery->byLoseRace)
     {
       qry.byRace = winLoseRankQuery->byLoseRace;
       size = static_cast<int>(qry.size());
-      PushDQSData(0xFFFFFFFF, nullptr, 0x21u, reinterpret_cast<char *>(&qry), size);
+      PushDQSData(-1, nullptr, 33, reinterpret_cast<char *>(&qry), size);
     }
 
     _qry_case_load_guildbattle_totalrecord total{};
     total.dwGuildSerial = winLoseRankQuery->dwWinGuildSerial;
     size = static_cast<int>(total.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x39u, reinterpret_cast<char *>(&total), size);
+    PushDQSData(-1, nullptr, 57, reinterpret_cast<char *>(&total), size);
 
     total.dwGuildSerial = winLoseRankQuery->dwLoseGuildSerial;
     size = static_cast<int>(total.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x39u, reinterpret_cast<char *>(&total), size);
+    PushDQSData(-1, nullptr, 57, reinterpret_cast<char *>(&total), size);
   }
 }
 
@@ -2266,22 +2266,22 @@ void CMainThread::UpdateGuildBattleDrawRankInfo(_DB_QRY_SYN_DATA *pData)
     _qry_case_loadguildbattlerank qry{};
     qry.byRace = drawRankQuery->by1PRace;
     int size = static_cast<int>(qry.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x21u, reinterpret_cast<char *>(&qry), size);
+    PushDQSData(-1, nullptr, 33, reinterpret_cast<char *>(&qry), size);
     if (drawRankQuery->by1PRace != drawRankQuery->by2PRace)
     {
       qry.byRace = drawRankQuery->by2PRace;
       size = static_cast<int>(qry.size());
-      PushDQSData(0xFFFFFFFF, nullptr, 0x21u, reinterpret_cast<char *>(&qry), size);
+      PushDQSData(-1, nullptr, 33, reinterpret_cast<char *>(&qry), size);
     }
 
     _qry_case_load_guildbattle_totalrecord total{};
     total.dwGuildSerial = drawRankQuery->dw1PGuildSerial;
     size = static_cast<int>(total.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x39u, reinterpret_cast<char *>(&total), size);
+    PushDQSData(-1, nullptr, 57, reinterpret_cast<char *>(&total), size);
 
     total.dwGuildSerial = drawRankQuery->dw2PGuildSerial;
     size = static_cast<int>(total.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x39u, reinterpret_cast<char *>(&total), size);
+    PushDQSData(-1, nullptr, 57, reinterpret_cast<char *>(&total), size);
   }
 }
 
@@ -2328,7 +2328,7 @@ void CMainThread::OutSrcGuildbattleCost(_DB_QRY_SYN_DATA *pData)
     guild->m_bIOWait = 0;
     if (srcGuildOutBattleCostQuery->byProcRet)
     {
-      guild->SendMsg_GuildBattleSuggestResult(0xA6u, guild->m_GuildBattleSugestMatter.pkDest->m_wszName);
+      guild->SendMsg_GuildBattleSuggestResult(166, guild->m_GuildBattleSugestMatter.pkDest->m_wszName);
       guild->m_GuildBattleSugestMatter.Clear();
     }
     else if (!pData->m_byResult)
@@ -2573,7 +2573,7 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
     _qry_case_post_return_list_get qry{};
     qry.dwMasterSerial = player->m_pUserDB->m_dwSerial;
     int size = static_cast<int>(qry.size());
-    PushDQSData(0xFFFFFFFF, nullptr, 0x50u, reinterpret_cast<char *>(&qry), size);
+    PushDQSData(-1, nullptr, 80, reinterpret_cast<char *>(&qry), size);
   }
 }
 void CMainThread::Load_ReturnPost_Complete(char *pData)

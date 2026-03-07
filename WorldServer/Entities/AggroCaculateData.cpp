@@ -24,7 +24,7 @@ void AggroCaculateData::Init()
 
 int AggroCaculateData::GetDefault(unsigned int dwKind)
 {
-  if (dwKind < 0x12)
+  if (dwKind < 18)
   {
     return m_DefaultData[dwKind];
   }
@@ -51,7 +51,7 @@ int AggroCaculateData::GetSpecialData(unsigned __int8 byAttackType, unsigned __i
 
 bool AggroCaculateData::PushSpecialData(unsigned __int8 byAttackType, unsigned __int16 wIndex, int nValue)
 {
-  if (m_nTotalCount >= 0x32)
+  if (m_nTotalCount >= 50)
   {
     return false;
   }

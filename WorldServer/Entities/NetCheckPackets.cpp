@@ -1,10 +1,10 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "NetCheckPackets.h"
 
 namespace
 {
-  unsigned int s_dwKey = 0x12AB34CC;
+  unsigned int s_dwKey = 313210060;
   unsigned int s_KeyBuffer[4]{};
 }
 

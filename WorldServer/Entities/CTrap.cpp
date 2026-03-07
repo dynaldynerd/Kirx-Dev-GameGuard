@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -510,7 +510,7 @@ void CTrap::RecvKillMessage(CCharacter *pDier)
   query.dwSerial = m_dwMasterSerial;
   query.dwPoint = static_cast<unsigned int>(addPoint);
   query.dwCashBag = static_cast<unsigned int>(addPoint);
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x0Du, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+  g_Main.PushDQSData(-1, nullptr, 13, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
 
   g_Main.m_logPvP.Write(
     "%s [ %d ] DST: [ %d ] type: logoff_inc  >> pvp : %.0f  last: %.0f",

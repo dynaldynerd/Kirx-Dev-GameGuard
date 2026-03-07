@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "base_fld.h"
@@ -17,4 +17,4 @@ struct _ItemCombine_link_fld : _base_fld
 
 #pragma pack(pop)
 
-static_assert(sizeof(_ItemCombine_link_fld) == 0x1944);
+static_assert(sizeof(_ItemCombine_link_fld) == 6468);

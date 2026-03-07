@@ -86,7 +86,7 @@ bool CCircleZone::Init(
     keyName,
     "X",
     returned,
-    0xFFu,
+    255u,
     "./Initialize/NormalGuildBattle.ini");
   if (returned[0] == 'X')
   {

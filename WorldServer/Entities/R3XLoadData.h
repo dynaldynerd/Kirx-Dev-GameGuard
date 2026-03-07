@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 
@@ -12,4 +12,4 @@ struct _R3X_LOAD_DATA
   unsigned int mData[252];
 };
 
-static_assert(sizeof(_R3X_LOAD_DATA) == 0x408);
+static_assert(sizeof(_R3X_LOAD_DATA) == 1032);

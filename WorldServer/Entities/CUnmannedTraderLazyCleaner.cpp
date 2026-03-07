@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderLazyCleaner.h"
 #include <new>
@@ -39,7 +39,7 @@ void CUnmannedTraderLazyCleaner::Loop()
   if (!m_bClearProcess && m_pkTimer && m_pkTimer->CountingTimer())
   {
     _qry_case_unmandtrader_lazyclean_flags qryData{};
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(-1, nullptr, 67, reinterpret_cast<char *>(&qryData), sizeof(qryData));
     m_bClearProcess = true;
   }
 }
@@ -51,7 +51,7 @@ unsigned __int8 CUnmannedTraderLazyCleaner::UpdateClear(_qry_case_unmandtrader_l
 
   const unsigned __int8 ret1 = ProcUpdate(5u, &systemTime, &pFlags->bFlag[0]);
   const unsigned __int8 ret2 = ProcUpdate(3u, &systemTime, &pFlags->bFlag[1]);
-  const unsigned __int8 ret3 = ProcUpdate(0xBu, &systemTime, &pFlags->bFlag[2]);
+  const unsigned __int8 ret3 = ProcUpdate(11, &systemTime, &pFlags->bFlag[2]);
   const unsigned __int8 ret4 = ProcUpdate(7u, &systemTime, &pFlags->bFlag[3]);
 
   if (ret1 == 1 || ret2 == 1 || ret3 == 1 || ret4 == 1)
@@ -79,7 +79,7 @@ unsigned __int8 CUnmannedTraderLazyCleaner::ProcUpdate(
     0,
     byState,
     pdwSerial,
-    0x32u,
+    50,
     pwRecordCnt);
   if (!result)
   {
@@ -102,7 +102,7 @@ void CUnmannedTraderLazyCleaner::CompleteUpdateClear(_qry_case_unmandtrader_lazy
       (pFlags->bFlag[0] || pFlags->bFlag[1] || pFlags->bFlag[2] || pFlags->bFlag[3]))
   {
     _qry_case_unmandtrader_lazyclean_flags qryData{};
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x43u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(-1, nullptr, 67, reinterpret_cast<char *>(&qryData), sizeof(qryData));
     ++m_uiRetryCnt;
     m_bClearProcess = true;
     return;

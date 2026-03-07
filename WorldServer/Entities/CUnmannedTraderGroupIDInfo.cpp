@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderGroupIDInfo.h"
 #include "CUnmannedTraderDivisionInfo.h"
@@ -152,7 +152,7 @@ char CUnmannedTraderGroupIDInfo::IsExistGroupID(
   unsigned __int8 bySortType,
   unsigned int *dwListIndex)
 {
-  if (byDivision == 0xFFu)
+  if (byDivision == 255)
   {
     return 0;
   }
@@ -176,7 +176,7 @@ CUnmannedTraderSortType *CUnmannedTraderGroupIDInfo::GetSortType(
   unsigned __int8 byDivision,
   unsigned __int8 bySortType)
 {
-  if (byDivision == 0xFFu || bySortType == 0xFFu)
+  if (byDivision == 255 || bySortType == 255)
   {
     return nullptr;
   }

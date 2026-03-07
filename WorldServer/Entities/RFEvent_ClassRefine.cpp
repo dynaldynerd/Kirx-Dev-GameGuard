@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "RFEvent_ClassRefine.h"
 
@@ -40,22 +40,22 @@ bool RFEvent_ClassRefine::Initialzie()
   ReadClassRefineEventInfo();
   memcpy_0(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
 
-  _pkParticipant = reinterpret_cast<_event_participant_classrefine *>(operator new[](0xC5D0uLL));
+  _pkParticipant = reinterpret_cast<_event_participant_classrefine *>(operator new[](50640));
   if (_pkParticipant == nullptr)
   {
     return false;
   }
-  memset_0(_pkParticipant, 0, 0xC5D0uLL);
+  memset_0(_pkParticipant, 0, 50640);
   m_bUserDataReset = false;
 
-  m_tmDataFileCheckTime.BeginTimer(0x2710u);
+  m_tmDataFileCheckTime.BeginTimer(10000);
   CAsyncLogger *logger = CAsyncLogger::Instance();
   logger->Regist(
     ALT_CLASSREFINE_SERVICE_LOG,
     "..\\ZoneServerLog\\ServiceLog\\ClassRefine",
     "ClassRefine_EventLog",
     true,
-    0xFFFFFFFF);
+    -1);
 
   const char *enableText = _kEvent.bEnable ? "TRUE" : "FALSE";
   CAsyncLogger *formatLogger = CAsyncLogger::Instance();
@@ -191,7 +191,7 @@ bool RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
   memcpy_0(&_kEvent, p, size);
   if (bInit)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x53u, nullptr, 0);
+    g_Main.PushDQSData(-1, nullptr, 83, nullptr, 0);
     for (int index = 0; index < MAX_PLAYER; ++index)
     {
       _pkParticipant[index].bChange = false;
@@ -209,7 +209,7 @@ bool RFEvent_ClassRefine::IsDbUpdate(unsigned int nIdx)
 
 _event_participant_classrefine *RFEvent_ClassRefine::GetPlayerState(unsigned int nIdx, unsigned int nAvator)
 {
-  if (nIdx >= 0x9E4)
+  if (nIdx >= 2532)
   {
     return nullptr;
   }

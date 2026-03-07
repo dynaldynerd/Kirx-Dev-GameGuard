@@ -70,7 +70,7 @@ void CAggroNode::SetAggro(
   {
     if (m_pCharacter->m_ObjID.m_byID == 3)
     {
-      defaultValue = g_AggroCaculateData.GetDefault(7u);
+      defaultValue = g_AggroCaculateData.GetDefault(7);
       CAnimus *animus = static_cast<CAnimus *>(m_pCharacter);
       if (animus)
       {
@@ -78,16 +78,16 @@ void CAggroNode::SetAggro(
         switch (extraKind)
         {
           case 1:
-            defaultValue += g_AggroCaculateData.GetDefault(0xDu);
+            defaultValue += g_AggroCaculateData.GetDefault(13);
             break;
           case 2:
-            defaultValue += g_AggroCaculateData.GetDefault(0xEu);
+            defaultValue += g_AggroCaculateData.GetDefault(14);
             break;
           case 3:
-            defaultValue += g_AggroCaculateData.GetDefault(0xFu);
+            defaultValue += g_AggroCaculateData.GetDefault(15);
             break;
           case 4:
-            defaultValue += g_AggroCaculateData.GetDefault(0x10u);
+            defaultValue += g_AggroCaculateData.GetDefault(16);
             break;
           default:
             break;
@@ -96,7 +96,7 @@ void CAggroNode::SetAggro(
     }
     else if (m_pCharacter->m_ObjID.m_byID == 4)
     {
-      defaultValue += g_AggroCaculateData.GetDefault(0x11u);
+      defaultValue += g_AggroCaculateData.GetDefault(17);
     }
     else
     {
@@ -130,30 +130,30 @@ void CAggroNode::SetAggro(
             {
               if (record->m_nClass == 1)
               {
-                defaultValue = g_AggroCaculateData.GetDefault(2u);
+                defaultValue = g_AggroCaculateData.GetDefault(2);
               }
               else
               {
-                defaultValue = g_AggroCaculateData.GetDefault(1u);
+                defaultValue = g_AggroCaculateData.GetDefault(1);
               }
             }
             else
             {
-              defaultValue = g_AggroCaculateData.GetDefault(3u);
+              defaultValue = g_AggroCaculateData.GetDefault(3);
             }
             break;
           }
 
-          defaultValue = g_AggroCaculateData.GetDefault(6u);
+          defaultValue = g_AggroCaculateData.GetDefault(6);
           break;
         }
 
-        defaultValue = g_AggroCaculateData.GetDefault(5u);
+        defaultValue = g_AggroCaculateData.GetDefault(5);
         break;
       }
       case 1:
       {
-        const int specialValue = g_AggroCaculateData.GetSpecialData(1u, static_cast<unsigned __int16>(dwAttackSerial));
+        const int specialValue = g_AggroCaculateData.GetSpecialData(1, static_cast<unsigned __int16>(dwAttackSerial));
         if (specialValue)
         {
           defaultValue = specialValue;
@@ -170,20 +170,20 @@ void CAggroNode::SetAggro(
         {
           if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
           {
-            defaultValue = g_AggroCaculateData.GetDefault(1u);
+            defaultValue = g_AggroCaculateData.GetDefault(1);
             break;
           }
 
-          defaultValue = g_AggroCaculateData.GetDefault(6u);
+          defaultValue = g_AggroCaculateData.GetDefault(6);
           break;
         }
 
-        defaultValue = g_AggroCaculateData.GetDefault(5u);
+        defaultValue = g_AggroCaculateData.GetDefault(5);
         break;
       }
       case 2:
       {
-        const int specialValue = g_AggroCaculateData.GetSpecialData(2u, static_cast<unsigned __int16>(dwAttackSerial));
+        const int specialValue = g_AggroCaculateData.GetSpecialData(2, static_cast<unsigned __int16>(dwAttackSerial));
         if (specialValue)
         {
           defaultValue = specialValue;
@@ -195,17 +195,17 @@ void CAggroNode::SetAggro(
         {
           if (!record->m_nContEffectType)
           {
-            defaultValue = g_AggroCaculateData.GetDefault(5u);
+            defaultValue = g_AggroCaculateData.GetDefault(5);
             break;
           }
 
           if (record->m_nContEffectType != 1 || !bOtherPlayerSupport)
           {
-            defaultValue = g_AggroCaculateData.GetDefault(4u);
+            defaultValue = g_AggroCaculateData.GetDefault(4);
             break;
           }
 
-          defaultValue = g_AggroCaculateData.GetDefault(6u);
+          defaultValue = g_AggroCaculateData.GetDefault(6);
         }
         break;
       }
@@ -216,7 +216,7 @@ void CAggroNode::SetAggro(
   m_nAggroData += defaultValue;
   if (bFirstAttack)
   {
-    m_nAggroData += g_AggroCaculateData.GetDefault(9u);
+    m_nAggroData += g_AggroCaculateData.GetDefault(9);
   }
   m_nAggroData = static_cast<int>(static_cast<float>(m_nAggroData)
                                   + static_cast<float>(m_nAggroData) * fAdd);

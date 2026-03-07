@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCryptParam.h"
 
@@ -82,7 +82,7 @@ void CCryptParam::SetAESDecryptor()
 
 void CCryptParam::LoadKey(CryptoPP::ByteQueue *kQueuePub, const char *szKeyPath)
 {
-  CryptoPP::ByteQueue *queue = new CryptoPP::ByteQueue(0x400u);
+  CryptoPP::ByteQueue *queue = new CryptoPP::ByteQueue(1024);
   CryptoPP::StreamTransformationFilter *attachment = new CryptoPP::StreamTransformationFilter(
     m_AESDecryptor,
     queue,
@@ -99,7 +99,7 @@ void CCryptParam::LoadKey(CryptoPP::ByteQueue *kQueuePub, const char *szKeyPath)
 
 void CCryptParam::CheckPublicKeyHash(CryptoPP::ByteQueue *kQueuePub)
 {
-  CryptoPP::SecByteBlock buffer(0x400u);
+  CryptoPP::SecByteBlock buffer(1024);
   const unsigned __int64 length = kQueuePub->Get(buffer, buffer.size());
   CryptoPP::SHA256 hash;
   if (!hash.VerifyDigest(g_cbHashVerify, buffer, static_cast<size_t>(length)))
@@ -110,7 +110,7 @@ void CCryptParam::CheckPublicKeyHash(CryptoPP::ByteQueue *kQueuePub)
 
 bool CCryptParam::Load(const char *szKeyPath)
 {
-  CryptoPP::ByteQueue queue(0x400u);
+  CryptoPP::ByteQueue queue(1024);
   SetAESDecryptor();
   LoadKey(&queue, szKeyPath);
   CheckPublicKeyHash(&queue);

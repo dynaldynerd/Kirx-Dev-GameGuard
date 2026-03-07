@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMgrAccountLobbyHistory.h"
 
@@ -28,7 +28,7 @@ CMgrAccountLobbyHistory::CMgrAccountLobbyHistory()
     "HistoryPath",
     "C:\\History",
     returnedString,
-    0x80u,
+    128,
     "..\\WorldInfo\\WorldInfo.ini");
   CreateDirectoryA(returnedString, nullptr);
   sprintf_s(m_szStdPath, "%s\\Lobby", returnedString);
@@ -39,24 +39,24 @@ CMgrAccountLobbyHistory::CMgrAccountLobbyHistory()
   _strtime(m_szCurTime);
   m_szCurTime[5] = 0;
 
-  m_tmrUpdateTime.BeginTimer(0xEA60u);
+  m_tmrUpdateTime.BeginTimer(60000);
 
-  m_listLogData_10K.SetList(0xFEu);
-  m_listLogDataEmpty_10K.SetList(0xFEu);
+  m_listLogData_10K.SetList(254);
+  m_listLogDataEmpty_10K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
   {
     m_listLogDataEmpty_10K.PushNode_Back(index);
   }
 
-  m_listLogData_1K.SetList(0xFEu);
-  m_listLogDataEmpty_1K.SetList(0xFEu);
+  m_listLogData_1K.SetList(254);
+  m_listLogDataEmpty_1K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
   {
     m_listLogDataEmpty_1K.PushNode_Back(index);
   }
 
-  m_listLogData_200.SetList(0x9E4u);
-  m_listLogDataEmpty_200.SetList(0x9E4u);
+  m_listLogData_200.SetList(2532);
+  m_listLogDataEmpty_200.SetList(2532);
   for (unsigned int index = 0; index < 2532; ++index)
   {
     m_listLogDataEmpty_200.PushNode_Back(index);
@@ -183,7 +183,7 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
     strcat_s(sLData, sLBuf);
     for (int j = 0; j < 3; ++j)
     {
-      if (pRegeData->RegeList[j].bySlotIndex != 0xFF)
+      if (pRegeData->RegeList[j].bySlotIndex != 255)
       {
         sprintf_s(
           sLBuf,
@@ -318,7 +318,7 @@ void CMgrAccountLobbyHistory::reged_char_complete(
     strcat_s(sLData, sLBuf);
     for (int j = 0; j < 3; ++j)
     {
-      if (pRegedList[j].m_bySlotIndex != 0xFF)
+      if (pRegedList[j].m_bySlotIndex != 255)
       {
         sprintf_s(
           sLBuf,
@@ -475,9 +475,9 @@ void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
 {
   unsigned int outIndex[4]{};
   const int size = static_cast<int>(strlen_0(pszLog));
-  if (size >= 0xC8)
+  if (size >= 200)
   {
-    if (size >= 0x3E8)
+    if (size >= 1000)
     {
       if (size < 0x2710 && m_listLogDataEmpty_10K.PopNode_Front(outIndex))
       {

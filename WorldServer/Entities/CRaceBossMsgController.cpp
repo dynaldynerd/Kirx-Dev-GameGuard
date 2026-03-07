@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRaceBossMsgController.h"
 
@@ -92,15 +92,15 @@ char RACE_BOSS_MSG::CMsg::Set(
     return 0;
   }
   m_dwSerial = dwSerial;
-  strncpy(m_wszName, pwszName, 0x10u);
+  strncpy(m_wszName, pwszName, 16u);
   m_wszName[16] = 0;
-  strncpy(m_wszMsg, pwszMsg, 0x30u);
+  strncpy(m_wszMsg, pwszMsg, 48u);
   m_wszMsg[48] = 0;
   for (int j = 0; j <= 48; ++j)
   {
-    if (m_wszMsg[j] == 39)
+    if (m_wszMsg[j] == '\'')
     {
-      m_wszMsg[j] = 32;
+      m_wszMsg[j] = ' ';
     }
   }
   m_dwSendTime = timeGetTime();
@@ -583,8 +583,8 @@ bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
   char sectionName[288];
   char translated[1296];
 
-  memset_0(sectionName, 0, 0xFFu);
-  memset_0(stringBuffer, 0, 0xFFu);
+  memset_0(sectionName, 0, 255);
+  memset_0(stringBuffer, 0, 255);
   sprintf(sectionName, "%s_Message%d", raceName[ucRace], m_dwID);
   sprintf(stringBuffer, "%d", m_uiState);
   if (!WritePrivateProfileStringA(sectionName, "State", stringBuffer, "..\\SystemSave\\ServerState.ini"))
@@ -596,12 +596,12 @@ bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
   {
     return false;
   }
-  W2M(m_wszName, translated, 0x500u);
+  W2M(m_wszName, translated, 1280);
   if (!WritePrivateProfileStringA(sectionName, "Name", translated, "..\\SystemSave\\ServerState.ini"))
   {
     return false;
   }
-  W2M(m_wszMsg, translated, 0x500u);
+  W2M(m_wszMsg, translated, 1280);
   if (!WritePrivateProfileStringA(sectionName, "Msg", translated, "..\\SystemSave\\ServerState.ini"))
   {
     return false;
@@ -644,9 +644,9 @@ bool RACE_BOSS_MSG::CMsgList::SaveIndexList(unsigned int iType, CNetIndexList *k
   char keyName[288];
   char stringBuffer[280];
 
-  memset_0(sectionName, 0, 0xFFu);
-  memset_0(keyName, 0, 0xFFu);
-  memset_0(stringBuffer, 0, 0xFFu);
+  memset_0(sectionName, 0, 255);
+  memset_0(keyName, 0, 255);
+  memset_0(stringBuffer, 0, 255);
   sprintf(sectionName, "%s_%s_IndexList", raceName[m_ucRace], typeName[iType]);
 
   const int listSize = static_cast<int>(kInxList->size());
@@ -825,9 +825,9 @@ void CRaceBossMsgController::SendComfirmWeb(unsigned __int8 ucRace, RACE_BOSS_MS
   msg.nCountIndex = static_cast<int>(pkMsg->GetID());
   msg.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
   msg.byRaceCode = ucRace;
-  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 0x10u);
+  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 16);
   msg.wszMasterName[16] = 0;
-  strncpy(msg.wszMsg, pkMsg->GetMsg(), 0x30u);
+  strncpy(msg.wszMsg, pkMsg->GetMsg(), 48);
   msg.wszMsg[48] = 0;
 
   unsigned __int8 type[2] = {51, 9};
@@ -852,9 +852,9 @@ void CRaceBossMsgController::SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_M
   msg.nCountIndex = static_cast<int>(pkMsg->GetID());
   msg.nWorldCode = static_cast<int>(g_Main.m_byWorldCode);
   msg.byRaceCode = ucRace;
-  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 0x10u);
+  strncpy(msg.wszMasterName, pkMsg->GetBossName(), 16);
   msg.wszMasterName[16] = 0;
-  strncpy(msg.wszMsg, pkMsg->GetMsg(), 0x30u);
+  strncpy(msg.wszMsg, pkMsg->GetMsg(), 48);
   msg.wszMsg[48] = 0;
 
   unsigned __int8 type[2] = {54, 2};
@@ -1073,7 +1073,7 @@ char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID
   const int result = m_kManager.Cancel(ucRace, dwMsgID, &pkMsg);
   if (result)
   {
-    SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, result, 0xFFFFFFFFu, nullptr);
+    SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, result, -1, nullptr);
     return 0;
   }
 
@@ -1113,7 +1113,7 @@ void CRaceBossMsgController::SendCancleInfomManager(
   msg.dwMsgID = dwMsgID;
   if (pwszName)
   {
-    strncpy_s(msg.wszBossName, sizeof(msg.wszBossName), pwszName, 0x10u);
+    strncpy_s(msg.wszBossName, sizeof(msg.wszBossName), pwszName, 16);
     msg.wszBossName[16] = '\0';
   }
 

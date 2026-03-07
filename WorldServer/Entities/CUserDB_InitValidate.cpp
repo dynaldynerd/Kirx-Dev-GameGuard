@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -15,15 +15,15 @@
 static const char aAe[] = "FirstSettingData (%s) Item[%d] Invalid Table Code (%s)";
 static const char aAe_0[] = "FirstSettingData (%s) Item[%d] Unit Item Not Allowed (%s)";
 static const char aAe_1[] = "FirstSettingData (%s) Item[%d] Record Not Found (%s)";
-static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise Àå";
+static const char aDDatavalidchec_21[] = "%d > DataValidCheckRevise Ã€Ã¥";
 static const char aDDatavalidchec_22[] = "%d > DataValidCheckRevise ";
-static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise Àå";
-static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise Æ";
+static const char aDDatavalidchec_23[] = "%d > DataValidCheckRevise Ã€Ã¥";
+static const char aDDatavalidchec_24[] = "%d > DataValidCheckRevise Ã†";
 static const char aDDatavalidchec_25[] = "%d > DataValidCheckRevise ";
-static const char aDDDatavalidche[] = "%d > %d DataValidCheckRevise À";
-static const char aDDDatavalidche_0[] = "%d > %d DataValidCheckRevise Äù";
-static const char aDDDatavalidche_1[] = "%d > %d DataValidCheckRevise Äù";
-static const char aDDatavalidchec_26[] = "%d > DataValidCheckRevise ÀÌÆåÆ® ÀÎµ";
+static const char aDDDatavalidche[] = "%d > %d DataValidCheckRevise Ã€";
+static const char aDDDatavalidche_0[] = "%d > %d DataValidCheckRevise Ã„Ã¹";
+static const char aDDDatavalidche_1[] = "%d > %d DataValidCheckRevise Ã„Ã¹";
+static const char aDDatavalidchec_26[] = "%d > DataValidCheckRevise Ã€ÃŒÃ†Ã¥Ã†Â® Ã€ÃŽÂµ";
 static const char aDDatavalidchec_27[] = "%d > DataValidCheckRevise ";
 
 bool CUserDB::FirstSettingData()
@@ -50,7 +50,7 @@ bool CUserDB::FirstSettingData()
       this->Update_Stat( j, classRecord->m_MasteryLim.m_nBnsMMastery[j], 1);
   }
   if ( classRecord->m_MasteryLim.m_nBnsSMastery )
-    this->Update_Stat( 0x4Fu, classRecord->m_MasteryLim.m_nBnsSMastery, 1);
+    this->Update_Stat( 79, classRecord->m_MasteryLim.m_nBnsSMastery, 1);
   if ( classRecord->m_MasteryLim.m_nBnsDefMastery )
     this->Update_Stat( 2u, classRecord->m_MasteryLim.m_nBnsDefMastery, 1);
   if ( classRecord->m_MasteryLim.m_nBnsPryMastery )
@@ -113,7 +113,7 @@ bool CUserDB::FirstSettingData()
       }
       else
       {
-        dwLv = 0xFFFFFFF;
+        dwLv = 268435455;
       }
 
       pItem.Init();
@@ -175,7 +175,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
     if ( pDataUpdated )
       *pDataUpdated = 1;
   }
-  if ( pData->dbAvator.m_dwDalant > 0x77359400 )
+  if ( pData->dbAvator.m_dwDalant > 2000000000 )
   {
     CUserDB::s_logAvatorDB.Write(
       "%d > DataValidCheckRevise DALANT (%u) (ADJUST %d)",
@@ -186,7 +186,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
     if ( pDataUpdated )
       *pDataUpdated = 1;
   }
-  if ( pData->dbAvator.m_dwGold > 0x7A120 )
+  if ( pData->dbAvator.m_dwGold > 500000 )
   {
     CUserDB::s_logAvatorDB.Write(
       "%d > DataValidCheckRevise GOLD (%u) (ADJUST %d)",
@@ -257,7 +257,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
     invenKey = &invenEntry->Key;
     if ( !invenKey->IsFilled() )
       continue;
-    if ( invenKey->byTableCode >= 0x25u )
+    if ( invenKey->byTableCode >= 37 )
     {
       CUserDB::s_logAvatorDB.Write(
         "%d > DataValidCheckRevise INVEN.. TABLE (%d) (DEL)",
@@ -296,7 +296,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
           *pDataUpdated = 1;
         continue;
       }
-      if ( invenEntry->dwDur > 0x63uLL )
+      if ( invenEntry->dwDur > 99 )
       {
         CUserDB::s_logAvatorDB.Write(
           "%d > DataValidCheckRevise INVEN.. AMOUNT: %d, (%d : %d) (ADJUST)",
@@ -309,9 +309,8 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
           *pDataUpdated = 1;
       }
     }
-    if ( invenKey->byTableCode != 19 )
-      goto LABEL_208;
-    if ( (int)pData->dbAvator.m_byRaceSexCode >> 1 )
+    bool shouldValidateSaveItem = invenKey->byTableCode != 19;
+    if ( !shouldValidateSaveItem && (int)pData->dbAvator.m_byRaceSexCode >> 1 )
     {
       CUserDB::s_logAvatorDB.Write(
         "%d > DataValidCheckRevise INVEN.. UNIT KEY (race %d) (ADJUST)",
@@ -322,30 +321,31 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
         *pDataUpdated = 1;
       continue;
     }
-    hasLinkedUnit = 0;
-    for ( k = 0; k < 4; ++k )
+    if ( !shouldValidateSaveItem )
     {
-      unitEntry = &pData->dbUnit.m_List[k];
-      if ( pData->dbUnit.m_List[k].byFrame != 255 && invenEntry->dwUpt == static_cast<unsigned int>(k) )
+      hasLinkedUnit = 0;
+      for ( k = 0; k < 4; ++k )
       {
-        hasLinkedUnit = 1;
-        break;
+        unitEntry = &pData->dbUnit.m_List[k];
+        if ( pData->dbUnit.m_List[k].byFrame != 255 && invenEntry->dwUpt == static_cast<unsigned int>(k) )
+        {
+          hasLinkedUnit = 1;
+          break;
+        }
       }
-    }
-    if ( hasLinkedUnit )
-    {
-LABEL_208:
-      if ( !IsSaveItem(invenKey->byTableCode) )
+      if ( !hasLinkedUnit )
       {
-        CUserDB::s_logAvatorDB.Write( "%d > NO SAVE ITEM (INVEN) (DEL)", pData->dbAvator.m_dwRecordNum);
+        CUserDB::s_logAvatorDB.Write( "%d > NOTHING UNIT (KEY DEL)", pData->dbAvator.m_dwRecordNum);
         invenKey->SetRelease();
         if ( pDataUpdated )
           *pDataUpdated = 1;
+        continue;
       }
+      shouldValidateSaveItem = 1;
     }
-    else
+    if ( shouldValidateSaveItem && !IsSaveItem(invenKey->byTableCode) )
     {
-      CUserDB::s_logAvatorDB.Write( "%d > NOTHING UNIT (KEY DEL)", pData->dbAvator.m_dwRecordNum);
+      CUserDB::s_logAvatorDB.Write( "%d > NO SAVE ITEM (INVEN) (DEL)", pData->dbAvator.m_dwRecordNum);
       invenKey->SetRelease();
       if ( pDataUpdated )
         *pDataUpdated = 1;
@@ -366,7 +366,7 @@ LABEL_208:
         *pDataUpdated = 1;
     }
   }
-  memset_0(embellishCountByTableCode, 0, 0x25uLL);
+  memset_0(embellishCountByTableCode, 0, 37);
   for ( j = 0; j < 7; ++j )
   {
     embellishKey = &pData->dbEquip.m_EmbellishList[j].Key;
@@ -493,7 +493,7 @@ LABEL_208:
           questRecord = (_Quest_fld *)CQuestMgr::s_tblQuest->GetRecord( questEntry->wIndex);
           for ( n = 0; n < 3; ++n )
           {
-            if ( questEntry->wNum[n] != 0xFFFF )
+            if ( questEntry->wNum[n] != 65535 )
             {
               const _action_node *actionNode = &questRecord->m_ActionNode[n];
               if ( actionNode->m_nActType == -1 )
@@ -534,72 +534,70 @@ LABEL_208:
       }
     }
   }
-  j = 0;
-  while ( 2 )
+  for ( j = 0; j < pData->dbTrunk.bySlotNum; ++j )
   {
-    if ( j < pData->dbTrunk.bySlotNum )
+    _TRUNK_DB_BASE::_LIST *trunkEntry = &pData->dbTrunk.m_List[j];
+    trunkKey = &trunkEntry->Key;
+    if ( trunkKey->IsFilled() )
     {
-      _TRUNK_DB_BASE::_LIST *trunkEntry = &pData->dbTrunk.m_List[j];
-      trunkKey = &trunkEntry->Key;
-      if ( trunkKey->IsFilled() )
+      if ( trunkKey->byTableCode < 37 )
       {
-        if ( trunkKey->byTableCode < 0x25u )
+        trunkItemIndex = trunkKey->wItemIndex;
+        trunkRecordCount = g_Main.m_tblItemData[trunkKey->byTableCode].GetRecordNum();
+        if ( trunkItemIndex < trunkRecordCount )
         {
-          trunkItemIndex = trunkKey->wItemIndex;
-          trunkRecordCount = g_Main.m_tblItemData[trunkKey->byTableCode].GetRecordNum();
-          if ( trunkItemIndex < trunkRecordCount )
+          if ( IsOverLapItem(trunkKey->byTableCode) )
           {
-            if ( IsOverLapItem(trunkKey->byTableCode) )
-            {
-              if ( !trunkEntry->dwDur )
-              {
-                CUserDB::s_logAvatorDB.Write(
-                  "%d > DataValidCheckRevise TRUNK.. AMOUNT: 0, (%d : %d) (DEL)",
-                  pData->dbAvator.m_dwRecordNum,
-                  trunkKey->byTableCode,
-                  trunkKey->wItemIndex);
-                trunkKey->SetRelease();
-                if ( pDataUpdated )
-                  *pDataUpdated = 1;
-                goto LABEL_166;
-              }
-              if ( trunkEntry->dwDur > 0x63uLL )
-              {
-                CUserDB::s_logAvatorDB.Write(
-                  "%d > DataValidCheckRevise TRUNK.. AMOUNT: %d, (%d : %d) (ADJUST)",
-                  pData->dbAvator.m_dwRecordNum,
-                  static_cast<unsigned int>(trunkEntry->dwDur),
-                  trunkKey->byTableCode,
-                  trunkKey->wItemIndex);
-                trunkEntry->dwDur = 99;
-                if ( pDataUpdated )
-                  *pDataUpdated = 1;
-              }
-            }
-            if ( trunkEntry->byRace < 3u )
-            {
-              if ( !IsSaveItem(trunkKey->byTableCode) )
-              {
-                CUserDB::s_logAvatorDB.Write(
-                  "%d > NO SAVE ITEM (TRUNK) (DEL)",
-                  pData->dbAvator.m_dwRecordNum);
-                trunkKey->SetRelease();
-                if ( pDataUpdated )
-                  *pDataUpdated = 1;
-              }
-            }
-            else
+            if ( !trunkEntry->dwDur )
             {
               CUserDB::s_logAvatorDB.Write(
-                "%d > DataValidCheckRevise TRUNK.. RACE (%d) (DEL)",
+                "%d > DataValidCheckRevise TRUNK.. AMOUNT: 0, (%d : %d) (DEL)",
                 pData->dbAvator.m_dwRecordNum,
-                trunkEntry->byRace);
+                trunkKey->byTableCode,
+                trunkKey->wItemIndex);
+              trunkKey->SetRelease();
+              if ( pDataUpdated )
+                *pDataUpdated = 1;
+              continue;
+            }
+            if ( trunkEntry->dwDur > 99 )
+            {
+              CUserDB::s_logAvatorDB.Write(
+                "%d > DataValidCheckRevise TRUNK.. AMOUNT: %d, (%d : %d) (ADJUST)",
+                pData->dbAvator.m_dwRecordNum,
+                static_cast<unsigned int>(trunkEntry->dwDur),
+                trunkKey->byTableCode,
+                trunkKey->wItemIndex);
+              trunkEntry->dwDur = 99;
+              if ( pDataUpdated )
+                *pDataUpdated = 1;
+            }
+          }
+          if ( trunkEntry->byRace < 3u )
+          {
+            if ( !IsSaveItem(trunkKey->byTableCode) )
+            {
+              CUserDB::s_logAvatorDB.Write(
+                "%d > NO SAVE ITEM (TRUNK) (DEL)",
+                pData->dbAvator.m_dwRecordNum);
               trunkKey->SetRelease();
               if ( pDataUpdated )
                 *pDataUpdated = 1;
             }
-            goto LABEL_166;
           }
+          else
+          {
+            CUserDB::s_logAvatorDB.Write(
+              "%d > DataValidCheckRevise TRUNK.. RACE (%d) (DEL)",
+              pData->dbAvator.m_dwRecordNum,
+              trunkEntry->byRace);
+            trunkKey->SetRelease();
+            if ( pDataUpdated )
+              *pDataUpdated = 1;
+          }
+        }
+        else
+        {
           CUserDB::s_logAvatorDB.Write(
             "%d > DataValidCheckRevise TRUNK.. INDEX (%d : %d) (DEL)",
             pData->dbAvator.m_dwRecordNum,
@@ -609,22 +607,18 @@ LABEL_208:
           if ( pDataUpdated )
             *pDataUpdated = 1;
         }
-        else
-        {
-          CUserDB::s_logAvatorDB.Write(
-            "%d > DataValidCheckRevise TRUNK.. TABLE (%d) (DEL)",
-            pData->dbAvator.m_dwRecordNum,
-            trunkKey->byTableCode);
-          trunkKey->SetRelease();
-          if ( pDataUpdated )
-            *pDataUpdated = 1;
-        }
       }
-LABEL_166:
-      ++j;
-      continue;
+      else
+      {
+        CUserDB::s_logAvatorDB.Write(
+          "%d > DataValidCheckRevise TRUNK.. TABLE (%d) (DEL)",
+          pData->dbAvator.m_dwRecordNum,
+          trunkKey->byTableCode);
+        trunkKey->SetRelease();
+        if ( pDataUpdated )
+          *pDataUpdated = 1;
+      }
     }
-    break;
   }
   for ( j = 0; j < 10; ++j )
   {

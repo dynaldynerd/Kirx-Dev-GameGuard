@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CLuaLootingMgr.h"
 
@@ -39,7 +39,7 @@ CLuaLooting_Novus_Item::~CLuaLooting_Novus_Item()
 
 CLuaLootingMgr::CLuaLootingMgr()
 {
-  m_Loot_Novus_ItemArEx.Alloc(0x1F4u);
+  m_Loot_Novus_ItemArEx.Alloc(500);
   m_dwAddNodeCount = 0;
 }
 
@@ -105,7 +105,7 @@ bool CLuaLootingMgr::AddNovusItem(
 
   unsigned __int8 tableCode = static_cast<unsigned __int8>(-1);
   _base_fld *record = nullptr;
-  for (unsigned __int8 j = 0; j < 0x25u; ++j)
+  for (unsigned __int8 j = 0; j < 37; ++j)
   {
     record = g_Main.m_tblItemData[j].GetRecord(strItemCode);
     if (record)

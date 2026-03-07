@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "ClassOrderProcessor.h"
 #include "PatriarchElectProcessor.h"
@@ -46,7 +46,7 @@ bool ClassOrderProcessor::Initialize()
   _kSysLog.SetWriteLogFile(logPath, true, false, true, true);
 
   ElectProcessor::Initialize();
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, false);
+  g_Main.PushDQSData(-1, nullptr, 120, nullptr, false);
   return true;
 }
 
@@ -166,7 +166,7 @@ int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(race, 0);
   CPlayer *raceBoss = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, raceBossSerial);
 
-  if (player->m_byPatriarchAppointPropose == 0xFF)
+  if (player->m_byPatriarchAppointPropose == 255)
     return 0;
 
   if (*data != 0)
@@ -180,8 +180,8 @@ int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
         player->m_Param.GetCharNameW());
     }
 
-    player->m_byPatriarchAppointPropose = 0xFF;
-    player->m_dwPatriarchAppointTime = 0xFFFFFFFF;
+    player->m_byPatriarchAppointPropose = 255;
+    player->m_dwPatriarchAppointTime = -1;
     return 0;
   }
 
@@ -228,8 +228,8 @@ int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
     }
   }
 
-  player->m_byPatriarchAppointPropose = 0xFF;
-  player->m_dwPatriarchAppointTime = 0xFFFFFFFF;
+  player->m_byPatriarchAppointPropose = 255;
+  player->m_dwPatriarchAppointTime = -1;
   return 0;
 }
 

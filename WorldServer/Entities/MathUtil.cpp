@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 #include "CEntity.h"
@@ -290,7 +290,7 @@ float GetFloatMod(float value, float modulus)
 
 void MatrixIdentity(float (*const outMatrix)[4])
 {
-    memset_0(outMatrix, 0, 0x40u);
+    memset_0(outMatrix, 0, 64);
     (*outMatrix)[0] = 1.0f;
     (*outMatrix)[5] = 1.0f;
     (*outMatrix)[10] = 1.0f;
@@ -299,7 +299,7 @@ void MatrixIdentity(float (*const outMatrix)[4])
 
 void MatrixCopy(float (*const outMatrix)[4], float (*const sourceMatrix)[4])
 {
-    memcpy_0(outMatrix, sourceMatrix, 0x40u);
+    memcpy_0(outMatrix, sourceMatrix, 64);
 }
 
 void MatrixMultiply(float (*outMatrix)[4], float (*const leftMatrix)[4], float (*const rightMatrix)[4])

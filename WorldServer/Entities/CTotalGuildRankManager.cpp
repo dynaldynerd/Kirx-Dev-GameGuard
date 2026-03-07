@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CTotalGuildRankManager.h"
 #include "WorldServerUtil.h"
@@ -64,7 +64,7 @@ __int64 CTotalGuildRankManager::Load(unsigned __int8 byDayAfter, _total_guild_ra
   GetDateStrAfterDay(dateStr, 128, byDayAfter);
 
   char tableName[260]{};
-  sprintf_s(tableName, 0x100u, "tbl_GuildRank%s", dateStr);
+  sprintf_s(tableName, 256, "tbl_GuildRank%s", dateStr);
   if (!g_Main.m_pWorldDB->TableExist(tableName))
   {
     return 1;
@@ -87,7 +87,7 @@ __int64 CTotalGuildRankManager::Load(unsigned __int8 byDayAfter, _total_guild_ra
 
 void CTotalGuildRankManager::Loop()
 {
-  if (IsDayChanged(&m_iOldDay) && !g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x2Bu, nullptr, 0))
+  if (IsDayChanged(&m_iOldDay) && !g_Main.PushDQSData(-1, nullptr, 43, nullptr, 0))
   {
     CPvpUserAndGuildRankingSystem::Instance()->Log(
       "CTotalGuildRankManager::Loop() g_Main.PushDQSData(..) Fail!");

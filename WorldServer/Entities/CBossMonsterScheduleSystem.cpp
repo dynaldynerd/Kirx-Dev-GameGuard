@@ -40,7 +40,7 @@ CBossMonsterScheduleSystem::CBossMonsterScheduleSystem()
 
 CBossMonsterScheduleSystem::~CBossMonsterScheduleSystem()
 {
-  Terminate(0xFFFFFFFF);
+  Terminate(-1);
   if (m_pCurTBL)
   {
     delete m_pCurTBL;

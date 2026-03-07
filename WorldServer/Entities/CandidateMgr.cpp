@@ -45,12 +45,12 @@ void CandidateMgr::_candidate_info::_Init()
   bLoad = false;
   bUpdateClassType = false;
   eStatus = candidate_normal;
-  byRace = 0xFF;
-  byLevel = 0xFF;
-  dwRank = 0xFFFFFFFFu;
+  byRace = static_cast<unsigned __int8>(-1);
+  byLevel = static_cast<unsigned __int8>(-1);
+  dwRank = static_cast<unsigned int>(-1);
   dPvpPoint = 0.0;
-  dwGuildSerial = 0xFFFFFFFFu;
-  dwAvatorSerial = 0xFFFFFFFFu;
+  dwGuildSerial = static_cast<unsigned int>(-1);
+  dwAvatorSerial = static_cast<unsigned int>(-1);
   memset_0(wszGuildName, 0, sizeof(wszGuildName));
   memset_0(wszName, 0, sizeof(wszName));
   dwScore = 0;
@@ -124,7 +124,7 @@ char CandidateMgr::LoadDatabase()
   {
     for (int candidateIndex = 0; candidateIndex < 500; ++candidateIndex)
     {
-      if (m_kCandidate[raceIndex][candidateIndex].byRace != 0xFF)
+      if (m_kCandidate[raceIndex][candidateIndex].byRace != static_cast<unsigned __int8>(-1))
       {
         if (m_kCandidate[raceIndex][candidateIndex].eStatus == _candidate_info::candidate_1st)
         {
@@ -275,13 +275,13 @@ bool CandidateMgr::AppointPatriarchGroup(CPlayer *pOne, _candidate_info::ClassTy
   }
   else
   {
-    candidate->dwGuildSerial = 0xFFFFFFFFu;
+    candidate->dwGuildSerial = static_cast<unsigned int>(-1);
     memset_0(candidate->wszGuildName, 0, sizeof(candidate->wszGuildName));
   }
 
   const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
   _qry_case_insert_candidate query(candidate->byRace, pOne->m_id.wIndex, electSerial, candidate->dwAvatorSerial);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x7Du, reinterpret_cast<char *>(&query), query.size());
+  g_Main.PushDQSData(-1, nullptr, 125u, reinterpret_cast<char *>(&query), query.size());
   return true;
 }
 
@@ -296,7 +296,7 @@ bool CandidateMgr::DischargePatriarchGroup(unsigned __int8 byRace, _candidate_in
 
   const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetCurrPatriarchElectSerial();
   _qry_case_discharge_patriarch query(candidate->byRace, candidate->dwAvatorSerial, electSerial);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x7Eu, reinterpret_cast<char *>(&query), query.size());
+  g_Main.PushDQSData(-1, nullptr, 126u, reinterpret_cast<char *>(&query), query.size());
   return true;
 }
 
@@ -338,7 +338,7 @@ bool CandidateMgr::Regist(CPlayer *pOne)
     pOne->m_id.wIndex,
     electSerial,
     empty->dwAvatorSerial);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x75u, reinterpret_cast<char *>(&query), query.size());
+  g_Main.PushDQSData(-1, nullptr, 117u, reinterpret_cast<char *>(&query), query.size());
 
   return true;
 }
@@ -368,10 +368,10 @@ bool CandidateMgr::Regist(unsigned __int8 byRace, const _PVP_RANK_DATA *pData)
   const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
   _qry_case_insert_candidate query(
     empty->byRace,
-    0xFFFFu,
+    static_cast<unsigned __int16>(-1),
     electSerial,
     empty->dwAvatorSerial);
-  g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x75u, reinterpret_cast<char *>(&query), query.size());
+  g_Main.PushDQSData(-1, nullptr, 117u, reinterpret_cast<char *>(&query), query.size());
 
   return true;
 }
@@ -678,7 +678,7 @@ void CandidateMgr::ChangeState_1to2()
     }
   }
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x72u, nullptr, 0);
+  g_Main.PushDQSData(-1, nullptr, 114u, nullptr, 0);
 }
 
 void CandidateMgr::__AddWinner(unsigned __int8 byRace, unsigned __int8 byNum)
@@ -720,9 +720,13 @@ void CandidateMgr::__AddWinner(unsigned __int8 byRace, unsigned __int8 byNum)
       m_nCandidateCnt_1st[empty->byRace]);
 
     const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
-    _qry_case_insert_candidate query(empty->byRace, 0xFFFFu, electSerial, empty->dwAvatorSerial);
+    _qry_case_insert_candidate query(
+      empty->byRace,
+      static_cast<unsigned __int16>(-1),
+      electSerial,
+      empty->dwAvatorSerial);
     const int querySize = static_cast<int>(query.size());
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x75u, reinterpret_cast<char *>(&query), querySize);
+    g_Main.PushDQSData(-1, nullptr, 117u, reinterpret_cast<char *>(&query), querySize);
   }
 }
 
@@ -769,7 +773,7 @@ void CandidateMgr::FinalDecision()
     }
   }
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x74u, nullptr, 0);
+  g_Main.PushDQSData(-1, nullptr, 116u, nullptr, 0);
 }
 
 void CandidateMgr::ApplyPatriarchGroup()
@@ -811,7 +815,7 @@ __int64 CandidateMgr::Update_RegistCandidate_2st()
     {
       if (m_kCandidate[race][index].eStatus == _candidate_info::candidate_2st)
       {
-        sprintf_s(source, 0xC8u, "ASerial=%d or ", m_kCandidate[race][index].dwAvatorSerial);
+        sprintf_s(source, 200u, "ASerial=%d or ", m_kCandidate[race][index].dwAvatorSerial);
         strcat_s(buffer, sizeof(buffer), source);
         ++count;
       }
@@ -963,7 +967,7 @@ __int64 CandidateMgr::Update_DischargePatriarch(_qry_case_discharge_patriarch *p
 __int64 CandidateMgr::CheckDBValidCharacter(unsigned __int8 byProc)
 {
   unsigned int dwDbSerial[4]{};
-  dwDbSerial[0] = 0xFFFFFFFFu;
+  dwDbSerial[0] = static_cast<unsigned int>(-1);
 
   for (int race = 0; race < 3; ++race)
   {
@@ -1092,7 +1096,7 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_inse
 {
   if (byRet)
   {
-    if (p->wIndex != 0xFFFF)
+    if (p->wIndex != static_cast<unsigned __int16>(-1))
     {
       CPlayer *player = &g_Player[p->wIndex];
       if (player->m_bOper)
@@ -1104,9 +1108,9 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_inse
             p->byRace,
             p->wIndex,
             p->dwAvatorSerial,
-            0x989680uLL);
+            10000000uLL);
           const int size = static_cast<int>(refund.size());
-          g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Cu, reinterpret_cast<char *>(&refund), size);
+          g_Main.PushDQSData(-1, nullptr, 124u, reinterpret_cast<char *>(&refund), size);
         }
       }
     }

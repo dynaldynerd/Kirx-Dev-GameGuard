@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNationSettingFactoryGroup.h"
 
@@ -27,7 +27,7 @@ CNationSettingFactoryGroup::~CNationSettingFactoryGroup() = default;
 int CNationSettingFactoryGroup::Init()
 {
   CNationSettingFactory *factory = nullptr;
-  auto *factoryKr = static_cast<CNationSettingFactoryKR *>(operator new(0x10uLL));
+  auto *factoryKr = static_cast<CNationSettingFactoryKR *>(operator new(16));
   if (factoryKr)
   {
     new (factoryKr) CNationSettingFactoryKR();
@@ -39,7 +39,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryGb = static_cast<CNationSettingFactoryGB *>(operator new(0x10uLL));
+  auto *factoryGb = static_cast<CNationSettingFactoryGB *>(operator new(16));
   if (factoryGb)
   {
     new (factoryGb) CNationSettingFactoryGB();
@@ -51,7 +51,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryId = static_cast<CNationSettingFactoryID *>(operator new(0x10uLL));
+  auto *factoryId = static_cast<CNationSettingFactoryID *>(operator new(16));
   if (factoryId)
   {
     new (factoryId) CNationSettingFactoryID();
@@ -63,7 +63,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryJp = static_cast<CNationSettingFactoryJP *>(operator new(0x10uLL));
+  auto *factoryJp = static_cast<CNationSettingFactoryJP *>(operator new(16));
   if (factoryJp)
   {
     new (factoryJp) CNationSettingFactoryJP();
@@ -75,7 +75,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryPh = static_cast<CNationSettingFactoryPH *>(operator new(0x10uLL));
+  auto *factoryPh = static_cast<CNationSettingFactoryPH *>(operator new(16));
   if (factoryPh)
   {
     new (factoryPh) CNationSettingFactoryPH();
@@ -87,7 +87,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryRu = static_cast<CNationSettingFactoryRU *>(operator new(0x10uLL));
+  auto *factoryRu = static_cast<CNationSettingFactoryRU *>(operator new(16));
   if (factoryRu)
   {
     new (factoryRu) CNationSettingFactoryRU();
@@ -99,7 +99,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryBr = static_cast<CNationSettingFactoryBR *>(operator new(0x10uLL));
+  auto *factoryBr = static_cast<CNationSettingFactoryBR *>(operator new(16));
   if (factoryBr)
   {
     new (factoryBr) CNationSettingFactoryBR();
@@ -111,7 +111,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryTw = static_cast<CNationSettingFactoryTW *>(operator new(0x10uLL));
+  auto *factoryTw = static_cast<CNationSettingFactoryTW *>(operator new(16));
   if (factoryTw)
   {
     new (factoryTw) CNationSettingFactoryTW();
@@ -123,7 +123,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryCn = static_cast<CNationSettingFactoryCN *>(operator new(0x10uLL));
+  auto *factoryCn = static_cast<CNationSettingFactoryCN *>(operator new(16));
   if (factoryCn)
   {
     new (factoryCn) CNationSettingFactoryCN();
@@ -135,7 +135,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryUs = static_cast<CNationSettingFactoryUS *>(operator new(0x10uLL));
+  auto *factoryUs = static_cast<CNationSettingFactoryUS *>(operator new(16));
   if (factoryUs)
   {
     new (factoryUs) CNationSettingFactoryUS();
@@ -147,7 +147,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryEs = static_cast<CNationSettingFactoryES *>(operator new(0x10uLL));
+  auto *factoryEs = static_cast<CNationSettingFactoryES *>(operator new(16));
   if (factoryEs)
   {
     new (factoryEs) CNationSettingFactoryES();
@@ -159,7 +159,7 @@ int CNationSettingFactoryGroup::Init()
   }
 
   factory = nullptr;
-  auto *factoryTh = static_cast<CNationSettingFactoryTH *>(operator new(0x10uLL));
+  auto *factoryTh = static_cast<CNationSettingFactoryTH *>(operator new(16));
   if (factoryTh)
   {
     new (factoryTh) CNationSettingFactoryTH();

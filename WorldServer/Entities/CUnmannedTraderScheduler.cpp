@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderScheduler.h"
 #include "CUnmannedTraderEnvironmentValue.h"
@@ -201,7 +201,7 @@ void CUnmannedTraderScheduler::ClearAll()
 
 void CUnmannedTraderScheduler::PushLoad()
 {
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Au, nullptr, 0);
+  g_Main.PushDQSData(-1, nullptr, 58, nullptr, 0);
 }
 
 void CUnmannedTraderScheduler::CompleteClear(

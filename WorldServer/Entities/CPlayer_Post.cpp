@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -268,7 +268,7 @@ void CPlayer::pc_PostListRequest()
   _qry_case_post_storage_list_get qry{};
   qry.dwMasterSerial = m_pUserDB->m_dwSerial;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Fu, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 79, reinterpret_cast<char *>(&qry), size);
 }
 
 void CPlayer::pc_PostContentRequest(unsigned int dwIndex)
@@ -300,12 +300,12 @@ void CPlayer::pc_PostContentRequest(unsigned int dwIndex)
       qry.dwSerial = post->m_dwPSSerial;
       qry.dwIndex = dwIndex;
       const int size = static_cast<int>(qry.size());
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x52u, reinterpret_cast<char *>(&qry), size);
+      g_Main.PushDQSData(-1, nullptr, 82, reinterpret_cast<char *>(&qry), size);
     }
   }
   else
   {
-    SendMsg_PostItemGold(0xBu);
+    SendMsg_PostItemGold(11);
   }
 }
 
@@ -332,7 +332,7 @@ void CPlayer::pc_PostDeleteRequest(unsigned int dwIndex)
   }
   else
   {
-    SendMsg_PostDelete(0xBu, dwIndex);
+    SendMsg_PostDelete(11, dwIndex);
   }
 }
 
@@ -341,7 +341,7 @@ void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
   CPostData *post = m_Param.m_PostStorage.GetPostDataFromInx(dwIndex);
   if (!post)
   {
-    SendMsg_PostItemGold(0xBu);
+    SendMsg_PostItemGold(11);
     return;
   }
 
@@ -352,16 +352,16 @@ void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
 
   if (post->m_Key.IsFilled() && m_Param.m_dbInven.GetIndexEmptyCon() == 255)
   {
-    SendMsg_PostItemGold(0xEu);
+    SendMsg_PostItemGold(14);
     return;
   }
 
   if (post->m_dwGold)
   {
     const unsigned int money = GetMoney(1u);
-    if (post->m_dwGold + money > 0x7A120)
+    if (post->m_dwGold + money > 500000)
     {
-      SendMsg_PostItemGold(0xFu);
+      SendMsg_PostItemGold(15);
       return;
     }
   }
@@ -407,7 +407,7 @@ void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
 
   post->m_Key.SetRelease();
   post->m_dwDur = 0;
-  post->m_dwUpt = 0xFFFFFFF;
+  post->m_dwUpt = 268435455;
   post->m_lnUID = 0;
   post->m_dwGold = 0;
   if (hadChange)
@@ -417,7 +417,7 @@ void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
   }
   else
   {
-    SendMsg_PostItemGold(0xCu);
+    SendMsg_PostItemGold(12);
   }
 }
 
@@ -431,7 +431,7 @@ void CPlayer::pc_PostReturnConfirmRequest(unsigned int dwPostSerial)
   CPostData *post = m_Param.m_ReturnPostStorage.GetPostDataFromSerial(dwPostSerial);
   if (!post)
   {
-    SendMsg_PostReturnConfirm(0xBu, dwPostSerial);
+    SendMsg_PostReturnConfirm(11, dwPostSerial);
     return;
   }
   if (!IsReturnPostUpdate())
@@ -443,14 +443,14 @@ void CPlayer::pc_PostReturnConfirmRequest(unsigned int dwPostSerial)
   _STORAGE_LIST::_db_con *addedItem = nullptr;
   if (post->m_Key.IsFilled() && m_Param.m_dbInven.GetIndexEmptyCon() == 255)
   {
-    SendMsg_PostReturnConfirm(0xEu, dwPostSerial);
+    SendMsg_PostReturnConfirm(14, dwPostSerial);
     return;
   }
 
   const unsigned int money = GetMoney(1u);
-  if (post->m_dwGold + money + 5 > 0x7A120)
+  if (post->m_dwGold + money + 5 > 500000)
   {
-    SendMsg_PostReturnConfirm(0xFu, dwPostSerial);
+    SendMsg_PostReturnConfirm(15, dwPostSerial);
     return;
   }
 
@@ -491,7 +491,7 @@ void CPlayer::pc_PostReturnConfirmRequest(unsigned int dwPostSerial)
 
   post->m_Key.SetRelease();
   post->m_dwDur = 0;
-  post->m_dwUpt = 0xFFFFFFF;
+  post->m_dwUpt = 268435455;
   post->m_lnUID = 0;
   post->m_dwGold = 0;
   AddGold(5u, true);
@@ -509,6 +509,6 @@ void CPlayer::pc_UpdateDataForPostSend()
   qry.pNewData = &m_pUserDB->m_AvatorData;
   qry.pOldData = &m_pUserDB->m_AvatorData_bk;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0xAFu, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 175, reinterpret_cast<char *>(&qry), size);
 }
 

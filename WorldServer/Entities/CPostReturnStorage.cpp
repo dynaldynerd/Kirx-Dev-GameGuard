@@ -105,5 +105,5 @@ unsigned int CPostReturnStorage::GetReturnPostInx()
       return static_cast<unsigned int>(j);
     }
   }
-  return 0xFFFFFFFFu;
+  return static_cast<unsigned int>(-1);
 }

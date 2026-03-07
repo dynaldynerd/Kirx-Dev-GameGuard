@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "radar_char_list_result_zocl.h"
 
@@ -10,7 +10,7 @@ _radar_char_list_result_zocl::_radar_char_list_result_zocl()
 
 __int64 _radar_char_list_result_zocl::size()
 {
-  if (byListNum > 0x32u)
+  if (byListNum > 50)
   {
     byListNum = 0;
   }

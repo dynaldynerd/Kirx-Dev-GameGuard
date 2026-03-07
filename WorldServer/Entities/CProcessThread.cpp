@@ -48,7 +48,7 @@ CProcessThread::CProcessThread()
 CProcessThread::~CProcessThread()
 {
   m_bThread = false;
-  Sleep(0xBB8u);
+    Sleep(3000u);
 
   if (m_pSynData)
   {

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 #include "R3EngineStateOverlay.h"
@@ -173,11 +173,11 @@ char *cvt_string(int nVal)
 
 bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney)
 {
-  if (ui64AddMoney > 0x77359400ULL)
+  if (ui64AddMoney > 2000000000)
   {
     return false;
   }
-  if (ui64HasMoney <= 0x77359400ULL)
+  if (ui64HasMoney <= 2000000000)
   {
     return ui64AddMoney <= 2000000000ULL - ui64HasMoney;
   }
@@ -186,11 +186,11 @@ bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 u
 
 bool CanAddMoneyForMaxLimGold(unsigned __int64 ui64AddGold, unsigned __int64 ui64HasGold)
 {
-  if (ui64AddGold > 0x7A120ULL)
+  if (ui64AddGold > 500000)
   {
     return false;
   }
-  if (ui64HasGold <= 0x7A120ULL)
+  if (ui64HasGold <= 500000)
   {
     return ui64AddGold <= 500000ULL - ui64HasGold;
   }
@@ -977,7 +977,7 @@ char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
     return g_szUPT;
   }
 
-  if (GetItemKindCode(nTableCode) || dwLvBit == 0x0FFFFFFF)
+  if (GetItemKindCode(nTableCode) || dwLvBit == 268435455)
   {
     return g_szUPT;
   }
@@ -1154,7 +1154,7 @@ bool GetDateTimeStr(char *szTime)
     return false;
   }
 
-  return std::strftime(szTime, 0x80, "%y-%m-%d_%H-%M-%S", &local) != 0;
+  return std::strftime(szTime, 128, "%y-%m-%d_%H-%M-%S", &local) != 0;
 }
 
 bool GetLastWriteFileTime(const char *szFileName, _FILETIME *ftWrite)
@@ -1288,21 +1288,21 @@ int IsStorageRange(unsigned __int8 byStorageCode, unsigned __int8 byStorageIndex
   switch (byStorageCode)
   {
     case 0u:
-      return byStorageIndex < 0x64u;
+      return byStorageIndex < 100;
     case 1u:
       return byStorageIndex < 8u;
     case 2u:
       return byStorageIndex < 7u;
     case 3u:
-      return byStorageIndex < 0x58u;
+      return byStorageIndex < 88;
     case 4u:
       return byStorageIndex < 4u;
     case 5u:
-      return byStorageIndex < 0x64u;
+      return byStorageIndex < 100;
     case 6u:
-      return byStorageIndex < 0x28u;
+      return byStorageIndex < 40;
     case 7u:
-      return byStorageIndex < 0x28u;
+      return byStorageIndex < 40;
     default:
       return 0;
   }
@@ -1319,7 +1319,7 @@ unsigned __int8 GetItemUpgedLv(unsigned int dwLvBit)
   for (int j = 0; j < 7; ++j)
   {
     const unsigned __int8 talik = static_cast<unsigned __int8>((dwLvBit >> (4 * j)) & 0xF);
-    if (talik == 0xF)
+    if (talik == 15)
     {
       break;
     }
@@ -1816,7 +1816,7 @@ void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData)
       break;
     }
     _force_fld *record = static_cast<_force_fld *>(pForceData->GetRecord(n));
-    if (record && static_cast<unsigned int>(record->m_nMastIndex) < 0x18u)
+    if (record && static_cast<unsigned int>(record->m_nMastIndex) < 24)
     {
       s_nForceLvPerMastery[record->m_nMastIndex] = record->m_nLv;
     }
@@ -4621,7 +4621,7 @@ _R3MATERIAL *LoadMainR3M(char *szFileName)
   char *sourceFileName = szFileName;
   char r3xPath[256]{};
 
-  reinterpret_cast<unsigned int *>(&qword_184A79818)[1] = 0xFF000000u;
+  reinterpret_cast<unsigned int *>(&qword_184A79818)[1] = 4278190080;
   dword_184A79920 = 1;
   dword_184A798D0 = -1;
   dword_184A79808 = 0;
@@ -4945,7 +4945,7 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
   }
 
   if (mat)
-    *mat = static_cast<unsigned int>(matNum);
+    mat->m_iMatNum = matNum;
   fclose(fp);
   return reinterpret_cast<_R3MATERIAL *>(mat);
 }
@@ -5021,7 +5021,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
     }
   }
 
-  if (std::strlen(szFileName) >= 0x7F)
+  if (std::strlen(szFileName) >= 127)
   {
     Warning(aA_3, byte_140883769);
     return nullptr;
@@ -5105,7 +5105,7 @@ int R3GetPreTextureId(char *szFileName)
     dword_140978968 = oldMaxCount + 16;
   }
 
-  if (std::strlen(szFileName) >= 0x7F)
+  if (std::strlen(szFileName) >= 127)
   {
     Warning(aA_3, byte_140883769);
     return 0;
@@ -5232,10 +5232,10 @@ void SetNoLodTextere()
     _R3MATERIAL *const material = &qword_184A79DA8[i];
     if ((material->m_dwFlag & 2) != 0)
     {
-      SetR3D3DTexture(static_cast<unsigned int>(material->m_iDetailSurface), 0x80000000);
+      SetR3D3DTexture(static_cast<unsigned int>(material->m_iDetailSurface), 2147483648);
       for (unsigned int layerIndex = 0; layerIndex < material->m_dwLayerNum; ++layerIndex)
       {
-        SetR3D3DTexture(static_cast<unsigned int>(material->m_Layer[layerIndex].m_iSurface), 0x80000000);
+        SetR3D3DTexture(static_cast<unsigned int>(material->m_Layer[layerIndex].m_iSurface), 2147483648);
       }
     }
   }
@@ -5262,10 +5262,10 @@ void LoadR3T(struct R3Texture *pTex)
       size_t size = 0;
       fread(&size, 4, 1, fp);
       R3TextureSlot *const slots = GetTextureSlots();
-      if (_bittest(reinterpret_cast<const long *>(&slots[i + pTex->mStartID].mFlag), 0x1F))
-        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, 0, 0x800, 0x800);
+      if (_bittest(reinterpret_cast<const long *>(&slots[i + pTex->mStartID].mFlag), 31))
+        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, 0, 2048, 2048);
       else
-        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, dword_184A797D0, 0x800, 0x800);
+        slots[i + pTex->mStartID].mTexture = R3LoadDDSFromFP(fp, size, dword_184A797D0, 2048, 2048);
     }
     fclose(fp);
   }
@@ -5336,13 +5336,13 @@ void R3LoadTextureMem(int id)
       ++texture;
     } while (ownerIndex < dword_140978964);
 
-    if (_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 0xF))
+    if (_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 15))
     {
       if (!textures[ownerIndex].mSameCnt)
       {
         const unsigned int mipLevel =
-          _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 0x1F) ? 0 : dword_184A797D0;
-        slots[id].mTexture = R3LoadDDS(textures[ownerIndex].mName, mipLevel, 0x800, 0x800);
+          _bittest(reinterpret_cast<const long *>(&slots[id].mFlag), 31) ? 0 : dword_184A797D0;
+        slots[id].mTexture = R3LoadDDS(textures[ownerIndex].mName, mipLevel, 2048, 2048);
       }
     }
     else
@@ -5381,7 +5381,7 @@ void R3ReleaseTextureMem(int id)
   }
   else
   {
-    if (!_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 0xF))
+    if (!_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 15))
     {
       Warning(aR3tAaia, byte_140883769);
     }
@@ -5429,7 +5429,7 @@ struct IDirect3DTexture8 *R3LoadDDSFromFP(FILE *fp, size_t size, unsigned int mi
   if (!buf)
     return nullptr;
 
-  fread(buf, 0x90, 1, fp);
+  fread(buf, 144, 1, fp);
   if (*buf != 542327876)
   {
     sub_1404FFFB0(reinterpret_cast<__int64>(buf));
@@ -5473,7 +5473,7 @@ struct IDirect3DTexture8 *R3LoadDDSAndTextureMem(char *name)
 }
 _R3MATERIAL *LoadMainMaterial(char *szFileName)
 {
-  reinterpret_cast<unsigned int *>(&qword_184A79818)[1] = 0xFF000000u;
+  reinterpret_cast<unsigned int *>(&qword_184A79818)[1] = 4278190080;
   dword_184A79920 = 1;
   dword_184A798D0 = -1;
   dword_184A79808 = 0;
@@ -5577,7 +5577,7 @@ unsigned int GetLightMapColor(float *const uv, int id)
   uv[0] = u;
   uv[1] = v;
   if (!dword_184A79D88)
-    return 0xFFFFFFFFu;
+    return -1;
   unsigned short *lm = reinterpret_cast<unsigned short **>(stLightmap)[id];
   __int64 idx = static_cast<int>(lm[0] * u) + lm[0] * static_cast<__int64>(static_cast<int>(lm[1] * v));
   unsigned short val = *reinterpret_cast<unsigned short *>(reinterpret_cast<unsigned char *>(reinterpret_cast<unsigned short **>(lm)[1]) + 2 * idx);
@@ -5597,7 +5597,7 @@ void R3RestoreAllTextures()
     R3Texture *textureTable = GetTextureTable();
     do
     {
-      if (_bittest(reinterpret_cast<const long *>(&textureTable[textureIndex].mFlag), 0xF))
+      if (_bittest(reinterpret_cast<const long *>(&textureTable[textureIndex].mFlag), 15))
       {
         if (textureTable[textureIndex].mTexNum != 1)
         {
@@ -5609,9 +5609,9 @@ void R3RestoreAllTextures()
         if (!slots[startId].mTexture)
         {
           IDirect3DTexture8 *dds =
-            _bittest(reinterpret_cast<const long *>(&slots[startId].mFlag), 0x1F)
-              ? R3LoadDDS(textureTable[textureIndex].mName, 0, 0x800, 0x800)
-              : R3LoadDDS(textureTable[textureIndex].mName, dword_184A797D0, 0x800, 0x800);
+            _bittest(reinterpret_cast<const long *>(&slots[startId].mFlag), 31)
+              ? R3LoadDDS(textureTable[textureIndex].mName, 0, 2048, 2048)
+              : R3LoadDDS(textureTable[textureIndex].mName, dword_184A797D0, 2048, 2048);
           textureTable = GetTextureTable();
           slots[startId].mTexture = dds;
         }
@@ -5669,7 +5669,7 @@ void Error(char *source, char *msg)
     exit(1);
   }
 
-  static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-에서"
+  static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-ì—ì„œ"
   char *suffixDst = &fullMessage[std::strlen(fullMessage) + 1];
   memcpy_0(suffixDst - 1, asc_140884708, sizeof(asc_140884708));
   errorHandler(fullMessage);
@@ -5692,7 +5692,7 @@ void Warning(char *source, char *msg)
   void (*warningHandler)(char *) = WarningMessageProc;
   if (warningHandler)
   {
-    static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-에러"
+    static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-ì—ëŸ¬"
     strcat_s(fullMessage, kSuffix);
     warningHandler(fullMessage);
   }
@@ -6001,7 +6001,7 @@ static __int64 sub_1404FFF30(unsigned int *a1)
     const int rgbBitCount = a1[25];
     if (rgbBitCount == 16)
     {
-      if (a1[29] != 0x8000)
+      if (a1[29] != 32768)
       {
         a1[26] = 3840;
         result = 0;
@@ -6014,7 +6014,7 @@ static __int64 sub_1404FFF30(unsigned int *a1)
         a1[26] = 16711680;
         a1[27] = 65280;
         a1[28] = 255;
-        a1[29] = 0xFF000000;
+        a1[29] = 4278190080;
         result = 0;
       }
     }
@@ -6492,7 +6492,7 @@ static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2)
         }
         d3dFormat = 21;
       }
-      if (width > 0x800u || height > 0x800u)
+      if (width > 2048 || height > 2048)
         Error(byte_140883FF8, byte_140883769);
       dword_184A79C54 += width * height * (static_cast<unsigned int>(rgbBitCount) >> 3);
       const int mipWidth = sub_1405005A0(width);
@@ -6537,13 +6537,13 @@ static void RestoreSystemTexture()
   if (qword_184A79C18)
   {
     char logoPath[] = ".\\system\\logo.dds";
-    qword_184A79C18 = reinterpret_cast<unsigned long long>(R3LoadDDS(logoPath, 2, 0x800, 0x800));
+    qword_184A79C18 = reinterpret_cast<unsigned long long>(R3LoadDDS(logoPath, 2, 2048, 2048));
     dlightTexture = qword_184A79C20;
   }
   if (dlightTexture)
   {
     char dlightPath[] = ".\\system\\dlight.dds";
-    qword_184A79C20 = reinterpret_cast<unsigned long long>(R3LoadDDS(dlightPath, 2, 0x800, 0x800));
+    qword_184A79C20 = reinterpret_cast<unsigned long long>(R3LoadDDS(dlightPath, 2, 2048, 2048));
   }
 }
 
@@ -6558,7 +6558,7 @@ static IDirect3DTexture8 *GetD3DTextureFromBuffer(unsigned __int8 *a1, unsigned 
 static int GetMipMapSkipSize(IDA_DDSURFACEDESC2 *a1, unsigned int a2, unsigned int a3, unsigned int a4)
 {
   unsigned int skipSize = 0;
-  if (a3 < 0x100 || a4 < 0x100)
+  if (a3 < 256 || a4 < 256)
     Error(aAi_1, byte_140883769);
   unsigned int mipIndex = 0;
   for (mipIndex = 0; mipIndex < a2 || a1->dwWidth > a3 || a1->dwHeight > a4; ++mipIndex)

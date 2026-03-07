@@ -46,7 +46,7 @@ bool _DELAY_PROCESS::Init(unsigned int dwObjectNum, unsigned int dwTerm)
   m_pdwPushTime = new unsigned int[dwObjectNum];
   m_pdwPushSerial = new unsigned int[dwObjectNum];
   m_list.SetList(dwObjectNum);
-  std::memset(m_pdwPushSerial, 0xFF, sizeof(unsigned int) * dwObjectNum);
+  std::memset(m_pdwPushSerial, -1, sizeof(unsigned int) * dwObjectNum);
   return true;
 }
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -204,7 +204,7 @@ _economy_rate_inform_zocl msg{};
   }
 
   unsigned __int8 type[2] = {12, 15};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 21);
 }
 
 void CPlayer::UpdateLastCriTicket(
@@ -1128,9 +1128,9 @@ void CPlayer::pc_UpdateDataForTrade(CPlayer *pTrader)
   query.tradelist[1].pOldData = &pTrader->m_pUserDB->m_AvatorData_bk;
 
   g_Main.PushDQSData(
-    0xFFFFFFFFu,
+    -1,
     nullptr,
-    0xB0u,
+    176,
     reinterpret_cast<char *>(&query),
     static_cast<int>(query.size()));
 }
@@ -1199,8 +1199,8 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
         break;
       }
 
-      if (current->m_pmTrd.dwDTrade_Dalant > 0x77359400u
-          || current->m_pmTrd.dwDTrade_Gold > 0x7A120u)
+      if (current->m_pmTrd.dwDTrade_Dalant > 2000000000
+          || current->m_pmTrd.dwDTrade_Gold > 500000)
       {
         resultCode = 5;
         break;

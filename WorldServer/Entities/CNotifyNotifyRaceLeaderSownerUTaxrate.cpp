@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNotifyNotifyRaceLeaderSownerUTaxrate.h"
 
@@ -21,24 +21,24 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::Init()
     {
       auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
       const char *noneString = nationSetting->GetNoneString();
-      strcpy_s(m_Send[raceIndex].wszRaceLeaderName[leaderIndex], 0x11u, noneString);
+      strcpy_s(m_Send[raceIndex].wszRaceLeaderName[leaderIndex], 17, noneString);
     }
 
     auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
     const char *noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[raceIndex].wszSettlement1OwnerGuildName, 0x11u, noneString);
+    strcpy_s(m_Send[raceIndex].wszSettlement1OwnerGuildName, 17, noneString);
 
     nationSetting = CTSingleton<CNationSettingManager>::Instance();
     noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[raceIndex].wszSettlement1OwnerGuildMasterName, 0x11u, noneString);
+    strcpy_s(m_Send[raceIndex].wszSettlement1OwnerGuildMasterName, 17, noneString);
 
     nationSetting = CTSingleton<CNationSettingManager>::Instance();
     noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[raceIndex].wszSettlement2OwnerGuildName, 0x11u, noneString);
+    strcpy_s(m_Send[raceIndex].wszSettlement2OwnerGuildName, 17, noneString);
 
     nationSetting = CTSingleton<CNationSettingManager>::Instance();
     noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[raceIndex].wszSettlement2OwnerGuildMasterName, 0x11u, noneString);
+    strcpy_s(m_Send[raceIndex].wszSettlement2OwnerGuildMasterName, 17, noneString);
 
     m_Send[raceIndex].byTaxRate = 5;
   }
@@ -68,7 +68,7 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateRaceLeader(
     source = nationSetting->GetNoneString();
   }
 
-  strcpy_s(m_Send[byRace].wszRaceLeaderName[byNth], 0x11u, source);
+  strcpy_s(m_Send[byRace].wszRaceLeaderName[byNth], 17, source);
 }
 
 void CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
@@ -84,7 +84,7 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
   CGuild *guild = GetGuildDataFromSerial(g_Guild, 500, dw1ThGuildSerial);
   if (guild)
   {
-    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildName, 0x11u, guild->m_wszName);
+    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildName, 17, guild->m_wszName);
     const char *source = nullptr;
     if (guild->m_MasterData.pMember)
     {
@@ -95,22 +95,22 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
       auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
       source = nationSetting->GetNoneString();
     }
-    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildMasterName, 0x11u, source);
+    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildMasterName, 17, source);
   }
   else
   {
     auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
     const char *noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildName, 0x11u, noneString);
+    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildName, 17, noneString);
     nationSetting = CTSingleton<CNationSettingManager>::Instance();
     noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildMasterName, 0x11u, noneString);
+    strcpy_s(m_Send[byRace].wszSettlement1OwnerGuildMasterName, 17, noneString);
   }
 
   guild = GetGuildDataFromSerial(g_Guild, 500, dw2ThGuildSerial);
   if (guild)
   {
-    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildName, 0x11u, guild->m_wszName);
+    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildName, 17, guild->m_wszName);
     const char *source = nullptr;
     if (guild->m_MasterData.pMember)
     {
@@ -121,16 +121,16 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::UpdateSettlementOwner(
       auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
       source = nationSetting->GetNoneString();
     }
-    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildMasterName, 0x11u, source);
+    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildMasterName, 17, source);
   }
   else
   {
     auto *nationSetting = CTSingleton<CNationSettingManager>::Instance();
     const char *noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildName, 0x11u, noneString);
+    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildName, 17, noneString);
     nationSetting = CTSingleton<CNationSettingManager>::Instance();
     noneString = nationSetting->GetNoneString();
-    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildMasterName, 0x11u, noneString);
+    strcpy_s(m_Send[byRace].wszSettlement2OwnerGuildMasterName, 17, noneString);
   }
 }
 
@@ -158,7 +158,7 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(unsigned __int8 byRace)
       player->m_ObjID.m_wIndex,
       pbyType,
       reinterpret_cast<char *>(&m_Send[raceCode]),
-      0xDEu);
+      222);
   }
 }
 
@@ -177,5 +177,5 @@ void CNotifyNotifyRaceLeaderSownerUTaxrate::Notify(unsigned __int8 byRace, unsig
     wIndex,
     pbyType,
     reinterpret_cast<char *>(&m_Send[byRace]),
-    0xDEu);
+    222);
 }

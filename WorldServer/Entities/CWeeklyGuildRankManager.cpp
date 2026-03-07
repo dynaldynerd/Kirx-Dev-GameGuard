@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CWeeklyGuildRankManager.h"
 
@@ -136,7 +136,7 @@ void CWeeklyGuildRankManager::Loop()
   if (now >= m_tNextUpdateTime)
   {
     SetNextRankDate();
-    if (!g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x2Cu, nullptr, 0))
+    if (!g_Main.PushDQSData(-1, nullptr, 44, nullptr, 0))
     {
       CPvpUserAndGuildRankingSystem::Instance()->Log(
         "CWeeklyGuildRankManager::Loop() g_Main.PushDQSData(..) Fail!");
@@ -162,7 +162,7 @@ __int64 CWeeklyGuildRankManager::UpdateTodayTable(char *szDate, _pvppoint_guild_
 {
   char created = 0;
   char tableName[260]{};
-  sprintf_s(tableName, 0xFFu, "tbl_PvpPointGuildRank%s", szDate);
+  sprintf_s(tableName, 255, "tbl_PvpPointGuildRank%s", szDate);
   if (!g_Main.m_pWorldDB->TableExist(tableName))
   {
     if (!CreatePvpPointGuildRank(szDate))
@@ -282,7 +282,7 @@ void CWeeklyGuildRankManager::SetSettlementAreaManageOwnerGuild()
     AutoMineMachineMng::Instance()->ChangeOwner(race, m_kInfo.GetCurOwnerGuild(race, 0), 0);
     AutoMineMachineMng::Instance()->ChangeOwner(race, m_kInfo.GetCurOwnerGuild(race, 1), 1);
   }
-  g_Main.m_kEtcNotifyInfo.Notify(0xFFu);
+  g_Main.m_kEtcNotifyInfo.Notify(255);
 }
 
 bool CWeeklyGuildRankManager::SaveINI()
@@ -394,14 +394,14 @@ void CWeeklyGuildRankManager::CompleteLoadeTodayRank(
       InitNextSetOwnerDate();
       SetSettlementAreaManageOwnerGuild();
       SaveINI();
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x2Eu, nullptr, 0);
+      g_Main.PushDQSData(-1, nullptr, 46, nullptr, 0);
       CPvpUserAndGuildRankingSystem::Instance()->Log(
         "CWeeklyGuildRankManager::CompleteLoadeTodayRank() : ( RET_CODE_SUCCESS != byRet || m_kInfo.IsNoDataToday() ) Push Clear!");
       CGuildBattleController::Instance()->PushClearGuildBattleRank();
     }
     else
     {
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x2Du, nullptr, 0);
+      g_Main.PushDQSData(-1, nullptr, 45, nullptr, 0);
       CPvpUserAndGuildRankingSystem::Instance()->Log(
         "CWeeklyGuildRankManager::CompleteLoadeTodayRank() : Push Update Owner!");
     }
@@ -425,7 +425,7 @@ void CWeeklyGuildRankManager::CompleteUpdateWeeklyOwner(
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::CompleteUpdateWeeklyOwner() : PushSettlementOwnerDBLog()!");
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x2Eu, nullptr, 0);
+  g_Main.PushDQSData(-1, nullptr, 46, nullptr, 0);
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::CompleteUpdateWeeklyOwner() : Push Clear!");
   CGuildBattleController::Instance()->PushClearGuildBattleRank();
@@ -447,7 +447,7 @@ bool CWeeklyGuildRankManager::CreatePvpPointGuildRank(char *szDate)
   }
 
   char buffer[1040]{};
-  sprintf_s(buffer, 0x400u, "tbl_PvpPointGuildRank%s", szDate);
+  sprintf_s(buffer, 1024, "tbl_PvpPointGuildRank%s", szDate);
   if (g_Main.m_pWorldDB->TableExist(buffer))
   {
     return true;
@@ -495,9 +495,9 @@ char CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSe
   query.dwGuildSerial = dwGuildSerial;
   query.dPvpPoint = dPoint;
   if (g_Main.PushDQSData(
-        0xFFFFFFFF,
+        -1,
         nullptr,
-        0x2Fu,
+        47,
         reinterpret_cast<char *>(&query),
         static_cast<int>(query.size())))
   {
@@ -595,7 +595,7 @@ bool CWeeklyGuildRankManager::LoadPrevTable(char *szDate, _pvppoint_guild_rank_i
 {
   char tableName[272]{};
 
-  sprintf_s(tableName, 0xFFu, "tbl_PvpPointGuildRank%s", szDate);
+  sprintf_s(tableName, 255, "tbl_PvpPointGuildRank%s", szDate);
   if (!g_Main.m_pWorldDB->TableExist(tableName))
   {
     return false;

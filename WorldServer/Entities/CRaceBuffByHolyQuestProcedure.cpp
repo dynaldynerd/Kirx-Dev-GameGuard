@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRaceBuffByHolyQuestProcedure.h"
 
@@ -143,9 +143,9 @@ bool CRaceBuffByHolyQuestProcedure::RequestSubProcCancelRaceBuff()
 bool CRaceBuffByHolyQuestProcedure::RequestSubProcSetRaceBattleResult()
 {
   const int destroyRace =
-    (g_HolySys.GetDestroyStoneRace() == -1) ? 0xFF : g_HolySys.GetDestroyStoneRace();
+    (g_HolySys.GetDestroyStoneRace() == -1) ? 255 : g_HolySys.GetDestroyStoneRace();
   const int holyMasterRace =
-    (g_HolySys.GetHolyMasterRace() == -1) ? 0xFF : g_HolySys.GetHolyMasterRace();
+    (g_HolySys.GetHolyMasterRace() == -1) ? 255 : g_HolySys.GetHolyMasterRace();
   const unsigned int maxThCnt = m_kBuffInfo.GetMaxThCnt();
   m_kBuffHolyQestResultInfo.SetResult(
     static_cast<unsigned __int8>(holyMasterRace),

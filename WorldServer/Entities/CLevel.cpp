@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CLevel.h"
 #include "CBsp.h"
 #include "CSkyBox.h"
@@ -224,7 +224,7 @@ void CLevel::LoadLevel(const char *szFileName)
   R3EnvironmentShakeOff();
   mIsLoadedBsp = 1;
   ClearDynamicLight();
-  memset_0(&gAsci, 0, 0x100u);
+  memset_0(&gAsci, 0, 256);
   mBsp->mIsLoaded = 1;
 }
 
@@ -578,7 +578,7 @@ __int64 CLevel::GetNextYposFar(float *const a2, float *const a3, float *a4)
     float begin[3]{dst[0], dst[1] + ableHeight, dst[2]};
     float end[3]{dst[0], dst[1] - ableHeight, dst[2]};
     int leafCount = 0;
-    mBsp->GetLeafList(begin, end, &leafCount, leafIds, 0x7D00u);
+    mBsp->GetLeafList(begin, end, &leafCount, leafIds, 32000);
 
     float bCamera[3]{dst[0], dst[1] + FLOAT_9999_0, dst[2]};
     float nCamera[3]{dst[0], dst[1] - FLOAT_9999_0, dst[2]};
@@ -933,7 +933,7 @@ __int64 CLevel::GetNextYposForServerFar(float *const a2, float *const a3, float 
     float start[3]{dst[0], dst[1] + ableHeight, dst[2]};
     float end[3]{dst[0], dst[1] - ableHeight, dst[2]};
     int leafCount = 0;
-    mBsp->GetLeafList(start, end, &leafCount, leafIds, 0x7D00u);
+    mBsp->GetLeafList(start, end, &leafCount, leafIds, 32000);
 
     float bCamera[3]{dst[0], dst[1] + FLOAT_9999_0, dst[2]};
     float nCamera[3]{dst[0], dst[1] - FLOAT_9999_0, dst[2]};
@@ -1015,7 +1015,7 @@ __int64 CLevel::GetNextYposFarProgress(float *const a2, float *const a3, float *
     float start[3]{dst[0], dst[1] + 30000.0f, dst[2]};
     float end[3]{dst[0], dst[1] - 30000.0f, dst[2]};
     int leafCount = 0;
-    mBsp->GetLeafList(start, end, &leafCount, leafIds, 0x2710u);
+    mBsp->GetLeafList(start, end, &leafCount, leafIds, 10000);
 
     float bCamera[3]{dst[0], dst[1] + 30000.0f, dst[2]};
     float nCamera[3]{dst[0], dst[1] - 30000.0f, dst[2]};

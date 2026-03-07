@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -237,7 +237,7 @@ void CPlayer::pc_MineCancle()
 void CPlayer::pc_MineComplete()
 {
   unsigned __int8 resultCode = 0;
-  unsigned __int8 targetSlot = 0xFF;
+  unsigned __int8 targetSlot = 255;
   _STORAGE_LIST::_db_con *batteryItem = nullptr;
 
   if (!COreAmountMgr::Instance()->IsOreRemain())
@@ -281,7 +281,7 @@ void CPlayer::pc_MineComplete()
             {
               const int randomValue = rand();
               const int randomHigh = randomValue << 16;
-              const unsigned int lottery = static_cast<unsigned int>((rand() + randomHigh) % 0x1770 + 1);
+              const unsigned int lottery = static_cast<unsigned int>((rand() + randomHigh) % 6000 + 1);
               if (rate <= lottery
                   && CGoldenBoxItemMgr::Instance()->Get_Box_Count(static_cast<unsigned __int8>(loopIndex)))
               {
@@ -315,7 +315,7 @@ void CPlayer::pc_MineComplete()
           if (item->m_bLoad
               && item->m_byTableCode == 17
               && item->m_wItemIndex == targetOreIndex
-              && item->m_dwDur < 0x63
+              && item->m_dwDur < 99
               && !item->m_bLock)
           {
             targetSlot = static_cast<unsigned __int8>(slotIndex);
@@ -323,7 +323,7 @@ void CPlayer::pc_MineComplete()
           }
         }
 
-        if (targetSlot == 0xFF && m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+        if (targetSlot == 255 && m_Param.m_dbInven.GetIndexEmptyCon() == 255)
         {
           resultCode = 10;
         }
@@ -340,13 +340,13 @@ void CPlayer::pc_MineComplete()
         _STORAGE_LIST::_db_con minedItem{};
         unsigned __int16 oreSerial = 0;
 
-        if (targetSlot == 0xFF)
+        if (targetSlot == 255)
         {
           _STORAGE_LIST::_db_con newItem{};
           newItem.m_byTableCode = 17;
           newItem.m_dwDur = 1;
           newItem.m_wItemIndex = targetOreIndex;
-          newItem.m_dwLv = 0xFFFFFFF;
+          newItem.m_dwLv = 268435455;
           newItem.m_wSerial = m_Param.GetNewItemSerial();
 
           if (!Emb_AddStorage(0, &newItem, false, true))
@@ -692,7 +692,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
           rate);
         if (resIndex != static_cast<unsigned int>(-1)
             && resIndex < static_cast<unsigned int>(maxResKind)
-            && m_Param.m_wCuttingResBuffer[resIndex] < 0xFFu)
+            && m_Param.m_wCuttingResBuffer[resIndex] < 255)
         {
           ++m_Param.m_wCuttingResBuffer[resIndex];
         }
@@ -772,11 +772,11 @@ void CPlayer::pc_OreIntoBag(
   {
     resultCode = 2;
   }
-  else if (wSerial == 0xFFFF && m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+  else if (wSerial == 0xFFFF && m_Param.m_dbInven.GetIndexEmptyCon() == 255)
   {
     resultCode = 4;
   }
-  else if (wSerial != 0xFFFF)
+  else if (wSerial != 65535)
   {
     targetItem = m_Param.m_dbInven.GetPtrFromSerial(wSerial);
     if (!targetItem)
@@ -806,7 +806,7 @@ void CPlayer::pc_OreIntoBag(
       newItem.m_byTableCode = 18;
       newItem.m_wItemIndex = wResIndex;
       newItem.m_dwDur = byAddAmount;
-      newItem.m_dwLv = 0xFFFFFFF;
+      newItem.m_dwLv = 268435455;
       newItem.m_wSerial = m_Param.GetNewItemSerial();
 
       if (timeRecord && timeRecord->m_nCheckType)
@@ -820,7 +820,7 @@ void CPlayer::pc_OreIntoBag(
 
       if (!Emb_AddStorage(0, &newItem, false, false))
       {
-        this->SendMsg_OreIntoBagResult(static_cast<char>(0xFF), newSerial, 0, 0);
+        this->SendMsg_OreIntoBagResult(static_cast<char>(255), newSerial, 0, 0);
         return;
       }
       newSerial = newItem.m_wSerial;

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -433,7 +433,7 @@ void CPlayer::pc_PotionUseTrunkExtend()
 
   if (m_Param.GetTrunkSlotNum())
   {
-    if (m_Param.GetExtTrunkSlotNum() < 0x28u)
+    if (m_Param.GetExtTrunkSlotNum() < 40)
     {
       byLackSlotNum = static_cast<unsigned __int8>(100 - m_Param.GetTrunkSlotNum());
     }
@@ -796,7 +796,7 @@ void CPlayer::pc_TrunkIoMoveRequest(
           false,
           "CPlayer::pc_TrunkIoMoveRequest()"))
     {
-      this->SendMsg_TrunkIoResult(0, 0x12, this->m_Param.GetDalant(), dwConsumDalant);
+      this->SendMsg_TrunkIoResult(0, 18, this->m_Param.GetDalant(), dwConsumDalant);
       return;
     }
 
@@ -804,7 +804,7 @@ void CPlayer::pc_TrunkIoMoveRequest(
     if (!pAdded)
     {
       this->Emb_AddStorage(byStartStorageIndex, &copyItem, false, false);
-      this->SendMsg_TrunkIoResult(0, 0x12, this->m_Param.GetDalant(), dwConsumDalant);
+      this->SendMsg_TrunkIoResult(0, 18, this->m_Param.GetDalant(), dwConsumDalant);
       return;
     }
 
@@ -1024,7 +1024,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
           false,
           "CPlayer::pc_TrunkIoSwapRequest() -- 0"))
     {
-      this->SendMsg_TrunkIoResult(1, 0x12, this->m_Param.GetDalant(), dwConsumDalant);
+      this->SendMsg_TrunkIoResult(1, 18, this->m_Param.GetDalant(), dwConsumDalant);
       return;
     }
 
@@ -1032,7 +1032,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
     if (!firstAdded)
     {
       this->Emb_AddStorage(byStartStorageIndex, &startCopy, false, false);
-      this->SendMsg_TrunkIoResult(1, 0x12, this->m_Param.GetDalant(), dwConsumDalant);
+      this->SendMsg_TrunkIoResult(1, 18, this->m_Param.GetDalant(), dwConsumDalant);
       return;
     }
 
@@ -1056,7 +1056,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
         false,
         "CPlayer::pc_TrunkIoSwapRequest() -- 1 Fail");
       this->Emb_AddStorage(byStartStorageIndex, &startCopy, false, false);
-      this->SendMsg_TrunkIoResult(1, 0x12, this->m_Param.GetDalant(), dwConsumDalant);
+      this->SendMsg_TrunkIoResult(1, 18, this->m_Param.GetDalant(), dwConsumDalant);
       return;
     }
 
@@ -1253,7 +1253,7 @@ void CPlayer::pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int d
   {
     byRetCode = 6;
   }
-  else if (static_cast<unsigned int>(dwDalant) > 0x77359400u || static_cast<unsigned int>(dwGold) > 0x7A120u)
+  else if (static_cast<unsigned int>(dwDalant) > 0x77359400u || static_cast<unsigned int>(dwGold) > 500000)
   {
     byRetCode = 21;
   }
@@ -1367,7 +1367,7 @@ void CPlayer::SendMsg_TrunkEstResult(unsigned __int8 byRetCode, unsigned int dwL
   }
 
   unsigned __int8 pbyType[2] = {34, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0x15u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 21);
 }
 
 void CPlayer::SendMsg_TrunkDownloadResult(unsigned __int8 byRetCode)
@@ -1460,7 +1460,7 @@ void CPlayer::SendMsg_TrunkExtendResult(
   msg.dwConsumDanlant = dwConsumDanlant;
 
   unsigned __int8 pbyType[2] = {34, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0xAu);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 10);
 }
 
 void CPlayer::SendMsg_TrunkResDivision(
@@ -1513,7 +1513,7 @@ void CPlayer::SendMsg_TrunkIoResult(
   msg.dwConsumDanlant = dwConsumDanlant;
 
   unsigned __int8 pbyType[2] = {34, 17};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0xAu);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 10);
 }
 
 void CPlayer::SendMsg_TrunkIoMoneyResult(
@@ -1533,7 +1533,7 @@ void CPlayer::SendMsg_TrunkIoMoneyResult(
   msg.dwFeeDalant = dwFeeDalant;
 
   unsigned __int8 pbyType[2] = {34, 19};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0x1Du);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 29);
 }
 
 void CPlayer::SendMsg_TrunkPwHintIndexResult(char byRetCode, char byHintIndex)
@@ -1556,6 +1556,6 @@ void CPlayer::SendMsg_TrunkHintAnswerResult(char byRetCode, char *pwszPassword)
   }
 
   unsigned __int8 pbyType[2] = {34, 23};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 0xEu);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 14);
 }
 

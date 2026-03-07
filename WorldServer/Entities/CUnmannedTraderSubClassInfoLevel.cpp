@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderSubClassInfoLevel.h"
 #include "CLogFile.h"
@@ -33,9 +33,9 @@ bool CUnmannedTraderSubClassInfoLevel::LoadXML(
 {
   int minLevel = 0;
   int maxLevel = 0;
-  if (elemSubClass->Attribute("min", &minLevel) && minLevel < 0x100u)
+  if (elemSubClass->Attribute("min", &minLevel) && minLevel < 256)
   {
-    if (elemSubClass->Attribute("max", &maxLevel) && maxLevel < 0x100u)
+    if (elemSubClass->Attribute("max", &maxLevel) && maxLevel < 256)
     {
       if (maxLevel >= minLevel)
       {

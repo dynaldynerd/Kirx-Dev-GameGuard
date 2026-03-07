@@ -43,7 +43,7 @@ int CNationSettingDataRU::Init()
 
 CashDbWorker *CNationSettingDataRU::CreateWorker()
 {
-  auto *worker = static_cast<CCashDbWorkerRU *>(operator new(0x230uLL));
+  auto *worker = static_cast<CCashDbWorkerRU *>(operator new(560uLL));
   if (!worker)
   {
     return nullptr;

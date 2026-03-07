@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "base_fld.h"
 
@@ -116,12 +116,12 @@ CUnmannedTraderSortType *CUnmannedTraderGroupItemInfoTable::GetSortType(
 
 char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex)
 {
-  if (byTableCode == 0xFF || wItemTableIndex == 0xFFFF)
+  if (byTableCode == 0xFF || wItemTableIndex == 65535)
   {
     return 0;
   }
 
-  if (byTableCode >= 0x25u)
+  if (byTableCode >= 37)
   {
     Log(
       "UnmannedTraderGroupItemInfoTable::IncreaseVersion( BYTE byTableCode(%u), WORD wItemTableIndex(%u) )\r\n"
@@ -178,12 +178,12 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
   unsigned __int8 byRegistDivision,
   unsigned __int8 byRegistClass)
 {
-  if (byTableCode == 0xFF || wItemTableIndex == 0xFFFF)
+  if (byTableCode == 0xFF || wItemTableIndex == 65535)
   {
     return 0;
   }
 
-  if (byTableCode >= 0x25u)
+  if (byTableCode >= 37)
   {
     Log(
       "UnmannedTraderGroupItemInfoTable::IncreaseVersion( BYTE byTableCode(%u), WORD wItemTableIndex(%u), BYTE byRegistDivision(%u), BYTE byRegistClass(%u) )\r\n"

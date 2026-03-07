@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -627,7 +627,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
           CreateItemBox(
             &battery,
             m_pOwner,
-            0xFFFFFFFF,
+            static_cast<unsigned int>(-1),
             false,
             m_pOwner,
             1u,
@@ -637,7 +637,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
             false);
           CPlayer::s_MgrItemHistory.personal_amine_itemlog(
             "THROW_GROUND",
-            0xFFu,
+            static_cast<unsigned __int8>(-1),
             battery.m_byTableCode,
             battery.m_wItemIndex,
             battery.m_dwDur,
@@ -1119,7 +1119,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
         continue;
       }
 
-      const unsigned int randomValue = (rand() + (rand() << 16)) % 0x1770u + 1;
+      const unsigned int randomValue = (rand() + (rand() << 16)) % 6000u + 1;
       if (triggerRate <= static_cast<int>(randomValue) && goldBoxMgr->Get_Box_Count(static_cast<unsigned __int8>(index)))
       {
         oreItemIndex = goldItemIndex;
@@ -1178,7 +1178,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     newOre.m_byTableCode = 17;
     newOre.m_dwDur = 1;
     newOre.m_wItemIndex = oreItemIndex;
-    newOre.m_dwLv = 0xFFFFFFF;
+    newOre.m_dwLv = 268435455;
     newOre.m_wSerial = m_pOwner->m_Param.GetNewItemSerial();
     if (m_pOwner->Emb_AddStorage(6u, &newOre, false, true) == nullptr)
     {

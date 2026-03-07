@@ -30,7 +30,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   char pszErrMsg[160]{};
   if (!clsHolyStoneSystem->m_tblQuest.ReadRecord(
         ".\\script\\HolyStoneKeepperQuest.dat",
-        0x968,
+        2408,
         pszErrMsg))
   {
     MyMessageBox("CHolyStoneSystem Data init", pszErrMsg);
@@ -66,7 +66,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "KeeperCreateMap",
     "-1",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -91,7 +91,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "KeeperCreateDummy",
     "-1",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -109,7 +109,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "KeeperActiveDummy",
     "-1",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -127,7 +127,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "KeeperCenterDummy",
     "-1",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -145,7 +145,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "KeeperMonsterCode",
     "-1",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -176,7 +176,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "FreeMining",
     "FALSE",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   clsHolyStoneSystem->bFreeMining = strcmp_0(returned, "TRUE") == 0;
 
@@ -185,7 +185,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "MentalPass",
     "FALSE",
     returned,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   clsHolyStoneSystem->m_pMentalPass = strcmp_0(returned, "TRUE") == 0;
 
@@ -193,7 +193,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   {
     char key[96]{};
     sprintf(key, "StoneCreateMap%d", j);
-    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
       MyMessageBox("CHolyStoneSystemDataeMgr::LoadIni()", "%dth stone create-map code error(%s) : no defined", j, returned);
@@ -213,7 +213,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     }
 
     sprintf(key, "StoneCreateDummy%d", j);
-    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
       MyMessageBox("CHolyStoneSystemDataeMgr::LoadIni()", "%dth stone create-dummy code error(%s) : no defined", j, returned);
@@ -226,7 +226,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     }
 
     sprintf(key, "StoneMonsterCode%d", j);
-    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
       MyMessageBox("CHolyStoneSystemDataeMgr::LoadIni()", "%dth stone code error(%s) : no defined", j, returned);
@@ -241,7 +241,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
 
     sprintf(key, "StoneMasterRace%d", j);
     stone->nRace = GetPrivateProfileIntA("HolySystem", key, -1, ".\\Initialize\\NewHolySystem.ini");
-    if (stone->nRace > 2u)
+    if (stone->nRace > 2)
     {
       MyMessageBox("CHolyStoneSystemDataeMgr::LoadIni()", "%dth stone master-race code error(%d)", j, stone->nRace);
       return false;
@@ -253,7 +253,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     "HolyMental",
     "-1",
     clsHolyStoneSystem->m_strHolyMental,
-    0x40,
+    64,
     ".\\Initialize\\NewHolySystem.ini");
   if (strncmp(returned, "-1", 2) == 0)
   {
@@ -276,8 +276,8 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   if (clsHolyStoneSystem->m_HolyKeeperData.pCreateMap)
   {
     char portalName[80]{};
-    memset_0(portalName, 0, 0x40);
-    GetPrivateProfileStringA("PortalDummyName", "BellaDummyName", "NULL", portalName, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    memset_0(portalName, 0, 64);
+    GetPrivateProfileStringA("PortalDummyName", "BellaDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
     if (!strcmp_0("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Bella>");
@@ -290,8 +290,8 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    memset_0(portalName, 0, 0x40);
-    GetPrivateProfileStringA("PortalDummyName", "CoraDummyName", "NULL", portalName, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    memset_0(portalName, 0, 64);
+    GetPrivateProfileStringA("PortalDummyName", "CoraDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
     if (!strcmp_0("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Cora>");
@@ -304,8 +304,8 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    memset_0(portalName, 0, 0x40);
-    GetPrivateProfileStringA("PortalDummyName", "AccDummyName", "NULL", portalName, 0x40, ".\\Initialize\\NewHolySystem.ini");
+    memset_0(portalName, 0, 64);
+    GetPrivateProfileStringA("PortalDummyName", "AccDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
     if (!strcmp_0("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Acc>");

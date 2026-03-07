@@ -118,7 +118,7 @@ bool CReturnGateController::Init(unsigned int gateCount)
     m_pkEmptyInxList->PushNode_Back(index);
   }
 
-  m_pkTimer->BeginTimer(0x2710u);
+  m_pkTimer->BeginTimer(10000u);
   return true;
 }
 

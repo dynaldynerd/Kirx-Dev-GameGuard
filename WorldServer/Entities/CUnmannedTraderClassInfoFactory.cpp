@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderClassInfoFactory.h"
 #include "CUnmannedTraderClassInfoTableCodeType.h"
@@ -7,10 +7,10 @@
 CUnmannedTraderClassInfoFactory::CUnmannedTraderClassInfoFactory()
   : m_vecTable()
 {
-  CUnmannedTraderClassInfoTableType *tableType = new CUnmannedTraderClassInfoTableType(0xFFFFFFFF);
+  CUnmannedTraderClassInfoTableType *tableType = new CUnmannedTraderClassInfoTableType(-1);
   Regist(tableType);
 
-  CUnmannedTraderClassInfoTableCodeType *codeType = new CUnmannedTraderClassInfoTableCodeType(0xFFFFFFFF);
+  CUnmannedTraderClassInfoTableCodeType *codeType = new CUnmannedTraderClassInfoTableCodeType(-1);
   Regist(codeType);
 }
 

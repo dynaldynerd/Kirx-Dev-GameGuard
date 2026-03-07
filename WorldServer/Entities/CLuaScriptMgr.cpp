@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CLuaScriptMgr.h"
 
@@ -62,8 +62,8 @@ int LuaScripAlert(lua_State *L)
 CLuaScriptMgr::CLuaScriptMgr()
   : m_MasterState(nullptr)
 {
-  m_ChildScriptArEx.Alloc(0x14u);
-  m_ExternCommandArEx.Alloc(0x3E8u);
+  m_ChildScriptArEx.Alloc(20);
+  m_ExternCommandArEx.Alloc(1000);
 }
 
 CLuaScriptMgr::~CLuaScriptMgr()
@@ -104,7 +104,7 @@ bool CLuaScriptMgr::InitSDM()
   }
 
   CLuaLootingMgr *lootingMgr = CLuaLootingMgr::Instance();
-  if (!lootingMgr || !lootingMgr->InitSDM(0xAu, 0x64u))
+  if (!lootingMgr || !lootingMgr->InitSDM(10, 100))
   {
     return false;
   }
@@ -318,7 +318,7 @@ bool CLuaScriptMgr::AttachLuaScript(CLuaScript *pScript, CLuaCommand *pAttachCom
     _wassert(
       L"m_MasterState",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
-      0x11Du);
+      285);
   }
 
   if (!pScript)
@@ -356,7 +356,7 @@ bool CLuaScriptMgr::AttachLuaScript(CLuaScript *pScript, CLuaCommand *pAttachCom
   }
 
   char buffer[80]{};
-  sprintf_s(buffer, 0x40u, "%s_%s", pScript->GetName(), "OnAttach");
+  sprintf_s(buffer, 64, "%s_%s", pScript->GetName(), "OnAttach");
   lua_tinker::call<void, CLuaScript *>(pScript->m_MyState, buffer, pScript);
   return true;
 }
@@ -368,7 +368,7 @@ bool CLuaScriptMgr::DetackLuaScript(CLuaScript *pScript)
     _wassert(
       L"m_MasterState",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
-      0x14Au);
+      330);
   }
 
   if (!pScript)
@@ -377,7 +377,7 @@ bool CLuaScriptMgr::DetackLuaScript(CLuaScript *pScript)
   }
 
   char buffer[80]{};
-  sprintf_s(buffer, 0x40u, "%s_%s", pScript->GetName(), "OnDettach");
+  sprintf_s(buffer, 64, "%s_%s", pScript->GetName(), "OnDettach");
   lua_tinker::call<void, CLuaScript *>(pScript->m_MyState, buffer, pScript);
 
   lua_settop(pScript->m_MyState, 0);

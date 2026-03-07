@@ -35,7 +35,7 @@ bool CUnmannedTraderSubClassInfoForceLiverGrade::LoadXML(
   unsigned int dwClassID)
 {
   int grade = -1;
-  if (elemSubClass->Attribute("grade", &grade) && grade < 0x100u)
+        if (elemSubClass->Attribute("grade", &grade) && grade < 256u)
   {
     this->m_byGrade = static_cast<unsigned char>(grade);
     return true;

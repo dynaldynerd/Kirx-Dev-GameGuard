@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRFWorldDatabase.h"
 #include "CPotionMgr.h"
@@ -218,7 +218,7 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dExp, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dLoseExp, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 5, &pCharacterData->byMaxLevel, 0, &indicator);
-        if (pCharacterData->byMaxLevel < 0x32u)
+        if (pCharacterData->byMaxLevel < 50)
         {
           pCharacterData->byMaxLevel = 50;
         }
@@ -1352,14 +1352,14 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
         ret = SQLGetData(m_hStmtSelect, 9u, 93, resultTimeFields, 0, &indicator);
         ret = SQLGetData(
           m_hStmtSelect,
-          0xAu,
+          10,
           1,
           pTradeData->list[pTradeData->dwCnt].wszBuyerName,
           17,
           &indicator);
         ret = SQLGetData(
           m_hStmtSelect,
-          0xBu,
+          11,
           1,
           pTradeData->list[pTradeData->dwCnt].szBuyerAccount,
           13,
@@ -1393,7 +1393,7 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
         }
         pTradeData->list[pTradeData->dwCnt++].tResultTime = timestamp;
       }
-      while (pTradeData->dwCnt < 0xA);
+      while (pTradeData->dwCnt < 10);
 
       if (m_hStmtSelect)
       {

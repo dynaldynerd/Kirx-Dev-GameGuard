@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMonsterEventRespawn.h"
 
@@ -269,7 +269,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
       char keyName[132]{};
       char returnedString[72]{};
       sprintf(keyName, "code%d", k);
-      GetPrivateProfileStringA("MONSTER", keyName, "X", returnedString, 0x40u, buffer);
+      GetPrivateProfileStringA("MONSTER", keyName, "X", returnedString, 64, buffer);
       if (!strcmp_0(returnedString, "X"))
       {
         g_Main.m_logLoadingError.Write(
@@ -321,7 +321,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
     }
 
     char mapCode[136]{};
-    GetPrivateProfileStringA("POSITION", "map", "X", mapCode, 0x80u, buffer);
+    GetPrivateProfileStringA("POSITION", "map", "X", mapCode, 128, buffer);
     CMapData *mapData = g_MapOper.GetMap(mapCode);
     if (!mapData)
     {
@@ -335,13 +335,13 @@ bool CMonsterEventRespawn::SetEventRespawn()
 
     for (int m = 0; m < 3; ++m)
     {
-      const int pos = GetPrivateProfileIntA("POSITION", pos_key[m], 0xFFFF, buffer);
-      if (pos == 0xFFFF)
+      const int pos = GetPrivateProfileIntA("POSITION", pos_key[m], 65535, buffer);
+      if (pos == 65535)
       {
         g_Main.m_logLoadingError.Write(
           "Monster Respawn Load Error : %s >> xyz error : %d",
           &fileBaseNames[64 * fileIndex],
-          0xFFFF);
+          65535);
         return false;
       }
       eventRespawn->fPos[m] = static_cast<float>(pos);
@@ -374,11 +374,11 @@ bool CMonsterEventRespawn::SetEventRespawn()
       char keyName[132]{};
       char itemCode[132]{};
       sprintf(keyName, "item code %d", n + 1);
-      GetPrivateProfileStringA("REWARD ITEM", keyName, "X", itemCode, 0x80u, buffer);
+      GetPrivateProfileStringA("REWARD ITEM", keyName, "X", itemCode, 128, buffer);
       if (itemCode[0] != 'X')
       {
         const unsigned __int8 itemTableCode = GetItemTableCode(itemCode);
-        if (itemTableCode == 0xFF)
+        if (itemTableCode == 255)
         {
           g_Main.m_logLoadingError.Write(
             "Monster Respawn Load Error : %s >> reward item : item code error : %s",
@@ -399,7 +399,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
 
         char monCode[136]{};
         sprintf(keyName, "monster %d", n + 1);
-        GetPrivateProfileStringA("REWARD ITEM", keyName, "ALL", monCode, 0x80u, buffer);
+        GetPrivateProfileStringA("REWARD ITEM", keyName, "ALL", monCode, 128, buffer);
         _base_fld *dstMonRecord = nullptr;
         if (strcmp_0(monCode, "ALL"))
         {

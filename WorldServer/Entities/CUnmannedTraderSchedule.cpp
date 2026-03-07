@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -115,7 +115,7 @@ void CUnmannedTraderSchedule::PushClear(bool bTimeLimit)
       strcpy_s(qryData.wszName, 17, charName);
     }
 
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Eu, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(-1, nullptr, 62, reinterpret_cast<char *>(&qryData), sizeof(qryData));
   }
 }
 

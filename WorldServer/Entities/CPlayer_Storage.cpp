@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -337,7 +337,7 @@ SendMsg_ResSeparation(1u, nullptr, nullptr);
 
 void CPlayer::pc_PotionSeparation(unsigned __int16 wSerial, unsigned __int8 byAmount)
 {
-  SendMsg_PotionSeparation(wSerial, 0, 0xFFu, byAmount, static_cast<char>(-1));
+  SendMsg_PotionSeparation(wSerial, 0, 255, byAmount, static_cast<char>(-1));
 }
 
 void CPlayer::pc_ResDivision(unsigned __int16 wStartSerial, unsigned __int16 wTarSerial, unsigned __int8 byMoveAmount)
@@ -373,7 +373,7 @@ void CPlayer::pc_ResDivision(unsigned __int16 wStartSerial, unsigned __int16 wTa
             {
               if (startOre->m_dwDur >= byMoveAmount)
               {
-                if (targetOre->m_dwDur + byMoveAmount > 0x63)
+                if (targetOre->m_dwDur + byMoveAmount > 99)
                 {
                   resultCode = 9;
                 }
@@ -446,7 +446,7 @@ void CPlayer::pc_PotionDivision(unsigned __int16 wSerial, unsigned __int16 wTarS
           {
             if (sourcePotion->m_dwDur >= byAmount)
             {
-              if (targetPotion->m_dwDur + byAmount > 0x63)
+              if (targetPotion->m_dwDur + byAmount > 99)
               {
                 resultCode = -4;
               }
@@ -534,11 +534,11 @@ void CPlayer::pc_AlterLinkBoardSlotRequest(
       }
       else
       {
-        linkCode = 0xFF;
-        linkIndex = 0xFFFF;
+        linkCode = 255;
+        linkIndex = 65535;
       }
     }
-    else if (linkCode == 0xFF)
+    else if (linkCode == 255)
     {
       this->m_Param.PopLink(entry.bySlotIndex);
     }
@@ -584,31 +584,29 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
       }
       else
       {
-        if (wReplaceSerial != 0xFFFF)
+        if (wReplaceSerial != 65535)
         {
           replaceItem = targetStorage->GetPtrFromSerial(wReplaceSerial);
           if (!replaceItem || replaceItem->m_byTableCode != 15)
           {
             resultCode = 2;
-            goto SEND_FORCE_CHANGE_RESULT;
           }
-          if (replaceItem->m_bLock)
+          else if (replaceItem->m_bLock)
           {
             resultCode = 11;
-            goto SEND_FORCE_CHANGE_RESULT;
           }
-          if (CPlayer::s_pnLinkForceItemToEffect[sourceItem->m_wItemIndex]
-              != CPlayer::s_pnLinkForceItemToEffect[replaceItem->m_wItemIndex])
+          else if (
+            CPlayer::s_pnLinkForceItemToEffect[sourceItem->m_wItemIndex]
+            != CPlayer::s_pnLinkForceItemToEffect[replaceItem->m_wItemIndex])
           {
             resultCode = 3;
-            goto SEND_FORCE_CHANGE_RESULT;
           }
         }
-        if (wReplaceSerial == 0xFFFF && targetStorage->GetIndexEmptyCon() == 255)
+        if (!resultCode && wReplaceSerial == 0xFFFF && targetStorage->GetIndexEmptyCon() == 255)
         {
           resultCode = 5;
         }
-        else if (wReplaceSerial == 0xFFFF && !pItem->byStorageCode)
+        else if (!resultCode && wReplaceSerial == 0xFFFF && !pItem->byStorageCode)
         {
           for (int index = 0; index < targetStorage->m_nUsedNum; ++index)
           {
@@ -634,7 +632,6 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
     resultCode = 1;
   }
 
-SEND_FORCE_CHANGE_RESULT:
   if (!resultCode)
   {
     _STORAGE_LIST::_db_con sourceBackup;
@@ -646,7 +643,7 @@ SEND_FORCE_CHANGE_RESULT:
           false,
           "CPlayer::pc_ForceInvenChange() -- 0"))
     {
-      this->SendMsg_ForceInvenChange(0xFFu);
+      this->SendMsg_ForceInvenChange(255);
       return;
     }
 
@@ -657,7 +654,7 @@ SEND_FORCE_CHANGE_RESULT:
       if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
       {
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_ForceInvenChange(0xFFu);
+        this->SendMsg_ForceInvenChange(255);
         return;
       }
       if (!this->Emb_DelStorage(
@@ -669,7 +666,7 @@ SEND_FORCE_CHANGE_RESULT:
       {
         this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_ForceInvenChange(0xFFu);
+        this->SendMsg_ForceInvenChange(255);
         return;
       }
 
@@ -678,14 +675,14 @@ SEND_FORCE_CHANGE_RESULT:
       this->Emb_AddStorage(targetStorage->m_nListCode, &replaceForRestore, true, false);
       this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_ForceInvenChange(0xFFu);
+      this->SendMsg_ForceInvenChange(255);
       return;
     }
 
     if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
     {
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_ForceInvenChange(0xFFu);
+      this->SendMsg_ForceInvenChange(255);
       return;
     }
     this->Emb_EquipLink();
@@ -698,7 +695,7 @@ void CPlayer::SendMsg_UILock_Init_Result(char resultCode)
   _uilock_init_result_zocl packet{};
   packet.byRet = resultCode;
   packet.byUILock_HintIndex = 0;
-  unsigned __int8 type[2] = {13, 0x80};
+  unsigned __int8 type[2] = {13, 128};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
@@ -707,13 +704,13 @@ void CPlayer::SendMsg_UILock_Login_Result(char resultCode, char failCount)
   _uilock_user_certify_result_zocl packet{};
   packet.byRet = resultCode;
   packet.byFailCount = failCount;
-  unsigned __int8 type[2] = {13, 0x82};
+  unsigned __int8 type[2] = {13, 130};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UILock_Update_Result(char resultCode)
 {
-  unsigned __int8 type[2] = {13, 0x84};
+  unsigned __int8 type[2] = {13, 132};
   _uilock_update_info_result_zocl packet{};
   packet.byRet = resultCode;
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
@@ -729,7 +726,7 @@ void CPlayer::SendMsg_UILock_FindPW_Result(char resultCode, const char *password
     strcpy_s(packet.uszUILockPW, sizeof(packet.uszUILockPW), password);
   }
 
-  unsigned __int8 type[2] = {13, 0x87};
+  unsigned __int8 type[2] = {13, 135};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 

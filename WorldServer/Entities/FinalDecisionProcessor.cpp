@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "FinalDecisionProcessor.h"
 
@@ -29,7 +29,7 @@ bool FinalDecisionProcessor::Initialize()
 
   ElectProcessor::Initialize();
   PatriarchElectProcessor::Instance()->PushDQSCheckInvalidChar();
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, false);
+  g_Main.PushDQSData(-1, nullptr, 120, nullptr, false);
   return true;
 }
 

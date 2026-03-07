@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CAlpha.h"
 #include "CBsp.h"
@@ -53,12 +53,12 @@ void ByteSortForShort(unsigned int count, unsigned int *srcValue, __int16 *srcKe
 
 CAlpha::CAlpha()
 {
-  mAlphaFace = static_cast<unsigned int *>(Dmalloc(0x8000));
-  mAlphaFaceZ = static_cast<__int16 *>(Dmalloc(0x4000));
-  mTempAlphaFace = static_cast<unsigned int *>(Dmalloc(0x8000));
-  mTempAlphaFaceZ = static_cast<__int16 *>(Dmalloc(0x4000));
+  mAlphaFace = static_cast<unsigned int *>(Dmalloc(32768));
+  mAlphaFaceZ = static_cast<__int16 *>(Dmalloc(16384));
+  mTempAlphaFace = static_cast<unsigned int *>(Dmalloc(32768));
+  mTempAlphaFaceZ = static_cast<__int16 *>(Dmalloc(16384));
   mAlphaFaceCnt = 0;
-  mAlphaSize = 0x2000;
+  mAlphaSize = 8192;
   mBsp = nullptr;
 }
 

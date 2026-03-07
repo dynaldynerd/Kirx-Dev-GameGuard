@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 
@@ -80,7 +80,7 @@ namespace US
       }
       if (!m_pPool)
       {
-        _wassert(L"m_pPool", L".\\../Common/USGeneric/CircularFIFO.h", 0x61u);
+        _wassert(L"m_pPool", L".\\../Common/USGeneric/CircularFIFO.h", 97);
       }
     }
 
@@ -119,7 +119,7 @@ namespace US
       CScope_Lock<Lock> lock(&m_CS);
       if (!pOut)
       {
-        _wassert(L"pOut", L".\\../Common/USGeneric/CircularFIFO.h", 0x3Bu);
+        _wassert(L"pOut", L".\\../Common/USGeneric/CircularFIFO.h", 59);
       }
       if (m_Size)
       {

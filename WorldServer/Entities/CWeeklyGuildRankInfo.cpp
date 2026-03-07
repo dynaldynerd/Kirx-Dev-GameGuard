@@ -67,7 +67,7 @@ void CWeeklyGuildRankRecord::Clear()
 
 __int64 _weekly_guild_rank_result_zocl::size()
 {
-  if (byCnt < 0xBu)
+  if (byCnt < 11u)
   {
     return 260;
   }

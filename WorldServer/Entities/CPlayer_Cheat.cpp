@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "cStaticMember_Player.h"
@@ -207,7 +207,7 @@ char CPlayer::dev_cont_effect_time(unsigned int dwSec)
 
     if ( dwSec )
     {
-      if ( dwSec <= 0x2328 )
+      if ( dwSec <= 9000 )
         this->m_nContEffectSec = dwSec;
       else
         this->m_nContEffectSec = 9000;
@@ -226,7 +226,7 @@ char CPlayer::dev_dalant(unsigned int dwDalant)
   {
     dalant = 2000000000;
   }
-  else if (dwDalant > 0x77359400)
+  else if (dwDalant > 2000000000)
   {
     dalant = 2000000000;
   }
@@ -405,9 +405,9 @@ bool CPlayer::dev_full_force()
       _STORAGE_LIST::_db_con src;
       src.m_byTableCode = 15;
       src.m_wItemIndex = static_cast<unsigned __int16>(n);
-      src.m_dwDur = 0xFFFFFFuLL;
+      src.m_dwDur = 16777215;
       src.m_wSerial = this->m_Param.GetNewItemSerial();
-      src.m_dwLv = 0xFFFFFFF;
+      src.m_dwLv = 268435455;
       if (this->Emb_AddStorage(3u, &src, 1, 1))
       {
         memcpy_0(&items[count++], &src, sizeof(_STORAGE_LIST::_db_con));
@@ -442,7 +442,7 @@ char CPlayer::dev_gold(unsigned int dwGold)
   {
     gold = 500000;
   }
-  else if (dwGold > 0x7A120)
+  else if (dwGold > 500000)
   {
     gold = 500000;
   }
@@ -513,7 +513,7 @@ char CPlayer::dev_half_inven_amount(unsigned __int64 dwAmount)
     }
 
     unsigned __int64 amount = dwAmount;
-    if (IsOverLapItem(item->m_byTableCode) && amount > 0x63)
+    if (IsOverLapItem(item->m_byTableCode) && amount > 99)
     {
       amount = 99;
     }
@@ -671,11 +671,11 @@ char CPlayer::dev_loot_material()
     materialItem.m_byTableCode = 20;
     materialItem.m_wItemIndex = recordIndex;
     materialItem.m_dwDur = 99LL;
-    materialItem.m_dwLv = 0xFFFFFFF;
+    materialItem.m_dwLv = 268435455;
     if (!CreateItemBox(
           &materialItem,
           this,
-          0xFFFFFFFF,
+          -1,
           0,
           0LL,
           2u,
@@ -694,11 +694,11 @@ char CPlayer::dev_loot_material()
     upgradeItem.m_byTableCode = 18;
     upgradeItem.m_wItemIndex = recordIndex;
     upgradeItem.m_dwDur = 99LL;
-    upgradeItem.m_dwLv = 0xFFFFFFF;
+    upgradeItem.m_dwLv = 268435455;
     if (!CreateItemBox(
           &upgradeItem,
           this,
-          0xFFFFFFFF,
+          -1,
           0,
           0LL,
           2u,
@@ -717,11 +717,11 @@ char CPlayer::dev_loot_material()
     resourceItem.m_byTableCode = 11;
     resourceItem.m_wItemIndex = recordIndex;
     resourceItem.m_dwDur = GetItemDurPoint(11, recordIndex);
-    resourceItem.m_dwLv = 0xFFFFFFF;
+    resourceItem.m_dwLv = 268435455;
     if (!CreateItemBox(
           &resourceItem,
           this,
-          0xFFFFFFFF,
+          -1,
           0,
           0LL,
           2u,
@@ -786,11 +786,11 @@ char CPlayer::dev_loot_tower()
     item.m_byTableCode = 25;
     item.m_wItemIndex = static_cast<unsigned __int16>(n);
     item.m_dwDur = GetItemDurPoint(25, n);
-    item.m_dwLv = 0x0FFFFFFF;
+    item.m_dwLv = 268435455;
     if (!CreateItemBox(
           &item,
           this,
-          0xFFFFFFFF,
+          -1,
           0,
           nullptr,
           2u,
@@ -895,7 +895,7 @@ char CPlayer::dev_max_level_ext(unsigned __int8 byMaxLevel)
       if ( byMaxLevel )
         this->SetLevelD( byMaxLevel);
       else
-        this->SetLevelD( 0x32u);
+        this->SetLevelD( 50);
     }
     return 1;
 }
@@ -934,7 +934,7 @@ char CPlayer::dev_quest_complete()
          || questRecord->m_bSelectQuestMenual)
       this->SendMsg_SelectQuestReward( slotIndex);
     else
-      this->Emb_CompleteQuest( slotIndex, 0xFFu, 0xFFu);
+      this->Emb_CompleteQuest( slotIndex, 255, 255);
     return 1;
 }
 
@@ -969,7 +969,7 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
          || questRecord->m_bSelectQuestMenual)
       targetPlayer->SendMsg_SelectQuestReward( slotIndex);
     else
-      targetPlayer->Emb_CompleteQuest( slotIndex, 0xFFu, 0xFFu);
+      targetPlayer->Emb_CompleteQuest( slotIndex, 255, 255);
     return 1;
 }
 
@@ -1248,9 +1248,9 @@ char CPlayer::dev_up_all(int nCum)
       this->m_pmMst.UpdateCumPerMast(5u, statIndex, nCum);
       this->SendMsg_StatInform( statIndex + 76, nCum, 0);
     }
-    this->Emb_UpdateStat( 0x4Fu, nCum, 0);
+    this->Emb_UpdateStat( 79, nCum, 0);
     this->m_pmMst.UpdateCumPerMast(6u, 0, nCum);
-    this->SendMsg_StatInform( 0x4Fu, nCum, 0);
+    this->SendMsg_StatInform( 79, nCum, 0);
     for ( statIndex = 0; (int)statIndex < 24; ++statIndex )
     {
       this->Emb_UpdateStat( statIndex + 52, nCum, 0);
@@ -1367,9 +1367,9 @@ char CPlayer::dev_up_all_pt(int nLv)
       const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
       newStatValue = (int)pow(raceRoot / 2.0, 2);
     }
-    this->Emb_UpdateStat( 0x4Fu, newStatValue, 0);
+    this->Emb_UpdateStat( 79, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(6u, 0, newStatValue);
-    this->SendMsg_StatInform( 0x4Fu, newStatValue, 0);
+    this->SendMsg_StatInform( 79, newStatValue, 0);
     this->ReCalcMaxHFSP( 1, 0);
     return 1;
 }
@@ -1395,8 +1395,8 @@ char CPlayer::dev_up_forceitem(int nCum)
       return 0;
     if ( !this->m_pUserDB )
       return 0;
-    if ( nCum > 0xFFFFFF )
-      clampedCum = 0xFFFFFF;
+    if ( nCum > 16777215 )
+      clampedCum = 16777215;
     for ( slotIndex = 0; slotIndex < 88; ++slotIndex )
     {
       forceItem = &this->m_Param.m_dbForce.m_pStorageList[slotIndex];
@@ -1452,27 +1452,35 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
       switch ( nMasteryCode )
       {
         case 1:
+        {
           weaponOffsetSquared = pow(1000.0, 2);
           const float weaponLevelSquared = pow((float)nLv, 2);
           const float weaponRoot = sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0;
           newStatValue = (int)pow(weaponRoot / 2.0, 2);
           break;
+        }
         case 2:
+        {
           classOffsetSquared = pow(1000.0, 2);
           const float classLevelSquared = pow((float)nLv, 2);
           const float classRoot = sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0;
           newStatValue = (int)pow(classRoot / 2.0, 2);
           break;
+        }
         case 4:
+        {
           const float forceItemLevelSquared = pow((float)nLv, 2);
           const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
           newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
           break;
+        }
         case 3:
+        {
           const float skillLevelSquared = pow((float)nLv, 2);
           const float skillLevelPow4 = pow(skillLevelSquared, 2);
           newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
           break;
+        }
         case 5:
           if ( nMasteryIndex > 1 )
           {
@@ -1485,6 +1493,7 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
           }
           break;
         case 6:
+        {
           if ( !(unsigned int)this->m_Param.GetRaceCode()
             || (unsigned int)this->m_Param.GetRaceCode() == 1 )
           {
@@ -1498,6 +1507,7 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
             newStatValue = (int)pow(raceRoot / 2.0, 2);
           }
           break;
+        }
       }
     }
     else
@@ -1513,7 +1523,7 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
     {
       masterySkillGroupOffset = 196LL * (int)nMasteryIndex;
       newSkillStatValue =
-        newStatValue / CPlayer::s_SkillIndexPerMastery[masterySkillGroupOffset / 0xC4].m_nSkillIndexNum + 1;
+        newStatValue / CPlayer::s_SkillIndexPerMastery[masterySkillGroupOffset / 196].m_nSkillIndexNum + 1;
       for ( skillIndexOffset = 0; skillIndexOffset < CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndexNum; ++skillIndexOffset )
       {
         masterySkillIndex = CPlayer::s_SkillIndexPerMastery[nMasteryIndex].m_nSkillIndex[skillIndexOffset];
@@ -1536,7 +1546,7 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
 
 char CPlayer::dev_up_pvp(long double dPoint)
 {
-  this->AlterPvPPoint(dPoint, cheat, 0xFFFFFFFF);
+  this->AlterPvPPoint(dPoint, cheat, -1);
   return 1;
 }
 
@@ -1797,7 +1807,7 @@ char CPlayer::mgr_destroy_system_tower()
                 && abs(guardTower->m_fCurPos[1] - this->m_fCurPos[1]) <= 100.0
                 && GetSqrt(guardTower->m_fCurPos, this->m_fCurPos) < 20.0 )
               {
-                M2W(systemTower->m_pRecordSet->m_strCode, wszTran, 0x80u);
+                M2W(systemTower->m_pRecordSet->m_strCode, wszTran, 128);
                 if ( systemTower->m_nIniIndex != -1 )
                 {
                   appNameByRace[0] = "BELLATO";
@@ -1909,7 +1919,7 @@ char CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
     if ( !destinationPortal )
       return 0;
     if ( !destinationMap->GetRandPosInDummy( destinationPortal->m_pDumPos, newPos, 1) )
-      memcpy_0(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 0xCuLL);
+      memcpy_0(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 12);
     this->OutOfMap( destinationMap, 0, 4u, newPos);
     const unsigned __int8 mapCode = this->m_Param.GetMapCode();
     this->SendMsg_GotoRecallResult( 0, mapCode, newPos, 4u);
@@ -2169,7 +2179,7 @@ char CPlayer::mgr_item_telekinesis()
               {
                 _base_fld *monRec = g_Main.m_tblMonster.GetRecord( itemBox->m_wMonRecIndex);
                 _base_fld *itemRec = g_Main.m_tblItemData[item.m_byTableCode].GetRecord( item.m_wItemIndex);
-                const DWORD nowSec = timeGetTime() / 0x3E8;
+                const DWORD nowSec = timeGetTime() / 1000;
                 const char *charNameA = this->m_Param.GetCharNameA();
                 CMonster::s_logTrace_Boss_Looting.Write(
                   "\t Mob: %s Item: %s => %s ( %d ), Sec: %d",
@@ -2279,7 +2289,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     char Buffer[160]; // [rsp+1F0h] [rbp-1E8h] BYREF
     char KeyName[160]; // [rsp+290h] [rbp-148h] BYREF
     char String[144]; // [rsp+330h] [rbp-A8h] BYREF
-  M2W(pszTowerCode, wszTran, 0x80u);
+  M2W(pszTowerCode, wszTran, 128);
     towerRecord = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(pszTowerCode));
     if ( !towerRecord )
       return 0;
@@ -2311,7 +2321,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
         Buffer,
         "NULL",
         ReturnedString,
-        0x80u,
+        128,
         ".\\Script\\SystemGuardTower.ini");
       if ( !strcmp_0(ReturnedString, "NULL") )
       {
@@ -2589,11 +2599,11 @@ char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char
       accountSerial = targetUserDb->m_dwAccountSerial;
       memcpy_0(targetGlobalId, &targetUserDb->m_gidGlobal, sizeof(targetGlobalId));
       memcpy_0(gmWorldId, &this->m_pUserDB->m_idWorld, sizeof(gmWorldId));
-      strncpy(reasonText, uszReason, 0x1FuLL);
+      strncpy(reasonText, uszReason, 31);
       gmCharacterName = this->m_Param.GetCharNameW();
-      strncpy(gmName, gmCharacterName, 0x1FuLL);
+      strncpy(gmName, gmCharacterName, 31);
       memcpy_0(messageType, "2n", 2);
-      g_Network.m_pProcess[1]->LoadSendMsg( 0, messageType, &blockType, 0x57u);
+      g_Network.m_pProcess[1]->LoadSendMsg( 0, messageType, &blockType, 87);
       return 1;
     }
     else
@@ -2682,7 +2692,7 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
       if ( !upgradeItemRecord )
         return 0;
       upgradeRecord = g_Main.m_tblItemUpgrade.GetRecordFromRes(upgradeItemRecord->m_dwIndex);
-      if ( !upgradeRecord || upgradeRecord->m_dwIndex >= 0xD )
+      if ( !upgradeRecord || upgradeRecord->m_dwIndex >= 13 )
         return 0;
     }
     for ( createIndex = 0; createIndex < nNum; ++createIndex )
@@ -2710,7 +2720,7 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
       if ( !CreateItemBox(
               &pItem,
               pOwner,
-              0xFFFFFFFF,
+              -1,
               0,
               0LL,
               2u,

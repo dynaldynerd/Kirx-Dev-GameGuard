@@ -216,7 +216,7 @@ char CGuildRanking::LoadMemberInfo(
   unsigned __int16 *pwMemberCnt)
 {
   _worlddb_guild_member_info memberInfo{};
-  if (!g_Main.m_pWorldDB->Select_GuildMemberData(0x32u, dwGuildSerial, &memberInfo))
+  if (!g_Main.m_pWorldDB->Select_GuildMemberData(50u, dwGuildSerial, &memberInfo))
   {
     return 0;
   }

@@ -98,7 +98,7 @@ void CActionPointSystemMgr::Load_Event_INI(_action_point_system_ini *pIni, unsig
   pIni->m_byDay[0] = static_cast<int>(val);
 
   val = GetPrivateProfileIntA(sectionName, "BEGIN_HOUR", 0, "./initialize/ActionPointSystem.ini");
-  if (val >= 0x18)
+  if (val >= 24)
   {
     pIni->m_bUse_event = false;
     return;
@@ -106,7 +106,7 @@ void CActionPointSystemMgr::Load_Event_INI(_action_point_system_ini *pIni, unsig
   pIni->m_byHour[0] = static_cast<int>(val);
 
   val = GetPrivateProfileIntA(sectionName, "BEGIN_MINUTE", 0, "./initialize/ActionPointSystem.ini");
-  if (val >= 0x3C)
+  if (val >= 60)
   {
     pIni->m_bUse_event = false;
     return;
@@ -153,7 +153,7 @@ void CActionPointSystemMgr::Load_Event_INI(_action_point_system_ini *pIni, unsig
   pIni->m_byDay[1] = static_cast<int>(val);
 
   val = GetPrivateProfileIntA(sectionName, "END_HOUR", 0, "./initialize/ActionPointSystem.ini");
-  if (val >= 0x18)
+  if (val >= 24)
   {
     pIni->m_bUse_event = false;
     return;
@@ -161,7 +161,7 @@ void CActionPointSystemMgr::Load_Event_INI(_action_point_system_ini *pIni, unsig
   pIni->m_byHour[1] = static_cast<int>(val);
 
   val = GetPrivateProfileIntA(sectionName, "END_MINUTE", 0, "./initialize/ActionPointSystem.ini");
-  if (val >= 0x3C)
+  if (val >= 60)
   {
     pIni->m_bUse_event = false;
     return;

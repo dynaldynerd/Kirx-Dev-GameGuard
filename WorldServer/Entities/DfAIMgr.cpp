@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "DfAIMgr.h"
 
@@ -66,7 +66,7 @@ bool DfAIMgr::OnUsStateTBLInit()
   CRFMonsterAIMgr *aiMgr = CRFMonsterAIMgr::Instance();
   UsStateTBL *stateTable = nullptr;
 
-  DfAIMgr *newManager = static_cast<DfAIMgr *>(operator new(0x48uLL));
+  DfAIMgr *newManager = static_cast<DfAIMgr *>(operator new(72));
   if (newManager)
   {
     new (newManager) DfAIMgr();
@@ -82,97 +82,97 @@ bool DfAIMgr::OnUsStateTBLInit()
 
   stateTable->SetInitFunction(DfAIMgr::OnDFInitHFSM);
   stateTable->SetExternCallFunction(DfAIMgr::OnDfExternCallFun);
-  stateTable->Alloc(8u, 0x19u, 0x30u);
+  stateTable->Alloc(8, 25, 48);
 
-  stateTable->SetHFSMNode(1, 2u, 0x7D0u, -1, 1);
-  stateTable->SetHFSMNode(2, 4u, 0x1F4u, -1, 1);
-  stateTable->SetHFSMNode(7, 5u, 0x3E8u, -1, 1);
+  stateTable->SetHFSMNode(1, 2, 2000, -1, 1);
+  stateTable->SetHFSMNode(2, 4, 500, -1, 1);
+  stateTable->SetHFSMNode(7, 5, 1000, -1, 1);
 
   const int randomValue = rand();
   stateTable->SetHFSMNode(6, 7u, 100 * (randomValue % 50) + 2500, -1, 1);
 
-  stateTable->SetHFSMNode(3, 0xBu, 0x7530u, -1, 1);
-  stateTable->SetHFSMNode(4, 0x10u, 0x2710u, -1, 1);
-  stateTable->SetHFSMNode(5, 0x17u, 0x7530u, -1, 1);
+  stateTable->SetHFSMNode(3, 11, 30000, -1, 1);
+  stateTable->SetHFSMNode(4, 16, 10000, -1, 1);
+  stateTable->SetHFSMNode(5, 23, 30000, -1, 1);
 
-  stateTable->Add(1u, 1u, 0, 0, DfAIMgr::Atp_SearchStart_OnLoop);
-  stateTable->Add(1u, 1u, 0x1Bu, 2u, nullptr);
-  stateTable->Add(1u, 2u, 0x1Au, 1u, nullptr);
-  stateTable->Add(1u, 1u, 0x1Du, 0, DfAIMgr::Atp_Lost_Handler);
-  stateTable->Add(1u, 2u, 0x1Du, 0, DfAIMgr::Atp_Lost_Handler);
-  stateTable->Add(1u, 1u, 0x1Cu, 0, DfAIMgr::Atp_Searched_Handler);
-  stateTable->Add(1u, 2u, 0x1Cu, 0, DfAIMgr::Atp_Searched_Handler);
+  stateTable->Add(1, 1, 0, 0, DfAIMgr::Atp_SearchStart_OnLoop);
+  stateTable->Add(1, 1, 27, 2, nullptr);
+  stateTable->Add(1, 2, 26, 1, nullptr);
+  stateTable->Add(1, 1, 29, 0, DfAIMgr::Atp_Lost_Handler);
+  stateTable->Add(1, 2, 29, 0, DfAIMgr::Atp_Lost_Handler);
+  stateTable->Add(1, 1, 28, 0, DfAIMgr::Atp_Searched_Handler);
+  stateTable->Add(1, 2, 28, 0, DfAIMgr::Atp_Searched_Handler);
 
-  stateTable->Add(2u, 3u, 0, 0, DfAIMgr::Mon_SearchStart_OnLoop);
-  stateTable->Add(2u, 3u, 0x1Fu, 4u, nullptr);
-  stateTable->Add(2u, 4u, 0x1Eu, 3u, nullptr);
-  stateTable->Add(2u, 3u, 0x20u, 0, DfAIMgr::Mon_Searched_Handler);
-  stateTable->Add(2u, 4u, 0x20u, 0, DfAIMgr::Mon_Searched_Handler);
+  stateTable->Add(2, 3, 0, 0, DfAIMgr::Mon_SearchStart_OnLoop);
+  stateTable->Add(2, 3, 31, 4, nullptr);
+  stateTable->Add(2, 4, 30, 3, nullptr);
+  stateTable->Add(2, 3, 32, 0, DfAIMgr::Mon_Searched_Handler);
+  stateTable->Add(2, 4, 32, 0, DfAIMgr::Mon_Searched_Handler);
 
-  stateTable->Add(7u, 5u, 0x22u, 6u, nullptr);
-  stateTable->Add(7u, 6u, 0x21u, 5u, DfAIMgr::Mv_Stop_Handler);
-  stateTable->Add(7u, 6u, 0, 0, DfAIMgr::Mv_Go_OnLoop);
+  stateTable->Add(7, 5, 34, 6, nullptr);
+  stateTable->Add(7, 6, 33, 5, DfAIMgr::Mv_Stop_Handler);
+  stateTable->Add(7, 6, 0, 0, DfAIMgr::Mv_Go_OnLoop);
 
-  stateTable->Add(6u, 7u, 0x1Cu, 9u, DfAIMgr::Action_Change_Handler);
-  stateTable->Add(6u, 8u, 0x1Cu, 9u, DfAIMgr::Action_Change_Handler);
-  stateTable->Add(6u, 9u, 0x1Du, 7u, DfAIMgr::Action_Change_Handler);
-  stateTable->Add(6u, 9u, 0x26u, 8u, DfAIMgr::Action_Change_Handler);
-  stateTable->Add(6u, 7u, 0x26u, 8u, DfAIMgr::Action_Change_Handler);
-  stateTable->Add(6u, 7u, 0, 0, DfAIMgr::Action_Wait_OnLoop);
-  stateTable->Add(6u, 8u, 0, 0, DfAIMgr::Action_Patrol_OnLoop);
-  stateTable->Add(6u, 9u, 0, 0, DfAIMgr::Action_Attack_OnLoop);
-  stateTable->Add(6u, 0xAu, 0, 0, DfAIMgr::Action_Runaway_OnLoop);
+  stateTable->Add(6, 7, 28, 9, DfAIMgr::Action_Change_Handler);
+  stateTable->Add(6, 8, 28, 9, DfAIMgr::Action_Change_Handler);
+  stateTable->Add(6, 9, 29, 7, DfAIMgr::Action_Change_Handler);
+  stateTable->Add(6, 9, 38, 8, DfAIMgr::Action_Change_Handler);
+  stateTable->Add(6, 7, 38, 8, DfAIMgr::Action_Change_Handler);
+  stateTable->Add(6, 7, 0, 0, DfAIMgr::Action_Wait_OnLoop);
+  stateTable->Add(6, 8, 0, 0, DfAIMgr::Action_Patrol_OnLoop);
+  stateTable->Add(6, 9, 0, 0, DfAIMgr::Action_Attack_OnLoop);
+  stateTable->Add(6, 10, 0, 0, DfAIMgr::Action_Runaway_OnLoop);
 
-  for (stateIndex = 11; stateIndex <= 0xF; ++stateIndex)
+  for (stateIndex = 11; stateIndex <= 15; ++stateIndex)
   {
-    stateTable->Add(3u, static_cast<unsigned __int8>(stateIndex), 0, 0, DfAIMgr::Emotion_OnLoop);
+    stateTable->Add(3, static_cast<unsigned __int8>(stateIndex), 0, 0, DfAIMgr::Emotion_OnLoop);
   }
 
-  stateTable->Add(3u, 0xBu, 0x23u, 0xCu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xCu, 0x23u, 0xDu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xDu, 0x23u, 0xEu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xEu, 0x23u, 0xFu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xFu, 0x24u, 0xEu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xEu, 0x24u, 0xDu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xDu, 0x24u, 0xCu, DfAIMgr::Emotion_OnChange);
-  stateTable->Add(3u, 0xCu, 0x24u, 0xBu, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 11, 35, 12, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 12, 35, 13, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 13, 35, 14, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 14, 35, 15, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 15, 36, 14, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 14, 36, 13, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 13, 36, 12, DfAIMgr::Emotion_OnChange);
+  stateTable->Add(3, 12, 36, 11, DfAIMgr::Emotion_OnChange);
 
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0, 0, DfAIMgr::Condition_OnLoop);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 0, 0, DfAIMgr::Condition_OnLoop);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x27u, 0x10u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 39, 16, DfAIMgr::Condition_OnChange);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x28u, 0x11u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 40, 17, DfAIMgr::Condition_OnChange);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x29u, 0x12u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 41, 18, DfAIMgr::Condition_OnChange);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x2Au, 0x13u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 42, 19, DfAIMgr::Condition_OnChange);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x2Bu, 0x14u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 43, 20, DfAIMgr::Condition_OnChange);
   }
-  for (stateIndex = 16; stateIndex <= 0x15; ++stateIndex)
+  for (stateIndex = 16; stateIndex <= 21; ++stateIndex)
   {
-    stateTable->Add(4u, static_cast<unsigned __int8>(stateIndex), 0x2Cu, 0x15u, DfAIMgr::Condition_OnChange);
+    stateTable->Add(4, static_cast<unsigned __int8>(stateIndex), 44, 21, DfAIMgr::Condition_OnChange);
   }
 
-  stateTable->Add(5u, 0x17u, 0x2Du, 0x16u, DfAIMgr::Assist_OnChange);
-  stateTable->Add(5u, 0x18u, 0x2Eu, 0x17u, DfAIMgr::Assist_OnChange);
-  stateTable->Add(5u, 0x16u, 0x2Eu, 0x17u, DfAIMgr::Assist_OnChange);
-  stateTable->Add(5u, 0x16u, 0x2Fu, 0x18u, DfAIMgr::Assist_OnChange);
-  stateTable->Add(5u, 0x17u, 0x2Fu, 0x18u, DfAIMgr::Assist_OnChange);
-  stateTable->Add(5u, 0x16u, 0, 0, DfAIMgr::Assist_OnLoop);
-  stateTable->Add(5u, 0x18u, 0, 0, DfAIMgr::Assist_OnLoop);
+  stateTable->Add(5, 23, 45, 22, DfAIMgr::Assist_OnChange);
+  stateTable->Add(5, 24, 46, 23, DfAIMgr::Assist_OnChange);
+  stateTable->Add(5, 22, 46, 23, DfAIMgr::Assist_OnChange);
+  stateTable->Add(5, 22, 47, 24, DfAIMgr::Assist_OnChange);
+  stateTable->Add(5, 23, 47, 24, DfAIMgr::Assist_OnChange);
+  stateTable->Add(5, 22, 0, 0, DfAIMgr::Assist_OnLoop);
+  stateTable->Add(5, 24, 0, 0, DfAIMgr::Assist_OnLoop);
 
   return true;
 }
@@ -188,12 +188,12 @@ if (!pHFSM)
   SF_Timer *timer = ai->GetTimer(0);
   if (timer)
   {
-    timer->Set(0xBB8u);
+    timer->Set(3000);
   }
   timer = ai->GetTimer(1);
   if (timer)
   {
-    timer->Set(0x7D0u);
+    timer->Set(2000);
   }
   return 1;
 }
@@ -223,7 +223,7 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
     void *nextTarget = damager;
     if (mon->IsBeDamagedAble(damager))
     {
-      pHFS->SendMsg(5u, 0x2Eu, nullptr);
+      pHFS->SendMsg(5u, 46, nullptr);
       if (mon->GetAttackTarget())
       {
         nextTarget = mon->m_AggroMgr.GetTopAggroCharacter();
@@ -232,21 +232,21 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
         {
           if (DfAIMgr::CheckEmotionBad(mon, static_cast<CMonsterAI *>(hfs), nParam))
           {
-            hfs->SendMsg(3u, 0x23u, nullptr);
+            hfs->SendMsg(3u, 35, nullptr);
           }
         }
         else
         {
-          pHFS->SendMsg(1u, 0x1Cu, nextTarget);
+          pHFS->SendMsg(1u, 28, nextTarget);
         }
       }
       else
       {
-        pHFS->SendMsg(1u, 0x1Cu, nextTarget);
+        pHFS->SendMsg(1u, 28, nextTarget);
         mon->CheckEventEmotionPresentation(9u, nullptr);
       }
       CMonsterHelper::HierarcyHelpCast(mon);
-      hfs->SendMsg(2u, 0x1Eu, nullptr);
+      hfs->SendMsg(2u, 30, nullptr);
     }
     return;
   }
@@ -264,7 +264,7 @@ void DfAIMgr::OnDfExternCallFun(Us_HFSM *pHFS, unsigned int dwEvent, void *lpPar
         const int roll = rand() % 100;
         if (assistAptRate > roll)
         {
-          pHFS->SendMsg(5u, 0x2Du, lpParam);
+          pHFS->SendMsg(5u, 45, lpParam);
         }
       }
     }
@@ -291,7 +291,7 @@ if (!pHFS)
       L"pMon->m_pRecordSet",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
       L"Handler.cpp",
-      0x92u);
+      146);
   }
 
   const int offensiveType = mon->GetOffensiveType();
@@ -299,10 +299,10 @@ if (!pHFS)
   if (target)
   {
     mon->CheckEventEmotionPresentation( 1u, nullptr);
-    pHFS->SendMsg(1u, 0x1Cu, target);
+    pHFS->SendMsg(1u, 28, target);
     if (mon->GetHelpMeCase())
     {
-      hfs->SendMsg(2u, 0x1Eu, nullptr);
+      hfs->SendMsg(2u, 30, nullptr);
     }
   }
 }
@@ -324,8 +324,8 @@ if (!pHFS)
 
   mon->SetAttackTarget(nullptr);
   mon->m_AggroMgr.ResetAggro();
-  pHFS->SendMsg(7u, 0x21u, nullptr);
-  pHFS->SendMsg(6u, 0x1Du, nullptr);
+  pHFS->SendMsg(7u, 33, nullptr);
+  pHFS->SendMsg(6u, 29, nullptr);
 
   CMonster *assistMon = ai->m_pAsistMonster;
   if (assistMon && assistMon->m_bLive)
@@ -333,11 +333,11 @@ if (!pHFS)
     CCharacter *target = assistMon->GetAttackTarget();
     if (target)
     {
-      hfs->SendMsg(1u, 0x1Cu, target);
+      hfs->SendMsg(1u, 28, target);
     }
   }
 
-  hfs->SendMsg(2u, 0x1Fu, nullptr);
+  hfs->SendMsg(2u, 31, nullptr);
 }
 
 void DfAIMgr::Atp_Searched_Handler(Us_HFSM *pHFS, unsigned int dwEvent, void *lpParam)
@@ -353,17 +353,17 @@ if (!pHFS)
     return;
   }
 
-  pHFS->SendMsg(1u, 0x1Bu, nullptr);
+  pHFS->SendMsg(1u, 27, nullptr);
   CCharacter *target = static_cast<CCharacter *>(lpParam);
   CCharacter *attackTarget = mon->GetAttackTarget();
   if (target && attackTarget != target)
   {
     mon->SetAttackTarget( target);
-    pHFS->SendMsg(6u, 0x1Cu, nullptr);
+    pHFS->SendMsg(6u, 28, nullptr);
     Us_FSM_Node *node = pHFS->GetNode( 3u);
     if (node->GetState() == 11)
     {
-      pHFS->SendMsg(3u, 0x23u, nullptr);
+      pHFS->SendMsg(3u, 35, nullptr);
     }
   }
 }
@@ -395,13 +395,13 @@ if (!pHFS)
       {
         const unsigned int maxCount = static_cast<unsigned int>(recordSet->m_nPincerCnt);
         static _NEAR_DATA nearMon[20];
-        const unsigned int found = CMonsterHelper::SearchNearMonster(mon, nearMon, 0x14u, 0);
+        const unsigned int found = CMonsterHelper::SearchNearMonster(mon, nearMon, 20, 0);
         const unsigned int count = found >= maxCount ? maxCount : found;
         for (unsigned int j = 0; j < count; ++j)
         {
           if (nearMon[j].pChar && nearMon[j].pChar != mon)
           {
-            pHFS->SendMsg(2u, 0x20u, nearMon[j].pChar);
+            pHFS->SendMsg(2u, 32, nearMon[j].pChar);
             _object_id *objId = &nearMon[j].pChar->m_ObjID;
             if (!objId->m_byKind && objId->m_byID == 1)
             {
@@ -413,7 +413,7 @@ if (!pHFS)
         }
         if (count)
         {
-          hfs->SendMsg(2u, 0x1Fu, nullptr);
+          hfs->SendMsg(2u, 31, nullptr);
         }
       }
     }
@@ -518,7 +518,7 @@ if (!pHFS)
     }
     case 9u:
     {
-      pHFS->SetLoopTime( 6, 0x1F4u);
+      pHFS->SetLoopTime( 6, 500);
       mon->SetCombatState( 1u);
       const unsigned int now = GetLoopTime();
       static_cast<CMonsterAI *>(hfs)->SetBattleModeTime( now);
@@ -537,7 +537,7 @@ if (!pHFS)
   CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
   if (mon && mon->m_bLive)
   {
-    pHFS->SendMsg(6u, 0x26u, nullptr);
+    pHFS->SendMsg(6u, 38, nullptr);
   }
 }
 
@@ -558,7 +558,7 @@ if (!pHFS)
   Us_FSM_Node *node = pHFS->GetNode( 1u);
   if (node->GetState() == 2)
   {
-    pHFS->SendMsg(1u, 0x1Au, nullptr);
+    pHFS->SendMsg(1u, 26, nullptr);
   }
 
   if (!mon->m_bMove && !DfAIMgr::CheckMonArea_N_ChangeState(static_cast<CMonsterAI *>(hfs), mon, 0))
@@ -567,7 +567,7 @@ if (!pHFS)
     {
       DfAIMgr::SearchPatrollPath(static_cast<CMonsterAI *>(hfs), mon);
     }
-    hfs->SendMsg(3u, 0x24u, nullptr);
+    hfs->SendMsg(3u, 36, nullptr);
   }
 }
 
@@ -589,8 +589,8 @@ if (!pHFS)
   CCharacter *target = mon->GetAttackTarget();
   if (!target || !target->m_bLive || target->GetStealth(true) || target->m_bCorpse || mon->m_pCurMap != target->m_pCurMap)
   {
-    hfs->SendMsg(1u, 0x1Du, nullptr);
-    hfs->SetLoopTime( 6, 0x1F4u);
+    hfs->SendMsg(1u, 29, nullptr);
+    hfs->SetLoopTime( 6, 500);
     return;
   }
 
@@ -608,7 +608,7 @@ if (!pHFS)
       Us_FSM_Node *node = pHFS->GetNode( 5u);
       if (node->GetState() == 23)
       {
-        hfs->SendMsg(2u, 0x1Eu, nullptr);
+        hfs->SendMsg(2u, 30, nullptr);
       }
     }
 
@@ -618,7 +618,7 @@ if (!pHFS)
         || (DfAIMgr::CheckSPFDelayTime(static_cast<CMonsterAI *>(hfs), 0, now)
             && DfAIMgr::CheckGen(static_cast<CMonsterAI *>(hfs), mon)))
     {
-      pHFS->SendMsg(7u, 0x21u, nullptr);
+      pHFS->SendMsg(7u, 33, nullptr);
       const float loopTime = reinterpret_cast<_monster_fld *>(mon->m_pRecordSet)->m_fAttMoTime1 + 500.0f;
       hfs->SetLoopTime( 6, static_cast<int>(loopTime));
     }
@@ -632,13 +632,13 @@ if (!pHFS)
       {
         ++ai->m_nCurPathFindFailCount;
       }
-      hfs->SetLoopTime( 6, 0x1F4u);
+      hfs->SetLoopTime( 6, 500);
     }
   }
   else
   {
-    hfs->SendMsg(1u, 0x1Du, nullptr);
-    hfs->SetLoopTime( 6, 0x1F4u);
+    hfs->SendMsg(1u, 29, nullptr);
+    hfs->SetLoopTime( 6, 500);
   }
 }
 
@@ -664,7 +664,7 @@ if (!pHFS)
   Us_FSM_Node *node = pHFS->GetNode( 3u);
   if (node->GetState() != 12)
   {
-    pHFS->SendMsg(3u, 0x24u, nullptr);
+    pHFS->SendMsg(3u, 36, nullptr);
     return;
   }
 
@@ -678,7 +678,7 @@ if (!pHFS)
   const int lostDist = g_MonsterSetInfoData.GetLostMonsterTargetDistance();
   if (dist >= static_cast<float>(lostDist))
   {
-    pHFS->SendMsg(3u, 0x24u, nullptr);
+    pHFS->SendMsg(3u, 36, nullptr);
     return;
   }
 
@@ -709,17 +709,17 @@ if (!pHFS)
   const unsigned int state = node->GetState();
   switch (state)
   {
-    case 0xBu:
+    case 11:
       mon->SetMoveType( 0);
       mon->SetEmotionState( 0);
-      hfs->SendMsg(1u, 0x1Du, nullptr);
+      hfs->SendMsg(1u, 29, nullptr);
       break;
-    case 0xCu:
+    case 12:
       mon->SetMoveType( 1u);
       mon->SetEmotionState( 1u);
-      hfs->SetLoopTime( 3, 0x7530u);
+      hfs->SetLoopTime( 3, 30000);
       break;
-    case 0xDu:
+    case 13:
     {
       mon->SetMoveType( 1u);
       mon->SetEmotionState( 2u);
@@ -727,7 +727,7 @@ if (!pHFS)
       hfs->SetLoopTime( 3, static_cast<int>(loopTime));
       break;
     }
-    case 0xEu:
+    case 14:
     {
       mon->SetMoveType( 1u);
       mon->SetEmotionState( 3u);
@@ -735,7 +735,7 @@ if (!pHFS)
       hfs->SetLoopTime( 3, static_cast<int>(loopTime));
       break;
     }
-    case 0xFu:
+    case 15:
     {
       mon->SetMoveType( 1u);
       mon->SetEmotionState( 4u);
@@ -765,8 +765,8 @@ if (!pHFS)
   const float hpPercent = (hp / maxHp) * 100.0f;
   if (hp == maxHp)
   {
-    pHFS->SendMsg(4u, 0x27u, nullptr);
-    pHFS->SetLoopTime( 4, 0x2710u);
+    pHFS->SendMsg(4u, 39, nullptr);
+    pHFS->SetLoopTime( 4, 10000);
   }
   else if (hpPercent <= recordSet->m_fGoodToOrdHPPer)
   {
@@ -774,25 +774,25 @@ if (!pHFS)
     {
       if (hpPercent <= recordSet->m_fBadToWorseHPPer)
       {
-        pHFS->SendMsg(4u, 0x2Bu, nullptr);
-        pHFS->SetLoopTime( 4, 0x7D0u);
+        pHFS->SendMsg(4u, 43, nullptr);
+        pHFS->SetLoopTime( 4, 2000);
       }
       else
       {
-        pHFS->SendMsg(4u, 0x2Au, nullptr);
-        pHFS->SetLoopTime( 4, 0x2710u);
+        pHFS->SendMsg(4u, 42, nullptr);
+        pHFS->SetLoopTime( 4, 10000);
       }
     }
     else
     {
-      pHFS->SendMsg(4u, 0x29u, nullptr);
-      pHFS->SetLoopTime( 4, 0x2710u);
+      pHFS->SendMsg(4u, 41, nullptr);
+      pHFS->SetLoopTime( 4, 10000);
     }
   }
   else
   {
-    pHFS->SendMsg(4u, 0x28u, nullptr);
-    pHFS->SetLoopTime( 4, 0x2710u);
+    pHFS->SendMsg(4u, 40, nullptr);
+    pHFS->SetLoopTime( 4, 10000);
   }
 }
 
@@ -844,7 +844,7 @@ if (!pHFS)
   const unsigned int state = node->GetState();
   switch (state)
   {
-    case 0x16u:
+    case 22:
     {
       ai->m_pAsistMonster = static_cast<CMonster *>(lpParam);
       CMonster *parentMon = ai->m_pAsistMonster;
@@ -861,19 +861,19 @@ if (!pHFS)
       }
       if (target)
       {
-        pHFS->SendMsg(1u, 0x1Cu, target);
+        pHFS->SendMsg(1u, 28, target);
       }
-      pHFS->SetLoopTime( 5, 0x7530u);
+      pHFS->SetLoopTime( 5, 30000);
       mon->CheckEventEmotionPresentation(3u, nullptr);
       break;
     }
-    case 0x17u:
+    case 23:
       ai->m_pAsistMonster = nullptr;
-      pHFS->SetLoopTime( 5, 0x7530u);
+      pHFS->SetLoopTime( 5, 30000);
       break;
-    case 0x18u:
+    case 24:
       ai->m_pAsistMonster = nullptr;
-      pHFS->SetLoopTime( 5, 0x1B58u);
+      pHFS->SetLoopTime( 5, 7000);
       break;
   }
 }
@@ -888,7 +888,7 @@ if (!pHFS)
   CMonster *mon = static_cast<CMonster *>(pHFS->GetObjectA());
   if (mon && mon->m_bLive)
   {
-    pHFS->SendMsg(5u, 0x2Eu, nullptr);
+    pHFS->SendMsg(5u, 46, nullptr);
   }
 }
 
@@ -905,7 +905,7 @@ if (!pMon || !pAI)
       L"pMon->m_pRecordSet",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
       L"Handler.cpp",
-      0x16Cu);
+      364);
   }
 
   signed int normalValue = 100;
@@ -914,19 +914,19 @@ if (!pMon || !pAI)
   const int emoIndex = static_cast<int>(reinterpret_cast<_monster_fld *>(pMon->m_pRecordSet)->m_fEmoType) - 1;
   switch (state)
   {
-    case 0xBu:
+    case 11:
       normalValue = EmotionType[emoIndex].m_Normal;
       break;
-    case 0xCu:
+    case 12:
       normalValue = EmotionType[emoIndex].m_Discomport;
       break;
-    case 0xDu:
+    case 13:
       normalValue = EmotionType[emoIndex].m_Anger;
       break;
-    case 0xEu:
+    case 14:
       normalValue = EmotionType[emoIndex].m_Fury;
       break;
-    case 0xFu:
+    case 15:
       normalValue = EmotionType[emoIndex].m_Mad;
       break;
   }
@@ -1170,7 +1170,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
             pMon->m_fCreatePos,
             &midPos))
       {
-        pAI->SendMsg(3u, 0x24u, nullptr);
+        pAI->SendMsg(3u, 36, nullptr);
         DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
       }
       else
@@ -1204,7 +1204,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
 
         if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, tarPos, &midPos))
         {
-          pAI->SendMsg(3u, 0x23u, nullptr);
+          pAI->SendMsg(3u, 35, nullptr);
           const float loopTime = pMon->GeEmotionImpStdTime();
           pAI->SetLoopTime( 3, static_cast<int>(loopTime));
           DfAIMgr::ChangeTargetPos(pMon, pMon->m_MonHierarcy.GetParent()->m_fCurPos);
@@ -1214,7 +1214,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
       else if (dist > 300 && bAttackState)
       {
         pMon->m_MonHierarcy.GetParent()->m_MonHierarcy.PopChildMon(pMon);
-        pMon->Command_ChildMonDestroy( 0x3A98u);
+        pMon->Command_ChildMonDestroy( 15000);
         return 1LL;
       }
     }
@@ -1231,7 +1231,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
                 pMon->m_fCreatePos,
                 &midPos))
           {
-            pAI->SendMsg(3u, 0x24u, nullptr);
+            pAI->SendMsg(3u, 36, nullptr);
             DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
             return 1LL;
           }
@@ -1245,7 +1245,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
               pMon->m_fCreatePos,
               &midPos))
         {
-          pAI->SendMsg(3u, 0x23u, nullptr);
+          pAI->SendMsg(3u, 35, nullptr);
           const float loopTime = pMon->GeEmotionImpStdTime();
           pAI->SetLoopTime( 3, static_cast<int>(loopTime));
           DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
@@ -1275,14 +1275,14 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
 
   if (bAttackState)
   {
-    pAI->SendMsg(5u, 0x2Fu, nullptr);
+    pAI->SendMsg(5u, 47, nullptr);
     CMonsterHelper::TransPort(pMon, pMon->m_fCreatePos);
     pMon->SetAttackTarget( nullptr);
-    pAI->SendMsg(6u, 0x26u, nullptr);
+    pAI->SendMsg(6u, 38, nullptr);
   }
   else
   {
-    pAI->SendMsg(3u, 0x23u, nullptr);
+    pAI->SendMsg(3u, 35, nullptr);
     const float loopTime = pMon->GeEmotionImpStdTime();
     pAI->SetLoopTime( 3, static_cast<int>(loopTime));
     DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
@@ -1393,7 +1393,7 @@ void DfAIMgr::ChangeTargetPos(CMonster *pMon, float *pTarPos)
     {
       pMon->SendMsg_Move();
     }
-    pMon->m_AI.SendMsg(7u, 0x22u, nullptr);
+    pMon->m_AI.SendMsg(7u, 34, nullptr);
   }
 }
 
@@ -1568,7 +1568,7 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
   if (!assistMon)
   {
     _NEAR_DATA nearData[20];
-    const unsigned int count = CMonsterHelper::SearchNearMonster(pMon, nearData, 0x14u, 1);
+    const unsigned int count = CMonsterHelper::SearchNearMonster(pMon, nearData, 20, 1);
     for (unsigned int j = 0; j < count; ++j)
     {
       assistMon = static_cast<CMonster *>(nearData[j].pChar);

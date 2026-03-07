@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CheatCommands.h"
 #include "CHEAT_COMMAND.h"
@@ -216,13 +216,13 @@ static const char aA_48[] = "<unknown>";
 static const char aA_49[] = "<unknown>";
 static const char aA_50[] = "<unknown>";
 static const char aCheatHelpSynta_0[] = "Cheat Help : Syntax = timeset ";
-static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset Ã‡Ã‡";
-static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset Ã‡Ã Ã€";
+static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset Ãƒâ€¡Ãƒâ€¡";
+static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset Ãƒâ€¡ÃƒÂ Ãƒâ‚¬";
 static const char aCheatHelpSynta_3[] = "Cheat Help : Syntax = %eventset ";
 static const char aOne_3[] = "<unknown>";
-static const char aCoacE[] = "Ã‡Ã¶Ã€Ã§ Ãˆ";
-static const char aCoacCodeDBoxAc[] = "Ã‡Ã¶Ã€Ã§ [Code_%d Box] Ã€Ã‡ Ã€Ãœ";
-static const char aCoacE_0[] = "Ã‡Ã¶Ã€Ã§ Ãˆ";
+static const char aCoacE[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
+static const char aCoacCodeDBoxAc[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ [Code_%d Box] Ãƒâ‚¬Ãƒâ€¡ Ãƒâ‚¬ÃƒÅ“";
+static const char aCoacE_0[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
 static const char aE_2[] = "<unknown>";
 static const char aAi_8[] = "<unknown>";
 static const char aAo_6[] = "<unknown>";
@@ -435,7 +435,7 @@ bool __fastcall ct_respawn_start(CPlayer *pOne)
   char pwszErrCode[132]; // [rsp+90h] [rbp-A8h] BYREF
   bool started; // [rsp+114h] [rbp-24h]
 
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   started = g_MonsterEventRespawn.StartRespawnEvent(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
@@ -453,7 +453,7 @@ bool __fastcall ct_respawn_stop(CPlayer *pOne)
   char pwszErrCode[132]; // [rsp+90h] [rbp-A8h] BYREF
   bool stopped; // [rsp+114h] [rbp-24h]
 
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   stopped = g_MonsterEventRespawn.StopRespawnEvent(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
@@ -582,7 +582,7 @@ bool __fastcall ct_jump_to_pos(CPlayer *pOne)
     return 0;
   if ( s_nWordCount == 4 )
   {
-    W2M(s_pwszDstCheat[0], szTran, 0x20u);
+    W2M(s_pwszDstCheat[0], szTran, 32);
     fZ = (float)atoi(s_pwszDstCheat[3]);
     fY = (float)atoi(s_pwszDstCheat[2]);
     const float x = (float)atoi(s_pwszDstCheat[1]);
@@ -594,7 +594,7 @@ bool __fastcall ct_jump_to_pos(CPlayer *pOne)
   }
   else
   {
-    W2M(s_pwszDstCheat[1], pszMapCode, 0x20u);
+    W2M(s_pwszDstCheat[1], pszMapCode, 32);
     if ( !strcmp_0(s_pwszDstCheat[0], "#") )
     {
       dstZ = (float)atoi(s_pwszDstCheat[4]);
@@ -756,7 +756,7 @@ bool __fastcall ct_change_class(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->dev_change_class(szTran);
 }
 
@@ -800,7 +800,7 @@ bool __fastcall ct_recall_monster(CPlayer *pOne)
   nCreateNum = 1;
   if ( s_nWordCount >= 2 )
     nCreateNum = atoi(s_pwszDstCheat[1]);
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->mgr_recall_mon(szTran, nCreateNum);
 }
 
@@ -913,7 +913,7 @@ bool __fastcall ct_up_skill(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 2 )
     return 0;
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   const int level = atoi(s_pwszDstCheat[1]);
   return pOne->dev_up_skill(szTran, level);
 }
@@ -1068,7 +1068,7 @@ bool __fastcall ct_make_system_tower(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->mgr_make_system_tower(szTran);
 }
 
@@ -1168,7 +1168,7 @@ bool __fastcall ct_fullset(CPlayer *pOne)
   pOne->dev_lv(nLv);
   pOne->dev_up_all(400000000);
   if ( !g_Main.IsReleaseServiceMode() )
-    pOne->dev_dalant(0xFFFFFFFF);
+    pOne->dev_dalant(-1);
   pOne->dev_loot_fullitem(nLv);
   return 1;
 }
@@ -1200,11 +1200,11 @@ bool __fastcall ct_loot_upgrade(CPlayer *pOne)
       pItem.m_byTableCode = 18;
       pItem.m_wItemIndex = *RecordByHash;
       pItem.m_dwDur = 99LL;
-      pItem.m_dwLv = 0xFFFFFFF;
+      pItem.m_dwLv = 268435455;
       if ( !CreateItemBox(
               &pItem,
               pOne,
-              0xFFFFFFFF,
+              -1,
               0,
               0LL,
               2u,
@@ -1222,8 +1222,8 @@ bool __fastcall ct_loot_upgrade(CPlayer *pOne)
   upgradeBox.m_byTableCode = 11;
   upgradeBox.m_wItemIndex = *upgradeBoxItem;
   upgradeBox.m_dwDur = GetItemDurPoint(11, dwIndex);
-  upgradeBox.m_dwLv = 0xFFFFFFF;
-  if ( CreateItemBox(&upgradeBox, pOne, 0xFFFFFFFF, 0, 0LL, 2u, pOne->m_pCurMap, pOne->m_wMapLayerIndex, pOne->m_fCurPos, 1) )
+  upgradeBox.m_dwLv = 268435455;
+  if ( CreateItemBox(&upgradeBox, pOne, -1, 0, 0LL, 2u, pOne->m_pCurMap, pOne->m_wMapLayerIndex, pOne->m_fCurPos, 1) )
     return 1;
   else
     return 1;
@@ -1250,11 +1250,11 @@ bool __fastcall ct_loot_dungeon(CPlayer *pOne)
     pItem.m_byTableCode = 23;
     pItem.m_wItemIndex = *Record;
     pItem.m_dwDur = 1LL;
-    pItem.m_dwLv = 0xFFFFFFF;
+    pItem.m_dwLv = 268435455;
     if ( !CreateItemBox(
             &pItem,
             pOne,
-            0xFFFFFFFF,
+            -1,
             0,
             0LL,
             2u,
@@ -1285,7 +1285,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     equipPartCode = 1;
   }
-  else if ( !strcmp_0("å°©", s_pwszDstCheat[0]) )
+  else if ( !strcmp_0("Ã¥Â°Â©", s_pwszDstCheat[0]) )
   {
     equipPartCode = 2;
   }
@@ -1433,8 +1433,8 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   if ( s_nWordCount >= 4 )
     nUpNum = atoi(s_pwszDstCheat[3]);
   nNum = atoi(s_pwszDstCheat[1]);
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
-  W2M(s_pwszDstCheat[2], Str1, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
+  W2M(s_pwszDstCheat[2], Str1, 32);
   if ( !strcmp_0(Str1, byte_1407AE660) )
   {
     strcpy_0(Destination, "irtal01");
@@ -1483,13 +1483,13 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   {
     strcpy_0(Destination, "irtal12");
   }
-  else if ( !strcmp_0(Str1, "Úº") )
+  else if ( !strcmp_0(Str1, "ÃšÂº") )
   {
     strcpy_0(Destination, "irtal13");
   }
   else
   {
-    if ( strcmp_0(Str1, "È°") )
+    if ( strcmp_0(Str1, "ÃˆÂ°") )
       return 0;
     strcpy_0(Destination, "irtal14");
   }
@@ -2147,7 +2147,7 @@ bool __fastcall ct_cashitembuy(CPlayer *pOne)
   if ( !pOne || !pOne->m_bOper )
     return 0;
   nNum = atoi(s_pwszDstCheat[1]);
-  if ( (unsigned int)nNum >= 0x64 )
+  if ( (unsigned int)nNum >= 100 )
     return 0;
   return 0;
 }
@@ -2231,7 +2231,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
   }
   if ( !strcmp_0("end", s_pwszDstCheat[0]) )
     return g_HolySys.ct_StopBattle();
-  if ( strcmp_0("Å°", s_pwszDstCheat[0]) )
+  if ( strcmp_0("Ã…Â°", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
       return g_HolySys.ct_State(pOne);
@@ -2598,7 +2598,7 @@ bool __fastcall ct_drop_jade(CPlayer *pOne)
   nNum = 1;
   if ( s_nWordCount >= 2 )
     nNum = atoi(s_pwszDstCheat[1]);
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->dev_drop_item(szTran, nNum, nullptr);
 }
 
@@ -2681,7 +2681,7 @@ bool __fastcall ct_server_rate(CPlayer *pOne)
   memset(Buffer, 0, 255);
   sprintf_s(
     Buffer,
-    0xFFuLL,
+    255,
     "Item Looting: %f Percent\n"
     "Mine Speed: %f Percent\n"
     "Force Liver: %f Percent\n"
@@ -2709,7 +2709,7 @@ bool __fastcall ct_premium_rate(CPlayer *pOne)
   memset(Buffer, 0, 255);
   sprintf_s(
     Buffer,
-    0xFFuLL,
+    255,
     "PC Item Looting: %f Percent\n"
     "PC Mine Speed: %f Percent\n"
     "PC Force Liver: %f Percent\n"
@@ -2794,7 +2794,7 @@ bool __fastcall ct_eventset_start(CPlayer *pOne)
   char pwszErrCode[132]; // [rsp+90h] [rbp-A8h] BYREF
   bool started; // [rsp+114h] [rbp-24h]
 
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   if ( !pOne )
     return 0;
   started = g_MonsterEventSet->StartEventSet(szTran, pwszErrCode, pOne);
@@ -2812,7 +2812,7 @@ bool __fastcall ct_eventset_stop(CPlayer *pOne)
   char pwszErrCode[132]; // [rsp+90h] [rbp-A8h] BYREF
   bool stopped; // [rsp+114h] [rbp-24h]
 
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   stopped = g_MonsterEventSet->StopEventSet(szTran, pwszErrCode);
   if ( !pOne )
     return 0;
@@ -2877,9 +2877,9 @@ bool __fastcall ct_lua_command(CPlayer *pOne)
   memset(scriptName, 0, sizeof(scriptName));
   memset(commandArg, 0, sizeof(commandArg));
 
-  W2M(s_pwszDstCheat[1], scriptName, 0x20u);
+  W2M(s_pwszDstCheat[1], scriptName, 32);
   if ( s_nWordCount >= 3 )
-    W2M(s_pwszDstCheat[2], commandArg, 0x20u);
+    W2M(s_pwszDstCheat[2], commandArg, 32);
 
   if ( !strcmp_0("attach", s_pwszDstCheat[0]) )
   {
@@ -2941,7 +2941,7 @@ bool __fastcall ct_userchatban(CPlayer *pOne)
     return 0;
   if ( s_nWordCount == 3 )
   {
-    if ( strlen_0(s_pwszDstCheat[2]) && strlen_0(s_pwszDstCheat[2]) <= 0x7F )
+    if ( strlen_0(s_pwszDstCheat[2]) && strlen_0(s_pwszDstCheat[2]) <= 127 )
     {
       iPeriod = 0;
       iPeriod = atoi(s_pwszDstCheat[1]);
@@ -3197,7 +3197,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
         strcpy_0(Destination, s_pwszDstCheat[0]);
         sprintf_s(
           Buffer,
-          0x200uLL,
+          512,
           "Player Vote Info : Name = %s, ResetTime = %d, AccTime = %d, Scaner = %d, Enable = %d, Over = %d",
           Destination,
           dwLastResetDate,
@@ -3210,7 +3210,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
       }
     }
     if ( !foundPlayer )
-      sprintf_s(Buffer, 0x200uLL, "Player Search Fail!! -> Name = %s", s_pwszDstCheat[0]);
+      sprintf_s(Buffer, 512, "Player Search Fail!! -> Name = %s", s_pwszDstCheat[0]);
   }
   else
   {
@@ -3225,7 +3225,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
     strcpy_0(Destination, charName);
     sprintf_s(
       Buffer,
-      0x200uLL,
+      512,
       "Player Vote Info : Name = %s, Token = %d, AccTime = %d, Scaner = %d, Enable = %d, Over = %d",
       Destination,
       dwLastResetDate,
@@ -3277,7 +3277,7 @@ bool __fastcall ct_period_time_set(CPlayer *pOne)
   memset(Buffer, 0, 125);
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
   {
-    sprintf_s(Buffer, 0x7DuLL, aCheatHelpSynta_0);
+    sprintf_s(Buffer, 125, aCheatHelpSynta_0);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3318,7 +3318,7 @@ bool __fastcall ct_tl_info_set(CPlayer *pOne)
   memset(Buffer, 0, 125);
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
   {
-    sprintf_s(Buffer, 0x7DuLL, aCheatHelpSynta_1);
+    sprintf_s(Buffer, 125, aCheatHelpSynta_1);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3333,7 +3333,7 @@ bool __fastcall ct_tl_info_set(CPlayer *pOne)
     timelimitInfo.dwAccSerial = pOne->m_pUserDB->m_dwAccountSerial;
     timelimitInfo.wIndex = pOne->m_id.wIndex;
     const int querySize = static_cast<int>(timelimitInfo.size());
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x9Bu, reinterpret_cast<char *>(&timelimitInfo), querySize);
+    g_Main.PushDQSData(-1, nullptr, 155, reinterpret_cast<char *>(&timelimitInfo), querySize);
     return 1;
   }
 }
@@ -3367,7 +3367,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
         strcpy_0(Destination, charName);
         sprintf_s(
           Buffer,
-          0x200uLL,
+          512,
           "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %d",
           Destination,
           dwFatigue,
@@ -3378,7 +3378,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
       }
     }
     if ( !foundPlayer )
-      sprintf_s(Buffer, 0x200uLL, "Player Search Fail!! -> Name = %s", s_pwszDstCheat[0]);
+      sprintf_s(Buffer, 512, "Player Search Fail!! -> Name = %s", s_pwszDstCheat[0]);
   }
   else
   {
@@ -3391,7 +3391,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
     strcpy_0(Destination, charName);
     sprintf_s(
       Buffer,
-      0x200uLL,
+      512,
       "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %d",
       Destination,
       dwFatigue,
@@ -3414,7 +3414,7 @@ bool __fastcall ct_tl_system_setting(CPlayer *pOne)
     return 0;
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
   {
-    sprintf_s(Buffer, 0x7DuLL, "Cheat Help : Syntax = tlsysset 0 ~ 2,   0 = TL Disable, 1 = TL Enable, 2 = Suspend");
+    sprintf_s(Buffer, 125, "Cheat Help : Syntax = tlsysset 0 ~ 2,   0 = TL Disable, 1 = TL Enable, 2 = Suspend");
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3426,20 +3426,20 @@ bool __fastcall ct_tl_system_setting(CPlayer *pOne)
       if ( systemState == 1 )
       {
         g_Main.m_pTimeLimitMgr->SetTLEnable(1u);
-        sprintf_s(statusMessage, 0x32uLL, "Time Limit System Enable");
+        sprintf_s(statusMessage, 50, "Time Limit System Enable");
       }
       else if ( systemState == 2 )
       {
         g_Main.m_pTimeLimitMgr->SetTLEnable(2u);
-        sprintf_s(statusMessage, 0x32uLL, "Time Limit System Suspend");
+        sprintf_s(statusMessage, 50, "Time Limit System Suspend");
       }
     }
     else
     {
       g_Main.m_pTimeLimitMgr->SetTLEnable(0);
-      sprintf_s(statusMessage, 0x32uLL, "Time Limit System Disable");
+      sprintf_s(statusMessage, 50, "Time Limit System Disable");
     }
-    sprintf_s(Buffer, 0x7DuLL, "Time Limit Info : %s", statusMessage);
+    sprintf_s(Buffer, 125, "Time Limit Info : %s", statusMessage);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3456,7 +3456,7 @@ bool __fastcall ct_action_point_set(CPlayer *pOne)
   memset(Buffer, 0, 125);
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
   {
-    sprintf_s(Buffer, 0x7DuLL, aCheatHelpSynta_2);
+    sprintf_s(Buffer, 125, aCheatHelpSynta_2);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3516,24 +3516,24 @@ bool __fastcall ct_Gold_Age_Event_Status(CPlayer *pOne)
     switch ( eventStatus )
     {
       case 1u:
-        sprintf_s(Buffer, 0x1EuLL, byte_1407AF104);
+        sprintf_s(Buffer, 30, byte_1407AF104);
         break;
       case 2u:
-        sprintf_s(Buffer, 0x1EuLL, byte_1407AF0F8);
+        sprintf_s(Buffer, 30, byte_1407AF0F8);
         break;
       case 3u:
-        sprintf_s(Buffer, 0x1EuLL, aA_50);
+        sprintf_s(Buffer, 30, aA_50);
         break;
       default:
-        sprintf_s(Buffer, 0x1EuLL, byte_1407AF110);
+        sprintf_s(Buffer, 30, byte_1407AF110);
         break;
     }
   }
   else
   {
-    sprintf_s(Buffer, 0x1EuLL, aOne_3);
+    sprintf_s(Buffer, 30, aOne_3);
   }
-  sprintf_s(pwszMessage, 0x100uLL, aCoacE, Buffer);
+  sprintf_s(pwszMessage, 256, aCoacE, Buffer);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, pwszMessage, 0xFFu, 0LL);
   return 1;
 }
@@ -3551,7 +3551,7 @@ bool __fastcall ct_Gold_Age_Set_Event_Status(CPlayer *pOne)
   memset(Buffer, 0, 256);
   if ( !strcmp_0(s_pwszDstCheat[0], "?") )
   {
-    sprintf_s(Buffer, 0x100uLL, aCheatHelpSynta_3);
+    sprintf_s(Buffer, 256, aCheatHelpSynta_3);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3596,16 +3596,16 @@ bool __fastcall ct_Gold_Age_Get_Box_Cnt(CPlayer *pOne)
       LoopCount = goldenBox->GetLoopCount();
       if ( j >= LoopCount )
         break;
-      memset_0(Buffer, 0, 0x100uLL);
+      memset_0(Buffer, 0, 256);
       bFilter = goldenBox->Get_Box_Count(static_cast<unsigned __int8>(j));
-      sprintf_s(Buffer, 0x100uLL, aCoacCodeDBoxAc, (unsigned int)j, bFilter);
+      sprintf_s(Buffer, 256, aCoacCodeDBoxAc, (unsigned int)j, bFilter);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     }
     return 1;
   }
   else
   {
-    sprintf_s(Buffer, 0x100uLL, aCoacE_0);
+    sprintf_s(Buffer, 256, aCoacE_0);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 1;
   }
@@ -3641,7 +3641,7 @@ bool __fastcall ct_alter_dalant(CPlayer *pOne)
   if ( !pOne )
     return 0;
   if ( s_nWordCount < 1 )
-    return pOne->dev_dalant(0xFFFFFFFF);
+    return pOne->dev_dalant(-1);
   const unsigned int dalant = strtoul(s_pwszDstCheat[0], &EndPtr, 10);
   return pOne->dev_dalant(dalant);
 }
@@ -3653,7 +3653,7 @@ bool __fastcall ct_alter_gold(CPlayer *pOne)
   if ( !pOne )
     return 0;
   if ( s_nWordCount < 1 )
-    return pOne->dev_gold(0xFFFFFFFF);
+    return pOne->dev_gold(-1);
   const unsigned int gold = strtoul(s_pwszDstCheat[0], &EndPtr, 10);
   return pOne->dev_gold(gold);
 }
@@ -3807,7 +3807,7 @@ bool __fastcall ct_ClearSettleOwnerGuild(CPlayer *pOne)
       }
       g_Main.m_kEtcNotifyInfo.UpdateSettlementOwner(static_cast<unsigned __int8>(nRaceCode), 0, 0);
     }
-    g_Main.m_kEtcNotifyInfo.Notify(0xFFu);
+    g_Main.m_kEtcNotifyInfo.Notify(255);
     return 1;
   }
 }
@@ -4108,7 +4108,7 @@ bool __fastcall ct_request_delete_quest(CPlayer *pOne)
   if ( s_nWordCount != 1 )
     return 0;
   questIndex = atoi(s_pwszDstCheat[0]);
-  if ( questIndex >= 0x1Eu )
+  if ( questIndex >= 30 )
     return 0;
   pOne->pc_QuestGiveupRequest(questIndex);
   return 1;
@@ -4243,7 +4243,7 @@ bool __fastcall ct_loot_item(CPlayer *pOne)
   nNum = 1;
   if ( s_nWordCount >= 2 )
     nNum = atoi(s_pwszDstCheat[1]);
-  W2M(s_pwszDstCheat[0], szTran, 0x20u);
+  W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->dev_loot_item(szTran, nNum, 0LL, 0);
 }
 

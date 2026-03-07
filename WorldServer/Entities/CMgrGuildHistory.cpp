@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMgrGuildHistory.h"
 
@@ -43,7 +43,7 @@ CMgrGuildHistory::CMgrGuildHistory()
     "HistoryPath",
     "C:\\History",
     returnedString,
-    0x80u,
+    128,
     "..\\WorldInfo\\WorldInfo.ini");
   CreateDirectoryA(returnedString, nullptr);
   sprintf(m_szStdPath, "%s\\Guild", returnedString);
@@ -55,15 +55,15 @@ CMgrGuildHistory::CMgrGuildHistory()
 
   char dateBuffer[160]{};
   char timeBuffer[128]{};
-  _strdate_s(dateBuffer, 0x80u);
+  _strdate_s(dateBuffer, 128);
   dateBuffer[5] = 0;
-  _strtime_s(timeBuffer, 0x80u);
+  _strtime_s(timeBuffer, 128);
   timeBuffer[5] = 0;
-  sprintf_s(m_szCurTime, 0x20u, "%s %s", dateBuffer, timeBuffer);
+  sprintf_s(m_szCurTime, 32, "%s %s", dateBuffer, timeBuffer);
 
-  m_tmrUpdateTime.BeginTimer(0xEA60u);
-  m_listLogData.SetList(0x9E4u);
-  m_listLogDataEmpty.SetList(0x9E4u);
+  m_tmrUpdateTime.BeginTimer(60000);
+  m_listLogData.SetList(2532);
+  m_listLogDataEmpty.SetList(2532);
   for (unsigned int index = 0; static_cast<int>(index) < 2532; ++index)
   {
     m_listLogDataEmpty.PushNode_Back(index);
@@ -104,11 +104,11 @@ void CMgrGuildHistory::OnLoop()
   {
     char dateBuffer[160]{};
     char timeBuffer[144]{};
-    _strdate_s(dateBuffer, 0x80u);
+    _strdate_s(dateBuffer, 128);
     dateBuffer[5] = 0;
-    _strtime_s(timeBuffer, 0x80u);
+    _strtime_s(timeBuffer, 128);
     timeBuffer[5] = 0;
-    sprintf_s(m_szCurTime, 0x20u, "%s %s", dateBuffer, timeBuffer);
+    sprintf_s(m_szCurTime, 32, "%s %s", dateBuffer, timeBuffer);
   }
 }
 
@@ -124,7 +124,7 @@ void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
   if (logSize < 0x12C && m_listLogDataEmpty.PopNode_Front(outIndex))
   {
     __LOG_DATA &entry = m_LogData[outIndex[0]];
-    strcpy_s(entry.szFileName, 0x80u, pszFileName);
+    strcpy_s(entry.szFileName, 128, pszFileName);
     entry.nLen = static_cast<int>(logSize);
     memcpy_0(entry.sData, pszLog, logSize);
     entry.sData[logSize] = 0;
@@ -339,7 +339,7 @@ void CMgrGuildHistory::suggest_vote(
       if (pMatter->wszMatterDst[0])
       {
         char dstName[160]{};
-        W2M(pMatter->wszMatterDst, dstName, 0x80u);
+        W2M(pMatter->wszMatterDst, dstName, 128);
         sprintf_s(
           s_guildHistoryLogData,
           sizeof(s_guildHistoryLogData),
@@ -370,7 +370,7 @@ void CMgrGuildHistory::suggest_vote(
       if (pMatter->wszMatterDst[0])
       {
         char dstName[160]{};
-        W2M(pMatter->wszMatterDst, dstName, 0x80u);
+        W2M(pMatter->wszMatterDst, dstName, 128);
         sprintf_s(
           s_guildHistoryLogData,
           sizeof(s_guildHistoryLogData),
@@ -403,7 +403,7 @@ void CMgrGuildHistory::suggest_vote(
     case 3:
     {
       char comment[1296]{};
-      W2M(pMatter->wszComment, comment, 0x500u);
+      W2M(pMatter->wszComment, comment, 1280);
       sprintf_s(
         s_guildHistoryLogData,
         sizeof(s_guildHistoryLogData),

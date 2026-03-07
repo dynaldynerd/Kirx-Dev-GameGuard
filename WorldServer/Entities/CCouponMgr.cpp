@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCouponMgr.h"
 
@@ -41,9 +41,9 @@ void CCouponMgr::Init(unsigned __int16 wIdx)
     return;
   }
 
-  m_tmrCheckConnMin.BeginTimer(0xEA60u);
+  m_tmrCheckConnMin.BeginTimer(60000);
   const unsigned int minuteGap = m_dwContTime % 60u;
-  m_tmrCouponEnableTime.BeginTimer(0x36EE80u);
+  m_tmrCouponEnableTime.BeginTimer(3600000);
   if (minuteGap)
   {
     m_tmrCouponEnableTime.CountingAddTickOld(60000u * minuteGap);
@@ -331,13 +331,13 @@ void CCouponMgr::LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo)
   dateString[5] = buffer[4];
   dateString[6] = '\0';
 
-  const unsigned int lastConnDate = pkInfo->dwLastConnTime / 0x2710;
+  const unsigned int lastConnDate = pkInfo->dwLastConnTime / 10000;
   const int today = std::atoi(dateString);
   const unsigned long long connectTimeLimit = GetConnectTime_AddBySec(-1800);
 
   if (lastConnDate == static_cast<unsigned int>(today) && lastConnDate)
   {
-    if (pkInfo->dwLastConnTime <= connectTimeLimit || pkInfo->dwContPlayTime <= 0xA)
+    if (pkInfo->dwLastConnTime <= connectTimeLimit || pkInfo->dwContPlayTime <= 10)
     {
       m_byReceiveCoupon = pkInfo->byReceiveCoupon;
       m_byRemainTime = 0;

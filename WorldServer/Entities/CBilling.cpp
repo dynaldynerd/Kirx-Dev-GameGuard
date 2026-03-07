@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CBilling.h"
 
@@ -144,7 +144,7 @@ void CBilling::BillingClose(char *szID)
       const int billingType = player->m_pUserDB->GetBillingType();
       if (billingType == 6 || billingType == 7)
       {
-        player->m_pUserDB->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Billing close");
+        player->m_pUserDB->ForceCloseCommand(1u, -1, false, "Billing close");
         player->m_pUserDB->m_BillingInfo.iType = 1;
       }
     }
@@ -284,7 +284,7 @@ void CBilling::Expire_PCBang(char *szCMS)
       CPlayer *player = &g_Player[j];
       if (player && player->m_bLive && !strcmp_0(player->m_pUserDB->m_BillingInfo.szCMS, szCMS))
       {
-        player->m_pUserDB->ForceCloseCommand(1u, 0xFFFFFFFFu, false, "Billing expire");
+        player->m_pUserDB->ForceCloseCommand(1u, -1, false, "Billing expire");
         player->m_pUserDB->m_BillingInfo.iType = 1;
       }
     }

@@ -88,7 +88,7 @@ char CRaceBossWinRate::LoadINI()
 char CRaceBossWinRate::SaveINI()
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 0xFFu);
+  memset_0(buffer, 0, 255u);
 
   sprintf(buffer, "%d", m_byTotalBattleCnt);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "TotalBattleCnt", buffer, "..\\SystemSave\\ServerState.ini"))

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderTradeInfo.h"
 #include "CUnmannedTraderEnvironmentValue.h"
@@ -66,7 +66,7 @@ void CUnmannedTraderTradeInfo::LoadINI()
     "OldIncome",
     "0",
     buffer,
-    0x1400u,
+    5120,
     CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME);
   m_ui64TotalOldIncome = _strtoui64(buffer, nullptr, 10);
 
@@ -75,7 +75,7 @@ void CUnmannedTraderTradeInfo::LoadINI()
     "CurrentIncome",
     "0",
     buffer,
-    0x1400u,
+    5120,
     CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME);
   m_ui64TotalCurrentIncome = _strtoui64(buffer, nullptr, 10);
 }
@@ -88,14 +88,14 @@ void CUnmannedTraderTradeInfo::SaveINI()
   }
 
   char buffer[5136]{};
-  _ui64toa_s(m_ui64TotalOldIncome, buffer, 0x1400u, 10);
+  _ui64toa_s(m_ui64TotalOldIncome, buffer, 5120, 10);
   WritePrivateProfileStringA(
     CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME,
     "OldIncome",
     buffer,
     CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_FILE_NAME);
 
-  _ui64toa_s(m_ui64TotalCurrentIncome, buffer, 0x1400u, 10);
+  _ui64toa_s(m_ui64TotalCurrentIncome, buffer, 5120, 10);
   WritePrivateProfileStringA(
     CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_SAVE_INI_SECTION_NAME,
     "CurrentIncome",
@@ -138,7 +138,7 @@ void CUnmannedTraderTradeInfo::NotifyIncome()
     }
 
     msg[j].ui64TotalIncome = m_ui64TotalOldIncome;
-    strncpy_s(msg[j].wszRaceLeaderName, sizeof(msg[j].wszRaceLeaderName), source, 0x10u);
+    strncpy_s(msg[j].wszRaceLeaderName, sizeof(msg[j].wszRaceLeaderName), source, 16);
   }
 
   for (int k = 0; k < MAX_PLAYER; ++k)
@@ -177,7 +177,7 @@ void CUnmannedTraderTradeInfo::NotifyIncome(unsigned __int8 byRace, unsigned __i
   }
 
   msg.ui64TotalIncome = m_ui64TotalOldIncome;
-  strncpy_s(msg.wszRaceLeaderName, sizeof(msg.wszRaceLeaderName), source, 0x10u);
+  strncpy_s(msg.wszRaceLeaderName, sizeof(msg.wszRaceLeaderName), source, 16);
 
   g_Network.m_pProcess[0]->LoadSendMsg(
     wIndex,

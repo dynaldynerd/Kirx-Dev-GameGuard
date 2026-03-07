@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CGuardTower.h"
 
@@ -722,13 +722,13 @@ void CGuardTower::RecvKillMessage(CCharacter *pDier)
 void CGuardTower::OnLoop_Static()
 {
   const DWORD currentTime = timeGetTime();
-  if (currentTime - CGuardTower::s_dwOldTick_CheckTemp >= 0x2710)
+  if (currentTime - CGuardTower::s_dwOldTick_CheckTemp >= 10000)
   {
     CGuardTower::s_dwOldTick_CheckTemp = currentTime;
     for (int playerIndex = 0; playerIndex < MAX_PLAYER; ++playerIndex)
     {
       __TEMP_WAIT_TOWER *tempInfo = &CGuardTower::s_Temp[playerIndex];
-      if (tempInfo->dwMasterSerial != static_cast<unsigned int>(-1) && currentTime - tempInfo->dwPushTime > 0x493E0)
+      if (tempInfo->dwMasterSerial != static_cast<unsigned int>(-1) && currentTime - tempInfo->dwPushTime > 300000)
       {
         tempInfo->dwMasterSerial = static_cast<unsigned int>(-1);
       }

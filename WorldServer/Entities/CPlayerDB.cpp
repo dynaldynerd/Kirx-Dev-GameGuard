@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CPlayerDB.h"
@@ -515,7 +515,7 @@ void CPlayerDB::SetHaveBoxOfAMP(bool bFlag)
 char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
 {
   unsigned __int16 rankRate = wRankRate;
-  if (wRankRate >= 0x2710u)
+  if (wRankRate >= 10000)
   {
     rankRate = 0;
   }
@@ -709,7 +709,7 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
 char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
 {
   strcpy_0(this->m_dbChar.m_wszCharID, pData->dbAvator.m_wszAvatorName);
-  W2M(this->m_dbChar.m_wszCharID, this->m_aszName, 0x11u);
+  W2M(this->m_dbChar.m_wszCharID, this->m_aszName, 17);
   this->m_byNameLen = static_cast<unsigned __int8>(strlen_0(this->m_dbChar.m_wszCharID));
   this->m_dbChar.m_dwSerial = pData->dbAvator.m_dwRecordNum;
   this->m_dbChar.m_byRaceSexCode = pData->dbAvator.m_byRaceSexCode;
@@ -933,7 +933,7 @@ char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
     storage->m_byClientIndex = embellish.Key.bySlotIndex;
     storage->m_wItemIndex = embellish.Key.wItemIndex;
     storage->m_dwDur = embellish.wAmount;
-    storage->m_dwLv = 0xFFFFFFF;
+    storage->m_dwLv = 268435455;
     storage->m_bLoad = 1;
     storage->m_bLock = 0;
     storage->SetSerialNumber(embellish.dwItemETSerial);
@@ -989,7 +989,7 @@ char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
     storage->m_byTableCode = 15;
     storage->m_wItemIndex = force.Key.GetIndex();
     storage->m_dwDur = force.Key.GetStat();
-    storage->m_dwLv = 0xFFFFFFF;
+    storage->m_dwLv = 268435455;
     storage->m_bLoad = 1;
     storage->m_bLock = 0;
     storage->SetSerialNumber(force.dwItemETSerial);

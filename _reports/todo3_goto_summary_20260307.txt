@@ -1,45 +1,18 @@
 ﻿TODO Item 3 Scan
 3. recreate function that still using goto and label
 
-Generated: 2026-03-07 14:50:14 +07:00
+Generated: 2026-03-07 15:22:13 +07:00
 Scope: WorldServer source (.cpp/.h), excluding ThirdParty/build output
 Heuristic: goto statements plus standalone labels outside comments/strings, grouped to nearest enclosing function.
 Files scanned: 1381
-Functions with goto/label flow: 20
-Goto statements: 149
-Standalone labels: 25
-Files with hits: 7
+Functions with goto/label flow: 0
+Goto statements: 
+Standalone labels: 
+Files with hits: 0
 
 Top Files By Function Count
-  - WorldServer\Entities\CPlayer.cpp: 12 function(s), 115 goto(s), 15 label(s), 130 total hit(s)
-  - WorldServer\Entities\CAttack.cpp: 3 function(s), 9 goto(s), 3 label(s), 12 total hit(s)
-  - WorldServer\Entities\CParticle.cpp: 1 function(s), 8 goto(s), 2 label(s), 10 total hit(s)
-  - WorldServer\Entities\CPlayer_Animus.cpp: 1 function(s), 7 goto(s), 1 label(s), 8 total hit(s)
-  - WorldServer\Entities\CBsp.cpp: 1 function(s), 4 goto(s), 1 label(s), 5 total hit(s)
-  - WorldServer\Entities\CUserDB_InitValidate.cpp: 1 function(s), 3 goto(s), 2 label(s), 5 total hit(s)
-  - WorldServer\Entities\CPlayer_Storage.cpp: 1 function(s), 3 goto(s), 1 label(s), 4 total hit(s)
 
 Top Functions By Total Hit Count
-  - WorldServer\Entities\CPlayer.cpp:3608 CPlayer::pc_MovePortal -> 20 hit(s) [Result]
-  - WorldServer\Entities\CPlayer.cpp:24481 CPlayer::pc_ExchangeItem -> 16 hit(s) [RESULT_EXCHANGE]
-  - WorldServer\Entities\CPlayer.cpp:23265 CPlayer::pc_MakeItem -> 16 hit(s) [RESULT]
-  - WorldServer\Entities\CPlayer.cpp:22979 CPlayer::pc_EmbellishPart -> 15 hit(s) [LABEL_EMBEL_FAIL, RESULT]
-  - WorldServer\Entities\CPlayer.cpp:6796 CPlayer::SF_TeleportToDestination -> 13 hit(s) [RESULT]
-  - WorldServer\Entities\CPlayer.cpp:22373 CPlayer::pc_TakeGroundingItem -> 12 hit(s) [RESULT]
-  - WorldServer\Entities\CPlayer.cpp:24178 CPlayer::pc_CombineItem -> 12 hit(s) [APPLY_COMBINE_COST, RESULT_COMBINE, SEND_COMBINE_RESULT]
-  - WorldServer\Entities\CPlayer.cpp:12313 CPlayer::pc_SellItemStore -> 11 hit(s) [Result]
-  - WorldServer\Entities\CParticle.cpp:632 CParticle::LoadParticleSPT -> 10 hit(s) [LABEL_INVALID_TRACK_USAGE, LABEL_NEXT_TOKEN]
-  - WorldServer\Entities\CPlayer_Animus.cpp:488 CPlayer::pc_AnimusInvenChange -> 8 hit(s) [SEND_ANIMUS_CHANGE_RESULT]
-  - WorldServer\Entities\CPlayer.cpp:23623 CPlayer::pc_UpgradeItem -> 7 hit(s) [RESULT_UPGRADE]
-  - WorldServer\Entities\CBsp.cpp:433 CBsp::FrameMoveEnvironment -> 5 hit(s) [NEXT_ENV]
-  - WorldServer\Entities\CUserDB_InitValidate.cpp:133 CUserDB::DataValidCheckRevise -> 5 hit(s) [LABEL_166, LABEL_208]
-  - WorldServer\Entities\CAttack.cpp:1128 CAttack::AreaDamageProc -> 4 hit(s) [CHECK_AREA_DAMAGE]
-  - WorldServer\Entities\CAttack.cpp:938 CAttack::FlashDamageProc -> 4 hit(s) [CHECK_FLASH_DAMAGE]
-  - WorldServer\Entities\CAttack.cpp:1296 CAttack::SectorDamageProc -> 4 hit(s) [CHECK_SECTOR_DAMAGE]
-  - WorldServer\Entities\CPlayer.cpp:11958 CPlayer::pc_BuyItemStore -> 4 hit(s) [Result]
-  - WorldServer\Entities\CPlayer_Storage.cpp:551 CPlayer::pc_ForceInvenChange -> 4 hit(s) [SEND_FORCE_CHANGE_RESULT]
-  - WorldServer\Entities\CPlayer.cpp:16033 CPlayer::pc_ChatAllRequest -> 2 hit(s) [LABEL_AFTER_ITEM]
-  - WorldServer\Entities\CPlayer.cpp:22870 CPlayer::pc_EquipPart -> 2 hit(s) [LABEL_EQUIP_FAIL]
 
 Recommended Order
 1. Start with contained functions that have a small label set and obvious early-return rewrites.

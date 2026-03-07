@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WheatyExceptionReport.h"
 
@@ -146,7 +146,7 @@ char *WheatyExceptionReport::FormatOutputValue(
       {
         const unsigned int pointerValue = *reinterpret_cast<const unsigned int *>(pAddress);
         const char *textPointer = reinterpret_cast<const char *>(static_cast<uintptr_t>(pointerValue));
-        if (IsBadStringPtrA(textPointer, 0x20u))
+        if (IsBadStringPtrA(textPointer, 32))
         {
           pszCurrBuffer += sprintf(pszCurrBuffer, " = %X", pointerValue);
         }
@@ -232,7 +232,7 @@ BOOL CALLBACK WheatyExceptionReport::EnumerateSymbolsCallback(
 {
   (void)SymbolSize;
   char buffer[10256]{};
-  if (FormatSymbolValue(pSymInfo, reinterpret_cast<STACKFRAME64 *>(UserContext), buffer, 0x2800u))
+  if (FormatSymbolValue(pSymInfo, reinterpret_cast<STACKFRAME64 *>(UserContext), buffer, 10240))
   {
     WheatyExceptionReport::printf("\t%s\r\n", buffer);
   }
@@ -359,7 +359,7 @@ void WheatyExceptionReport::WriteStackDetails(CONTEXT *pContext, bool bWriteVari
       char szModule[292]{};
       unsigned int section = 0;
       unsigned int offset = 0;
-      WheatyExceptionReport::GetLogicalAddress(reinterpret_cast<void *>(stackFrame.AddrPC.Offset), szModule, 0x104u, &section, &offset);
+      WheatyExceptionReport::GetLogicalAddress(reinterpret_cast<void *>(stackFrame.AddrPC.Offset), szModule, 260, &section, &offset);
       WheatyExceptionReport::printf("<2>%04X:%08X %s", section, offset, szModule);
     }
 
@@ -400,7 +400,7 @@ void WheatyExceptionReport::GenerateExceptionReport(EXCEPTION_POINTERS *pExcepti
     WheatyExceptionReport::printf("%s\r\n\r\n", m_szDescription);
   }
 
-  GetModuleFileNameA(nullptr, filename, 0xFFu);
+  GetModuleFileNameA(nullptr, filename, 255);
   WheatyExceptionReport::printf("Exe :         %s\r\n", filename);
   WheatyExceptionReport::printf("OS :          %s\r\n", WheatyExceptionReport::GetOsVersion());
   GetUserNameA(userName, &size);
@@ -409,12 +409,12 @@ void WheatyExceptionReport::GenerateExceptionReport(EXCEPTION_POINTERS *pExcepti
   WheatyExceptionReport::printf("Computer :    %s\r\n", computerName);
   WheatyExceptionReport::printf("Time :        %d-%02d-%02d %s", m_st.wYear, m_st.wMonth, m_st.wDay, dayofweek[m_st.wDayOfWeek]);
 
-  const char *amPm = (m_st.wHour < 0xCu) ? "AM" : "PM";
-  const int hour = (m_st.wHour < 0xDu) ? m_st.wHour : (m_st.wHour - 12);
+  const char *amPm = (m_st.wHour < 12) ? "AM" : "PM";
+  const int hour = (m_st.wHour < 13) ? m_st.wHour : (m_st.wHour - 12);
   WheatyExceptionReport::printf(", %02d:%02d:%02d.%03d %s\r\n", hour, m_st.wMinute, m_st.wSecond, m_st.wMilliseconds, amPm);
   WheatyExceptionReport::printf("Code :        %08X %s\r\n", exceptionRecord->ExceptionCode, WheatyExceptionReport::GetExceptionString(exceptionRecord->ExceptionCode));
 
-  if (WheatyExceptionReport::GetLogicalAddress(exceptionRecord->ExceptionAddress, szModule, 0x104u, &section, &offset))
+  if (WheatyExceptionReport::GetLogicalAddress(exceptionRecord->ExceptionAddress, szModule, 260, &section, &offset))
   {
     WheatyExceptionReport::printf(
       "Address :     %08X %02X:%08X %s\r\n",
@@ -529,7 +529,7 @@ void WheatyExceptionReport::GenerateExceptionReport(EXCEPTION_POINTERS *pExcepti
 const char *WheatyExceptionReport::GetExceptionString(DWORD dwCode)
 {
   DWORD localCode = dwCode;
-  if (dwCode > 0xC0000005)
+  if (dwCode > 3221225477)
   {
     localCode += 1073741818;
     switch (localCode)
@@ -538,35 +538,35 @@ const char *WheatyExceptionReport::GetExceptionString(DWORD dwCode)
         return "IN_PAGE_ERROR";
       case 2:
         return "INVALID_HANDLE";
-      case 0x17:
+      case 23:
         return "ILLEGAL_INSTRUCTION";
-      case 0x1F:
+      case 31:
         return "NONCONTINUABLE_EXCEPTION";
-      case 0x20:
+      case 32:
         return "INVALID_DISPOSITION";
-      case 0x86:
+      case 134:
         return "ARRAY_BOUNDS_EXCEEDED";
-      case 0x87:
+      case 135:
         return "FLT_DENORMAL_OPERAND";
-      case 0x88:
+      case 136:
         return "FLT_DIVIDE_BY_ZERO";
-      case 0x89:
+      case 137:
         return "FLT_INEXACT_RESULT";
-      case 0x8A:
+      case 138:
         return "FLT_INVALID_OPERATION";
-      case 0x8B:
+      case 139:
         return "FLT_OVERFLOW";
-      case 0x8C:
+      case 140:
         return "FLT_STACK_CHECK";
-      case 0x8D:
+      case 141:
         return "FLT_UNDERFLOW";
-      case 0x8E:
+      case 142:
         return "INT_DIVIDE_BY_ZERO";
-      case 0x8F:
+      case 143:
         return "INT_OVERFLOW";
-      case 0x90:
+      case 144:
         return "PRIV_INSTRUCTION";
-      case 0xF7:
+      case 247:
         return "STACK_OVERFLOW";
       default:
         break;
@@ -576,15 +576,15 @@ const char *WheatyExceptionReport::GetExceptionString(DWORD dwCode)
   {
     switch (localCode)
     {
-      case 0xC0000005:
+      case 3221225477:
         return "ACCESS_VIOLATION";
-      case 0x80000001:
+      case 2147483649:
         return "GUARD_PAGE";
-      case 0x80000002:
+      case 2147483650:
         return "DATATYPE_MISALIGNMENT";
-      case 0x80000003:
+      case 2147483651:
         return "BREAKPOINT";
-      case 0x80000004:
+      case 2147483652:
         return "SINGLE_STEP";
       default:
         break;
@@ -592,7 +592,7 @@ const char *WheatyExceptionReport::GetExceptionString(DWORD dwCode)
   }
 
   HMODULE moduleHandle = GetModuleHandleA("NTDLL.DLL");
-  FormatMessageA(0xA00u, moduleHandle, dwCode, 0, szBuffer, 0x200u, nullptr);
+  FormatMessageA(2560, moduleHandle, dwCode, 0, szBuffer, 512, nullptr);
   return szBuffer;
 }
 
@@ -659,7 +659,7 @@ const char *WheatyExceptionReport::GetOsVersion()
 #pragma warning(pop)
   if (gotVersion)
   {
-    if (strlen_0(versionInfo.szCSDVersion) > 0xC8)
+    if (strlen_0(versionInfo.szCSDVersion) > 200)
     {
       versionInfo.szCSDVersion[100] = 0;
     }
@@ -738,7 +738,7 @@ long __stdcall WheatyExceptionReport::WheatyUnhandledExceptionFilter(EXCEPTION_P
   char szModule[292]{};
   unsigned int section = 0;
   unsigned int offset = 0;
-  GetModuleFileNameA(nullptr, filename, 0x104u);
+  GetModuleFileNameA(nullptr, filename, 260);
   _splitpath(filename, drive, dir, fileName, nullptr);
   sprintf(pdbPath, "%s%s%s.pdb", drive, dir, fileName);
   HANDLE pdbFile = CreateFileA(pdbPath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -748,7 +748,7 @@ long __stdcall WheatyExceptionReport::WheatyUnhandledExceptionFilter(EXCEPTION_P
     CloseHandle(pdbFile);
   }
 
-  GetLogicalAddress(pExceptionInfo->ExceptionRecord->ExceptionAddress, szModule, 0x104u, &section, &offset);
+  GetLogicalAddress(pExceptionInfo->ExceptionRecord->ExceptionAddress, szModule, 260, &section, &offset);
 
   sprintf(
     m_szLogFileName,

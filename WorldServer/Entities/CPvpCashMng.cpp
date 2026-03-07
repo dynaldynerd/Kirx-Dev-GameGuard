@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "base_fld.h"
 
@@ -254,7 +254,7 @@ bool CPvpCashMng::Parsing(
   memset_0(buffer, 0, sizeof(buffer));
   memset_0(returned, 0, sizeof(returned));
   sprintf(buffer, "%s%d", szItem, nInx);
-  GetPrivateProfileStringA(szTitle, buffer, "X", returned, 0x800u, ".\\Initialize\\PvpCashPoint.ini");
+  GetPrivateProfileStringA(szTitle, buffer, "X", returned, 2048, ".\\Initialize\\PvpCashPoint.ini");
   if (!strcmp_0(returned, "X"))
   {
     return false;
@@ -296,7 +296,7 @@ bool CPvpCashMng::SetItem(char *szItemCode, int nInx)
   unsigned __int8 tableCode = 0;
   for (tableCode = 0; ; ++tableCode)
   {
-    if (tableCode >= 0x25u)
+    if (tableCode >= 37)
     {
       return false;
     }

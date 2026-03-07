@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMsgProcess.h"
 #include "CMainThread.h"
@@ -26,7 +26,7 @@ CMsgProcess::~CMsgProcess()
 void CMsgProcess::ProcessMessage(_message *pMsg)
 {
   unsigned int message = pMsg->GetMessageA();
-  if (message > 0x2711)
+  if (message > 10001)
   {
     return;
   }
@@ -34,7 +34,7 @@ void CMsgProcess::ProcessMessage(_message *pMsg)
   if (message == 10001)
   {
     g_MapDisplay.OffDisplay();
-    SendMessageA(g_pDoc->m_pwndMainFrame->m_hWnd, 0x10u, 0, 0);
+    SendMessageA(g_pDoc->m_pwndMainFrame->m_hWnd, 16, 0, 0);
     return;
   }
 

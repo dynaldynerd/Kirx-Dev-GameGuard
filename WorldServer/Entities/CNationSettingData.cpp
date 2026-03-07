@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNationSettingData.h"
 
@@ -271,7 +271,7 @@ bool CNationSettingData::IsNormalStringDefProc(const char *szString, const char 
     const wchar_t ch = wideCharStr[index];
     if ((ch < 0x41 || ch > 0x5A) && (ch < 0x61 || ch > 0x7A) && !iswctype(ch, 4u))
     {
-      if (!IsNormalChar(ch) && !iswctype(ch, 0x103u))
+      if (!IsNormalChar(ch) && !iswctype(ch, 259))
       {
         if (!szException)
         {
@@ -302,7 +302,7 @@ bool CNationSettingData::IsNormalStringDefProc(const wchar_t *wszString, const w
     const wchar_t ch = wszString[index];
     if ((ch < 0x41 || ch > 0x5A) && (ch < 0x61 || ch > 0x7A) && !iswctype(ch, 4u))
     {
-      if (!IsNormalChar(ch) && !iswctype(ch, 0x103u))
+      if (!IsNormalChar(ch) && !iswctype(ch, 259))
       {
         if (!wszException)
         {
@@ -325,7 +325,7 @@ bool CNationSettingData::GetFireGuardEnableSetting()
 {
   char returnedString[40];
   memset(returnedString, 0, 16);
-  GetPrivateProfileStringA("FireGuard Use", "Use", "X", returnedString, 0x10u, ".\\fireguard\\fgrs.ini");
+  GetPrivateProfileStringA("FireGuard Use", "Use", "X", returnedString, 16, ".\\fireguard\\fgrs.ini");
   if (!strcmp_0(returnedString, "X"))
   {
     return false;
@@ -342,7 +342,7 @@ bool CNationSettingData::GetTimeLimitEnableSetting()
 {
   char returnedString[40];
   memset(returnedString, 0, 16);
-  GetPrivateProfileStringA("Time Limit", "Use", "X", returnedString, 0x10u, ".\\Initialize\\WorldSystem.ini");
+  GetPrivateProfileStringA("Time Limit", "Use", "X", returnedString, 16, ".\\Initialize\\WorldSystem.ini");
   if (!strcmp_0(returnedString, "X"))
   {
     return false;

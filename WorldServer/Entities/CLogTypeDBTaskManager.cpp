@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CLogTypeDBTaskManager.h"
 
@@ -69,7 +69,7 @@ void CLogTypeDBTask::Clear()
 
 bool CLogTypeDBTask::Set(unsigned __int8 byQueryType, char *pcData, unsigned __int16 wSize)
 {
-  if (byQueryType >= lt_qry_case_max || !pcData || wSize > 0x400u)
+  if (byQueryType >= lt_qry_case_max || !pcData || wSize > 1024)
   {
     return false;
   }
@@ -417,7 +417,7 @@ bool CLogTypeDBTaskManager::Init()
     return false;
   }
 
-  if (!m_kPool.Init(0x400u, 0x13C8u, m_pkLogger))
+  if (!m_kPool.Init(1024, 5064, m_pkLogger))
   {
     Log("CLogTypeDBTaskManager::Init() : m_kPool.Init( %u, %u )!", 1024u, 5064u);
     return false;

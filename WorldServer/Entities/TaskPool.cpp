@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "TaskPool.h"
 
@@ -25,11 +25,11 @@ __int64 TaskPool::Initialize(int nTskMaxNum, int nMaxTskSize)
   _nMaxTskNum = nTskMaxNum;
   if (!_create_task(nMaxTskSize))
   {
-    return 0xFFFFFFFCLL;
+    return 4294967292;
   }
   if (!_init_index_lists())
   {
-    return 0xFFFFFFFALL;
+    return 4294967290;
   }
   _bInit = true;
   return 0;
@@ -80,7 +80,7 @@ __int64 TaskPool::PushWaitTsk(int nTaskCode, unsigned __int8 *p, unsigned __int6
   unsigned int outIndex = 0;
   if (!_listEmptyIdx.PopNode_Front(&outIndex))
   {
-    return 0xFFFFFFFELL;
+    return -2;
   }
   _pTsks[static_cast<unsigned __int64>(outIndex)].SetTask(nTaskCode, p, size);
   if (_listRegedIdx.PushNode_Back(outIndex))
@@ -88,7 +88,7 @@ __int64 TaskPool::PushWaitTsk(int nTaskCode, unsigned __int8 *p, unsigned __int6
     return 0;
   }
   _listEmptyIdx.PushNode_Front(outIndex);
-  return 0xFFFFFFFDLL;
+  return 4294967293;
 }
 
 __int64 TaskPool::PushCompleteTsk(unsigned int nIdx)
@@ -97,7 +97,7 @@ __int64 TaskPool::PushCompleteTsk(unsigned int nIdx)
   {
     return 0;
   }
-  return 0xFFFFFFFDLL;
+  return 4294967293;
 }
 
 __int64 TaskPool::PushEmptyTsk(unsigned int nIdx)
@@ -106,7 +106,7 @@ __int64 TaskPool::PushEmptyTsk(unsigned int nIdx)
   {
     return 0;
   }
-  return 0xFFFFFFFDLL;
+  return 4294967293;
 }
 
 bool TaskPool::_create_task(int nMaxTskSize)

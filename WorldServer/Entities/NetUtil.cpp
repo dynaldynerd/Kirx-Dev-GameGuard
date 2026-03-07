@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "NetUtil.h"
 
@@ -30,7 +30,7 @@ __int64 GetIPAddress(char *szAddr)
   const char *src = inet_ntoa(addr);
   if (src)
   {
-    memcpy_0(szAddr, src, 0x10u);
+    memcpy_0(szAddr, src, 16);
     return 1;
   }
 

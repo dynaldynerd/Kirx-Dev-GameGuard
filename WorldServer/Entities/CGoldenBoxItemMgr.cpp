@@ -65,7 +65,7 @@ CGoldenBoxItemMgr *CGoldenBoxItemMgr::Instance()
 bool CGoldenBoxItemMgr::Initialize()
 {
   _init_loggers();
-  m_tmLoopTimer.BeginTimer(0x2710u);
+  m_tmLoopTimer.BeginTimer(10000);
   if (!Load_Golden_Box_Item_Event())
     return false;
 
@@ -159,7 +159,7 @@ void CGoldenBoxItemMgr::PushDQSUpdate()
     &m_golden_box_item_Old,
     sizeof(m_golden_box_item_Old));
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0xA5u, payload, static_cast<int>(sizeof(payload)));
+  g_Main.PushDQSData(-1, nullptr, 165, payload, static_cast<int>(sizeof(payload)));
 }
 
 bool CGoldenBoxItemMgr::_init_loggers()
@@ -170,7 +170,7 @@ bool CGoldenBoxItemMgr::_init_loggers()
     "..\\ZoneServerLog\\ServiceLog\\GoldBoxSystem",
     "GetGoldBarHistory",
     true,
-    0x5265C00u);
+    86400000);
 
   logger = CAsyncLogger::Instance();
   logger->Regist(
@@ -178,7 +178,7 @@ bool CGoldenBoxItemMgr::_init_loggers()
     "..\\ZoneServerLog\\ServiceLog\\GoldBoxSystem",
     "GetCouponHistory",
     true,
-    0x5265C00u);
+    86400000);
 
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog\\GoldenAgeEvent", nullptr);
 
@@ -275,7 +275,7 @@ char CGoldenBoxItemMgr::SynchINIANDDB()
 
 bool CGoldenBoxItemMgr::Load_Golden_Box_Item_Event()
 {
-  m_golden_box_event.m_event_timer.BeginTimer(0x1D4C0u);
+  m_golden_box_event.m_event_timer.BeginTimer(120000);
   m_golden_box_event.m_event_log.Write("Server Start and LogFile Loading");
   Set_Event_Status(0);
   if (Load_Event_INI(&m_golden_box_event.m_ini))
@@ -332,7 +332,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
     "StarterBoxCode_0",
     "NULL",
     pIni->m_szStarterBoxCode[0],
-    0x40u,
+    64,
     "./initialize/GoldenBox_Item.ini");
   if (!strcmp_0(pIni->m_szStarterBoxCode[0], "NULL"))
   {
@@ -345,7 +345,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
     "StarterBoxCode_1",
     "NULL",
     pIni->m_szStarterBoxCode[1],
-    0x40u,
+    64,
     "./initialize/GoldenBox_Item.ini");
   if (!strcmp_0(pIni->m_szStarterBoxCode[1], "NULL"))
   {
@@ -383,7 +383,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   pIni->m_byDay[0] = ret;
 
   ret = GetPrivateProfileIntA("GoldBox_Item", "BEGIN_HOUR", 0, "./initialize/GoldenBox_Item.ini");
-  if (ret >= 0x18)
+  if (ret >= 24)
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -391,7 +391,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   pIni->m_byHour[0] = ret;
 
   ret = GetPrivateProfileIntA("GoldBox_Item", "BEGIN_MINUTE", 0, "./initialize/GoldenBox_Item.ini");
-  if (ret >= 0x3C)
+  if (ret >= 60)
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -438,7 +438,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   pIni->m_byDay[1] = ret;
 
   ret = GetPrivateProfileIntA("GoldBox_Item", "END_HOUR", 0, "./initialize/GoldenBox_Item.ini");
-  if (ret >= 0x18)
+  if (ret >= 24)
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -446,7 +446,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   pIni->m_byHour[1] = ret;
 
   ret = GetPrivateProfileIntA("GoldBox_Item", "END_MINUTE", 0, "./initialize/GoldenBox_Item.ini");
-  if (ret >= 0x3C)
+  if (ret >= 60)
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -471,14 +471,14 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   memset(buffer, 0, 50);
   for (int j = 0; j < pIni->m_byLoopCnt; ++j)
   {
-    memset_0(buffer, 0, 0x32uLL);
-    sprintf_s(buffer, 0x32uLL, "BoxItem_Code_%d", j);
+    memset_0(buffer, 0, 50);
+    sprintf_s(buffer, 50, "BoxItem_Code_%d", j);
     ret = GetPrivateProfileStringA(
       "GoldBox_Item",
       buffer,
       "NULL",
       pIni->m_szGoldenBoxcode[static_cast<__int64>(j)],
-      0x40u,
+      64,
       "./initialize/GoldenBox_Item.ini");
     if (!strcmp_0(pIni->m_szGoldenBoxcode[static_cast<__int64>(j)], "NULL"))
     {
@@ -486,20 +486,20 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       return false;
     }
 
-    memset_0(buffer, 0, 0x32uLL);
-    sprintf_s(buffer, 0x32uLL, "Box_Max_%d", j);
+    memset_0(buffer, 0, 50);
+    sprintf_s(buffer, 50, "Box_Max_%d", j);
     ret = GetPrivateProfileIntA("GoldBox_Item", buffer, 0, "./initialize/GoldenBox_Item.ini");
-    if (ret > 0xEA60)
+    if (ret > 60000)
     {
       pIni->m_bUse_event = 0;
       return false;
     }
     pIni->m_wGoldenBoxmax[j] = static_cast<unsigned __int16>(ret);
 
-    memset_0(buffer, 0, 0x32uLL);
-    sprintf_s(buffer, 0x32uLL, "GoldBox_Item_Out_List_%d", j);
+    memset_0(buffer, 0, 50);
+    sprintf_s(buffer, 50, "GoldBox_Item_Out_List_%d", j);
     ret = GetPrivateProfileIntA(buffer, "List_Count", 0, "./initialize/GoldenBox_Item.ini");
-    if (ret > 0x64)
+    if (ret > 100)
     {
       pIni->m_bUse_event = 0;
       return false;
@@ -512,14 +512,14 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       sprintf_s(keyNum, sizeof(keyNum), "Num%d", k);
       sprintf_s(keyRate, sizeof(keyRate), "Rate%d", k);
 
-      memset_0(buffer, 0, 0x32uLL);
-      sprintf_s(buffer, 0x32uLL, "GoldBox_Item_Out_List_%d", j);
+      memset_0(buffer, 0, 50);
+      sprintf_s(buffer, 50, "GoldBox_Item_Out_List_%d", j);
       GetPrivateProfileStringA(
         buffer,
         keyItem,
         "NULL",
         pIni->m_golden_box_item_list[j][k].m_szLimcode,
-        0x40u,
+        64,
         "./initialize/GoldenBox_Item.ini");
       if (!strcmp_0(pIni->m_golden_box_item_list[j][k].m_szLimcode, "NULL"))
       {
@@ -528,7 +528,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       }
 
       ret = GetPrivateProfileIntA(buffer, keyNum, 0, "./initialize/GoldenBox_Item.ini");
-      if (ret > 0xEA60)
+      if (ret > 60000)
       {
         pIni->m_bUse_event = 0;
         return false;
@@ -536,7 +536,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       pIni->m_golden_box_item_list[j][k].m_wLimcount = static_cast<unsigned __int16>(ret);
 
       ret = GetPrivateProfileIntA(buffer, keyRate, 0, "./initialize/GoldenBox_Item.ini");
-      if (ret >= 0x2710)
+      if (ret >= 10000)
       {
         pIni->m_bUse_event = 0;
         return false;
@@ -561,7 +561,7 @@ void CGoldenBoxItemMgr::Check_Loaded_Event_Status()
   _time32(timeValue);
   if (timeValue[0] > m_golden_box_event.m_ini.m_EventTime[1])
   {
-    Set_Event_Status(3u);
+    Set_Event_Status(3);
     return;
   }
 
@@ -570,7 +570,7 @@ void CGoldenBoxItemMgr::Check_Loaded_Event_Status()
   {
     if (timeValue[0] < m_golden_box_event.m_ini.m_EventTime[0])
     {
-      Set_Event_Status(1u);
+      Set_Event_Status(1);
       m_golden_box_event.m_event_log.Write(
         "[golden_box_item_event Loaded] [EventState : %d] [EventTime : %d/%d/%d %d:%d  ~ %d/%d/%d %d:%d ]",
         m_golden_box_event.m_event_status,
@@ -591,11 +591,11 @@ void CGoldenBoxItemMgr::Check_Loaded_Event_Status()
   const int remain = m_golden_box_event.m_ini.m_EventTime[1] - timeValue[0];
   if (remain <= 0)
   {
-    Set_Event_Status(3u);
+    Set_Event_Status(3);
     return;
   }
 
-  Set_Event_Status(2u);
+  Set_Event_Status(2);
 }
 
 bool CGoldenBoxItemMgr::SetGoldBoxItemIndex()
@@ -732,7 +732,7 @@ char *CGoldenBoxItemMgr::BoxItemOpen(unsigned __int8 byIndex)
 
   RateCheck(byIndex);
   const unsigned __int64 count = m_golden_box_item.m_bygolden_item_num[byIndex];
-  m_pBoxItemOpen = static_cast<_BoxItemOpen_output *>(operator new[](saturated_mul(count, 0x10uLL)));
+  m_pBoxItemOpen = static_cast<_BoxItemOpen_output *>(operator new[](saturated_mul(count, 16)));
   for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
   {
     m_pBoxItemOpen[j].m_dwProb = m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate;
@@ -746,7 +746,7 @@ char *CGoldenBoxItemMgr::BoxItemOpen(unsigned __int8 byIndex)
     {
       return nullptr;
     }
-    if (strlen_0(itemCode) < 2 || !strncmp(itemCode, "-", 1u) || !strncmp(itemCode, "-1", 2u))
+    if (strlen_0(itemCode) < 2 || !strncmp(itemCode, "-", 1) || !strncmp(itemCode, "-1", 2))
     {
       return nullptr;
     }
@@ -856,7 +856,7 @@ void CGoldenBoxItemMgr::Set_FromINIToStruct(_golden_box_item_ini *pIni)
 
     for (int k = 0; k < m_golden_box_item.m_bygolden_item_num[j]; ++k)
     {
-      m_golden_box_item.m_golden_box_item_info[j][k].m_byTableCode = 0xFF;
+      m_golden_box_item.m_golden_box_item_info[j][k].m_byTableCode = static_cast<unsigned __int8>(-1);
       m_golden_box_item.m_golden_box_item_info[j][k].m_dwIndex = 255;
       m_golden_box_item.m_golden_box_item_info[j][k].m_wNum = pIni->m_golden_box_item_list[j][k].m_wLimcount;
       m_golden_box_item.m_golden_box_item_info[j][k].m_wRate = pIni->m_golden_box_item_list[j][k].m_wRate;
@@ -986,7 +986,7 @@ char *CGoldenBoxItemMgr::GetStarterBoxCode(unsigned __int16 wIndex)
 bool CGoldenBoxItemMgr::StarterBox_InsertToInven(CPlayer *pOne, char *szItemCode)
 {
   const unsigned __int8 itemTableCode = GetItemTableCode(szItemCode);
-  if (itemTableCode == 0xFF)
+  if (itemTableCode == static_cast<unsigned __int8>(-1))
   {
     return false;
   }
@@ -1031,10 +1031,10 @@ char CGoldenBoxItemMgr::_insert_to_inven(
     return 0;
   }
 
-  pOne->SendMsg_RewardAddItem(addedItem, 0xAu);
+  pOne->SendMsg_RewardAddItem(addedItem, 10);
   char *charName = pOne->m_Param.GetCharNameA();
   const unsigned int charSerial = pOne->m_Param.GetCharSerial();
-  pOne->SendMsg_Notify_Get_Golden_Box(2u, charSerial, charName, addedItem, 0);
+  pOne->SendMsg_Notify_Get_Golden_Box(2, charSerial, charName, addedItem, 0);
   return 1;
 }
 
@@ -1131,7 +1131,7 @@ void CGoldenBoxItemMgr::SendMsg_RaceChat(CPlayer *pOne, char *pwszChatData)
       continue;
     }
 
-    const bool isAllowedUserDgr = receiver->m_byUserDgr >= 2u;
+    const bool isAllowedUserDgr = receiver->m_byUserDgr >= 2;
     const bool isSameRace = receiver->m_Param.GetRaceCode() == pOne->m_Param.GetRaceCode();
     if (isAllowedUserDgr || isSameRace)
     {

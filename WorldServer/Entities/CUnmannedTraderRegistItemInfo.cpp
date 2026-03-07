@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CLogFile.h"
@@ -55,7 +55,7 @@ void CUnmannedTraderRegistItemInfo::Clear()
   this->m_wItemIndex = 255;
   this->m_byStorageIndex = static_cast<unsigned char>(-1);
   this->m_dwD = static_cast<unsigned long long>(-1);
-  this->m_dwU = 0x7FFFFFF;
+  this->m_dwU = 134217727;
 }
 
 bool CUnmannedTraderRegistItemInfo::Set(
@@ -147,7 +147,7 @@ void CUnmannedTraderRegistItemInfo::RegistItem(
   m_dwETSerialNumber = dwETSerialNumber;
   m_dwPrice = dwPrice;
   m_bySellTurm = bySellTurm;
-  m_dwBuyerSerial = 0xFFFFFFFFu;
+  m_dwBuyerSerial = -1;
   m_dwTax = 0;
   m_tResultTime = 0;
   m_wszBuyerName[0] = '\0';
@@ -189,8 +189,8 @@ void CUnmannedTraderRegistItemInfo::SellComplete(
   m_dwBuyerSerial = dwBuyerSerial;
   m_dwTax = dwTax;
   m_tResultTime = tResultTime;
-  strcpy_s(m_wszBuyerName, 0x11u, wszBuyerName);
-  strcpy_s(m_szBuyerAccount, 0xDu, szBuyerAccount);
+  strcpy_s(m_wszBuyerName, 17, wszBuyerName);
+  strcpy_s(m_szBuyerAccount, 13, szBuyerAccount);
   m_kState.Set(3u);
 }
 
@@ -265,7 +265,7 @@ unsigned __int8 CUnmannedTraderRegistItemInfo::SellWaitItem(
     seller->AddDalant(static_cast<int>(realSellDalant), true);
 
     char buyerName[17]{};
-    W2M(m_wszBuyerName, buyerName, 0x11u);
+    W2M(m_wszBuyerName, buyerName, 17);
     CPlayer::s_MgrItemHistory.auto_trade_sell(
       buyerName,
       m_dwBuyerSerial,

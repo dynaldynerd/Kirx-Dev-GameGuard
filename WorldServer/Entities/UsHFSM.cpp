@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -208,7 +208,7 @@ void UsStateTBL::Alloc(unsigned __int8 byHFSMSize, unsigned __int8 byStateSize, 
   for (unsigned int j = 0; j < m_byStateSize; ++j)
   {
     const unsigned __int64 messageSize = m_byMessageSize;
-    _TBLData *table = static_cast<_TBLData *>(operator new[](saturated_mul(messageSize, 0x10uLL)));
+    _TBLData *table = static_cast<_TBLData *>(operator new[](saturated_mul(messageSize, 16)));
     for (unsigned int k = 0; k < m_byMessageSize; ++k)
     {
       table[k].Init();
@@ -219,7 +219,7 @@ void UsStateTBL::Alloc(unsigned __int8 byHFSMSize, unsigned __int8 byStateSize, 
   m_bAlloc = 1;
 
   const unsigned __int64 hfsmSize = m_byHFSMSize;
-  m_pNodeInfo = static_cast<_HFSM_Node_Info *>(operator new[](saturated_mul(hfsmSize, 0x10uLL)));
+  m_pNodeInfo = static_cast<_HFSM_Node_Info *>(operator new[](saturated_mul(hfsmSize, 16)));
   for (unsigned int j = 0; j < m_byHFSMSize; ++j)
   {
     m_pNodeInfo[j].Init();
@@ -385,7 +385,7 @@ void Us_HFSM::CleanUp()
 int Us_HFSM::SetMyData(UsStateTBL *pStateTBL, void *pObject)
 {
   Init();
-  if (!pStateTBL || !pStateTBL->m_bAlloc || pStateTBL->GetHSFMSize() > 0xAu)
+  if (!pStateTBL || !pStateTBL->m_bAlloc || pStateTBL->GetHSFMSize() > 10)
   {
     return 0;
   }
@@ -429,7 +429,7 @@ Us_FSM_Node *Us_HFSM::GetNode(unsigned int dwIndex)
   {
     return nullptr;
   }
-  if (dwIndex >= 0xA)
+  if (dwIndex >= 10)
   {
     return nullptr;
   }
@@ -467,7 +467,7 @@ unsigned int Us_HFSM::GetIndex(Us_FSM_Node *pNode)
       }
     }
   }
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 int Us_HFSM::Link(Us_FSM_Node *pParent, Us_FSM_Node *pChild)

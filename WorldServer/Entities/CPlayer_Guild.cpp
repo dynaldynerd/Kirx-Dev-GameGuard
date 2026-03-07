@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -324,10 +324,10 @@ void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
       const unsigned int estConsumeDalant =
         static_cast<unsigned int>(g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant());
 
-      guildMaster->SendMsg_GuildEstablishFail(0xFFu);
+      guildMaster->SendMsg_GuildEstablishFail(255);
       guildMaster->AddDalant(estConsumeDalant, 0);
       strcpy_0(guildNameWide, query->in_w_guildName);
-      W2M(guildNameWide, guildNameAnsi, 0x80u);
+      W2M(guildNameWide, guildNameAnsi, 128);
       CPlayer::s_MgrItemHistory.guild_est_money_rollback(
         guildMaster->m_ObjID.m_wIndex,
         guildNameAnsi,
@@ -445,7 +445,7 @@ void CPlayer::Guild_Join_Accept_Complete(_DB_QRY_SYN_DATA *pData)
     applicant->m_wRegionIndex);
 
   char accepterNameAnsi[144]{};
-  W2M(acceptor->wszName, accepterNameAnsi, 0x80u);
+  W2M(acceptor->wszName, accepterNameAnsi, 128);
   CGuild::s_MgrHistory.join_member(
     applicant->m_Param.GetCharNameA(),
     applicant->m_dwObjSerial,
@@ -479,7 +479,7 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
   {
     if (player)
     {
-      player->SendMsg_GuildSelfLeaveResult(0xFFu);
+      player->SendMsg_GuildSelfLeaveResult(255);
     }
     return;
   }
@@ -497,7 +497,7 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
             player->m_ObjID.m_wIndex,
             player->m_pUserDB->m_dwSerial))
       {
-        player->SendMsg_GuildSelfLeaveResult(0xFFu);
+        player->SendMsg_GuildSelfLeaveResult(255);
         return;
       }
     }
@@ -535,9 +535,9 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
     disjointQuery.in_guildserial = guild->m_dwSerial;
     disjointQuery.tmp_guildindex = guild->m_nIndex;
     g_Main.PushDQSData(
-      0xFFFFFFFF,
+      -1,
       0LL,
-      0x16u,
+      22,
       reinterpret_cast<char *>(&disjointQuery),
       static_cast<int>(disjointQuery.size()));
   }
@@ -718,11 +718,11 @@ void CPlayer::Guild_Pop_Money_Complete(_DB_QRY_SYN_DATA *pData)
 
   if (query->dwSubDalant)
   {
-    g_Main.Push_ChargeItem(query->in_poperserial, 0xFFFFFFFF, query->dwSubDalant, 0xFFFFFFFu, 1u);
+    g_Main.Push_ChargeItem(query->in_poperserial, -1, query->dwSubDalant, 268435455, 1u);
   }
   if (query->dwSubGold)
   {
-    g_Main.Push_ChargeItem(query->in_poperserial, 0xFFFFFFFF, query->dwSubGold, 0xFFFFFFFu, 2u);
+    g_Main.Push_ChargeItem(query->in_poperserial, -1, query->dwSubGold, 268435455, 2u);
   }
 
   g_Main.m_logSystemError.Write(
@@ -829,8 +829,8 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
   unsigned __int8 memberGrades[8] = {};
   char memberNames[136] = {};
 
-  std::memset(memberIndices, 0xFF, sizeof(memberIndices));
-  std::memset(memberSerials, 0xFF, sizeof(memberSerials));
+  std::memset(memberIndices, 255, sizeof(memberIndices));
+  std::memset(memberSerials, 255, sizeof(memberSerials));
 
   CPartyPlayer *party = this->m_pPartyMgr;
   CPartyPlayer **partyMembers = party ? party->GetPtrPartyMember() : nullptr;
@@ -1018,10 +1018,10 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
   }
 
   _qry_case_insertguild_local query{};
-  query.in_guildindex = 0xFFFFFFFFu;
-  query.out_guildserial = 0xFFFFFFFFu;
-  query.tmp_Esterindex = 0xFFFFFFFFu;
-  query.tmp_Esterserial = 0xFFFFFFFFu;
+  query.in_guildindex = -1;
+  query.out_guildserial = -1;
+  query.tmp_Esterindex = -1;
+  query.tmp_Esterserial = -1;
   query.in_guildindex = static_cast<unsigned int>(selectedGuildIndex);
   query.tmp_Esterindex = this->m_id.wIndex;
   query.tmp_Esterserial = this->m_id.dwSerial;
@@ -1036,9 +1036,9 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
   std::memcpy(query.tmp_w_membername, memberNames, sizeof(query.tmp_w_membername));
 
   if (!g_Main.PushDQSData(
-        0xFFFFFFFFu,
+        -1,
         nullptr,
-        0x0Fu,
+        15,
         reinterpret_cast<char *>(&query),
         static_cast<int>(sizeof(query))))
   {
@@ -1228,7 +1228,7 @@ void CPlayer::pc_GuildJoinAcceptRequest(unsigned int dwApplierSerial, bool bAcce
       query.in_Grade = 0;
       query.in_MemberNum = static_cast<int>(guild->GetMemberNum()) + 1;
 
-      if (g_Main.PushDQSData(0xFFFFFFFFu, &this->m_id, 0x10u, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
+      if (g_Main.PushDQSData(-1, &this->m_id, 16, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
       {
         applierInfo->pPlayer->m_Param.m_bGuildLock = true;
         ++guild->m_nTempMemberNum;
@@ -1265,7 +1265,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
   {
     result = 103;
   }
-  else if (dwPushDalant > 0xB2D05E00u || dwPushGold > 0xB2D05E00u)
+  else if (dwPushDalant > 3000000000 || dwPushGold > 3000000000)
   {
     result = 101;
   }
@@ -1297,7 +1297,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
     query.in_date[3] = GetCurrentMin();
     strcpy_0(query.in_w_pushername, this->m_Param.GetCharNameW());
 
-    if (g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 0x13u, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
+    if (g_Main.PushDQSData(-1, nullptr, 19, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
     {
       guild->m_bIOWait = true;
       this->SubDalant(dwPushDalant);
@@ -1395,9 +1395,9 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   query.in_date[3] = static_cast<unsigned __int8>(GetCurrentMin());
   strcpy_0(query.in_w_popername, "GuildRoom Rent");
   g_Main.PushDQSData(
-    0xFFFFFFFFu,
+    -1,
     nullptr,
-    0x14u,
+    20,
     reinterpret_cast<char *>(&query),
     static_cast<int>(query.size()));
 

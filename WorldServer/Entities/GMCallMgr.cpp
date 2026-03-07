@@ -264,7 +264,7 @@ char GMCallMgr::SendResponseGMList(CPlayer *pOne, int nCurrPageIndex)
     pOne->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&response),
-    0xE2u);
+    226u);
   return 1;
 }
 

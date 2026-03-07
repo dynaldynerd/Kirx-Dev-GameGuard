@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCheckSumBaseConverter.h"
 
@@ -24,11 +24,11 @@ const long long CCheckSumBaseConverter::ms_i64Keys[8][10] = {
 
 unsigned int CCheckSumBaseConverter::ProcCode(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue)
 {
-  return ms_dwKeys[byIndex][dwSerial % 0x0A] ^ dwValue;
+  return ms_dwKeys[byIndex][dwSerial % 10] ^ dwValue;
 }
 
 long double CCheckSumBaseConverter::ProcCode(unsigned __int8 byIndex, unsigned int dwSerial, long double dValue)
 {
-  const unsigned int keyValue = static_cast<unsigned int>(ms_i64Keys[byIndex][dwSerial % 0x0A]);
+  const unsigned int keyValue = static_cast<unsigned int>(ms_i64Keys[byIndex][dwSerial % 10]);
   return static_cast<long double>(keyValue ^ static_cast<unsigned int>(static_cast<int>(dValue)));
 }

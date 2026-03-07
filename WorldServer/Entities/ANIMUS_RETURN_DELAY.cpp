@@ -6,7 +6,7 @@
 #include "GlobalObjects.h"
 
 _ANIMUS_RETURN_DELAY::_ANIMUS_RETURN_DELAY()
-  : _DELAY_PROCESS(0x9E4u, 0x1388u)
+  : _DELAY_PROCESS(2532u, 5000u)
 {
 }
 

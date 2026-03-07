@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMapOperation.h"
 
@@ -45,9 +45,9 @@ CMapOperation::CMapOperation()
   m_Map = nullptr;
   m_nLoopStartPoint = 0;
 
-  m_tmrObjTerm.BeginTimer(0x32u);
-  m_tmrRecover.BeginTimer(0x7D0u);
-  m_tmrSystem.BeginTimer(0x3E8u);
+  m_tmrObjTerm.BeginTimer(50);
+  m_tmrRecover.BeginTimer(2000);
+  m_tmrSystem.BeginTimer(1000);
 
   m_nRegionNum = 0;
   m_SettlementMapData[0][0] = nullptr;

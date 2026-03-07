@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CGuildRoomInfo.h"
 
@@ -142,7 +142,7 @@ char CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, 
   }
 
   RoomCharInfo value{};
-  m_vecRoomMember.assign(0x64u, value);
+  m_vecRoomMember.assign(100, value);
   if (m_vecRoomMember.size() != 100)
   {
     return 0;
@@ -169,7 +169,7 @@ char CGuildRoomInfo::SetRoom(int iGuildInx, unsigned int dwGuildSerial)
   }
 
   RoomCharInfo value{};
-  m_vecRoomMember.assign(0x64u, value);
+  m_vecRoomMember.assign(100, value);
   if (m_vecRoomMember.size() != 100)
   {
     return 0;
@@ -224,7 +224,7 @@ void CGuildRoomInfo::SendDQS_RoomInsert()
   query.dwGuildSerial = m_dwGuildSerial;
   query.byRoomType = m_byRoomType;
   query.byRace = m_byRace;
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x47u, reinterpret_cast<char *>(&query), sizeof(query));
+  g_Main.PushDQSData(-1, nullptr, 71, reinterpret_cast<char *>(&query), sizeof(query));
 }
 
 void CGuildRoomInfo::SendDQS_RoomUpdate()
@@ -233,7 +233,7 @@ void CGuildRoomInfo::SendDQS_RoomUpdate()
   query.dwGuildSerial = m_dwGuildSerial;
   query.byRoomType = m_byRoomType;
   query.byRace = m_byRace;
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x48u, reinterpret_cast<char *>(&query), sizeof(query));
+  g_Main.PushDQSData(-1, nullptr, 72, reinterpret_cast<char *>(&query), sizeof(query));
 }
 
 void CGuildRoomInfo::SendMsg_RoomTimeOver()
@@ -241,7 +241,7 @@ void CGuildRoomInfo::SendMsg_RoomTimeOver()
   CGuild *guild = &g_Guild[m_iGuildIdx];
   if (guild && guild->m_dwSerial == m_dwGuildSerial)
   {
-    guild->SendMsg_GuildRoomRented(0x64u);
+    guild->SendMsg_GuildRoomRented(100);
   }
 }
 
@@ -351,7 +351,7 @@ char CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberI
   {
     player->OutOfMap(CGuildRoomInfo::sm_neutal_map[m_byRace], 0, 3u, newPos);
     player->SendMsg_GuildRoomOutResult(
-      0xAu,
+      10,
       CGuildRoomInfo::sm_neutal_map[m_byRace]->m_pMapSet->m_dwIndex,
       0,
       newPos);

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "SecondCandidateCrystallizer.h"
 #include "PatriarchElectProcessor.h"
@@ -24,7 +24,7 @@ bool SecondCandidateCrystallizer::Initialize()
 
   ElectProcessor::Initialize();
   Doit(_eReg2ndCandidate, nullptr, nullptr);
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, false);
+  g_Main.PushDQSData(-1, nullptr, 120, nullptr, false);
   return true;
 }
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CExchangeEvent.h"
 
@@ -80,7 +80,7 @@ bool CExchangeEvent::Initialzie()
     }
   }
 
-  m_tmDataFileCheckTime.BeginTimer(0x2710u);
+  m_tmDataFileCheckTime.BeginTimer(10000);
   return true;
 }
 
@@ -226,14 +226,14 @@ void CExchangeEvent::GiveEventItem(CPlayer *pOne)
 {
   if (pOne && pOne->m_bOper)
   {
-    if (pOne->m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+    if (pOne->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
     {
       pOne->SendMsg_BuddhaEventMsg(1u);
       return;
     }
 
     EventItemInfo *itemInfo = GetEventItemInfo(0);
-    if (itemInfo && itemInfo->byTableCode != 0xFF)
+    if (itemInfo && itemInfo->byTableCode != 255)
     {
       _STORAGE_LIST::_db_con *lootItem = MakeLoot(itemInfo->byTableCode, itemInfo->dwIndex);
       if (lootItem)
@@ -279,28 +279,28 @@ void CExchangeEvent::ReadBuddhaEventInfo()
     "GiveItem",
     "NULL",
     m_ModifyItemCode[0],
-    0x40u,
+    64,
     ".\\Initialize\\WorldSystem.ini");
   GetPrivateProfileStringA(
     "Buddha Event",
     "ExchangeItem",
     "NULL",
     m_ModifyItemCode[1],
-    0x40u,
+    64,
     ".\\Initialize\\WorldSystem.ini");
   GetPrivateProfileStringA(
     "Buddha Event",
     "DeleteItem1",
     "NULL",
     m_ModifyItemCode[2],
-    0x40u,
+    64,
     ".\\Initialize\\WorldSystem.ini");
   GetPrivateProfileStringA(
     "Buddha Event",
     "DeleteItem2",
     "NULL",
     m_ModifyItemCode[3],
-    0x40u,
+    64,
     ".\\Initialize\\WorldSystem.ini");
 
   m_bModifyEnable = strcmp_0(enableStr, "TRUE") == 0;

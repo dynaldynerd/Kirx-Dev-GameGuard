@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPostSystemManager.h"
 
@@ -157,7 +157,7 @@ void CPostSystemManager::Loop()
         ++query.dwCount;
       }
 
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Du, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+      g_Main.PushDQSData(-1, nullptr, 77, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
     }
   }
 
@@ -185,7 +185,7 @@ void CPostSystemManager::Loop()
       }
 
       m_nPostProcCountPerDay += query.dwCount;
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x81u, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+      g_Main.PushDQSData(-1, nullptr, 129, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
     }
   }
 
@@ -235,7 +235,7 @@ char CPostSystemManager::InsertDefaultPSRecord()
   const int emptyCount = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord();
   if (emptyCount >= 0)
   {
-    if (emptyCount >= 5000 || g_Main.m_pWorldDB->Insert_PSDefaultRecord(0x1388u))
+    if (emptyCount >= 5000 || g_Main.m_pWorldDB->Insert_PSDefaultRecord(5000))
     {
       return 1;
     }
@@ -256,7 +256,7 @@ char CPostSystemManager::InsertDefaultPSRecord()
 char CPostSystemManager::PostRegistryLoad()
 {
   CPostData temp[500]{};
-  const unsigned __int8 result = g_Main.m_pWorldDB->Select_PostRegistryData(0x1F4u, temp);
+  const unsigned __int8 result = g_Main.m_pWorldDB->Select_PostRegistryData(500, temp);
   if (result)
   {
     if (result == 2)
@@ -382,7 +382,7 @@ unsigned __int8 CPostSystemManager::PostSend(_qry_case_post_send *pData)
         entry.dwUpt,
         entry.dwGold,
         entry.byErr,
-        0xFFu,
+        255,
         number,
         true,
         entry.lnUID);
@@ -423,18 +423,18 @@ unsigned __int8 CPostSystemManager::PostReceiverCheck(_qry_case_post_serial_chec
         {
           if (entry.bySenderDgr >= 2u)
           {
-            invalid = accSerial[0] < 0x77359400;
+            invalid = accSerial[0] < 2000000000u;
           }
           else
           {
-            invalid = accSerial[0] >= 0x77359400;
+            invalid = accSerial[0] >= 2000000000u;
           }
         }
         if (invalid)
         {
           entry.byErr = 8;
         }
-        else if (status[0] == 99)
+        else if (status[0] == 'c')
         {
           entry.byErr = 18;
         }
@@ -476,7 +476,7 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   }
 
   const unsigned __int64 totalGold = static_cast<unsigned __int64>(dwGold) + 5u;
-  if (totalGold > 0x7A120)
+  if (totalGold > 500000)
   {
     return 4;
   }
@@ -491,7 +491,7 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   {
     return 3;
   }
-  if (pItemInfo->wItemSerial == 0xFFFF)
+  if (pItemInfo->wItemSerial == 65535)
   {
     return 0;
   }
@@ -649,7 +649,7 @@ char CPostSystemManager::PostSendRequest(
 
     _INVENKEY key;
     unsigned __int64 dwDur = 0;
-    unsigned int dwUpt = 0xFFFFFFF;
+    unsigned int dwUpt = 268435455;
     unsigned __int64 lnUID = 0;
     key.SetRelease();
     if (hasItem)
@@ -735,7 +735,7 @@ void CPostSystemManager::CompleteSend(_qry_case_post_send *pData)
         CPostData *post = player->m_Param.m_ReturnPostStorage.AddReturnPost(
           entry.byErr,
           entry.dwPSSerial,
-          0x64u,
+          100,
           postData->m_wszRecvName,
           postData->m_wszTitle,
           postData->m_wszContent,
@@ -880,6 +880,6 @@ void CPostSystemManager::CompletePostReceiverCheck(_qry_case_post_serial_check *
   if (qry.dwCount)
   {
     int size = static_cast<int>(qry.size());
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x4Eu, reinterpret_cast<char *>(&qry), size);
+    g_Main.PushDQSData(-1, nullptr, 78, reinterpret_cast<char *>(&qry), size);
   }
 }

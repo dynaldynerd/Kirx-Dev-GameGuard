@@ -32,7 +32,7 @@ bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode
     return false;
   }
 
-  if (std::strlen(fileName) > 0x80)
+  if (std::strlen(fileName) > 128)
   {
     return false;
   }

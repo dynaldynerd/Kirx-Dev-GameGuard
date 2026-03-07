@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNuclearBombMgr.h"
 
@@ -102,7 +102,7 @@ bool CNuclearBombMgr::MissileInit()
 {
   for (int j = 0; j < 3; ++j)
   {
-    _object_id objectId(0, 0xCu, static_cast<unsigned __int16>(j));
+    _object_id objectId(0, 12, static_cast<unsigned __int16>(j));
     for (int k = 0; k < 3; ++k)
     {
       if (!m_Missile[j][k].Init(&objectId))
@@ -121,7 +121,7 @@ bool CNuclearBombMgr::LoadIni()
     "NeedItem",
     "-1",
     m_szStickCode,
-    0x40u,
+    64,
     ".\\Initialize\\NuclearBomb.ini");
 
   if (!strncmp_0(m_szStickCode, "-1", 2))
@@ -383,7 +383,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
             clientIndex,
             type,
             reinterpret_cast<char *>(&msg),
-            0x11u);
+            17);
         }
       }
     }
@@ -393,7 +393,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
         clientIndex,
         type,
         reinterpret_cast<char *>(&msg),
-        0x11u);
+        17);
     }
   }
 
@@ -428,7 +428,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
   }
 
   SendMsg_Result(n, 2u);
-  master->SendMsg_GestureInform(0xEu);
+  master->SendMsg_GestureInform(14);
   return 1;
 }
 

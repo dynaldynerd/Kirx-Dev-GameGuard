@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -26,7 +26,7 @@ void CMonsterHierarchy::Init()
   m_byChildMonSetNum = 0;
   for (unsigned int j = 0; j < 3; ++j)
   {
-    for (unsigned int k = 0; k < 0xA; ++k)
+    for (unsigned int k = 0; k < 10; ++k)
     {
       m_pChildMon[j][k] = nullptr;
     }
@@ -73,7 +73,7 @@ CMonster *CMonsterHierarchy::GetChild(int nKind, unsigned int nIndex)
     return nullptr;
   }
 
-  unsigned int childCount = GetChildCount(static_cast<unsigned int>(nKind)) <= 0xA
+  unsigned int childCount = GetChildCount(static_cast<unsigned int>(nKind)) <= 10
                               ? static_cast<unsigned int>(GetChildCount(static_cast<unsigned int>(nKind)))
                               : 10u;
   if (nIndex >= childCount)
@@ -90,7 +90,7 @@ __int64 CMonsterHierarchy::SearchChildMon(CMonster *pMon)
   {
     for (unsigned int kind = 0; kind < 3; ++kind)
     {
-      for (unsigned int index = 0; index < 0xA; ++index)
+      for (unsigned int index = 0; index < 10; ++index)
       {
         if (m_pChildMon[kind][index] == pMon)
         {
@@ -112,7 +112,7 @@ __int64 CMonsterHierarchy::PushChildMon(unsigned int nKind, CMonster *pMon)
 
   if (nKind <= 2)
   {
-    for (unsigned int index = 0; index < 0xA; ++index)
+    for (unsigned int index = 0; index < 10; ++index)
     {
       if (!m_pChildMon[nKind][index])
       {
@@ -133,7 +133,7 @@ __int64 CMonsterHierarchy::PopChildMon(CMonster *pMon)
   {
     for (unsigned int kind = 0; kind < 3; ++kind)
     {
-      for (unsigned int index = 0; index < 0xA; ++index)
+      for (unsigned int index = 0; index < 10; ++index)
       {
         if (m_pChildMon[kind][index] == pMon)
         {
@@ -153,7 +153,7 @@ void CMonsterHierarchy::PopChildMonAll()
 {
   for (unsigned int kind = 0; kind < 3; ++kind)
   {
-    for (unsigned int index = 0; index < 0xA; ++index)
+    for (unsigned int index = 0; index < 10; ++index)
     {
       if (m_pChildMon[kind][index])
       {
@@ -265,11 +265,11 @@ void CMonsterHierarchy::OnChildMonsterDestroy()
 
   for (unsigned int j = 0; j < 3; ++j)
   {
-    for (unsigned int k = 0; k < 0xA; ++k)
+    for (unsigned int k = 0; k < 10; ++k)
     {
       if (m_pChildMon[j][k])
       {
-        m_pChildMon[j][k]->Command_ChildMonDestroy(0x1388u);
+        m_pChildMon[j][k]->Command_ChildMonDestroy(5000);
       }
     }
   }

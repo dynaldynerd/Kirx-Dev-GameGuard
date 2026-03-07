@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMapExtend.h"
 
@@ -36,7 +36,7 @@ CMapExtend::CMapExtend()
     m_ptEndScreen(0, 0),
     m_ptMoveScreen(0, 0),
     m_sizeExtend(0, 0),
-    m_hPen(CreatePen(0, 1, 0x646464u)),
+    m_hPen(CreatePen(0, 1, 6579300)),
     m_pSF(nullptr),
     m_Rate{},
     m_bSetArea(0),
@@ -54,7 +54,7 @@ CMapExtend::CMapExtend(CSurface **pSF)
     m_ptEndScreen(0, 0),
     m_ptMoveScreen(0, 0),
     m_sizeExtend(0, 0),
-    m_hPen(CreatePen(0, 1, 0x646464u)),
+    m_hPen(CreatePen(0, 1, 6579300)),
     m_pSF(pSF),
     m_Rate{},
     m_bSetArea(0),

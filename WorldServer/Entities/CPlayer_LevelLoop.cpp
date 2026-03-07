@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -277,7 +277,7 @@ void CPlayer::SendMsg_NotifyGetExpInfo(long double dOldExp, long double dAlterEx
     memset_0(&msg, 0, sizeof(msg));
     msg.wMsgSize = _snprintf(
       msg.wszChatData,
-      0xFFu,
+      255,
       "%u Old Exp     : %f\n   Alter Exp   : %f\n   Cur Exp     : %f\n",
       ++s_ExpNotifyIndex,
       static_cast<double>(dOldExp),
@@ -1047,7 +1047,7 @@ void CPlayer::_CheckForcePullUnit()
   {
     const unsigned int currentTime = timeGetTime();
     const unsigned int elapsedTime = currentTime - m_dwLastTimeCheckUnitViewOver;
-    if (elapsedTime > 0x7D0)
+    if (elapsedTime > 2000)
     {
       m_dwLastTimeCheckUnitViewOver = currentTime;
       if (m_pCurMap == m_pParkingUnit->m_pCurMap
@@ -1060,7 +1060,7 @@ void CPlayer::_CheckForcePullUnit()
       {
         m_dwUnitViewOverTime = currentTime;
       }
-      else if (currentTime - m_dwUnitViewOverTime > 0xEA60)
+      else if (currentTime - m_dwUnitViewOverTime > 60000)
       {
         ForcePullUnit(false);
       }
@@ -1072,7 +1072,7 @@ void CPlayer::UpdatedMasteryWriteHistory()
 {
   const unsigned int loopTime = GetLoopTime();
   const unsigned int elapsed = loopTime - m_dwUMWHLastTime;
-  if (elapsed > 0xDBBA0)
+  if (elapsed > 900000)
   {
     m_dwUMWHLastTime = loopTime;
     s_MgrLvHistory.update_mastery(
@@ -1308,10 +1308,10 @@ void CPlayer::Loop()
     m_bDownCheckEquipEffect = false;
   }
 
-  if (m_byNextRecallReturn != 0xFF)
+  if (m_byNextRecallReturn != 255)
   {
     _AnimusReturn(m_byNextRecallReturn);
-    m_byNextRecallReturn = 0xFF;
+    m_byNextRecallReturn = 255;
   }
 
   if (m_dwSelfDestructionTime && m_dwSelfDestructionTime < currentTime)
@@ -1368,7 +1368,7 @@ void CPlayer::Loop()
 
   if (m_bMove
       && GetLoopTime() > m_dwLastSetPointTime
-      && GetLoopTime() - m_dwLastSetPointTime > 0xBB8)
+      && GetLoopTime() - m_dwLastSetPointTime > 3000)
   {
     const bool isOutExtraStopPos = IsOutExtraStopPos(m_fCurPos);
     SendMsg_Stop(isOutExtraStopPos);
@@ -1391,10 +1391,10 @@ void CPlayer::Loop()
     }
   }
 
-  if (m_Param.GetCurItemSerial() > 0xEA60u)
+  if (m_Param.GetCurItemSerial() > 60000)
   {
     s_MgrItemHistory.item_serial_full(m_ObjID.m_wIndex, m_szItemHistoryFileName);
-    m_pUserDB->ForceCloseCommand(7u, 0xFFFFFFFFu, true, "Item Serial Count Over");
+    m_pUserDB->ForceCloseCommand(7u, -1, true, "Item Serial Count Over");
   }
 
   if (m_tmrGroupTargeting.CountingTimer())
@@ -1404,15 +1404,15 @@ void CPlayer::Loop()
     _check_race_target_object();
   }
 
-  if (m_byPatriarchAppointPropose != 0xFF
-      && currentTime - m_dwPatriarchAppointTime >= 0x493E0)
+  if (m_byPatriarchAppointPropose != 255
+      && currentTime - m_dwPatriarchAppointTime >= 300000)
   {
     char appointData[20]{};
     appointData[0] = 1;
     PatriarchElectProcessor::Instance()->Doit(_eRespAppoint, this, appointData);
   }
 
-  if (currentTime - m_dwLastCheckRegionTime > 0x1388)
+  if (currentTime - m_dwLastCheckRegionTime > 5000)
   {
     if (CGameObject::GetCurSecNum() != static_cast<unsigned int>(-1))
     {
@@ -1479,7 +1479,7 @@ void CPlayer::Loop()
   {
     if (m_pDHChannel)
     {
-      unsigned __int8 raceSerial = 0xFF;
+      unsigned __int8 raceSerial = 255;
       const int raceCode = m_Param.GetRaceCode();
       if (raceCode == 0)
       {
@@ -1731,7 +1731,7 @@ __int64 CPlayer::SetDamage(
     if (nDam == -1)
     {
       const int attackPart = pDst ? static_cast<int>(pDst->GetAttackRandomPart()) : static_cast<int>(GetAttackRandomPart());
-      pc_PlayAttack_Gen(pDst, static_cast<unsigned __int8>(attackPart), 0xFFFFu, 0xFFFFu, true);
+      pc_PlayAttack_Gen(pDst, static_cast<unsigned __int8>(attackPart), 65535, 65535, true);
     }
     else if (nDam == -2 && m_nLastBeatenPart == 5 && pDst && !IsInTown() && IsPassMasteryLimitLvDiff(nDstLv))
     {
@@ -1869,7 +1869,7 @@ __int64 CPlayer::SetDamage(
 
                 const unsigned int alterCum = static_cast<unsigned int>(share);
                 const int statIndex = _STAT_DB_BASE::GetStatIndex(1u, 0u);
-                if (member->m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 0xEE6B2800)
+                if (member->m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 4000000000)
                 {
                   continue;
                 }
@@ -1957,10 +1957,10 @@ char CPlayer::IsOverOneDay()
   const unsigned int curDay = static_cast<unsigned int>(atoi(dayString));
   (void)atoi(hourMinString);
 
-  const unsigned int lastYearMonth = lastConnTime / 0xF4240;
-  const unsigned int lastYear = lastYearMonth / 0x64;
-  const unsigned int lastMonth = lastYearMonth % 0x64;
-  const unsigned int lastDay = lastConnTime % 0xF4240 / 0x2710;
+  const unsigned int lastYearMonth = lastConnTime / 1000000;
+  const unsigned int lastYear = lastYearMonth / 100;
+  const unsigned int lastMonth = lastYearMonth % 100;
+  const unsigned int lastDay = lastConnTime % 1000000 / 10000;
 
   if (curYear == static_cast<int>(lastYear))
   {
@@ -2166,7 +2166,7 @@ void CPlayer::Emb_AlterStat_F(
 
   const int addCum = static_cast<int>(fAlter + 0.5f);
   const int statIndex = _STAT_DB_BASE::GetStatIndex(byMasteryClass, byIndex);
-  if (m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 0xEE6B2800)
+  if (m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 4000000000)
   {
     return;
   }
@@ -2304,7 +2304,7 @@ if (!dwAlter || (!byReason && this->m_bInGuildBattle))
   }
 
   const int statIndex = _STAT_DB_BASE::GetStatIndex(byMasteryClass, byIndex);
-  if (this->m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 0xEE6B2800)
+  if (this->m_pmMst.m_BaseCum.m_dwDamWpCnt[statIndex] > 4000000000)
   {
     return;
   }

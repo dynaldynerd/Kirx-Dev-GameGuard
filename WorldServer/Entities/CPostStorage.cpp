@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPostStorage.h"
 
@@ -35,7 +35,7 @@ CPostData *CPostStorage::GetPostDataFromInx(unsigned int nIndex)
   {
     return nullptr;
   }
-  if (m_PostData[nIndex].m_byState == 0xFF)
+  if (m_PostData[nIndex].m_byState == 255)
   {
     return nullptr;
   }
@@ -56,12 +56,12 @@ unsigned int CPostStorage::AddPostTitleData(
 {
   if (nIndex >= 50)
   {
-    return 0xFFFFFFFFu;
+    return -1;
   }
 
   for (int j = 0; j < 50; ++j)
   {
-    if (m_PostData[j].GetState() == 0xFF)
+    if (m_PostData[j].GetState() == 255)
     {
       m_PostData[j].SetPostTitleData(
         nIndex,
@@ -80,7 +80,7 @@ unsigned int CPostStorage::AddPostTitleData(
     }
   }
 
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 char CPostStorage::AddPostTitleDataByStorageIndex(
@@ -139,12 +139,12 @@ unsigned int CPostStorage::AddNewPost(
 {
   if (m_nSize >= 50)
   {
-    return 0xFFFFFFFFu;
+    return -1;
   }
 
   for (int j = 0; j < 50; ++j)
   {
-    if (m_PostData[j].GetState() == 0xFF)
+    if (m_PostData[j].GetState() == 255)
     {
       m_PostData[j].SetState(byState);
       m_PostData[j].SetPostData(
@@ -167,7 +167,7 @@ unsigned int CPostStorage::AddNewPost(
     }
   }
 
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 CPostData *CPostStorage::GetPostDataFromSerial(unsigned int dwPostSerial)
@@ -206,5 +206,5 @@ unsigned int CPostStorage::SetPostContent(unsigned int dwSerial, char *wszConten
       return static_cast<unsigned int>(j);
     }
   }
-  return 0xFFFFFFFFu;
+  return -1;
 }

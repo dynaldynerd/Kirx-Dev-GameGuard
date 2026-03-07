@@ -112,14 +112,14 @@ bool CAsyncLogger::Regist(
 
   m_mapLogInfo.insert(std::make_pair(static_cast<int>(eType), logInfo));
   CreateDirectoryA(directory, nullptr);
-  clear_file(directory, 0xFu);
+  clear_file(directory, 15u);
   return true;
 }
 
 int CAsyncLogger::Init()
 {
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog\\AsyncLogger", nullptr);
-  clear_file("..\\ZoneServerLog\\SystemLog\\AsyncLogger", 0xFu);
+  clear_file("..\\ZoneServerLog\\SystemLog\\AsyncLogger", 15u);
 
   char dest[128]{};
   sprintf_s(dest, "%s\\Loading.log", "..\\ZoneServerLog\\SystemLog\\AsyncLogger");
@@ -131,7 +131,7 @@ int CAsyncLogger::Init()
         "..\\ZoneServerLog\\SystemLog\\AsyncLogger",
         "System",
         true,
-        0xFFFFFFFFu))
+        static_cast<unsigned int>(-1)))
   {
     m_logLoading.Write(
       "CAsyncLogger::Init() : Regist( ALT_ASYNC_LOGGER_SYSTEM_LOG, ASYNC_LOGGER_UPPER_SYSTEM_LOG_PATH, System ) Fail!");
@@ -156,21 +156,21 @@ int CAsyncLogger::Init()
     return -4;
   }
 
-  if (!m_kBufferList[0].Init(0x9E4u, 0xC8u, &m_logLoading))
+  if (!m_kBufferList[0].Init(2532u, 200u, &m_logLoading))
   {
     return -5;
   }
-  if (!m_kBufferList[1].Init(0xFEu, 0x400u, &m_logLoading))
+  if (!m_kBufferList[1].Init(254u, 1024u, &m_logLoading))
   {
     return -6;
   }
-  if (!m_kBufferList[2].Init(0xFEu, 0x2800u, &m_logLoading))
+  if (!m_kBufferList[2].Init(254u, 10240u, &m_logLoading))
   {
     return -7;
   }
 
   const unsigned int dwMaxBufNum = 3040;
-  m_klistEmpty.SetList(0xBE0u);
+  m_klistEmpty.SetList(dwMaxBufNum);
   for (unsigned int index = 0; index < dwMaxBufNum; ++index)
   {
     m_klistEmpty.PushNode_Back(index);
@@ -178,7 +178,7 @@ int CAsyncLogger::Init()
   m_klistProc.SetList(dwMaxBufNum);
   m_vecPushList.assign(dwMaxBufNum, static_cast<unsigned long>(-1));
 
-  m_kCheckUpdateLogFileNameDelay.BeginTimer(0x2710u);
+  m_kCheckUpdateLogFileNameDelay.BeginTimer(10000u);
   m_bProcThread = true;
 
   if (_beginthread(CAsyncLogger::ProcThread, 0, this) == -1L)
@@ -298,7 +298,7 @@ bool CAsyncLogger::Log(int iType, const char *szLog)
   const unsigned int count = it->second->GetCount();
   const int headerLen = sprintf_s(
     buffer,
-    0x2C00u,
+    sizeof(buffer),
     "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : %s",
     count,
     systemTime.wYear,
@@ -336,7 +336,7 @@ bool CAsyncLogger::LogFromArg(int iType, char *fmt, va_list arg_ptr)
   const unsigned int count = it->second->GetCount();
   const int headerLen = sprintf_s(
     buffer,
-    0x2C00u,
+    sizeof(buffer),
     "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
     count,
     systemTime.wYear,
@@ -380,7 +380,7 @@ bool CAsyncLogger::FormatLog(int iType, const char *fmt, ...)
   const unsigned int count = it->second->GetCount();
   const int headerLen = sprintf_s(
     buffer,
-    0x2C00u,
+    sizeof(buffer),
     "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
     count,
     systemTime.wYear,
@@ -425,7 +425,7 @@ void CAsyncLogger::SystemLog(const char *fmt, ...)
   const unsigned int count = m_pSystemLogInfo->GetCount();
   const int headerLen = sprintf_s(
     buffer,
-    0x2C00u,
+    sizeof(buffer),
     "%u\t%04d-%02d-%02d %02d:%02d:%02d.%03d : ",
     count,
     systemTime.wYear,

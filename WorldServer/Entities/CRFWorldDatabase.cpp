@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "GlobalObjects.h"
 
@@ -88,7 +88,7 @@ unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderSearchGroupTotalRowCount(
   char buffer[1028]{};
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "select count(si.serial) from [dbo].[tbl_utsingleiteminfo] as si join [dbo].[tbl_utsellinfo] as s on s.type = %u and "
     "s.race = %u and s.serial = si.serial join [dbo].[tbl_utresultinfo] as r on r.type = %u and s.serial = r.serial where"
     " r.state in (1, 2) and si.class1=%u and si.class2=%u and si.class3=%u",
@@ -179,7 +179,7 @@ unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderSearchPageInfo(
   char orderBuffer[152]{};
   if (szSortQuery)
   {
-    sprintf_s(orderBuffer, 0x80u, "order by %s", szSortQuery);
+    sprintf_s(orderBuffer, 128, "order by %s", szSortQuery);
   }
 
   static const char kEmptySortOuter[] = "";
@@ -190,7 +190,7 @@ unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderSearchPageInfo(
   char query[2080]{};
   sprintf_s(
     query,
-    0x800u,
+    2048,
     "select top %u si.[serial], si.[k], si.[d], si.[u], s.[price], s.[owner], b.[Name], s.[regdate], s.[sellturm], si.[s]"
     ", si.[t] from [dbo].[tbl_utsingleiteminfo] as si join [dbo].[tbl_utsellinfo] as s on s.type=%u and s.race = %u and s"
     ".serial=si.serial join [dbo].[tbl_utresultinfo] as r on r.type=%u and s.serial=r.serial left join [dbo].[tbl_base] a"
@@ -840,7 +840,7 @@ unsigned __int8 CRFWorldDatabase::Select_PlayerTimeLimitInfo(
 
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "Select Fatigue, TLStatus, LastLogoutTime From [dbo].[tbl_TimeLimitInfo] Where AccountSerial = %d",
     dwAccountSerial);
   if (m_bSaveDBLog)
@@ -926,7 +926,7 @@ unsigned __int8 CRFWorldDatabase::Select_PlayerTimeLimitInfo(
 
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "Select Fatigue, TLStatus From [dbo].[tbl_TimeLimitInfo] Where AccountSerial = %d",
     dwAccountSerial);
   if (m_bSaveDBLog)
@@ -1730,7 +1730,7 @@ bool CRFWorldDatabase::Insert_GuildBatlleResultLogBattelInfo(
   char buffer[1040]{};
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "{ CALL pInsert_guildbattleresultlog('%s', '%s' , %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, %d, %d, %u, %d, '%s', %"
     "d, '%s', %u, %d, '%s') }",
     szStartTime,
@@ -2179,7 +2179,7 @@ unsigned __int8 CRFWorldDatabase::Select_PvpPointGuildRank(char *szDate, _pvppoi
 bool CRFWorldDatabase::Update_PvpPointGuildRankRecord(char *szDate, unsigned int dwSerial, unsigned __int16 wRank)
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 0x100u);
+  memset_0(buffer, 0, 256);
   sprintf(buffer, "update [dbo].[tbl_PvpPointGuildRank%s] set rank=%u where serial=%u", szDate, wRank, dwSerial);
   return ExecUpdateQuery(buffer, true);
 }
@@ -2191,7 +2191,7 @@ bool CRFWorldDatabase::Update_PvpPointGuildRankSumLv(
   unsigned __int8 byLimitGrade)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 0x400u);
+  memset_0(buffer, 0, 1024);
   sprintf(
     buffer,
     "update [dbo].[tbl_PvpPointGuildRank%s] set sumlv = nsl.newsumlv from ( select top %u serial, ( select sum(lv) from t"
@@ -2350,7 +2350,7 @@ unsigned __int8 CRFWorldDatabase::Select_WeeklyGuildRankOwnerGuild(
 bool CRFWorldDatabase::Create_PvpPointGuildRankTable(char *szDate)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 0x400u);
+  memset_0(buffer, 0, 1024);
   sprintf(
     buffer,
     "create table [dbo].[tbl_PvpPointGuildRank%s] ( [serial] [int] not null, [rank] [int] not null, [id] [varchar](17) no"
@@ -2366,7 +2366,7 @@ bool CRFWorldDatabase::Create_PvpPointGuildRankTable(char *szDate)
 bool CRFWorldDatabase::Insert_PvpPointGuildRankData(char *szDate)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 0x400u);
+  memset_0(buffer, 0, 1024);
   sprintf(
     buffer,
     "insert into [dbo].[tbl_PvpPointGuildRank%s] select g.serial, 0 as rank, g.id, g.race, g.grade, s.killpvppoint, s.gui"
@@ -2379,7 +2379,7 @@ bool CRFWorldDatabase::Insert_PvpPointGuildRankData(char *szDate)
 bool CRFWorldDatabase::Update_ClearWeeklyPvpPointSum()
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 0x100u);
+  memset_0(buffer, 0, 256);
   sprintf(buffer, "update [dbo].[tbl_WeeklyGuildPVPPointSum] set killpvppoint = 0, guildbattlepvppoint = 0");
   return ExecUpdateQuery(buffer, false);
 }
@@ -2387,7 +2387,7 @@ bool CRFWorldDatabase::Update_ClearWeeklyPvpPointSum()
 bool CRFWorldDatabase::Update_IncreaseWeeklyGuildGuildBattlePvpPointSum(unsigned int dwSerial, long double dPvpPoint)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 0x400u);
+  memset_0(buffer, 0, 1024);
   sprintf(buffer, "{ CALL pUpdate_WeeklyGuildGuildBattlePVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
   return ExecUpdateQuery(buffer, true);
 }
@@ -2784,7 +2784,7 @@ __int64 CRFWorldDatabase::Updatet_Account_Vote_Available(unsigned int dwSerial, 
   memset(buffer, 0, 256);
   sprintf_s(
     buffer,
-    0x100u,
+    256,
     "declare @out_amount int exec pUpdatet_Account_Vote_Available  %d, @vote = @out_amount output select @out_amount",
     dwSerial);
 
@@ -2878,7 +2878,7 @@ bool CRFWorldDatabase::Update_Player_Vote_Info(
   memset(buffer, 0, 1024);
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "{ CALL pUpdate_Supplement_Ex_20080609( %d, %d, %d, %d, %d) }",
     dwSerial,
     dwAccPlayTime,
@@ -2894,7 +2894,7 @@ bool CRFWorldDatabase::UpdateVotedReset_Supplement(unsigned int dwSerial)
   memset(buffer, 0, 1024);
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "Update [dbo].[tbl_Supplement] Set IsVoted = 0, VoteEnable = 1 From [dbo].[tbl_Supplement] as s join [dbo].[tbl_base]"
     " as b on s.serial = b.serial Where b.DCK = 0 AND b.accountserial = (select accountserial from tbl_base where serial =%d)",
     dwSerial);
@@ -2929,7 +2929,7 @@ bool CRFWorldDatabase::UpdateVotedReset_General(unsigned int dwSerial)
 
   sprintf_s(
     dateBuffer,
-    0x1Eu,
+    30,
     "%d-%d-%d %d:%d:%d",
     systemTime.wYear,
     systemTime.wMonth,
@@ -2939,7 +2939,7 @@ bool CRFWorldDatabase::UpdateVotedReset_General(unsigned int dwSerial)
     systemTime.wSecond);
   sprintf_s(
     strQuery,
-    0x400u,
+    1024,
     "Update tbl_general Set tmRaceBossVote = '%s' Where serial = %d",
     dateBuffer,
     dwSerial);
@@ -2955,7 +2955,7 @@ bool CRFWorldDatabase::UpdateServerResetToken(unsigned int dwToken, unsigned __i
 {
   char buffer[1040]{};
   memset(buffer, 0, 1024);
-  sprintf_s(buffer, 0x400u, "{ CALL pUpdate_Patriarch_Elect_ResetTime( %d, %d, %d ) }", dwToken, wProcType, dwESerial);
+  sprintf_s(buffer, 1024, "{ CALL pUpdate_Patriarch_Elect_ResetTime( %d, %d, %d ) }", dwToken, wProcType, dwESerial);
   return ExecUpdateQuery(buffer, true);
 }
 
@@ -2964,7 +2964,7 @@ __int64 CRFWorldDatabase::Select_Player_Last_LogoutTime(unsigned int dwAccSerial
   char buffer[1048]{};
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "Select LastLogoutTime From [dbo].[tbl_TimeLimitInfo] Where AccountSerial = %d",
     dwAccSerial);
   if (m_bSaveDBLog)
@@ -3042,7 +3042,7 @@ __int64 CRFWorldDatabase::Select_Player_Last_LogoutTime(unsigned int dwAccSerial
 bool CRFWorldDatabase::Insert_PlayerTimeLimitInfo(unsigned int dwAccountSerial)
 {
   char buffer[272]{};
-  sprintf_s(buffer, 0x100u, "Insert into [dbo].[tbl_TimeLimitInfo] ( AccountSerial) values (%d)", dwAccountSerial);
+  sprintf_s(buffer, 256, "Insert into [dbo].[tbl_TimeLimitInfo] ( AccountSerial) values (%d)", dwAccountSerial);
   return ExecUpdateQuery(buffer, true);
 }
 
@@ -3053,7 +3053,7 @@ bool CRFWorldDatabase::Update_Player_TimeLimit_Info(
 {
   char buffer[1040]{};
   memset(buffer, 0, 1024);
-  sprintf_s(buffer, 0x400u, "{ CALL pUpdate_TimeLimit_Info( %d, %d, %d) }", dwAccSerial, dwFatigue, wStatus);
+  sprintf_s(buffer, 1024, "{ CALL pUpdate_TimeLimit_Info( %d, %d, %d) }", dwAccSerial, dwFatigue, wStatus);
   return ExecUpdateQuery(buffer, true);
 }
 
@@ -4779,7 +4779,7 @@ bool CRFWorldDatabase::Update_PostRegistry(
   char buffer[1040]{};
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "update tbl_PostRegistry set dck=0,sendserial=%d,sendname='%s',recvname='%s',title='%s',content='%s',k=%d,d=%I64d,u=%"
     "d,gold=%d,sendrace=%d,userdgr=%d,uid=%I64d where serial=%d",
     dwSenderSerial,
@@ -4801,7 +4801,7 @@ bool CRFWorldDatabase::Update_PostRegistry(
 bool CRFWorldDatabase::Update_PostRegistryDisable(unsigned int dwIndex)
 {
   char buffer[80]{};
-  sprintf_s(buffer, 0x40u, "update tbl_PostRegistry set dck=1 where serial=%d", dwIndex);
+  sprintf_s(buffer, 64, "update tbl_PostRegistry set dck=1 where serial=%d", dwIndex);
   return ExecUpdateQuery(buffer, true);
 }
 
@@ -4812,7 +4812,7 @@ char CRFWorldDatabase::Select_PostRecvSerialFromName(
   unsigned int *pdwRace)
 {
   char buffer[132]{};
-  sprintf_s(buffer, 0x80u, "select Serial,AccountSerial,Race from tbl_base where Name='%s'", wszRecvName);
+  sprintf_s(buffer, 128, "select Serial,AccountSerial,Race from tbl_base where Name='%s'", wszRecvName);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -4890,7 +4890,7 @@ __int64 CRFWorldDatabase::Select_PostRecvStorageCheck(unsigned int dwSerial)
   char buffer[144]{};
   sprintf_s(
     buffer,
-    0x80u,
+    128,
     "select count(serial) from tbl_PostStorage where owner=%d and dck=0 and poststate<%d",
     dwSerial,
     100);
@@ -5277,7 +5277,7 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 0xAu, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5298,7 +5298,7 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 0xBu, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5320,7 +5320,7 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
         }
 
         int classType = 0;
-        ret = SQLGetData(m_hStmtSelect, 0xCu, SQL_C_SLONG, &classType, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 12, SQL_C_SLONG, &classType, 0LL, &ind);
         p[j].eClassType = static_cast<CandidateMgr::_candidate_info::ClassType>(classType);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
@@ -5343,7 +5343,7 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
         }
 
         int status = 0;
-        ret = SQLGetData(m_hStmtSelect, 0xDu, SQL_C_SLONG, &status, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 13, SQL_C_SLONG, &status, 0LL, &ind);
         p[j].eStatus = static_cast<CandidateMgr::_candidate_info::Status>(status);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
@@ -5451,15 +5451,15 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchGroup(unsigned __int8 byRace, 
         ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_CHAR, p[j].wszName, 17LL, &ind);
         ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_ULONG, &p[j].dwGuildSerial, 0LL, &ind);
         ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_CHAR, p[j].wszGuildName, 17LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 0xAu, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 0xBu, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
 
         int classType = 0;
-        ret = SQLGetData(m_hStmtSelect, 0xCu, SQL_C_SLONG, &classType, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 12, SQL_C_SLONG, &classType, 0LL, &ind);
         p[j].eClassType = static_cast<CandidateMgr::_candidate_info::ClassType>(classType);
 
         int status = 0;
-        ret = SQLGetData(m_hStmtSelect, 0xDu, SQL_C_SLONG, &status, 0LL, &ind);
+        ret = SQLGetData(m_hStmtSelect, 13, SQL_C_SLONG, &status, 0LL, &ind);
         p[j].eStatus = static_cast<CandidateMgr::_candidate_info::Status>(status);
 
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
@@ -5949,7 +5949,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordSerial(unsig
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 0xFFFFFFFBu;
+          return 4294967291;
         }
 
         if (m_hStmtSelect)
@@ -5966,13 +5966,13 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordSerial(unsig
       unsigned int result = 0;
       if (ret == SQL_NO_DATA)
       {
-        result = 0xFFFFFFFDu;
+        result = 4294967293;
       }
       else
       {
         ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
         ErrorAction(ret, m_hStmtSelect);
-        result = 0xFFFFFFFCu;
+        result = 4294967292;
       }
       if (m_hStmtSelect)
       {
@@ -5983,7 +5983,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordSerial(unsig
 
     if (ret == SQL_NO_DATA)
     {
-      return 0xFFFFFFFEu;
+      return -2;
     }
 
     ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
@@ -5992,7 +5992,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordSerial(unsig
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 char CRFWorldDatabase::Select_UnmannedTraderSingleItemBottomSerial(unsigned int *dwSerial)
@@ -6235,7 +6235,7 @@ bool CRFWorldDatabase::Update_UnmannedTraderSingleItemInfo(
   char buffer[1040]{};
   sprintf_s(
     buffer,
-    0x400u,
+    1024,
     "{ CALL pUpdate_utsingleiteminfo_20070601( %d, %u, %d, %I64d, %d, %u, %u, %u, %u, %u, %I64d, %d ) }",
     dwRegSerial,
     kInfo->byInveninx,
@@ -6335,7 +6335,7 @@ char CRFWorldDatabase::Select_UnmannedTraderBuySingleItemInfo(
   _unmannedtrader_buy_item_info *kData)
 {
   char buffer[260]{};
-  sprintf_s(buffer, 0x100u, "{ CALL pSelect_utbuysingleiteminfo_20061115( %u, %u ) }", byType, dwRegistSerial);
+  sprintf_s(buffer, 256, "{ CALL pSelect_utbuysingleiteminfo_20061115( %u, %u ) }", byType, dwRegistSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -6584,7 +6584,7 @@ unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderRegister(
   unsigned int *pdwRegister)
 {
   char buffer[1040]{};
-  sprintf_s(buffer, 0x400u, "{ CALL pSelect_utsellinfo_owner( %u, %u ) }", byType, dwRegistSerial);
+  sprintf_s(buffer, 1024, "{ CALL pSelect_utsellinfo_owner( %u, %u ) }", byType, dwRegistSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);

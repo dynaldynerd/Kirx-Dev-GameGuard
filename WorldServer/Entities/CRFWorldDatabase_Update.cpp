@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRFWorldDatabase.h"
 #include "DqsDbStructs.h"
@@ -460,7 +460,7 @@ char CRFWorldDatabase::Update_CharacterData(unsigned int dwSerial, _worlddb_upda
 bool CRFWorldDatabase::Update_IncreaseWeeklyGuildKillPvpPointSum(unsigned int dwSerial, long double dPvpPoint)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 0x400u);
+  memset_0(buffer, 0, 1024);
   sprintf(buffer, "{ CALL pUpdate_WeeklyGuildKillPVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
   return ExecUpdateQuery( buffer, true);
 }
@@ -486,7 +486,7 @@ bool CRFWorldDatabase::Update_CristalBattleCharInfo(
   diePoint[byHSKTime] = wDiePoint;
 
   char buffer[280]{};
-  memset_0(buffer, 0, 0x100u);
+  memset_0(buffer, 0, 256);
   sprintf(
     buffer,
     "Update tbl_general set Pvp_0=%d, Pk_0=%d, Pvp_1=%d, Pk_1=%d, Pvp_2=%d, Pk_2=%d, CharacterGrade=%d, Die_0=%d, Die_1=%"
@@ -516,7 +516,7 @@ bool CRFWorldDatabase::Insert_Supplement(unsigned int dwSerial)
 {
   char buffer[80]{};
   memset(buffer, 0, 64);
-  sprintf_s(buffer, 0x40u, "{ CALL pInsert_supplement( %d ) }", dwSerial);
+  sprintf_s(buffer, 64, "{ CALL pInsert_supplement( %d ) }", dwSerial);
   return ExecUpdateQuery( buffer, true);
 }
 
@@ -530,7 +530,7 @@ char CRFWorldDatabase::Select_PostStorageRecordCheck()
   unsigned int targetValue[11]{};
   char buffer[144]{};
   memset(buffer, 0, 128);
-  sprintf_s(buffer, 0x80u, "select top 1 Serial from tbl_PostStorage where dck=1");
+  sprintf_s(buffer, 128, "select top 1 Serial from tbl_PostStorage where dck=1");
   if (m_bSaveDBLog)
   {
     Log( buffer);
@@ -596,7 +596,7 @@ bool CRFWorldDatabase::Insert_PostStorageRecord()
 {
   char buffer[80]{};
   memset(buffer, 0, 64);
-  sprintf_s(buffer, 0x40u, "{ CALL pInsert_PostStorageRecord }");
+  sprintf_s(buffer, 64, "{ CALL pInsert_PostStorageRecord }");
   return ExecUpdateQuery( buffer, true);
 }
 
@@ -605,7 +605,7 @@ char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
   unsigned int targetValue[11]{};
   char buffer[272]{};
   memset(buffer, 0, 256);
-  sprintf_s(buffer, 0x100u, "select top 1 Serial from tbl_PostStorage where dck=1");
+  sprintf_s(buffer, 256, "select top 1 Serial from tbl_PostStorage where dck=1");
   if (m_bSaveDBLog)
   {
     Log( buffer);
@@ -698,7 +698,7 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
   {
     sprintf_s(
       buffer,
-      0x400u,
+      1024,
       "select count(Serial) from tbl_PostStorage where owner=%d and dck=0 and poststate<%d",
       dwOwner,
       100);
@@ -827,7 +827,7 @@ bool CRFWorldDatabase::Insert_Start_NpcQuest_History(
   char buffer[272]{};
   sprintf_s(
     buffer,
-    0x100u,
+    256,
     "{ CALL pInsert_Start_Npc_Quest_History_Type1( %d, '%s', %d, '%s', %I64d) }",
     dwSerial,
     szQuestCode,
@@ -847,7 +847,7 @@ bool CRFWorldDatabase::Update_Start_NpcQuest_History(
   char buffer[272]{};
   sprintf_s(
     buffer,
-    0x100u,
+    256,
     "{ CALL pUpdate_Start_Npc_Quest_History_Type1( %d, '%s', %d, '%s', %I64d) }",
     dwSerial,
     szQuestCode,

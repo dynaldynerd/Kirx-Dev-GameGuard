@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -777,7 +777,7 @@ unsigned __int8 CPlayer::skill_process(
 
     if (skillField->m_nClass == 4)
     {
-      m_tmrAuraSkill.BeginTimer(0x1388u);
+      m_tmrAuraSkill.BeginTimer(5000);
       skill_process_for_aura(static_cast<int>(skillField->m_dwIndex));
     }
 
@@ -1278,7 +1278,7 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
     bulletParam = &m_pUsingUnit->m_BulletParam[1];
     const unsigned __int16 bulletLeft = bulletParam->wLeftNum;
     const unsigned __int16 bulletItemIndex = bulletParam->wBulletIndex;
-    if (!bulletLeft || bulletLeft == 0xFFFF)
+    if (!bulletLeft || bulletLeft == 65535)
     {
       byErrCode = 19;
     }
@@ -1650,7 +1650,7 @@ void CPlayer::pc_MakeTowerRequest(
   bool consumeOverlap[3]{};
   int needFp = 0;
 
-  if (m_byPosRaceTown != 0xFF)
+  if (m_byPosRaceTown != 255)
   {
     byErrCode = 16;
   }
@@ -1869,9 +1869,9 @@ void CPlayer::pc_BackTowerRequest(unsigned int dwTowerObjSerial)
       {
         hp = 0;
       }
-      else if (hp > 0xFFFF)
+      else if (hp > 65535)
       {
-        hp = 0xFFFF;
+        hp = 65535;
       }
       wLeftHp = static_cast<unsigned __int16>(hp);
       tower->Destroy(2u, false);
@@ -1904,7 +1904,7 @@ void CPlayer::pc_MakeTrapRequest(
   int classGrade[2] = {-1, -1};
   int needFp = 0;
 
-  if (m_byPosRaceTown != 0xFF)
+  if (m_byPosRaceTown != 255)
   {
     byErrCode = 16;
   }
@@ -2044,7 +2044,7 @@ void CPlayer::_TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial)
     return;
   }
 
-  if (wAddSerial == 0xFFFF)
+  if (wAddSerial == 65535)
   {
     _STORAGE_LIST::_db_con item;
     item.Init();
@@ -2064,7 +2064,7 @@ void CPlayer::_TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial)
       CreateItemBox(
         &item,
         this,
-        0xFFFFFFFF,
+        -1,
         false,
         nullptr,
         1u,
@@ -2110,7 +2110,7 @@ void CPlayer::_TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial)
       && targetItem->m_byTableCode == static_cast<unsigned __int8>(tableCode)
       && targetItem->m_wItemIndex == static_cast<unsigned __int16>(itemRecord->m_dwIndex))
   {
-    if (targetItem->m_dwDur + 1 <= 0x63)
+    if (targetItem->m_dwDur + 1 <= 99)
     {
       const bool isProtectItem = IsProtectItem(tableCode) != 0;
       (void)isProtectItem;
@@ -2816,7 +2816,7 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
       if ((rand() % 100) < blockChance)
       {
         m_nLastBeatenPart = 5;
-        return 0xFFFFFFFEu;
+        return -2;
       }
     }
 

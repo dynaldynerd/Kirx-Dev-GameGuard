@@ -20,9 +20,9 @@ char CMainThread::db_Update_Avator(
   _AVATOR_DATA *pOldData,
   bool bCheckLowHigh)
 {
-  static constexpr size_t kQuerySize = 0x10000;
-  static constexpr size_t kNpcQuestQuerySize = 0x20000;
-  static constexpr size_t kAmpInvenQuerySize = 0x10000;
+  static constexpr size_t kQuerySize = 65536;
+  static constexpr size_t kNpcQuestQuerySize = 131072;
+  static constexpr size_t kAmpInvenQuerySize = 65536;
 
   std::vector<char> queryBase(kQuerySize, 0);
   std::vector<char> queryGeneral(kQuerySize, 0);
@@ -208,7 +208,7 @@ char CMainThread::db_Update_Avator(
     }
   }
 
-  if (pNewData->m_byHSKTime <= 2u && pNewData->m_byCristalBattleDBInfo != 3)
+  if (pNewData->m_byHSKTime <= 2 && pNewData->m_byCristalBattleDBInfo != 3)
   {
     if (!m_pWorldDB->Update_CristalBattleCharInfo(dwSerial,
           pNewData->m_byHSKTime,
@@ -386,21 +386,21 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
   {
     for (int storageIndex = 0; storageIndex < newDeletePost->m_nCum; ++storageIndex)
     {
-      sprintf_s(buffer, 0x800u, "update tbl_PostStorage set dck=1 where ");
+      sprintf_s(buffer, 2048, "update tbl_PostStorage set dck=1 where ");
       if (newDeletePost->m_List[storageIndex].dwDelSerial)
       {
-        sprintf_s(source, 0x80u, "serial=%d", newDeletePost->m_List[storageIndex].dwDelSerial);
+        sprintf_s(source, 128, "serial=%d", newDeletePost->m_List[storageIndex].dwDelSerial);
       }
       else
       {
         sprintf_s(
           source,
-          0x80u,
+          128,
           "sindex=%d and owner=%d",
           newDeletePost->m_List[storageIndex].nStorageIndex,
           dwAvatorSerial);
       }
-      strcat_s(buffer, 0x800u, source);
+      strcat_s(buffer, 2048, source);
       m_pWorldDB->Update_Post(buffer);
     }
   }
@@ -449,64 +449,64 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
             bool changed = false;
             if (postEntry->dwPSSerial)
             {
-              sprintf_s(buffer, 0x800u, "update tbl_PostStorage set ");
+              sprintf_s(buffer, 2048, "update tbl_PostStorage set ");
               if (postEntry->byState != oldEntry->byState)
               {
-                sprintf_s(source, 0x80u, "poststate=%d,", postEntry->byState);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "poststate=%d,", postEntry->byState);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->nNumber != oldEntry->nNumber)
               {
-                sprintf_s(source, 0x80u, "postinx=%d,", postEntry->nNumber);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "postinx=%d,", postEntry->nNumber);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->nKey != oldEntry->nKey)
               {
-                sprintf_s(source, 0x80u, "k=%d,", postEntry->nKey);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "k=%d,", postEntry->nKey);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->dwDur != oldEntry->dwDur)
               {
-                sprintf_s(source, 0x80u, "d=%d,", static_cast<unsigned int>(postEntry->dwDur));
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "d=%d,", static_cast<unsigned int>(postEntry->dwDur));
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->dwUpt != oldEntry->dwUpt)
               {
-                sprintf_s(source, 0x80u, "u=%d,", postEntry->dwUpt);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "u=%d,", postEntry->dwUpt);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->lnUID != oldEntry->lnUID)
               {
-                sprintf_s(source, 0x80u, "uid=%I64d,", postEntry->lnUID);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "uid=%I64d,", postEntry->lnUID);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->dwGold != oldEntry->dwGold)
               {
-                sprintf_s(source, 0x80u, "gold=%d,", postEntry->dwGold);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "gold=%d,", postEntry->dwGold);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
               if (postEntry->bUpdateIndex)
               {
-                sprintf_s(source, 0x80u, "sindex=%d,", storageIndex);
-                strcat_s(buffer, 0x800u, source);
+                sprintf_s(source, 128, "sindex=%d,", storageIndex);
+                strcat_s(buffer, 2048, source);
                 changed = true;
               }
-              sprintf_s(source, 0x80u, "where serial=%d", postEntry->dwPSSerial);
+              sprintf_s(source, 128, "where serial=%d", postEntry->dwPSSerial);
               buffer[strlen_0(buffer) - 1] = 32;
-              strcat_s(buffer, 0x800u, source);
+              strcat_s(buffer, 2048, source);
             }
             else
             {
               sprintf_s(
                 buffer,
-                0x800u,
+                2048,
                 "update tbl_PostStorage set poststate=%d,postinx=%d,k=%d,d=%d,u=%d,gold=%d",
                 postEntry->byState,
                 postEntry->nNumber,
@@ -514,15 +514,15 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
                 static_cast<unsigned int>(postEntry->dwDur),
                 postEntry->dwUpt,
                 postEntry->dwGold);
-              sprintf_s(source, 0x80u, ",uid=%I64d", postEntry->lnUID);
-              strcat_s(buffer, 0x800u, source);
+              sprintf_s(source, 128, ",uid=%I64d", postEntry->lnUID);
+              strcat_s(buffer, 2048, source);
               sprintf_s(
                 source,
-                0x80u,
+                128,
                 " where dck=0 and sindex=%d and owner=%u",
                 storageIndex,
                 dwAvatorSerial);
-              strcat_s(buffer, 0x800u, source);
+              strcat_s(buffer, 2048, source);
               changed = true;
             }
             if (changed)
@@ -542,7 +542,7 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
     {
       sprintf_s(
         buffer,
-        0x800u,
+        2048,
         "update tbl_PostStorage set dck=1 where serial=%d",
         newReturnPost->m_RetSerials[storageIndex]);
       m_pWorldDB->Update_Post(buffer);
@@ -781,7 +781,7 @@ char CMainThread::_db_Update_General(
         if (pNewData->dbEquip.m_EmbellishList[index].wAmount
             != pOldData->dbEquip.m_EmbellishList[index].wAmount)
         {
-          if (pNewData->dbEquip.m_EmbellishList[index].wAmount == 0xFFFF)
+          if (pNewData->dbEquip.m_EmbellishList[index].wAmount == static_cast<unsigned __int16>(-1))
           {
             sprintf(source, "ED%d=-1,", index);
           }
@@ -834,7 +834,7 @@ char CMainThread::_db_Update_General(
           newET = pNewData->dbEquip.m_EmbellishList[index].dwT;
         }
 
-        if (pNewData->dbEquip.m_EmbellishList[index].wAmount == 0xFFFF)
+        if (pNewData->dbEquip.m_EmbellishList[index].wAmount == static_cast<unsigned __int16>(-1))
         {
           int dbKey = pNewData->dbEquip.m_EmbellishList[index].Key.CovDBKey();
           sprintf(
@@ -1099,50 +1099,50 @@ char CMainThread::_db_Update_Supplement(
 
   if (pOldData->dbSupplement.dPvpPointLeak != pNewData->dbSupplement.dPvpPointLeak)
   {
-    sprintf_s(buffer, 0x80u, "PvpPointLeak=%f,", static_cast<double>(pNewData->dbSupplement.dPvpPointLeak));
+    sprintf_s(buffer, 128, "PvpPointLeak=%f,", static_cast<double>(pNewData->dbSupplement.dPvpPointLeak));
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.bLastAttBuff != pNewData->dbSupplement.bLastAttBuff)
   {
     int lastAttBuff = pNewData->dbSupplement.bLastAttBuff;
-    sprintf_s(buffer, 0x80u, "LastAttBuff=%d,", lastAttBuff);
+    sprintf_s(buffer, 128, "LastAttBuff=%d,", lastAttBuff);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.dwBufPotionEndTime != pNewData->dbSupplement.dwBufPotionEndTime)
   {
-    sprintf_s(buffer, 0x80u, "BufEndTime = %u,", pNewData->dbSupplement.dwBufPotionEndTime);
+    sprintf_s(buffer, 128, "BufEndTime = %u,", pNewData->dbSupplement.dwBufPotionEndTime);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.dwRaceBuffClear != pNewData->dbSupplement.dwRaceBuffClear)
   {
-    sprintf_s(buffer, 0x80u, "RaceBuffClear = %u,", pNewData->dbSupplement.dwRaceBuffClear);
+    sprintf_s(buffer, 128, "RaceBuffClear = %u,", pNewData->dbSupplement.dwRaceBuffClear);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.dwAccumPlayTime != pNewData->dbSupplement.dwAccumPlayTime)
   {
-    sprintf_s(buffer, 0x80u, " AccumPlayTime = %d,", pNewData->dbSupplement.dwAccumPlayTime);
+    sprintf_s(buffer, 128, " AccumPlayTime = %d,", pNewData->dbSupplement.dwAccumPlayTime);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.dwLastResetDate != pNewData->dbSupplement.dwLastResetDate)
   {
-    sprintf_s(buffer, 0x80u, " ResetAccumPlayTime = %d,", pNewData->dbSupplement.dwLastResetDate);
+    sprintf_s(buffer, 128, " ResetAccumPlayTime = %d,", pNewData->dbSupplement.dwLastResetDate);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.byVoted != pNewData->dbSupplement.byVoted)
   {
-    sprintf_s(buffer, 0x80u, " IsVoted = %d,", pNewData->dbSupplement.byVoted);
+    sprintf_s(buffer, 128, " IsVoted = %d,", pNewData->dbSupplement.byVoted);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.VoteEnable != pNewData->dbSupplement.VoteEnable)
   {
-    sprintf_s(buffer, 0x80u, " VoteEnable = %d,", pNewData->dbSupplement.VoteEnable);
+    sprintf_s(buffer, 128, " VoteEnable = %d,", pNewData->dbSupplement.VoteEnable);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.wScanerCnt != pNewData->dbSupplement.wScanerCnt)
   {
     sprintf_s(
       buffer,
-      0x80u,
+      128,
       " ScanerCnt = %d%d,",
       pNewData->dbSupplement.dwScanerGetDate,
       pNewData->dbSupplement.wScanerCnt);
@@ -1152,7 +1152,7 @@ char CMainThread::_db_Update_Supplement(
   {
     if (pOldData->dbSupplement.dwActionPoint[index] != pNewData->dbSupplement.dwActionPoint[index])
     {
-      sprintf_s(buffer, 0x80u, " ActionPoint_%d = %d,", index, pNewData->dbSupplement.dwActionPoint[index]);
+      sprintf_s(buffer, 128, " ActionPoint_%d = %d,", index, pNewData->dbSupplement.dwActionPoint[index]);
       strcat_s(pSzQuery, nBufferSize, buffer);
     }
   }
@@ -1167,21 +1167,21 @@ char CMainThread::_db_Update_Supplement(
       if (newKey != oldKey)
       {
         int dbKey = pNewData->dbEquip.m_EmbellishList[embellishIndex].Key.CovDBKey();
-        sprintf_s(buffer, 0x80u, "EK%d=%d,", embellishIndex, dbKey);
+        sprintf_s(buffer, 128, "EK%d=%d,", embellishIndex, dbKey);
         strcat_s(pSzQuery, nBufferSize, buffer);
       }
       if (pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount
           != pOldData->dbEquip.m_EmbellishList[embellishIndex].wAmount)
       {
-        if (pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount == 0xFFFF)
+        if (pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount == static_cast<unsigned __int16>(-1))
         {
-          sprintf_s(buffer, 0x80u, "ED%d=-1,", embellishIndex);
+          sprintf_s(buffer, 128, "ED%d=-1,", embellishIndex);
         }
         else
         {
           sprintf_s(
             buffer,
-            0x80u,
+            128,
             "ED%d=%d,",
             embellishIndex,
             static_cast<__int16>(pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount));
@@ -1204,7 +1204,7 @@ char CMainThread::_db_Update_Supplement(
         }
         if (newET != oldET)
         {
-          sprintf_s(buffer, 0x80u, "ET%d=%d,", embellishIndex, newET);
+          sprintf_s(buffer, 128, "ET%d=%d,", embellishIndex, newET);
           strcat_s(pSzQuery, nBufferSize, buffer);
         }
       }
@@ -1213,7 +1213,7 @@ char CMainThread::_db_Update_Supplement(
       {
         sprintf_s(
           buffer,
-          0x80u,
+          128,
           "ES%d=%I64d,",
           embellishIndex,
           pNewData->dbEquip.m_EmbellishList[embellishIndex].lnUID);
@@ -1232,12 +1232,12 @@ char CMainThread::_db_Update_Supplement(
         newET = pNewData->dbEquip.m_EmbellishList[embellishIndex].dwT;
       }
 
-      if (pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount == 0xFFFF)
+      if (pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount == static_cast<unsigned __int16>(-1))
       {
         int dbKey = pNewData->dbEquip.m_EmbellishList[embellishIndex].Key.CovDBKey();
         sprintf_s(
           buffer,
-          0x80u,
+          128,
           "EK%d=%d,ED%d=-1,ET%d=%d,ES%d=%I64d,",
           embellishIndex,
           dbKey,
@@ -1253,7 +1253,7 @@ char CMainThread::_db_Update_Supplement(
         __int16 amount = static_cast<__int16>(pNewData->dbEquip.m_EmbellishList[embellishIndex].wAmount);
         sprintf_s(
           buffer,
-          0x80u,
+          128,
           "EK%d=%d,ED%d=%d,ET%d=%d,ES%d=%I64d,",
           embellishIndex,
           dbKey,
@@ -1270,7 +1270,7 @@ char CMainThread::_db_Update_Supplement(
   else if (pOldData->dbEquip.m_EmbellishList[embellishIndex].Key.IsFilled())
   {
     int dbKey = pNewData->dbEquip.m_EmbellishList[embellishIndex].Key.CovDBKey();
-    sprintf_s(buffer, 0x80u, "EK%d=%d,", embellishIndex, dbKey);
+    sprintf_s(buffer, 128, "EK%d=%d,", embellishIndex, dbKey);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
 
@@ -1281,7 +1281,7 @@ char CMainThread::_db_Update_Supplement(
   }
   else
   {
-    sprintf_s(buffer, 0x80u, "WHERE Serial = %d", dwSerial);
+    sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
     pSzQuery[strlen_0(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
@@ -1634,7 +1634,7 @@ char CMainThread::_db_Update_Start_NpcQuest_History(
       memcpy_0(timeParts, rawTime, sizeof(rawTime));
       sprintf_s(
         timeBuffer,
-        0x19u,
+        25,
         "%04d-%02d-%02d %02d:%02d:%02d.%d",
         timeParts[0],
         timeParts[1],
@@ -1651,7 +1651,7 @@ char CMainThread::_db_Update_Start_NpcQuest_History(
       {
         return 0;
       }
-      memset_0(timeBuffer, 0, 0x19u);
+      memset_0(timeBuffer, 0, 25);
       memset_0(timeParts, 0, sizeof(timeParts));
       ++count;
       ++listIndex;
@@ -2050,16 +2050,16 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
 
   if (pOldData->dbTimeLimitInfo.dwFatigue != pNewData->dbTimeLimitInfo.dwFatigue)
   {
-    sprintf_s(buffer, 0x80u, "Fatigue=%d,", pNewData->dbTimeLimitInfo.dwFatigue);
+    sprintf_s(buffer, 128, "Fatigue=%d,", pNewData->dbTimeLimitInfo.dwFatigue);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbTimeLimitInfo.byTLStatus != pNewData->dbTimeLimitInfo.byTLStatus)
   {
-    sprintf_s(buffer, 0x80u, "TLStatus = %u,", pNewData->dbTimeLimitInfo.byTLStatus);
+    sprintf_s(buffer, 128, "TLStatus = %u,", pNewData->dbTimeLimitInfo.byTLStatus);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   unsigned int localTime = GetKorLocalTime();
-  sprintf_s(buffer, 0x80u, "LastLogoutTime=%u,", localTime);
+  sprintf_s(buffer, 128, "LastLogoutTime=%u,", localTime);
   strcat_s(pSzQuery, nBufferSize, buffer);
 
   size_t queryLength = strlen_0(pSzQuery);
@@ -2069,7 +2069,7 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
   }
   else
   {
-    sprintf_s(buffer, 0x80u, "WHERE AccountSerial = %d", dwAccSerial);
+    sprintf_s(buffer, 128, "WHERE AccountSerial = %d", dwAccSerial);
     pSzQuery[strlen_0(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
@@ -2437,7 +2437,7 @@ char CMainThread::_db_Update_PotionDelay(
       {
         delay = pNewData->dbPotionNextUseTime.dwPotionNextUseTime[index] - now;
       }
-      sprintf_s(buffer, 0x80u, "PD%d=%u,", index, delay);
+      sprintf_s(buffer, 128, "PD%d=%u,", index, delay);
       strcat_s(pSzQuery, nBufferSize, buffer);
     }
   }
@@ -2449,7 +2449,7 @@ char CMainThread::_db_Update_PotionDelay(
   }
   else
   {
-    sprintf_s(buffer, 0x80u, "WHERE Serial = %d", dwSerial);
+    sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
     pSzQuery[strlen_0(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
@@ -2476,13 +2476,13 @@ char CMainThread::_db_Update_OreCutting(
     int oldKey = static_cast<int>(oldItem.Key.CovDBKey());
     if (newKey != oldKey)
     {
-      sprintf_s(buffer, 0x80u, "K%d=%d,", index, newKey);
+      sprintf_s(buffer, 128, "K%d=%d,", index, newKey);
       strcat_s(pSzQuery, nBufferSize, buffer);
     }
     unsigned int newDur = newItem.dwDur;
     if (newDur != oldItem.dwDur)
     {
-      sprintf_s(buffer, 0x80u, "D%d=%d,", index, newDur);
+      sprintf_s(buffer, 128, "D%d=%d,", index, newDur);
       strcat_s(pSzQuery, nBufferSize, buffer);
     }
   }
@@ -2494,7 +2494,7 @@ char CMainThread::_db_Update_OreCutting(
   }
   else
   {
-    sprintf_s(buffer, 0x80u, "WHERE Serial = %d", dwSerial);
+    sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
     pSzQuery[strlen_0(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
@@ -2528,7 +2528,7 @@ char CMainThread::_db_Update_PcBangFavor(
   }
   else
   {
-    sprintf_s(buffer, 0x80u, "WHERE Serial = %d", dwSerial);
+    sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
     pSzQuery[strlen_0(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }

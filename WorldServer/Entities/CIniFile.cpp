@@ -186,7 +186,7 @@ INI_Section *CIniFile::LoadSection(const char *strSection)
 INI_Key *CIniFile::LoadKey(const char *strSection, const char *strKey)
 {
   char returnedString[88]{};
-  GetPrivateProfileStringA(strSection, strKey, kIniInvalid, returnedString, 0x41u, m_strPath);
+  GetPrivateProfileStringA(strSection, strKey, kIniInvalid, returnedString, 65u, m_strPath);
   if (!strcmp_0(returnedString, kIniInvalid))
   {
     return nullptr;
@@ -410,4 +410,3 @@ INI_Key::INI_Key()
   m_strValue[0] = 0;
   m_pParentSection = nullptr;
 }
-

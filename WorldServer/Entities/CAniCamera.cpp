@@ -100,7 +100,7 @@ __int64 CAniCamera::GetCameraIndex(char *name)
 
   if (!mAniCameraNum)
   {
-    return 0xFFFFFFFFLL;
+    return -1;
   }
 
   unsigned int index = 0;
@@ -109,7 +109,7 @@ __int64 CAniCamera::GetCameraIndex(char *name)
     ++index;
     if (index >= mAniCameraNum)
     {
-      return 0xFFFFFFFFLL;
+      return -1;
     }
   }
 
@@ -152,7 +152,7 @@ __int64 CAniCamera::GetDummyID(char *name, int compareLoweredInput)
 
         if (++index >= mDummyNum)
         {
-          return 0xFFFFFFFFLL;
+          return -1;
         }
       }
       return index;
@@ -167,21 +167,21 @@ __int64 CAniCamera::GetDummyID(char *name, int compareLoweredInput)
       {
         if (++index >= dummyCount)
         {
-          return 0xFFFFFFFFLL;
+          return -1;
         }
       }
       return index;
     }
   }
 
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 void CAniCamera::GetDummyMatrixSub(float (*const matrix)[4], unsigned int index, double frameTime)
 {
   const unsigned int parentId =
     static_cast<unsigned int>(GetDummyID(mDummy[index].ParentName, 0));
-  if (parentId != 0xFFFFFFFFu)
+  if (parentId != static_cast<unsigned int>(-1))
   {
     GetDummyMatrixSub(matrix, parentId, static_cast<float>(frameTime));
   }
@@ -298,22 +298,22 @@ void CAniCamera::LoadAniCamera(char *fileName)
   }
 
   float version = 0.0f;
-  fread(&version, 4uLL, 1uLL, stream);
+  fread(&version, 4, 1, stream);
   if (version >= 1.2f)
   {
-    fread(&mAniCameraNum, 4uLL, 1uLL, stream);
+    fread(&mAniCameraNum, 4, 1, stream);
     if (mAniCameraNum)
     {
-      fread(&mStartFrame, 4uLL, 1uLL, stream);
-      fread(&mEndFrame, 4uLL, 1uLL, stream);
+      fread(&mStartFrame, 4, 1, stream);
+      fread(&mEndFrame, 4, 1, stream);
 
       AniCamera = static_cast<_ANI_CAMERA *>(Dmalloc(96 * mAniCameraNum));
       for (unsigned int cameraIndex = 0; cameraIndex < mAniCameraNum; ++cameraIndex)
       {
-        fread(&AniCamera[cameraIndex], 0x40uLL, 1uLL, stream);
-        fread(&AniCamera[cameraIndex].fov, 4uLL, 1uLL, stream);
-        fread(&AniCamera[cameraIndex].tdist, 4uLL, 1uLL, stream);
-        fread(&AniCamera[cameraIndex].h_num, 4uLL, 1uLL, stream);
+        fread(&AniCamera[cameraIndex], 64, 1, stream);
+        fread(&AniCamera[cameraIndex].fov, 4, 1, stream);
+        fread(&AniCamera[cameraIndex].tdist, 4, 1, stream);
+        fread(&AniCamera[cameraIndex].h_num, 4, 1, stream);
 
         if (version < 1.3f)
         {
@@ -321,7 +321,7 @@ void CAniCamera::LoadAniCamera(char *fileName)
         }
         else
         {
-          fread(&AniCamera[cameraIndex].ext_num, 4uLL, 1uLL, stream);
+          fread(&AniCamera[cameraIndex].ext_num, 4, 1, stream);
         }
 
         AniCamera[cameraIndex].obj = static_cast<_ANI_OBJECT *>(
@@ -334,31 +334,31 @@ void CAniCamera::LoadAniCamera(char *fileName)
         }
         else
         {
-          fread(AniCamera[cameraIndex].ext, 20LL * AniCamera[cameraIndex].ext_num, 1uLL, stream);
+          fread(AniCamera[cameraIndex].ext, 20 * AniCamera[cameraIndex].ext_num, 1, stream);
         }
 
         for (unsigned int nodeIndex = 0; nodeIndex < AniCamera[cameraIndex].h_num; ++nodeIndex)
         {
-          fread(AniCamera[cameraIndex].obj[nodeIndex].s_matrix, 0x40uLL, 1uLL, stream);
-          fread(AniCamera[cameraIndex].obj[nodeIndex].pos, 0xCuLL, 1uLL, stream);
-          fread(AniCamera[cameraIndex].obj[nodeIndex].quat, 0x10uLL, 1uLL, stream);
-          fread(&AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt, 4uLL, 1uLL, stream);
-          fread(&AniCamera[cameraIndex].obj[nodeIndex].Rot_cnt, 4uLL, 1uLL, stream);
+          fread(AniCamera[cameraIndex].obj[nodeIndex].s_matrix, 64, 1, stream);
+          fread(AniCamera[cameraIndex].obj[nodeIndex].pos, 12, 1, stream);
+          fread(AniCamera[cameraIndex].obj[nodeIndex].quat, 16, 1, stream);
+          fread(&AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt, 4, 1, stream);
+          fread(&AniCamera[cameraIndex].obj[nodeIndex].Rot_cnt, 4, 1, stream);
 
           AniCamera[cameraIndex].obj[nodeIndex].Pos = static_cast<_POS_TRACK *>(
             Dmalloc(16 * AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt + 20 * AniCamera[cameraIndex].obj[nodeIndex].Rot_cnt));
           AniCamera[cameraIndex].obj[nodeIndex].Rot = reinterpret_cast<_ROT_TRACK *>(
             &AniCamera[cameraIndex].obj[nodeIndex].Pos[AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt]);
 
-          fread(AniCamera[cameraIndex].obj[nodeIndex].Pos, 16LL * AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt, 1uLL, stream);
-          fread(AniCamera[cameraIndex].obj[nodeIndex].Rot, 20LL * AniCamera[cameraIndex].obj[nodeIndex].Rot_cnt, 1uLL, stream);
+          fread(AniCamera[cameraIndex].obj[nodeIndex].Pos, 16 * AniCamera[cameraIndex].obj[nodeIndex].Pos_cnt, 1, stream);
+          fread(AniCamera[cameraIndex].obj[nodeIndex].Rot, 20 * AniCamera[cameraIndex].obj[nodeIndex].Rot_cnt, 1, stream);
 
           AniCamera[cameraIndex].obj[nodeIndex].Scale = nullptr;
           AniCamera[cameraIndex].obj[nodeIndex].Scale_cnt = 0;
         }
       }
 
-      fread(&mDummyNum, 4uLL, 1uLL, stream);
+      fread(&mDummyNum, 4, 1, stream);
       if (mDummyNum)
       {
         mDummy = static_cast<_ANI_OBJECT *>(Dmalloc(sizeof(_ANI_OBJECT) * mDummyNum));
@@ -366,20 +366,20 @@ void CAniCamera::LoadAniCamera(char *fileName)
 
       for (unsigned int dummyIndex = 0; dummyIndex < mDummyNum; ++dummyIndex)
       {
-        fread(&mDummy[dummyIndex], 0x40uLL, 1uLL, stream);
-        fread(mDummy[dummyIndex].ParentName, 0x40uLL, 1uLL, stream);
-        fread(mDummy[dummyIndex].s_matrix, 0x40uLL, 1uLL, stream);
-        fread(mDummy[dummyIndex].pos, 0xCuLL, 1uLL, stream);
-        fread(mDummy[dummyIndex].quat, 0x10uLL, 1uLL, stream);
-        fread(&mDummy[dummyIndex].Pos_cnt, 4uLL, 1uLL, stream);
-        fread(&mDummy[dummyIndex].Rot_cnt, 4uLL, 1uLL, stream);
+        fread(&mDummy[dummyIndex], 64, 1, stream);
+        fread(mDummy[dummyIndex].ParentName, 64, 1, stream);
+        fread(mDummy[dummyIndex].s_matrix, 64, 1, stream);
+        fread(mDummy[dummyIndex].pos, 12, 1, stream);
+        fread(mDummy[dummyIndex].quat, 16, 1, stream);
+        fread(&mDummy[dummyIndex].Pos_cnt, 4, 1, stream);
+        fread(&mDummy[dummyIndex].Rot_cnt, 4, 1, stream);
 
         mDummy[dummyIndex].Pos = static_cast<_POS_TRACK *>(
           Dmalloc(16 * mDummy[dummyIndex].Pos_cnt + 20 * mDummy[dummyIndex].Rot_cnt));
         mDummy[dummyIndex].Rot = reinterpret_cast<_ROT_TRACK *>(&mDummy[dummyIndex].Pos[mDummy[dummyIndex].Pos_cnt]);
 
-        fread(mDummy[dummyIndex].Pos, 16LL * mDummy[dummyIndex].Pos_cnt, 1uLL, stream);
-        fread(mDummy[dummyIndex].Rot, 20LL * mDummy[dummyIndex].Rot_cnt, 1uLL, stream);
+        fread(mDummy[dummyIndex].Pos, 16 * mDummy[dummyIndex].Pos_cnt, 1, stream);
+        fread(mDummy[dummyIndex].Rot, 20 * mDummy[dummyIndex].Rot_cnt, 1, stream);
 
         mDummy[dummyIndex].Scale = nullptr;
         mDummy[dummyIndex].Scale_cnt = 0;
@@ -524,8 +524,8 @@ __int64 CAniCamera::SetExtCamAni()
   if (extCount)
   {
     const float lerp = SampleAniTrackLerp(extCount, &camera->ext->frame, 5, mNowFrame * 30.0f);
-    const float value0 = *(reinterpret_cast<float *>(reinterpret_cast<char *>(camera->ext) + 20LL * sAniExtKeyIndex0 + 4));
-    const float value1 = *(reinterpret_cast<float *>(reinterpret_cast<char *>(camera->ext) + 20LL * sAniExtKeyIndex1 + 4));
+    const float value0 = *(reinterpret_cast<float *>(reinterpret_cast<char *>(camera->ext) + 20 * sAniExtKeyIndex0 + 4));
+    const float value1 = *(reinterpret_cast<float *>(reinterpret_cast<char *>(camera->ext) + 20 * sAniExtKeyIndex1 + 4));
     SetAniCameraFov(((value1 - value0) * lerp + value0) * 0.78799999f);
     return 1;
   }
@@ -548,7 +548,7 @@ void CAniCamera::SetPrePlayCamera(
   const unsigned int cameraCount = mAniCameraNum;
   if (cameraCount)
   {
-    if (startFrame == 0xFFFFFFFFu && endFrame == 0xFFFFFFFFu)
+    if (startFrame == static_cast<unsigned int>(-1) && endFrame == static_cast<unsigned int>(-1))
     {
       startFrame = mStartFrame;
       endFrame = mEndFrame;

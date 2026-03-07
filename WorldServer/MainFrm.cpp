@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "MainFrm.h"
 
@@ -180,7 +180,7 @@ void CMainFrame::BuildAsciiTitleToken(const char *source, char *destination, siz
   for (size_t i = 0; i < maxCopy; ++i)
   {
     const unsigned char ch = static_cast<unsigned char>(source[i]);
-    destination[i] = (ch >= 0x20 && ch <= 0x7E) ? static_cast<char>(ch) : '?';
+    destination[i] = (ch >= 0x20 && ch <= 126) ? static_cast<char>(ch) : '?';
   }
   destination[maxCopy] = '\0';
 }

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRusiaBillingMgr.h"
 
@@ -74,7 +74,7 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
   }
 
   const unsigned long parsedPort = strtoul(szPort, nullptr, 10);
-  const unsigned __int16 wPort = (parsedPort > 0 && parsedPort <= 0xFFFFu)
+  const unsigned __int16 wPort = (parsedPort > 0 && parsedPort <= 65535)
     ? static_cast<unsigned __int16>(parsedPort)
     : static_cast<unsigned __int16>(atoi(defaultPort));
   const bool bTrustedConnection = szTrustedConnection[0] != '\0' && szTrustedConnection[0] != '0';
@@ -167,7 +167,7 @@ bool CRusiaBillingMgr::LoadINIFile()
   char fileName[288]{};
 
   memset(buffer, 0, 260);
-  GetCurrentDirectoryA(0x104u, buffer);
+  GetCurrentDirectoryA(260, buffer);
   memset(fileName, 0, 260);
   sprintf(fileName, "%s\\Initialize\\Database.ini", buffer);
 

@@ -174,7 +174,7 @@ bool AutoMineMachine::_InitMineOre()
   for (int j = 0; j < 5; ++j)
   {
     const int tableCode = GetItemTableCode(s_szOreKind_160[j]);
-    if (tableCode >= 0x25)
+    if (tableCode >= 37)
     {
       m_sysLog.Write("ERR::Invalid value of table code.(%d)", tableCode);
       return false;
@@ -456,7 +456,7 @@ void AutoMineMachine::Start(int n)
     }
     else
     {
-      SendMsg_ResultCode(n, 0x12u, 0xAu);
+      SendMsg_ResultCode(n, 18u, 10u);
     }
   }
   else
@@ -480,7 +480,7 @@ void AutoMineMachine::Stop(int n)
     }
     else
     {
-      SendMsg_ResultCode(n, 0x13u, 0);
+      SendMsg_ResultCode(n, 19u, 0);
     }
   }
   else
@@ -494,7 +494,7 @@ void AutoMineMachine::SelectOre(int n, unsigned __int8 byOre)
   if (byOre < 5)
   {
     m_bySelectedOre = byOre;
-    SendMsg_ResultCode(n, 0x14u, 0);
+    SendMsg_ResultCode(n, 20u, 0);
     push_dqs_selore();
     m_Log.Write(
       "[SELECT ORE] Owner:%d Master:%d [Ore:%d]",
@@ -504,7 +504,7 @@ void AutoMineMachine::SelectOre(int n, unsigned __int8 byOre)
   }
   else
   {
-    SendMsg_ResultCode(n, 0x14u, 5u);
+    SendMsg_ResultCode(n, 20u, 5u);
     m_sysLog.Write("[ERR-SelectOre]:max_kind_automine_ore(%d)", byOre);
   }
 }
@@ -515,14 +515,14 @@ void AutoMineMachine::Charge(int n, int nCharge, int nGold)
   {
     if (m_pOwnerGuild->m_bIOWait)
     {
-      SendMsg_ResultCode(n, 0x18u, 0xDu);
+      SendMsg_ResultCode(n, 24u, 13u);
       m_sysLog.Write("[ERR-Charge]:automine_guild_db_io_wait");
     }
     else if (nGold > 0 && static_cast<double>(nGold) <= m_pOwnerGuild->GetTotalGold())
     {
       if (nCharge == static_cast<int>(_Convert_GoldToGage(nGold)))
       {
-        SendMsg_ResultCode(n, 0x18u, 0);
+        SendMsg_ResultCode(n, 24u, 0);
         push_dqs_battery_charge(static_cast<unsigned __int16>(n), nCharge, nGold);
         m_Log.Write(
           "Owner:%d Charge:%d GuildGold:%.0f - Cost:%d",
@@ -533,13 +533,13 @@ void AutoMineMachine::Charge(int n, int nCharge, int nGold)
       }
       else
       {
-        SendMsg_ResultCode(n, 0x18u, 9u);
+        SendMsg_ResultCode(n, 24u, 9u);
         m_sysLog.Write("[ERR-Charge]:utomine_nonmatch_charge_value");
       }
     }
     else
     {
-      SendMsg_ResultCode(n, 0x18u, 7u);
+      SendMsg_ResultCode(n, 24u, 7u);
       const long double totalDalant = m_pOwnerGuild->GetTotalDalant();
       const unsigned int totalDalantValue = static_cast<unsigned int>(totalDalant);
       m_sysLog.Write(
@@ -550,7 +550,7 @@ void AutoMineMachine::Charge(int n, int nCharge, int nGold)
   }
   else
   {
-    SendMsg_ResultCode(n, 0x18u, 5u);
+    SendMsg_ResultCode(n, 24u, 5u);
     m_sysLog.Write("[ERR-Charge]:Have not owner guild");
   }
 }
@@ -573,7 +573,7 @@ void AutoMineMachine::GetOutOreInAutoMine(CPlayer *pUser, const _pt_automine_get
     const int popRet = m_Inven.pop(nPage, nSlot, &item, nNum);
     if (popRet == -1)
     {
-      SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 0x15u, 0xCu);
+      SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 21u, 12u);
       m_sysLog.Write(
         "[ERR-GetOutOreInAutoMine]:automine_invalid_values(%d,%d,%d,%d)",
         nPage,
@@ -634,13 +634,13 @@ void AutoMineMachine::GetOutOreInAutoMine(CPlayer *pUser, const _pt_automine_get
             nNum,
             466);
         }
-        SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 0x15u, 0xCu);
+        SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 21u, 12u);
       }
     }
   }
   else
   {
-    SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 0x15u, 5u);
+    SendMsg_ResultCode(pUser->m_ObjID.m_wIndex, 21u, 5u);
     m_sysLog.Write("[ERR-GetOutOreInAutoMine]:automine_isnot_owner_guild");
   }
 }
@@ -656,7 +656,7 @@ void AutoMineMachine::MoveOreInAutoMine(
   {
     if (sl == dl && ss == ds)
     {
-      SendMsg_ResultCode(n, 0x17u, 0);
+      SendMsg_ResultCode(n, 23u, 0);
     }
     else
     {
@@ -678,7 +678,7 @@ void AutoMineMachine::MoveOreInAutoMine(
           pDKey->bySlotIndex = ds;
         }
 
-        SendMsg_ResultCode(n, 0x17u, 0);
+        SendMsg_ResultCode(n, 23u, 0);
 
         const unsigned __int8 byDNum = static_cast<unsigned __int8>(pDst->get_overlapnum());
         const int nDBSlot_D = ds + 40 * dl;
@@ -693,7 +693,7 @@ void AutoMineMachine::MoveOreInAutoMine(
       }
       else
       {
-        SendMsg_ResultCode(n, 0x17u, 0xCu);
+        SendMsg_ResultCode(n, 23u, 12u);
         m_sysLog.Write(
           "[ERR-MoveOreInAutoMine]:automine_invalid_values(%d,%d,%d,%d)",
           sl,
@@ -705,7 +705,7 @@ void AutoMineMachine::MoveOreInAutoMine(
   }
   else
   {
-    SendMsg_ResultCode(n, 0x17u, 5u);
+    SendMsg_ResultCode(n, 23u, 5u);
     m_sysLog.Write("[ERR-MoveOreInAutoMine]:automine_isnot_owner_guild");
   }
 }
@@ -720,7 +720,7 @@ void AutoMineMachine::OreMerge(int n, const _pt_automine_merge_clzo *request)
   if (popRet == -1)
   {
     _INVENKEY item = request->item;
-    SendMsg_ResultCode(n, 0x1Au, 0xCu);
+    SendMsg_ResultCode(n, 26u, 12u);
     m_sysLog.Write(
       "[ERR-OreMerge]:automine_invalid_values(%d,%d,%d,%d)",
       page,
@@ -730,7 +730,7 @@ void AutoMineMachine::OreMerge(int n, const _pt_automine_merge_clzo *request)
   }
   else
   {
-    SendMsg_ResultCode(n, 0x1Au, 0);
+    SendMsg_ResultCode(n, 26u, 0);
   }
 }
 
@@ -822,7 +822,7 @@ void AutoMineMachine::push_dqs_workingstate()
   qry.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
   qry.bWorking = m_bRunning;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_selore()
@@ -838,7 +838,7 @@ void AutoMineMachine::push_dqs_selore()
   qry.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
   qry.byOreIdx = m_bySelectedOre;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_mineore(int nP, int nS)
@@ -858,7 +858,7 @@ void AutoMineMachine::push_dqs_mineore(int nP, int nS)
   qry.byOverlapNum = static_cast<unsigned __int8>(slot->get_overlapnum());
   qry.dwGage = m_Battery.m_nCurGage;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_getore(char nP, char nS, unsigned __int8 byNum)
@@ -872,7 +872,7 @@ void AutoMineMachine::push_dqs_getore(char nP, char nS, unsigned __int8 byNum)
   qry.byOverlapNum = byNum;
   qry.dwGage = m_Battery.m_nCurGage;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_moveore(
@@ -894,7 +894,7 @@ void AutoMineMachine::push_dqs_moveore(
   qry.dwDK = pDKey ? *reinterpret_cast<unsigned int *>(pDKey) : static_cast<unsigned int>(-1);
   qry.byDOverlapNum = byDNum;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_battery_charge(unsigned __int16 wIndex, int ncharge, int ncost)
@@ -917,7 +917,7 @@ void AutoMineMachine::push_dqs_battery_charge(unsigned __int16 wIndex, int nchar
   qry.out_totaldalant = 0.0;
   qry.byProcRet = 0;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::push_dqs_battery_discharge()
@@ -933,7 +933,7 @@ void AutoMineMachine::push_dqs_battery_discharge()
   qry.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
   qry.dwBattery = m_Battery.m_nCurGage;
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&qry), size);
 }
 
 void AutoMineMachine::ChangeOwner(CGuild *pOwnerGuild)
@@ -982,7 +982,7 @@ void AutoMineMachine::push_dqs_newowner()
   query.dwGuildSerial = m_pOwnerGuild->m_dwSerial;
 
   const int size = static_cast<int>(query.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x35u, reinterpret_cast<char *>(&query), size);
+  g_Main.PushDQSData(-1, nullptr, 53u, reinterpret_cast<char *>(&query), size);
 }
 
 bool AutoMineMachineMng::Initialzie()
@@ -1053,7 +1053,7 @@ bool AutoMineMachineMng::OpenUI(int n)
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type != 0xFF)
+  if (type != static_cast<unsigned __int8>(-1))
   {
     CMapData *settlementMap = g_MapOper.m_SettlementMapData[raceCode][type];
     if (settlementMap && settlementMap == pUser->m_pCurMap)
@@ -1064,7 +1064,7 @@ bool AutoMineMachineMng::OpenUI(int n)
     }
   }
 
-  SendMsg_ResultCode(n, 0xFu, 6u);
+  SendMsg_ResultCode(n, 15u, 6u);
   return true;
 }
 
@@ -1078,9 +1078,9 @@ bool AutoMineMachineMng::CloseUI(int n)
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x11u, 6u);
+    SendMsg_ResultCode(n, 17u, 6u);
   }
   else
   {
@@ -1099,9 +1099,9 @@ bool AutoMineMachineMng::StartWorkMachine(int n)
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x12u, 6u);
+    SendMsg_ResultCode(n, 18u, 6u);
   }
   else
   {
@@ -1120,9 +1120,9 @@ bool AutoMineMachineMng::StopWorkMachine(int n)
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x13u, 6u);
+    SendMsg_ResultCode(n, 19u, 6u);
   }
   else
   {
@@ -1141,9 +1141,9 @@ bool AutoMineMachineMng::SelectOreType(int n, const _pt_automine_selectore_clzo 
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x14u, 6u);
+    SendMsg_ResultCode(n, 20u, 6u);
   }
   else
   {
@@ -1162,9 +1162,9 @@ bool AutoMineMachineMng::GetOutOre(int n, const _pt_automine_getoutore_clzo *req
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x15u, 6u);
+    SendMsg_ResultCode(n, 21u, 6u);
   }
   else
   {
@@ -1183,9 +1183,9 @@ bool AutoMineMachineMng::MoveOrePos(int n, const _pt_automine_moveore_clzo *requ
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x17u, 6u);
+    SendMsg_ResultCode(n, 23u, 6u);
   }
   else
   {
@@ -1209,9 +1209,9 @@ bool AutoMineMachineMng::BatteryCharge(int n, const _pt_automine_charge_clzo *re
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x18u, 6u);
+    SendMsg_ResultCode(n, 24u, 6u);
   }
   else
   {
@@ -1230,9 +1230,9 @@ bool AutoMineMachineMng::OreMerge(int n, const _pt_automine_merge_clzo *request)
 
   const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
   const unsigned __int8 type = get_type(pUser, raceCode);
-  if (type == 0xFF)
+  if (type == static_cast<unsigned __int8>(-1))
   {
-    SendMsg_ResultCode(n, 0x1Au, 6u);
+    SendMsg_ResultCode(n, 26u, 6u);
   }
   else
   {
@@ -1257,7 +1257,7 @@ unsigned __int8 AutoMineMachineMng::get_type(CPlayer *pUser, unsigned __int8 byR
   {
     return 1;
   }
-  return 0xFF;
+  return static_cast<unsigned __int8>(-1);
 }
 
 void AutoMineMachineMng::SendMsg_ResultCode(unsigned int n, unsigned __int8 byType, unsigned __int8 byRetCode)

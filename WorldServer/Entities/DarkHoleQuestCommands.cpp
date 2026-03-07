@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "DarkHoleQuestCommands.h"
 
@@ -250,7 +250,7 @@ bool __fastcall GetReactObject(
     if (!fstr->word(psItemCode))
       return _false(fstr, pSetup);
     poutReactObject->obj.item.byItemTableCode = GetItemTableCode(psItemCode);
-    if (poutReactObject->obj.item.byItemTableCode >= 0x25u)
+    if (poutReactObject->obj.item.byItemTableCode >= 37)
       return _false(fstr, pSetup);
     _base_fld *record =
       g_Main.m_tblItemData[poutReactObject->obj.item.byItemTableCode].GetRecord(psItemCode);
@@ -369,7 +369,7 @@ bool __fastcall qc_StartMission(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x20)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 32)
     return _false(fstr, pSetup);
   strcpy_0(pSetup->m_pCurLoadQuest->szStartMissionBuffer, poutszWord);
   return true;
@@ -414,7 +414,7 @@ bool __fastcall qc_DummyBlock(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
   }
   if (!block)
   {
-    __dummy_block *newBlock = (__dummy_block *)operator new(0x110uLL);
+    __dummy_block *newBlock = (__dummy_block *)operator new(272);
     if (newBlock)
     {
       new (newBlock) __dummy_block();
@@ -453,7 +453,7 @@ bool __fastcall qc_monsterGroup(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
   }
   if (!group)
   {
-    __monster_group *newGroup = (__monster_group *)operator new(0x110uLL);
+    __monster_group *newGroup = (__monster_group *)operator new(272);
     if (newGroup)
     {
       new (newGroup) __monster_group();
@@ -485,13 +485,13 @@ bool __fastcall qc_RewardItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
     return _false(fstr, pSetup);
   _dh_reward_sub_setup *reward = isOne ? &pSetup->m_pCurLoadQuest->RewardOne : &pSetup->m_pCurLoadQuest->RewardOther;
   unsigned __int8 itemTableCode = GetItemTableCode(psItemCode);
-  if (itemTableCode >= 0x25u)
+  if (itemTableCode >= 37)
     return _false(fstr, pSetup);
   _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecord(psItemCode);
   if (!record)
     return _false(fstr, pSetup);
   unsigned __int8 itemKindCode = GetItemKindCode(itemTableCode);
-  unsigned int maxParamFromExp = 0x0FFFFFFF;
+  unsigned int maxParamFromExp = 268435455;
   if (itemKindCode)
   {
     if (itemKindCode == 1)
@@ -526,7 +526,7 @@ bool __fastcall qc_RewardItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
     reward->m_dwGivePercent[nItemNum] = static_cast<int>(static_cast<float>(pfoutVal[0] * 2147450900.0));
   else
     reward->m_dwGivePercent[nItemNum] = 2147450879;
-  _STORAGE_LIST::_db_con *newItem = (_STORAGE_LIST::_db_con *)operator new(0x32uLL);
+  _STORAGE_LIST::_db_con *newItem = (_STORAGE_LIST::_db_con *)operator new(50);
   if (newItem)
   {
     new (newItem) _STORAGE_LIST::_db_con();
@@ -596,7 +596,7 @@ bool __fastcall qc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
     return _false(fstr, pSetup);
   strcpy_0(pSetup->m_pCurLoadQuest->szDescirptCode, poutszWord);
   return true;
@@ -698,9 +698,9 @@ bool __fastcall mc_ResultContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x20)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 32)
     return _false(fstr, pSetup);
-  pSetup->m_pCurLoadMission->pszNextMissionTitle = (char *)operator new[](0x21uLL);
+  pSetup->m_pCurLoadMission->pszNextMissionTitle = (char *)operator new[](33);
   strcpy_0(pSetup->m_pCurLoadMission->pszNextMissionTitle, poutszWord);
   return true;
 }
@@ -709,7 +709,7 @@ bool __fastcall mc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
     return _false(fstr, pSetup);
   strcpy_0(pSetup->m_pCurLoadMission->szDescirptCode, poutszWord);
   return true;
@@ -719,7 +719,7 @@ bool __fastcall mc_CompleteMsg(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
     return _false(fstr, pSetup);
   strcpy_0(pSetup->m_pCurLoadMission->szCompleteMsg, poutszWord);
   return true;
@@ -746,7 +746,7 @@ bool __fastcall mc_LootItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
     if (!GetReactObject(fstr, pSetup, &poutReactObject, 0, 6u, pszoutErrMsg, nullptr))
     return _false(fstr, pSetup);
   const int nLootItemNum = pSetup->m_pCurLoadMission->nLootItemNum;
-  __add_loot_item *item = (__add_loot_item *)operator new(0x38uLL);
+  __add_loot_item *item = (__add_loot_item *)operator new(56);
   if (item)
   {
     new (item) __add_loot_item();
@@ -772,7 +772,7 @@ bool __fastcall mc_AddMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
   const int nAddMonsterNum = pSetup->m_pCurLoadMission->nAddMonsterNum;
   if (nAddMonsterNum >= 32)
     return _false(fstr, pSetup);
-  __add_monster *monster = (__add_monster *)operator new(0x30uLL);
+  __add_monster *monster = (__add_monster *)operator new(48);
   if (monster)
   {
     new (monster) __add_monster();
@@ -792,7 +792,7 @@ bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
     return _false(fstr, pSetup);
   if (!poutReactObject.wNum)
     return _false(fstr, pSetup);
-  if (poutReactObject.wNum > 0x80u)
+  if (poutReactObject.wNum > 128)
     return _false(fstr, pSetup);
   _react_area poutReactArea;
     if (!GetReactArea(fstr, pSetup, &poutReactArea, 3u, pszoutErrMsg, nullptr))
@@ -816,7 +816,7 @@ bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
   const int nRespawnMonsterNum = pSetup->m_pCurLoadMission->nRespawnMonsterNum;
   if (nRespawnMonsterNum >= 32)
     return _false(fstr, pSetup);
-  __respawn_monster *respawn = (__respawn_monster *)operator new(0x48uLL);
+  __respawn_monster *respawn = (__respawn_monster *)operator new(72);
   if (respawn)
   {
     new (respawn) __respawn_monster();
@@ -847,7 +847,7 @@ bool __fastcall mc_RespawnMonsterOption(strFILE *fstr, CDarkHoleDungeonQuestSetu
   __respawn_monster *respawn = pSetup->m_pCurLoadMission->pRespawnMonster[index];
   if (!respawn->pszDefineCode)
   {
-    respawn->pszDefineCode = (char *)operator new[](0x21uLL);
+    respawn->pszDefineCode = (char *)operator new[](33);
   }
   strcpy_0(respawn->pszDefineCode, Source);
   respawn->bCallEvent = true;
@@ -873,11 +873,11 @@ bool __fastcall mc_ChangeMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSet
   if (!recordB)
     return _false(fstr, pSetup);
   int len = static_cast<int>(strlen_0(Str));
-  if (Str[len] == 37)
+  if (Str[len] == '%')
     Str[len] = '\0';
   const int prob = atoi(Str);
   const int nChangeMonsterNum = pSetup->m_pCurLoadMission->nChangeMonsterNum;
-  __change_monster *change = (__change_monster *)operator new(0x28uLL);
+  __change_monster *change = (__change_monster *)operator new(40uLL);
   if (change)
   {
     new (change) __change_monster();
@@ -910,19 +910,19 @@ bool __fastcall mc_If(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *p
     char Source[144]{};
     if (!strcmp_0(Str1, kDHIfCompleteMsg)
       && fstr->word(Source)
-      && strlen_0(Source) <= 0x10
+      && strlen_0(Source) <= 16
       && !change->pszifCompleteMsg)
     {
-      change->pszifCompleteMsg = (char *)operator new[](0x11uLL);
+      change->pszifCompleteMsg = (char *)operator new[](17uLL);
       strcpy_0(change->pszifCompleteMsg, Source);
       return true;
     }
     return _false(fstr, pSetup);
   }
   char Str[160]{};
-  if (!fstr->word(Str) || strlen_0(Str) > 0x10 || change->pszIfMissionDescirptCode)
+  if (!fstr->word(Str) || strlen_0(Str) > 16 || change->pszIfMissionDescirptCode)
     return _false(fstr, pSetup);
-  change->pszIfMissionDescirptCode = (char *)operator new[](0x11uLL);
+  change->pszIfMissionDescirptCode = (char *)operator new[](17uLL);
   strcpy_0(change->pszIfMissionDescirptCode, Str);
   return true;
 }
@@ -957,7 +957,7 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
       char poutszWord[160]{};
       if (!fstr->word(poutszWord))
         return _false(fstr, pSetup);
-      memcpy_0(msgCode, poutszWord, 0x10uLL);
+      memcpy_0(msgCode, poutszWord, 16);
       msgCode[16] = '\0';
     }
     else
@@ -965,7 +965,7 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
       char Src[152]{};
       if (strcmp_0(Str1, kDHInnerRespawnToken) || !fstr->word(Src))
         return _false(fstr, pSetup);
-      memcpy_0(respawnCode, Src, 0x20uLL);
+      memcpy_0(respawnCode, Src, 32);
       respawnCode[32] = '\0';
     }
   }
@@ -974,7 +974,7 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
     if (hasEventObj && !GetReactArea(fstr, pSetup, &afterArea, 3u, pszoutErrMsg, nullptr))
     return _false(fstr, pSetup);
   const int nInnerCheckNum = pSetup->m_pCurLoadMission->nInnerCheckNum;
-  __inner_check *inner = (__inner_check *)operator new(0x50uLL);
+  __inner_check *inner = (__inner_check *)operator new(80);
   if (inner)
   {
     new (inner) __inner_check();
@@ -985,12 +985,12 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
   pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->ReactObj.copy(&poutReactObject);
   if (msgCode[0])
   {
-    pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg = (char *)operator new[](0x11uLL);
+    pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg = (char *)operator new[](17);
     strcpy_0(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg, msgCode);
   }
   if (respawnCode[0])
   {
-    pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode = (char *)operator new[](0x21uLL);
+    pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode = (char *)operator new[](33);
     strcpy_0(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode, respawnCode);
   }
   ++pSetup->m_pCurLoadMission->nInnerCheckNum;
@@ -1033,7 +1033,7 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
     char Src[152]{};
     if (fstr->word(Src))
     {
-      memcpy_0(msgCode, Src, 0x10uLL);
+      memcpy_0(msgCode, Src, 16);
       msgCode[16] = '\0';
     }
     else
@@ -1046,7 +1046,7 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
     if (hasEventObj && !GetReactArea(fstr, pSetup, &poutReactArea, 7u, pszoutErrMsg, nullptr))
     return _false(fstr, pSetup);
   const int nRespondCheckNum = pSetup->m_pCurLoadMission->nRespondCheckNum;
-  __respond_check *respond = (__respond_check *)operator new(0x48uLL);
+  __respond_check *respond = (__respond_check *)operator new(72);
   if (respond)
   {
     new (respond) __respond_check();
@@ -1058,7 +1058,7 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->ReactArea.copy(&poutReactArea);
   if (msgCode[0])
   {
-    pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg = (char *)operator new[](0x10uLL);
+    pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg = (char *)operator new[](16);
     strcpy_0(pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg, msgCode);
   }
   ++pSetup->m_pCurLoadMission->nRespondCheckNum;
@@ -1081,7 +1081,7 @@ bool __fastcall mc_AddTime(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   if (!fstr->word(Str1))
     return _false(fstr, pSetup);
   const int nAddSecCheckNum = pSetup->m_pCurLoadMission->nAddSecCheckNum;
-  __add_time *addTime = (__add_time *)operator new(0x30uLL);
+  __add_time *addTime = (__add_time *)operator new(48);
   if (addTime)
   {
     new (addTime) __add_time();
@@ -1091,7 +1091,7 @@ bool __fastcall mc_AddTime(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->dwAddSec = pnoutVal[0];
   if (strcmp_0(Str1, kDHReactAreaNoValue))
   {
-    pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg = (char *)operator new[](0x10uLL);
+    pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg = (char *)operator new[](16);
     strcpy_0(pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg, Str1);
   }
   ++pSetup->m_pCurLoadMission->nAddSecCheckNum;
@@ -1149,7 +1149,7 @@ bool __fastcall jc_Contents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
   else
   {
     unsigned __int8 itemTableCode = GetItemTableCode(poutszWord);
-    if (itemTableCode >= 0x25u)
+    if (itemTableCode >= 37)
       return _false(fstr, pSetup);
     _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecord(poutszWord);
     if (!record)
@@ -1185,7 +1185,7 @@ bool __fastcall jc_ReactType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
   if (!fstr->word(poutszWord) || strcmp_0(poutszWord, kDHJobReactPortal))
     return _false(fstr, pSetup);
   const int nReactNum = pSetup->m_pCurLoadJob->nReactNum;
-  _react_sub_setup *react = (_react_sub_setup *)operator new(0x10uLL);
+  _react_sub_setup *react = (_react_sub_setup *)operator new(16);
   if (react)
   {
     new (react) _react_sub_setup();
@@ -1231,12 +1231,11 @@ bool __fastcall jc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 0x10)
+  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
     return _false(fstr, pSetup);
   strcpy_0(pSetup->m_pCurLoadJob->szDescirptCode, poutszWord);
   return true;
 }
-
 
 
 

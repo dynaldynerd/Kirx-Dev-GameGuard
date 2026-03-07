@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "LendItemSheet.h"
 
@@ -37,7 +37,7 @@ LendItemSheet::~LendItemSheet() = default;
 
 bool LendItemSheet::Initialzie()
 {
-  return _heapFixRow.Initialize(0xC8u);
+  return _heapFixRow.Initialize(200);
 }
 
 bool LendItemSheet::InsertLink(unsigned __int8 byStorageCode, _STORAGE_LIST::_db_con *pkItem)

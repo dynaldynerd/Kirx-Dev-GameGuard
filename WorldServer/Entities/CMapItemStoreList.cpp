@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CMapItemStoreList.h"
 #include "CItemStore.h"
 #include "CMapData.h"
@@ -58,14 +58,14 @@ char CMapItemStoreList::CopyItemStoreData(CMapItemStoreList *pDest)
 
         memcpy_s(
             m_ItemStore[j].m_pLimitStorageItem,
-            0x100uLL,
+            256,
             pDest->m_ItemStore[j].m_pLimitStorageItem,
-            0x100uLL);
+            256);
         memcpy_s(
             m_ItemStore[j].m_pStorageItem,
-            0x2590uLL,
+            9616,
             pDest->m_ItemStore[j].m_pStorageItem,
-            0x2590uLL);
+            9616);
     }
 
     return 1;

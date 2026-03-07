@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CTotalGuildRankInfo.h"
 
@@ -11,7 +11,7 @@
 
 __int64 _total_guild_rank_result_zocl::size()
 {
-  if (byCnt < 0xBu)
+  if (byCnt < 11)
   {
     return 403;
   }
@@ -273,7 +273,7 @@ void CTotalGuildRankInfo::Clear()
 
 bool CTotalGuildRankInfo::Init()
 {
-  m_ppkInfo = reinterpret_cast<CTotalGuildRankRecord **>(operator new[](0xFA0));
+  m_ppkInfo = reinterpret_cast<CTotalGuildRankRecord **>(operator new[](4000));
   if (m_ppkInfo == nullptr)
   {
     return false;
@@ -287,7 +287,7 @@ bool CTotalGuildRankInfo::Init()
       return false;
     }
   }
-  m_pkSendList = reinterpret_cast<_total_guild_rank_result_zocl *>(operator new[](0x4B9));
+  m_pkSendList = reinterpret_cast<_total_guild_rank_result_zocl *>(operator new[](1209));
   if (m_pkSendList == nullptr)
   {
     return false;

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMergeFileManager.h"
 #include "CMergeFile.h"
@@ -33,7 +33,7 @@ void CMergeFileManager::InitMergeFile(char *directoryPath)
   HANDLE findHandle = FindFirstFileA(searchPattern, &findFileData);
   if (findHandle != INVALID_HANDLE_VALUE)
   {
-    char *mergeFileNameStorage = static_cast<char *>(Dmalloc(0x10000));
+    char *mergeFileNameStorage = static_cast<char *>(Dmalloc(65536));
     char *mergeFileNames[256]{};
     char *nextMergeFileName = mergeFileNameStorage;
     for (unsigned int slot = 0; slot < 256; ++slot)
@@ -68,7 +68,7 @@ void CMergeFileManager::InitMergeFile(char *directoryPath)
       }
     }
     FindClose(findHandle);
-    if (mergeFileCount <= 0xFF)
+    if (mergeFileCount <= 255)
     {
       if (mergeFileCount)
       {

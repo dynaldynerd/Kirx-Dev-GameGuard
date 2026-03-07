@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "PatriarchElectProcessor.h"
 
@@ -30,12 +30,12 @@
 #include <cstring>
 #include <mmsystem.h>
 
-static_assert(sizeof(CandidateRegister) == 0x11438, "CandidateRegister size mismatch");
-static_assert(sizeof(SecondCandidateCrystallizer) == 0xC8, "SecondCandidateCrystallizer size mismatch");
-static_assert(sizeof(Voter) == 0x648, "Voter size mismatch");
-static_assert(sizeof(FinalDecisionProcessor) == 0x1C8, "FinalDecisionProcessor size mismatch");
-static_assert(sizeof(FinalDecisionApplyer) == 0xC8, "FinalDecisionApplyer size mismatch");
-static_assert(sizeof(ClassOrderProcessor) == 0x210, "ClassOrderProcessor size mismatch");
+static_assert(sizeof(CandidateRegister) == 70712, "CandidateRegister size mismatch");
+static_assert(sizeof(SecondCandidateCrystallizer) == 200, "SecondCandidateCrystallizer size mismatch");
+static_assert(sizeof(Voter) == 1608, "Voter size mismatch");
+static_assert(sizeof(FinalDecisionProcessor) == 456, "FinalDecisionProcessor size mismatch");
+static_assert(sizeof(FinalDecisionApplyer) == 200, "FinalDecisionApplyer size mismatch");
+static_assert(sizeof(ClassOrderProcessor) == 528, "ClassOrderProcessor size mismatch");
 
 PatriarchElectProcessor *PatriarchElectProcessor::_pkInstance = nullptr;
 
@@ -142,17 +142,17 @@ bool PatriarchElectProcessor::Initialize()
   char buffer[260];
 
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\Patriarch", nullptr);
-  clear_file("..\\ZoneServerLog\\Systemlog\\Patriarch", 0x1E);
+  clear_file("..\\ZoneServerLog\\Systemlog\\Patriarch", 30);
 
   memset(buffer, 0, 256);
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(buffer, 0x100u, "..\\ZoneServerLog\\SystemLog\\Patriarch\\PatriarchElect_%u.log", now);
+  sprintf_s(buffer, 256, "..\\ZoneServerLog\\SystemLog\\Patriarch\\PatriarchElect_%u.log", now);
   _kSysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ZoneServerLog\\ServiceLog\\Patriarch", nullptr);
-  clear_file("..\\ZoneServerLog\\ServiceLog\\Patriarch", 0x1E);
+  clear_file("..\\ZoneServerLog\\ServiceLog\\Patriarch", 30);
 
-  CandidateRegister *candidate = static_cast<CandidateRegister *>(operator new(0x11438uLL));
+  CandidateRegister *candidate = static_cast<CandidateRegister *>(operator new(70712));
   if (candidate)
   {
     new (candidate) CandidateRegister();
@@ -164,7 +164,7 @@ bool PatriarchElectProcessor::Initialize()
   _kProcessor[0] = candidate;
 
   SecondCandidateCrystallizer *secondCandidate =
-    static_cast<SecondCandidateCrystallizer *>(operator new(0xC8uLL));
+    static_cast<SecondCandidateCrystallizer *>(operator new(200));
   if (secondCandidate)
   {
     new (secondCandidate) SecondCandidateCrystallizer();
@@ -175,7 +175,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[1] = secondCandidate;
 
-  Voter *voter = static_cast<Voter *>(operator new(0x648uLL));
+  Voter *voter = static_cast<Voter *>(operator new(1608));
   if (voter)
   {
     new (voter) Voter();
@@ -186,7 +186,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[2] = voter;
 
-  FinalDecisionProcessor *finalDecision = static_cast<FinalDecisionProcessor *>(operator new(0x1C8uLL));
+  FinalDecisionProcessor *finalDecision = static_cast<FinalDecisionProcessor *>(operator new(456));
   if (finalDecision)
   {
     new (finalDecision) FinalDecisionProcessor();
@@ -197,7 +197,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[3] = finalDecision;
 
-  FinalDecisionApplyer *finalApplyer = static_cast<FinalDecisionApplyer *>(operator new(0xC8uLL));
+  FinalDecisionApplyer *finalApplyer = static_cast<FinalDecisionApplyer *>(operator new(200));
   if (finalApplyer)
   {
     new (finalApplyer) FinalDecisionApplyer();
@@ -208,7 +208,7 @@ bool PatriarchElectProcessor::Initialize()
   }
   _kProcessor[4] = finalApplyer;
 
-  ClassOrderProcessor *classOrder = static_cast<ClassOrderProcessor *>(operator new(0x210uLL));
+  ClassOrderProcessor *classOrder = static_cast<ClassOrderProcessor *>(operator new(528));
   if (classOrder)
   {
     new (classOrder) ClassOrderProcessor();
@@ -355,7 +355,7 @@ void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __
     if (_eProcessType == ElectProcessor::_eCandidateRegister)
     {
       CandidateMgr::Instance()->InitCandidate();
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x77u, nullptr, 0);
+      g_Main.PushDQSData(-1, nullptr, 119, nullptr, 0);
     }
 
     _kRunningProcessor = _kProcessor[_eProcessType];
@@ -385,8 +385,8 @@ void PatriarchElectProcessor::TimeCheck(unsigned __int16 wDayOfWeek, unsigned __
   if (_kRunningProcessor
       && _kRunningProcessor->GetProcessorType() == ElectProcessor::_eVoter)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x73u, nullptr, 0);
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, 0);
+    g_Main.PushDQSData(-1, nullptr, 115, nullptr, 0);
+    g_Main.PushDQSData(-1, nullptr, 120, nullptr, 0);
   }
 }
 
@@ -467,9 +467,9 @@ void PatriarchElectProcessor::PushDQSCheckInvalidChar()
   _qry_case_check_invalid_character queryData{};
   queryData.byProc = static_cast<unsigned __int8>(_eProcessType);
   g_Main.PushDQSData(
-    0xFFFFFFFF,
+    -1,
     nullptr,
-    0x8Au,
+    138,
     reinterpret_cast<char *>(&queryData),
     static_cast<int>(queryData.size()));
 }
@@ -497,11 +497,11 @@ void PatriarchElectProcessor::SendMsg_ConnectNewUser(CPlayer *pOne)
       const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
       _qry_case_request_refund query(raceCode, pOne->m_id.wIndex, charSerial, addMoney);
       const int size = query.size();
-      g_Main.PushDQSData(static_cast<unsigned __int8>(-1), nullptr, 0x7B, reinterpret_cast<char *>(&query), size);
+      g_Main.PushDQSData(static_cast<unsigned __int8>(-1), nullptr, 123, reinterpret_cast<char *>(&query), size);
     }
     else
     {
-      SendMsg_ResultCode(pOne->m_id.wIndex, 0xFu);
+      SendMsg_ResultCode(pOne->m_id.wIndex, 15);
     }
   }
 
@@ -857,7 +857,7 @@ bool PatriarchElectProcessor::CheatSetPatriarch(CPlayer *pOne, int eClass)
   {
     _qry_case_raceboss_accumulation_winrate qryData{};
     const int size = static_cast<int>(sizeof(qryData));
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Eu, reinterpret_cast<char *>(&qryData), size);
+    g_Main.PushDQSData(-1, nullptr, 142, reinterpret_cast<char *>(&qryData), size);
   }
 
   return true;
@@ -865,7 +865,7 @@ bool PatriarchElectProcessor::CheatSetPatriarch(CPlayer *pOne, int eClass)
 
 void PatriarchElectProcessor::CompleteInsertElect()
 {
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Au, nullptr, 0);
+  g_Main.PushDQSData(-1, nullptr, 122, nullptr, 0);
 }
 
 void PatriarchElectProcessor::CompleteSelectElect()
@@ -904,7 +904,7 @@ void PatriarchElectProcessor::CompleteRequestRefund(_DB_QRY_SYN_DATA *pData)
 
         player->AlterDalant(refundValue);
         player->SendMsg_AlterMoneyInform(0);
-        SendMsg_ResultCode(player->m_id.wIndex, 0xDu);
+        SendMsg_ResultCode(player->m_id.wIndex, 13);
 
         const unsigned int serial = player->m_Param.GetCharSerial();
         CPlayer::s_MgrItemHistory.raceboss_giveback(
@@ -917,7 +917,7 @@ void PatriarchElectProcessor::CompleteRequestRefund(_DB_QRY_SYN_DATA *pData)
   }
 
   const int size = static_cast<int>(qryData->size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Cu, reinterpret_cast<char *>(qryData), size);
+  g_Main.PushDQSData(-1, nullptr, 124, reinterpret_cast<char *>(qryData), size);
 }
 
 void PatriarchElectProcessor::CompleteItemChargeRefund(_DB_QRY_SYN_DATA *pData)

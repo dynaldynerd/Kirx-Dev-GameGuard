@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CInfoSheetTabs.h"
 
@@ -168,7 +168,7 @@ void CMapTab::DoDataExchange(CDataExchange *pDX)
 
 BOOL CMapTab::OnSetActive()
 {
-  g_Main.m_GameMsg.PackingMsg(0x3EFu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1007, 0, 0, 0);
   return CPropertyPage::OnSetActive();
 }
 
@@ -263,7 +263,7 @@ void CMapTab::OnButtonMapchange()
   {
     if (selected == m_hMap[mapIndex])
     {
-      g_Main.m_GameMsg.PackingMsg(0x3EAu, mapIndex, 0, 0);
+      g_Main.m_GameMsg.PackingMsg(1002, mapIndex, 0, 0);
       break;
     }
   }
@@ -294,7 +294,7 @@ BOOL CServerTab::OnInitDialog()
 
 BOOL CServerTab::OnSetActive()
 {
-  g_Main.m_GameMsg.PackingMsg(0x3EDu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1005, 0, 0, 0);
   return CPropertyPage::OnSetActive();
 }
 
@@ -334,7 +334,7 @@ void CServerTab::UpdateServerTab()
 
 void CServerTab::OnButtonUpdateserver()
 {
-  g_Main.m_GameMsg.PackingMsg(0x3EDu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1005, 0, 0, 0);
 }
 
 CIPXTab::CIPXTab()
@@ -486,7 +486,7 @@ void CTCPTab::UpdateTab()
 
 void CTCPTab::OnBUTTONMainThreadControlApply()
 {
-  g_Main.m_GameMsg.PackingMsg(0x3F6u, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1014, 0, 0, 0);
 }
 
 void CTCPTab::OnButtonUpdatelistsize()
@@ -517,7 +517,7 @@ BOOL CObjectTab::OnSetActive()
 {
   m_btAuto.SetWindowText(_T("Auto"));
   m_bAutoUpdate = false;
-  g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
   return CPropertyPage::OnSetActive();
 }
 
@@ -533,7 +533,7 @@ BOOL CObjectTab::OnKillActive()
 
 void CObjectTab::OnTimer(UINT_PTR nIDEvent)
 {
-  g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
   CPropertyPage::OnTimer(nIDEvent);
 }
 
@@ -1208,14 +1208,14 @@ void CObjectTab::UpdateTab()
 
 void CObjectTab::OnButtonUpdate()
 {
-  g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+  g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
 }
 
 void CObjectTab::OnButtonDestory()
 {
   if (!g_Main.IsExcuteService())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3F5u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1013, 0, 0, 0);
   }
 }
 
@@ -1242,7 +1242,7 @@ void CObjectTab::OnButtonSearch()
   CGameObject::s_pSelectObject = target;
   if (g_pDoc->m_InfoSheet.GetActiveIndex() == 3)
   {
-    g_Main.m_GameMsg.PackingMsg(0x3EEu, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
   }
 
   if (g_MapDisplay.m_bDisplayMode && target->m_pCurMap)
@@ -1250,7 +1250,7 @@ void CObjectTab::OnButtonSearch()
     const int mapIndex = g_MapOper.GetMap(target->m_pCurMap);
     if (mapIndex >= 0)
     {
-      g_Main.m_GameMsg.PackingMsg(0x3EAu, static_cast<unsigned int>(mapIndex), 0, 0);
+      g_Main.m_GameMsg.PackingMsg(1002, static_cast<unsigned int>(mapIndex), 0, 0);
     }
   }
 }

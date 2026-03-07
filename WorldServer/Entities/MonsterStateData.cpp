@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 #include "GlobalObjects.h"
@@ -63,7 +63,7 @@ bool EmotionPresentationChecker::CheckEmotionState(
     if (checker.m_nEmotionCon > 0 && checker.m_nEmotionCon == byCheckType)
     {
       const unsigned __int8 checkType = byCheckType;
-      if (checkType && checkType <= 0xAu)
+      if (checkType && checkType <= 10)
       {
         m_bIsSet = true;
         m_pTarget = nullptr;
@@ -156,7 +156,7 @@ void MonsterSFContDamageToleracne::Update()
       {
         elapsed = 0;
       }
-      if (elapsed >= 0x3E8)
+      if (elapsed >= 1000)
       {
         SetSFDamageToleracne_Variation(0.02f);
         m_dwLastUpdateTime = loopTime;

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CQuestMgr.h"
 
@@ -78,7 +78,7 @@ void CQuestMgr::Loop()
   for (int slotIndex = 0; slotIndex < 30; ++slotIndex)
   {
     _QUEST_DB_BASE::_LIST *slot = &m_pMaster->m_Param.m_QuestDB.m_List[slotIndex];
-    if (slot->byQuestType == 0xFF || slot->wIndex == 0xFFFF)
+    if (slot->byQuestType == 0xFF || slot->wIndex == 65535)
     {
       continue;
     }
@@ -89,7 +89,7 @@ void CQuestMgr::Loop()
       {
         slot->dwPassSec += 10;
         CheckFailCondition(static_cast<unsigned __int8>(slotIndex), 0, nullptr);
-        if (slot->byQuestType != 0xFF)
+        if (slot->byQuestType != 255)
         {
           m_pMaster->m_pUserDB->Update_QuestUpdate(static_cast<unsigned __int8>(slotIndex), slot, false);
         }
@@ -228,7 +228,7 @@ bool CQuestMgr::LoadQuestData()
     char pszErrMsg[160];
     for (int j = 0; j < 9; ++j)
     {
-        if (!CQuestMgr::s_tblQuestHappenEvent[j].ReadRecord(szFile[j], 0x888u, pszErrMsg))
+        if (!CQuestMgr::s_tblQuestHappenEvent[j].ReadRecord(szFile[j], 2184, pszErrMsg))
         {
             MyMessageBox("CQuestMgr Data Load", "%s Load Error", szFile[j]);
             ServerProgramExit("CQuestMgr Data Load", 0);
@@ -239,7 +239,7 @@ bool CQuestMgr::LoadQuestData()
     {
         CQuestMgr::s_tblQuest = new CRecordData();
     }
-    if(!CQuestMgr::s_tblQuest->ReadRecord(".\\script\\Quest.dat", 0x968u, pszErrMsg))
+    if(!CQuestMgr::s_tblQuest->ReadRecord(".\\script\\Quest.dat", 2408, pszErrMsg))
     {
         MyMessageBox("CQuestMgr Data Load", "Quest.dat Load Error");
         ServerProgramExit("CQuestMgr Data Load", 0);
@@ -459,7 +459,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
   for (int slotIndex = 0; slotIndex < 30; ++slotIndex)
   {
     _QUEST_DB_BASE::_LIST *slot = &m_pQuestData->m_List[slotIndex];
-    if (slot->byQuestType == 0xFF)
+    if (slot->byQuestType == 255)
     {
       continue;
     }
@@ -477,7 +477,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
 
     for (int actIndex = 0; actIndex < 3; ++actIndex)
     {
-      if (slot->wNum[actIndex] == 0xFFFF)
+      if (slot->wNum[actIndex] == 65535)
       {
         continue;
       }
@@ -525,7 +525,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
           allowByOrder = true;
           for (int m = 0; m < 3; ++m)
           {
-            if (record->m_ActionNode[m].m_nOrder < action->m_nOrder && slot->wNum[m] != 0xFFFF)
+            if (record->m_ActionNode[m].m_nOrder < action->m_nOrder && slot->wNum[m] != 65535)
             {
               allowByOrder = false;
               break;
@@ -543,7 +543,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
 
           if (wActCount + slot->wNum[actIndex] >= action->m_nReqAct)
           {
-            node->wCount = 0xFFFF;
+            node->wCount = 65535;
 
             if (nActCode == 14 && !DeleteQuestItem(action->m_strActSub2, static_cast<unsigned __int16>(action->m_nReqAct)))
             {
@@ -590,7 +590,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
   _QUEST_DB_BASE::_LIST backup{};
   memcpy_0(&backup, slot, sizeof(backup));
 
-  if (slot->wIndex == 0xFFFF)
+  if (slot->wIndex == 65535)
   {
     return failed;
   }
@@ -686,14 +686,14 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
       slot->dwPassSec = 0;
       for (int k = 0; k < 3; ++k)
       {
-        slot->wNum[k] = 0xFFFF;
+        slot->wNum[k] = 65535;
         if (nextRecord->m_ActionNode[k].m_nActType != -1)
         {
           slot->wNum[k] = 0;
         }
         if (nextRecord->m_ActionNode[k].m_nReqAct == -1)
         {
-          slot->wNum[k] = 0xFFFF;
+          slot->wNum[k] = 65535;
         }
       }
 
@@ -709,7 +709,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
 char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
 {
   const int itemTableCode = GetItemTableCode(pszItemCode);
-  if (itemTableCode == 0xFF)
+  if (itemTableCode == 255)
   {
     return 0;
   }
@@ -823,7 +823,7 @@ char CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
 void CQuestMgr::DeleteQuestData(unsigned __int8 bySlot)
 {
   _QUEST_DB_BASE::_LIST *slot = &m_pQuestData->m_List[bySlot];
-  if (slot->byQuestType != 0xFF)
+  if (slot->byQuestType != 255)
   {
     slot->Init();
   }
@@ -840,7 +840,7 @@ char CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
   for (int j = 0; j < 70; ++j)
   {
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[j];
-    if (history.byLevel != 0xFF
+    if (history.byLevel != 255
       && std::strncmp(history.szQuestCode, pszCode, 7) == 0
       && bQuestRepeat != 1)
     {
@@ -922,12 +922,12 @@ _Quest_fld *CQuestMgr::GetQuestFromEvent(unsigned __int8 bySelect)
 unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLevel, long double dRepeatTime)
 {
   int bestIndex = 0;
-  unsigned __int8 minLevel = 0xFF;
+  unsigned __int8 minLevel = 255;
 
   for (int j = 0; j < 70; ++j)
   {
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[j];
-    if (history.byLevel == 0xFF)
+    if (history.byLevel == 255)
     {
       strcpy_0(history.szQuestCode, pszQuestCode);
       history.byLevel = byLevel;
@@ -1215,7 +1215,7 @@ _quest_fail_result *CQuestMgr::CheckLimLv(int nNewLv)
   for (int j = 0; j < 30; ++j)
   {
     _QUEST_DB_BASE::_LIST *slot = &this->m_pQuestData->m_List[j];
-    if (slot->wIndex != 0xFFFF)
+    if (slot->wIndex != 65535)
     {
         _Quest_fld *record = CQuestMgr::s_tblQuest
           ? static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex))

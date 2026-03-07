@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderController.h"
 
@@ -228,7 +228,7 @@ bool CUnmannedTraderController::CheatCancelRegist(
 bool CUnmannedTraderController::InitLogger()
 {
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\UnmannedTrader", nullptr);
-  clear_file("..\\ZoneServerLog\\Systemlog\\UnmannedTrader", 0xF);
+  clear_file("..\\ZoneServerLog\\Systemlog\\UnmannedTrader", 15);
 
   this->m_pkLogger = new CLogFile();
   if (!this->m_pkLogger)
@@ -243,7 +243,7 @@ bool CUnmannedTraderController::InitLogger()
   this->m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ServiceLog\\UnmannedTrader", nullptr);
-  clear_file("..\\ServiceLog\\UnmannedTrader", 0xF);
+  clear_file("..\\ServiceLog\\UnmannedTrader", 15);
 
   this->m_pkServiceLogger = new CLogFile();
   if (!this->m_pkServiceLogger)
@@ -428,7 +428,7 @@ char CUnmannedTraderController::InsertStateRecord()
   if (!result || result == 2)
   {
     _unmannedtrader_stade_id_info *stateInfo =
-      static_cast<_unmannedtrader_stade_id_info *>(operator new[](saturated_mul(stateCount, 0x104uLL)));
+      static_cast<_unmannedtrader_stade_id_info *>(operator new[](saturated_mul(stateCount, 260)));
     if (!stateInfo)
     {
       Log(
@@ -605,7 +605,7 @@ unsigned __int8 CUnmannedTraderController::UpdateRegistItem(_qry_case_unmandtrad
 unsigned __int8 CUnmannedTraderController::UpdateCancelRegist(_qry_case_unmandtrader_cancelitem *pData)
 {
   pData->byProcRet = 0;
-  unsigned __int8 state = 0xFF;
+  unsigned __int8 state = 255;
   unsigned __int8 dbRet = CheckDBItemState(
     pData->byType,
     pData->dwRegistSerial,
@@ -651,7 +651,7 @@ unsigned __int8 CUnmannedTraderController::UpdateCancelRegist(_qry_case_unmandtr
 unsigned __int8 CUnmannedTraderController::UpdateTimeOutCancelRegist(_qry_case_unmandtrader_time_out_cancelitem *pData)
 {
   pData->byProcRet = 0;
-  unsigned __int8 state = 0xFF;
+  unsigned __int8 state = 255;
   unsigned __int8 dbRet = CheckDBItemState(
     pData->byType,
     pData->dwRegistSerial,
@@ -729,7 +729,7 @@ unsigned __int8 CUnmannedTraderController::UpdateTimeOutCancelRegist(_qry_case_u
 unsigned __int8 CUnmannedTraderController::UpdateRePrice(_qry_case_unmandtrader_update_reprice *pData)
 {
   pData->byProcRet = 0;
-  unsigned __int8 state = 0xFF;
+  unsigned __int8 state = 255;
   unsigned __int8 dbRet = CheckDBItemState(
     pData->byType,
     pData->dwRegistSerial,
@@ -758,7 +758,7 @@ unsigned __int8 CUnmannedTraderController::SelectBuy(_qry_case_unmandtrader_buy_
 {
   unsigned int salesTotals[5]{};
   unsigned long long totalSales = 0;
-  unsigned __int8 state = 0xFF;
+  unsigned __int8 state = 255;
   _unmannedtrader_seller_info sellerInfo{};
 
   for (int j = 0; j < pData->byNum; ++j)
@@ -886,7 +886,7 @@ unsigned __int8 CUnmannedTraderController::UpdateBuy(_qry_case_unmandtrader_buy_
           if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
                 pData->byType,
                 entry.dwRegistSerial,
-                0xAu,
+                10,
                 pData->dwBuyer,
                 entry.byOldState,
                 &systemTime))
@@ -1050,7 +1050,7 @@ unsigned __int8 CUnmannedTraderController::UpdateReRegist(_qry_case_unmandtrader
   for (int j = 0; j < pData->byNum; ++j)
   {
     _qry_case_unmandtrader_re_registsingleitem::__list &entry = pData->List[j];
-    state = 0xFF;
+    state = 255;
     procRet = 0;
     CheckDBItemState(
       pData->byType,
@@ -1372,7 +1372,7 @@ void CUnmannedTraderController::CompleteSelectBuyInfo(
 
   if (addMoneyCount)
   {
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x41u, reinterpret_cast<char *>(&qryData), sizeof(qryData));
+    g_Main.PushDQSData(-1, nullptr, 65, reinterpret_cast<char *>(&qryData), sizeof(qryData));
   }
   else
   {

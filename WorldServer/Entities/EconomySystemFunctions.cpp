@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "EconomySystemFunctions.h"
 
@@ -275,7 +275,7 @@ void eUpdateEconomySystem(bool *pbChangeDay)
   }
 
   const unsigned int loopTime = GetLoopTime();
-  if (loopTime - e_EconomySystem.m_dwLastUpdateTime < 0xEA60)
+  if (loopTime - e_EconomySystem.m_dwLastUpdateTime < 60000)
   {
     return;
   }
@@ -347,7 +347,7 @@ void eUpdateEconomySystem(bool *pbChangeDay)
         qryData.dCutOre[race + 3][oreType] = e_EconomySystem.m_dCurOreCutCount[race][oreType];
       }
     }
-    g_Main.PushDQSData(0xFFFFFFFFu, nullptr, 9u, reinterpret_cast<char *>(&qryData), qryData.size());
+    g_Main.PushDQSData(-1, nullptr, 9u, reinterpret_cast<char *>(&qryData), qryData.size());
   }
 
   SendMsg_EconomyDataToWeb();

@@ -12,7 +12,7 @@ CLuaEventMgr *CLuaEventMgr::ms_Instance;
 
 CLuaEventMgr::CLuaEventMgr()
 {
-  m_LuaEventArEx.Alloc(0x14u);
+  m_LuaEventArEx.Alloc(20u);
 }
 
 CLuaEventMgr::~CLuaEventMgr() = default;

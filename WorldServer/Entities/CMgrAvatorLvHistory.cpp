@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMgrAvatorLvHistory.h"
 
@@ -31,7 +31,7 @@ CMgrAvatorLvHistory::CMgrAvatorLvHistory()
     kHistoryPathKey,
     kHistoryPathDefault,
     returnedString,
-    0x80u,
+    128,
     kHistoryIniFile);
   CreateDirectoryA(returnedString, nullptr);
 
@@ -43,24 +43,24 @@ CMgrAvatorLvHistory::CMgrAvatorLvHistory()
   _strtime(m_szCurTime);
   m_szCurTime[5] = 0;
 
-  m_tmrUpdateTime.BeginTimer(0xEA60u);
+  m_tmrUpdateTime.BeginTimer(60000);
 
-  m_listLogData_2K.SetList(0xFEu);
-  m_listLogDataEmpty_2K.SetList(0xFEu);
+  m_listLogData_2K.SetList(254);
+  m_listLogDataEmpty_2K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
   {
     m_listLogDataEmpty_2K.PushNode_Back(index);
   }
 
-  m_listLogData_1K.SetList(0xFEu);
-  m_listLogDataEmpty_1K.SetList(0xFEu);
+  m_listLogData_1K.SetList(254);
+  m_listLogDataEmpty_1K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
   {
     m_listLogDataEmpty_1K.PushNode_Back(index);
   }
 
-  m_listLogData_200.SetList(0x9E4u);
-  m_listLogDataEmpty_200.SetList(0x9E4u);
+  m_listLogData_200.SetList(2532);
+  m_listLogDataEmpty_200.SetList(2532);
   for (unsigned int index = 0; index < 2532; ++index)
   {
     m_listLogDataEmpty_200.PushNode_Back(index);
@@ -137,9 +137,9 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
   const int logLen = static_cast<int>(strlen_0(pszLog));
   unsigned int outIndex = 0;
 
-  if (logLen >= 0xC8)
+  if (logLen >= 200)
   {
-    if (logLen >= 0x3E8)
+    if (logLen >= 1000)
     {
       if (logLen < 0x7D0 && m_listLogDataEmpty_2K.PopNode_Front(&outIndex))
       {
@@ -397,24 +397,24 @@ void CMgrAvatorLvHistory::alter_pvp(
   char buffer[132]{};
   const bool isPartyMode = pParty->IsPartyMode();
 
-  sprintf_s(sData_0, 0x2710u, "Pvp_Variation: %.0f, Party: %d, ", static_cast<double>(dPvpVariation), isPartyMode);
+  sprintf_s(sData_0, 10000, "Pvp_Variation: %.0f, Party: %d, ", static_cast<double>(dPvpVariation), isPartyMode);
 
   if (isPartyMode)
   {
-    sprintf_s(buffer, 0x80u, "Boss: %s, Member: ", pParty->m_pPartyBoss->m_wszName);
-    strcat_s(sData_0, 0x2710u, buffer);
+    sprintf_s(buffer, 128, "Boss: %s, Member: ", pParty->m_pPartyBoss->m_wszName);
+    strcat_s(sData_0, 10000, buffer);
     for (int j = 0; j < 8; ++j)
     {
       if (pParty->m_pPartyBoss->m_pPartyMember[j])
       {
-        sprintf_s(buffer, 0x80u, "%s, ", pParty->m_pPartyBoss->m_pPartyMember[j]->m_wszName);
-        strcat_s(sData_0, 0x2710u, buffer);
+        sprintf_s(buffer, 128, "%s, ", pParty->m_pPartyBoss->m_pPartyMember[j]->m_wszName);
+        strcat_s(sData_0, 10000, buffer);
       }
     }
   }
 
-  sprintf_s(buffer, 0x80u, "[%s %s]\r\n\r\n", m_szCurDate, m_szCurTime);
-  strcat_s(sData_0, 0x2710u, buffer);
+  sprintf_s(buffer, 128, "[%s %s]\r\n\r\n", m_szCurDate, m_szCurTime);
+  strcat_s(sData_0, 10000, buffer);
   WriteFile(pszFileName, sData_0);
 }
 

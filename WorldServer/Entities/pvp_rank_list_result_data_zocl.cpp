@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "pvp_rank_list_result_data_zocl.h"
 
@@ -9,7 +9,7 @@ _pvp_rank_list_result_data_zocl::_pvp_rank_list_result_data_zocl()
 
 __int64 _pvp_rank_list_result_data_zocl::size()
 {
-  if (wRankDataLen >= 0xFA0u)
+  if (wRankDataLen >= 4000)
   {
     wRankDataLen = 0;
   }

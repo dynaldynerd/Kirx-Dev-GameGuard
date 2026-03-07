@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CItemStore.h"
 
@@ -267,7 +267,7 @@ unsigned int CItemStore::CalcSecIndex(float x, float z)
 void CItemStore::SetLimitItemInitTime()
 {
   const unsigned __int64 initIntervalMs = 60000LL * m_pRec->m_nLimitItem_InitTime;
-  const int totalDays = static_cast<int>(initIntervalMs / 0x5265C00);
+  const int totalDays = static_cast<int>(initIntervalMs / 86400000);
   const __int64 nowSec = static_cast<__int64>(time(nullptr));
 
   if (totalDays > 0)
@@ -414,14 +414,14 @@ if (!m_pStorageItem || !m_pLimitStorageItem)
         fDiscountRate = FLOAT_1_0;
       }
       const unsigned __int64 discountRate = static_cast<unsigned int>(fDiscountRate * 10000.0f);
-      totalCost -= (discountRate * totalCost) / 0x2710;
+      totalCost -= (discountRate * totalCost) / 10000;
       if (!totalCost)
       {
         totalCost = 1;
       }
     }
 
-    totalCost = static_cast<unsigned __int64>(texRate) * totalCost / 0x2710;
+    totalCost = static_cast<unsigned __int64>(texRate) * totalCost / 10000;
     if (unit)
     {
       switch (unit)
@@ -547,17 +547,17 @@ unsigned __int8 CItemStore::IsBuy(
         durRatio = FLOAT_1_0;
       }
       const unsigned int durScaled = static_cast<unsigned int>(durRatio * 10000.0f);
-      value = static_cast<unsigned int>(static_cast<unsigned __int64>(durScaled) * value / 0x2710);
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(durScaled) * value / 10000);
     }
 
     if (IsItemEquipCivil(tableCode, itemIndex, 2 * byRace))
     {
-      value = static_cast<unsigned int>(static_cast<unsigned __int64>(texRate) * value / 0x2710);
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(texRate) * value / 10000);
     }
 
     if (pOffer[j].pItem->m_byTableCode == 17)
     {
-      value = static_cast<unsigned int>(static_cast<unsigned __int64>(oreRateScaled) * value / 0x2710);
+      value = static_cast<unsigned int>(static_cast<unsigned __int64>(oreRateScaled) * value / 10000);
     }
 
     if (!moneyKind[0]
@@ -583,7 +583,7 @@ unsigned __int8 CItemStore::IsBuy(
     const int rateScaled = static_cast<int>(fDiscountRate * 10000.0f);
     const unsigned __int64 addValue = static_cast<unsigned __int64>(rateScaled) * m_dwLastTradeDalant;
     const unsigned int current = m_dwLastTradeDalant;
-    m_dwLastTradeDalant = static_cast<unsigned int>(addValue / 0x2710 + current);
+    m_dwLastTradeDalant = static_cast<unsigned int>(addValue / 10000 + current);
   }
 return 0;
 }

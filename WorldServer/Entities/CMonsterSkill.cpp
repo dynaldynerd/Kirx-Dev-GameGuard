@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMonsterSkill.h"
 
@@ -266,7 +266,7 @@ __int64 CMonsterSkill::GetExceptMotive()
   {
     return static_cast<unsigned int>(m_pSPConst->m_nMotiveExceptionCondition);
   }
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 __int64 CMonsterSkill::GetExceptMotiveValue()
@@ -275,7 +275,7 @@ __int64 CMonsterSkill::GetExceptMotiveValue()
   {
     return static_cast<unsigned int>(m_pSPConst->m_nMotiveExceptionValue);
   }
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 __int64 CMonsterSkill::GetDstCaseType()

@@ -213,7 +213,7 @@ DWORD CSurface::ConvertGDIColor(COLORREF dwGDIColor)
 {
   if (!m_pdds)
   {
-    return 0x00000000;
+  return 0;
   }
 
   COLORREF originalColor = CLR_INVALID;

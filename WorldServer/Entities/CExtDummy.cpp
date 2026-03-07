@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 #include "CExtDummy.h"
@@ -85,7 +85,7 @@ bool CExtDummy::LoadExtDummy(const char *szFileName)
       if (token[0] == '*')
       {
         memset_0(&mDummy[mNum], 0, sizeof(mDummy[mNum]));
-        strncpy(mDummy[mNum].mName, token, 0x1Fu);
+        strncpy(mDummy[mNum].mName, token, 31);
         MatrixIdentity(mDummy[mNum].mMat);
 
         for (int i = 0; i < 3; ++i)
@@ -281,18 +281,18 @@ void CExtDummy::DrawDummyBBox(unsigned int nDummyIndex)
   source[2] = dummy->mBBmin[2];
   Vector3fTransform(p7, source, dummy->mMat);
 
-  R3DrawLine(p0, p1, 0xFFFFFFFF);
-  R3DrawLine(p1, p2, 0xFFFFFFFF);
-  R3DrawLine(p2, p3, 0xFFFFFFFF);
-  R3DrawLine(p3, p0, 0xFFFFFFFF);
-  R3DrawLine(p4, p5, 0xFFFFFFFF);
-  R3DrawLine(p5, p6, 0xFFFFFFFF);
-  R3DrawLine(p6, p7, 0xFFFFFFFF);
-  R3DrawLine(p7, p4, 0xFFFFFFFF);
-  R3DrawLine(p0, p4, 0xFFFFFFFF);
-  R3DrawLine(p1, p5, 0xFFFFFFFF);
-  R3DrawLine(p2, p6, 0xFFFFFFFF);
-  R3DrawLine(p3, p7, 0xFFFFFFFF);
+  R3DrawLine(p0, p1, -1);
+  R3DrawLine(p1, p2, -1);
+  R3DrawLine(p2, p3, -1);
+  R3DrawLine(p3, p0, -1);
+  R3DrawLine(p4, p5, -1);
+  R3DrawLine(p5, p6, -1);
+  R3DrawLine(p6, p7, -1);
+  R3DrawLine(p7, p4, -1);
+  R3DrawLine(p0, p4, -1);
+  R3DrawLine(p1, p5, -1);
+  R3DrawLine(p2, p6, -1);
+  R3DrawLine(p3, p7, -1);
 }
 
 void CExtDummy::DrawAllDummyBBox()

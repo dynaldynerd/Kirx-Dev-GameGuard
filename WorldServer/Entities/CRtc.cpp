@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRtc.h"
 #include "KorLocalTime.h"
@@ -55,7 +55,7 @@ int CRtc::RTC_Fn(int errType, const wchar_t *file, int line, const wchar_t *modu
     va_copy(argsCopy, args);
     unsigned int userSpecifiedType = va_arg(args, unsigned int);
 
-    wchar_t buffer[0x400];
+    wchar_t buffer[1024];
     vswprintf_s(buffer, sizeof(buffer) / sizeof(buffer[0]), format, argsCopy);
     va_end(argsCopy);
     va_end(args);
@@ -63,7 +63,7 @@ int CRtc::RTC_Fn(int errType, const wchar_t *file, int line, const wchar_t *modu
     const wchar_t *fileName = file ? file : L"<unknown file>";
     const wchar_t *moduleName = module ? module : L"<unknown module>";
 
-    wchar_t formatted[0x400];
+    wchar_t formatted[1024];
     swprintf_s(
         formatted,
         sizeof(formatted) / sizeof(formatted[0]),

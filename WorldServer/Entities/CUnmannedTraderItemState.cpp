@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderItemState.h"
 #include "GlobalObjects.h"
@@ -59,7 +59,7 @@ void CUnmannedTraderItemState::Clear()
 
 char CUnmannedTraderItemState::Set(unsigned __int8 byState)
 {
-  if (byState >= 0xEu)
+  if (byState >= 14)
   {
     return 0;
   }
@@ -84,7 +84,7 @@ wchar_t **CUnmannedTraderItemState::GetStateStrList()
 
 wchar_t *CUnmannedTraderItemState::GetStateStrW(unsigned int uiInx)
 {
-  if (uiInx <= 0xEu)
+  if (uiInx <= 14)
   {
     return CUnmannedTraderItemState::ms_wszStateName[uiInx];
   }
@@ -115,6 +115,6 @@ char CUnmannedTraderItemState::PushUpdateState(
   qry.wItemTableIndex = wItemTableIndex;
 
   const int size = static_cast<int>(qry.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x3Bu, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData(-1, nullptr, 59, reinterpret_cast<char *>(&qry), size);
   return 1;
 }

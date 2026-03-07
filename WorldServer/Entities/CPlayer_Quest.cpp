@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -206,7 +206,7 @@ void CPlayer::pc_SelectQuestAfterHappenEvent(unsigned __int8 bySelectIndex)
 void CPlayer::pc_BriefPass(unsigned __int8 byQuestSlotIndex)
 {
   _QUEST_DB_BASE::_LIST *quest = &this->m_Param.m_QuestDB.m_List[byQuestSlotIndex];
-  if (quest->byQuestType == 0xFF)
+  if (quest->byQuestType == 255)
   {
     return;
   }
@@ -227,7 +227,7 @@ void CPlayer::pc_RequestDialogWithNPC(CItemStore *pStore)
 
   const int npcRace = pStore->m_byNpcRaceCode;
   const int raceCode = this->m_Param.GetRaceCode();
-  if (npcRace != raceCode && npcRace != 0xFF)
+  if (npcRace != raceCode && npcRace != 255)
   {
     return;
   }
@@ -251,7 +251,7 @@ void CPlayer::pc_RequestWatchingWithNPC(CItemStore *pStore)
 
   const int npcRace = pStore->m_byNpcRaceCode;
   const int raceCode = this->m_Param.GetRaceCode();
-  if (npcRace != raceCode && npcRace != 0xFF)
+  if (npcRace != raceCode && npcRace != 255)
   {
     return;
   }
@@ -269,14 +269,14 @@ void CPlayer::pc_SelectQuestReward(
   unsigned __int8 bySelectLinkQuestIndex)
 {
   _QUEST_DB_BASE::_LIST *questSlot = &m_Param.m_QuestDB.m_List[byQuestDBSlot];
-  if (questSlot->byQuestType == 0xFF)
+  if (questSlot->byQuestType == 255)
   {
     return;
   }
 
   for (int index = 0; index < 3; ++index)
   {
-    if (questSlot->wNum[index] != 0xFFFF)
+    if (questSlot->wNum[index] != 65535)
     {
       return;
     }
@@ -288,7 +288,7 @@ void CPlayer::pc_SelectQuestReward(
     return;
   }
 
-  if (bySelectItemSlotIndex == 0xFF)
+  if (bySelectItemSlotIndex == 255)
   {
     if (questRecord->m_bSelectConsITMenual)
     {
@@ -300,7 +300,7 @@ void CPlayer::pc_SelectQuestReward(
     return;
   }
 
-  if (bySelectItemSlotIndex != 0xFF)
+  if (bySelectItemSlotIndex != 255)
   {
     const char *rewardCode = questRecord->m_RewardItem[bySelectItemSlotIndex].m_strConsITCode;
     if (!strncmp(rewardCode, "-1", 2u))
@@ -309,7 +309,7 @@ void CPlayer::pc_SelectQuestReward(
     }
   }
 
-  if (bySelectLinkQuestIndex != 0xFF)
+  if (bySelectLinkQuestIndex != 255)
   {
     const char *linkCode = questRecord->m_strLinkQuest[bySelectItemSlotIndex];
     if (!strncmp(linkCode, "-1", 2u))
@@ -433,7 +433,7 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
 
   _happen_event_cont happenEvent{};
   std::memcpy(&happenEvent, sourceEvent, sizeof(happenEvent));
-  if (Emb_StartQuest(0xFFu, &happenEvent))
+  if (Emb_StartQuest(255, &happenEvent))
   {
     if (skipStartHistoryInsert)
     {

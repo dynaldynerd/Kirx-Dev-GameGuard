@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRFNewDatabase.h"
 #include "WorldServerUtil.h"
@@ -428,7 +428,7 @@ bool CRFNewDatabase::ExecUpdateBinaryQuery(const char *strQuery, char *buf, int 
           memcpy_0(data, src, chunkSize);
 
           const SQLRETURN putRet = SQLPutData(m_hStmtUpdate, data, chunkSize);
-          if (static_cast<unsigned int>(putRet) >= 0xFFFFFFFEu)
+          if (static_cast<unsigned int>(putRet) >= -2)
           {
             ErrorMsgLog(ret, strQuery, "SQLExecDirect", m_hStmtUpdate);
             ErrorAction(ret, m_hStmtUpdate);
@@ -605,7 +605,7 @@ bool CRFNewDatabase::ReConnectDataBase()
     }
     FmtLog("ReConnectDataBase Fail. Count : %d", count);
     ErrFmtLog("ReConnectDataBase Fail. Count : %d", count);
-    Sleep(0x3E8u);
+    Sleep(1000);
   }
 
   Log("ReConnectDataBase : Fail End");
@@ -624,7 +624,7 @@ bool CRFNewDatabase::Select_NextHourDate(unsigned __int8 byAddHour, char *szDate
   char buffer[272]{};
   sprintf_s(
     buffer,
-    0x100u,
+    256,
     "select convert( varchar(9), dateadd(hour, %d, getdate()) , 112 )",
     byAddHour);
 

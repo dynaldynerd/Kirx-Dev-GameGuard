@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMoveMapLimitInfoPortal.h"
 
@@ -63,7 +63,7 @@ bool CMoveMapLimitInfoPortal::LoadINI()
 
   const unsigned int inx = GetInx();
   std::sprintf(buffer, "Map%u", inx);
-  GetPrivateProfileStringA("MoveMapLimitInfo", buffer, "NULL", returned, 0x400u, "./Initialize/MoveMapLimit.ini");
+  GetPrivateProfileStringA("MoveMapLimitInfo", buffer, "NULL", returned, 1024, "./Initialize/MoveMapLimit.ini");
   if (!strcmp_0(returned, "NULL"))
   {
     g_Main.m_logLoadingError.Write(
@@ -137,7 +137,7 @@ void CMoveMapLimitInfoPortal::SubProcNotifyForceMoveHQ()
         type,
         reinterpret_cast<char *>(&msg),
         static_cast<unsigned __int16>(sizeof(msg)));
-      if (++sentCount >= 0x64)
+      if (++sentCount >= 100)
       {
         m_uiProcNotifyInx = index + 1;
         break;
@@ -148,7 +148,7 @@ void CMoveMapLimitInfoPortal::SubProcNotifyForceMoveHQ()
   if (m_uiProcNotifyInx >= MAX_PLAYER)
   {
     m_uiProcNotifyInx = 0;
-    m_pkNotifyForceMoveHQTimer->BeginTimer(0x2710u);
+    m_pkNotifyForceMoveHQTimer->BeginTimer(10000);
     m_eNotifyForceMoveHQState = FMHS_WAIT_FORCE_MOVE;
   }
 }
@@ -183,7 +183,7 @@ void CMoveMapLimitInfoPortal::SubProcForceMoveHQ()
           type,
           reinterpret_cast<char *>(&msg),
           static_cast<unsigned __int16>(sizeof(msg)));
-        if (++sentCount >= 0x64)
+        if (++sentCount >= 100)
         {
           m_uiProcNotifyInx = index + 1;
           break;
@@ -372,7 +372,7 @@ unsigned __int8 CMoveMapLimitInfoPortal::ProcForceMoveHQ(
   CMoveMapLimitRightInfo *pkRight)
 {
 m_uiProcNotifyInx = 0;
-  m_pkNotifyForceMoveHQTimer->BeginTimer(0xFA0u);
+  m_pkNotifyForceMoveHQTimer->BeginTimer(4000);
   m_eNotifyForceMoveHQState = FMHS_WAIT_NOTIFY_FORCE_MOVE;
   return 0;
 }

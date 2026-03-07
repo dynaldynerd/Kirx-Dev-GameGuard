@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "guild_vote_process_inform_zocl.h"
 
@@ -9,7 +9,7 @@ _guild_vote_process_inform_zocl::_guild_vote_process_inform_zocl()
 
 __int64 _guild_vote_process_inform_zocl::size()
 {
-  if (byCommentLen >= 0x40u)
+  if (byCommentLen >= 64)
   {
     byCommentLen = 0;
   }

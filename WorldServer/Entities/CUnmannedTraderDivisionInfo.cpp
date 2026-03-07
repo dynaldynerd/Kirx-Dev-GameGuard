@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderDivisionInfo.h"
 #include "CUnmannedTraderClassInfo.h"
@@ -289,7 +289,7 @@ char CUnmannedTraderDivisionInfo::IsExistGroupID(
   {
     return 0;
   }
-  if (bySortType == 0xFFu)
+  if (bySortType == 255)
   {
     return this->m_vecSortType.empty() ? 1 : 0;
   }

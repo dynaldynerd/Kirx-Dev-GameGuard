@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -291,7 +291,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
   {
     return result;
   }
-  if (pData->dbAvator.m_byLevel >= 0x19u)
+  if (pData->dbAvator.m_byLevel >= 25)
   {
     result = _db_load_losebattlecount(dwSerial, pData);
     if (result)
@@ -453,10 +453,10 @@ unsigned __int8 CMainThread::db_Load_Avator(
     if (pData->dbTrunk.bySlotNum != 100)
     {
       pData->dbTrunk.bySlotNum += static_cast<unsigned __int8>(pDwItemCode_D[0]);
-      if (pData->dbTrunk.bySlotNum > 0x64u)
+      if (pData->dbTrunk.bySlotNum > 100)
       {
         unsigned int excess = pData->dbTrunk.bySlotNum - 100;
-        double addDalant = static_cast<double>(static_cast<int>(500000 * (excess / 0x14)));
+        double addDalant = static_cast<double>(static_cast<int>(500000 * (excess / 20)));
         pData->dbTrunk.dDalant = pData->dbTrunk.dDalant + addDalant;
         pData->dbTrunk.bySlotNum = 100;
       }
@@ -464,7 +464,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
       continue;
     }
 
-    long long addValue = 500000LL * (pDwItemCode_D[0] / 0x14);
+    long long addValue = 500000LL * (pDwItemCode_D[0] / 20);
     double add = static_cast<double>(static_cast<int>(addValue));
     if (addValue < 0)
     {
@@ -546,7 +546,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
       {
         pData->dbTrunk.bySlotNum = 100;
         pData->dbTrunk.byExtSlotNum += static_cast<unsigned __int8>(pDwItemCode_D[0]);
-        if (pData->dbTrunk.byExtSlotNum > 0x28u)
+        if (pData->dbTrunk.byExtSlotNum > 40)
         {
           pData->dbTrunk.byExtSlotNum = 40;
         }

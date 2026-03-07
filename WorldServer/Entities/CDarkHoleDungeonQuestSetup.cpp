@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CDarkHoleDungeonQuestSetup.h"
 #include "DarkHoleQuestCommands.h"
@@ -158,7 +158,7 @@ _dh_quest_setup *CDarkHoleDungeonQuestSetup::GetQuestSetupPtr(unsigned int dwQue
 bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
 {
 
-  _dh_quest_setup *quest = (_dh_quest_setup *)operator new(0x1200uLL);
+  _dh_quest_setup *quest = (_dh_quest_setup *)operator new(4608);
   if (quest)
   {
     new (quest) _dh_quest_setup();
@@ -172,7 +172,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 0x20)
+    if (strlen_0(poutszWord) <= 32)
     {
       strcpy_0(m_pCurLoadQuest->szQuestTitle, poutszWord);
       m_ErrorInfo.SetQuestTitle(poutszWord);
@@ -209,7 +209,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
 
   if (!m_pCurLoadQuest)
     return _false(fstr, this);
-  _dh_mission_setup *mission = (_dh_mission_setup *)operator new(0x1188uLL);
+  _dh_mission_setup *mission = (_dh_mission_setup *)operator new(4488);
   if (mission)
   {
     new (mission) _dh_mission_setup();
@@ -223,7 +223,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 0x20)
+    if (strlen_0(poutszWord) <= 32)
     {
       strcpy_0(m_pCurLoadMission->szMissionTitle, poutszWord);
       return true;
@@ -259,7 +259,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
 
   if (!m_pCurLoadQuest || !m_pCurLoadMission)
     return _false(fstr, this);
-  _dh_job_setup *job = (_dh_job_setup *)operator new(0xB0uLL);
+  _dh_job_setup *job = (_dh_job_setup *)operator new(176);
   if (job)
   {
     new (job) _dh_job_setup();
@@ -273,7 +273,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 0x20)
+    if (strlen_0(poutszWord) <= 32)
     {
       strcpy_0(m_pCurLoadJob->szJobTitle, poutszWord);
       return true;

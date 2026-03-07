@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CAsyncLogInfo.h"
 
@@ -139,12 +139,12 @@ bool CAsyncLogInfo::Init(
 
   strcpy_s(m_szTypeName, static_cast<size_t>(len) + 1, szTypeName);
 
-  if (dwUpdateFileNameDelay == 0xFFFFFFFF)
+  if (dwUpdateFileNameDelay == -1)
   {
     return true;
   }
 
-  if (dwUpdateFileNameDelay < 0x2710)
+  if (dwUpdateFileNameDelay < 10000)
   {
     return false;
   }

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "FinalDecisionApplyer.h"
 
@@ -27,7 +27,7 @@ bool FinalDecisionApplyer::Initialize()
 
   ElectProcessor::Initialize();
   Doit(_eReqQryFinalApplyer, nullptr, nullptr);
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x78u, nullptr, false);
+  g_Main.PushDQSData(-1, nullptr, 120, nullptr, false);
   return true;
 }
 
@@ -104,6 +104,6 @@ void FinalDecisionApplyer::_FinalDecisionApply()
 
   _qry_case_raceboss_accumulation_winrate query{};
   const int querySize = static_cast<int>(query.size());
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x8Eu, reinterpret_cast<char *>(&query), querySize);
+  g_Main.PushDQSData(-1, nullptr, 142, reinterpret_cast<char *>(&query), querySize);
 }
 

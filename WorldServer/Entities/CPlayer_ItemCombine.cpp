@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -200,7 +200,7 @@ unsigned __int8 MakeCombineItem(
   }
 
   const int tableCode = GetItemTableCode(outputCode);
-  if (tableCode < 0 || tableCode >= 0x25)
+  if (tableCode < 0 || tableCode >= 37)
   {
     return 12;
   }
@@ -222,7 +222,7 @@ unsigned __int8 MakeCombineItem(
     item->dwDur = output.m_dwUpt;
     item->dwUpt = GetMaxParamFromExp(recordByHash->m_dwIndex, output.m_dwUpt);
   }
-  else if (!itemKindCode && output.m_dwUpt == 0xFFFFFFFFu)
+  else if (!itemKindCode && output.m_dwUpt == -1)
   {
     const unsigned __int8 defaultSocketNum = GetDefItemUpgSocketNum(tableCode, recordByHash->m_dwIndex);
     const int socketNum = defaultSocketNum ? (rand() % defaultSocketNum) + 1 : 0;
@@ -263,7 +263,7 @@ void TakeOutLotto(int *buffer, unsigned int count)
     return;
   }
 
-  std::memset(buffer, 0xFF, sizeof(int) * count);
+  std::memset(buffer, 255, sizeof(int) * count);
   int nextValue = 0;
   int randomSeed = rand();
   for (unsigned int draw = 0; draw < count; ++draw)
@@ -472,7 +472,7 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
     const unsigned int checkTime =
       GetCheckTimeFromCombineExCheckKey(m_pMaster->m_Param.m_ItemCombineDB.m_dwCheckKey);
     const int elapsed = static_cast<int>(nowMasked) - static_cast<int>(checkTime);
-    if (std::abs(elapsed) < 0x5265C00)
+    if (std::abs(elapsed) < 86400000)
     {
       resultCode = 17;
     }
@@ -526,7 +526,7 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
           }
 
           _base_fld *materialRecord = nullptr;
-          if (materialStorage[slotIndex]->m_byTableCode < 0x25u)
+          if (materialStorage[slotIndex]->m_byTableCode < 37)
           {
             materialRecord = g_Main.m_tblItemData[materialStorage[slotIndex]->m_byTableCode]
               .GetRecord(materialStorage[slotIndex]->m_wItemIndex);
@@ -671,7 +671,7 @@ unsigned __int8 ItemCombineMgr::MakeNewItems(
   _combine_ex_item_accept_request_clzo *pRecv,
   _combine_ex_item_accept_result_zocl *pSend)
 {
-int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 0x18u ? 24 : pRecv->SelectItemBuff.bySelectNum;
+int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 24 ? 24 : pRecv->SelectItemBuff.bySelectNum;
   if (selectedCount >= pPlayerItemDB->m_bySelectItemCount)
   {
     selectedCount = pPlayerItemDB->m_bySelectItemCount;
@@ -729,7 +729,7 @@ int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 0x18u ? 24 : pRecv->Sel
       rewardItem.m_dwDur = rewardData->dwDur;
       rewardItem.m_dwLv = rewardData->dwUpt;
     }
-    else if (!itemKindCode && rewardData->dwUpt == 0xFFFFFFF)
+    else if (!itemKindCode && rewardData->dwUpt == 268435455)
     {
       const unsigned __int8 defaultSocketCount = GetDefItemUpgSocketNum(tableCode, itemIndex);
       const int socketCount = defaultSocketCount ? (rand() % defaultSocketCount) + 1 : 0;
@@ -740,12 +740,12 @@ int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 0x18u ? 24 : pRecv->Sel
       rewardItem.m_dwLv = rewardData->dwUpt;
     }
 
-    if (m_pMaster->m_Param.m_dbInven.GetIndexEmptyCon() == 0xFF)
+    if (m_pMaster->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
     {
       CreateItemBox(
         &rewardItem,
         m_pMaster,
-        0xFFFFFFFFu,
+        -1,
         false,
         nullptr,
         3u,
@@ -818,7 +818,7 @@ char ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
   pSaveData->dwCheckKey = CombineExCheckKeyGen(timeGetTime(), pfld->m_dwIndex);
 
   int selectedOutputIndices[24];
-  std::memset(selectedOutputIndices, 0xFF, sizeof(selectedOutputIndices));
+  std::memset(selectedOutputIndices, 255, sizeof(selectedOutputIndices));
 
   int selectedCount = 0;
   int operationCount = pfld->m_nOperationCount;

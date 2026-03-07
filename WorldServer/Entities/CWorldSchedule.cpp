@@ -47,7 +47,7 @@ bool CWorldSchedule::Init()
   this->m_dwLastCheckTime = timeGetTime();
 
   char pszErrMsg[132]{};
-  if (this->m_tblSch.ReadRecord(".\\script\\Schedule.dat", 0x5C, pszErrMsg))
+  if (this->m_tblSch.ReadRecord(".\\script\\Schedule.dat", 92, pszErrMsg))
   {
     this->m_nMaxSchNum = this->m_tblSch.GetRecordNum();
     if (this->DataCheck())

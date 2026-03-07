@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -119,12 +119,12 @@ char CMainThread::LoadLimitInfo()
 
   unsigned __int8 hash[44]{};
   CCryptor *cryptor = CTSingleton<CCryptor>::Instance();
-  if (!cryptor->MakeHash(g_cbHashVerify, 0x20uLL, hash, 0x20uLL))
+  if (!cryptor->MakeHash(g_cbHashVerify, 32, hash, 32))
   {
     return 0;
   }
 
-  if (!memcmp_0(data, hash, 0x20uLL))
+  if (!memcmp_0(data, hash, 32))
   {
     unsigned int dwTerm = 1000 * (rand() % 21 + 10);
     this->m_tmCheckForceClose.BeginTimer(dwTerm);

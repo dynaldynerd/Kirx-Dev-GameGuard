@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMgrAvatorQuestHistory.h"
 
@@ -29,7 +29,7 @@ CMgrAvatorQuestHistory::CMgrAvatorQuestHistory()
     kHistoryPathKey,
     kHistoryPathDefault,
     returnedString,
-    0x80u,
+    128,
     kHistoryIniFile);
   CreateDirectoryA(returnedString, nullptr);
 
@@ -39,9 +39,9 @@ CMgrAvatorQuestHistory::CMgrAvatorQuestHistory()
   _strtime(m_szCurTime);
   m_szCurTime[5] = 0;
 
-  m_tmrUpdateTime.BeginTimer(0xEA60u);
-  m_listLogData.SetList(0x9E4u);
-  m_listLogDataEmpty.SetList(0x9E4u);
+  m_tmrUpdateTime.BeginTimer(60000);
+  m_listLogData.SetList(2532);
+  m_listLogDataEmpty.SetList(2532);
 
   for (unsigned int index = 0; index < 2532; ++index)
   {

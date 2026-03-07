@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMonsterHelper.h"
 
@@ -517,8 +517,8 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
       }
       else
       {
-        const int baseAngle = (rand() % 2) ? 0 : 0x7FFF;
-        const float angleValue = static_cast<float>((baseAngle + rand()) % 0xFFFF);
+        const int baseAngle = (rand() % 2) ? 0 : 32767;
+        const float angleValue = static_cast<float>((baseAngle + rand()) % 65535);
         const int range = mon->m_pMonRec->m_nMaxMoveDistance - mon->m_pMonRec->m_nMinMoveDistance;
         float moveDistance = static_cast<float>(mon->m_pMonRec->m_nMinMoveDistance);
         if (range > 0)

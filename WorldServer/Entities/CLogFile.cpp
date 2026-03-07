@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CLogFile.h"
 
@@ -69,8 +69,8 @@ void CLogFile::Write(const char *format, ...)
     vsprintf_s(message, sizeof(message), format, args);
     if (m_bDate)
     {
-      _strdate_s(date, 0x80u);
-      _strtime_s(time, 0x80u);
+      _strdate_s(date, 128);
+      _strtime_s(time, 128);
     }
     else
     {
@@ -120,8 +120,8 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
     return;
   }
 
-  char date[0x80]{};
-  char time[0x80]{};
+  char date[128]{};
+  char time[128]{};
 
   va_list countArg;
   va_copy(countArg, arg);
@@ -265,8 +265,8 @@ void CLogFile::WriteFromArg(const wchar_t *format, va_list arg)
 
   if (m_bDate)
   {
-    _wstrdate_s(date, 0x80u);
-    _wstrtime_s(time, 0x80u);
+    _wstrdate_s(date, 128);
+    _wstrtime_s(time, 128);
   }
   else
   {
@@ -368,8 +368,8 @@ void CLogFile::WriteString(const char *fmt)
   }
 
   char line[10272]{};
-  char date[0x80]{};
-  char time[0x80]{};
+  char date[128]{};
+  char time[128]{};
 
   if (m_bDate)
   {

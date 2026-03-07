@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -242,7 +242,7 @@ unsigned __int8 CMainThread::db_Insert_CharacSelect_Log(
   unsigned __int8 bySec)
 {
   char buffer[144]{};
-  sprintf_s(buffer, 0x80uLL, "tbl_characterselect_log_%04d%02d", dwYear, byMonth);
+  sprintf_s(buffer, 128, "tbl_characterselect_log_%04d%02d", dwYear, byMonth);
   if (!m_pWorldDB->TableExist(buffer)
       && !m_pWorldDB->CreateCharacterSelectLogTable(buffer)
       && !m_pWorldDB->CreateCharacterSelectLogTable(buffer))
@@ -377,7 +377,7 @@ unsigned __int8 CMainThread::db_update_guildmember_del(
   {
     return 24;
   }
-  if (!m_pWorldDB->Update_UserGuildData(dwGuildSerial, 0xFFFFFFFF, 0xFFu))
+  if (!m_pWorldDB->Update_UserGuildData(dwGuildSerial, -1, 255))
   {
     return 24;
   }
@@ -1135,29 +1135,29 @@ unsigned __int8 CMainThread::_db_Update_Cash_LimSale(_db_cash_limited_sale *pNew
 {
   char source[160]{};
   char buffer[2052]{};
-  sprintf_s(buffer, 0x800uLL, "UPDATE tbl_Cash_LimSale Set ");
+  sprintf_s(buffer, 2048, "UPDATE tbl_Cash_LimSale Set ");
   int baseLen = static_cast<int>(strlen_0(buffer));
   if (pNewData->byDck != pOldData->byDck)
   {
     sprintf(source, "DCK=%d,", pNewData->byDck);
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
   }
   if (pNewData->byLimited_sale_num != pOldData->byLimited_sale_num)
   {
     sprintf(source, "LimSaleNum=%d,", pNewData->byLimited_sale_num);
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
   }
   for (int j = 0; j < pNewData->byLimited_sale_num; ++j)
   {
     if (pNewData->List[j].nLimcode != pOldData->List[j].nLimcode)
     {
       sprintf(source, "Code_K%d=%d,", j, pNewData->List[j].nLimcode);
-      strcat_s(buffer, 0x800uLL, source);
+      strcat_s(buffer, 2048, source);
     }
     if (pNewData->List[j].nLimcount != pOldData->List[j].nLimcount)
     {
       sprintf(source, "Num%d=%d,", j, pNewData->List[j].nLimcount);
-      strcat_s(buffer, 0x800uLL, source);
+      strcat_s(buffer, 2048, source);
     }
   }
 
@@ -1167,9 +1167,9 @@ unsigned __int8 CMainThread::_db_Update_Cash_LimSale(_db_cash_limited_sale *pNew
   }
   else
   {
-    sprintf_s(source, 0x80uLL, "WHERE [index] = 1");
+    sprintf_s(source, 128, "WHERE [index] = 1");
     buffer[strlen_0(buffer) - 1] = ' ';
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
     m_pWorldDB->ExecUpdateQuery(buffer, true);
   }
   return 0;
@@ -1181,12 +1181,12 @@ unsigned __int8 CMainThread::_db_Update_Set_Limit_Run()
   char out[84]{};
 
   CCryptor *cryptor = CTSingleton<CCryptor>::Instance();
-  if (!cryptor->MakeHash(g_cbHashVerify, 0x20uLL, hash, 0x20uLL))
+  if (!cryptor->MakeHash(g_cbHashVerify, 32, hash, 32))
   {
     return 82;
   }
 
-  MakeBinaryStr(hash, 0x20uLL, out, 0x43uLL);
+  MakeBinaryStr(hash, 32, out, 67);
   unsigned __int8 result = m_pWorldDB->Select_Limit_Run_Record();
   if (result)
   {
@@ -1217,17 +1217,17 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   char source[160]{};
   char buffer[2052]{};
 
-  sprintf_s(buffer, 0x800uLL, "UPDATE tbl_GoldBoxItem Set ");
+  sprintf_s(buffer, 2048, "UPDATE tbl_GoldBoxItem Set ");
   int baseLen = static_cast<int>(strlen_0(buffer));
   if (pNewData->bydck != pOldData->bydck)
   {
     sprintf(source, "DCK=%d,", pNewData->bydck);
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
   }
   if (pNewData->dwStarterBoxCnt != pOldData->dwStarterBoxCnt)
   {
     sprintf(source, "StarterBoxMax=%d,", pNewData->dwStarterBoxCnt);
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
   }
 
   for (int j = 0;; ++j)
@@ -1241,29 +1241,29 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
     if (pNewData->nBoxcode[j] != pOldData->nBoxcode[j])
     {
       sprintf(source, "BoxItemK_%d=%ld,", j + 1, pNewData->nBoxcode[j]);
-      strcat_s(buffer, 0x800uLL, source);
+      strcat_s(buffer, 2048, source);
     }
     if (pNewData->wBoxMax[j] != pOldData->wBoxMax[j])
     {
       sprintf(source, "BoxItemMax_%d=%d,", j + 1, pNewData->wBoxMax[j]);
-      strcat_s(buffer, 0x800uLL, source);
+      strcat_s(buffer, 2048, source);
     }
     if (pNewData->bygolden_item_num[j] != pOldData->bygolden_item_num[j])
     {
       sprintf(source, "LimItemNum_%d=%d,", j + 1, pNewData->bygolden_item_num[j]);
-      strcat_s(buffer, 0x800uLL, source);
+      strcat_s(buffer, 2048, source);
     }
     for (int k = 0; k < pNewData->bygolden_item_num[j]; ++k)
     {
       if (pNewData->List[j][k].ncode != pOldData->List[j][k].ncode)
       {
         sprintf(source, "K%d_%d=%d,", j + 1, k, pNewData->List[j][k].ncode);
-        strcat_s(buffer, 0x800uLL, source);
+        strcat_s(buffer, 2048, source);
       }
       if (pNewData->List[j][k].wcount != pOldData->List[j][k].wcount)
       {
         sprintf(source, "N%d_%d=%d,", j + 1, k, pNewData->List[j][k].wcount);
-        strcat_s(buffer, 0x800uLL, source);
+        strcat_s(buffer, 2048, source);
       }
     }
   }
@@ -1274,9 +1274,9 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   }
   else
   {
-    sprintf_s(source, 0x80uLL, "WHERE serial=%d", nDBSerial);
+    sprintf_s(source, 128, "WHERE serial=%d", nDBSerial);
     buffer[strlen_0(buffer) - 1] = ' ';
-    strcat_s(buffer, 0x800uLL, source);
+    strcat_s(buffer, 2048, source);
     m_pWorldDB->ExecUpdateQuery(buffer, true);
   }
   return 0;

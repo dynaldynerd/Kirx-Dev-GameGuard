@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -891,7 +891,7 @@ void CPlayer::pc_PartyLockReqeuest(bool bLock)
 {
   if (!m_pPartyMgr->IsPartyBoss() || m_pPartyMgr->m_bLock == bLock)
   {
-    SendMsg_PartyLockResult(static_cast<char>(0xFFu));
+    SendMsg_PartyLockResult(static_cast<char>(255));
   }
   else
   {
@@ -907,7 +907,7 @@ void CPlayer::pc_PartyAlterLootShareReqeuest(unsigned __int8 byLootShareMode)
   }
   else
   {
-    SendMsg_PartyAlterLootShareResult(static_cast<char>(0xFFu));
+    SendMsg_PartyAlterLootShareResult(static_cast<char>(255));
   }
 }
 
@@ -2304,7 +2304,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
       return;
     }
 
-    if (loopTime - this->m_dwLastGroupMapPointTime[0] < 0xEA60)
+    if (loopTime - this->m_dwLastGroupMapPointTime[0] < 60000)
     {
       pzTar[0] = static_cast<float>((60000 - (loopTime - this->m_dwLastGroupMapPointTime[0])) / 1000);
       this->SendMsg_SetGroupMapPoint(2, 0, mapCode, pzTar, 0);
@@ -2330,7 +2330,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
           && groupPlayer->m_pCurMap == this->m_pCurMap
           && groupPlayer->m_wMapLayerIndex == this->m_wMapLayerIndex)
       {
-        groupPlayer->SendMsg_SetGroupMapPoint(0, 0, mapCode, pzTar, 0x3Cu);
+        groupPlayer->SendMsg_SetGroupMapPoint(0, 0, mapCode, pzTar, 60);
       }
     }
   }
@@ -2342,7 +2342,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
       return;
     }
 
-    if (loopTime - this->m_dwLastGroupMapPointTime[byGroupType] < 0x57E40)
+    if (loopTime - this->m_dwLastGroupMapPointTime[byGroupType] < 360000)
     {
       pzTar[0] = static_cast<float>(
         (360000 - (loopTime - this->m_dwLastGroupMapPointTime[byGroupType])) / 1000);
@@ -2364,7 +2364,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
           && groupPlayer->m_pCurMap == this->m_pCurMap
           && groupPlayer->m_wMapLayerIndex == this->m_wMapLayerIndex)
       {
-        groupPlayer->SendMsg_SetGroupMapPoint(0, byGroupType, mapCode, pzTar, 0x3Cu);
+        groupPlayer->SendMsg_SetGroupMapPoint(0, byGroupType, mapCode, pzTar, 60);
       }
     }
   }
@@ -2390,7 +2390,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
       return;
     }
 
-    if (loopTime - this->m_dwLastGroupMapPointTime[byGroupType] < 0x2BF20)
+    if (loopTime - this->m_dwLastGroupMapPointTime[byGroupType] < 180000)
     {
       pzTar[0] = static_cast<float>(
         (180000 - (loopTime - this->m_dwLastGroupMapPointTime[byGroupType])) / 1000);
@@ -2405,7 +2405,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
           && groupPlayer->m_Param.GetRaceCode() == this->m_Param.GetRaceCode()
           && groupPlayer->m_pCurMap == this->m_pCurMap)
       {
-        groupPlayer->SendMsg_SetGroupMapPoint(0, byGroupType, mapCode, pzTar, 0x3Cu);
+        groupPlayer->SendMsg_SetGroupMapPoint(0, byGroupType, mapCode, pzTar, 60);
       }
     }
   }
@@ -2664,12 +2664,12 @@ void CPlayer::pc_RequestChangeTaxRate(unsigned __int8 byTaxRate)
 
   if (rankingSystem->GetCurrentRaceBossSerial(raceCode, 5u) == this->m_dwObjSerial)
   {
-    if (byTaxRate >= 5u && byTaxRate <= 0x14u)
+    if (byTaxRate >= 5u && byTaxRate <= 20)
     {
       CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
       const unsigned int suggestedTime = taxRateManager->GetSuggestedTime(raceCode);
       const unsigned int now = GetKorLocalTime();
-      if (now - suggestedTime < 0x3Cu)
+      if (now - suggestedTime < 60)
       {
         errorCode = 2;
       }
@@ -2686,7 +2686,7 @@ void CPlayer::pc_RequestChangeTaxRate(unsigned __int8 byTaxRate)
 
   if (errorCode)
   {
-    this->SendMsg_ResultChangeTaxRate(errorCode, 0xFFu);
+    this->SendMsg_ResultChangeTaxRate(errorCode, 255);
   }
   else
   {

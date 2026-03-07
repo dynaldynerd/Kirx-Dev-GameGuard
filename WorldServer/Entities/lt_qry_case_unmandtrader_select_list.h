@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #pragma pack(push, 8)
@@ -48,6 +48,6 @@ struct _lt_qry_case_unmandtrader_select_list
 };
 
 static_assert(sizeof(_lt_qry_case_unmandtrader_select_list::__list) == 72);
-static_assert(sizeof(_lt_qry_case_unmandtrader_select_list) == 0x378);
+static_assert(sizeof(_lt_qry_case_unmandtrader_select_list) == 888);
 
 #pragma pack(pop)

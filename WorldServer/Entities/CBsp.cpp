@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CBsp.h"
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
@@ -456,6 +456,10 @@ void CBsp::FrameMoveEnvironment()
 
   auto *env = &___u21;
   int *state = reinterpret_cast<int *>(&dword_184A79A24);
+  auto advanceEnvironment = [&]() {
+    ++state;
+    env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+  };
   for (int i = 0; i < 2; ++i)
   {
     if (*state == 1)
@@ -463,7 +467,8 @@ void CBsp::FrameMoveEnvironment()
       CParticle *particle = env->mEnvParticle[0];
       if (!particle)
       {
-        goto NEXT_ENV;
+        advanceEnvironment();
+        continue;
       }
 
       D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
@@ -482,7 +487,7 @@ void CBsp::FrameMoveEnvironment()
         }
       }
 
-      if (_bittest(reinterpret_cast<const LONG *>(&particle->mFlag), 0x10u))
+      if (_bittest(reinterpret_cast<const LONG *>(&particle->mFlag), 16))
       {
         const float dayTime = CN_GetDayTime();
         if (dayTime > 0.24f && dayTime < 0.83f)
@@ -502,7 +507,8 @@ void CBsp::FrameMoveEnvironment()
 
       if (!particle->Loop())
       {
-        goto NEXT_ENV;
+        advanceEnvironment();
+        continue;
       }
 
       particle->SetStartBoxArea();
@@ -513,7 +519,8 @@ void CBsp::FrameMoveEnvironment()
       CParticle *particle = env->mEnvParticle[0];
       if (!particle)
       {
-        goto NEXT_ENV;
+        advanceEnvironment();
+        continue;
       }
 
       particle->mCreatePos[0] = camX;
@@ -534,16 +541,14 @@ void CBsp::FrameMoveEnvironment()
 
       if (!particle->Loop())
       {
-        goto NEXT_ENV;
+        advanceEnvironment();
+        continue;
       }
 
       particle->SetStartBoxArea();
       MatrixCopy(reinterpret_cast<float (*const)[4]>(particle->mRotMat), reinterpret_cast<float (*const)[4]>(rotMat));
     }
-
-  NEXT_ENV:
-    ++state;
-    env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
+    advanceEnvironment();
   }
 }
 
@@ -1232,7 +1237,7 @@ void CBsp::RenderEnvironment()
           env->mEnvParticle[0],
           reinterpret_cast<CEntity *>(env->mEnvEntity[0]->mStaticIndexedBuffer.m_lpIndexBuffer),
           reinterpret_cast<float (*)[4]>(identity),
-          0xFFFFFFFF);
+          -1);
       }
       ++state;
       env = reinterpret_cast<$1D4D54E2B5971D5BE0EAD557ED232A85 *>(reinterpret_cast<char *>(env) + 8);
@@ -1935,7 +1940,7 @@ float CBsp::GetFirstYpos(float *const a2, int a3)
     __int16 leafList[32000];
     int leafCount = 0;
 
-    GetLeafList(start, end, &leafCount, leafList, 0x7D00u);
+    GetLeafList(start, end, &leafCount, leafList, 32000);
 
     if (leafCount > 0)
     {
@@ -2007,7 +2012,7 @@ float CBsp::GetFirstYpos(float *const a2, __int16 *const a3, __int16 *const a4)
     __int16 leafList[32000];
     int leafCount = 0;
 
-    GetLeafList(start, end, &leafCount, leafList, 0x7D00u);
+    GetLeafList(start, end, &leafCount, leafList, 32000);
     if (leafCount > 0)
     {
         for (int i = 0; i < leafCount; ++i)
@@ -2331,7 +2336,7 @@ __int64 CBsp::GetLightFromPoint(float *const a2, int a3)
     __int16 leafList[1256];
     int leafCount = 0;
 
-    GetLeafList(start, end, &leafCount, leafList, 0x4E7u);
+    GetLeafList(start, end, &leafCount, leafList, 1255);
 
     float bestDist = 100000000.0f;
     int bestFace = -1;
@@ -2716,7 +2721,7 @@ __int64 CBsp::IsCollisionFace(float *const a2, float *const a3, float (*a4)[3], 
 {
     int leafCount = 0;
     __int16 leafIds[32000];
-    GetLeafList(a2, a3, &leafCount, leafIds, 0x7D00u);
+    GetLeafList(a2, a3, &leafCount, leafIds, 32000);
 
     float nearestDistance = 1.0e8f;
     bool foundCollision = false;
@@ -2811,15 +2816,15 @@ void CBsp::LoadBsp(char *a2)
     mTotalAllocSize = 0;
     ResetTotalVertexBufferInfo();
 
-    fread(&mBSPHeader, 0x2ACu, 1, stream);
+    fread(&mBSPHeader, 684, 1, stream);
     if (mBSPHeader.version != 39)
         Error(aBspAai, aAa);
 
     mLeafNum = mBSPHeader.Leaf.size / 25;
-    mNodeNum = mBSPHeader.Node.size / 0x18;
-    mCVertexNum = mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6 + mBSPHeader.FVertex.size / 0xC;
+    mNodeNum = mBSPHeader.Node.size / 24;
+    mCVertexNum = mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6 + mBSPHeader.FVertex.size / 12;
     mCFaceNum = mBSPHeader.Face.size / 6;
-    mObjectNum = mBSPHeader.Object.size / 0x58;
+    mObjectNum = mBSPHeader.Object.size / 88;
 
     mMatGroupNum = mBSPHeader.ReadMatGroup.size / 42;
 
@@ -2842,7 +2847,7 @@ void CBsp::LoadBsp(char *a2)
         collisionFaceSize + collisionFaceOffset + mBSPHeader.CPlanes.size + mBSPHeader.CFaceId.size + mBSPHeader.Node.size
         + mBSPHeader.Track.size +
         mBSPHeader.Leaf.size + mBSPHeader.LgtUV.size + mBSPHeader.MatListInLeaf.size + mBSPHeader.VertexColor.size +
-        361 * (mBSPHeader.Object.size / 0x58) +
+        361 * (mBSPHeader.Object.size / 88) +
         2 * (mObjectNum + 29 * mMapEntitiesListNum +
              43 * readMatGroupCount);
 
@@ -2879,7 +2884,7 @@ void CBsp::LoadBsp(char *a2)
     mObject = ByteOffsetPtr<_ANI_OBJECT>(mStaticAlloc, objectOffset);
     fread(readAniObjects, mBSPHeader.Object.size, 1, stream);
 
-    const unsigned int trackOffset = 361 * (mBSPHeader.Object.size / 0x58) + objectOffset;
+    const unsigned int trackOffset = 361 * (mBSPHeader.Object.size / 88) + objectOffset;
     unsigned char *trackData = mStaticAlloc + trackOffset;
     fread(trackData, mBSPHeader.Track.size, 1, stream);
 
@@ -2898,7 +2903,7 @@ void CBsp::LoadBsp(char *a2)
     fseek(stream, skippedReadSpareSize, 1);
 
     ConvAniObject(
-        static_cast<int>(mBSPHeader.Object.size / 0x58),
+        static_cast<int>(mBSPHeader.Object.size / 88),
         trackData,
         reinterpret_cast<_READ_ANI_OBJECT *>(readAniObjects),
         mObject);
@@ -2931,9 +2936,9 @@ void CBsp::LoadBsp(char *a2)
             char *entityName = &byte_184A79924[128 * envIndex];
             if (IsParticle(entityName))
                 mEnvIDPtr[0] |= 0x1000u;
-            if (_bittest(reinterpret_cast<const LONG *>(mEnvIDPtr), 0xCu))
+            if (_bittest(reinterpret_cast<const LONG *>(mEnvIDPtr), 12))
             {
-                CParticle *particleStorage = reinterpret_cast<CParticle *>(operator new(0x490ull));
+                CParticle *particleStorage = reinterpret_cast<CParticle *>(operator new(1168));
                 CParticle *particle = particleStorage ? new (particleStorage) CParticle() : nullptr;
                 ___u21.mEnvEntity[envIndex] = reinterpret_cast<CEntity *>(particle);
                 if (particle && particle->LoadParticleSPT(entityName, 0))
@@ -2955,7 +2960,7 @@ void CBsp::LoadBsp(char *a2)
             }
             else
             {
-                CEntity *entityStorage = reinterpret_cast<CEntity *>(operator new(0xF4ull));
+                CEntity *entityStorage = reinterpret_cast<CEntity *>(operator new(244));
                 CEntity *entity = entityStorage ? new (entityStorage) CEntity() : nullptr;
                 ___u21.mEnvEntity[envIndex] = entity;
                 if (entity && !entity->LoadEntity(entityName, 0))
@@ -2989,7 +2994,7 @@ void CBsp::LoadExtBsp(char *a2)
     if (!fp)
         return;
 
-    fread(&mExtBSPHeader, 0x184u, 1, fp);
+    fread(&mExtBSPHeader, 388, 1, fp);
     if (mExtBSPHeader.version != 20)
     {
         Warning(aEbpAai, aAa);
@@ -2999,16 +3004,16 @@ void CBsp::LoadExtBsp(char *a2)
     unsigned int cfVertexSize = mExtBSPHeader.CFVertex.size;
     unsigned int entityListSize = mExtBSPHeader.EntityList.size;
     mCFLineNum = mExtBSPHeader.CFLine.size >> 4;
-    mCFVertexNum = cfVertexSize / 0xC;
+    mCFVertexNum = cfVertexSize / 12;
     mCFLineIdNum = mExtBSPHeader.CFLineId.size >> 1;
     mLeafSoundEntityListNum = mExtBSPHeader.LeafSoundEntityList.size >> 2;
-    mEntityListNum = entityListSize / 0x54;
+    mEntityListNum = entityListSize / 84;
     mEntityIDNum = mExtBSPHeader.EntityID.size >> 1;
     mLeafEntityListNum = mExtBSPHeader.LeafEntityList.size / 6;
     mSoundEntityIDNum = mExtBSPHeader.SoundEntityID.size >> 1;
-    mMapEntitiesListNum = mExtBSPHeader.MapEntitiesList.size / 0x26;
+    mMapEntitiesListNum = mExtBSPHeader.MapEntitiesList.size / 38;
     mSoundEntityListNum = mExtBSPHeader.SoundEntityList.size >> 6;
-    mSoundEntitiesListNum = mExtBSPHeader.SoundEntitiesList.size / 0x38;
+    mSoundEntitiesListNum = mExtBSPHeader.SoundEntitiesList.size / 56;
 
     if (mLeafSoundEntityListNum && mLeafSoundEntityListNum != mLeafNum)
     {
@@ -3087,7 +3092,7 @@ void CBsp::LoadExtBsp(char *a2)
     ReadDynamicDataExtBsp(fp);
     fclose(fp);
 
-    mEntityCacheSize = mExtBSPHeader.MapEntitiesList.size / 0x130 + 1;
+    mEntityCacheSize = mExtBSPHeader.MapEntitiesList.size / 304 + 1;
     mEntityCache = static_cast<unsigned char *>(Dmalloc(mEntityCacheSize));
     mTotalAllocSize += mEntityCacheSize;
 
@@ -3137,7 +3142,7 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
     int leafCount = 0;
     __int16 leafIds[32000];
     int visitedLineIds[10000];
-    GetLeafList(a2, a3, &leafCount, leafIds, 0x7D00u);
+    GetLeafList(a2, a3, &leafCount, leafIds, 32000);
 
     if (mCFLineNum < 2)
     {
@@ -3329,7 +3334,7 @@ void CBsp::LoadEnvironment()
                 envID[0] |= 0x1000u;
             }
 
-            if (_bittest(reinterpret_cast<const LONG *>(envID), 0xCu))
+            if (_bittest(reinterpret_cast<const LONG *>(envID), 12))
             {
                 CParticle *particle = new CParticle();
                 env->mEnvEntity[0] = reinterpret_cast<CEntity *>(particle);
@@ -3456,7 +3461,7 @@ void CBsp::OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], s
     unsigned int static_v_cnt = 0;
     _R3MATERIAL *mat = GetMainMaterial();
 
-    int matGroupCount = static_cast<int>(mBSPHeader.ReadMatGroup.size / 0x2A);
+    int matGroupCount = static_cast<int>(mBSPHeader.ReadMatGroup.size / 42);
     for (int i = 0; i < matGroupCount; ++i)
     {
         _BSP_READ_M_GROUP &mGroup = pRM[i];
@@ -3583,7 +3588,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
     fread(fvertex, mBSPHeader.FVertex.size, 1, Stream);
     ptr += mBSPHeader.FVertex.size;
 
-    int v_normal_size = 12 * (mBSPHeader.FVertex.size / 0xC + mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6);
+    int v_normal_size = 12 * (mBSPHeader.FVertex.size / 12 + mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6);
     float *v_normal = static_cast<float *>(Dmalloc(v_normal_size));
     memset_0(v_normal, 0, v_normal_size);
 
@@ -3637,7 +3642,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
     int st_num = 0;
     int vp_state = 2;
     int st_num_acc = 0;
-    int matGroupCount = static_cast<int>(mBSPHeader.ReadMatGroup.size / 0x2A);
+    int matGroupCount = static_cast<int>(mBSPHeader.ReadMatGroup.size / 42);
 
     if (matGroupCount > 0)
     {
@@ -3659,12 +3664,12 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
             static_vertexnum += group_v_num;
             static_trinum += group_tri_num;
 
-            if (static_vertexnum > 0xFFFF)
+            if (static_vertexnum > 65535)
             {
                 static_vertexnum -= old_v_num;
                 mVBVertexNum[mStaticVBCnt++] = old_v_num;
                 old_v_num = 0;
-                if (mStaticVBCnt >= 0x50)
+                if (mStaticVBCnt >= 80)
                     Error(aMaxVbCnt, byte_140883769);
             }
 
@@ -3703,7 +3708,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
     unsigned int prevVBSize = GetTotalVertexBufferSize();
     for (int i = 0; i < static_cast<int>(mStaticVBCnt); ++i)
-        mStaticVertexBuffer[i].InitVertexBuffer(44 * mVBVertexNum[i], vp_state, 0x252u);
+        mStaticVertexBuffer[i].InitVertexBuffer(44 * mVBVertexNum[i], vp_state, 594);
     mStaticIndexedBuffer.InitIndexBuffer(6 * static_trinum, 2);
     mVertexBufferSize = GetTotalVertexBufferSize() - prevVBSize;
 
@@ -3774,7 +3779,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
                 GetObjectMatrix(reinterpret_cast<float (*)[4]>(w_matrix), mMatGroup[i].ObjectId, mObject, 0.0);
             }
 
-            unsigned int m_ARGB = 0xFFFFFFFFu;
+            unsigned int m_ARGB = -1;
             if (group.mtl_id != -1)
                 m_ARGB = MainMaterial[group.mtl_id].m_Layer[0].m_ARGB;
 
@@ -4322,7 +4327,7 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                 mMapEntitiesList[listIdx].Particle = nullptr;
                 if (mEntityList[mMapEntitiesList[listIdx].ID].IsParticle)
                 {
-                    CParticle *p = reinterpret_cast<CParticle *>(operator new(0x490uLL));
+                    CParticle *p = reinterpret_cast<CParticle *>(operator new(1168));
                     CParticle *inst = p ? new (p) CParticle() : nullptr;
                     mMapEntitiesList[listIdx].Particle = inst;
                     memcpy_0(inst, &mParticle[mMapEntitiesList[listIdx].ID], sizeof(CParticle));
@@ -4508,7 +4513,7 @@ void CBsp::DrawDynamicLightSub(float *const a2, float *const a3)
 {
     int leafCount = 0;
     __int16 leafList[256]{};
-    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 0x80u);
+    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 128);
 
     int vertexCount = 0;
     unsigned int uniqueFaceCount = 0;
@@ -4637,7 +4642,7 @@ void CBsp::DrawMagicLightSub(float *const a2, float *const a3)
 
     int leafCount = 0;
     __int16 leafList[256]{};
-    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 0x100u);
+    GetFastLeafListFromBBox(a2, a3, &leafCount, leafList, 256);
 
     int vertexCount = 0;
     unsigned int uniqueFaceCount = 0;
@@ -4673,7 +4678,7 @@ void CBsp::DrawMagicLightSub(float *const a2, float *const a3)
                 continue;
             }
 
-            if (uniqueFaceCount > 0xBB7)
+            if (uniqueFaceCount > 2999)
             {
                 uniqueFaceCount = 2999;
                 vertexCursor = 2999;
@@ -4760,14 +4765,14 @@ void CBsp::DrawShadowRender(float *const a2, float *a3, float *a4)
         const float halfY = (a4[1] - a3[1]) * 0.5f;
         a2[1] = originalY - halfY;
         checkPos[1] = originalY + halfY;
-        GetFastLeafListFromBBox(a3, a4, &leafCount, leafList, 0x100u);
+        GetFastLeafListFromBBox(a3, a4, &leafCount, leafList, 256);
         yRange = a4[1] - a3[1];
     }
     else
     {
         checkPos[1] = originalY + 11.0f;
         a2[1] = originalY - 11.0f;
-        GetLeafList(a2, checkPos, &leafCount, leafList, 0x100u);
+        GetLeafList(a2, checkPos, &leafCount, leafList, 256);
         yRange = 22.0f;
     }
 
@@ -4956,7 +4961,7 @@ __int64 CBsp::IsCollisionFromPath(float *const a2, float *const a3)
 
     int leafCount = 0;
     __int16 leafList[32000]{};
-    GetLeafList(a2, a3, &leafCount, leafList, 0x7D00u);
+    GetLeafList(a2, a3, &leafCount, leafList, 32000);
 
     __int64 result = 0;
     if (mCFLineNum >= 2 && leafCount > 0)
@@ -5345,7 +5350,7 @@ void CBsp::DrawCollisionPoly()
     IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
     d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
 
-    const unsigned int backColor = 0x7F000000u;
+    const unsigned int backColor = 2130706432;
     const unsigned int frontColors[3] = {0x5F00FF9Fu, 0x7C6FFFBFu, 0x5F028F7Fu};
     const unsigned int selectedFrontColors[3] = {0x5FFF009Fu, 0x7CFF6FBFu, 0x5F8F027Fu};
     const unsigned int freezeFrontColors[3] = {0x5F00FFFFu, 0x7C00FFFFu, 0x5F00FFFFu};
@@ -5456,7 +5461,7 @@ void CBsp::DrawLeafCollisionPoly(__int16 a2)
     IDirect3DDevice8 *const d3dDevice = GetD3dDevice();
     d3dDevice->SetTransform(d3dDevice, static_cast<_D3DTRANSFORMSTATETYPE>(256), reinterpret_cast<const _D3DMATRIX *>(world));
 
-    const unsigned int backColor = 0x7F000000u;
+    const unsigned int backColor = 2130706432;
     const unsigned int frontColors[3] = {0x5F00FF9Fu, 0x7C6FFFBFu, 0x5F028F7Fu};
     const unsigned int selectedFrontColors[3] = {0x5FFF009Fu, 0x7CFF6FBFu, 0x5F8F027Fu};
 
@@ -5559,7 +5564,7 @@ void CBsp::DrawLeafBBox()
     d3dDevice->SetTexture(d3dDevice, 0, nullptr);
 
     int count = 0;
-    const unsigned int defaultColor = 0x80FF4F00u;
+    const unsigned int defaultColor = 2164215552;
     for (int i = 1; i < static_cast<int>(mLeafNum); ++i)
     {
         unsigned int color = defaultColor;
@@ -5619,7 +5624,7 @@ void CBsp::DrawMatBBox()
     d3dDevice->SetTexture(d3dDevice, 0, nullptr);
 
     int count = 0;
-    const unsigned int color = 0x80FF4F00u;
+    const unsigned int color = 2164215552;
     for (int i = 1; i < static_cast<int>(mMatGroupNum); ++i)
     {
         const float minX = mMatGroup[i].BBMin[0];

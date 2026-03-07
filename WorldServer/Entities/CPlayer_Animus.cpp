@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -526,86 +526,82 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
       }
       else
       {
-        if (wReplaceSerial != 0xFFFF)
+        if (wReplaceSerial != 65535)
         {
           replaceItem = targetStorage->GetPtrFromSerial(wReplaceSerial);
           if (!replaceItem || replaceItem->m_byTableCode != 24)
           {
             resultCode = 2;
-            goto SEND_ANIMUS_CHANGE_RESULT;
           }
-          if (replaceItem->m_bLock)
+          else if (replaceItem->m_bLock)
           {
             resultCode = 11;
-            goto SEND_ANIMUS_CHANGE_RESULT;
           }
-          if (replaceItem->m_wItemIndex != sourceItem->m_wItemIndex)
+          else if (replaceItem->m_wItemIndex != sourceItem->m_wItemIndex)
           {
             resultCode = 3;
-            goto SEND_ANIMUS_CHANGE_RESULT;
           }
-          if (replaceItem == this->m_pRecalledAnimusItem)
+          else if (replaceItem == this->m_pRecalledAnimusItem)
           {
             resultCode = 6;
-            goto SEND_ANIMUS_CHANGE_RESULT;
           }
         }
-        if (wReplaceSerial == 0xFFFF && targetStorage->GetIndexEmptyCon() == 255)
+        if (!resultCode && wReplaceSerial == 0xFFFF && targetStorage->GetIndexEmptyCon() == 255)
         {
           resultCode = 5;
         }
-        else if (wReplaceSerial == 0xFFFF && !pItem->byStorageCode)
+        else if (!resultCode && wReplaceSerial == 0xFFFF && !pItem->byStorageCode)
         {
           record = g_Main.m_tblItemData[24].GetRecord(sourceItem->m_wItemIndex);
           if (!record)
           {
             resultCode = 8;
-            goto SEND_ANIMUS_CHANGE_RESULT;
-          }
-
-          bool canDuplicate = false;
-          if (reinterpret_cast<_AnimusItem_fld *>(record)->m_nAnimusType == 1)
-          {
-            if (this->m_Param.m_pClassHistory[0] && this->m_Param.m_pClassHistory[0]->m_nClass == 3)
-            {
-              canDuplicate = this->m_Param.m_pClassData->m_nClass == 3;
-            }
           }
           else
           {
-            for (int index = 0; index < 4; ++index)
+            bool canDuplicate = false;
+            if (reinterpret_cast<_AnimusItem_fld *>(record)->m_nAnimusType == 1)
             {
-              _class_fld *historyClass = *this->m_Param.m_ppHistoryEffect[index];
-              if (!historyClass)
+              if (this->m_Param.m_pClassHistory[0] && this->m_Param.m_pClassHistory[0]->m_nClass == 3)
               {
-                break;
-              }
-              if (historyClass->m_bAnimusUsable)
-              {
-                canDuplicate = true;
-                break;
+                canDuplicate = this->m_Param.m_pClassData->m_nClass == 3;
               }
             }
-          }
-
-          if (this->m_bFreeSFByClass)
-          {
-            canDuplicate = true;
-          }
-
-          if (!canDuplicate)
-          {
-            resultCode = 7;
-            goto SEND_ANIMUS_CHANGE_RESULT;
-          }
-
-          for (int index = 0; index < targetStorage->m_nUsedNum; ++index)
-          {
-            _STORAGE_LIST::_db_con *item = &targetStorage->m_pStorageList[index];
-            if (item->m_bLoad && item->m_wItemIndex == sourceItem->m_wItemIndex)
+            else
             {
-              resultCode = 4;
-              goto SEND_ANIMUS_CHANGE_RESULT;
+              for (int index = 0; index < 4; ++index)
+              {
+                _class_fld *historyClass = *this->m_Param.m_ppHistoryEffect[index];
+                if (!historyClass)
+                {
+                  break;
+                }
+                if (historyClass->m_bAnimusUsable)
+                {
+                  canDuplicate = true;
+                  break;
+                }
+              }
+            }
+
+            if (this->m_bFreeSFByClass)
+            {
+              canDuplicate = true;
+            }
+
+            if (!canDuplicate)
+            {
+              resultCode = 7;
+            }
+
+            for (int index = 0; !resultCode && index < targetStorage->m_nUsedNum; ++index)
+            {
+              _STORAGE_LIST::_db_con *item = &targetStorage->m_pStorageList[index];
+              if (item->m_bLoad && item->m_wItemIndex == sourceItem->m_wItemIndex)
+              {
+                resultCode = 4;
+                break;
+              }
             }
           }
         }
@@ -621,7 +617,6 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
     resultCode = 1;
   }
 
-SEND_ANIMUS_CHANGE_RESULT:
   if (!resultCode)
   {
     _STORAGE_LIST::_db_con sourceBackup;
@@ -633,7 +628,7 @@ SEND_ANIMUS_CHANGE_RESULT:
           false,
           "CPlayer::pc_AnimusInvenChange() -- 0"))
     {
-      this->SendMsg_AnimusInvenChange(0xFFu);
+      this->SendMsg_AnimusInvenChange(255);
       return;
     }
 
@@ -644,7 +639,7 @@ SEND_ANIMUS_CHANGE_RESULT:
       if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
       {
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(0xFFu);
+        this->SendMsg_AnimusInvenChange(255);
         return;
       }
       if (!this->Emb_DelStorage(
@@ -661,7 +656,7 @@ SEND_ANIMUS_CHANGE_RESULT:
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(0xFFu);
+        this->SendMsg_AnimusInvenChange(255);
         return;
       }
     }
@@ -680,14 +675,14 @@ SEND_ANIMUS_CHANGE_RESULT:
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(0xFFu);
+        this->SendMsg_AnimusInvenChange(255);
         return;
       }
     }
     else if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
     {
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_AnimusInvenChange(0xFFu);
+      this->SendMsg_AnimusInvenChange(255);
       return;
     }
     this->Emb_EquipLink();
@@ -928,7 +923,7 @@ void CPlayer::pc_AnimusReturnRequest()
 
   if (ret)
   {
-    this->SendMsg_AnimusReturnResult(ret, 0xFFFFu, 0);
+    this->SendMsg_AnimusReturnResult(ret, 65535, 0);
   }
   else
   {

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "GlobalObjectDefs.h"
@@ -2447,12 +2447,12 @@ struct  _guild_battle_suggest_matter
 {
   enum STATE : __int32
   {
-    WAIT_BATTLE_REQUEST = 0x0,
-    BATTLE_REQUEST_SUGGEST = 0x1,
-    COMPLETE_REQUEST = 0x2,
-    APPLY_BATTLE_REQUEST_SUGGEST = 0x3,
-    COMPLETE_BATTLE_REQUEST = 0x4,
-    STATE_MAX = 0x5,
+    WAIT_BATTLE_REQUEST = 0,
+    BATTLE_REQUEST_SUGGEST = 1,
+    COMPLETE_REQUEST = 2,
+    APPLY_BATTLE_REQUEST_SUGGEST = 3,
+    COMPLETE_BATTLE_REQUEST = 4,
+    STATE_MAX = 5,
   };
 
   STATE eState;
@@ -2501,7 +2501,7 @@ struct  _guild_member_info
   bool IsFill();
 };
 #pragma pack(pop)
-static_assert(sizeof(_guild_member_info) == 0x30, "_guild_member_info size must match IDA (0x30)");
+static_assert(sizeof(_guild_member_info) == 48, "_guild_member_info size must match IDA (48)");
 static_assert(alignof(_guild_member_info) == 8, "_guild_member_info alignment must match IDA (8)");
 
 /* 1690 */
@@ -2895,7 +2895,7 @@ struct  _guild_applier_info
   bool IsFill();
 };
 #pragma pack(pop)
-static_assert(sizeof(_guild_applier_info) == 0x10, "_guild_applier_info size must match IDA (0x10)");
+static_assert(sizeof(_guild_applier_info) == 16, "_guild_applier_info size must match IDA (16)");
 static_assert(alignof(_guild_applier_info) == 8, "_guild_applier_info alignment must match IDA (8)");
 
 /* 1724 */
@@ -3004,9 +3004,9 @@ struct  _dh_mission_setup
 /* 407 */
 enum __bitmask OBJ_DEF_TYPE : __int32
 {
-  react_kind_item = 0x1,
-  react_kind_monster = 0x2,
-  react_kind_mgrp = 0x4,
+  react_kind_item = 1,
+  react_kind_monster = 2,
+  react_kind_mgrp = 4,
 };
 
 /* 1613 */
@@ -3052,9 +3052,9 @@ struct  _react_obj
 /* 408 */
 enum __bitmask AREA_DEF_TYPE : __int32
 {
-  at_dummy = 0x1,
-  at_block = 0x2,
-  at_var = 0x4,
+  at_dummy = 1,
+  at_block = 2,
+  at_var = 4,
 };
 
 /* 1618 */
@@ -3573,8 +3573,8 @@ struct  __add_time
 /* 409 */
 enum EM_DH_EVENT : __int32
 {
-  dh_event_take = 0x0,
-  dh_event_hunt = 0x1,
+  dh_event_take = 0,
+  dh_event_hunt = 1,
 };
 
 /* 1628 */

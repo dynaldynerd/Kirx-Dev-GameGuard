@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CLuaSignalReActor.h"
 #include "CLuaScriptMgr.h"
@@ -104,7 +104,7 @@ bool CLuaSignalReActor::AddAction(
   const char *strName)
 {
 
-  if (bySignalCode == 0xFF)
+  if (bySignalCode == 255)
   {
     return false;
   }

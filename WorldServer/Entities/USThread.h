@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 
@@ -131,7 +131,7 @@ namespace US
     {
       return false;
     }
-    WaitForSingleObject(m_hStartupEvent, 0xFFFFFFFF);
+    WaitForSingleObject(m_hStartupEvent, -1);
     return true;
   }
 

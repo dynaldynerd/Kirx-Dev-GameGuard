@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
@@ -383,12 +383,12 @@ __int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
   {
     if (g_PotionMgr.IsPotionDelayUseIndex(potionIndex))
     {
-      sprintf_s(source, 0x80uLL, "PD%d,", potionIndex);
+      sprintf_s(source, 128, "PD%d,", potionIndex);
       strcat_s(query, source);
     }
   }
   query[strlen_0(query) - 1] = ' ';
-  sprintf_s(source, 0x80uLL, "from tbl_potion_delay where serial=%u", dwSerial);
+  sprintf_s(source, 128, "from tbl_potion_delay where serial=%u", dwSerial);
   strcat_s(query, source);
   if (this->m_bSaveDBLog)
   {
@@ -579,9 +579,9 @@ __int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
       {
         sqlRet = SQLGetData(this->m_hStmtSelect, killerIndex + 8, 4, &kInfo->dwKillerSerial[killerIndex], 0, &indicator);
       }
-      sqlRet = SQLGetData(this->m_hStmtSelect, 0x12u, 65530, &kInfo->byContHaveCash, 0, &indicator);
-      sqlRet = SQLGetData(this->m_hStmtSelect, 0x13u, 65530, &kInfo->byContLoseCash, 0, &indicator);
-      sqlRet = SQLGetData(this->m_hStmtSelect, 0x14u, 65529, &kInfo->bRaceWarRecvr, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 18, 65530, &kInfo->byContHaveCash, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 19, 65530, &kInfo->byContLoseCash, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 20, 65529, &kInfo->bRaceWarRecvr, 0, &indicator);
 
       updatedTm.tm_year = dateFields[0] - 1900;
       updatedTm.tm_mon = dateFields[1] - 1;
@@ -743,7 +743,7 @@ bool CRFWorldDatabase::Insert_OreCutting(unsigned int dwSerial)
   char Buffer[80]; // [rsp+30h] [rbp-68h] BYREF
 
   memset(Buffer, 0, 64);
-  sprintf_s(Buffer, 0x40uLL, "{ CALL pInsert_OreCutting( %d ) }", dwSerial);
+  sprintf_s(Buffer, 64, "{ CALL pInsert_OreCutting( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -752,7 +752,7 @@ bool CRFWorldDatabase::Insert_PcBangFavorItem(unsigned int dwSerial)
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
 
   memset(Buffer, 0, 1024);
-  sprintf_s(Buffer, 0x400uLL, "{ CALL pInsert_PcbangItem( %d ) }", dwSerial);
+  sprintf_s(Buffer, 1024, "{ CALL pInsert_PcbangItem( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -761,7 +761,7 @@ bool CRFWorldDatabase::Insert_PotionDelay(unsigned int dwSerial)
   char Buffer[80]; // [rsp+30h] [rbp-68h] BYREF
 
   memset(Buffer, 0, 64);
-  sprintf_s(Buffer, 0x40uLL, "{ CALL pInsert_potiondelay( %d ) }", dwSerial);
+  sprintf_s(Buffer, 64, "{ CALL pInsert_potiondelay( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -1208,7 +1208,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     "update tbl_general set GuildRank = rank.NewRank\tfrom ( select serial, NewRank from #tbl_RankInGuildAll ) as rank where tbl_general.serial = rank.serial",
     false);
 
-  memset_0(gradeRows, 0, 0x258u);
+  memset_0(gradeRows, 0, 600);
   sprintf(buffer, "select serial, Grade from #tbl_RankInGuildCom order by Grade");
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
@@ -1481,7 +1481,7 @@ bool CRFWorldDatabase::Update_DisappearOwnerRecord()
   char Buffer[1040]{};
   sprintf_s(
     Buffer,
-    0x400u,
+    1024,
     "update [dbo].[tbl_PostStorage] set [dbo].[tbl_PostStorage].dck=1 from (select p.serial from [dbo].[tbl_PostStorage] "
     "as p join [dbo].[tbl_base] as b on p.owner <> 0 and p.owner = b.serial and b.dck=1) as d where [dbo].[tbl_PostStorag"
     "e].serial = d.serial");
@@ -1495,7 +1495,7 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
   char Buffer[148]{};
   unsigned int TargetValue[4]{};
 
-  sprintf_s(Buffer, 0x80u, "select count(serial) from tbl_PostStorage where dck=1");
+  sprintf_s(Buffer, 128, "select count(serial) from tbl_PostStorage where dck=1");
   if (m_bSaveDBLog)
   {
     Log(Buffer);
@@ -1534,13 +1534,13 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
       unsigned int result = 0;
       if (ret == 100)
       {
-        result = 0xFFFFFFFCu;
+        result = 4294967292;
       }
       else
       {
         ErrorMsgLog(ret, Buffer, "SQLFetch", m_hStmtSelect);
         ErrorAction(ret, m_hStmtSelect);
-        result = 0xFFFFFFFBu;
+        result = 4294967291;
       }
       if (m_hStmtSelect)
       {
@@ -1550,16 +1550,16 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
     }
     if (ret == 100)
     {
-      return 0xFFFFFFFEu;
+      return -2;
     }
 
     ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
-    return 0xFFFFFFFDu;
+    return 4294967293;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CPostData *pPostData)
@@ -1573,7 +1573,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
   int pl_nKey[8]{};
   unsigned char stateBuffer[28]{};
 
-  sprintf_s(Buffer, 0x40u, "select * from tbl_PostRegistry where dck=0");
+  sprintf_s(Buffer, 64, "select * from tbl_PostRegistry where dck=0");
   if (m_bSaveDBLog)
   {
     Log(Buffer);
@@ -1633,13 +1633,13 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
             &StrLen_or_IndPtr);
           ret = SQLGetData(m_hStmtSelect, 8u, 4, pl_nKey, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(m_hStmtSelect, 9u, 65511, &pPostData[TargetValue[0]].m_dwDur, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xAu, 4, &pPostData[TargetValue[0]].m_dwUpt, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xBu, 4, &pPostData[TargetValue[0]].m_dwGold, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xCu, 5, sendRaceBuffer, 0, &StrLen_or_IndPtr);
-          ret = SQLGetData(m_hStmtSelect, 0xDu, 5, senderDgrBuffer, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 10, 4, &pPostData[TargetValue[0]].m_dwUpt, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 11, 4, &pPostData[TargetValue[0]].m_dwGold, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 12, 5, sendRaceBuffer, 0, &StrLen_or_IndPtr);
+          ret = SQLGetData(m_hStmtSelect, 13, 5, senderDgrBuffer, 0, &StrLen_or_IndPtr);
           ret = SQLGetData(
             m_hStmtSelect,
-            0xEu,
+            14,
             65511,
             &pPostData[TargetValue[0]].m_lnUID,
             0,
@@ -1679,7 +1679,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
 char CRFWorldDatabase::Insert_PSDefaultRecord(unsigned int dwCum)
 {
   char Buffer[68]{};
-  sprintf_s(Buffer, 0x40u, "{ CALL pInsert_PostStorageRecord }");
+  sprintf_s(Buffer, 64, "{ CALL pInsert_PostStorageRecord }");
   for (unsigned int j = 0; j < dwCum; ++j)
   {
     if (!ExecUpdateQuery(Buffer, 1))
@@ -1810,7 +1810,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfoCnt(unsigned int *pd
   SQLRETURN ret = 0;
   char Buffer[260]{};
 
-  sprintf_s(Buffer, 0x100u, "select count([id]) from [dbo].[tbl_utresultstateid]");
+  sprintf_s(Buffer, 256, "select count([id]) from [dbo].[tbl_utresultstateid]");
   if (m_bSaveDBLog)
   {
     Log(Buffer);
@@ -2020,13 +2020,13 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
       unsigned int result = 0;
       if (ret == 100)
       {
-        result = 0xFFFFFFFCu;
+        result = 4294967292;
       }
       else
       {
         ErrorMsgLog(ret, Buffer, "SQLFetch", m_hStmtSelect);
         ErrorAction(ret, m_hStmtSelect);
-        result = 0xFFFFFFFBu;
+        result = 4294967291;
       }
       if (m_hStmtSelect)
       {
@@ -2037,16 +2037,16 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
 
     if (ret == 100)
     {
-      return 0xFFFFFFFEu;
+      return -2;
     }
 
     ErrorMsgLog(ret, Buffer, "SQLExecDirectA", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
-    return 0xFFFFFFFDu;
+    return 4294967293;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 __int64 CRFWorldDatabase::select_atrade_taxrate(
@@ -2714,7 +2714,7 @@ char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
         ret = SQLGetData(this->m_hStmtSelect, 3u, 65530, &pInfo->info[count].byRoomType, 0, &strLen);
         ret = SQLGetData(this->m_hStmtSelect, 4u, 65530, &pInfo->info[count].byRace, 0, &strLen);
         ret = SQLGetData(this->m_hStmtSelect, 5u, 93, &pInfo->info[count++].ts, 0, &strLen);
-        if (count >= 0x5Au)
+        if (count >= 90)
         {
           break;
         }
@@ -2753,7 +2753,7 @@ char CRFWorldDatabase::Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum)
   SQLRETURN ret = 0;
 
   memset(query, 0, 128);
-  sprintf_s(query, 0x80uLL, "select count(serial) from tbl_StoreLimitItem_061212 where dck=0");
+  sprintf_s(query, 128, "select count(serial) from tbl_StoreLimitItem_061212 where dck=0");
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -2829,7 +2829,7 @@ char CRFWorldDatabase::Select_TotalRecordNum(unsigned int *pdwTotalNum)
   SQLRETURN ret = 0;
 
   memset(query, 0, 128);
-  sprintf_s(query, 0x80uLL, "select count(serial) from tbl_StoreLimitItem_061212");
+  sprintf_s(query, 128, "select count(serial) from tbl_StoreLimitItem_061212");
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -2912,7 +2912,7 @@ unsigned __int8 CRFWorldDatabase::Select_StoreLimitItem(_qry_case_all_store_limi
   memset(query, 0, 512);
   sprintf_s(
     query,
-    0x200uLL,
+    512,
     "select k0,k1,k2,k3,k4,k5,k6,k7,k8,k9,k10,k11,k12,k13,k14,k15,num0,num1,num2,num3,num4,num5,num6,num7,num8,num9,num10"
     ",num11,num12,num13,num14,num15,serial,type,typeserial,storeinx,resettime from tbl_StoreLimitItem_061212 where dck=0");
 
@@ -3404,7 +3404,7 @@ char CRFWorldDatabase::SelectGuildBattleRerservedList(
         SQLGetData(m_hStmtSelect, 9u, 65530, &pkInfo->list[count].byEndHour, 0, &strLenOrInd);
         SQLGetData(m_hStmtSelect, 10u, 65530, &pkInfo->list[count++].byEndMin, 0, &strLenOrInd);
       }
-      while (count < 0x2E);
+      while (count < 46);
 
       pkInfo->wCount = count;
       if (m_hStmtSelect)
@@ -3545,7 +3545,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 0xFFFFFFFA;
+          return 4294967290;
         }
 
         if (m_hStmtSelect)
@@ -3579,16 +3579,16 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
     }
     if (ret == 100)
     {
-      return 0xFFFFFFFE;
+      return -2;
     }
 
     ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
-    return 0xFFFFFFFD;
+    return 4294967293;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return static_cast<__int64>(0xFFFFFFFF);
+  return static_cast<__int64>(-1);
 }
 
 __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
@@ -3618,7 +3618,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 0xFFFFFFFB;
+          return 4294967291;
         }
 
         if (m_hStmtSelect)
@@ -3652,7 +3652,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
     }
     if (ret == 100)
     {
-      return 0xFFFFFFFE;
+      return -2;
     }
 
     ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
@@ -3661,7 +3661,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return static_cast<__int64>(0xFFFFFFFF);
+  return static_cast<__int64>(-1);
 }
 
 char CRFWorldDatabase::LoadGuildBattleInfo(
@@ -3860,7 +3860,7 @@ char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
   {
     return 0;
   }
-  if (uiDayCnt > 0x1E || byMaxHour > 0x18u)
+  if (uiDayCnt > 0x1E || byMaxHour > 24)
   {
     return 0;
   }
@@ -4332,7 +4332,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostContent(unsigned int dwPostSerial,
   SQLRETURN sqlRet = SQL_ERROR;
   char query[132]{};
 
-  sprintf_s(query, 0x80uLL, "select content from tbl_PostStorage where serial=%d", dwPostSerial);
+  sprintf_s(query, 128, "select content from tbl_PostStorage where serial=%d", dwPostSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -4410,7 +4410,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostStorageList(unsigned int dwOwner,
   pListData->dwCount = 0;
   sprintf_s(
     query,
-    0x200uLL,
+    512,
     "select top %d postinx,serial,poststate,sendname,title,k,d,u,gold,uid,sindex from tbl_PostStorage where owner=%d and "
     "poststate<%d and dck=0",
     50,
@@ -4446,8 +4446,8 @@ unsigned __int8 CRFWorldDatabase::Select_PostStorageList(unsigned int dwOwner,
       sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 65511, &pListData->List[pListData->dwCount].dwDur, 0, &indicator);
       sqlRet = SQLGetData(this->m_hStmtSelect, 8u, 4, &pListData->List[pListData->dwCount].dwUpt, 0, &indicator);
       sqlRet = SQLGetData(this->m_hStmtSelect, 9u, 65518, &pListData->List[pListData->dwCount].dwGold, 0, &indicator);
-      sqlRet = SQLGetData(this->m_hStmtSelect, 0xAu, 65511, &pListData->List[pListData->dwCount].lnUID, 0, &indicator);
-      sqlRet = SQLGetData(this->m_hStmtSelect, 0xBu, 5, &pListData->List[pListData->dwCount].wStorageIndex, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 10, 65511, &pListData->List[pListData->dwCount].lnUID, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 11, 5, &pListData->List[pListData->dwCount].wStorageIndex, 0, &indicator);
       ++pListData->dwCount;
     }
 
@@ -4637,7 +4637,7 @@ unsigned __int8 CRFWorldDatabase::Select_ReturnPost(unsigned int dwMax,
   pRetData->bContinue = 0;
   sprintf_s(
     query,
-    0x200uLL,
+    512,
     "select count(serial) from tbl_PostStorage where owner=%d and poststate=%d and dck=0",
     dwMasterSerial,
     100);
@@ -4682,7 +4682,7 @@ unsigned __int8 CRFWorldDatabase::Select_ReturnPost(unsigned int dwMax,
       {
         sprintf_s(
           query,
-          0x200uLL,
+          512,
           "select top %d serial,poststate,recvname,title,content,k,d,u,gold,err,uid from tbl_PostStorage where owner=%d a"
           "nd poststate=%d and dck=0",
           dwMax,
@@ -4727,8 +4727,8 @@ unsigned __int8 CRFWorldDatabase::Select_ReturnPost(unsigned int dwMax,
           sqlRet = SQLGetData(this->m_hStmtSelect, 7u, 65511, &pRetData->List[pRetData->dwCount].dwDur, 0, &indicator);
           sqlRet = SQLGetData(this->m_hStmtSelect, 8u, 65518, &pRetData->List[pRetData->dwCount].dwUpt, 0, &indicator);
           sqlRet = SQLGetData(this->m_hStmtSelect, 9u, 65518, &pRetData->List[pRetData->dwCount].dwGold, 0, &indicator);
-          sqlRet = SQLGetData(this->m_hStmtSelect, 0xAu, 65530, &pRetData->List[pRetData->dwCount].byErr, 0, &indicator);
-          sqlRet = SQLGetData(this->m_hStmtSelect, 0xBu, 65511, &pRetData->List[pRetData->dwCount].lnUID, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 10, 65530, &pRetData->List[pRetData->dwCount].byErr, 0, &indicator);
+          sqlRet = SQLGetData(this->m_hStmtSelect, 11, 65511, &pRetData->List[pRetData->dwCount].lnUID, 0, &indicator);
           ++pRetData->dwCount;
         }
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CRecallEffectController.h"
 
@@ -132,7 +132,7 @@ bool CRecallEffectController::Init(unsigned int infoCount)
   }
 
   m_uiInfoTotCnt = infoCount;
-  m_pkTimer->BeginTimer(0x7530u);
+  m_pkTimer->BeginTimer(30000);
   return true;
 }
 
@@ -378,19 +378,19 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
 
   if (pkObj->IsSiegeMode())
   {
-    SendDecideRecallErrorResultToDest(0x1Au, pkObj, -1);
+    SendDecideRecallErrorResultToDest(26, pkObj, -1);
     return;
   }
 
   if (g_HolySys.GetDestroyerState() == 2 && g_HolySys.GetDestroyerSerial() == pkObj->m_dwObjSerial)
   {
-    SendDecideRecallErrorResultToDest(0x14u, pkObj, -1);
+    SendDecideRecallErrorResultToDest(20, pkObj, -1);
     return;
   }
 
   if (owner->GetCurSecNum() == -1 || owner->m_bMapLoading)
   {
-    SendDecideRecallErrorResultToDest(0x15u, pkObj, -1);
+    SendDecideRecallErrorResultToDest(21, pkObj, -1);
     return;
   }
 
@@ -398,8 +398,8 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   {
     if (pkObj->m_pCurMap != owner->m_pCurMap)
     {
-      SendDecideRecallErrorResultToDest(0xCu, pkObj, owner->m_pCurMap->m_nMapCode);
-      SendRecallReqeustResult(0xDu, owner);
+      SendDecideRecallErrorResultToDest(12, pkObj, owner->m_pCurMap->m_nMapCode);
+      SendRecallReqeustResult(13, owner);
       Close(request, true);
       return;
     }
@@ -408,7 +408,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
   {
     if (!request->m_bBattleModeUse && pkObj->Is_Battle_Mode())
     {
-      SendDecideRecallErrorResultToDest(0x12u, pkObj, -1);
+      SendDecideRecallErrorResultToDest(18, pkObj, -1);
       return;
     }
 
@@ -417,7 +417,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     const int playerLevel = static_cast<int>(pkObj->GetLevel());
     if (playerLevel < minLevel || (maxLevel != -1 && playerLevel > maxLevel))
     {
-      SendDecideRecallErrorResultToDest(0x13u, pkObj, -1);
+      SendDecideRecallErrorResultToDest(19, pkObj, -1);
       return;
     }
 
@@ -427,18 +427,18 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
       {
         if (pkObj->m_pDHChannel != owner->m_pDHChannel)
         {
-          SendDecideRecallErrorResultToDest(0x16u, pkObj, -1);
+          SendDecideRecallErrorResultToDest(22, pkObj, -1);
           return;
         }
       }
       else if (!pkObj->m_pDHChannel && owner->m_pDHChannel)
       {
-        SendDecideRecallErrorResultToDest(0x16u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(22, pkObj, -1);
         return;
       }
       else if (pkObj->m_pDHChannel && !owner->m_pDHChannel)
       {
-        SendDecideRecallErrorResultToDest(0x17u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(23, pkObj, -1);
         return;
       }
     }
@@ -447,7 +447,7 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
     {
       if (pkObj->m_bInGuildBattle && !owner->m_bInGuildBattle)
       {
-        SendDecideRecallErrorResultToDest(0x19u, pkObj, -1);
+        SendDecideRecallErrorResultToDest(25, pkObj, -1);
         return;
       }
 
@@ -463,13 +463,13 @@ void CRecallEffectController::DecideRecall(unsigned __int16 dwRequestID, unsigne
         const CMapData *ownerMap = GetGuildBattleMap(owner->m_Param.GetGuildSerial());
         if (destMap != ownerMap)
         {
-          SendDecideRecallErrorResultToDest(0x19u, pkObj, -1);
+          SendDecideRecallErrorResultToDest(25, pkObj, -1);
           return;
         }
 
         if (pkObj->m_bTakeGravityStone)
         {
-          SendDecideRecallErrorResultToDest(0xAu, pkObj, -1);
+          SendDecideRecallErrorResultToDest(10, pkObj, -1);
           return;
         }
       }

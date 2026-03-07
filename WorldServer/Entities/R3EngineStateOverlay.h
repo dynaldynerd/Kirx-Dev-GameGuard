@@ -6,8 +6,7 @@
 
 struct R3EngineStateOverlay
 {
-  _R3ENGINE_STATE m_Base;
-  unsigned char m_PadToSkyTextureName[2144 - sizeof(_R3ENGINE_STATE)];
+  unsigned char m_PadToSkyTextureName[2144];
   char mSkyTextureName[128];
   unsigned int mSkyTextureNameReserved;
   unsigned int mSkyLayerData[16];

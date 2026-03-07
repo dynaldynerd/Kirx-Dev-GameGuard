@@ -39,7 +39,7 @@ CCryptor::~CCryptor()
 
 bool CCryptor::Init(const char *szKeyPath, bool bUseCreate)
 {
-  m_prng = new (std::nothrow) CryptoPP::AutoSeededRandomPool(false, 0x20u);
+  m_prng = new (std::nothrow) CryptoPP::AutoSeededRandomPool(false, 32u);
   if (!m_prng)
   {
     return false;

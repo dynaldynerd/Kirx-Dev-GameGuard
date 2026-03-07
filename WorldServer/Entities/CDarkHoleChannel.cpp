@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -44,7 +44,7 @@ unsigned int CDarkHoleChannel::s_dwChannelSerialCounter;
 
 CDarkHoleChannel::CDarkHoleChannel()
 {
-  m_listEnterMember.SetList(0x40u, 8u, false);
+  m_listEnterMember.SetList(64, 8u, false);
   Init();
 }
 
@@ -792,7 +792,7 @@ char CDarkHoleChannel::CheckEvent(
             item.m_byTableCode = check->ReactObj.obj.item.byItemTableCode;
             item.m_wItemIndex = check->ReactObj.obj.item.pItemFld->m_dwIndex;
             item.m_dwDur = 1;
-            item.m_dwLv = 0xFFFFFFF;
+            item.m_dwLv = 268435455;
             CreateItemBox(
               &item,
               5u,
@@ -890,7 +890,7 @@ void CDarkHoleChannel::OpenDungeon(
 
   const char *name = pOpener->m_Param.GetCharNameW();
   strcpy_0(m_wszOpenerName, name);
-  W2M(m_wszOpenerName, m_aszOpenerName, 0x11u);
+  W2M(m_wszOpenerName, m_aszOpenerName, 17);
 
   m_nOpenerDegree = pOpener->m_pUserDB->m_byUserDgr;
   m_nOpenerSubDegree = pOpener->m_pUserDB->m_bySubDgr;
@@ -935,7 +935,7 @@ void CDarkHoleChannel::CreateMonster()
       _mon_active_fld *activeRec = active->m_pActRec;
       const unsigned int regenLimit = activeRec->m_dwRegenLimNum;
       if (active->m_dwCumMonNum < regenLimit
-          && active->m_wMonRecIndex != 0xFFFF
+          && active->m_wMonRecIndex != 65535
           && activeRec->m_dwRegenProp > static_cast<unsigned int>(rand() % 100))
       {
         int spawnCount = static_cast<int>(regenLimit - active->m_dwCumMonNum);
@@ -1283,7 +1283,7 @@ void CDarkHoleChannel::OnLoop()
 void CDarkHoleChannel::CheckWaitNextMission()
 {
   const DWORD now = timeGetTime();
-  if (now - m_MissionMgr.dwMissionEndTime > 0x493E0)
+  if (now - m_MissionMgr.dwMissionEndTime > 300000)
   {
     SendMsg_TimeOut();
     m_dwNextCloseTime = now + 10000;
@@ -1404,7 +1404,7 @@ void CDarkHoleChannel::CheckCurrentMission()
         case 2u:
           GotoNextMission();
           break;
-        case 0xFFu:
+        case 255:
           WaitNextMission();
           break;
         default:
@@ -1686,7 +1686,7 @@ void CDarkHoleChannel::CheckInnerEventDummy()
           item.m_byTableCode = innerCheck->ReactObj.obj.item.byItemTableCode;
           item.m_wItemIndex = innerCheck->ReactObj.obj.item.pItemFld->m_dwIndex;
           item.m_dwDur = 1;
-          item.m_dwLv = 0xFFFFFFF;
+          item.m_dwLv = 268435455;
           CreateItemBox(&item, 5u, m_pQuestSetup->pUseMap, m_wLayerIndex, spawnPos, false, nullptr, 0, 3u);
           break;
         }

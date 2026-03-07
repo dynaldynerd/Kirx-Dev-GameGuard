@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef MAX_PLAYER
 #define MAX_PLAYER 2532
@@ -57,7 +57,7 @@
 #endif
 
 #ifndef MAX_RETURN_GATE
-#define MAX_RETURN_GATE 0x7E
+#define MAX_RETURN_GATE 126
 #endif
 
 #ifndef MAX_NUCLEAR_BOMB
@@ -95,7 +95,7 @@
 #endif
 
 #ifndef MAX_DQS
-#define MAX_DQS 0x3174
+#define MAX_DQS 12660
 #endif
 
 #ifndef MAX_DB_QRY_SYN

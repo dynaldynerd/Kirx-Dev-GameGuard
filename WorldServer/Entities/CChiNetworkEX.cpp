@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CChiNetworkEX.h"
 
@@ -47,11 +47,11 @@ __int64 CChiNetworkEX::Initialize()
 {
   if (!LoadINIFile())
   {
-    return 0xFFFFFFFFLL;
+    return -1;
   }
   if (!LoadDll(const_cast<char *>("CHI_NETD.dll")))
   {
-    return 0xFFFFFFFELL;
+    return -2;
   }
 
   SetDataAnalysisFunc(s_DataAnalysis);
@@ -177,7 +177,7 @@ void CChiNetworkEX::Recv_ApexKill(unsigned int dwSID, unsigned int dwRecvSize, c
   {
     if (player)
     {
-      player->m_pUserDB->ForceCloseCommand(12, 0x0FFFFFFF, true, "ApexItemServer Kick");
+      player->m_pUserDB->ForceCloseCommand(12, 268435455, true, "ApexItemServer Kick");
       CAsyncLogger::Instance()->FormatLog(12, "APEX_USER_KICK - %d, CPlayer::s_nLiveNum : %d", dwSID, CPlayer::s_nLiveNum);
     }
     return;
@@ -189,7 +189,7 @@ void CChiNetworkEX::Recv_ApexKill(unsigned int dwSID, unsigned int dwRecvSize, c
     CAsyncLogger::Instance()->FormatLog(12, "Inform_For_Exit_By_ApexBlock - %d", dwSID);
     if (player)
     {
-      player->m_pUserDB->ForceCloseCommand(13, 0x0FFFFFFF, true, "ApexItemServer Block");
+      player->m_pUserDB->ForceCloseCommand(13, 268435455, true, "ApexItemServer Block");
     }
     return;
   }
@@ -222,7 +222,7 @@ void CChiNetworkEX::Send_Trans(CPlayer *pOne, int dwRet)
 
   const unsigned __int16 packetLength = static_cast<unsigned __int16>(sendData.size());
   CUserDB *userDb = pOne->m_pUserDB;
-  _apex_id packetType(0x52u);
+  _apex_id packetType(82);
   Send(reinterpret_cast<unsigned __int8 *>(packetType.operator&()), userDb->m_dwAccountSerial, reinterpret_cast<char *>(&sendData), packetLength);
 
   CAsyncLogger::Instance()->FormatLog(12, "Send_Trans - %d", userDb->m_dwAccountSerial);
@@ -232,7 +232,7 @@ void CChiNetworkEX::Send_ClienInform(CPlayer *pOne, unsigned __int16 wSize, char
 {
   const unsigned __int16 payloadLength = static_cast<unsigned __int16>(wSize - 4);
   CUserDB *userDb = pOne->m_pUserDB;
-  _apex_id packetType(0x54u);
+  _apex_id packetType(84);
   Send(reinterpret_cast<unsigned __int8 *>(packetType.operator&()), userDb->m_dwAccountSerial, pBuf, payloadLength);
 
   CAsyncLogger::Instance()->FormatLog(12, "Send_ClienInform - %d", userDb->m_dwAccountSerial);
@@ -246,7 +246,7 @@ void CChiNetworkEX::Send_IP(CPlayer *pOne)
 
   const unsigned __int16 packetLength = 5;
   CUserDB *userDb = pOne->m_pUserDB;
-  _apex_id packetType(0x53u);
+  _apex_id packetType(83);
   Send(reinterpret_cast<unsigned __int8 *>(packetType.operator&()), userDb->m_dwAccountSerial, reinterpret_cast<char *>(&sendData), packetLength);
 
   CAsyncLogger::Instance()->FormatLog(12, "Send_IP - %d", userDb->m_dwAccountSerial);
@@ -259,7 +259,7 @@ void CChiNetworkEX::Send_Login(CPlayer *pOne)
 
   const unsigned __int16 packetLength = 13;
   CUserDB *userDb = pOne->m_pUserDB;
-  _apex_id packetType(0x4Cu);
+  _apex_id packetType(76);
   Send(reinterpret_cast<unsigned __int8 *>(packetType.operator&()), userDb->m_dwAccountSerial, sendData, packetLength);
 
   CAsyncLogger::Instance()->FormatLog(12, "Send_Login - %d", userDb->m_dwAccountSerial);
@@ -277,7 +277,7 @@ void CChiNetworkEX::Send_Logout(CPlayer *pOne)
 
   const unsigned __int16 packetLength = 13;
   CUserDB *userDb = pOne->m_pUserDB;
-  _apex_id packetType(0x47u);
+  _apex_id packetType(71);
   Send(reinterpret_cast<unsigned __int8 *>(packetType.operator&()), userDb->m_dwAccountSerial, sendData, packetLength);
 
   CAsyncLogger::Instance()->FormatLog(12, "Send_Logout - %d", userDb->m_dwAccountSerial);

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPcBangFavor.h"
 
@@ -37,7 +37,7 @@ bool CPcBangFavor::Initialzie()
     "USE",
     "FALSE",
     returnedString,
-    0xAu,
+    10,
     ".\\Initialize\\WorldSystem.ini");
   m_bEnable = strcmp_0(returnedString, "FALSE") != 0;
   return true;
@@ -46,7 +46,7 @@ bool CPcBangFavor::Initialzie()
 bool CPcBangFavor::LoadPcBangData()
 {
   char pszErrMsg[144] = {};
-  if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", 0x2A4u, pszErrMsg))
+  if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", 676, pszErrMsg))
   {
     return true;
   }

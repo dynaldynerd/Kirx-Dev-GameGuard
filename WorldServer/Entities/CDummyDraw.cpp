@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CDummyDraw.h"
 
@@ -30,7 +30,7 @@ void CDummyDraw::InitPen()
 {
   const COLORREF colors[10] = {
     7883506,
-    0xFFFFFF,
+    16777215,
     5173094,
     1355506,
     44546,
@@ -50,7 +50,7 @@ void CDummyDraw::InitPen()
     }
   }
 
-  HPEN directionPen = CreatePen(PS_SOLID, 1, 0xFF05FFu);
+  HPEN directionPen = CreatePen(PS_SOLID, 1, 16713215);
   if (directionPen)
   {
     s_hDirection = directionPen;
@@ -196,7 +196,7 @@ __int64 CDummyDraw::Draw(CSurface *pSF, CRect *prcArea)
 {
   if (!m_pMap)
   {
-    return 0xFFFFFFFFLL;
+    return -1;
   }
 
   float *screenPoints = m_fScrNor;
@@ -205,7 +205,7 @@ __int64 CDummyDraw::Draw(CSurface *pSF, CRect *prcArea)
   {
     if (!CalcAbsExt(prcArea))
     {
-      return 0xFFFFFFFELL;
+      return -2;
     }
 
     g_pDoc->m_DisplayView.GetDrawableRect(&drawRect);
@@ -214,7 +214,7 @@ __int64 CDummyDraw::Draw(CSurface *pSF, CRect *prcArea)
     {
       if (value < 0 || value > 10000)
       {
-        return 0xFFFFFFFFLL;
+        return -1;
       }
     }
 

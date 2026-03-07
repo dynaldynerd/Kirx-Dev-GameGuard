@@ -194,7 +194,7 @@ void CDisplayView::OnLButtonDown(UINT nFlags, CPoint point)
     SetFocus();
     if (g_MapDisplay.m_bDisplayMode)
     {
-      g_Main.m_GameMsg.PackingMsg(0x3ECu, 0, 0, 0);
+      g_Main.m_GameMsg.PackingMsg(1004u, 0, 0, 0);
       m_ptLBtn = point;
       CRect rcOut;
       GetDrawableRect(&rcOut);

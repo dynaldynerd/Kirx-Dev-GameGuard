@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCharacter.h"
 
@@ -120,7 +120,7 @@ bool _effect_parameter::GetEff_State(unsigned int nParamIndex)
     return false;
   if (m_bLock)
     return false;
-  if (nParamIndex <= 0x1C)
+  if (nParamIndex <= 28)
     return m_pDataParam->m_bEff_State[nParamIndex] > 0;
   return false;
 }
@@ -139,7 +139,7 @@ float _effect_parameter::GetEff_Rate(unsigned int nParamIndex)
   {
     return FLOAT_1_0;
   }
-  if (nParamIndex < 0x3E)
+  if (nParamIndex < 62)
   {
     return m_pDataParam->m_fEff_Rate[nParamIndex];
   }
@@ -156,7 +156,7 @@ float _effect_parameter::GetEff_Plus(unsigned int nParamIndex)
   {
     return 0.0f;
   }
-  if (nParamIndex < 0x2A)
+  if (nParamIndex < 42)
   {
     return m_pDataParam->m_fEff_Plus[nParamIndex];
   }
@@ -173,7 +173,7 @@ float _effect_parameter::GetEff_Have(unsigned int nParamIndex)
   {
     return 0.0f;
   }
-  if (nParamIndex <= 0x52)
+  if (nParamIndex <= 82)
   {
     return m_pDataParam->m_fEff_Have[nParamIndex];
   }
@@ -184,7 +184,7 @@ bool _effect_parameter::SetEff_Rate(unsigned int nParamIndex, float fVar, bool b
 {
   if (!m_pDataParam)
     return false;
-  if (nParamIndex >= 0x3E)
+  if (nParamIndex >= 62)
     return false;
   m_pDataParam->m_fEff_Rate[nParamIndex] =
     bAdd ? (m_pDataParam->m_fEff_Rate[nParamIndex] + fVar)
@@ -196,7 +196,7 @@ bool _effect_parameter::SetEff_Plus(unsigned int nParamIndex, float fVar, bool b
 {
   if (!m_pDataParam)
     return false;
-  if (nParamIndex >= 0x2A)
+  if (nParamIndex >= 42)
     return false;
   m_pDataParam->m_fEff_Plus[nParamIndex] =
     bAdd ? (m_pDataParam->m_fEff_Plus[nParamIndex] + fVar)
@@ -208,7 +208,7 @@ bool _effect_parameter::SetEff_State(unsigned int nParamIndex, bool bVar)
 {
   if (!m_pDataParam)
     return false;
-  if (nParamIndex > 0x1C)
+  if (nParamIndex > 28)
     return false;
   m_pDataParam->m_bEff_State[nParamIndex] =
     bVar ? static_cast<char>(m_pDataParam->m_bEff_State[nParamIndex] + 1)
@@ -344,7 +344,7 @@ __int64 CCharacter::GetSlot(CCharacter *p)
       return static_cast<unsigned int>(i);
     }
   }
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 bool CCharacter::GetStealth(bool bInvisible)
@@ -767,7 +767,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
     ++nextIndex;
     --prevIndex;
   }
-  return 0xFFFFFFFFu;
+  return -1;
 }
 
 __int64 CCharacter::InsertSlot(CCharacter *p, int pos)
@@ -866,7 +866,7 @@ __int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, C
 
   if (defFc == -2.0f)
   {
-    return 0xFFFFFFFEu;
+    return -2;
   }
 
   float defFacing = pDst->GetDefFacing(outPart[0]);
@@ -947,7 +947,7 @@ __int64 CCharacter::GetAttackRandomPart()
       return static_cast<unsigned int>(j);
     }
   }
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 void CCharacter::SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer)
@@ -1604,8 +1604,8 @@ char CCharacter::AssistSkill(
 
   bool upFlags[64]{};
   unsigned __int8 retCodes[48]{};
-  std::memset(upFlags, 0, 0x1Eu);
-  std::memset(retCodes, 0, 0x1Eu);
+  std::memset(upFlags, 0, 30);
+  std::memset(retCodes, 0, 30);
 
   if (pSkillFld->m_nContEffectType != -1)
   {
@@ -1745,8 +1745,8 @@ char CCharacter::AssistForce(
 
   bool upFlags[64]{};
   unsigned __int8 retCodes[48]{};
-  std::memset(upFlags, 0, 0x1Eu);
-  std::memset(retCodes, 0, 0x1Eu);
+  std::memset(upFlags, 0, 30);
+  std::memset(retCodes, 0, 30);
 
   if (pForceFld->m_nContEffectType != -1)
   {

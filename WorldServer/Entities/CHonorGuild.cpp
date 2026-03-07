@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CHonorGuild.h"
 
@@ -121,7 +121,7 @@ void CHonorGuild::LoopSubProcSendInform(unsigned __int8 byRace)
     CPlayer *player = &g_Player[processIndex];
     if (player->m_bOper && player->m_Param.GetRaceCode() == byRace)
     {
-      SendCurrHonorGuildList(player->m_ObjID.m_wIndex, byRace, 0xFFu);
+      SendCurrHonorGuildList(player->m_ObjID.m_wIndex, byRace, 255);
     }
   }
 
@@ -188,7 +188,7 @@ char CHonorGuild::LoadDB()
         return 0;
       }
 
-      if (dwSerial[0] == 0xFFFFFFFFu)
+      if (dwSerial[0] == -1)
       {
         memset_0(m_pNextHonorGuild[j], 0, sizeof(_guild_honor_list_result_zocl));
         m_bNext[j] = true;
@@ -329,7 +329,7 @@ unsigned __int8 CHonorGuild::SetNextHonorGuild(unsigned __int8 byRace, _guild_ho
     totalTaxRate += pRecv->GuildList[index].byTaxRate;
   }
 
-  if (totalTaxRate > 0x32)
+  if (totalTaxRate > 50)
   {
     return 2;
   }
@@ -338,7 +338,7 @@ unsigned __int8 CHonorGuild::SetNextHonorGuild(unsigned __int8 byRace, _guild_ho
   m_bNext[byRace] = true;
   _qry_case_update_honor_guild query{};
   query.byRace = byRace;
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x86u, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
+  g_Main.PushDQSData(-1, nullptr, 134, reinterpret_cast<char *>(&query), static_cast<int>(query.size()));
 
   for (int index = 0; index < nextList.byListNum; ++index)
   {
@@ -365,10 +365,10 @@ void CHonorGuild::ChangeHonorGuild(unsigned __int8 byRace)
     _qry_case_update_honor_guild query{};
     query.byRace = byRace;
     const int size = static_cast<int>(query.size());
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x87u, reinterpret_cast<char *>(&query), size);
+    g_Main.PushDQSData(-1, nullptr, 135, reinterpret_cast<char *>(&query), size);
 
     m_bSendInform[byRace] = true;
-    SendInformChange(byRace, 0xFFFF);
+    SendInformChange(byRace, 65535);
     UpdateHonorGuildMark(&prevList, 0);
     UpdateHonorGuildMark(m_pCurrHonorGuild[byRace], 1);
     m_bChageInform[byRace] = true;
@@ -390,7 +390,7 @@ void CHonorGuild::SendInformChange(unsigned __int8 byRace, unsigned __int16 wInd
   }
 
   unsigned __int16 targetIndex = wIndex;
-  if (wIndex == 0xFFFF)
+  if (wIndex == 65535)
   {
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     const unsigned int bossSerial = ranking->GetCurrentRaceBossSerial(byRace, 0);
@@ -438,7 +438,7 @@ void CHonorGuild::UpdateHonorGuildMark(_guild_honor_list_result_zocl *pList, int
         }
         else
         {
-          member->pPlayer->SendMsg_HonorGuildMark(static_cast<char>(0xFFu));
+          member->pPlayer->SendMsg_HonorGuildMark(static_cast<char>(255));
         }
       }
     }
@@ -450,7 +450,7 @@ void CHonorGuild::SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwT
   _guild_honor_list_result_zocl *honorList = m_pCurrHonorGuild[byRace];
   for (int j = 0; j < honorList->byListNum; ++j)
   {
-    unsigned int amount = honorList->GuildList[j].byTaxRate * dwTax / 0x64u;
+    unsigned int amount = honorList->GuildList[j].byTaxRate * dwTax / 100;
     if (!amount)
     {
       continue;
@@ -481,7 +481,7 @@ void CHonorGuild::SetGuildMaintainMoney(unsigned __int8 byRace, unsigned int dwT
     qry.in_dalant = amount;
 
     const int size = static_cast<int>(qry.size());
-    g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x88u, reinterpret_cast<char *>(&qry), size);
+    g_Main.PushDQSData(-1, nullptr, 136, reinterpret_cast<char *>(&qry), size);
     CMoneySupplyMgr::Instance()->UpdateHonorGuildMoneyData(0, byRace, amount);
   }
 }

@@ -237,10 +237,10 @@ bool CNetWorking::SetNetSystem(
   g_FgLogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
 
   std::memset(returnedString, 0, 16);
-  GetPrivateProfileStringA("FireGuard Use", "Use", "TRUE", returnedString, 0x10u, ".\\fireguard\\fgrs.ini");
+  GetPrivateProfileStringA("FireGuard Use", "Use", "TRUE", returnedString, 16, ".\\fireguard\\fgrs.ini");
   this->m_bUseFG = strcmp_0(returnedString, "FALSE") != 0;
 
-  GetPrivateProfileStringA("System", "WorldName", "X", this->m_szServerName, 0x21u, "..\\WorldInfo\\WorldInfo.ini");
+  GetPrivateProfileStringA("System", "WorldName", "X", this->m_szServerName, 33, "..\\WorldInfo\\WorldInfo.ini");
   if (this->m_szServerName[0] == 'X')
   {
     g_FgLogFile.Write("FG Error : WorldName Read Failed In \"WorldInfo.ini\" File");
@@ -257,13 +257,13 @@ bool CNetWorking::SetNetSystem(
     if (!nIndex)
     {
       std::memset(filename, 0, 260);
-      GetModuleFileNameA(nullptr, filename, 0x104u);
+      GetModuleFileNameA(nullptr, filename, 260);
       char *slash = strrchr(filename, '\\');
       if (slash)
       {
         *(slash + 1) = 0;
       }
-      strcat_s(filename, 0x104u, "fireguard\\");
+      strcat_s(filename, 260, "fireguard\\");
       const int pathLen = strlen_0(filename);
       if (AddEnvVariable("path", filename, pathLen) <= 0)
       {
@@ -357,7 +357,7 @@ unsigned int CNetWorking::GetCheckRecvTime(unsigned int dwProID, unsigned int dw
   {
     return socket->m_dwLastRecvTime;
   }
-  return 0xFFFFFFFFu;
+  return static_cast<unsigned int>(-1);
 }
 
 void CNetWorking::UserLoop()
@@ -1051,13 +1051,13 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
         case 6u:
           result = this->SelectClassRequest(n, pMsg);
           break;
-        case 0x18u:
+        case 24:
           result = this->InitClassRequest(n, reinterpret_cast<_init_class_request_clzo *>(pMsg));
           break;
-        case 0x1Au:
+        case 26:
           result = this->InitClassCostRequest(n, pMsg);
           break;
-        case 0x1Cu:
+        case 28:
           result = this->CanSelectClassRequest(n, pMsg);
           break;
         default:
@@ -1764,7 +1764,7 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
         case 8u:
           result = BuddyAddRequest(n, pMsg);
           break;
-        case 0xCu:
+        case 12:
           result = BuddyAddAnswer(n, pMsg);
           break;
         default:
@@ -1837,20 +1837,20 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       const unsigned __int8 subType = pMsgHeader->m_byType[1];
       switch (subType)
       {
-        case 0xC9:
+        case 201:
           result = DarkHoleOpenRequest(n, pMsg);
           break;
-        case 0xCB:
+        case 203:
           result = DarkHoleEnterRequest(n, pMsg);
           break;
-        case 0xCD:
+        case 205:
           result = DarkHoleGiveupOutRequest(n, pMsg);
           break;
-        case 0xCF:
+        case 207:
           result = DarkHoleClearOutRequest(n, pMsg);
           break;
         default:
-          result = subType != 0xD2 || DarkHoleAnswerReenterRequest(n, pMsg);
+          result = subType != 210 || DarkHoleAnswerReenterRequest(n, pMsg);
           break;
       }
       break;
@@ -2599,7 +2599,7 @@ bool CNetworkEX::SelectClassRequest(unsigned int n, char *pBuf)
   if (selClassIndex < recordNum)
   {
     const unsigned __int8 selectRewardItem = static_cast<unsigned __int8>(request->bySelectRewardItem);
-    if (selectRewardItem == 0xFF || selectRewardItem < 9u)
+    if (selectRewardItem == 255 || selectRewardItem < 9)
     {
       player->pc_SelectClassRequest(selClassIndex, selectRewardItem);
       return true;
@@ -2719,7 +2719,7 @@ bool CNetworkEX::BuyStoreRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 buyNum = request->byBuyNum;
-  if (buyNum > 0x64u)
+  if (buyNum > 100)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -2800,7 +2800,7 @@ bool CNetworkEX::BuyStoreRequest(unsigned int n, char *pBuf)
       return false;
     }
     const unsigned __int8 amount = request->OfferList[j].byAmount;
-    if (!amount || amount > 0x63u)
+    if (!amount || amount > 99)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -2845,7 +2845,7 @@ bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 sellNum = request->bySellNum;
-  if (sellNum > 0x64u)
+  if (sellNum > 100)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -2865,7 +2865,7 @@ bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
   for (int j = 0; j < sellNum; ++j)
   {
     const unsigned __int8 amount = request->Item[j].byAmount;
-    if (!amount || amount > 0x63u)
+    if (!amount || amount > 99)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -3098,7 +3098,7 @@ bool CNetworkEX::AttackForceRequest(unsigned int n, char *pBuf)
   auto *target = reinterpret_cast<CCharacter *>(
     g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->byID), request->wIndex));
   if (target
-      || (static_cast<unsigned __int8>(request->byID) == 0xFF && request->wIndex == 0xFFFF))
+      || (static_cast<unsigned __int8>(request->byID) == 255 && request->wIndex == 65535))
   {
     float areaPos[3]{};
     areaPos[0] = static_cast<float>(request->zAreaPos[0]);
@@ -3161,13 +3161,13 @@ bool CNetworkEX::AttackTestRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 effectCode = static_cast<unsigned __int8>(request->byEffectCode);
-  if (effectCode == 0xFF || effectCode < 4u)
+  if (effectCode == 255 || effectCode < 4)
   {
     if (effectCode >= 4u
         || g_Main.m_tblEffectData[effectCode].GetRecord(static_cast<unsigned __int8>(request->byEffectIndex)))
     {
       const unsigned __int8 weaponPart = static_cast<unsigned __int8>(request->byWeaponPart);
-      if (weaponPart == 0xFF || weaponPart < 2u)
+      if (weaponPart == 255 || weaponPart < 2)
       {
         return true;
       }
@@ -3394,7 +3394,7 @@ bool CNetworkEX::MakeItemRequest(unsigned int n, char *pBuf)
     return true;
   }
 
-  if (request->byMaterialNum <= 0x64u)
+  if (request->byMaterialNum <= 100)
   {
     const int manualIndex = request->wManualIndex;
     const int recordNum = g_Main.m_tblItemMakeData.GetRecordNum();
@@ -3569,7 +3569,7 @@ bool CNetworkEX::CombineItemRequest(unsigned int n, char *pBuf)
     return true;
   }
 
-  if (request->byMaterialNum <= 0x64u)
+  if (request->byMaterialNum <= 100)
   {
     const int manualIndex = request->wManualIndex;
     const int recordNum = g_Main.m_tblItemCombineData.GetRecordNum();
@@ -3662,9 +3662,9 @@ bool CNetworkEX::CombineExItemAcceptRequest(unsigned int n, char *pBuf)
     return true;
   }
 
-  if (request->SelectItemBuff.bySelectNum < 0x18u)
+  if (request->SelectItemBuff.bySelectNum < 24)
   {
-    if (request->byDlgType == 0xFF || request->byDlgType == 1 || !request->byDlgType)
+    if (request->byDlgType == 255 || request->byDlgType == 1 || !request->byDlgType)
     {
       player->pc_CombineItemExAccept(request);
       return true;
@@ -3745,7 +3745,7 @@ bool CNetworkEX::UseSoccerBallItemRequest(unsigned int n, char *pBuf)
   }
 
   unsigned __int16 itemIndex[16]{};
-  itemIndex[0] = 0xFFFFu;
+  itemIndex[0] = 65535;
   unsigned __int8 result = player->pc_UserSoccerBall(request->wItemSerial, itemIndex);
 
   _use_soccer_ball_item_result_zocl sendMsg{};
@@ -3830,11 +3830,11 @@ bool CNetworkEX::UseRecallTeleportItemRequest(unsigned int n, _use_recall_telepo
 
   if (item->byStorageCode)
   {
-    player->SendMsg_UsePotionResult(0x19u, item->wItemSerial, 0);
+    player->SendMsg_UsePotionResult(25, item->wItemSerial, 0);
   }
 
   char targetName[17]{};
-  strncpy_s(targetName, sizeof(targetName), request->wszRecallName, 0x10u);
+  strncpy_s(targetName, sizeof(targetName), request->wszRecallName, 16);
   CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
   if (manager->IsNormalString(targetName))
   {
@@ -3846,13 +3846,13 @@ bool CNetworkEX::UseRecallTeleportItemRequest(unsigned int n, _use_recall_telepo
     else
     {
       CRecallEffectController *recall = CRecallEffectController::Instance();
-      recall->SendRecallReqeustResult(0x11u, player);
+      recall->SendRecallReqeustResult(17, player);
     }
     return true;
   }
 
   CRecallEffectController *recall = CRecallEffectController::Instance();
-  recall->SendRecallReqeustResult(0x11u, player);
+  recall->SendRecallReqeustResult(17, player);
   return true;
 }
 
@@ -3875,7 +3875,7 @@ bool CNetworkEX::CharacterRenameCash(unsigned int n, char *pBuf)
   }
 
   char newName[17]{};
-  strncpy_s(newName, sizeof(newName), request->szNewName, 0x10u);
+  strncpy_s(newName, sizeof(newName), request->szNewName, 16);
   player->pc_CharacterRenameCash(
     static_cast<bool>(request->bChange),
     &request->Item,
@@ -3893,7 +3893,7 @@ auto *player = &g_Player[n];
   }
 
   const unsigned __int8 exchangeNum = static_cast<unsigned __int8>(request->byExchangeNum);
-  if (exchangeNum <= 0x18u)
+  if (exchangeNum <= 24)
   {
     if (exchangeNum)
     {
@@ -3940,7 +3940,7 @@ bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char
     if (strlen_0(request->szClientVerCheckKey) == 32)
     {
       if (strcmp_0(CMainThread::ms_szClientVerCheck, "X")
-          && strncmp(CMainThread::ms_szClientVerCheck, request->szClientVerCheckKey, 0x20u))
+          && strncmp(CMainThread::ms_szClientVerCheck, request->szClientVerCheckKey, 32))
       {
         m_LogFile.Write(
           "KeyCheckError.. Socket( %d ): EnterWorldRequest().. if( strncmp( CMainThread::ms_szClientVerCheck, pRecv->szClientVerCheckKey, CMainThread::eClinetCheckMax ) )",
@@ -4031,10 +4031,10 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
   }
 
   char charName[17]{};
-  memcpy_0(charName, request->wszCharName, 0x10u);
+  memcpy_0(charName, request->wszCharName, 16);
   charName[16] = '\0';
 
-  if (strlen_0(charName) <= 0x10)
+  if (strlen_0(charName) <= 16)
   {
     if (static_cast<unsigned __int8>(request->bySlotIndex) < 3u)
     {
@@ -4150,10 +4150,10 @@ bool CNetworkEX::AliveCharRequest(int n, char *pBuf)
   }
 
   char charName[17]{};
-  memcpy_0(charName, request->wszNewName, 0x10u);
+  memcpy_0(charName, request->wszNewName, 16);
   charName[16] = '\0';
 
-  if (strlen_0(charName) <= 0x10)
+  if (strlen_0(charName) <= 16)
   {
     if (static_cast<unsigned __int8>(request->bySlotIndex) < 3u)
     {
@@ -4239,10 +4239,10 @@ bool CNetworkEX::ChatOperatorRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 raceCode = static_cast<unsigned __int8>(request->byRaceCode);
-  if (raceCode < 3u || raceCode == 0xFF)
+  if (raceCode < 3 || raceCode == 255)
   {
     const unsigned __int8 messageSize = static_cast<unsigned __int8>(request->bySize);
-    if (messageSize == 0xFF)
+    if (messageSize == 255)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -4280,7 +4280,7 @@ bool CNetworkEX::ChatCircleRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4311,7 +4311,7 @@ bool CNetworkEX::ChatFarRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatFarRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4320,7 +4320,7 @@ bool CNetworkEX::ChatFarRequest(unsigned int n, char *pBuf)
   {
     char name[56]{};
     char chatData[272]{};
-    memcpy_0(name, request->wszName, 0x10u);
+    memcpy_0(name, request->wszName, 16);
     name[16] = 0;
     memcpy_0(chatData, request->wszChatData, size);
     chatData[size] = 0;
@@ -4343,7 +4343,7 @@ bool CNetworkEX::ChatPartyRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatPartyRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4372,7 +4372,7 @@ bool CNetworkEX::ChatRaceRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatRaceRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4397,7 +4397,7 @@ bool CNetworkEX::ChatCheatRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatCheatRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4428,7 +4428,7 @@ bool CNetworkEX::ChatMgrWhisperRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4466,7 +4466,7 @@ bool CNetworkEX::ChatMapRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatMapRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4491,7 +4491,7 @@ bool CNetworkEX::ChatRaceBossRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4518,7 +4518,7 @@ bool CNetworkEX::ChatGuildEstSenRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4545,7 +4545,7 @@ bool CNetworkEX::ChatRePresentationRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4583,7 +4583,7 @@ bool CNetworkEX::ChatAllRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatAllRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4612,7 +4612,7 @@ bool CNetworkEX::ChatGreetingMsg_GM(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4650,7 +4650,7 @@ bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4698,7 +4698,7 @@ bool CNetworkEX::ChatGreetingMsg_GUILD(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4750,7 +4750,7 @@ bool CNetworkEX::ChatTradeRequestMsg(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 messageSize = static_cast<unsigned __int8>(request->bySize);
-  if (messageSize == 0xFF)
+  if (messageSize == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatTradeMsg()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4779,7 +4779,7 @@ bool CNetworkEX::ChatGuildRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write("odd.. %s: ChatGuildRequest()..  if(pRecv->bySize > max_message_size)", charName);
@@ -4814,7 +4814,7 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
       unsigned __int8 nameLen = 0;
       memcpy_0(&nameLen, src, 1u);
       ++src;
-      if (nameLen > 0x10u)
+      if (nameLen > 16)
       {
         const char *charName = player->m_Param.GetCharNameA();
         m_LogFile.Write("odd.. %s: ChatMultiFarRequest()..  if(byNameLen > max_name_len)", charName);
@@ -4828,7 +4828,7 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
     unsigned __int8 msgSize = 0;
     memcpy_0(&msgSize, src, 1u);
     ++src;
-    if (msgSize == 0xFF)
+    if (msgSize == 255)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write("odd.. %s: ChatMultiFarRequest()..  if(byMsgSize >= max_message_size)", charName);
@@ -4859,7 +4859,7 @@ bool CNetworkEX::ChatRaceBossCryRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4886,7 +4886,7 @@ bool CNetworkEX::ChatGmNoticeRequest(unsigned int n, char *pBuf)
   }
 
   const unsigned __int8 size = static_cast<unsigned __int8>(request->bySize);
-  if (size == 0xFF)
+  if (size == 255)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -4979,30 +4979,30 @@ bool CNetworkEX::BillingLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg)
       return BillingRemaintimePersonal(n, reinterpret_cast<const _remaintime_personal_request_bizo *>(pMsg));
     case 9u:
       return BillingRemaintimePCBang(n, reinterpret_cast<const _remaintime_pcbang_request_bizo *>(pMsg));
-    case 0xAu:
+    case 10u:
       return BillingChangeType(n, reinterpret_cast<const _change_type_request_bizo *>(pMsg));
-    case 0xBu:
+    case 11u:
       return BillingExpirePersonal(n, reinterpret_cast<const _expire_personal_request_bizo *>(pMsg));
-    case 0xCu:
+    case 12u:
       return BillingExpirePCBang(n, reinterpret_cast<const _expire_pcbang_request_bizo *>(pMsg));
-    case 0xDu:
+    case 13u:
       return BillingExpireIPOverflow(n, reinterpret_cast<const _expire_ipoverflow_request_bizo *>(pMsg));
-    case 0xEu:
+    case 14u:
       return BillingDestroyModule(n);
-    case 0xFu:
+    case 15u:
       return TaiwanBillingUserCertify(n, pMsg);
-    case 0x11u:
+    case 17u:
       return ChinaBillingChangePrimium(n, pMsg);
     default:
       break;
   }
-  return pMsgHeader->m_byType[1] != 90
+  return pMsgHeader->m_byType[1] != 'Z'
       || ZoneAliveCheckRequest(n, reinterpret_cast<const _zone_alive_check_request_bizo *>(pMsg));
 }
 
 bool CNetworkEX::WebAgentLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg)
 {
-  if (pMsgHeader->m_byType[0] == 51)
+  if (pMsgHeader->m_byType[0] == '3')
   {
     const unsigned __int8 type1 = pMsgHeader->m_byType[1];
     if (!type1)
@@ -5014,7 +5014,7 @@ bool CNetworkEX::WebAgentLineAnalysis(int n, _MSG_HEADER *pMsgHeader, char *pMsg
       return SendRaceBossMsgFromWebRequest(n, reinterpret_cast<const _send_race_boss_msg_from_web_request_wazo *>(pMsg));
     }
   }
-  if (pMsgHeader->m_byType[0] != 54)
+  if (pMsgHeader->m_byType[0] != '6')
   {
     return true;
   }
@@ -5063,7 +5063,7 @@ bool CNetworkEX::OpenWorldFailureResult(unsigned int n, const _open_world_failur
 
 bool CNetworkEX::ForceCloseCommand(unsigned int n, const _force_close_command_acwr *request)
 {
-  if (request->idLocal.wIndex > 0x9E4u)
+  if (request->idLocal.wIndex > 2532)
   {
     return false;
   }
@@ -5107,7 +5107,7 @@ bool CNetworkEX::TransAccountInform(unsigned int n, const _trans_account_inform_
 
 bool CNetworkEX::EnterWorldResult(unsigned int n, const _enter_world_result_acwr *request)
 {
-  if (request->idLocal.wIndex > 0x9E4u)
+  if (request->idLocal.wIndex > 2532)
   {
     return false;
   }
@@ -5117,7 +5117,7 @@ bool CNetworkEX::EnterWorldResult(unsigned int n, const _enter_world_result_acwr
 
 bool CNetworkEX::UILockInitResult(unsigned int n, const _uilock_init_result_acwr *request)
 {
-if (request->wUserIndex >= 0x9E4u)
+if (request->wUserIndex >= 2532)
   {
     return false;
   }
@@ -5127,7 +5127,7 @@ if (request->wUserIndex >= 0x9E4u)
 
 bool CNetworkEX::UILockUpdateResult(unsigned int n, const _uilock_update_result_acwr *request)
 {
-if (request->wUserIndex >= 0x9E4u)
+if (request->wUserIndex >= 2532)
   {
     return false;
   }
@@ -5336,7 +5336,7 @@ bool CNetworkEX::WorldMsgInform(unsigned int n, const _world_msg_inform_acwr *re
 {
 char msgBuf[1312]{};
   const unsigned __int16 msgLen = request->wMsgSize;
-  if (msgLen < 0x500u)
+  if (msgLen < 1280)
   {
     memcpy_0(msgBuf, request->wszMsg, msgLen);
     msgBuf[msgLen] = 0;
@@ -5485,7 +5485,7 @@ bool CNetworkEX::SendRaceBossMsgFromWebRequest(int n, const _send_race_boss_msg_
   strcpy_0(qry.szCharacterName, request->szCharacterName);
   strcpy_0(qry.wszMsg, request->wszMsg);
   const unsigned __int16 size = qry.size();
-  g_Main.PushDQSData( 0, nullptr, 0x19u, reinterpret_cast<char *>(&qry), size);
+  g_Main.PushDQSData( 0, nullptr, 25, reinterpret_cast<char *>(&qry), size);
   return true;
 }
 
@@ -5577,7 +5577,7 @@ char CNetworkEX::BossSMSMsgRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 msgSize = static_cast<unsigned __int8>(request->bySize);
-  if (msgSize <= 0x30u)
+  if (msgSize <= 48)
   {
     if (IsSQLValidString(request->wszChatData))
     {
@@ -5813,7 +5813,7 @@ char CNetworkEX::ResSeparationRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount < 0x63u)
+  if (moveAmount < 99)
   {
     player->pc_ResSeparation(request->wStartSerial, moveAmount);
     return 1;
@@ -5837,7 +5837,7 @@ char CNetworkEX::ResDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount < 0x63u)
+  if (moveAmount < 99)
   {
     player->pc_ResDivision(
       request->wStartSerial,
@@ -5864,7 +5864,7 @@ char CNetworkEX::PotionSocketSeparationRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount <= 0x63u)
+  if (moveAmount <= 99)
   {
     player->pc_PotionSeparation(request->wStartSerial, moveAmount);
     return 1;
@@ -5888,7 +5888,7 @@ char CNetworkEX::PotionSocketDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount <= 0x63u)
+  if (moveAmount <= 99)
   {
     player->pc_PotionDivision(
       request->wStartSerial,
@@ -5915,7 +5915,7 @@ char CNetworkEX::AlterItemSlotRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 count = static_cast<unsigned __int8>(request->byNum);
-  if (count == 0 || count > 0x64u)
+  if (count == 0 || count > 100)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -5956,7 +5956,7 @@ char CNetworkEX::AlterItemSlotRequest(int n, char *pBuf)
         return 0;
       }
     }
-    else if (clientSlotIndex >= 0x64u)
+    else if (clientSlotIndex >= 100)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -5986,7 +5986,7 @@ char CNetworkEX::AlterLinkBoardSlotRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 count = static_cast<unsigned __int8>(request->byNum);
-  if (count >= 0x32u)
+  if (count >= 50)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6001,7 +6001,7 @@ char CNetworkEX::AlterLinkBoardSlotRequest(int n, char *pBuf)
     const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->list[index].bySlotIndex);
     const unsigned __int8 linkCode = static_cast<unsigned __int8>(request->list[index].byLinkCode);
 
-    if (slotIndex >= 0x32u)
+    if (slotIndex >= 50)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -6012,7 +6012,7 @@ char CNetworkEX::AlterLinkBoardSlotRequest(int n, char *pBuf)
       return 0;
     }
 
-    if (linkCode != 0xFF && linkCode >= 7u)
+    if (linkCode != 255 && linkCode >= 7)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -6044,7 +6044,7 @@ char CNetworkEX::PvpRankListRequest(int n, char *pBuf)
   const unsigned __int8 byPage = static_cast<unsigned __int8>(request->byPage);
   if (byRace < 3u)
   {
-    if (byPage < 0xAu)
+    if (byPage < 10)
     {
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       ranking->PvpRankListRequest(
@@ -6117,7 +6117,7 @@ char CNetworkEX::GustureRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 gestureType = static_cast<unsigned __int8>(request->byGestureType);
-  if (gestureType < 0x64u)
+  if (gestureType < 100)
   {
     player->pc_GestureRequest(gestureType);
     return 1;
@@ -6263,7 +6263,7 @@ char CNetworkEX::SetRaceBossCryMsgRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->bySlot);
-  if (slotIndex >= 0xAu)
+  if (slotIndex >= 10)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6274,7 +6274,7 @@ char CNetworkEX::SetRaceBossCryMsgRequest(int n, char *pBuf)
 
   char message[65];
   memset(message, 0, sizeof(message));
-  strncpy_s(message, request->wszMessage, 0x40uLL);
+  strncpy_s(message, request->wszMessage, 64);
   player->pc_SetRaceBossCryMsg(slotIndex, message);
   return 1;
 }
@@ -6344,13 +6344,13 @@ char CNetworkEX::TrunkEstRequest(int n, char *pBuf)
   }
 
   char password[128]{};
-  memcpy_0(password, request->wszPassword, 0xCu);
+  memcpy_0(password, request->wszPassword, 12);
   password[12] = 0;
 
   const unsigned __int8 hintIndex = static_cast<unsigned __int8>(request->byHintIndex);
 
   char hintAnswer[128]{};
-  memcpy_0(hintAnswer, request->wszHintAnswer, 0x10u);
+  memcpy_0(hintAnswer, request->wszHintAnswer, 16);
   hintAnswer[16] = 0;
 
   player->pc_TrunkEstRequest(password, hintIndex, hintAnswer);
@@ -6367,7 +6367,7 @@ char CNetworkEX::TrunkDownloadRequest(int n, char *pBuf)
   }
 
   char password[128]{};
-  memcpy_0(password, request->wszPassword, 0xCu);
+  memcpy_0(password, request->wszPassword, 12);
   password[12] = 0;
 
   player->pc_TrunkDownloadRequest(password);
@@ -6384,17 +6384,17 @@ char CNetworkEX::TrunkChangePasswdRequest(int n, char *pBuf)
   }
 
   char prevPassword[128]{};
-  memcpy_0(prevPassword, request->wszPrevPassword, 0xCu);
+  memcpy_0(prevPassword, request->wszPrevPassword, 12);
   prevPassword[12] = 0;
 
   char changedPassword[128]{};
-  memcpy_0(changedPassword, request->wszChangedPassword, 0xCu);
+  memcpy_0(changedPassword, request->wszChangedPassword, 12);
   changedPassword[12] = 0;
 
   const unsigned __int8 hintIndex = static_cast<unsigned __int8>(request->byHintIndex);
 
   char hintAnswer[128]{};
-  memcpy_0(hintAnswer, request->wszHintAnswer, 0x10u);
+  memcpy_0(hintAnswer, request->wszHintAnswer, 16);
   hintAnswer[16] = 0;
 
   player->pc_TrunkChangePasswdRequest(prevPassword, changedPassword, hintIndex, hintAnswer);
@@ -6426,7 +6426,7 @@ char CNetworkEX::TrunkAlterItemSlotRequest(int n, char *pBuf)
   const unsigned __int8 storageIndex = static_cast<unsigned __int8>(request->byStorageIndex);
   if (storageIndex == 5)
   {
-    if (clientSlotIndex >= 0x64u)
+    if (clientSlotIndex >= 100)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -6437,7 +6437,7 @@ char CNetworkEX::TrunkAlterItemSlotRequest(int n, char *pBuf)
   }
   else if (storageIndex == 7)
   {
-    if (clientSlotIndex >= 0x28u)
+    if (clientSlotIndex >= 40)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -6472,7 +6472,7 @@ char CNetworkEX::TrunkResDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 0x63u)
+  if (moveAmount >= 99)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6510,7 +6510,7 @@ char CNetworkEX::TrunkPotionDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 0x63u)
+  if (moveAmount >= 99)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6696,7 +6696,7 @@ char CNetworkEX::TrunkIoMergeRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 0x63u || moveAmount == 0)
+  if (moveAmount >= 99 || moveAmount == 0)
   {
     m_LogFile.Write(
       "odd.. %s: TrunkIoMergeRequest() : if(pRecv->wMoveAmount >= max_overlap_num || pRecv->wMoveAmount == 0)",
@@ -6870,7 +6870,7 @@ char CNetworkEX::RequestPatriarchPunishment(int n, char *pBuf)
   if (punishmentType < 3u)
   {
     const unsigned __int16 contentSize = request->wContentSize;
-    if (contentSize <= 0x4FFu)
+    if (contentSize <= 1279)
     {
       if (contentSize != 0)
       {
@@ -6937,9 +6937,9 @@ char CNetworkEX::RequestUILockInit(int n, char *pBuf)
   memset(uiLockPwConfirm, 0, 13);
   memset(uiLockHintAnswer, 0, 17);
 
-  memcpy_0(uiLockPw, request->uszUILockPW, 0xCuLL);
-  memcpy_0(uiLockPwConfirm, request->uszUILockPWConfirm, 0xCuLL);
-  memcpy_0(uiLockHintAnswer, request->uszHintAnswer, 0x10uLL);
+  memcpy_0(uiLockPw, request->uszUILockPW, 12);
+  memcpy_0(uiLockPwConfirm, request->uszUILockPWConfirm, 12);
+  memcpy_0(uiLockHintAnswer, request->uszHintAnswer, 16);
 
   player->pc_RequestUILockInit(
     userDb,
@@ -6994,7 +6994,7 @@ CUserDB *userDb = &g_UserDB[n];
   query.dwAccountSerial = userDb->m_dwAccountSerial;
   query.wIndex = n;
   const int size = query.size();
-  g_Main.PushDQSData( 0xFFFFFFFF, 0LL, 0x99u, reinterpret_cast<char *>(&query), size);
+  g_Main.PushDQSData(-1, nullptr, 153, reinterpret_cast<char *>(&query), size);
   return 1;
 }
 
@@ -7066,7 +7066,7 @@ char CNetworkEX::ResCuttingRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 processNum = static_cast<unsigned __int8>(request->byProcessNum);
-  if (processNum <= 0x63u)
+  if (processNum <= 99)
   {
     player->pc_OreCutting(request->wOreSerial, processNum);
     return 1;
@@ -7089,7 +7089,7 @@ char CNetworkEX::OreIntoBagRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 addAmount = static_cast<unsigned __int8>(request->byAddAmount);
-  if (addAmount <= 0x63u)
+  if (addAmount <= 99)
   {
     const int resIndex = request->wResIndex;
     const int recordNum = g_Main.m_tblItemData[18].GetRecordNum();
@@ -7328,7 +7328,7 @@ char CNetworkEX::AwayPartyInvitation(int n, const _away_party_invitation_request
     return 0;
   }
 
-  if (strlen_0(inviteeName) <= 0x10)
+  if (strlen_0(inviteeName) <= 16)
   {
     player->pc_AwaypartyInvitationRequest(inviteeName);
     return 1;
@@ -7505,7 +7505,7 @@ char CNetworkEX::SkillRecallTeleportRequest(int n, char *pBuf)
     else
     {
       CRecallEffectController *controller = CRecallEffectController::Instance();
-      controller->SendRecallReqeustResult(0x11u, player);
+      controller->SendRecallReqeustResult(17, player);
     }
     return 1;
   }
@@ -7542,7 +7542,7 @@ char CNetworkEX::ClassSkillRecallTeleportRequest(int n, char *pBuf)
     else
     {
       CRecallEffectController *controller = CRecallEffectController::Instance();
-      controller->SendRecallReqeustResult(0x11u, player);
+      controller->SendRecallReqeustResult(17, player);
     }
     return 1;
   }
@@ -7623,7 +7623,7 @@ char CNetworkEX::MakeTowerRequest(int n, char *pBuf)
   if (skillIndex < recordNum)
   {
     const unsigned __int8 materialNum = static_cast<unsigned __int8>(request->byMaterialNum);
-    if (materialNum <= 0x1Eu)
+    if (materialNum <= 30)
     {
       for (int index = 0; index < materialNum; ++index)
       {
@@ -7637,7 +7637,7 @@ char CNetworkEX::MakeTowerRequest(int n, char *pBuf)
             charName);
           return 0;
         }
-        if (amount > 0x63u)
+        if (amount > 99)
         {
           const char *charName = player->m_Param.GetCharNameA();
           m_LogFile.Write(
@@ -7731,7 +7731,7 @@ char CNetworkEX::MakeTrapRequest(int n, char *pBuf)
   }
 
   CNuclearBombMgr *mgr = CNuclearBombMgr::Instance();
-  mgr->SendMsg_Result(n, 0xBu);
+  mgr->SendMsg_Result(n, 11);
   return 0;
 }
 
@@ -7784,7 +7784,7 @@ char CNetworkEX::ForceRecallTeleportRequest(int n, char *pBuf)
   else
   {
     CRecallEffectController *controller = CRecallEffectController::Instance();
-    controller->SendRecallReqeustResult(0x11u, player);
+    controller->SendRecallReqeustResult(17, player);
   }
   return 1;
 }
@@ -7817,7 +7817,7 @@ char CNetworkEX::DTradeAskRequest(int n, char *pBuf)
 
   if (player->m_EP.GetEff_State(26) || targetPlayer->m_EP.GetEff_State(26))
   {
-    player->SendMsg_DTradeAskResult(0x20u);
+    player->SendMsg_DTradeAskResult(32);
     return 1;
   }
 
@@ -7890,7 +7890,7 @@ char CNetworkEX::DTradeAddRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->bySlotIndex);
-  if (slotIndex <= 0xFu)
+  if (slotIndex <= 15)
   {
     const unsigned __int8 storageCode = static_cast<unsigned __int8>(request->byStorageCode);
     if (storageCode < 8u)
@@ -7931,7 +7931,7 @@ char CNetworkEX::DTradeDelRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->bySlotIndex);
-  if (slotIndex <= 0xFu)
+  if (slotIndex <= 15)
   {
     player->pc_DTradeDelRequest(slotIndex);
     return 1;
@@ -8194,7 +8194,7 @@ char CNetworkEX::UnitBulletFillRequest(int n, char *pBuf)
     for (int index = 0; index < 2; ++index)
     {
       const unsigned __int16 bulletIndex = request->wBulletIndex[index];
-      if (bulletIndex != 0xFFFF)
+      if (bulletIndex != 65535)
       {
         if (!g_Main.m_tblUnitBullet.GetRecord(bulletIndex))
         {
@@ -8315,7 +8315,7 @@ char CNetworkEX::UnitDeliveryRequest(int n, char *pBuf)
   }
 
   CItemStore *store = nullptr;
-  if (request->dwStoreIndex != 0xFFFFFFFF)
+  if (request->dwStoreIndex != static_cast<unsigned int>(-1))
   {
     const int mapCode = player->m_pCurMap->GetMapCode();
     CItemStoreManager *manager = CItemStoreManager::Instance();
@@ -8467,15 +8467,15 @@ char CNetworkEX::QuestSelectRewardReport(int n, char *pBuf)
   }
 
   const unsigned __int8 questSlot = static_cast<unsigned __int8>(request->byQuestSlot);
-  if (questSlot < 0x1Eu)
+  if (questSlot < 30)
   {
     const unsigned __int8 rewardSlot = static_cast<unsigned __int8>(request->bySelectItemSlotIndex);
     const unsigned __int8 linkIndex = static_cast<unsigned __int8>(request->byLinkQuestIndex);
-    if (rewardSlot == 0xFF || rewardSlot < 6u)
+    if (rewardSlot == 255 || rewardSlot < 6)
     {
-      if (linkIndex == 0xFF || linkIndex < 5u)
+      if (linkIndex == 255 || linkIndex < 5)
       {
-        if (rewardSlot == 0xFF && linkIndex == 0xFF)
+        if (rewardSlot == 255 && linkIndex == 255)
         {
           const char *charName = player->m_Param.GetCharNameA();
           m_LogFile.Write(
@@ -8647,7 +8647,7 @@ char CNetworkEX::QuestGiveupRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->byQuestDBSlot);
-  if (slotIndex < 0x1Eu)
+  if (slotIndex < 30)
   {
     player->pc_QuestGiveupRequest(slotIndex);
     return 1;
@@ -8670,7 +8670,7 @@ char CNetworkEX::BriefPassReport(int n, char *pBuf)
   }
 
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->bySlotIndex);
-  if (slotIndex < 0x1Eu)
+  if (slotIndex < 30)
   {
     player->pc_BriefPass(slotIndex);
     return 1;
@@ -8714,7 +8714,7 @@ char CNetworkEX::ProposeVoteRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 contentSize = request->wContentSize;
-  if (contentSize <= 0x4FFu)
+  if (contentSize <= 1279)
   {
     if (contentSize != 0)
     {
@@ -8898,7 +8898,7 @@ char CNetworkEX::GuildOfferSuggestRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 commentSize = static_cast<unsigned __int8>(request->byCommentLen);
-  if (commentSize >= 0x40u)
+  if (commentSize >= 64)
   {
     return 0;
   }
@@ -9210,7 +9210,7 @@ char CNetworkEX::GuildListRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 page = static_cast<unsigned __int8>(request->byPage);
-  if (page < 0x4Bu)
+  if (page < 75)
   {
     player->pc_GuildListRequest(page);
     return 1;
@@ -9242,12 +9242,12 @@ char CNetworkEX::ATradeRegItemRequest(int n, char *pBuf)
   }
 
   _a_trade_reg_item_request_clzo *request = reinterpret_cast<_a_trade_reg_item_request_clzo *>(pBuf);
-  if (request->byItemTableCode < 0x25u)
+  if (request->byItemTableCode < 37)
   {
     const int recordNum = g_Main.m_tblItemData[request->byItemTableCode].GetRecordNum();
     if (request->wItemIndex < recordNum)
     {
-      if (request->byAmount <= 0x63u)
+      if (request->byAmount <= 99)
       {
         CUnmannedTraderController *controller = CUnmannedTraderController::Instance();
         controller->Regist(static_cast<unsigned __int16>(n), request);
@@ -9326,7 +9326,7 @@ char CNetworkEX::ATradeBuyItemRequest(int n, char *pBuf)
   }
 
   _unmannedtrader_buy_item_request_clzo *request = reinterpret_cast<_unmannedtrader_buy_item_request_clzo *>(pBuf);
-  if (request->byNum <= 0xAu)
+  if (request->byNum <= 10)
   {
     CUnmannedTraderController *controller = CUnmannedTraderController::Instance();
     controller->Buy(static_cast<unsigned __int16>(n), request);
@@ -9395,9 +9395,9 @@ char CNetworkEX::BuddyAddRequest(int n, char *pBuf)
   char dstName[40];
   memset(dstName, 0, 17);
   const unsigned __int16 dstIndex = request->wDstIndex;
-  if (dstIndex == 0xFFFF)
+  if (dstIndex == 65535)
   {
-    memcpy_0(dstName, request->wszDstName, 0x10uLL);
+    memcpy_0(dstName, request->wszDstName, 16);
     dstName[16] = 0;
   }
   else if (dstIndex >= MAX_PLAYER)

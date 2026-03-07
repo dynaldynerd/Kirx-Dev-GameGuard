@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMgrAvatorItemHistory.h"
 
@@ -22,7 +22,7 @@
 namespace
 {
   char sData[20000]{};
-  char sBuf[0x2800]{};
+  char sBuf[10240]{};
   char s_personal_amine_log[20000]{};
   const char *pRace_0[3] = {
     "Bellato",
@@ -320,11 +320,11 @@ if (pkInfo && byMaxCnt)
   {
     sprintf_s(
       sBuf,
-      0x2800uLL,
+      10240,
       "\r\n== UnmannedTrader Regist Info pkInfo(%p) byMacCnt(%u) ==\r\n",
       pkInfo,
       byMaxCnt);
-    strcat_s(sData, 0x4E20uLL, sBuf);
+    strcat_s(sData, 20000, sBuf);
   }
 }
 
@@ -647,7 +647,7 @@ void CMgrAvatorItemHistory::have_item(
     for (int slot = 0; slot < 4; ++slot)
     {
       _UNIT_DB_BASE::_LIST *unit = &pLoadData->dbUnit.m_List[slot];
-      if (unit->byFrame != 0xFF)
+      if (unit->byFrame != 255)
       {
         sprintf(
           sBuf,
@@ -973,7 +973,7 @@ void CMgrAvatorItemHistory::take_ground_item(
   if (dwThrowerSerial == static_cast<unsigned int>(-1))
   {
     char destination[48]{};
-    if (byItemBoxCode || wMonRecIndex == 0xFFFF)
+    if (byItemBoxCode || wMonRecIndex == 65535)
     {
       switch (byItemBoxCode)
       {
@@ -1079,21 +1079,21 @@ void CMgrAvatorItemHistory::post_delete(CPostData *pPost, char *pFileName)
   char sender[17]{};
   sData[0] = 0;
 
-  W2M(pPost->m_wszSendName, sender, 0x11u);
+  W2M(pPost->m_wszSendName, sender, 17);
   if (pPost->m_Key.IsFilled())
   {
     _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
-    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+    sprintf_s(sBuf, 10240, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
   }
   else
   {
-    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+    sprintf_s(sBuf, 10240, "NoItem");
   }
 
   sprintf_s(
     sData,
-    0x4E20uLL,
+    20000,
     "[PostSystem : Post Delete] - PostSerial[%u] - No[%d] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
     pPost->m_dwPSSerial,
     pPost->m_nNumber,
@@ -1117,16 +1117,16 @@ void CMgrAvatorItemHistory::post_getpresent(
   char buffer[64]{};
   sData[0] = 0;
 
-  W2M(wszSendName, sender, 0x11u);
+  W2M(wszSendName, sender, 17);
   if (Item)
   {
     _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
-    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+    sprintf_s(buffer, 64, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
   }
   else
   {
-    sprintf_s(buffer, 0x40uLL, "NoItem");
+    sprintf_s(buffer, 64, "NoItem");
   }
 
   sprintf(
@@ -1152,16 +1152,16 @@ void CMgrAvatorItemHistory::post_senditem(
   char buffer[64]{};
   sData[0] = 0;
 
-  W2M(wszRecvName, receiver, 0x11u);
+  W2M(wszRecvName, receiver, 17);
   if (Item)
   {
     _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
-    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+    sprintf_s(buffer, 64, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
   }
   else
   {
-    sprintf_s(buffer, 0x40uLL, "NoItem");
+    sprintf_s(buffer, 64, "NoItem");
   }
 
   sprintf(
@@ -1187,16 +1187,16 @@ void CMgrAvatorItemHistory::post_return(
   char buffer[64]{};
   sData[0] = 0;
 
-  W2M(wszRecvName, receiver, 0x11u);
+  W2M(wszRecvName, receiver, 17);
   if (Item)
   {
     _base_fld *record = g_Main.m_tblItemData[Item->m_byTableCode].GetRecord(Item->m_wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(Item->m_byTableCode, Item->m_dwLv);
-    sprintf_s(buffer, 0x40uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
+    sprintf_s(buffer, 64, "%s_%I64u_@%s[%I64u]", record->m_strCode, dwDur, upgInfo, Item->m_lnUID);
   }
   else
   {
-    sprintf_s(buffer, 0x40uLL, "NoItem");
+    sprintf_s(buffer, 64, "NoItem");
   }
 
   sprintf(
@@ -1216,21 +1216,21 @@ void CMgrAvatorItemHistory::post_receive(CPostData *pPost, char *pFileName)
   char sender[17]{};
   sData[0] = 0;
 
-  W2M(pPost->m_wszSendName, sender, 0x11u);
+  W2M(pPost->m_wszSendName, sender, 17);
   if (pPost->m_Key.IsFilled())
   {
     _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
-    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+    sprintf_s(sBuf, 10240, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
   }
   else
   {
-    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+    sprintf_s(sBuf, 10240, "NoItem");
   }
 
   sprintf_s(
     sData,
-    0x4E20uLL,
+    20000,
     "[PostSystem : Post Receive] - PostSerial[%u] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
     pPost->m_dwPSSerial,
     sBuf,
@@ -1248,11 +1248,11 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
   char buffer[64]{};
 
   sData[0] = 0;
-  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  strcat_s(sData, 20000, "\r\n\t============\r\n\r\n");
   const int size = pStorage->GetSize();
   sprintf_s(
     sBuf,
-    0x2800uLL,
+    10240,
     "POST STORAGE >> POST NUM = %d\r\n\r\n\t%s%14s%11s%18s%17s%37s%15s\r\n",
     size,
     "[No]",
@@ -1262,7 +1262,7 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
     "[Title]",
     "[Item]",
     "[Gold]");
-  strcat_s(sData, 0x4E20uLL, sBuf);
+  strcat_s(sData, 20000, sBuf);
   if (size > 0)
   {
     for (int index = 0; index < 50; ++index)
@@ -1277,7 +1277,7 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
           const char *upgInfo = DisplayItemUpgInfo(postData->m_Key.byTableCode, postData->m_dwUpt);
           sprintf_s(
             buffer,
-            0x40uLL,
+            64,
             "%s_%I64u_@%s[%I64u]",
             record->m_strCode,
             postData->m_dwDur,
@@ -1286,14 +1286,14 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
         }
         else
         {
-          sprintf_s(buffer, 0x40uLL, "NoItem");
+          sprintf_s(buffer, 64, "NoItem");
         }
-        W2M(postData->m_wszTitle, szTran, 0x15u);
-        W2M(postData->m_wszSendName, sender, 0x11u);
+        W2M(postData->m_wszTitle, szTran, 21);
+        W2M(postData->m_wszSendName, sender, 17);
         const char *state = postData->m_byState == 1 ? "Read" : "NotRead";
         sprintf_s(
           sBuf,
-          0x2800uLL,
+          10240,
           "\t%3d %13u %10s %17s %22s %34s %10u\r\n",
           postData->m_nNumber,
           postData->m_dwPSSerial,
@@ -1302,11 +1302,11 @@ void CMgrAvatorItemHistory::post_storage(CPostStorage *pStorage, char *pFileName
           szTran,
           buffer,
           postData->m_dwGold);
-        strcat_s(sData, 0x4E20uLL, sBuf);
+        strcat_s(sData, 20000, sBuf);
       }
     }
   }
-  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  strcat_s(sData, 20000, "\r\n\t============\r\n\r\n");
   WriteFile(pFileName, sData);
 }
 
@@ -1315,21 +1315,21 @@ void CMgrAvatorItemHistory::post_returnreceive(CPostData *pPost, char *pFileName
   char receiver[17]{};
   sData[0] = 0;
 
-  W2M(pPost->m_wszRecvName, receiver, 0x11u);
+  W2M(pPost->m_wszRecvName, receiver, 17);
   if (pPost->m_Key.IsFilled())
   {
     _base_fld *record = g_Main.m_tblItemData[pPost->m_Key.byTableCode].GetRecord(pPost->m_Key.wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(pPost->m_Key.byTableCode, pPost->m_dwUpt);
-    sprintf_s(sBuf, 0x2800uLL, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
+    sprintf_s(sBuf, 10240, "%s_%I64u_@%s[%I64u]", record->m_strCode, pPost->m_dwDur, upgInfo, pPost->m_lnUID);
   }
   else
   {
-    sprintf_s(sBuf, 0x2800uLL, "NoItem");
+    sprintf_s(sBuf, 10240, "NoItem");
   }
 
   sprintf_s(
     sData,
-    0x4E20uLL,
+    20000,
     "[PostSystem : Return Post Receive] - PostSerial[%u] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
     pPost->m_dwPSSerial,
     sBuf,
@@ -1347,11 +1347,11 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
   char buffer[64]{};
 
   sData[0] = 0;
-  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  strcat_s(sData, 20000, "\r\n\t============\r\n\r\n");
   const int size = pReturn->GetSize();
   sprintf_s(
     sBuf,
-    0x2800uLL,
+    10240,
     "RETURN POST STORAGE >> RETURN POST NUM = %d\r\n\r\n\t%s%14s%11s%18s%17s%37s%15s\r\n",
     size,
     "[No]",
@@ -1361,7 +1361,7 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
     "[Title]",
     "[Item]",
     "[Gold]");
-  strcat_s(sData, 0x4E20uLL, sBuf);
+  strcat_s(sData, 20000, sBuf);
   if (size > 0)
   {
     for (int index = 0; index < 10; ++index)
@@ -1376,7 +1376,7 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
           const char *upgInfo = DisplayItemUpgInfo(postData->m_Key.byTableCode, postData->m_dwUpt);
           sprintf_s(
             buffer,
-            0x40uLL,
+            64,
             "%s_%I64u_@%s[%I64u]",
             record->m_strCode,
             postData->m_dwDur,
@@ -1385,14 +1385,14 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
         }
         else
         {
-          sprintf_s(buffer, 0x40uLL, "NoItem");
+          sprintf_s(buffer, 64, "NoItem");
         }
-        W2M(postData->m_wszTitle, szTran, 0x15u);
-        W2M(postData->m_wszRecvName, receiver, 0x11u);
+        W2M(postData->m_wszTitle, szTran, 21);
+        W2M(postData->m_wszRecvName, receiver, 17);
         const char *state = postData->m_byState == 1 ? "Read" : "NotRead";
         sprintf_s(
           sBuf,
-          0x2800uLL,
+          10240,
           "\t%3d %13u %10s %17s %22s %34s %10u\r\n",
           postData->m_nNumber,
           postData->m_dwPSSerial,
@@ -1401,11 +1401,11 @@ void CMgrAvatorItemHistory::return_post_storage(CPostReturnStorage *pReturn, cha
           szTran,
           buffer,
           postData->m_dwGold);
-        strcat_s(sData, 0x4E20uLL, sBuf);
+        strcat_s(sData, 20000, sBuf);
       }
     }
   }
-  strcat_s(sData, 0x4E20uLL, "\r\n\t============\r\n\r\n");
+  strcat_s(sData, 20000, "\r\n\t============\r\n\r\n");
   WriteFile(pFileName, sData);
 }
 
@@ -1676,20 +1676,20 @@ CMgrAvatorItemHistory::CMgrAvatorItemHistory()
   _strtime(m_szCurTime);
   m_szCurTime[5] = '\0';
 
-  m_tmrUpdateTime.BeginTimer(0xEA60);
+  m_tmrUpdateTime.BeginTimer(60000);
 
-  m_listLogData_10K.SetList(0xFE);
-  m_listLogDataEmpty_10K.SetList(0xFE);
+  m_listLogData_10K.SetList(254);
+  m_listLogDataEmpty_10K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
     m_listLogDataEmpty_10K.PushNode_Back(index);
 
-  m_listLogData_1K.SetList(0xFE);
-  m_listLogDataEmpty_1K.SetList(0xFE);
+  m_listLogData_1K.SetList(254);
+  m_listLogDataEmpty_1K.SetList(254);
   for (unsigned int index = 0; index < 254; ++index)
     m_listLogDataEmpty_1K.PushNode_Back(index);
 
-  m_listLogData_200.SetList(0x9E4);
-  m_listLogDataEmpty_200.SetList(0x9E4);
+  m_listLogData_200.SetList(2532);
+  m_listLogDataEmpty_200.SetList(2532);
   for (unsigned int index = 0; index < 2532; ++index)
     m_listLogDataEmpty_200.PushNode_Back(index);
 
@@ -1745,9 +1745,9 @@ void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLo
   const int logLen = static_cast<int>(strlen_0(pszLog));
   unsigned int outIndex = 0;
 
-  if (logLen >= 0xC8)
+  if (logLen >= 200)
   {
-    if (logLen >= 0x3E8)
+    if (logLen >= 1000)
     {
       if (logLen < 0x2710 && m_listLogDataEmpty_10K.PopNode_Front(&outIndex))
       {
@@ -2783,7 +2783,7 @@ void CMgrAvatorItemHistory::combine_ex_reward_item(
   }
 
   const unsigned __int16 excelIndex = GetExcelIndexFromCombineExCheckKey(pCombineDB->m_dwCheckKey);
-  const int listCount = pCombineDB->m_byItemListNum >= 0x18u ? 24 : pCombineDB->m_byItemListNum;
+  const int listCount = pCombineDB->m_byItemListNum >= 24 ? 24 : pCombineDB->m_byItemListNum;
   sprintf(
     sData,
     "\r\nCOMBINE_EX[REWARD]\r\n\tCombine%d@%d, type:%d, num:%d, (D:%u) [%s %s]\r\n",

@@ -108,7 +108,7 @@ unsigned int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
     return 3;
   }
 
-  if (pOne->m_Param.GetDalant() >= 0x989680)
+  if (pOne->m_Param.GetDalant() >= 10000000)
   {
     return 0;
   }
@@ -199,7 +199,7 @@ if (!_bEnable)
   }
 
   PatriarchElectProcessor::Instance()->SendMsg_ResultCode(pOne->m_id.wIndex, 1u);
-  pOne->SubDalant(0x989680u);
+  pOne->SubDalant(10000000u);
   pOne->SendMsg_AlterMoneyInform(0);
 
   const unsigned __int16 packetLength = m_kSend[raceCode].size();
@@ -214,7 +214,7 @@ if (!_bEnable)
   const int level = pOne->m_Param.GetLevel();
   if (level == 30 || level == 40 || level == 50 || level == 60)
   {
-    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(pOne->m_Param.GetRaceCode(), level, 0x989680u);
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(pOne->m_Param.GetRaceCode(), level, 10000000u);
   }
 
   return 0;

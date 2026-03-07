@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMapDisplay.h"
 
@@ -495,7 +495,7 @@ void CMapDisplay::DrawTextA()
 
   SetBkMode(hdc, TRANSPARENT);
   SetTextAlign(hdc, TA_LEFT);
-  SetTextColor(hdc, 0xFFFFFFu);
+  SetTextColor(hdc, 16777215);
   ::SelectObject(hdc, static_cast<HFONT>(m_Font.GetSafeHandle()));
 
   char buffer[136]{};
@@ -506,7 +506,7 @@ void CMapDisplay::DrawTextA()
   if (m_MapExtend.m_bExtendMode)
   {
     _bsp_info *bspInfo = m_pActMap->GetBspInfo();
-    SetTextColor(hdc, 0xFFFFu);
+    SetTextColor(hdc, 65535);
     sprintf_s(
       buffer,
       sizeof(buffer),
@@ -567,7 +567,7 @@ int CMapDisplay::InitSurface(CMapData *pMap)
     return result;
   }
 
-  result = m_pSFBuf->FillColor(0x9BBD52u);
+  result = m_pSFBuf->FillColor(10206546);
   if (result < 0)
   {
     MyMessageBox("CMapDisplay Error", "FillColor Failure");

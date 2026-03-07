@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CAnimus.h"
 #include "ObjectCreateSetData.h"
@@ -77,13 +77,13 @@ bool CAnimus::SetStaticMember()
   char errMsg[136]{};
   for (int nAnimusClass = 0; nAnimusClass < 8; ++nAnimusClass)
   {
-    if (!CAnimus::s_tblParameter[nAnimusClass].ReadRecord(kFiles[nAnimusClass], 0x1B8u, errMsg))
+    if (!CAnimus::s_tblParameter[nAnimusClass].ReadRecord(kFiles[nAnimusClass], 440, errMsg))
     {
       MyMessageBox("CAnimus::SetStaticMember", errMsg);
       return false;
     }
 
-    _animus_fld *record = GetAnimusFldFromLv(nAnimusClass, 0x40u);
+    _animus_fld *record = GetAnimusFldFromLv(nAnimusClass, 64);
     if (record == nullptr)
     {
       MyMessageBox("CAnimus::SetStaticMember", "::GetAnimusFldFromLv(...) Fail!");
@@ -146,7 +146,7 @@ char CAnimus::Create(_animus_create_setdata *pData)
   m_nMaxAttackPnt = pData->nMaxAttackPnt;
   m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
   strcpy_0(m_wszMasterName, pData->pMaster->m_Param.GetCharNameW());
-  W2M(m_wszMasterName, m_aszMasterName, 0x11u);
+  W2M(m_wszMasterName, m_aszMasterName, 17);
   m_pBeforeTownCheckMap = nullptr;
   CheckPosInTown();
   m_dwStunTime = 0;
@@ -180,9 +180,9 @@ void CAnimus::AIInit()
   m_pTarget = nullptr;
   m_Mightiness = 1.0f;
 
-  m_AITimer[1].Init(0x64u);
-  m_AITimer[0].Init(0x64u);
-  m_AITimer[2].Init(0xEA60u);
+  m_AITimer[1].Init(100);
+  m_AITimer[0].Init(100);
+  m_AITimer[2].Init(60000);
   m_AITimer[2].Set(0);
   m_Skill[0].Init(
     0,
@@ -426,7 +426,7 @@ char CAnimus::GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int
   {
     if ((!byMoveMode && target == m_pMaster)
         || std::abs(static_cast<int>(GetYAngle(m_fCurPos, target->m_fCurPos))
-                    - static_cast<int>(GetYAngle(target->m_fCurPos, target->m_fTarPos))) < 0x4000)
+                    - static_cast<int>(GetYAngle(target->m_fCurPos, target->m_fTarPos))) < 16384)
     {
       std::memcpy(src, target->m_fTarPos, sizeof(src));
     }
@@ -569,13 +569,13 @@ CCharacter *CAnimus::SearchNearPlayerAttack()
 void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex)
 {
   pAP->pDst = pDst;
-  unsigned __int8 forcedPart = 0xFF;
+  unsigned __int8 forcedPart = 255;
   if (pDst && !pDst->m_ObjID.m_byID)
   {
     forcedPart = static_cast<CPlayer *>(pDst)->m_byDamagePart;
   }
 
-  if (!pDst || pDst->m_ObjID.m_byID || forcedPart == 0xFF)
+  if (!pDst || pDst->m_ObjID.m_byID || forcedPart == 255)
   {
     pAP->nPart = byPart;
   }
@@ -1391,25 +1391,25 @@ void CAnimus::AlterExp(__int64 nAddExp)
       unsigned __int64 addExp = static_cast<unsigned int>(static_cast<int>(scaledExp));
       if (static_cast<int>(scaledExp) && m_pRecord->m_nForLvUpExp - m_dwExp < addExp)
       {
-        if (m_pRecord->m_nForLvUpExp - m_dwExp <= 0x7FFFFFFFFFFFFFFFLL)
+        if (m_pRecord->m_nForLvUpExp - m_dwExp <= 9223372036854775807)
         {
           addExp = m_pRecord->m_nForLvUpExp - m_dwExp;
         }
         else
         {
-          addExp = 0x7FFFFFFFFFFFFFFFLL;
+          addExp = 9223372036854775807;
           g_Main.m_logSystemError.Write(
             "CAnimus::AlterExp(__int64 nAddExp(%I64d) ) : m_pRecord->m_nForLvUpExp - m_dwExp(%I64u) Invalid!",
-            0x7FFFFFFFFFFFFFFFLL,
+            9223372036854775807,
             m_pRecord->m_nForLvUpExp - m_dwExp);
         }
 
-        if ((0xFFFFFFFFFFFFFFFFULL - m_dwExp) < addExp)
+        if ((-1 - m_dwExp) < addExp)
         {
           const unsigned __int64 oldAddExp = addExp;
-          if ((0xFFFFFFFFFFFFFFFFULL - m_dwExp) <= 0x7FFFFFFFFFFFFFFFLL)
+          if ((-1 - m_dwExp) <= 9223372036854775807)
           {
-            addExp = 0xFFFFFFFFFFFFFFFFULL - m_dwExp;
+            addExp = -1 - m_dwExp;
             g_Main.m_logSystemError.Write(
               "CAnimus::AlterExp( __int64 nAddExp ) : _UI64_MAX < m_dwExp(%I64u), nOldExp(%I64u) : nAddExp(%I64d) Invalid!",
               m_dwExp,
@@ -1418,11 +1418,11 @@ void CAnimus::AlterExp(__int64 nAddExp)
           }
           else
           {
-            addExp = 0x7FFFFFFFFFFFFFFFLL;
+            addExp = 9223372036854775807;
             g_Main.m_logSystemError.Write(
               "CAnimus::AlterExp( __int64 nAddExp ) : ( _UI64_MAX < m_dwExp + nAddExp ) && ( _I64_MAX < _UI64_MAX - m_dwExp )\r\nnOldExp(%I64u) : nAddExp(%I64d) Invalid!",
               oldAddExp,
-              0x7FFFFFFFFFFFFFFFLL);
+              9223372036854775807);
           }
         }
       }
@@ -1565,7 +1565,7 @@ __int64 CAnimus::GetWindTol()
 
 bool CAnimus::IsInTown()
 {
-  return m_byPosRaceTown != 0xFF;
+  return m_byPosRaceTown != 255;
 }
 
 bool CAnimus::IsBeAttackedAble(bool bFirst)

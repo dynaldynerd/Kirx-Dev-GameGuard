@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "guild_alter_member_state_inform_zocl.h"
 
@@ -9,7 +9,7 @@ _guild_alter_member_state_inform_zocl::_guild_alter_member_state_inform_zocl()
 
 __int64 _guild_alter_member_state_inform_zocl::size()
 {
-  if (byAlterMemberNum > 0x32u)
+  if (byAlterMemberNum > 50)
   {
     byAlterMemberNum = 0;
   }

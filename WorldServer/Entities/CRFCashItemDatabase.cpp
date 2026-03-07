@@ -106,7 +106,7 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rP
 {
   char wszQuery[5124]{};
   auto *workMgr = CTSingleton<CCashDBWorkManager>::Instance();
-  workMgr->GetUseCashQueryStr(rParam, nIdx, wszQuery, 0x1400u);
+  workMgr->GetUseCashQueryStr(rParam, nIdx, wszQuery, 5120u);
 
   if (m_bSaveDBLog)
   {

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CTransportShip.h"
 
@@ -37,7 +37,7 @@ CTransportShip::CTransportShip()
   m_byRaceCode_Layer = static_cast<unsigned __int8>(-1);
 
   m_tmrCheckState.BeginTimer(1000);
-  m_listLogoffMember.SetList(0x13C8u);
+  m_listLogoffMember.SetList(5064);
 }
 
 CTransportShip::~CTransportShip() = default;
@@ -369,7 +369,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
       return true;
     }
 
-    SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 0xFFFF);
+    SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 65535);
     const unsigned __int8 kickDirect = (m_byDirect == 0);
     const int raceCode = pExiter->m_Param.GetRaceCode();
     const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);
@@ -377,7 +377,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
     return true;
   }
 
-  SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 0xFFFF);
+  SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 65535);
   const unsigned __int8 kickDirect = (m_byDirect == 0);
   const int raceCode = pExiter->m_Param.GetRaceCode();
   const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);

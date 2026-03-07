@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -25,7 +25,7 @@ _starting_vote_inform_zocl::_starting_vote_inform_zocl()
 
 __int64 _starting_vote_inform_zocl::size()
 {
-  if (wContentSize > 0x500u)
+  if (wContentSize > 1280)
   {
     wContentSize = 0;
   }
@@ -39,7 +39,7 @@ _started_vote_inform_zocl::_started_vote_inform_zocl()
 
 __int64 _started_vote_inform_zocl::size()
 {
-  if (wContentSize > 0x500u)
+  if (wContentSize > 1280)
   {
     wContentSize = 0;
   }
@@ -49,7 +49,7 @@ __int64 _started_vote_inform_zocl::size()
 CVoteSystem::CVoteSystem() : m_bActive(false), m_byRaceCode(static_cast<unsigned __int8>(-1)), m_nSerial(0)
 {
   m_SendStarted = _started_vote_inform_zocl();
-  m_listVote.SetList(0x13C8u);
+  m_listVote.SetList(5064);
 }
 
 CVoteSystem::~CVoteSystem() = default;
@@ -221,19 +221,19 @@ void CVoteSystem::Loop()
   const unsigned int loopTime = GetLoopTime();
   if (m_bHurry)
   {
-    if (loopTime - m_dwStartVoteTime > 0x493E0)
+    if (loopTime - m_dwStartVoteTime > 300000)
     {
       StopVote();
       return;
     }
   }
-  else if (loopTime - m_dwStartVoteTime > 0x3A980)
+  else if (loopTime - m_dwStartVoteTime > 240000)
   {
     m_bHurry = true;
   }
 
   m_SendStarted.wLeftSec = (300000 - (loopTime - m_dwStartVoteTime)) / 1000;
-  if (loopTime - m_dwLastBroadcastTime <= 0x2710)
+  if (loopTime - m_dwLastBroadcastTime <= 10000)
   {
     return;
   }
@@ -364,5 +364,5 @@ void CVoteSystem::ProcessPunishment()
   strcpy_0(update.wszCharName, m_wszCharName);
 
   const int size = update.size();
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x7Fu, reinterpret_cast<char *>(&update), size);
+  g_Main.PushDQSData(-1, nullptr, 127, reinterpret_cast<char *>(&update), size);
 }

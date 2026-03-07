@@ -1,4 +1,4 @@
-
+﻿
 #include "pch.h"
 
 #include "GuildBattle.h"
@@ -77,7 +77,7 @@ __int64 _possible_battle_guild_list_result_zocl::size()
 
 __int64 _guild_battle_rank_list_result_zocl::size()
 {
-  if (byCnt <= 0xBu)
+  if (byCnt <= 11)
   {
     return 427;
   }
@@ -939,7 +939,7 @@ namespace GUILD_BATTLE
       szKeyName,
       "X",
       szStrBuff,
-      0x7FFu,
+      2047,
       "./Initialize/NormalGuildBattle.ini");
     if (!strcmp_0("X", szStrBuff))
     {
@@ -1168,7 +1168,7 @@ namespace GUILD_BATTLE
     char tmp[256]{};
 sprintf(buffer, "Map%d", uiMapInx);
     returned[0] = 0;
-    GetPrivateProfileStringA(buffer, "Name", "X", returned, 0xFFu, "./Initialize/NormalGuildBattle.ini");
+    GetPrivateProfileStringA(buffer, "Name", "X", returned, 255, "./Initialize/NormalGuildBattle.ini");
     if (returned[0] == 'X')
     {
       CGuildBattleLogger::Instance()->Log(
@@ -1196,7 +1196,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       "1PStartPosDummyName",
       "X",
       returned,
-      0xFFu,
+      255,
       "./Initialize/NormalGuildBattle.ini");
     if (returned[0] == 'X')
     {
@@ -1232,7 +1232,7 @@ sprintf(buffer, "Map%d", uiMapInx);
       "2PStartPosDummyName",
       "X",
       returned,
-      0xFFu,
+      255,
       "./Initialize/NormalGuildBattle.ini");
     if (returned[0] == 'X')
     {
@@ -1525,7 +1525,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     float newPos[3]{};
     if (!m_pkMap->GetRandPosInDummy(pPos, newPos, true))
     {
-      memcpy_0(newPos, pPos->m_fCenterPos, 0xCu);
+      memcpy_0(newPos, pPos->m_fCenterPos, 12);
     }
     pkPlayer->OutOfMap(m_pkMap, 0, byMapOutType, newPos);
     pkPlayer->SendMsg_GotoRecallResult(0, m_pkMap->m_pMapSet->m_dwIndex, newPos, byMapOutType);
@@ -1771,7 +1771,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     {
       return static_cast<unsigned int>(m_pkMap->m_nMapCode);
     }
-    return 0xFFFFFFFFu;
+    return -1;
   }
 
   unsigned int CNormalGuildBattleField::GetMapID()
@@ -1942,7 +1942,7 @@ sprintf(buffer, "Map%d", uiMapInx);
   {
     if (IsExist())
     {
-      SetBattleState(false, 0xFFu);
+      SetBattleState(false, 255);
       Clear();
     }
   }
@@ -2607,7 +2607,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     }
 
     char buffer[1032]{};
-    sprintf(buffer, "[%u]_(%02d:00)_[%s]:[%s]_", m_dwID, m_dwID % 0x17u, leftName, rightName);
+    sprintf(buffer, "[%u]_(%02d:00)_[%s]:[%s]_", m_dwID, m_dwID % 23, leftName, rightName);
     m_kLogger.CreateLogFile(buffer);
     if (!bSuccess)
     {
@@ -2650,7 +2650,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       return 0;
     }
 
-    if (!byNumber || byNumber > 0x32u)
+    if (!byNumber || byNumber > 50)
     {
       CGuildBattleLogger::Instance()->Log(
         "CNormalGuildBattle::Init(%u,%u,%u,%u)byNumber(%u) Invalid!",
@@ -3217,7 +3217,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CNormalGuildBattle::GuildBattleResultLogNotifyWeb(const _qry_case_guild_battel_result_log *sheet)
   {
-    static_assert(sizeof(_guild_battle_complete_msg_zowb) == 0xA8, "guild battle web notify size mismatch");
+    static_assert(sizeof(_guild_battle_complete_msg_zowb) == 168, "guild battle web notify size mismatch");
 
     if (!sheet)
     {
@@ -3257,7 +3257,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
         g_Main.m_byWebAgentServerNetInx,
         type,
         reinterpret_cast<char *>(&msg),
-        0xA8u);
+        168);
     }
   }
 
@@ -3351,7 +3351,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       }
     }
 
-    pkPlayer->pc_SetInGuildBattle(false, 0xFFu);
+    pkPlayer->pc_SetInGuildBattle(false, 255);
 
     const bool isLeft = isFirstGuild ? (m_k1P.GetColorInx() != 1) : (m_k2P.GetColorInx() != 1);
     const char *dropInfo = droppedBall ? "Drop Ball" : "None";
@@ -3420,7 +3420,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
         }
       }
 
-      pkPlayer->pc_SetInGuildBattle(false, 0xFFu);
+      pkPlayer->pc_SetInGuildBattle(false, 255);
 
       const char *dropInfo = droppedBall ? "Drop Ball" : "None";
       const char *guildName = isFirstGuild ? m_k1P.GetGuildName() : m_k2P.GetGuildName();
@@ -3721,7 +3721,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
   void CNormalGuildBattle::NotifyPassGravityStoneLimitTime()
   {
     char message[32]{};
-    message[0] = static_cast<char>(0xFF);
+    message[0] = static_cast<char>(255);
     unsigned __int8 type[2]{27, 85};
     m_k1P.SendMsg(type, message, 1u);
     m_k2P.SendMsg(type, message, 1u);
@@ -4132,7 +4132,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     {
       return 110;
     }
-    if (byNumber > 0x32u)
+    if (byNumber > 50)
     {
       return 126;
     }
@@ -4402,7 +4402,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     for (unsigned int j = 0; j < m_uiMapCnt; ++j)
     {
       CNormalGuildBattle **list = &m_ppkTodayBattle[23 * j];
-      for (unsigned __int8 k = 0; k < 0x17u; ++k)
+      for (unsigned __int8 k = 0; k < 23; ++k)
       {
         if (!list[k]->IsEmpty() && list[k]->IsMemberGuild(dwGuildSerial))
         {
@@ -4583,7 +4583,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return 0;
     }
-    if (wTumeMin > 0x1Eu)
+    if (wTumeMin > 30)
     {
       wTumeMin = 30;
     }
@@ -4630,7 +4630,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
   unsigned __int8 CGuildBattleSchedule::Set(unsigned int dwStartTimeInx, unsigned int dwElapseTimeCnt)
   {
-    if (!dwStartTimeInx || dwStartTimeInx >= 0x17)
+    if (!dwStartTimeInx || dwStartTimeInx >= 23)
     {
       return 122;
     }
@@ -4823,7 +4823,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
   char CGuildBattleReservedSchedule::Clear(unsigned int dwID)
   {
-    const unsigned int scheduleIndex = dwID % 0x17u;
+    const unsigned int scheduleIndex = dwID % 23;
     if (!m_bUseField[scheduleIndex] || !m_pkSchedule[scheduleIndex])
     {
       return 0;
@@ -4866,7 +4866,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     ++m_uiCurScheduleInx;
 
     bool foundWaitSchedule = false;
-    for (unsigned int scheduleIndex = m_uiCurScheduleInx; scheduleIndex < 0x17; ++scheduleIndex)
+    for (unsigned int scheduleIndex = m_uiCurScheduleInx; scheduleIndex < 23; ++scheduleIndex)
     {
       if (m_pkSchedule[scheduleIndex] && m_pkSchedule[scheduleIndex]->IsWait())
       {
@@ -4957,7 +4957,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return 125;
     }
-    if (dwStartTimeInx >= 0x17)
+    if (dwStartTimeInx >= 23)
     {
       return 122;
     }
@@ -5014,7 +5014,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
         if (schedule->Load(bToday, list[j].dwID, list[j].ucState, list[j].tStartTime, list[j].wTumeMin))
         {
-          const unsigned int idx = list[j].dwID % 0x17u;
+          const unsigned int idx = list[j].dwID % 23;
           m_pkSchedule[idx] = schedule;
 
           ATL::CTime result;
@@ -5059,7 +5059,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
   CGuildBattleSchedule *CGuildBattleReservedSchedule::UpdateUseFlag(unsigned int dwID)
   {
-    const unsigned int idx = dwID % 0x17u;
+    const unsigned int idx = dwID % 23;
     if (!m_pkSchedule[idx])
     {
       return nullptr;
@@ -5077,7 +5077,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   {
     CGuildBattleLogger *logger = CGuildBattleLogger::Instance();
     const ATL::CTime now = ATL::CTime::GetTickCount();
-    for (unsigned int j = 0; j < 0x17; ++j)
+    for (unsigned int j = 0; j < 23; ++j)
     {
       if (m_bUseField[j] && m_pkSchedule[j])
       {
@@ -5097,7 +5097,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
   char CGuildBattleReservedSchedule::CleanUpDanglingReservedSchedule()
   {
-    for (unsigned int j = 0; j < 0x17; ++j)
+    for (unsigned int j = 0; j < 23; ++j)
     {
       if (m_pkSchedule[j] && !m_bUseField[j])
       {
@@ -5235,7 +5235,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       _worlddb_guild_battle_schedule_list *pkInfo = &ms_pkDBScheduleInfo[j];
       const unsigned int id = m_ppkReservedSchedule[j]->GetID();
       const unsigned __int8 ret =
-        g_Main.m_pWorldDB->LoadGuildBattleScheduleInfo(id, 0x17u, pkInfo);
+        g_Main.m_pWorldDB->LoadGuildBattleScheduleInfo(id, 23, pkInfo);
       if (ret == 1)
       {
         CGuildBattleLogger::Instance()->Log(
@@ -5385,7 +5385,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     query.dwStartSLID = m_ppkReservedSchedule[0]->GetID();
     query.dwEndSLID = m_ppkReservedSchedule[m_uiMapCnt - 1]->GetID();
     query.dwStartSID = CGuildBattleSchedulePool::Instance()->GetSID(query.dwStartSLID, 0);
-    query.dwEndSID = CGuildBattleSchedulePool::Instance()->GetSID(query.dwEndSLID, 0x16u);
+    query.dwEndSID = CGuildBattleSchedulePool::Instance()->GetSID(query.dwEndSLID, 22);
 
     const int querySize = static_cast<int>(query.size());
     g_Main.PushDQSData(0xFFFFFFFF, 0LL, 0x24u, reinterpret_cast<char *>(&query), querySize);
@@ -5665,7 +5665,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
   char CGuildBattleScheduleManager::AddDefaultDBTable()
   {
-    if (g_Main.m_pWorldDB->InsertGuildBattleScheduleDefaultRecord(2u, m_uiMapCnt, 0x17u, 1u))
+    if (g_Main.m_pWorldDB->InsertGuildBattleScheduleDefaultRecord(2u, m_uiMapCnt, 23, 1u))
     {
       return 1;
     }
@@ -5745,7 +5745,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   bool CGuildBattleLogger::Init()
   {
     CreateDirectoryA("..\\ZoneServerLog\\Systemlog\\GuildBattle", nullptr);
-    clear_file("..\\ZoneServerLog\\Systemlog\\GuildBattle", 0xFu);
+    clear_file("..\\ZoneServerLog\\Systemlog\\GuildBattle", 15);
 
     if (!m_pkLogger)
     {
@@ -5792,7 +5792,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     va_end(va);
   }
 
-  CGuildBattleRewardItem::CGuildBattleRewardItem() : m_ucD(0), m_ucTableCode(0xFFu), m_pFld(nullptr)
+  CGuildBattleRewardItem::CGuildBattleRewardItem() : m_ucD(0), m_ucTableCode(255), m_pFld(nullptr)
   {
   }
 
@@ -5801,7 +5801,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     char buffer[1024]{};
     char returned[2048]{};
     sprintf(buffer, "item%d", usInx);
-    GetPrivateProfileStringA("RewardItem", buffer, "X", returned, 0x800u, "./Initialize/NormalGuildBattle.ini");
+    GetPrivateProfileStringA("RewardItem", buffer, "X", returned, 2048, "./Initialize/NormalGuildBattle.ini");
     if (!strcmp_0(returned, "X"))
     {
       return false;
@@ -5826,7 +5826,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   {
     _base_fld *record = nullptr;
     unsigned __int8 tableCode = 0;
-    for (; tableCode < 0x25u; ++tableCode)
+    for (; tableCode < 37; ++tableCode)
     {
       record = g_Main.m_tblItemData[tableCode].GetRecord(szItemCode);
       if (record)
@@ -5834,7 +5834,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         break;
       }
     }
-    if (tableCode >= 0x25u)
+    if (tableCode >= 37)
     {
       return false;
     }
@@ -6050,7 +6050,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     ++m_dwVer[byRace];
     for (unsigned __int16 j = 0; j < static_cast<unsigned int>(pkInfo.wCount); ++j)
     {
-      if (listInx >= 0xAu)
+      if (listInx >= 10)
       {
         m_ppkList[byRace][pageInx].dwCurVer = m_dwVer[byRace];
         m_ppkList[byRace][pageInx].byCnt = 10;
@@ -6088,7 +6088,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     {
       return 0;
     }
-    for (unsigned int page = 0; page < 0x1Eu; ++page)
+    for (unsigned int page = 0; page < 30; ++page)
     {
       for (int slot = 0; slot < 10; ++slot)
       {
@@ -6159,7 +6159,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     const int day = now.GetDay();
     const int month = now.GetMonth();
     const int year = now.GetYear();
-    sprintf_s(buffer, 0xAu, "%04d%02d%02d", year, month, day);
+    sprintf_s(buffer, 10, "%04d%02d%02d", year, month, day);
 
     g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x22u, buffer, 10);
     CPvpUserAndGuildRankingSystem::Instance()->Log("CGuildBattleRankManager::PushCreateGuildBattleRankTable()");
@@ -6264,7 +6264,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
 
     for (unsigned __int16 j = 0; j < rankList->wCount; ++j)
     {
-      if (pageInx >= 0xAu)
+      if (pageInx >= 10)
       {
         m_ppkList[byRace][listInx].dwCurVer = m_dwVer[byRace];
         m_ppkList[byRace][listInx].byCnt = 10;

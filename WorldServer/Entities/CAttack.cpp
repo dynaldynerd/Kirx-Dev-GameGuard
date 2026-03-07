@@ -669,7 +669,7 @@ __int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
       return index;
     }
   }
-  return 0xFFFFFFFFLL;
+  return -1LL;
 }
 
 __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
@@ -1013,34 +1013,41 @@ void CAttack::FlashDamageProc(
         }
 
         inGuildBattle = false;
+        bool shouldCheckDamage = false;
         if (!CheckGuildBattleLimit(object, &inGuildBattle))
         {
           if (inGuildBattle)
           {
-            goto CHECK_FLASH_DAMAGE;
+            shouldCheckDamage = true;
           }
-          const int objRace = object->GetObjRace();
-          const int attRace = m_pAttChar->GetObjRace();
-          if (objRace != attRace || m_pAttChar->m_ObjID.m_byID)
+          else
           {
-            goto CHECK_FLASH_DAMAGE;
-          }
-
-          CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
-          if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
-              || (attPlayer)->IsChaosMode())
-          {
-            if (object->m_ObjID.m_byID != 11
-                || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
-                    && (attPlayer)->IsChaosMode()))
+            const int objRace = object->GetObjRace();
+            const int attRace = m_pAttChar->GetObjRace();
+            if (objRace != attRace || m_pAttChar->m_ObjID.m_byID)
             {
-              goto CHECK_FLASH_DAMAGE;
+              shouldCheckDamage = true;
+            }
+            else
+            {
+              CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
+              if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
+                  || (attPlayer)->IsChaosMode())
+              {
+                if (object->m_ObjID.m_byID != 11
+                    || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
+                        && (attPlayer)->IsChaosMode()))
+                {
+                  shouldCheckDamage = true;
+                }
+              }
             }
           }
         }
-        continue;
-
-CHECK_FLASH_DAMAGE:
+        if (!shouldCheckDamage)
+        {
+          continue;
+        }
         if (object->IsBeDamagedAble(m_pAttChar))
         {
           CAnimus *recallAnimus = nullptr;
@@ -1186,37 +1193,41 @@ void CAttack::AreaDamageProc(
         }
 
         inGuildBattle = false;
+        bool shouldCheckDamage = false;
         if (!CheckGuildBattleLimit(object, &inGuildBattle))
         {
           if (inGuildBattle)
           {
-            goto CHECK_AREA_DAMAGE;
+            shouldCheckDamage = true;
           }
-          const int objRace = object->GetObjRace();
-          const int attRace = m_pAttChar->GetObjRace();
-          if (objRace != attRace)
+          else
           {
-            goto CHECK_AREA_DAMAGE;
-          }
-
-          if (!m_pAttChar->m_ObjID.m_byID)
-          {
-            CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
-            if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
-                || (attPlayer)->IsChaosMode())
+            const int objRace = object->GetObjRace();
+            const int attRace = m_pAttChar->GetObjRace();
+            if (objRace != attRace)
             {
-              if (object->m_ObjID.m_byID != 11
-                  || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
-                      && (attPlayer)->IsChaosMode()))
+              shouldCheckDamage = true;
+            }
+            else if (!m_pAttChar->m_ObjID.m_byID)
+            {
+              CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
+              if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
+                  || (attPlayer)->IsChaosMode())
               {
-                goto CHECK_AREA_DAMAGE;
+                if (object->m_ObjID.m_byID != 11
+                    || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
+                        && (attPlayer)->IsChaosMode()))
+                {
+                  shouldCheckDamage = true;
+                }
               }
             }
           }
         }
-        continue;
-
-CHECK_AREA_DAMAGE:
+        if (!shouldCheckDamage)
+        {
+          continue;
+        }
         if (object->IsBeDamagedAble(m_pAttChar))
         {
           CAnimus *recallAnimus = nullptr;
@@ -1366,34 +1377,41 @@ void CAttack::SectorDamageProc(
         }
 
         inGuildBattle = false;
+        bool shouldCheckDamage = false;
         if (!CheckGuildBattleLimit(object, &inGuildBattle))
         {
           if (inGuildBattle)
           {
-            goto CHECK_SECTOR_DAMAGE;
+            shouldCheckDamage = true;
           }
-          const int objRace = object->GetObjRace();
-          const int attRace = m_pAttChar->GetObjRace();
-          if (objRace != attRace || m_pAttChar->m_ObjID.m_byID)
+          else
           {
-            goto CHECK_SECTOR_DAMAGE;
-          }
-
-          CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
-          if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
-              || (attPlayer)->IsChaosMode())
-          {
-            if (object->m_ObjID.m_byID != 11
-                || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
-                    && (attPlayer)->IsChaosMode()))
+            const int objRace = object->GetObjRace();
+            const int attRace = m_pAttChar->GetObjRace();
+            if (objRace != attRace || m_pAttChar->m_ObjID.m_byID)
             {
-              goto CHECK_SECTOR_DAMAGE;
+              shouldCheckDamage = true;
+            }
+            else
+            {
+              CPlayer *attPlayer = static_cast<CPlayer *>(m_pAttChar);
+              if (object->m_ObjID.m_byID || static_cast<CPlayer *>(object)->IsPunished(1u, false)
+                  || (attPlayer)->IsChaosMode())
+              {
+                if (object->m_ObjID.m_byID != 11
+                    || ((static_cast<AutominePersonal *>(object)->GetOwner() != attPlayer)
+                        && (attPlayer)->IsChaosMode()))
+                {
+                  shouldCheckDamage = true;
+                }
+              }
             }
           }
         }
-        continue;
-
-CHECK_SECTOR_DAMAGE:
+        if (!shouldCheckDamage)
+        {
+          continue;
+        }
         if (object->IsBeDamagedAble(m_pAttChar))
         {
           CAnimus *recallAnimus = nullptr;

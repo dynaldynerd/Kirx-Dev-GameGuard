@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "TimeLimitJade.h"
 
@@ -78,12 +78,12 @@ bool TimeLimitJade::Init()
 
 bool TimeLimitJade::InitWait()
 {
-  return _heapWaitRow.Initialize(0x64u);
+  return _heapWaitRow.Initialize(100);
 }
 
 bool TimeLimitJade::InitUse()
 {
-  return _heapUseRow.Initialize(0x64u);
+  return _heapUseRow.Initialize(100);
 }
 
 void TimeLimitJade::Release()
@@ -195,7 +195,7 @@ __int64 TimeLimitJade::CheckStartTime()
       continue;
     }
 
-    const int endHour = static_cast<int>(cell->_wStartTime + cell->_dwUseTime / 0xE10 - 24);
+    const int endHour = static_cast<int>(cell->_wStartTime + cell->_dwUseTime / 3600 - 24);
     const int curHour = GetCurrentHour();
 
     if (endHour < 0 || cell->_wStartTime <= curHour)

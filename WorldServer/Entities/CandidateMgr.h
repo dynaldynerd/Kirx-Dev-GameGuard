@@ -18,26 +18,26 @@ public:
   {
     enum Status : int
     {
-      candidate_normal = 0x0,
-      candidate_1st = 0x1,
-      candidate_2st = 0x2,
-      candidate_appoint = 0x3,
-      candidate_discharge = 0x4,
-      candidate_delete = 0x5,
-      candidate_type_num = 0x6,
+      candidate_normal = 0,
+      candidate_1st = 1,
+      candidate_2st = 2,
+      candidate_appoint = 3,
+      candidate_discharge = 4,
+      candidate_delete = 5,
+      candidate_type_num = 6,
     };
 
     enum ClassType : int
     {
-      patriarch = 0x0,
-      attack_leader_a = 0x2,
-      defence_leader_a = 0x3,
-      support_leader_a = 0x4,
-      attack_leader_b = 0x6,
-      defence_leader_b = 0x7,
-      support_leader_b = 0x8,
-      patriarch_group_num = 0x9,
-      normal_user = 0xFF,
+      patriarch = 0,
+      attack_leader_a = 2,
+      defence_leader_a = 3,
+      support_leader_a = 4,
+      attack_leader_b = 6,
+      defence_leader_b = 7,
+      support_leader_b = 8,
+      patriarch_group_num = 9,
+      normal_user = 255,
     };
 
     bool bLoad;

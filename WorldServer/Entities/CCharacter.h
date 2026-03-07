@@ -4,6 +4,7 @@
 
 #include "CGameObject.h"
 #include "CMyTimer.h"
+#include "EffectParameterIndex.h"
 
 struct _character_create_setdata;
 struct _skill_fld;

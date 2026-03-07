@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPathMgr.h"
 
@@ -36,10 +36,10 @@ int CPathMgr::PopNextPath(float *pPos)
   {
     return 0;
   }
-  memcpy_0(pPos, m_PosPool[m_StartPos], 0xCuLL);
+  memcpy_0(pPos, m_PosPool[m_StartPos], 12);
   ++m_StartPos;
   --m_Size;
-  if (m_StartPos >= 0x10u)
+  if (m_StartPos >= 16)
   {
     m_StartPos = 0;
   }
@@ -66,7 +66,7 @@ int CPathMgr::SearchPathA(CMonster *pMon, float *vTarPos, int bBackupRestore)
   {
     m_Size = 1;
     m_StartPos = 0;
-    memcpy_0(m_PosPool, vTarPos, 0xCuLL);
+    memcpy_0(m_PosPool, vTarPos, 12);
     return m_Size;
   }
 

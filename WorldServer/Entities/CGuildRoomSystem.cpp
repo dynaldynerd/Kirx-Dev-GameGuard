@@ -29,7 +29,7 @@ CGuildRoomSystem *CGuildRoomSystem::GetInstance()
 bool CGuildRoomSystem::Init()
 {
   CGuildRoomInfo roomInfo;
-  m_vecGuildRoom.assign(0x5Au, roomInfo);
+  m_vecGuildRoom.assign(90u, roomInfo);
   if (m_vecGuildRoom.size() != 90)
   {
     g_Main.m_logLoadingError.Write(

@@ -41,7 +41,7 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
       return 0;
     }
   }
-  else if ( lv > 0x32u )
+  else if ( lv > 50u )
   {
     g_Main.m_logSystemError.Write(
       "%s : Update_Level(): pRecv->byLv (%d) => failed ",

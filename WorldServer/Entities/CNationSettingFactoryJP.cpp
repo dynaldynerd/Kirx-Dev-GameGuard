@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CNationSettingFactoryJP.h"
 
@@ -17,7 +17,7 @@ CNationSettingData *CNationSettingFactoryJP::Create(
   bool bServiceMode)
 {
   CNationSettingData *created = nullptr;
-  auto *data = static_cast<CNationSettingDataJP *>(operator new(0x1C0uLL));
+  auto *data = static_cast<CNationSettingDataJP *>(operator new(448));
   if (data)
   {
     new (data) CNationSettingDataJP();

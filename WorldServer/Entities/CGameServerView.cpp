@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CGameServerView.h"
 
@@ -118,7 +118,7 @@ void CGameServerView::OnButtonDisplaymode()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3E9u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1001, 0, 0, 0);
   }
 }
 
@@ -126,7 +126,7 @@ void CGameServerView::OnButtonDisplayall()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3F1u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1009, 0, 0, 0);
   }
 }
 
@@ -134,7 +134,7 @@ void CGameServerView::OnButtonMonster()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3EBu, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1003, 0, 0, 0);
   }
 }
 
@@ -142,7 +142,7 @@ void CGameServerView::OnBUTTONPreClose()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3F2u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1010, 0, 0, 0);
   }
 }
 
@@ -155,7 +155,7 @@ void CGameServerView::OnBUTTONServerClose()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3F4u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1012, 0, 0, 0);
   }
 }
 
@@ -163,7 +163,7 @@ void CGameServerView::OnBUTTONHSKControl()
 {
   if (!g_Main.IsReleaseServiceMode())
   {
-    g_Main.m_GameMsg.PackingMsg(0x3F7u, 0, 0, 0);
+    g_Main.m_GameMsg.PackingMsg(1015, 0, 0, 0);
   }
 }
 

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 
@@ -17,5 +17,5 @@ struct  _raceboss_msg_confirm_zowb
 
 inline unsigned __int16 _raceboss_msg_confirm_zowb::size() const
 {
-  return 0x119;
+  return 281;
 }

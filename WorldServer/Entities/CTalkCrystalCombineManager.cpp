@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CTalkCrystalCombineManager.h"
 
@@ -331,7 +331,7 @@ unsigned __int8 CTalkCrystalCombineManager::CombineProcess()
   }
 
   const int indexEmptyCon = m_pCurrentPlayer->m_Param.m_dbInven.GetIndexEmptyCon();
-  if (indexEmptyCon == 0xFF)
+  if (indexEmptyCon == 255)
   {
     return 3;
   }
@@ -390,8 +390,8 @@ char CTalkCrystalCombineManager::Doit(
     if (IsOverLapItem(node->m_MakeItem.m_byTableCode))
     {
       node->m_MakeItem.m_dwDur = static_cast<unsigned int>(node->m_nMakeCount);
-      const unsigned __int8 fullStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur / 0x63u);
-      const unsigned __int8 remainStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur % 0x63u);
+      const unsigned __int8 fullStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur / 99);
+      const unsigned __int8 remainStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur % 99);
 
       for (unsigned __int8 m = 0; m < fullStack; ++m)
       {

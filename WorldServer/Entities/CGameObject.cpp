@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CGameObject.h"
 
@@ -433,7 +433,7 @@ void CGameObject::OnLoop()
       SetStun(false);
     }
 
-    if (m_bBreakTranspar && loopTime - m_dwOldTickBreakTranspar > 0x7530)
+    if (m_bBreakTranspar && loopTime - m_dwOldTickBreakTranspar > 30000)
     {
       SetBreakTranspar(false);
     }
@@ -446,7 +446,7 @@ void CGameObject::OnLoop()
     _ResetCirclePlayer();
     Loop();
 
-    if (loopTime - m_dwLastSendTime > 0xFA0)
+    if (loopTime - m_dwLastSendTime > 4000)
     {
       m_dwLastSendTime = GetLoopTime();
       SendMsg_RealFixPosition(true);
@@ -819,7 +819,7 @@ void CGameObject::SetMaxVersion()
   m_bMaxVision = true;
   if (!m_bPlayerCircleList)
   {
-    m_bPlayerCircleList = static_cast<bool *>(operator new[](0x9E4uLL));
+    m_bPlayerCircleList = static_cast<bool *>(operator new[](2532));
   }
   _ResetCirclePlayer();
 }
@@ -831,7 +831,7 @@ void CGameObject::_ResetCirclePlayer()
     return;
   }
 
-  bool previousList[0x9E4]{};
+  bool previousList[2532]{};
   memcpy_0(previousList, m_bPlayerCircleList, sizeof(previousList));
   memset_0(m_bPlayerCircleList, 0, sizeof(previousList));
 
@@ -1140,7 +1140,7 @@ float CGameObject::GetWeaponAdjust()
 
 __int64 CGameObject::GetObjRace()
 {
-  return 0xFFFFFFFFLL;
+  return -1;
 }
 
 __int64 CGameObject::GetAvoidRate()

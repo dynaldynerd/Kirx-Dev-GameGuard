@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CPostData.h"
 
@@ -25,7 +25,7 @@ void CPostData::Init()
   memset_0(m_wszContent, 0, sizeof(m_wszContent));
   m_Key.SetRelease();
   m_dwDur = 0;
-  m_dwUpt = 0xFFFFFFF;
+  m_dwUpt = 268435455;
   m_dwGold = 0;
   m_dwPSSerial = 0;
   m_lnUID = 0;
@@ -45,7 +45,7 @@ void CPostData::SetState(unsigned __int8 byState)
 
 void CPostData::SetPostContent(char *wszContent)
 {
-  strncpy(m_wszContent, wszContent, 0xC9u);
+  strncpy(m_wszContent, wszContent, 201);
   m_wszContent[200] = 0;
   m_bContentLoad = true;
 }
@@ -71,9 +71,9 @@ void CPostData::SetPostData(
 {
   m_nNumber = nNumber;
   m_dwSenderSerial = dwSenderSerial;
-  strncpy(m_wszSendName, wszSendName, 0x11u);
-  strncpy(m_wszRecvName, wszRecvName, 0x11u);
-  strncpy(m_wszTitle, wszTitle, 0x15u);
+  strncpy(m_wszSendName, wszSendName, 17);
+  strncpy(m_wszRecvName, wszRecvName, 17);
+  strncpy(m_wszTitle, wszTitle, 21);
   m_wszSendName[16] = 0;
   m_wszRecvName[16] = 0;
   m_wszTitle[20] = 0;
@@ -106,8 +106,8 @@ void CPostData::SetPostTitleData(
   m_dwUpt = dwUpt;
   m_dwGold = dwGold;
   m_bUpdateIndex = bUpdateIndex;
-  strcpy_s(m_wszSendName, 0x11u, wszSendName);
-  strcpy_s(m_wszTitle, 0x15u, wszTitle);
+  strcpy_s(m_wszSendName, 17, wszSendName);
+  strcpy_s(m_wszTitle, 21, wszTitle);
 }
 
 void CPostData::SetReturnPostData(
@@ -123,9 +123,9 @@ void CPostData::SetReturnPostData(
 {
   m_byErrCode = byErrCode;
   m_dwPSSerial = dwPostSerial;
-  strcpy_s(m_wszRecvName, 0x11u, wszRecvName);
-  strcpy_s(m_wszTitle, 0x15u, wszTitle);
-  strcpy_s(m_wszContent, 0xC9u, wszContent);
+  strcpy_s(m_wszRecvName, 17, wszRecvName);
+  strcpy_s(m_wszTitle, 21, wszTitle);
+  strcpy_s(m_wszContent, 201, wszContent);
   m_Key = Key;
   m_dwDur = dwDur;
   m_dwUpt = dwUpt;

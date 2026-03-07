@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "base_fld.h"
@@ -14,4 +14,4 @@ struct _MasteryLimit_fld : _base_fld
 
 #pragma pack(pop)
 
-static_assert(sizeof(_MasteryLimit_fld) == 0xE8, "_MasteryLimit_fld size must match IDA (0xE8)");
+static_assert(sizeof(_MasteryLimit_fld) == 232, "_MasteryLimit_fld size must match IDA (232)");

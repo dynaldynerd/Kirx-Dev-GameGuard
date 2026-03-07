@@ -18,7 +18,7 @@ CNationSettingData *CNationSettingFactoryRU::Create(
   bool bServiceMode)
 {
   CNationSettingData *created = nullptr;
-  auto *data = static_cast<CNationSettingDataRU *>(operator new(0x1C0uLL));
+  auto *data = static_cast<CNationSettingDataRU *>(operator new(448uLL));
   if (data)
   {
     new (data) CNationSettingDataRU();

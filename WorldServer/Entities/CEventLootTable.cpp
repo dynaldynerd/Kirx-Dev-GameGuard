@@ -84,7 +84,7 @@ bool CEventLootTable::ReadRecord()
 
     if (ParsingCommandA(buffer, 5, tokens, 64) == 5)
     {
-      auto *record = static_cast<_event_drop *>(operator new(0x50u));
+      auto *record = static_cast<_event_drop *>(operator new(80u));
       if (!record)
       {
         continue;

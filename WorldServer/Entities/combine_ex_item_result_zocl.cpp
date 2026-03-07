@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "combine_ex_item_result_zocl.h"
 
@@ -11,7 +11,7 @@ void _combine_ex_item_result_zocl::__item::Init()
 {
   Key.SetRelease();
   dwDur = 0;
-  dwUpt = 0xFFFFFFF;
+  dwUpt = 268435455;
 }
 
 _combine_ex_item_result_zocl::_Result_ItemList_Buff::_Result_ItemList_Buff()

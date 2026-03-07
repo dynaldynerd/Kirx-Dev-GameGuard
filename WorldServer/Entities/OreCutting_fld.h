@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "IdaCompat.h"
 #include "base_fld.h"
@@ -13,4 +13,4 @@ struct _OreCutting_fld : _base_fld
 
 #pragma pack(pop)
 
-static_assert(sizeof(_OreCutting_fld) == 0x88, "_OreCutting_fld size must match IDA (0x88)");
+static_assert(sizeof(_OreCutting_fld) == 136, "_OreCutting_fld size must match IDA (136)");

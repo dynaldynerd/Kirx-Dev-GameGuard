@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
@@ -93,7 +93,7 @@ bool CRFWorldDatabase::Check_GuildMemberCount( unsigned int dwGuildSerial)
 bool CRFWorldDatabase::CreateCharacterSelectLogTable(const char *szTableName)
 {
   char Buffer[3088]; // [rsp+80h] [rbp-C28h] BYREF
-  memset_0(Buffer, 0, 0xC00uLL);
+  memset_0(Buffer, 0, 3072);
   sprintf(
     Buffer,
     "CREATE TABLE [dbo].[%s] ([ID] [int] IDENTITY (1, 1) NOT NULL ,[AccountSerial] [int] NOT NULL ,[Account] [varchar] (1"
@@ -197,7 +197,7 @@ bool CRFWorldDatabase::Insert_CashLimSale()
 {
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
   memset(Buffer, 0, 1024);
-  sprintf_s(Buffer, 0x400uLL, "{ CALL pInsert_CashLimSale( %d ) }", 0);
+  sprintf_s(Buffer, 1024, "{ CALL pInsert_CashLimSale( %d ) }", 0);
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
@@ -471,7 +471,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
   int Hour; // [rsp+1A8h] [rbp-20h]
   int Day; // [rsp+1ACh] [rbp-1Ch]
   int Month; // [rsp+1B0h] [rbp-18h]
-  memset_0(Buffer, 0, 0x100uLL);
+  memset_0(Buffer, 0, 256);
   result = ATL::CTime::GetCurrentTime();
   Second = result.GetSecond();
   Minute = result.GetMinute();
@@ -498,7 +498,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
 bool CRFWorldDatabase::Insert_Guild( char *pwszGuildName, unsigned __int8 byRace)
 {
   char Buffer[528]; // [rsp+30h] [rbp-228h] BYREF
-  memset_0(Buffer, 0, 0x200uLL);
+  memset_0(Buffer, 0, 512);
   sprintf(Buffer, "{ CALL pInsert_Guild('%s', %d) }", pwszGuildName, byRace);
   return this->ExecUpdateQuery( Buffer, 1);
 }
@@ -539,7 +539,7 @@ bool CRFWorldDatabase::Insert_ItemChargeInGame(
   char Buffer[1040]; // [rsp+50h] [rbp-428h] BYREF
   sprintf_s(
     Buffer,
-    0x400uLL,
+    1024,
     "{ CALL pInsert_ItemChargeInGame( %u, %d, %d, %d, %u ) }",
     dwAvatorSerial,
     dwItemCode_K,
@@ -568,7 +568,7 @@ bool CRFWorldDatabase::Insert_MacroData( unsigned int dwSerial)
   memset(Buffer, 0, 1024);
   for ( j = 0; j < 3; ++j )
   {
-    memset_0(Buffer, 0, 0x400uLL);
+    memset_0(Buffer, 0, 1024);
     sprintf(
       Buffer,
       "Insert into tbl_Macro values(%d, %d,%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '', '', '', '', '', 0, 0, 0)",
@@ -598,7 +598,7 @@ bool CRFWorldDatabase::Insert_RFEvent_ClassRefine( unsigned int dwAvatorSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
   memset(Buffer, 0, 256);
-  sprintf_s(Buffer, 0x100uLL, "insert [dbo].[tbl_event] (avatorserial) values (%u)", dwAvatorSerial);
+  sprintf_s(Buffer, 256, "insert [dbo].[tbl_event] (avatorserial) values (%u)", dwAvatorSerial);
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
@@ -620,7 +620,7 @@ bool CRFWorldDatabase::Insert_UserNum_Log( int nAvgUserNum, int nMaxUserNum)
 bool CRFWorldDatabase::Insert_WeeklyGuildPvpPointSum( unsigned int dwSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-  memset_0(Buffer, 0, 0x100uLL);
+  memset_0(Buffer, 0, 256);
   sprintf(Buffer, "{ CALL pInsert_WeeklyGuildPVPPointSum(%u) }", dwSerial);
   return this->ExecUpdateQuery( Buffer, 1);
 }
@@ -671,7 +671,7 @@ bool CRFWorldDatabase::InsertCharacterSelectLog(
         unsigned __int8 bySec)
 {
   char Buffer[1040]; // [rsp+80h] [rbp-438h] BYREF
-  memset_0(Buffer, 0, 0x400uLL);
+  memset_0(Buffer, 0, 1024);
   sprintf(
     Buffer,
     "insert into tbl_characterselect_log_%04d%02d ( AccountSerial, Account, CharacSerial, CharacName, LogDate ) values ( "
@@ -939,7 +939,7 @@ bool CRFWorldDatabase::Update_GuildEmblem(
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
-    0x100uLL,
+    256,
     "update [dbo].[tbl_guild] set emblemBack=%d, emblemMark=%d, dalant=%f where Serial=%d",
     dwEmblemBack,
     dwEmblemMark,
@@ -994,7 +994,7 @@ bool CRFWorldDatabase::Update_GuildMemberCount(
 bool CRFWorldDatabase::Update_GuildRoom( unsigned int dwGuildSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-  memset_0(Buffer, 0, 0x100uLL);
+  memset_0(Buffer, 0, 256);
   sprintf(
     Buffer,
     "update tbl_GuildRoom set dck = 1, logdate = getdate() where dck = 0 and guildserial = %d",
@@ -1050,18 +1050,18 @@ bool CRFWorldDatabase::Update_MacroData(
     const unsigned int fpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[1];
     const unsigned int hpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[0];
 
-    memset_0(queryBuffer, 0, 0x800uLL);
+    memset_0(queryBuffer, 0, 2048);
     sprintf(queryBuffer, " Update tbl_Macro Set hp=%d, fp=%d, sp=%d,", hpPotionCode, fpPotionCode, spPotionCode);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(queryFragment, " action0=%d, action1=%d, action2=%d, action3=%d,", action0, action1, action2, action3);
     strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(queryFragment, " action4=%d, action5=%d, action6=%d, action7=%d,", action4, action5, action6, action7);
     strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(queryFragment, " action8=%d, action9=%d,", action8, action9);
     strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(
       queryFragment,
       " chat0='%s', chat1='%s', chat2='%s', chat3='%s', chat4='%s',",
@@ -1071,10 +1071,10 @@ bool CRFWorldDatabase::Update_MacroData(
       chat3,
       chat4);
     strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(queryFragment, " hpvalue=%d, fpvalue=%d, spvalue=%d", hpPotionValue, fpPotionValue, spPotionValue);
     strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 0x200uLL);
+    memset_0(queryFragment, 0, 512);
     sprintf(queryFragment, " where serial=%d and belt=%d", dwSerial, beltIndex);
     strcat_0(queryBuffer, queryFragment);
     if ( this->m_bSaveDBLog )
@@ -1142,7 +1142,7 @@ bool CRFWorldDatabase::Update_RFEvent_ClassRefine(
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
-    0x100uLL,
+    256,
     "update [dbo].[tbl_event] set ClassRefineCnt=%d,ClassRefineDate=%d where avatorserial = %d",
     byRefineCnt,
     dwRefineDate,
@@ -1177,7 +1177,7 @@ bool CRFWorldDatabase::Update_SetGuildMoney(
   memset(Buffer, 0, 256);
   sprintf_s(
     Buffer,
-    0x100uLL,
+    256,
     "update [dbo].[tbl_guild] set [Dalant]=%f, [Gold]=%f where [Serial]=%d",
     (double)dDalant,
     (double)dGold,
@@ -1256,17 +1256,17 @@ char CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
       ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwMasterSerial, 0, &strLenOrInd);
       ret = SQLGetData(
         m_hStmtSelect,
-        0xAu,
+        10,
         SQL_C_UTINYINT,
         &pGuildInfo->GuildData[index].byMasterPrevGrade,
         0,
         &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 0xBu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotWin, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 0xCu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotDraw, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 0xDu, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotLose, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotWin, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 12, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotDraw, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 13, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotLose, 0, &strLenOrInd);
       ret = SQLGetData(
         m_hStmtSelect,
-        0xEu,
+        14,
         SQL_C_CHAR,
         pGuildInfo->GuildData[index].wszGreetingMsg,
         256,
@@ -1771,10 +1771,10 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
   this->FmtLog(
     "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Update_GuildRank Start!",
     szDate);
-  sprintf_s(queryBuffer, 0x400uLL, "tbl_GuildRank%s", szDate);
+  sprintf_s(queryBuffer, 1024, "tbl_GuildRank%s", szDate);
   if ( this->TableExist( queryBuffer) )
   {
-    sprintf_s(queryBuffer, 0x400uLL, "drop table [dbo].[tbl_GuildRank%s]", szDate);
+    sprintf_s(queryBuffer, 1024, "drop table [dbo].[tbl_GuildRank%s]", szDate);
     if ( !this->ExecUpdateQuery( queryBuffer, 1) )
     {
       this->FmtLog(
@@ -1790,7 +1790,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
     szDate);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "select top %d g.GuildSerial as serial, sum(b.lv) + sum(g.pvppoint)/10000 as GuildPower into #tbl_GuildRankTemp from "
     "tbl_general as g join tbl_base as b on g.serial = b.serial group by g.GuildSerial having g.guildserial >= 0",
     500);
@@ -1820,7 +1820,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
     szDate);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "select IDENTITY(int, 1, 1) AS Rank, serial, GuildPower, -1 as Rate, 1 as Grade into [dbo].[tbl_GuildRank%s] from #tb"
     "l_GuildRankTemp order by GuildPower desc",
     szDate);
@@ -1879,46 +1879,46 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
   memset(queryBuffer, 0, 1024);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "update tbl_GuildRank%s set Rate = ( (Rank*100)/(select count(*) from tbl_GuildRank%s) )",
     szDate,
     szDate);
   if ( this->ExecUpdateQuery( queryBuffer, 0) )
   {
-    sprintf_s(queryBuffer, 0x400uLL, "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= 300", szDate);
+    sprintf_s(queryBuffer, 1024, "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= 300", szDate);
     if ( this->ExecUpdateQuery( queryBuffer, 0) )
     {
       sprintf_s(
         queryBuffer,
-        0x400uLL,
+        1024,
         "update tbl_GuildRank%s set Grade = 3 where rate <= 85 and GuildPower >= 1500",
         szDate);
       if ( this->ExecUpdateQuery( queryBuffer, 0) )
       {
         sprintf_s(
           queryBuffer,
-          0x400uLL,
+          1024,
           "update tbl_GuildRank%s set Grade = 4 where rate <= 65 and GuildPower >= 3000",
           szDate);
         if ( this->ExecUpdateQuery( queryBuffer, 0) )
         {
           sprintf_s(
             queryBuffer,
-            0x400uLL,
+            1024,
             "update tbl_GuildRank%s set Grade = 5 where rate <= 35 and GuildPower >= 10000",
             szDate);
           if ( this->ExecUpdateQuery( queryBuffer, 0) )
           {
             sprintf_s(
               queryBuffer,
-              0x400uLL,
+              1024,
               "update tbl_GuildRank%s set Grade = 6 where rate <= 15 and GuildPower >= 25000",
               szDate);
             if ( this->ExecUpdateQuery( queryBuffer, 0) )
             {
               sprintf_s(
                 queryBuffer,
-                0x400uLL,
+                1024,
                 "update tbl_GuildRank%s set Grade = 7 where rate <= 5 and GuildPower >= 30000",
                 szDate);
               if ( this->ExecUpdateQuery( queryBuffer, 0) )
@@ -2001,7 +2001,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
     szDate);
   memset(queryBuffer, 0, 1024);
   if ( !this->TableExist( "tbl_GuildRankToday")
-    || (sprintf_s(queryBuffer, 0x400uLL, "Drop Table tbl_GuildRankToday"), this->ExecUpdateQuery( queryBuffer, 1)) )
+    || (sprintf_s(queryBuffer, 1024, "Drop Table tbl_GuildRankToday"), this->ExecUpdateQuery( queryBuffer, 1)) )
   {
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : End Drop tbl_GuildRankToday Table",
@@ -2011,7 +2011,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       szDate);
     sprintf_s(
       queryBuffer,
-      0x400uLL,
+      1024,
       "select Rank, Rate, Serial, GuildPower, Grade into [dbo].[tbl_GuildRankToday] from tbl_GuildRank%s",
       szDate);
     if ( this->ExecUpdateQuery( queryBuffer, 0) )
@@ -2108,7 +2108,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
   connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 0 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankB from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial < 200000000 and tbl_general.class0 <> -1 and tbl_base.race in (0"
@@ -2182,7 +2182,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
   connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 1 as Race, tbl_base.name, tbl_base.lv, tbl_general."
     "PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankC from tbl_general, tbl_base where tbl_base.serial=tbl_general.se"
     "rial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (2,3)"
@@ -2260,7 +2260,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
   connectTimeAddBySec = GetConnectTime_AddBySec(-2592000);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "select IDENTITY(int, 1, 1) AS Rank, -1 as Rate, tbl_base.serial, 2 as Race,  tbl_base.name, tbl_base.lv, tbl_general"
     ".PvpPoint, tbl_general.GuildSerial into #tbl_PvpRankA from tbl_general, tbl_base where tbl_base.serial=tbl_general.s"
     "erial and tbl_base.dck=0 and tbl_base.AccountSerial<200000000 and tbl_general.class0 <> -1 and tbl_base.race in (4) "
@@ -2333,10 +2333,10 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
     "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : Start Create tbl_PvpRank%s Table",
     szDate,
     szDate);
-  sprintf_s(queryBuffer, 0x400uLL, "tbl_PvpRank%s", szDate);
+  sprintf_s(queryBuffer, 1024, "tbl_PvpRank%s", szDate);
   if ( this->TableExist( queryBuffer) )
   {
-    sprintf_s(queryBuffer, 0x400uLL, "drop table [dbo].[tbl_PvpRank%s]", szDate);
+    sprintf_s(queryBuffer, 1024, "drop table [dbo].[tbl_PvpRank%s]", szDate);
     if ( !this->ExecUpdateQuery( queryBuffer, 1) )
     {
       this->FmtLog(
@@ -2349,7 +2349,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
   this->SetAutoCommitMode( 0);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "CREATE TABLE [dbo].[tbl_PvpRank%s] ( [Rank] [int] NOT NULL, [Rate] [int] NOT NULL, [serial] [int] NOT NULL ,[name] ["
     "varchar] (17) NOT NULL ,[lv] [int] NOT NULL, [Race] [int] NOT NULL, [Grade] [smallint] NOT NULL ,[PvpPoint] [float] "
     "NOT NULL, [GuildSerial] [int] NOT NULL ,[GuildName] [varchar] (17) NOT NULL ,CONSTRAINT PK_tbl_PvpRank%s PRIMARY KEY"
@@ -2376,7 +2376,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
     szDate);
   sprintf_s(
     queryBuffer,
-    0x400uLL,
+    1024,
     "insert tbl_PvpRank%s(Rank, Rate, Serial, Name, lv, race, PvpPoint, Grade, GuildSerial, GuildName) select 0, rate, se"
     "rial, name, lv, race, PvpPoint, 0, GuildSerial, '*' from #tbl_PvpRankB union select 0, rate, serial, name, lv, race,"
     " PvpPoint, 0, GuildSerial, '*' from #tbl_PvpRankC union select 0, rate, serial, name, lv, race, PvpPoint, 0, GuildSe"
@@ -2419,176 +2419,176 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
     szDate,
     szDate);
   memset(Buffer, 0, 1024);
-  sprintf_s(Buffer, 0x400uLL, "update tbl_PvpRank%s set grade=0", szDate);
+  sprintf_s(Buffer, 1024, "update tbl_PvpRank%s set grade=0", szDate);
   if ( this->ExecUpdateQuery( Buffer, 0) )
   {
-    sprintf_s(Buffer, 0x400uLL, "update tbl_PvpRank%s set grade=3 where lv >= 30 and lv <= 34 and rate <= 6500", szDate);
+    sprintf_s(Buffer, 1024, "update tbl_PvpRank%s set grade=3 where lv >= 30 and lv <= 34 and rate <= 6500", szDate);
     if ( this->ExecUpdateQuery( Buffer, 0) )
     {
       sprintf_s(
         Buffer,
-        0x400uLL,
+        1024,
         "update tbl_PvpRank%s set grade=2 where lv >= 30 and lv <= 34 and rate > 6500 and rate <= 8500",
         szDate);
       if ( this->ExecUpdateQuery( Buffer, 0) )
       {
         sprintf_s(
           Buffer,
-          0x400uLL,
+          1024,
           "update tbl_PvpRank%s set grade=1 where lv >= 30 and lv <= 34 and rate > 8500 and rate <= 9500",
           szDate);
         if ( this->ExecUpdateQuery( Buffer, 0) )
         {
           sprintf_s(
             Buffer,
-            0x400uLL,
+            1024,
             "update tbl_PvpRank%s set grade=4 where lv >= 35 and lv <= 39 and rate <= 3500",
             szDate);
           if ( this->ExecUpdateQuery( Buffer, 0) )
           {
             sprintf_s(
               Buffer,
-              0x400uLL,
+              1024,
               "update tbl_PvpRank%s set grade=3 where lv >= 35 and lv <= 39 and rate > 3500 and rate <= 6500",
               szDate);
             if ( this->ExecUpdateQuery( Buffer, 0) )
             {
               sprintf_s(
                 Buffer,
-                0x400uLL,
+                1024,
                 "update tbl_PvpRank%s set grade=2 where lv >= 35 and lv <= 39 and rate > 6500 and rate <= 8500",
                 szDate);
               if ( this->ExecUpdateQuery( Buffer, 0) )
               {
                 sprintf_s(
                   Buffer,
-                  0x400uLL,
+                  1024,
                   "update tbl_PvpRank%s set grade=1 where lv >= 35 and lv <= 39 and rate > 8500 and rate <= 9500",
                   szDate);
                 if ( this->ExecUpdateQuery( Buffer, 0) )
                 {
                   sprintf_s(
                     Buffer,
-                    0x400uLL,
+                    1024,
                     "update tbl_PvpRank%s set grade=5 where lv >= 40 and lv <= 44 and rate <= 1500",
                     szDate);
                   if ( this->ExecUpdateQuery( Buffer, 0) )
                   {
                     sprintf_s(
                       Buffer,
-                      0x400uLL,
+                      1024,
                       "update tbl_PvpRank%s set grade=4 where lv >= 40 and lv <= 44 and rate > 1500 and rate <= 3500",
                       szDate);
                     if ( this->ExecUpdateQuery( Buffer, 0) )
                     {
                       sprintf_s(
                         Buffer,
-                        0x400uLL,
+                        1024,
                         "update tbl_PvpRank%s set grade=3 where lv >= 40 and lv <= 44 and rate > 3500 and rate <= 6500",
                         szDate);
                       if ( this->ExecUpdateQuery( Buffer, 0) )
                       {
                         sprintf_s(
                           Buffer,
-                          0x400uLL,
+                          1024,
                           "update tbl_PvpRank%s set grade=2 where lv >= 40 and lv <= 44 and rate > 6500 and rate <= 8500",
                           szDate);
                         if ( this->ExecUpdateQuery( Buffer, 0) )
                         {
                           sprintf_s(
                             Buffer,
-                            0x400uLL,
+                            1024,
                             "update tbl_PvpRank%s set grade=1 where lv >= 40 and lv <= 44 and rate > 8500 and rate <= 9500",
                             szDate);
                           if ( this->ExecUpdateQuery( Buffer, 0) )
                           {
                             sprintf_s(
                               Buffer,
-                              0x400uLL,
+                              1024,
                               "update tbl_PvpRank%s set grade=6 where lv >= 45 and lv <= 49 and rate <= 500",
                               szDate);
                             if ( this->ExecUpdateQuery( Buffer, 0) )
                             {
                               sprintf_s(
                                 Buffer,
-                                0x400uLL,
+                                1024,
                                 "update tbl_PvpRank%s set grade=5 where lv >= 45 and lv <= 49 and rate > 500 and rate <= 1500",
                                 szDate);
                               if ( this->ExecUpdateQuery( Buffer, 0) )
                               {
                                 sprintf_s(
                                   Buffer,
-                                  0x400uLL,
+                                  1024,
                                   "update tbl_PvpRank%s set grade=4 where lv >= 45 and lv <= 49 and rate > 1500 and rate <= 3500",
                                   szDate);
                                 if ( this->ExecUpdateQuery( Buffer, 0) )
                                 {
                                   sprintf_s(
                                     Buffer,
-                                    0x400uLL,
+                                    1024,
                                     "update tbl_PvpRank%s set grade=3 where lv >= 45 and lv <= 49 and rate > 3500 and rate <= 6500",
                                     szDate);
                                   if ( this->ExecUpdateQuery( Buffer, 0) )
                                   {
                                     sprintf_s(
                                       Buffer,
-                                      0x400uLL,
+                                      1024,
                                       "update tbl_PvpRank%s set grade=2 where lv >= 45 and lv <= 49 and rate > 6500 and rate <= 8500",
                                       szDate);
                                     if ( this->ExecUpdateQuery( Buffer, 0) )
                                     {
                                       sprintf_s(
                                         Buffer,
-                                        0x400uLL,
+                                        1024,
                                         "update tbl_PvpRank%s set grade=1 where lv >= 45 and lv <= 49 and rate > 8500 and rate <= 9500",
                                         szDate);
                                       if ( this->ExecUpdateQuery( Buffer, 0) )
                                       {
                                         sprintf_s(
                                           Buffer,
-                                          0x400uLL,
+                                          1024,
                                           "update tbl_PvpRank%s set grade=7 where lv >= 50 and rate <= 100",
                                           szDate);
                                         if ( this->ExecUpdateQuery( Buffer, 0) )
                                         {
                                           sprintf_s(
                                             Buffer,
-                                            0x400uLL,
+                                            1024,
                                             "update tbl_PvpRank%s set grade=6 where lv >= 50 and rate > 100 and rate <= 500",
                                             szDate);
                                           if ( this->ExecUpdateQuery( Buffer, 0) )
                                           {
                                             sprintf_s(
                                               Buffer,
-                                              0x400uLL,
+                                              1024,
                                               "update tbl_PvpRank%s set grade=5 where lv >= 50 and rate > 500 and rate <= 1500",
                                               szDate);
                                             if ( this->ExecUpdateQuery( Buffer, 0) )
                                             {
                                               sprintf_s(
                                                 Buffer,
-                                                0x400uLL,
+                                                1024,
                                                 "update tbl_PvpRank%s set grade=4 where lv >= 50 and rate > 1500 and rate <= 3500",
                                                 szDate);
                                               if ( this->ExecUpdateQuery( Buffer, 0) )
                                               {
                                                 sprintf_s(
                                                   Buffer,
-                                                  0x400uLL,
+                                                  1024,
                                                   "update tbl_PvpRank%s set grade=3 where lv >= 50 and rate > 3500 and rate <= 6500",
                                                   szDate);
                                                 if ( this->ExecUpdateQuery( Buffer, 0) )
                                                 {
                                                   sprintf_s(
                                                     Buffer,
-                                                    0x400uLL,
+                                                    1024,
                                                     "update tbl_PvpRank%s set grade=2 where lv >= 50 and rate > 6500 and rate <= 8500",
                                                     szDate);
                                                   if ( this->ExecUpdateQuery( Buffer, 0) )
                                                   {
                                                     sprintf_s(
                                                       Buffer,
-                                                      0x400uLL,
+                                                      1024,
                                                       "update tbl_PvpRank%s set grade=1 where lv >= 50 and rate > 8500 and rate <= 9500",
                                                       szDate);
                                                     if ( this->ExecUpdateQuery( Buffer, 0) )
@@ -3002,7 +3002,7 @@ char CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
   memset(Buffer, 0, 1024);
   sprintf_s(
     Buffer,
-    0x400uLL,
+    1024,
     "update tbl_PvpRank%s set GuildName = g.id from(select serial, id from tbl_Guild) as g where tbl_PvpRank%s.GuildSeria"
     "l = g.serial and tbl_PvpRank%s.GuildSerial > 0",
     szDate,
@@ -3031,7 +3031,7 @@ char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
     szDate);
   memset(Buffer, 0, 1024);
   if ( !this->TableExist( "tbl_PvpRankToday")
-    || (sprintf_s(Buffer, 0x400uLL, "Drop Table tbl_PvpRankToday"), this->ExecUpdateQuery( Buffer, 0)) )
+    || (sprintf_s(Buffer, 1024, "Drop Table tbl_PvpRankToday"), this->ExecUpdateQuery( Buffer, 0)) )
   {
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step9(szDate(%s)) : End Drop tbl_PvpRankToday Table",
@@ -3041,7 +3041,7 @@ char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
       szDate);
     sprintf_s(
       Buffer,
-      0x400uLL,
+      1024,
       "select Rank, Rate, serial, name, lv, race, PvpPoint, Grade, GuildSerial, GuildName into [dbo].[tbl_PvpRankToday] f"
       "rom tbl_PvpRank%s",
       szDate);
@@ -3598,11 +3598,11 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
     dwGuildSerial);
   memset(queryBuffer, 0, 1024);
   memberIndex = 0;
-  memset_0(gradeBySerial, 0, 0x258uLL);
+  memset_0(gradeBySerial, 0, 600);
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : Start Get Grade from #tbl_RankInGuildCom",
     dwGuildSerial);
-  sprintf_s(queryBuffer, 0x400uLL, "select top %u serial, Grade from #tbl_RankInGuildCom order by Grade", 50);
+  sprintf_s(queryBuffer, 1024, "select top %u serial, Grade from #tbl_RankInGuildCom order by Grade", 50);
   if ( this->m_hStmtSelect || this->ReConnectDataBase() )
   {
     sqlStatus = SQLExecDirectA(this->m_hStmtSelect, (SQLCHAR *)queryBuffer, -3);

@@ -46,7 +46,7 @@ bool CMonsterSPGroupTable::Create(
         group->m_dwIndex = n;
         strcpy_s(group->m_strCode, sizeof(group->m_strCode), monsterRecord->m_strCode);
         group->m_wCount = 0;
-        for (int j = 0; j < 0xF; ++j)
+        for (int j = 0; j < 15; ++j)
         {
             if (!strcmp(monsterRecord->m_strSPCode[j], "-1"))
             {

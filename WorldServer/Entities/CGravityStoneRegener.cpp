@@ -152,7 +152,7 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
     keyName,
     "X",
     returned,
-    0xFFu,
+    255u,
     "./Initialize/NormalGuildBattle.ini");
   if (returned[0] == 'X')
   {

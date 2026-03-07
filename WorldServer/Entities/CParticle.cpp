@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CParticle.h"
 
@@ -158,7 +158,7 @@ void CParticle::CopyParticleToSaveParticle(_SAVE_PARTICLE *sParticle)
   sParticle->mGravity[1] = mGravity[1];
   sParticle->mGravity[2] = mGravity[2];
   sParticle->mTimeSpeed = mTimeSpeed;
-  memcpy_0(sParticle->mATrack, mATrack, 0x60uLL);
+  memcpy_0(sParticle->mATrack, mATrack, 96);
 }
 
 void CParticle::CopySaveParticleToParticle(_SAVE_PARTICLE *sParticle)
@@ -170,7 +170,7 @@ void CParticle::CopySaveParticleToParticle(_SAVE_PARTICLE *sParticle)
   mAlphaType = sParticle->mAlphaType;
   mLiveTime = sParticle->mLiveTime;
   mTimeSpeed = sParticle->mTimeSpeed;
-  memcpy_0(mATrack, sParticle->mATrack, 0x60uLL);
+  memcpy_0(mATrack, sParticle->mATrack, 96);
 }
 
 void CParticle::SetPreCalcParticle(unsigned int type)
@@ -183,7 +183,7 @@ void CParticle::SetPreCalcParticle(unsigned int type)
   mFlag = stPreParticleList[type].mFlag;
   mLiveTime = stPreParticleList[type].mLiveTime;
   mTimeSpeed = stPreParticleList[type].mTimeSpeed;
-  memcpy_0(mATrack, stPreParticleList[type].mATrack, 0x60uLL);
+  memcpy_0(mATrack, stPreParticleList[type].mATrack, 96);
 }
 
 __int64 CParticle::GetParticleState()
@@ -682,7 +682,10 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
   int currentTrackIndex = 0;
   float parsedValue = 0.0f;
   float parsedValue2 = 0.0f;
-  if (fscanf(particleFile, "%s", token) != -1)
+  auto readNextToken = [&]() {
+    return fscanf(particleFile, "%s", token) != -1;
+  };
+  if (readNextToken())
   {
     while (strcmp(token, "end"))
     {
@@ -691,7 +694,7 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
       {
         fscanf(particleFile, "%s", token);
         std::strcpy(this->mEntityName, token);
-        CEntity *entityStorage = reinterpret_cast<CEntity *>(operator new(0xF4uLL));
+        CEntity *entityStorage = reinterpret_cast<CEntity *>(operator new(244));
         CEntity *entity = entityStorage ? new (entityStorage) CEntity() : nullptr;
         this->mEntity = entity;
         if (!entity || !(unsigned int)entity->LoadEntity(this->mEntityName, a3 | 1u))
@@ -732,7 +735,9 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
             if (strcmp(token, "sphere_xy"))
             {
               Warning(token, (char *)&byte_1408851D8);
-              goto LABEL_NEXT_TOKEN;
+              if (!readNextToken())
+                break;
+              continue;
             }
             this->mFlag |= 0x40000000u;
           }
@@ -855,13 +860,18 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
         currentTrackIndex = this->mTrackCnt;
         this->mTimeTrack[currentTrackIndex] = static_cast<float>(atof(token));
         this->mTrackCnt = currentTrackIndex + 1;
-        if (this->mTrackCnt >= 0xCu)
+        if (this->mTrackCnt >= 12)
           Error(aAo_0, (char *)byte_140883769);
       }
       if (!strcmp(token, "power"))
       {
         if (hasTrackContext == -1)
-          goto LABEL_INVALID_TRACK_USAGE;
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
         if (!(unsigned int)GetRandOrNum(particleFile, this->mPowerTrack[currentTrackIndex][0], this->mPowerTrack[currentTrackIndex][1]))
           this->mPowerTrack[currentTrackIndex][1][0] = this->mPowerTrack[currentTrackIndex][0][0];
         if (!(unsigned int)GetRandOrNum(particleFile, &this->mPowerTrack[currentTrackIndex][0][1], &this->mPowerTrack[currentTrackIndex][1][1]))
@@ -873,7 +883,12 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
       if (!strcmp(token, "alpha"))
       {
         if (hasTrackContext == -1)
-          goto LABEL_INVALID_TRACK_USAGE;
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
         GetRandOrNum(particleFile, &parsedValue, &parsedValue);
         this->mATrack[currentTrackIndex] = static_cast<unsigned __int8>(parsedValue);
         this->mTrackFlag[currentTrackIndex] |= 0x80u;
@@ -883,7 +898,12 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
         this->mTrackFlag[currentTrackIndex] |= 8u;
         this->mFlag |= 0x100u;
         if (hasTrackContext == -1)
-          goto LABEL_INVALID_TRACK_USAGE;
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
         if (!(unsigned int)GetRandOrNum(particleFile, this->mZRotTrack[currentTrackIndex], &this->mZRotTrack[currentTrackIndex][1]))
           this->mZRotTrack[currentTrackIndex][1] = this->mZRotTrack[currentTrackIndex][0];
       }
@@ -892,7 +912,12 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
         this->mTrackFlag[currentTrackIndex] |= 4u;
         this->mFlag |= 0x1000u;
         if (hasTrackContext == -1)
-          goto LABEL_INVALID_TRACK_USAGE;
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
         if (!(unsigned int)GetRandOrNum(particleFile, this->mYRotTrack[currentTrackIndex], &this->mYRotTrack[currentTrackIndex][1]))
           this->mYRotTrack[currentTrackIndex][1] = this->mYRotTrack[currentTrackIndex][0];
       }
@@ -901,7 +926,12 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
       if (!strcmp(token, "color"))
       {
         if (hasTrackContext == -1)
-          goto LABEL_INVALID_TRACK_USAGE;
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
         GetRandOrNum(particleFile, &parsedValue, &parsedValue2);
         this->mRTrack[currentTrackIndex][0] = static_cast<unsigned __int8>(parsedValue);
         this->mRTrack[currentTrackIndex][1] = static_cast<unsigned __int8>(parsedValue2);
@@ -913,19 +943,20 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
         this->mBTrack[currentTrackIndex][1] = static_cast<unsigned __int8>(parsedValue2);
         this->mTrackFlag[currentTrackIndex] |= 0x40u;
       }
-      if (strcmp(token, "scale"))
-        goto LABEL_NEXT_TOKEN;
-      if (hasTrackContext == -1)
+      if (!strcmp(token, "scale"))
       {
-LABEL_INVALID_TRACK_USAGE:
-        Warning(token, aAi_2);
-        goto LABEL_NEXT_TOKEN;
+        if (hasTrackContext == -1)
+        {
+          Warning(token, aAi_2);
+          if (!readNextToken())
+            break;
+          continue;
+        }
+        if (!(unsigned int)GetRandOrNum(particleFile, this->mScaleTrack[currentTrackIndex], &this->mScaleTrack[currentTrackIndex][1]))
+          this->mScaleTrack[currentTrackIndex][1] = this->mScaleTrack[currentTrackIndex][0];
+        this->mTrackFlag[currentTrackIndex] |= 0x20u;
       }
-      if (!(unsigned int)GetRandOrNum(particleFile, this->mScaleTrack[currentTrackIndex], &this->mScaleTrack[currentTrackIndex][1]))
-        this->mScaleTrack[currentTrackIndex][1] = this->mScaleTrack[currentTrackIndex][0];
-      this->mTrackFlag[currentTrackIndex] |= 0x20u;
-LABEL_NEXT_TOKEN:
-      if (fscanf(particleFile, "%s", token) == -1)
+      if (!readNextToken())
         break;
     }
   }

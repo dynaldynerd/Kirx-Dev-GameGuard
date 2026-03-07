@@ -51,7 +51,7 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
       record->m_strCode,
       kDarkHoleQuestDefaultValue,
       returnedString,
-      0x80u,
+      128u,
       kDarkHoleQuestIndexIni);
     if (!strcmp_0(returnedString, kDarkHoleQuestNoMatch))
       MyMessageBox("Quest Dungeon Load Error", "%s item no match quest", record->m_strCode);

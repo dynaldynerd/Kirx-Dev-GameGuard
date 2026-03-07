@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CUnmannedTraderUserInfoTable.h"
 #include "CNetProcess.h"
@@ -58,13 +58,13 @@ void CUnmannedTraderUserInfoTable::Destroy()
 bool CUnmannedTraderUserInfoTable::Init()
 {
   CUnmannedTraderUserInfo info;
-  this->m_veckInfo.assign(0x9E4u, info);
-  if (this->m_veckInfo.size() != 0x9E4u)
+  this->m_veckInfo.assign(2532, info);
+  if (this->m_veckInfo.size() != 2532)
   {
     return false;
   }
 
-  for (unsigned short index = 0; index < 0x9E4u; ++index)
+  for (unsigned short index = 0; index < 2532; ++index)
   {
     CUnmannedTraderUserInfo &entry = this->m_veckInfo[index];
     if (!entry.Init(index))
@@ -341,9 +341,9 @@ void CUnmannedTraderUserInfoTable::CompleteRegist(
   {
     g_Main.Push_ChargeItem(
       pLoadData->dwOwnerSerial,
-      0xFFFFFFFF,
+      -1,
       pLoadData->dwTax,
-      0xFFFFFFFu,
+      268435455,
       1u);
     Log(
       "CUnmannedTraderUserInfoTable::CompleteRegist( BYTE byRet, char * pLoadData )\r\n"
@@ -486,7 +486,7 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
 
     if (qry.byNum)
     {
-      g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x44u, reinterpret_cast<char *>(&qry), sizeof(qry));
+      g_Main.PushDQSData(-1, nullptr, 68, reinterpret_cast<char *>(&qry), sizeof(qry));
     }
 
     if (successCount < result.byNum)
@@ -555,7 +555,7 @@ void CUnmannedTraderUserInfoTable::CompleteReRegist(_qry_case_unmandtrader_re_re
 
     if (sumTax)
     {
-      g_Main.Push_ChargeItem(pLoadData->dwOwnerSerial, 0xFFFFFFFF, sumTax, 0xFFFFFFFu, 1u);
+      g_Main.Push_ChargeItem(pLoadData->dwOwnerSerial, -1, sumTax, 268435455, 1u);
       Log(
         "CUnmannedTraderUserInfoTable::CompleteReRegist( BYTE byRet, char * pLoadData )\r\n"
         "\t\tdwOwnerSerial(%u) Push_ChargeItem( dwSumTax(%u) )!\r\n",
@@ -613,7 +613,7 @@ void CUnmannedTraderUserInfoTable::ClearLogLogOutState(
   unsigned int dwU)
 {
   char szTran[44]{};
-  W2M(wszName, szTran, 0x11u);
+  W2M(wszName, szTran, 17);
 
   _INVENKEY key;
   key.LoadDBKey(dwK);
@@ -786,7 +786,7 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyProcBuy(
   }
   else
   {
-    SubCompleteBuyProcBuyResult(0x51u, pUpdateCompleteList, byCompleteUpdateNum);
+    SubCompleteBuyProcBuyResult(81, pUpdateCompleteList, byCompleteUpdateNum);
     hasSeller = false;
   }
 
@@ -847,7 +847,7 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyProcBuy(
     unsigned int dwTaxTotal = 0;
     if (g_HolySys.GetHolyMasterRace() == -1)
     {
-      dwTaxTotal = 75 * pkQueryList->dwTax / 0x64u;
+      dwTaxTotal = 75 * pkQueryList->dwTax / 100;
       dwTax = dwTaxTotal / 2;
       const int raceCode = pkBuyPlayer->m_Param.GetRaceCode();
       CUnmannedTraderTaxRateManager::Instance()->SetPatriarchTaxMoney(raceCode, dwTax);
@@ -859,11 +859,11 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyProcBuy(
       const int holyMasterRace = g_HolySys.GetHolyMasterRace();
       if (buyerRace == holyMasterRace)
       {
-        dwTaxTotal = 75 * pkQueryList->dwTax / 0x64u;
+        dwTaxTotal = 75 * pkQueryList->dwTax / 100;
       }
       else
       {
-        dwTaxTotal = 50 * pkQueryList->dwTax / 0x64u;
+        dwTaxTotal = 50 * pkQueryList->dwTax / 100;
       }
       dwTax = dwTaxTotal / 2;
       CUnmannedTraderTaxRateManager::Instance()->SetPatriarchTaxMoney(holyMasterRace, dwTax);
@@ -888,28 +888,28 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyProcBuyResult(
 {
   switch (byRet)
   {
-    case 0x22u:
-    case 0x2Au:
-    case 0x2Bu:
-    case 0x96u:
-    case 0x97u:
+    case 34:
+    case 42:
+    case 43:
+    case 150:
+    case 151:
       pUpdateCompleteList->byUpdateState = 1;
       break;
-    case 0x25u:
-    case 0x63u:
+    case 37:
+    case 99:
       pUpdateCompleteList->byUpdateState = 8;
       break;
-    case 0x51u:
+    case 81:
       pUpdateCompleteList->byUpdateState = 4;
       break;
-    case 0x5Au:
+    case 90:
       pUpdateCompleteList->byUpdateState = 3;
       break;
     default:
       return false;
   }
 
-  if (pUpdateCompleteList->byProcUpdate == 0xFF)
+  if (pUpdateCompleteList->byProcUpdate == 255)
   {
     ++*byCompleteUpdateNum;
   }
@@ -956,5 +956,5 @@ void CUnmannedTraderUserInfoTable::PushUpdateBuyRollBack(_qry_case_unmandtrader_
   }
   qry.byNum = outCount;
 
-  g_Main.PushDQSData(0xFFFFFFFF, nullptr, 0x42u, reinterpret_cast<char *>(&qry), sizeof(qry));
+  g_Main.PushDQSData(-1, nullptr, 66, reinterpret_cast<char *>(&qry), sizeof(qry));
 }
