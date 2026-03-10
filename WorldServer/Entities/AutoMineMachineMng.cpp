@@ -157,7 +157,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
 
   if (_InitMineOre())
   {
-    if (m_Inven.create(2, 40, 99))
+    if (m_Inven.create(2, 40, MAX_ITEM_OVERLAP))
     {
       return true;
     }

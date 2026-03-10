@@ -322,9 +322,9 @@ void CPlayerDB::SetGold(unsigned int dwGold)
 void CPlayerDB::AddTrunkDalant(int dwPush)
 {
   double trunkDalant = this->m_dTrunkDalant + static_cast<double>(dwPush);
-  if (trunkDalant > 1000000000.0 || this->m_dTrunkDalant > trunkDalant)
+  if (trunkDalant > static_cast<double>(MAX_TRUNK_DALANT) || this->m_dTrunkDalant > trunkDalant)
   {
-    trunkDalant = 1000000000.0;
+    trunkDalant = static_cast<double>(MAX_TRUNK_DALANT);
   }
   this->m_dTrunkDalant = trunkDalant;
 }
@@ -332,9 +332,9 @@ void CPlayerDB::AddTrunkDalant(int dwPush)
 void CPlayerDB::AddTrunkGold(int dwPush)
 {
   double trunkGold = this->m_dTrunkGold + static_cast<double>(dwPush);
-  if (trunkGold > 500000.0 || this->m_dTrunkGold > trunkGold)
+  if (trunkGold > static_cast<double>(MAX_TRUNK_GOLD) || this->m_dTrunkGold > trunkGold)
   {
-    trunkGold = 500000.0;
+    trunkGold = static_cast<double>(MAX_TRUNK_GOLD);
   }
   this->m_dTrunkGold = trunkGold;
 }

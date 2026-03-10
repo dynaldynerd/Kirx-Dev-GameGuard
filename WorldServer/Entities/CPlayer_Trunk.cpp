@@ -377,7 +377,7 @@ void CPlayer::pc_TrunkChangePasswdRequest(
 void CPlayer::pc_TrunkExtendRequest()
 {
   unsigned __int8 byRetCode = 0;
-  const unsigned int dwSub = 500000;
+  const unsigned int dwSub = MAX_GOLD;
 
   if (!IsBeNearStore(this, 10))
   {
@@ -559,7 +559,7 @@ void CPlayer::pc_TrunkResDivision(
       {
         byErrCode = 8;
       }
-      else if (pTargetOre->m_dwDur + wMoveAmount > 99)
+      else if (pTargetOre->m_dwDur + wMoveAmount > MAX_ITEM_OVERLAP)
       {
         byErrCode = 9;
       }
@@ -625,7 +625,8 @@ void CPlayer::pc_TrunkPotionDivision(
       {
         byRetCode = static_cast<char>(-6);
       }
-      else if (pStartPotion->m_dwDur < wMoveAmount || pTargetPotion->m_dwDur + wMoveAmount > 99)
+      else if (pStartPotion->m_dwDur < wMoveAmount
+               || pTargetPotion->m_dwDur + wMoveAmount > MAX_ITEM_OVERLAP)
       {
         byRetCode = static_cast<char>(-4);
       }
@@ -1165,7 +1166,7 @@ void CPlayer::pc_TrunkIoMergeRequest(
       {
         byRetCode = 7;
       }
-      else if (pTargetItem->m_dwDur + wMoveAmount > 99)
+      else if (pTargetItem->m_dwDur + wMoveAmount > MAX_ITEM_OVERLAP)
       {
         byRetCode = 7;
       }
@@ -1253,7 +1254,8 @@ void CPlayer::pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int d
   {
     byRetCode = 6;
   }
-  else if (static_cast<unsigned int>(dwDalant) > 0x77359400u || static_cast<unsigned int>(dwGold) > 500000)
+  else if (static_cast<unsigned int>(dwDalant) > MAX_TRUNK_DALANT
+           || static_cast<unsigned int>(dwGold) > MAX_TRUNK_GOLD)
   {
     byRetCode = 21;
   }
@@ -1261,7 +1263,8 @@ void CPlayer::pc_TrunkIoMoneyRequest(unsigned __int8 byCase, int dwDalant, int d
   {
     const double nextTrunkGold = this->m_Param.m_dTrunkGold + static_cast<double>(dwGold);
     const double nextTrunkDalant = this->m_Param.m_dTrunkDalant + static_cast<double>(dwDalant);
-    if (nextTrunkGold > 500000.0 || nextTrunkDalant > 1000000000.0)
+    if (nextTrunkGold > static_cast<double>(MAX_TRUNK_GOLD)
+        || nextTrunkDalant > static_cast<double>(MAX_TRUNK_DALANT))
     {
       byRetCode = 20;
     }

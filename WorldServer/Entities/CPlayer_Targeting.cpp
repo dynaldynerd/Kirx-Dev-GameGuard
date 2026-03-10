@@ -122,7 +122,7 @@ bool IsTargetingObject(CGameObject *target)
   if (target->m_ObjID.m_byKind == 0 && target->m_ObjID.m_byID == 0)
   {
     CPlayer *targetPlayer = static_cast<CPlayer *>(target);
-    if (targetPlayer->m_EP.GetEff_State(21))
+    if (targetPlayer->m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
     {
       return false;
     }
@@ -620,7 +620,7 @@ void CPlayer::pc_PartyJoinInvitation(unsigned __int16 wDstIndex)
   {
     return;
   }
-  if (targetPlayer->m_EP.GetEff_Have(50) > 0.0f)
+  if (targetPlayer->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0f)
   {
     SendMsg_JadeEffectErr(1u);
     return;
@@ -654,7 +654,7 @@ void CPlayer::pc_PartyJoinInvitation(unsigned __int16 wDstIndex)
     return;
   }
 
-  const float profileBonus = targetPlayer->m_EP.GetEff_Have(53);
+  const float profileBonus = targetPlayer->m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int targetLevel = static_cast<int>(targetPlayer->GetLevel());
   if (!m_pPartyMgr->IsJoinPartyLevel(targetLevel, profileBonus))
   {
@@ -709,7 +709,7 @@ void CPlayer::pc_PartyJoinInvitationAnswer(_CLID *pidBoss)
     return;
   }
 
-  const float profileBonus = m_EP.GetEff_Have(53);
+  const float profileBonus = m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int myLevel = static_cast<int>(GetLevel());
   if (!partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
   {
@@ -781,7 +781,7 @@ void CPlayer::pc_PartyJoinApplication(unsigned __int16 wBossIndex)
     return;
   }
 
-  const float profileBonus = m_EP.GetEff_Have(53);
+  const float profileBonus = m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int myLevel = static_cast<int>(GetLevel());
   if (partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
   {
@@ -837,7 +837,7 @@ void CPlayer::pc_PartyJoinApplicationAnswer(_CLID *pidApplicant)
     return;
   }
 
-  const float profileBonus = applicant->m_EP.GetEff_Have(53);
+  const float profileBonus = applicant->m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int applicantLevel = static_cast<int>(applicant->GetLevel());
   if (m_pPartyMgr->IsJoinPartyLevel(applicantLevel, profileBonus))
   {
@@ -968,7 +968,7 @@ void CPlayer::pc_AwaypartyInvitationRequest(char *pwszCharName)
     return;
   }
 
-  const float profileBonus = targetPlayer->m_EP.GetEff_Have(53);
+  const float profileBonus = targetPlayer->m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int targetLevel = static_cast<int>(targetPlayer->GetLevel());
   if (!m_pPartyMgr->IsJoinPartyLevel(targetLevel, profileBonus))
   {
@@ -1043,7 +1043,7 @@ void CPlayer::pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 b
     return;
   }
 
-  const float profileBonus = m_EP.GetEff_Have(53);
+  const float profileBonus = m_EP.GetEff_Have(EFF_HAVE_PARTY_JOIN_LEVEL_BONUS);
   const int myLevel = static_cast<int>(GetLevel());
   if (!partyBoss->m_pPartyMgr->IsJoinPartyLevel(myLevel, profileBonus))
   {
@@ -2526,7 +2526,7 @@ void CPlayer::pc_MoveToOwnStoneMapRequest()
     {
       this->SendMsg_MoveToOwnStoneMapResult(11u, 0, pos);
     }
-    else if (this->m_pCurMap->m_pMapSet->m_nMapType || this->m_EP.GetEff_State(20) || this->m_EP.GetEff_State(28))
+    else if (this->m_pCurMap->m_pMapSet->m_nMapType || this->m_EP.GetEff_State(EFF_STATE_INSUPERABLE) || this->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
     {
       this->SendMsg_MoveToOwnStoneMapResult(12u, 0, pos);
     }
@@ -2932,7 +2932,7 @@ void CPlayer::CheckPos_Region()
     for (int index = 0; index < 50; ++index)
     {
       _BUDDY_LIST::__list *buddy = &this->m_pmBuddy.m_List[index];
-      if (buddy->fill() && buddy->pPtr && buddy->pPtr->m_EP.GetEff_Have(50) <= 0.0f)
+      if (buddy->fill() && buddy->pPtr && buddy->pPtr->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0f)
       {
         buddy->pPtr->SendMsg_BuddyPosInform(
           this->m_dwObjSerial,
@@ -2941,7 +2941,7 @@ void CPlayer::CheckPos_Region()
       }
     }
 
-    if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(50) <= 0.0f)
+    if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0f)
     {
       this->m_Param.m_pGuild->SendMsg_GuildMemberPosInform(
         this->m_dwObjSerial,

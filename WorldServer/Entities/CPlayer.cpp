@@ -3104,15 +3104,15 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   {
     errorCode = 1;
   }
-  else if (m_EP.GetEff_State(6))
+  else if (m_EP.GetEff_State(EFF_STATE_MOVE_RESTRICTED))
   {
     errorCode = 2;
   }
-  else if (m_EP.GetEff_State(7) && byMoveType == 1)
+  else if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_7) && byMoveType == 1)
   {
     errorCode = 3;
   }
-  else if (m_EP.GetEff_State(20))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errorCode = 13;
   }
@@ -3208,7 +3208,7 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   ResetSlot();
   Go();
   SendMsg_MoveNext(otherSend);
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
@@ -3248,7 +3248,7 @@ void CPlayer::pc_RealMovPos(float *pfCur)
       {
         errorCode = 10;
       }
-      else if (m_EP.GetEff_State(20))
+      else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
       {
         errorCode = 13;
       }
@@ -3402,11 +3402,11 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 8;
   }
-  else if (m_EP.GetEff_State(20))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     resultCode = 9;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     resultCode = 9;
   }
@@ -3448,7 +3448,7 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
                        && (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Elan")
                            || (!strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Platform01")
                                || !strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "Medicallab"))
-                             && m_EP.GetEff_Have(55) == 0.0)
+                             && m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_55) == 0.0)
                        && strcmp_0(townRecord->m_strMapCode, m_pCurMap->m_pMapSet->m_strCode))
               {
                 resultCode = 11;
@@ -4133,7 +4133,7 @@ bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigne
     CGameObject::s_pSelectObject = nullptr;
   }
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
@@ -4394,7 +4394,7 @@ bool CPlayer::Emb_DelStorage(
       }
     }
 
-    if (pkItem->m_byTableCode == 6 && m_EP.GetEff_State(14))
+    if (pkItem->m_byTableCode == 6 && m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
     {
       RemoveSFContHelpByEffect(2, 14);
     }
@@ -4915,12 +4915,12 @@ void CPlayer::NetClose(bool bMoveOutLobby)
 
     CGuildBattleController::Instance()->NetClose(this);
 
-    if (m_Param.m_pGuild && m_EP.GetEff_Have(50) <= 0.0)
+    if (m_Param.m_pGuild && m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0)
     {
       m_Param.m_pGuild->LogoffMember(m_dwObjSerial);
       m_Param.m_pGuild->SendMsg_GuildMemberLogoff(m_dwObjSerial);
     }
-    if (m_Param.m_pApplyGuild && m_EP.GetEff_Have(50) <= 0.0)
+    if (m_Param.m_pApplyGuild && m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0)
     {
       m_Param.m_pApplyGuild->PopApplier(m_dwObjSerial, 2u);
     }
@@ -5040,7 +5040,7 @@ void CPlayer::NetClose(bool bMoveOutLobby)
       CTSingleton<CBillingManager>::Instance()->Logout(m_pUserDB);
     }
 
-    if (m_EP.GetEff_Have(50) <= 0.0)
+    if (m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0)
     {
       for (int buddyIndex = 0; buddyIndex < 50; ++buddyIndex)
       {
@@ -5392,7 +5392,7 @@ float CPlayer::GetMoveSpeed()
     {
       return 3.0f;
     }
-    return playerRecord->m_fMoveRunRate + m_EP.GetEff_Plus(20);
+    return playerRecord->m_fMoveRunRate + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
   }
 
   if (m_byMoveType == 2)
@@ -5414,7 +5414,7 @@ float CPlayer::GetMoveSpeed()
 __int64 CPlayer::GetMaxHP()
 {
   const float baseMax = static_cast<float>(m_nMaxPoint[0]);
-  const float rate = m_EP.GetEff_Rate(9);
+  const float rate = m_EP.GetEff_Rate(EFF_RATE_MAX_HP);
   const int maxHp = static_cast<int>(baseMax * rate);
   if (maxHp <= 0)
   {
@@ -5503,7 +5503,7 @@ void CPlayer::SetStateFlag()
   {
     state |= bit << 7;
   }
-  if (m_EP.GetEff_Plus(22) > 0.0)
+  if (m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) > 0.0)
   {
     state |= bit << 8;
   }
@@ -5543,15 +5543,15 @@ void CPlayer::SetStateFlag()
   {
     state |= bit << 17;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     state |= bit << 18;
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     state |= bit << 19;
   }
-  if (m_EP.GetEff_State(22))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_22))
   {
     state |= bit << 20;
   }
@@ -5653,11 +5653,11 @@ void CPlayer::SetStateFlag()
   {
     state |= bit << 43;
   }
-  if (m_EP.GetEff_Have(50) > 0.0)
+  if (m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     state |= bit << 44;
   }
-  if (m_EP.GetEff_Have(58) > 0.0)
+  if (m_EP.GetEff_Have(EFF_HAVE_POTION_DELAY_BYPASS) > 0.0)
   {
     state |= bit << 45;
   }
@@ -5687,7 +5687,7 @@ void CPlayer::SetStateFlag()
   {
     state |= bit << 51;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     state |= bit << 52;
   }
@@ -5869,7 +5869,7 @@ bool CPlayer::SetBindPosition(CMapData *pMap, _dummy_position *pDummy)
 
 void CPlayer::TakeGravityStone()
 {
-  m_EP.SetEff_Plus(3, -30.0, true);
+  m_EP.SetEff_Plus(EFF_PLUS_AVOID_RATE, -30.0, true);
   ApplyEquipItemEffect(12, false);
   SF_RemoveAllContHelp_Once(this, 0.0f);
   m_bTakeGravityStone = true;
@@ -5879,7 +5879,7 @@ void CPlayer::TakeGravityStone()
 void CPlayer::ClearGravityStone()
 {
   m_bTakeGravityStone = false;
-  m_EP.SetEff_Plus(3, -30.0, 0);
+  m_EP.SetEff_Plus(EFF_PLUS_AVOID_RATE, -30.0, 0);
   ApplyEquipItemEffect(12, true);
 }
 
@@ -6210,7 +6210,7 @@ bool CPlayer::SF_OverHealing_Once(CCharacter *pDstObj, float fEffectValue)
   const int currentHp = static_cast<int>(pDstObj->GetHP());
   const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
   const float overHealingAmount = static_cast<float>(maxHp) * fEffectValue;
-  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(EFF_RATE_HP_GAIN);
   const int addHp = static_cast<int>(overHealingAmount * effectRate);
   pDstObj->SetHP(addHp + currentHp, true);
 
@@ -6368,7 +6368,7 @@ bool CPlayer::SF_AllContDamageForceRemove_Once(CCharacter *pDstObj)
 bool CPlayer::SF_AllContHelpForceRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -6390,7 +6390,7 @@ bool CPlayer::SF_AllContHelpForceRemove_Once(CCharacter *pDstObj)
 bool CPlayer::SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -6419,7 +6419,7 @@ bool CPlayer::SF_AttHPtoDstFP_Once(CCharacter *pDstObj, float fEffectValue)
   CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
   const int curFp = dstPlayer->GetFP();
   const int maxFp = dstPlayer->GetMaxFP();
-  const float effectRate = pDstObj->m_EP.GetEff_Rate(19);
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(EFF_RATE_FP_GAIN);
   const int addFp = static_cast<int>(static_cast<float>(maxFp) * (fEffectValue * effectRate));
   dstPlayer->SetFP(curFp + addFp, false);
 
@@ -6738,7 +6738,7 @@ bool CPlayer::SF_STInc_Once(CCharacter *pDstObj, float fEffectValue)
   CPlayer *dstPlayer = static_cast<CPlayer *>(pDstObj);
   const int currentSp = dstPlayer->GetSP();
   const int maxSp = dstPlayer->GetMaxSP();
-  const float effectRate = dstPlayer->m_EP.GetEff_Rate(20);
+  const float effectRate = dstPlayer->m_EP.GetEff_Rate(EFF_RATE_SP_GAIN);
   const int addSp = static_cast<int>(static_cast<float>(maxSp) * (fEffectValue * effectRate));
   dstPlayer->SetSP(addSp + currentSp, false);
 
@@ -7042,7 +7042,7 @@ bool CPlayer::SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue)
 
   const int currentHp = static_cast<int>(pDstObj->GetHP());
   const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
-  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(EFF_RATE_HP_GAIN);
   const float scaledEffectValue = fEffectValue * effectRate;
   const int addHp = static_cast<int>(static_cast<float>(maxHp) * scaledEffectValue);
   pDstObj->SetHP(addHp + currentHp, false);
@@ -7157,7 +7157,7 @@ bool CPlayer::SF_LateContDamageRemove_Once(CCharacter *pDstObj)
 bool CPlayer::SF_LateContHelpForceRemove_Once(CCharacter *pDstObj)
 {
   const float randomValue = static_cast<float>(rand() % 100);
-  const float resistValue = pDstObj->m_EP.GetEff_Plus(38);
+  const float resistValue = pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST);
   if (resistValue > randomValue)
   {
     return false;
@@ -7192,7 +7192,7 @@ bool CPlayer::SF_LateContHelpForceRemove_Once(CCharacter *pDstObj)
 bool CPlayer::SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj)
 {
   const float randomValue = static_cast<float>(rand() % 100);
-  const float resistValue = pDstObj->m_EP.GetEff_Plus(38);
+  const float resistValue = pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST);
   if (resistValue > randomValue)
   {
     return false;
@@ -7850,7 +7850,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
   const unsigned __int8 itemEquipUpLevel =
     static_cast<unsigned __int8>(GetItemEquipUpLevel(pCon->m_byTableCode, pCon->m_wItemIndex));
   const float level = static_cast<float>(m_Param.GetLevel());
-  const float effHave = m_EP.GetEff_Have(4);
+  const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
   if (static_cast<float>(itemEquipLevel) > (level + effHave))
   {
     return 0;
@@ -7860,7 +7860,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
   {
     const float limitLevel = static_cast<float>(itemEquipUpLevel);
     const float curLevel = static_cast<float>(m_Param.GetLevel());
-    const float curEffHave = m_EP.GetEff_Have(4);
+    const float curEffHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
     if ((curLevel - curEffHave) > limitLevel)
     {
       return 0;
@@ -7989,7 +7989,7 @@ bool CPlayer::_check_embel_part(_STORAGE_LIST::_db_con *pFixingItem)
   }
   const float itemEquipLevel = static_cast<float>(GetItemEquipLevel(pFixingItem->m_byTableCode, pFixingItem->m_wItemIndex));
   const float level = static_cast<float>(m_Param.GetLevel());
-  const float effHave = m_EP.GetEff_Have(4);
+  const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
   return itemEquipLevel <= (level + effHave);
 }
 
@@ -8192,25 +8192,25 @@ void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip
   switch (nEffCode)
   {
     case 1:
-      m_EP.SetEff_Rate(11, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_SP, fVal, bEquip);
       break;
     case 2:
-      m_EP.SetEff_Rate(7, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FP_COST, fVal, bEquip);
       break;
     case 3:
       for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
       {
         m_EP.SetEff_Plus(paramIndex, fVal, bEquip);
       }
-      m_EP.SetEff_Plus(2, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_2, fVal, bEquip);
       break;
     case 4:
     case 24:
-      m_EP.SetEff_Plus(3, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_AVOID_RATE, fVal, bEquip);
       break;
     case 5:
-      m_EP.SetEff_Rate(9, fVal, bEquip);
-      m_EP.SetEff_Rate(10, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_HP, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_FP, fVal, bEquip);
       break;
     case 6:
       for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
@@ -8218,51 +8218,51 @@ void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip
         m_EP.SetEff_Rate(paramIndex, fVal, bEquip);
         m_EP.SetEff_Rate(paramIndex + 2, fVal, bEquip);
       }
-      m_EP.SetEff_Rate(4, fVal, bEquip);
-      m_EP.SetEff_Rate(29, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, fVal, bEquip);
       break;
     case 7:
     case 21:
-      m_EP.SetEff_Rate(6, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, fVal, bEquip);
       break;
     case 8:
-      m_EP.SetEff_Plus(19, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_SKILL_LEVEL, fVal, bEquip);
       break;
     case 9:
-      m_EP.SetEff_Plus(21, 1.0f, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_21, 1.0f, bEquip);
       break;
     case 10:
-      m_EP.SetEff_Plus(22, 1.0f, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_22, 1.0f, bEquip);
       break;
     case 11:
-      m_EP.SetEff_Plus(23, 1.0f, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_23, 1.0f, bEquip);
       break;
     case 12:
       if (!m_bInGuildBattle || !m_bTakeGravityStone)
       {
-        m_EP.SetEff_Plus(20, fVal, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED, fVal, bEquip);
       }
       break;
     case 13:
-      m_EP.SetEff_Plus(24, 1.0f, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_24, 1.0f, bEquip);
       break;
     case 14:
-      m_EP.SetEff_Plus(25, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_FP_RECOVERY_RATE_POINTS, fVal, bEquip);
       break;
     case 15:
-      m_EP.SetEff_Rate(4, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, fVal, bEquip);
       break;
     case 16:
-      m_EP.SetEff_Rate(10, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_FP, fVal, bEquip);
       break;
     case 17:
-      m_EP.SetEff_Rate(12, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_DAMAGE_TO_HP, fVal, bEquip);
       break;
     case 18:
-      m_EP.SetEff_Rate(13, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_DAMAGE_TO_FP, fVal, bEquip);
       break;
     case 19:
-      m_EP.SetEff_Plus(14, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_CRITICAL_RATE, fVal, bEquip);
       break;
     case 20:
       for (int paramIndex = 0; paramIndex < 2; ++paramIndex)
@@ -8270,50 +8270,50 @@ void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip
         m_EP.SetEff_Plus(paramIndex + 4, fVal, bEquip);
         m_EP.SetEff_Plus(paramIndex + 6, fVal, bEquip);
       }
-      m_EP.SetEff_Plus(36, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_ATTACK_RANGE, fVal, bEquip);
       break;
     case 22:
     case 31:
-      m_EP.SetEff_Rate(8, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_CONT_DURATION, fVal, bEquip);
       break;
     case 23:
-      m_EP.SetEff_Rate(14, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_HP_RECOVERY, fVal, bEquip);
       break;
     case 25:
-      m_EP.SetEff_Plus(11, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_11, fVal, bEquip);
       break;
     case 26:
-      m_EP.SetEff_Plus(8, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_8, fVal, bEquip);
       break;
     case 27:
-      m_EP.SetEff_Plus(37, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_37, fVal, bEquip);
       break;
     case 28:
-      m_EP.SetEff_Plus(29, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_SHIELD_BLOCK_RATE, fVal, bEquip);
       break;
     case 29:
-      m_EP.SetEff_Plus(15, fVal, bEquip);
-      m_EP.SetEff_Plus(16, fVal, bEquip);
-      m_EP.SetEff_Plus(17, fVal, bEquip);
-      m_EP.SetEff_Plus(18, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_FIRE_TOLERANCE, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_WATER_TOLERANCE, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_SOIL_TOLERANCE, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_WIND_TOLERANCE, fVal, bEquip);
       break;
     case 30:
-      m_EP.SetEff_Rate(9, fVal, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_HP, fVal, bEquip);
       break;
     case 32:
-      m_EP.SetEff_Plus(28, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_SHIELD_IGNORE_RATE, fVal, bEquip);
       break;
     case 33:
-      m_EP.SetEff_Plus(10, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_10, fVal, bEquip);
       break;
     case 34:
-      m_EP.SetEff_Plus(12, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY, fVal, bEquip);
       break;
     case 35:
-      m_EP.SetEff_Plus(13, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_13, fVal, bEquip);
       break;
     case 36:
-      m_EP.SetEff_Plus(38, fVal, bEquip);
+      m_EP.SetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST, fVal, bEquip);
       break;
     default:
       return;
@@ -8329,7 +8329,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
   if (!itemUpgedLv || !GetDefItemUpgSocketNum(pItem->m_byTableCode, pItem->m_wItemIndex))
   {
     float effectValue = 0.0f;
-    const float have79 = m_EP.GetEff_Have(79);
+    const float have79 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_79);
     if (have79 > 0.0f
         && have79 < 6.0f
         && pItem->m_byTableCode == 6
@@ -8344,17 +8344,17 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
         m_EP.SetEff_Rate(paramIndex, effectValue, bEquip);
         m_EP.SetEff_Rate(paramIndex + 2, effectValue, bEquip);
       }
-      m_EP.SetEff_Rate(4, effectValue, bEquip);
-      m_EP.SetEff_Rate(29, effectValue, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, effectValue, bEquip);
+      m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, effectValue, bEquip);
     }
     else
     {
-      const float have80 = m_EP.GetEff_Have(80);
+      const float have80 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_80);
       if (have80 > 0.0f && have80 < 5.0f && pItem->m_byTableCode <= 5u)
       {
         _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
         effectValue = record->m_fEffectUnitList[static_cast<int>(have80)];
-        m_EP.SetEff_Rate(6, effectValue, bEquip);
+        m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, effectValue, bEquip);
         if (bEquip)
         {
           m_fTalik_DefencePoint += effectValue;
@@ -8402,7 +8402,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
     {
       case 0:
       {
-        int effHave79 = static_cast<int>(m_EP.GetEff_Have(79));
+        int effHave79 = static_cast<int>(m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_79));
         if (effHave79 > 5)
         {
           effHave79 = 5;
@@ -8419,32 +8419,32 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
           m_EP.SetEff_Rate(paramIndex, talikValue, bEquip);
           m_EP.SetEff_Rate(paramIndex + 2, talikValue, bEquip);
         }
-        m_EP.SetEff_Rate(4, talikValue, bEquip);
-        m_EP.SetEff_Rate(29, talikValue, bEquip);
+        m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, talikValue, bEquip);
+        m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, talikValue, bEquip);
         break;
       }
       case 1:
-        m_EP.SetEff_Rate(12, talikValue, bEquip);
+        m_EP.SetEff_Rate(EFF_RATE_DAMAGE_TO_HP, talikValue, bEquip);
         break;
       case 2:
-        m_EP.SetEff_Plus(28, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_SHIELD_IGNORE_RATE, talikValue, bEquip);
         break;
       case 3:
         if (pItem->m_byTableCode == 7)
         {
-          m_EP.SetEff_Plus(37, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_37, talikValue, bEquip);
         }
         else
         {
-          m_EP.SetEff_Plus(14, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_CRITICAL_RATE, talikValue, bEquip);
         }
         break;
       case 4:
-        m_EP.SetEff_Plus(5, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_5, talikValue, bEquip);
         break;
       case 5:
       {
-        int effHave80 = static_cast<int>(m_EP.GetEff_Have(80));
+        int effHave80 = static_cast<int>(m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_80));
         if (effHave80 > 4)
         {
           effHave80 = 4;
@@ -8453,7 +8453,7 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
         {
           talikValue = record->m_fEffectUnitList[effHave80];
         }
-        m_EP.SetEff_Rate(6, talikValue, bEquip);
+        m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, talikValue, bEquip);
         if (bEquip)
         {
           m_fTalik_DefencePoint += talikValue;
@@ -8465,30 +8465,30 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
         break;
       }
       case 6:
-        m_EP.SetEff_Plus(38, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST, talikValue, bEquip);
         break;
       case 7:
         if (pItem->m_byTableCode != 6)
         {
-          m_EP.SetEff_Plus(15, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_FIRE_TOLERANCE, talikValue, bEquip);
         }
         break;
       case 8:
         if (pItem->m_byTableCode != 6)
         {
-          m_EP.SetEff_Plus(16, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_WATER_TOLERANCE, talikValue, bEquip);
         }
         break;
       case 9:
         if (pItem->m_byTableCode != 6)
         {
-          m_EP.SetEff_Plus(17, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_SOIL_TOLERANCE, talikValue, bEquip);
         }
         break;
       case 10:
         if (pItem->m_byTableCode != 6)
         {
-          m_EP.SetEff_Plus(18, talikValue, bEquip);
+          m_EP.SetEff_Plus(EFF_PLUS_WIND_TOLERANCE, talikValue, bEquip);
         }
         break;
       case 11:
@@ -8496,14 +8496,14 @@ void CPlayer::apply_case_equip_upgrade_effect(_STORAGE_LIST::_db_con *pItem, boo
         {
           m_EP.SetEff_Plus(paramIndex, talikValue, bEquip);
         }
-        m_EP.SetEff_Plus(2, talikValue, bEquip);
-        m_EP.SetEff_Plus(31, talikValue, bEquip);
-        m_EP.SetEff_Plus(30, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_2, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_31, talikValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_30, talikValue, bEquip);
         break;
       case 12:
       {
         const float halfValue = talikValue / 2.0f;
-        m_EP.SetEff_Plus(3, halfValue, bEquip);
+        m_EP.SetEff_Plus(EFF_PLUS_AVOID_RATE, halfValue, bEquip);
         if (bEquip)
         {
           m_fTalik_AvoidPoint += halfValue;
@@ -8722,7 +8722,7 @@ void CPlayer::CalcEquipMaxDP(bool bInit)
 int CPlayer::GetMaxDP()
 {
   const float baseMax = static_cast<float>(m_nMaxDP);
-  const float bonus = m_EP.GetEff_Plus(35);
+  const float bonus = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_35);
   return static_cast<int>(baseMax + bonus);
 }
 
@@ -8873,8 +8873,8 @@ void CPlayer::SetHaveEffect(char bLogin)
     return;
   }
 
-  const float prevHave4 = m_EP.GetEff_Have(4);
-  const float prevHave77 = m_EP.GetEff_Have(77);
+  const float prevHave4 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
+  const float prevHave77 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_77);
 
   for (int effCode = 12; effCode < 83; ++effCode)
   {
@@ -8981,13 +8981,13 @@ void CPlayer::SetHaveEffect(char bLogin)
     }
   }
 
-  m_EP.m_pDataParam->m_fEff_Have[0] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[2] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[5] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[6] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[7] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[8] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[9] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_0] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_2] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_5] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_6] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_7] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_8] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_9] += FLOAT_1_0;
 
   for (int effCode = 12; effCode < 83; ++effCode)
   {
@@ -8995,8 +8995,8 @@ void CPlayer::SetHaveEffect(char bLogin)
     {
       if (effCode == 77)
       {
-        float diff = (m_EP.m_pDataParam->m_fEff_Have[77] - prevHave77) * 100.0f;
-        apply_have_item_std_effect(77, m_EP.m_pDataParam->m_fEff_Have[77], true, static_cast<int>(diff));
+        float diff = (m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_77] - prevHave77) * 100.0f;
+        apply_have_item_std_effect(77, m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_77], true, static_cast<int>(diff));
       }
       if (effCode == 79 || effCode == 80)
       {
@@ -9009,16 +9009,16 @@ void CPlayer::SetHaveEffect(char bLogin)
     }
   }
 
-  m_EP.m_pDataParam->m_fEff_Have[71] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[72] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[73] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[74] += FLOAT_1_0;
-  m_EP.m_pDataParam->m_fEff_Have[75] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_71] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_72] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_73] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_74] += FLOAT_1_0;
+  m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_75] += FLOAT_1_0;
 
-  const float afterHave4 = m_EP.GetEff_Have(4);
+  const float afterHave4 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
   if (afterHave4 <= prevHave4)
   {
-    if (prevHave4 > m_EP.GetEff_Have(4))
+    if (prevHave4 > m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4))
     {
       m_bDownCheckEquipEffect = 1;
     }
@@ -9028,9 +9028,9 @@ void CPlayer::SetHaveEffect(char bLogin)
     m_bUpCheckEquipEffect = 1;
   }
 
-  if (m_EP.m_pDataParam->m_fEff_Have[2] > FLOAT_1_0)
+  if (m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_2] > FLOAT_1_0)
   {
-    float diff = (m_EP.m_pDataParam->m_fEff_Have[2] - FLOAT_1_0) * 10.0f;
+    float diff = (m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_2] - FLOAT_1_0) * 10.0f;
     const int count = static_cast<int>(diff) % 10;
     s_MgrItemHistory.exp_prof_log(count, m_szItemHistoryFileName);
   }
@@ -9041,119 +9041,119 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
   switch (nEffCode)
   {
     case 15:
-      m_EP.SetEff_Rate(9, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_HP, fVal, bAdd);
       break;
     case 16:
-      m_EP.SetEff_Rate(10, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_FP, fVal, bAdd);
       break;
     case 17:
-      m_EP.SetEff_Rate(11, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_MAX_SP, fVal, bAdd);
       break;
     case 18:
-      m_EP.SetEff_Rate(0, fVal, bAdd);
-      m_EP.SetEff_Rate(1, fVal, bAdd);
-      m_EP.SetEff_Rate(2, fVal, bAdd);
-      m_EP.SetEff_Rate(3, fVal, bAdd);
-      m_EP.SetEff_Rate(4, fVal, bAdd);
-      m_EP.SetEff_Rate(29, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_RANGED_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_CLOSE_RANGE_SKILL_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_RANGED_SKILL_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, fVal, bAdd);
       break;
     case 19:
-      m_EP.SetEff_Rate(0, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK, fVal, bAdd);
       break;
     case 20:
-      m_EP.SetEff_Rate(2, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_CLOSE_RANGE_SKILL_ATTACK, fVal, bAdd);
       break;
     case 21:
-      m_EP.SetEff_Rate(1, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_RANGED_ATTACK, fVal, bAdd);
       break;
     case 22:
-      m_EP.SetEff_Rate(3, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_RANGED_SKILL_ATTACK, fVal, bAdd);
       break;
     case 23:
-      m_EP.SetEff_Rate(4, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, fVal, bAdd);
       break;
     case 24:
-      m_EP.SetEff_Rate(6, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, fVal, bAdd);
       break;
     case 25:
-      m_EP.SetEff_Rate(12, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_DAMAGE_TO_HP, fVal, bAdd);
       break;
     case 26:
-      m_EP.SetEff_Rate(13, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_DAMAGE_TO_FP, fVal, bAdd);
       break;
     case 27:
-      m_EP.SetEff_Rate(40, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_40, fVal, bAdd);
       break;
     case 29:
-      m_EP.SetEff_Rate(41, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_41, fVal, bAdd);
       break;
     case 30:
-      m_EP.SetEff_Rate(42, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_42, fVal, bAdd);
       break;
     case 31:
-      m_EP.SetEff_Rate(43, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_43, fVal, bAdd);
       break;
     case 32:
-      m_EP.SetEff_Rate(44, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_44, fVal, bAdd);
       break;
     case 33:
-      m_EP.SetEff_Rate(57, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_57, fVal, bAdd);
       break;
     case 34:
-      m_EP.SetEff_Rate(58, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_58, fVal, bAdd);
       break;
     case 35:
-      m_EP.SetEff_Rate(59, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_59, fVal, bAdd);
       break;
     case 36:
-      m_EP.SetEff_Rate(60, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_60, fVal, bAdd);
       break;
     case 37:
-      m_EP.SetEff_Rate(61, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_61, fVal, bAdd);
       break;
     case 38:
-      m_EP.SetEff_Rate(0, fVal, bAdd);
-      m_EP.SetEff_Rate(1, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK, fVal, bAdd);
+      m_EP.SetEff_Rate(EFF_RATE_RANGED_ATTACK, fVal, bAdd);
       break;
     case 39:
-      m_EP.SetEff_Plus(6, fVal, bAdd);
-      m_EP.SetEff_Plus(7, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_6, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_7, fVal, bAdd);
       break;
     case 40:
-      m_EP.SetEff_Plus(23, 1.0f, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_23, 1.0f, bAdd);
       break;
     case 41:
-      m_EP.SetEff_Plus(20, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED, fVal, bAdd);
       break;
     case 43:
-      m_EP.SetEff_Plus(0, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_0, fVal, bAdd);
       break;
     case 44:
-      m_EP.SetEff_Plus(1, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_1, fVal, bAdd);
       break;
     case 45:
-      m_EP.SetEff_Plus(31, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_31, fVal, bAdd);
       break;
     case 46:
-      m_EP.SetEff_Plus(30, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_30, fVal, bAdd);
       break;
     case 47:
-      m_EP.SetEff_Plus(14, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_CRITICAL_RATE, fVal, bAdd);
       break;
     case 48:
-      m_EP.SetEff_Plus(40, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_ATTACK_ACCURACY, fVal, bAdd);
       break;
     case 49:
-      m_EP.SetEff_Plus(3, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_AVOID_RATE, fVal, bAdd);
       break;
     case 50:
       HideNameEffect(bAdd);
       break;
     case 56:
-      m_EP.SetEff_State(8, bAdd);
+      m_EP.SetEff_State(EFF_STATE_UNKNOWN_8, bAdd);
       break;
     case 57:
-      m_EP.SetEff_Plus(29, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_SHIELD_BLOCK_RATE, fVal, bAdd);
       break;
     case 59:
       SetMstPt(0, fVal, bAdd, 0);
@@ -9175,7 +9175,7 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
       SetMstPt(6, fVal, bAdd, 0);
       break;
     case 76:
-      m_EP.SetEff_Plus(22, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_UNKNOWN_22, fVal, bAdd);
       break;
     case 77:
       if (nDiffCnt > 0 && bAdd)
@@ -9185,7 +9185,7 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
       }
       break;
     case 78:
-      m_EP.SetEff_Plus(28, fVal, bAdd);
+      m_EP.SetEff_Plus(EFF_PLUS_SHIELD_IGNORE_RATE, fVal, bAdd);
       break;
     case 79:
       if (nDiffCnt != 1 && fVal >= 1.0f)
@@ -9213,7 +9213,7 @@ void CPlayer::HideNameEffect(bool bAdd)
 
   if (!bossType || bossType == 1 || bossType == 5)
   {
-    m_EP.m_pDataParam->m_fEff_Have[50] = 0.0f;
+    m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_HIDE_NAME] = 0.0f;
   }
   else if (bAdd)
   {
@@ -9337,7 +9337,7 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
                   {
                     deltaValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)] - baseValue;
                   }
-                  m_EP.SetEff_Rate(6, deltaValue, bAdd);
+                  m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, deltaValue, bAdd);
                   m_fTalik_DefencePoint = m_fTalik_DefencePoint + deltaValue;
                 }
               }
@@ -9352,8 +9352,8 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
                   m_EP.SetEff_Rate(paramIndex, deltaValue, bAdd);
                   m_EP.SetEff_Rate(paramIndex + 2, deltaValue, bAdd);
                 }
-                m_EP.SetEff_Rate(4, deltaValue, bAdd);
-                m_EP.SetEff_Rate(29, deltaValue, bAdd);
+                m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, deltaValue, bAdd);
+                m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, deltaValue, bAdd);
               }
             }
           }
@@ -9374,14 +9374,14 @@ for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
             m_EP.SetEff_Rate(paramIndex, effectValue, bAdd);
             m_EP.SetEff_Rate(paramIndex + 2, effectValue, bAdd);
           }
-          m_EP.SetEff_Rate(4, effectValue, bAdd);
-          m_EP.SetEff_Rate(29, effectValue, bAdd);
+          m_EP.SetEff_Rate(EFF_RATE_FORCE_ATTACK, effectValue, bAdd);
+          m_EP.SetEff_Rate(EFF_RATE_LAUNCHER_ATTACK, effectValue, bAdd);
         }
         else if (fCurVal > 0.0f && fCurVal < 5.0f && item->m_byTableCode <= 5u)
         {
           _ItemUpgrade_fld *record = g_Main.m_tblItemUpgrade.GetRecord(5u);
           effectValue = record->m_fEffectUnitList[static_cast<int>(fCurVal)];
-          m_EP.SetEff_Rate(6, effectValue, bAdd);
+          m_EP.SetEff_Rate(EFF_RATE_FINAL_DEFENSE, effectValue, bAdd);
           m_fTalik_DefencePoint = bAdd ? (m_fTalik_DefencePoint + effectValue)
                                        : (m_fTalik_DefencePoint - effectValue);
         }
@@ -9643,7 +9643,7 @@ int CPlayer::GetSP()
 int CPlayer::GetMaxFP()
 {
   const float baseValue = static_cast<float>(m_nMaxPoint[1]);
-  const float rate = m_EP.GetEff_Rate(10);
+  const float rate = m_EP.GetEff_Rate(EFF_RATE_MAX_FP);
   const int maxFp = static_cast<int>(baseValue * rate);
   if (maxFp <= 0)
   {
@@ -9655,7 +9655,7 @@ int CPlayer::GetMaxFP()
 int CPlayer::GetMaxSP()
 {
   const float baseValue = static_cast<float>(m_nMaxPoint[2]);
-  const float rate = m_EP.GetEff_Rate(11);
+  const float rate = m_EP.GetEff_Rate(EFF_RATE_MAX_SP);
   const int maxSp = static_cast<int>(baseValue * rate);
   if (maxSp <= 0)
   {
@@ -10051,7 +10051,7 @@ void CPlayer::AddDalant(int dwPush, bool bApply)
   const unsigned int currentDalant = m_Param.GetDalant();
   if (!CanAddMoneyForMaxLimMoney(static_cast<unsigned int>(dwPush), currentDalant))
   {
-    newDalant = 2000000000;
+    newDalant = MAX_DALANT;
   }
 
   if (newDalant != m_Param.GetDalant())
@@ -11869,7 +11869,7 @@ void CPlayer::SendMsg_BuyItemStoreResult(
   {
     msg.dwLeftActPoint[j] = m_pUserDB->GetActPoint(static_cast<unsigned __int8>(j));
   }
-  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(1));
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_DISCOUNT_RATE));
   msg.byBuyNum = static_cast<unsigned __int8>(nOfferNum);
   for (int j = 0; j < nOfferNum; ++j)
   {
@@ -11891,7 +11891,7 @@ void CPlayer::SendMsg_SellItemStoreResult(CItemStore *pStore, unsigned __int8 by
   msg.dwLeftGold = m_Param.GetGold();
   msg.dwProfitDanlant = pStore->GetLastTradeDalant();
   msg.dwProfitGold = pStore->GetLastTradeGold();
-  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(1));
+  msg.byDiscountRate = 100 * static_cast<unsigned __int8>(m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_DISCOUNT_RATE));
   msg.byRetCode = byErrCode;
 
   unsigned __int8 type[2]{12, 5};
@@ -11961,7 +11961,7 @@ void CPlayer::pc_BuyItemStore(
             offers[j].byStorageCode = pList[j].byStorageCode;
           }
 
-          const float discount = m_EP.GetEff_Have(1) + m_EP.GetEff_Have(11);
+          const float discount = m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_DISCOUNT_RATE) + m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_SELL_DISCOUNT_RATE);
           unsigned __int8 actCode[16]{};
           const int race = m_Param.GetRaceCode();
           unsigned int *actPoints = m_pUserDB->GetPtrActPoint();
@@ -12368,7 +12368,7 @@ void CPlayer::pc_SellItemStore(
 
       if (!resultCode)
       {
-        discount = m_EP.GetEff_Have(1) + m_EP.GetEff_Have(10);
+        discount = m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_DISCOUNT_RATE) + m_EP.GetEff_Have(EFF_HAVE_ITEM_STORE_BUY_DISCOUNT_RATE);
         race = static_cast<unsigned __int8>(m_Param.GetRaceCode());
         resultCode = pStore->IsBuy(byOfferNum, offers, discount, race);
         if (!resultCode)
@@ -13699,7 +13699,7 @@ char CPlayer::Corpse(CCharacter *pAtter)
   SetBreakTranspar(false);
   SendMsg_Die();
 
-  unsigned __int16 jadeRevivalRate = static_cast<unsigned __int16>(m_EP.GetEff_Have(51) * 100.0f);
+  unsigned __int16 jadeRevivalRate = static_cast<unsigned __int16>(m_EP.GetEff_Have(EFF_HAVE_JADE_REVIVAL_RATE) * 100.0f);
   if (jadeRevivalRate > 100)
   {
     jadeRevivalRate = 100;
@@ -14262,7 +14262,7 @@ char CPlayer::Create()
     this->m_nAddDfnMstByClass += effectRecord->m_nUpValueDefMastery;
   }
 
-  if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(50) <= 0.0)
+  if (this->m_Param.m_pGuild && this->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0)
   {
     _guild_member_info *member = this->m_Param.m_pGuild->LoginMember(this->m_dwObjSerial, this);
     if (member)
@@ -14554,7 +14554,7 @@ void CPlayer::CreateComplete()
         CPlayer *ptr = &g_Player[n];
         if (ptr->m_bLive
             && ptr != this
-            && ptr->m_EP.GetEff_Have(50) <= 0.0
+            && ptr->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0
             && ptr->m_dwObjSerial == buddy->dwSerial)
         {
           if (ptr->m_pmBuddy.IsBuddy(this->m_dwObjSerial))
@@ -15606,7 +15606,7 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
           {
             sendFull = true;
           }
-          else if (target->m_EP.GetEff_Have(3) != 0.0)
+          else if (target->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_3) != 0.0)
           {
             sendFull = true;
           }
@@ -15660,7 +15660,7 @@ void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)
         {
           const int dstRace = dst->m_Param.GetRaceCode();
           const int myRace = m_Param.GetRaceCode();
-          if (dstRace != myRace && dst->m_byUserDgr < 2u && dst->m_EP.GetEff_Have(3) == 0.0)
+          if (dstRace != myRace && dst->m_byUserDgr < 2u && dst->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_3) == 0.0)
           {
             const int raceCode = dst->m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
@@ -16276,7 +16276,7 @@ void CPlayer::pc_ChatMultiFarRequest(unsigned __int8 byDstNum, _w_name *pDstName
         if (!failCode)
         {
           if (m_byUserDgr != 2 && dst->m_byUserDgr != 2
-              && dst->m_EP.GetEff_Have(3) <= 0.0)
+              && dst->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_3) <= 0.0)
           {
             const int raceCode = dst->m_Param.GetRaceCode();
             CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
@@ -16777,7 +16777,7 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
     }
     hpCost = record->m_nNeedHP;
     const float fpBase = static_cast<float>(record->m_nNeedFP);
-    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
+    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(EFF_RATE_FP_COST));
     spCost = record->m_nNeedSP;
   }
   else
@@ -16789,7 +16789,7 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
     }
     hpCost = record->m_nNeedHP;
     const float fpBase = static_cast<float>(record->m_nNeedFP);
-    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(7));
+    fpCost = static_cast<int>(fpBase * m_EP.GetEff_Rate(EFF_RATE_FP_COST));
     spCost = record->m_nNeedSP;
   }
 
@@ -17170,17 +17170,17 @@ char CPlayer::_pre_check_normal_attack(
     return static_cast<char>(-21);
   }
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     return static_cast<char>(-38);
   }
@@ -17232,7 +17232,7 @@ char CPlayer::_pre_check_normal_attack(
     const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
     const float width = pDst->GetWidth();
     const float rangeWithWidth = baseRange + (width / 2.0f);
-    const float effPlus = m_EP.GetEff_Plus(36);
+    const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
     attackRange = rangeWithWidth + effPlus;
   }
   else
@@ -17445,22 +17445,22 @@ char CPlayer::_pre_check_skill_attack(
     return static_cast<char>(-21);
   }
 
-  if (m_EP.GetEff_State(0))
+  if (m_EP.GetEff_State(EFF_STATE_SKILL_RESTRICTED))
   {
     return static_cast<char>(-50);
   }
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     return static_cast<char>(-38);
   }
@@ -17496,7 +17496,7 @@ char CPlayer::_pre_check_skill_attack(
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
       const float width = pDst->GetWidth();
       const float rangeWithWidth = baseRange + (width / 2.0f);
-      const float effPlus = m_EP.GetEff_Plus(36);
+      const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
       const float rangePlus = rangeWithWidth + effPlus;
       const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
@@ -17548,7 +17548,7 @@ char CPlayer::_pre_check_skill_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange);
-      const float effPlus = m_EP.GetEff_Plus(36);
+      const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
       const float rangePlus = baseRange + effPlus;
       const float classPlus = m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
       attackRange = (rangePlus + classPlus) + static_cast<float>(pSkillFld->m_nBonusDistance);
@@ -17615,17 +17615,17 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-21);
   }
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     return static_cast<char>(-38);
   }
@@ -17748,22 +17748,22 @@ char CPlayer::_pre_check_force_attack(
     return static_cast<char>(-24);
   }
 
-  if (m_EP.GetEff_State(1))
+  if (m_EP.GetEff_State(EFF_STATE_FORCE_RESTRICTED))
   {
     return static_cast<char>(-50);
   }
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     return static_cast<char>(-38);
   }
@@ -17788,7 +17788,7 @@ char CPlayer::_pre_check_force_attack(
     const float rangeBase = static_cast<float>(forceField->m_nActDistance + 40);
     const float width = pDst->GetWidth();
     const float rangeWithWidth = rangeBase + (width / 2.0f);
-    const float effPlus = m_EP.GetEff_Plus(8);
+    const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_8);
     const int range = static_cast<int>(rangeWithWidth + effPlus);
     float dist = GetSqrt(pDst->m_fCurPos, m_fCurPos);
     if (dist > static_cast<float>(range))
@@ -17805,7 +17805,7 @@ char CPlayer::_pre_check_force_attack(
     int range = forceField->m_nActDistance + 40;
     if (attackType == 6 || attackType == 5 || attackType == 7)
     {
-      const float effPlus = m_EP.GetEff_Plus(8);
+      const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_8);
       range = static_cast<int>(static_cast<float>(range) + effPlus);
     }
 
@@ -17871,12 +17871,12 @@ char CPlayer::_pre_check_unit_attack(
     return static_cast<char>(-41);
   }
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return static_cast<char>(-37);
   }
 
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return static_cast<char>(-37);
   }
@@ -18144,7 +18144,7 @@ char CPlayer::_pre_check_siege_attack(
     if (m_pmWpn.byWpType == 7)
     {
       const float baseRange = static_cast<float>(m_pmWpn.wGaAttRange) + siegeRecord->m_fMaxDst;
-      const float effPlus = m_EP.GetEff_Plus(36);
+      const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
       attackRange = baseRange + effPlus;
     }
     else
@@ -18677,22 +18677,22 @@ void CPlayer::make_gen_attack_param(
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBtFld)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float effRate = m_EP.GetEff_Rate(32);
+    const float effRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     pAP->nMinAFPlus = static_cast<int>(
       static_cast<float>(((minAf * effRate) * fAddBulletFc) * fAddEffBtFc) + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     pAP->nMaxAFPlus = static_cast<int>(
       static_cast<float>(((maxAf * maxRate) * fAddBulletFc) * fAddEffBtFc) + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float minRate = m_EP.GetEff_Rate(32);
+  const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMinAF = static_cast<int>((minAf * minRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
   const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-  const float maxRate = m_EP.GetEff_Rate(32);
+  const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]));
 
   pAP->nMinSel = m_pmWpn.byGaMinSel;
@@ -18751,9 +18751,9 @@ void CPlayer::make_skill_attack_param(
 
   pAP->nClass = m_pmWpn.byWpClass;
 
-  if (m_pmWpn.nGaMaxAF < 0 || m_EP.GetEff_Rate(32) < 0.0f || fAddBulletFc < 0.0f)
+  if (m_pmWpn.nGaMaxAF < 0 || m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE) < 0.0f || fAddBulletFc < 0.0f)
   {
-    const float effRate = m_EP.GetEff_Rate(32);
+    const float effRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     g_Main.m_logSystemError.Write(
       "Skill Attack Warning : nGaMaxAF(%d), Potion_Inc_Fc(%f), fAddBulletFc(%f)",
       m_pmWpn.nGaMaxAF,
@@ -18764,13 +18764,13 @@ void CPlayer::make_skill_attack_param(
   if (m_pmWpn.byWpType == 7)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float rate = m_EP.GetEff_Rate(32);
+    const float rate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMin = (minAf * rate) * fAddBulletFc;
     const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
     const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -18778,13 +18778,13 @@ void CPlayer::make_skill_attack_param(
   else
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float rate = m_EP.GetEff_Rate(32);
+    const float rate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMin = (minAf * rate) * fAddBulletFc;
     const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
     const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -18795,13 +18795,13 @@ void CPlayer::make_skill_attack_param(
     if (m_pmWpn.byWpType == 7)
     {
       const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-      const float rate = m_EP.GetEff_Rate(32);
+      const float rate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
       const float tempMin = ((minAf * rate) * fAddBulletFc) * fAddEffBulletFc;
       const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
       pAP->nMinAFPlus = static_cast<int>(tempMin + static_cast<float>(mastery));
 
       const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-      const float maxRate = m_EP.GetEff_Rate(32);
+      const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
       const float tempMax = ((maxAf * maxRate) * fAddBulletFc) * fAddEffBulletFc;
       const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
       pAP->nMaxAFPlus = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -18809,13 +18809,13 @@ void CPlayer::make_skill_attack_param(
     else
     {
       const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-      const float rate = m_EP.GetEff_Rate(32);
+      const float rate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
       const float tempMin = ((minAf * rate) * fAddBulletFc) * fAddEffBulletFc;
       const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
       pAP->nMinAFPlus = static_cast<int>(tempMin + static_cast<float>(mastery));
 
       const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-      const float maxRate = m_EP.GetEff_Rate(32);
+      const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
       const float tempMax = ((maxAf * maxRate) * fAddBulletFc) * fAddEffBulletFc;
       const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
       pAP->nMaxAFPlus = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -18828,22 +18828,22 @@ void CPlayer::make_skill_attack_param(
       reinterpret_cast<_SiegeKitItem_fld *>(g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
     if (siegeRecord)
     {
-      const float effRate = m_EP.GetEff_Rate(23);
+      const float effRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
       pAP->nMinAF = static_cast<int>(static_cast<float>(pAP->nMinAF)
                                      * (siegeRecord->m_fGAAF * effRate));
       if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
       {
-        const float rate = m_EP.GetEff_Rate(23);
+        const float rate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
         pAP->nMinAFPlus = static_cast<int>(static_cast<float>(pAP->nMinAFPlus)
                                            * (siegeRecord->m_fGAAF * rate));
       }
 
-      const float maxRate = m_EP.GetEff_Rate(23);
+      const float maxRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
       pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF)
                                      * (siegeRecord->m_fGAAF * maxRate));
       if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
       {
-        const float rate = m_EP.GetEff_Rate(23);
+        const float rate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
         pAP->nMaxAFPlus = static_cast<int>(static_cast<float>(pAP->nMaxAFPlus)
                                            * (siegeRecord->m_fGAAF * rate));
       }
@@ -18887,7 +18887,7 @@ void CPlayer::make_skill_attack_param(
   else
   {
     pAP->nLevel = m_pmMst.GetSkillLv(pSkillFld->m_dwIndex);
-    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + m_EP.GetEff_Plus(19));
+    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + m_EP.GetEff_Plus(EFF_PLUS_SKILL_LEVEL));
     if (pAP->nLevel > 7)
     {
       pAP->nLevel = 7;
@@ -18921,20 +18921,20 @@ void CPlayer::make_force_attack_param(
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletItem)
   {
     const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-    const float rate = m_EP.GetEff_Rate(32);
+    const float rate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     pAP->nMinAFPlus = static_cast<int>(((minAf * rate) * fAddEffBtFc) + static_cast<float>(m_pmMst.m_mtyStaff));
 
     const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     pAP->nMaxAFPlus = static_cast<int>(((maxAf * maxRate) * fAddEffBtFc) + static_cast<float>(m_pmMst.m_mtyStaff));
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-  const float minRate = m_EP.GetEff_Rate(32);
+  const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMinAF = static_cast<int>((minAf * minRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-  const float maxRate = m_EP.GetEff_Rate(32);
+  const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   pAP->nMinSel = m_pmWpn.byMaMinSel;
@@ -19043,35 +19043,35 @@ void CPlayer::make_siege_attack_param(
   if (strncmp(m_pmWpn.strEffBulletType, "-1", 2u) && pEffBulletFld)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = m_EP.GetEff_Rate(32);
+    const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float minValue =
       ((minAf * minRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
     const float minMul = minValue * siegeMul;
-    const float minEffRate = m_EP.GetEff_Rate(23);
+    const float minEffRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
     pAP->nMinAFPlus = static_cast<int>(minMul * minEffRate);
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float maxValue =
       ((maxAf * maxRate) * fAddBulletFc) * fAddEffBtFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
     const float maxMul = maxValue * siegeMul;
-    const float maxEffRate = m_EP.GetEff_Rate(23);
+    const float maxEffRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
     pAP->nMaxAFPlus = static_cast<int>(maxMul * maxEffRate);
     pAP->nEffShotNum = 1;
   }
 
   const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float minRate = m_EP.GetEff_Rate(32);
+  const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   const float minValue = (minAf * minRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
   const float minMul = minValue * siegeMul;
-  const float minEffRate = m_EP.GetEff_Rate(23);
+  const float minEffRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
   pAP->nMinAF = static_cast<int>(minMul * minEffRate);
 
   const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-  const float maxRate = m_EP.GetEff_Rate(32);
+  const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   const float maxValue = (maxAf * maxRate) * fAddBulletFc + static_cast<float>(CPlayer::s_nAddMstFc[masteryBonus]);
   const float maxMul = maxValue * siegeMul;
-  const float maxEffRate = m_EP.GetEff_Rate(23);
+  const float maxEffRate = m_EP.GetEff_Rate(EFF_RATE_SIEGE_ATTACK);
   pAP->nMaxAF = static_cast<int>(maxMul * maxEffRate);
 
   pAP->nMinSel = m_pmWpn.byGaMinSel;
@@ -19121,13 +19121,13 @@ void CPlayer::make_wpactive_skill_attack_param(
   if (m_pmWpn.byWpType == 7)
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = m_EP.GetEff_Rate(32);
+    const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMin = (minAf * minRate) * fAddBulletFc;
     const int mastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
     const int maxMastery = m_pmMst.GetMasteryPerMast(6u, 0);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -19135,13 +19135,13 @@ void CPlayer::make_wpactive_skill_attack_param(
   else
   {
     const float minAf = static_cast<float>(m_pmWpn.nGaMinAF);
-    const float minRate = m_EP.GetEff_Rate(32);
+    const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMin = (minAf * minRate) * fAddBulletFc;
     const int mastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMinAF = static_cast<int>(tempMin + static_cast<float>(mastery));
 
     const float maxAf = static_cast<float>(m_pmWpn.nGaMaxAF);
-    const float maxRate = m_EP.GetEff_Rate(32);
+    const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
     const float tempMax = (maxAf * maxRate) * fAddBulletFc;
     const int maxMastery = m_pmMst.GetMasteryPerMast(0, m_pmWpn.byWpClass);
     pAP->nMaxAF = static_cast<int>(tempMax + static_cast<float>(maxMastery));
@@ -19203,11 +19203,11 @@ void CPlayer::make_wpactive_force_attack_param(
   pAP->nTol = pForceFld->m_nProperty;
 
   const float minAf = static_cast<float>(m_pmWpn.nMaMinAF);
-  const float minRate = m_EP.GetEff_Rate(32);
+  const float minRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMinAF = static_cast<int>((minAf * minRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   const float maxAf = static_cast<float>(m_pmWpn.nMaMaxAF);
-  const float maxRate = m_EP.GetEff_Rate(32);
+  const float maxRate = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   pAP->nMaxAF = static_cast<int>((maxAf * maxRate) + static_cast<float>(m_pmMst.m_mtyStaff));
 
   pAP->nMinSel = m_pmWpn.byMaMinSel;
@@ -19489,9 +19489,9 @@ bool CPlayer::WPActiveSkill(
     {
       if (IsEffectableDst(pSkillFld->m_strActableDst, target)
           && (pSkillFld->m_nContEffectType == -1 || target->IsRecvableContEffect())
-          && (!target->m_EP.GetEff_State(20)
+          && (!target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE)
               || (pSkillFld->m_nTempEffectType != -1 && usableTemp))
-          && !target->m_EP.GetEff_State(28))
+          && !target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
       {
         if (pSkillFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown()
             || (!IsInTown() && !target->IsInTown()
@@ -19588,9 +19588,9 @@ bool CPlayer::WPActiveForce(_be_damaged_char *pDamList, int nDamagedObjNum, _for
     {
       if (IsEffectableDst(pForceFld->m_strActableDst, pDamList[j].m_pChar)
           && (pForceFld->m_nContEffectType == -1 || pDamList[j].m_pChar->IsRecvableContEffect())
-          && (!pDamList[j].m_pChar->m_EP.GetEff_State(20)
+          && (!pDamList[j].m_pChar->m_EP.GetEff_State(EFF_STATE_INSUPERABLE)
               || (pForceFld->m_nTempEffectType != -1 && usableTemp))
-          && !pDamList[j].m_pChar->m_EP.GetEff_State(28))
+          && !pDamList[j].m_pChar->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
       {
         if (pForceFld->m_nContEffectType || IsAttackableInTown() || target->IsAttackableInTown()
             || (!IsInTown() && !target->IsInTown()
@@ -19695,17 +19695,17 @@ void CPlayer::pc_PlayAttack_Gen(
       int delay = effPlus + static_cast<int>(attackDelay);
       if (m_pmWpn.byWpType == 7)
       {
-        const float effPlusInner = m_EP.GetEff_Plus(11);
+        const float effPlusInner = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11);
         delay = static_cast<int>(static_cast<float>(delay) + effPlusInner);
       }
       _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(delay));
     }
 
-    if (m_EP.GetEff_State(14))
+    if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
     {
       RemoveSFContHelpByEffect(2, 14);
     }
-    if (m_EP.GetEff_State(21))
+    if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
     {
       if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
       {
@@ -19960,14 +19960,14 @@ void CPlayer::pc_PlayAttack_Skill(
   }
   pAt.SetActiveSucc(bActiveSucc);
 
-  const float effPlus = m_EP.GetEff_Plus(12);
+  const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pSkillFld->m_fActDelay + effPlus));
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
@@ -20205,7 +20205,7 @@ void CPlayer::pc_PlayAttack_Force(
   }
 
   CAttack pAt(this);
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
@@ -20236,10 +20236,10 @@ void CPlayer::pc_PlayAttack_Force(
   }
   pAt.SetActiveSucc(bActiveSucc);
 
-  const float effPlus = m_EP.GetEff_Plus(13);
+  const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13);
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pForceFld->m_fActDelay + effPlus));
 
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
@@ -20353,7 +20353,7 @@ void CPlayer::pc_PlayAttack_Force(
           + static_cast<float>(baseAlter)
               * static_cast<float>(FORCE_LIVER_ACCUM_RATE - 1.0));
       }
-      const float effHave = m_EP.GetEff_Have(6);
+      const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_6);
       if (effHave > 1.0f)
       {
         nAlter = static_cast<int>(
@@ -20428,11 +20428,11 @@ void CPlayer::pc_PlayAttack_Unit(CCharacter *pDst, unsigned __int8 byWeaponPart)
 
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(pWeaponFld->m_nAttackDel));
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
@@ -20560,16 +20560,16 @@ void CPlayer::pc_PlayAttack_Siege(
   int delay = effPlus + static_cast<int>(attackDelay);
   if (m_pmWpn.byWpType == 7)
   {
-    const float effPlusInner = m_EP.GetEff_Plus(11);
+    const float effPlusInner = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11);
     delay = static_cast<int>(static_cast<float>(delay) + effPlusInner);
   }
   _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(delay));
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     if (pAP.nAttactType != 4 && pAP.nAttactType != 5 && pAP.nAttactType != 6 && pAP.nAttactType != 7)
     {
@@ -20762,7 +20762,7 @@ void CPlayer::pc_PlayAttack_Test(
       }
     }
 
-    if (m_EP.GetEff_State(14))
+    if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
     {
       RemoveSFContHelpByEffect(2, 14);
     }
@@ -20801,7 +20801,7 @@ void CPlayer::pc_PlayAttack_Test(
         unitBullet.wLeftNum = static_cast<unsigned __int16>(-1);
       }
 
-      if (m_EP.GetEff_State(14))
+      if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
       {
         RemoveSFContHelpByEffect(2, 14);
       }
@@ -20825,15 +20825,15 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
   {
     errCode = -21;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = -37;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = -37;
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     errCode = -38;
   }
@@ -20862,9 +20862,9 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
   pAP.nClass = 1;
 
   const float nGaMinAF = static_cast<float>(m_pmWpn.nGaMinAF);
-  const float effRate32 = m_EP.GetEff_Rate(32);
+  const float effRate32 = m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE);
   const float minBase = nGaMinAF * effRate32;
-  const float effRate29 = m_EP.GetEff_Rate(29);
+  const float effRate29 = m_EP.GetEff_Rate(EFF_RATE_LAUNCHER_ATTACK);
   pAP.nMinAF = static_cast<int>(minBase * effRate29 * m_fSelfDestructionDamage);
 
   const float nGaMaxAF = static_cast<float>(m_pmWpn.nGaMaxAF);
@@ -20879,7 +20879,7 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
 
   pAt.AttackGen(&pAP, false, false);
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     RemoveSFContHelpByEffect(2, 14);
   }
@@ -20936,12 +20936,12 @@ unsigned int CPlayer::_check_exp_after_attack(
 
 void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
 {
-  if (m_EP.GetEff_Rate(13) > 1.0f)
+  if (m_EP.GetEff_Rate(EFF_RATE_DAMAGE_TO_FP) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = m_EP.GetEff_Rate(13);
+    const float effRate = m_EP.GetEff_Rate(EFF_RATE_DAMAGE_TO_FP);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = m_EP.GetEff_Rate(19);
+    const float rateMul = m_EP.GetEff_Rate(EFF_RATE_FP_GAIN);
     const int addFp = static_cast<int>(rateBase * rateMul);
     int newFp = m_Param.GetFP() + addFp;
     const int maxFp = GetMaxFP();
@@ -20952,23 +20952,23 @@ void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
     SetFP(newFp, false);
   }
 
-  if (m_EP.GetEff_Rate(12) > 1.0f)
+  if (m_EP.GetEff_Rate(EFF_RATE_DAMAGE_TO_HP) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = m_EP.GetEff_Rate(12);
+    const float effRate = m_EP.GetEff_Rate(EFF_RATE_DAMAGE_TO_HP);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = m_EP.GetEff_Rate(18);
+    const float rateMul = m_EP.GetEff_Rate(EFF_RATE_HP_GAIN);
     const int addHp = static_cast<int>(rateBase * rateMul);
     const int curHp = m_Param.GetHP();
     SetHP(curHp + addHp, false);
   }
 
-  if (m_EP.GetEff_Rate(40) > 1.0f)
+  if (m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_40) > 1.0f)
   {
     const float base = static_cast<float>(nTotalDam);
-    const float effRate = m_EP.GetEff_Rate(40);
+    const float effRate = m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_40);
     const float rateBase = base * (effRate - 1.0f);
-    const float rateMul = m_EP.GetEff_Rate(20);
+    const float rateMul = m_EP.GetEff_Rate(EFF_RATE_SP_GAIN);
     const int addSp = static_cast<int>(rateBase * rateMul);
     int newSp = m_Param.GetSP() + addSp;
     const int maxSp = GetMaxSP();
@@ -20981,7 +20981,7 @@ void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
 
   if (pTarget)
   {
-    if (m_EP.GetEff_State(13))
+    if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_13))
     {
       if (pTarget->GetHP() > 0)
       {
@@ -20995,10 +20995,10 @@ void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
         }
       }
     }
-    else if (m_EP.GetEff_Rate(5) > 1.0f)
+    else if (m_EP.GetEff_Rate(EFF_RATE_STUN_RATE) > 1.0f)
     {
       const unsigned __int16 stunRate = static_cast<unsigned __int16>(
-        (m_EP.GetEff_Rate(5) - 1.0f) * 100.0f);
+        (m_EP.GetEff_Rate(EFF_RATE_STUN_RATE) - 1.0f) * 100.0f);
       if (stunRate > rand() % 1000 && pTarget->GetHP() > 0)
       {
         CPlayer *targetPlayer = pTarget->m_ObjID.m_byID ? nullptr : static_cast<CPlayer *>(pTarget);
@@ -21018,7 +21018,7 @@ bool CPlayer::IsPassExpLimitLvDiff(int iDstLevel, bool *bGetAttackExp)
 {
   *bGetAttackExp = true;
   const int diff = static_cast<int>(GetLevel()) - iDstLevel;
-  const float effHave = m_EP.GetEff_Have(52);
+  const float effHave = m_EP.GetEff_Have(EFF_HAVE_EXP_LEVEL_DIFFERENCE_TOLERANCE);
   if (static_cast<float>(diff) > effHave + 3.0f)
   {
     *bGetAttackExp = false;
@@ -21774,14 +21774,14 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   int effPlus = 0;
   if (m_pmWpn.byWpType == 7)
   {
-    effPlus = static_cast<int>(m_EP.GetEff_Plus(2));
+    effPlus = static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_2));
   }
   else
   {
     effPlus = static_cast<int>(m_EP.GetEff_Plus(m_pmWpn.byWpClass));
   }
   const int avoidRate = static_cast<int>(pDst->GetAvoidRate());
-  const float effPlus2 = m_EP.GetEff_Plus(40);
+  const float effPlus2 = m_EP.GetEff_Plus(EFF_PLUS_ATTACK_ACCURACY);
   effPlus = static_cast<int>(static_cast<float>(effPlus) + effPlus2);
   attackProb += effPlus - avoidRate;
 
@@ -21802,15 +21802,15 @@ bool CPlayer::IsBeAttackedAble(bool bFirst)
   {
     return false;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return false;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return false;
   }
-  return !bFirst || !m_EP.GetEff_State(21);
+  return !bFirst || !m_EP.GetEff_State(EFF_STATE_UNKNOWN_21);
 }
 
 void CPlayer::SetAttackPart(int nAttactPart)
@@ -22376,7 +22376,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
     {
       errCode = 8;
     }
-    else if (m_EP.GetEff_State(20) || m_EP.GetEff_State(28))
+    else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE) || m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
     {
       errCode = 13;
     }
@@ -22418,7 +22418,7 @@ void CPlayer::pc_TakeGroundingItem(CItemBox *pBox, unsigned __int16 wAddSerial)
         }
         else if (addTarget->m_byTableCode == item.m_byTableCode && addTarget->m_wItemIndex == item.m_wItemIndex)
         {
-          if (item.m_dwDur + addTarget->m_dwDur <= 99)
+          if (item.m_dwDur + addTarget->m_dwDur <= MAX_ITEM_OVERLAP)
           {
             if (addTarget->m_dwT != item.m_dwT)
             {
@@ -22609,11 +22609,11 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
 
   if (m_pUserDB)
   {
-    if (m_EP.GetEff_State(20))
+    if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
     {
       errCode = 5;
     }
-    else if (m_EP.GetEff_State(28))
+    else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
     {
       errCode = 5;
     }
@@ -22833,11 +22833,11 @@ void CPlayer::pc_EquipPart(_STORAGE_POS_INDIV *pItem)
   _base_fld *record = nullptr;
   _STORAGE_LIST::_db_con equipItem{};
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = 8;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = 8;
   }
@@ -22946,11 +22946,11 @@ void CPlayer::pc_EmbellishPart(_STORAGE_POS_INDIV *pItem, unsigned __int16 wChan
   int sameTypeCount = 0;
   _STORAGE_LIST::_db_con oldEmbel{};
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = 8;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = 8;
   }
@@ -23106,11 +23106,11 @@ void CPlayer::pc_OffPart(_STORAGE_POS_INDIV *pItem)
   _STORAGE_LIST *inventory = &m_Param.m_dbInven;
   _STORAGE_LIST::_db_con *srcItem = nullptr;
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = 8;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = 8;
   }
@@ -23606,11 +23606,11 @@ void CPlayer::pc_UpgradeItem(
   _ItemUpgrade_fld *primaryTalikRecord = nullptr;
   unsigned __int8 itemUpgLimSocket = 0;
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = 8;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = 8;
   }
@@ -23981,11 +23981,11 @@ void CPlayer::pc_DowngradeItem(
   _STORAGE_LIST::_db_con *upgradeItem = nullptr;
   _ItemUpgrade_fld *talikRecord = nullptr;
 
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     errCode = 7;
   }
-  else if (m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     errCode = 7;
   }
@@ -24214,7 +24214,8 @@ void CPlayer::pc_CombineItem(
     {
       _STORAGE_LIST::_db_con *candidate = m_Param.m_dbInven.GetPtrFromSerial(wOverlapItemSerial);
       if (candidate && candidate->m_byTableCode == itemTableCode
-          && candidate->m_wItemIndex == combineRecord->m_dwIndex && candidate->m_dwDur < 99
+          && candidate->m_wItemIndex == combineRecord->m_dwIndex
+          && candidate->m_dwDur < MAX_ITEM_OVERLAP
           && !candidate->m_bLock)
       {
         overlapItem = candidate;
@@ -24810,11 +24811,11 @@ void CPlayer::pc_AddBag(unsigned __int16 wBagItemSerial)
 
   if (m_pUserDB)
   {
-    if (m_EP.GetEff_State(20))
+    if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
     {
       errCode = 3;
     }
-    else if (m_EP.GetEff_State(28))
+    else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
     {
       errCode = 3;
     }
@@ -24895,11 +24896,11 @@ char CPlayer::pc_UseRecoverLossExpItem(unsigned __int16 wItemSerial)
   {
     return -6;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return -7;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return -7;
   }
@@ -25017,11 +25018,11 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
   {
     return -5;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return -6;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return -6;
   }
@@ -25074,11 +25075,11 @@ unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigne
   {
     return 5;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return 6;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return 6;
   }
@@ -25307,11 +25308,11 @@ unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pS
   {
     return 11;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return 12;
   }
-  if (m_EP.GetEff_State(28))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return 12;
   }
@@ -25768,7 +25769,7 @@ void CPlayer::AddGold(int dwPush, bool bApply)
   const unsigned int currentGold = m_Param.GetGold();
   if (!CanAddMoneyForMaxLimGold(static_cast<unsigned int>(dwPush), currentGold))
   {
-    newGold = 500000;
+    newGold = MAX_GOLD;
   }
 
   if (newGold != m_Param.GetGold())

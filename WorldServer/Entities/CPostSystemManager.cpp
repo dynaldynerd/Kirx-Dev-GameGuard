@@ -476,7 +476,7 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   }
 
   const unsigned __int64 totalGold = static_cast<unsigned __int64>(dwGold) + 5u;
-  if (totalGold > 500000)
+  if (totalGold > MAX_GOLD)
   {
     return 4;
   }

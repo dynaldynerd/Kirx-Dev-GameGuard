@@ -253,7 +253,7 @@ void CMonsterAggroMgr::SetAggro(
     float add = 0.0f;
     if (!pCharacter->m_ObjID.m_byKind)
     {
-      add = pCharacter->m_EP.GetEff_Have(28);
+      add = pCharacter->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_28);
     }
 
     if (node)

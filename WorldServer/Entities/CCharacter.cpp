@@ -357,11 +357,11 @@ bool CCharacter::GetStealth(bool bInvisible)
   {
     return false;
   }
-  if (m_EP.GetEff_Plus(21) > 0.0f || m_EP.GetEff_State(5))
+  if (m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_21) > 0.0f || m_EP.GetEff_State(EFF_STATE_STEALTH))
   {
     return true;
   }
-  return bInvisible && m_EP.GetEff_State(26);
+  return bInvisible && m_EP.GetEff_State(EFF_STATE_INVISIBLE);
 }
 
 bool CCharacter::GetInvisible()
@@ -374,7 +374,7 @@ bool CCharacter::GetInvisible()
   {
     return false;
   }
-  return m_EP.GetEff_State(26);
+  return m_EP.GetEff_State(EFF_STATE_INVISIBLE);
 }
 
 void CCharacter::SFContInit()
@@ -787,7 +787,7 @@ __int64 CCharacter::InsertSlot(CCharacter *p, int pos)
 
 void CCharacter::BreakStealth()
 {
-  if (m_EP.GetEff_State(5) || m_EP.GetEff_Plus(21) > 0.0f || m_EP.GetEff_State(26))
+  if (m_EP.GetEff_State(EFF_STATE_STEALTH) || m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_21) > 0.0f || m_EP.GetEff_State(EFF_STATE_INVISIBLE))
   {
     SetBreakTranspar(true);
   }
@@ -838,7 +838,7 @@ __int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, C
   int outPart[5]{};
   outPart[0] = nAttPart;
 
-  if (pDst->m_EP.GetEff_State(12))
+  if (pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_12))
   {
     pDst->SetAttackPart(nAttPart);
   }
@@ -2041,7 +2041,7 @@ unsigned __int8 CCharacter::InsertSFContEffect(
     _base_fld *record = g_Main.m_tblEffectData[3].GetRecord("17");
     if (record)
     {
-      if (m_EP.GetEff_Plus(23) > 0.0f && byEffectCode != 3 && dwEffectIndex != record->m_dwIndex)
+      if (m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_23) > 0.0f && byEffectCode != 3 && dwEffectIndex != record->m_dwIndex)
       {
         return 10;
       }
@@ -2138,7 +2138,7 @@ unsigned __int8 CCharacter::InsertSFContEffect(
   float effRate = FLOAT_1_0;
   if (!byContCode && byEffectCode == 1)
   {
-    effRate = m_EP.GetEff_Rate(8);
+    effRate = m_EP.GetEff_Rate(EFF_RATE_FORCE_CONT_DURATION);
   }
 
   unsigned __int16 contEffectSec = wDurSec;
@@ -2158,7 +2158,7 @@ unsigned __int8 CCharacter::InsertSFContEffect(
 
   if (!byContCode)
   {
-    const float effHave = m_EP.GetEff_Have(77);
+    const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_77);
     contEffectSec = static_cast<unsigned __int16>(static_cast<int>(static_cast<float>(contEffectSec) * (1.0f - effHave)));
   }
 

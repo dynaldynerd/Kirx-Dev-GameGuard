@@ -385,24 +385,24 @@ void CPlayer::AlterExp(
   if (adjustedAlterExp > 0.0 && !bUseExpRecoverItem && !bReward && !this->m_EP.m_bLock)
   {
     float extraRate = 0.0f;
-    extraRate += this->m_EP.GetEff_Have(2) - 1.0f;
-    extraRate += this->m_EP.GetEff_Have(5) - 1.0f;
-    extraRate += this->m_EP.GetEff_Have(9) - 1.0f;
+    extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_2) - 1.0f;
+    extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_5) - 1.0f;
+    extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_9) - 1.0f;
 
     if (IsApplyPcbangPrimium())
     {
       const float baseRate = (baseAlterExp < 0.0) ? PLAYER_LOST_EXP : PCBANG_PRIMIUM_FAVOR::PLAYER_EXP;
-      const float eff71 = this->m_EP.GetEff_Have(71);
+      const float eff71 = this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_71);
       if (eff71 > baseRate)
       {
         extraRate += eff71 - baseRate;
       }
-      extraRate += this->m_EP.GetEff_Have(72) - 1.0f;
+      extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_72) - 1.0f;
     }
     else
     {
-      extraRate += this->m_EP.GetEff_Have(71) - 1.0f;
-      extraRate += this->m_EP.GetEff_Have(72) - 1.0f;
+      extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_71) - 1.0f;
+      extraRate += this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_72) - 1.0f;
     }
 
     if (extraRate > 0.0f)
@@ -429,9 +429,9 @@ void CPlayer::AlterExp(
   }
   else
   {
-    const float rate34 = this->m_EP.GetEff_Rate(34);
+    const float rate34 = this->m_EP.GetEff_Rate(EFF_RATE_EXPERIENCE_GAIN);
     const double withRate34 = adjustedAlterExp + baseAlterExp * static_cast<double>(rate34 - 1.0f);
-    const float rate38 = this->m_EP.GetEff_Rate(38);
+    const float rate38 = this->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_38);
     finalAlterExp = withRate34 + baseAlterExp * static_cast<double>(rate38 - 1.0f);
     if (baseAlterExp < 0.0)
     {
@@ -794,9 +794,9 @@ void CPlayer::AutoRecover()
   int spDelta = 0;
   int dpDelta = 0;
 
-  if (!m_EP.GetEff_State(10))
+  if (!m_EP.GetEff_State(EFF_STATE_UNKNOWN_10))
   {
-    if (!m_EP.GetEff_State(15))
+    if (!m_EP.GetEff_State(EFF_STATE_UNKNOWN_15))
     {
       if (oldHp < GetMaxHP())
       {
@@ -812,17 +812,17 @@ void CPlayer::AutoRecover()
 
         if (baseRecover > 0)
         {
-          hpDelta = static_cast<int>(static_cast<float>(baseRecover) * m_EP.GetEff_Rate(14));
+          hpDelta = static_cast<int>(static_cast<float>(baseRecover) * m_EP.GetEff_Rate(EFF_RATE_HP_RECOVERY));
         }
       }
     }
 
-    if (!m_EP.GetEff_State(16))
+    if (!m_EP.GetEff_State(EFF_STATE_UNKNOWN_16))
     {
       if (oldFp < GetMaxFP())
       {
-        const int fpPlus = static_cast<int>(m_EP.GetEff_Plus(25));
-        const float fpRate = m_EP.GetEff_Rate(15);
+        const int fpPlus = static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_FP_RECOVERY_RATE_POINTS));
+        const float fpRate = m_EP.GetEff_Rate(EFF_RATE_FP_RECOVERY);
         if (m_bMove)
         {
           if (!m_byMoveType)
@@ -838,9 +838,9 @@ void CPlayer::AutoRecover()
       }
     }
 
-    if (!m_EP.GetEff_State(17))
+    if (!m_EP.GetEff_State(EFF_STATE_UNKNOWN_17))
     {
-      const float spRate = m_EP.GetEff_Rate(16);
+      const float spRate = m_EP.GetEff_Rate(EFF_RATE_SP_RECOVERY);
       if (m_bMove)
       {
         if (!m_byMoveType)
@@ -873,30 +873,30 @@ void CPlayer::AutoRecover()
     dpDelta = s_nRevDefPoint;
   }
 
-  if (m_EP.GetEff_Plus(32) != 0.0f)
+  if (m_EP.GetEff_Plus(EFF_PLUS_HP_RECOVERY_FLAT) != 0.0f)
   {
-    hpDelta += static_cast<int>(m_EP.GetEff_Plus(32));
+    hpDelta += static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_HP_RECOVERY_FLAT));
   }
-  if (m_EP.GetEff_Plus(33) != 0.0f)
+  if (m_EP.GetEff_Plus(EFF_PLUS_FP_RECOVERY_FLAT) != 0.0f)
   {
-    fpDelta += static_cast<int>(m_EP.GetEff_Plus(33));
+    fpDelta += static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_FP_RECOVERY_FLAT));
   }
-  if (m_EP.GetEff_Plus(34) != 0.0f)
+  if (m_EP.GetEff_Plus(EFF_PLUS_SP_RECOVERY_FLAT) != 0.0f)
   {
-    spDelta += static_cast<int>(m_EP.GetEff_Plus(34));
+    spDelta += static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_SP_RECOVERY_FLAT));
   }
 
-  if (m_EP.GetEff_Have(12) > 0.0f)
+  if (m_EP.GetEff_Have(EFF_HAVE_HP_RESTORE_FROM_MAX_HP_RATE) > 0.0f)
   {
-    hpDelta += static_cast<int>(m_EP.GetEff_Have(12) * static_cast<float>(GetMaxHP()));
+    hpDelta += static_cast<int>(m_EP.GetEff_Have(EFF_HAVE_HP_RESTORE_FROM_MAX_HP_RATE) * static_cast<float>(GetMaxHP()));
   }
-  if (m_EP.GetEff_Have(13) > 0.0f)
+  if (m_EP.GetEff_Have(EFF_HAVE_FP_RESTORE_FROM_MAX_FP_RATE) > 0.0f)
   {
-    fpDelta += static_cast<int>(m_EP.GetEff_Have(13) * static_cast<float>(GetMaxFP()));
+    fpDelta += static_cast<int>(m_EP.GetEff_Have(EFF_HAVE_FP_RESTORE_FROM_MAX_FP_RATE) * static_cast<float>(GetMaxFP()));
   }
-  if (m_EP.GetEff_Have(14) > 0.0f)
+  if (m_EP.GetEff_Have(EFF_HAVE_SP_RESTORE_FROM_MAX_SP_RATE) > 0.0f)
   {
-    spDelta += static_cast<int>(m_EP.GetEff_Have(14) * static_cast<float>(GetMaxSP()));
+    spDelta += static_cast<int>(m_EP.GetEff_Have(EFF_HAVE_SP_RESTORE_FROM_MAX_SP_RATE) * static_cast<float>(GetMaxSP()));
   }
 
   if (hpDelta)
@@ -1626,13 +1626,13 @@ __int64 CPlayer::SetDamage(
     return static_cast<unsigned int>(m_Param.GetHP());
   }
 
-  if (pDst && m_EP.GetEff_Have(54) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
+  if (pDst && m_EP.GetEff_Have(EFF_HAVE_JADE_RETURN_DAMAGE_RATE) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
   {
-    const int returnDamage = static_cast<int>(static_cast<float>(nDam) * m_EP.GetEff_Have(54));
+    const int returnDamage = static_cast<int>(static_cast<float>(nDam) * m_EP.GetEff_Have(EFF_HAVE_JADE_RETURN_DAMAGE_RATE));
     pDst->SetDamage(returnDamage, this, static_cast<int>(GetLevel()), true, -1, 0, false);
   }
 
-  if (pDst && m_EP.GetEff_Have(42) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
+  if (pDst && m_EP.GetEff_Have(EFF_HAVE_JADE_RETURN_FULL_DAMAGE) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
   {
     pDst->SetDamage(nDam, this, static_cast<int>(GetLevel()), true, -1, 0, false);
     return static_cast<unsigned int>(m_Param.GetHP());
@@ -1641,7 +1641,7 @@ __int64 CPlayer::SetDamage(
   CCharacter::BreakStealth();
   BreakCloakBooster();
 
-  if (m_EP.GetEff_State(14))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
   {
     CCharacter::RemoveSFContHelpByEffect(2, 14);
   }
@@ -1785,7 +1785,7 @@ __int64 CPlayer::SetDamage(
   }
   else
   {
-    if (m_Param.GetFP() > 0 && m_EP.GetEff_State(22))
+    if (m_Param.GetFP() > 0 && m_EP.GetEff_State(EFF_STATE_UNKNOWN_22))
     {
       int fpDamage = 2 * nDam;
       const int currentFp = m_Param.GetFP();
@@ -2249,8 +2249,8 @@ if (!dwAlter || (!byReason && this->m_bInGuildBattle))
     }
     if (byMasteryClass != 6 || this->m_Param.GetRaceCode() != 1)
     {
-      float effHave = this->m_EP.GetEff_Have(6);
-      const float eff82 = this->m_EP.GetEff_Have(82);
+      float effHave = this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_6);
+      const float eff82 = this->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_82);
       effHave = (effHave == 0.0f) ? eff82 : effHave + eff82;
       if (effHave > 1.0f)
       {
@@ -2260,7 +2260,7 @@ if (!dwAlter || (!byReason && this->m_bInGuildBattle))
     }
     if (byMasteryClass != 6 || this->m_Param.GetRaceCode() != 1)
     {
-      const float rate = this->m_EP.GetEff_Rate(35);
+      const float rate = this->m_EP.GetEff_Rate(EFF_RATE_MASTERY_GAIN);
       alterCum = static_cast<int>(static_cast<float>(alterCum) + static_cast<float>(alterBase) * (rate - 1.0f));
     }
   }

@@ -476,7 +476,7 @@ void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
 
 float CPlayer::GetAddSpeed()
 {
-  const float effectSpeed = this->m_EP.GetEff_Plus(20) * 100.0f;
+  const float effectSpeed = this->m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED) * 100.0f;
   const float baseSpeed = static_cast<float>(static_cast<__int16>(static_cast<int>(effectSpeed)));
 
   if (this->m_byMoveType == 2 && this->EquipItemSFAgent.IsUseBooster())

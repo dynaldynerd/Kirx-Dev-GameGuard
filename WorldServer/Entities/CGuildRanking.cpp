@@ -370,15 +370,15 @@ void CGuildRanking::CheckMaxGuildMoney(
     *pdDalant = 1000000000.0;
   }
 
-  if (*pdGold > 500000.0)
+  if (*pdGold > static_cast<double>(MAX_GOLD))
   {
     g_Main.m_logLoadingError.Write(
       "%d : %s > Guild GOLD (%.0f) (ADJUST %d)",
       dwGuildSerial,
       wszGuildName,
       static_cast<double>(*pdGold),
-      500000);
-    *pdGold = 500000.0;
+      MAX_GOLD);
+    *pdGold = static_cast<double>(MAX_GOLD);
   }
 }
 

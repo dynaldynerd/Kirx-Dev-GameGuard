@@ -224,11 +224,11 @@ char CPlayer::dev_dalant(unsigned int dwDalant)
   unsigned int dalant = dwDalant;
   if (dwDalant == static_cast<unsigned int>(-1))
   {
-    dalant = 2000000000;
+    dalant = MAX_DALANT;
   }
-  else if (dwDalant > 2000000000)
+  else if (dwDalant > MAX_DALANT)
   {
-    dalant = 2000000000;
+    dalant = MAX_DALANT;
   }
 
   this->m_Param.SetDalant(dalant);
@@ -440,11 +440,11 @@ char CPlayer::dev_gold(unsigned int dwGold)
   unsigned int gold = dwGold;
   if (dwGold == static_cast<unsigned int>(-1))
   {
-    gold = 500000;
+    gold = MAX_GOLD;
   }
-  else if (dwGold > 500000)
+  else if (dwGold > MAX_GOLD)
   {
-    gold = 500000;
+    gold = MAX_GOLD;
   }
 
   this->m_Param.SetGold(gold);
@@ -513,9 +513,9 @@ char CPlayer::dev_half_inven_amount(unsigned __int64 dwAmount)
     }
 
     unsigned __int64 amount = dwAmount;
-    if (IsOverLapItem(item->m_byTableCode) && amount > 99)
+    if (IsOverLapItem(item->m_byTableCode) && amount > MAX_ITEM_OVERLAP)
     {
-      amount = 99;
+      amount = MAX_ITEM_OVERLAP;
     }
 
     item->m_dwDur = amount;
@@ -2103,7 +2103,7 @@ char CPlayer::mgr_item_telekinesis()
         {
           continue;
         }
-        if (this->m_EP.GetEff_State(20) || this->m_EP.GetEff_State(28))
+        if (this->m_EP.GetEff_State(EFF_STATE_INSUPERABLE) || this->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
         {
           continue;
         }
@@ -2665,7 +2665,7 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
     itemDurability = 0;
     upgradeSocketLimit = 0;
     if ( IsOverLapItem(nTableCode) )
-      itemDurability = 99;
+      itemDurability = MAX_ITEM_OVERLAP;
     else
       itemDurability = GetItemDurPoint(nTableCode, itemRecord->m_dwIndex);
     if ( nNum > 100 )

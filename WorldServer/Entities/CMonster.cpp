@@ -558,7 +558,7 @@ char CMonster::CheckMonsterStateData()
   const unsigned __int8 moveType = GetMoveType();
   m_MonsterStateData.___u0.m_wSendChunkData =
     (moveType & 1) | (m_MonsterStateData.___u0.m_wSendChunkData & 0xFFFE);
-  const bool effState = m_EP.GetEff_State(7);
+  const bool effState = m_EP.GetEff_State(EFF_STATE_UNKNOWN_7);
   m_MonsterStateData.___u0.m_wSendChunkData =
     (static_cast<unsigned __int16>(effState) << 1) | (m_MonsterStateData.___u0.m_wSendChunkData & 0xFFFD);
   const unsigned __int8 combatState = GetCombatState();
@@ -574,7 +574,7 @@ char CMonster::CheckMonsterStateData()
 
 float CMonster::GetMoveSpeed()
 {
-  if (m_EP.GetEff_State(7))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_7))
   {
     return m_pMonRec->m_fMovSpd;
   }
@@ -663,7 +663,7 @@ if (m_pMonRec == nullptr)
   else
     defValue = static_cast<float>(m_DefPart[nAttactPart]);
 
-  return static_cast<unsigned int>(static_cast<int>(defValue * m_EP.GetEff_Rate(6)));
+  return static_cast<unsigned int>(static_cast<int>(defValue * m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE)));
 }
 
 float CMonster::GetDefFacing(int nPart)
@@ -697,13 +697,13 @@ __int64 CMonster::GetDefSkill(bool bBackAttackDamage)
 
 __int64 CMonster::GetFireTol()
 {
-  float value = m_pMonRec->m_fFireTol + m_EP.GetEff_Plus(15);
-  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(25));
+  float value = m_pMonRec->m_fFireTol + m_EP.GetEff_Plus(EFF_PLUS_FIRE_TOLERANCE);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_FIRE_TOLERANCE));
   if (finalValue < -200)
     finalValue = -200;
   if (finalValue > 200)
     finalValue = 200;
-  if (m_EP.GetEff_State(19) && finalValue > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
   return static_cast<unsigned int>(finalValue);
 }
@@ -744,26 +744,26 @@ __int64 CMonster::GetObjRace()
 
 __int64 CMonster::GetSoilTol()
 {
-  float value = m_pMonRec->m_fSoilTol + m_EP.GetEff_Plus(17);
-  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(27));
+  float value = m_pMonRec->m_fSoilTol + m_EP.GetEff_Plus(EFF_PLUS_SOIL_TOLERANCE);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_SOIL_TOLERANCE));
   if (finalValue < -200)
     finalValue = -200;
   if (finalValue > 200)
     finalValue = 200;
-  if (m_EP.GetEff_State(19) && finalValue > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
   return static_cast<unsigned int>(finalValue);
 }
 
 __int64 CMonster::GetWaterTol()
 {
-  float value = m_pMonRec->m_fWaterTol + m_EP.GetEff_Plus(16);
-  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(26));
+  float value = m_pMonRec->m_fWaterTol + m_EP.GetEff_Plus(EFF_PLUS_WATER_TOLERANCE);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_WATER_TOLERANCE));
   if (finalValue < -200)
     finalValue = -200;
   if (finalValue > 200)
     finalValue = 200;
-  if (m_EP.GetEff_State(19) && finalValue > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
   return static_cast<unsigned int>(finalValue);
 }
@@ -785,13 +785,13 @@ float CMonster::GetWidth()
 
 __int64 CMonster::GetWindTol()
 {
-  float value = m_pMonRec->m_fWindTol + m_EP.GetEff_Plus(18);
-  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(28));
+  float value = m_pMonRec->m_fWindTol + m_EP.GetEff_Plus(EFF_PLUS_WIND_TOLERANCE);
+  int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_WIND_TOLERANCE));
   if (finalValue < -200)
     finalValue = -200;
   if (finalValue > 200)
     finalValue = 200;
-  if (m_EP.GetEff_State(19) && finalValue > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
   return static_cast<unsigned int>(finalValue);
 }
@@ -895,9 +895,9 @@ bool CMonster::IsBeAttackedAble(bool bFirst)
 {
 if (!m_bLive || m_bObserver || m_bCorpse)
     return false;
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
     return false;
-  return !m_EP.GetEff_State(28);
+  return !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE);
 }
 
 char CMonster::IsBeDamagedAble(CCharacter *pAtter)
@@ -927,7 +927,7 @@ char CMonster::IsBeDamagedAble(CCharacter *pAtter)
 
 char CMonster::IsRecvableContEffect()
 {
-  return static_cast<char>(!m_EP.GetEff_State(20) && !m_EP.GetEff_State(28));
+  return static_cast<char>(!m_EP.GetEff_State(EFF_STATE_INSUPERABLE) && !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE));
 }
 
 bool CMonster::IsRewardExp()
@@ -938,7 +938,7 @@ bool CMonster::IsRewardExp()
 bool CMonster::SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -959,7 +959,7 @@ bool CMonster::SF_AllContHelpSkillRemove_Once(CCharacter *pDstObj)
 bool CMonster::SF_AllContHelpForceRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -991,7 +991,7 @@ bool CMonster::SF_HPInc_Once(CCharacter *pDstObj, float fEffectValue)
 
   const int curHp = static_cast<int>(pDstObj->GetHP());
   const int maxHp = static_cast<int>(pDstObj->GetMaxHP());
-  const float effectRate = pDstObj->m_EP.GetEff_Rate(18);
+  const float effectRate = pDstObj->m_EP.GetEff_Rate(EFF_RATE_HP_GAIN);
   const int addHp = static_cast<int>(static_cast<float>(maxHp) * (fEffectValue * effectRate));
   pDstObj->SetHP(addHp + curHp, false);
 
@@ -1031,7 +1031,7 @@ bool CMonster::SF_LateContDamageRemove_Once(CCharacter *pDstObj)
 bool CMonster::SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -1062,7 +1062,7 @@ bool CMonster::SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj)
 bool CMonster::SF_LateContHelpForceRemove_Once(CCharacter *pDstObj)
 {
   const float roll = static_cast<float>(rand() % 100);
-  if (pDstObj->m_EP.GetEff_Plus(38) > roll)
+  if (pDstObj->m_EP.GetEff_Plus(EFF_PLUS_CONT_HELP_REMOVE_RESIST) > roll)
   {
     return false;
   }
@@ -1243,9 +1243,9 @@ void CMonster::AutoRecover()
   const int hp = static_cast<int>(GetHP());
   int delta = 0;
 
-  if (m_EP.GetEff_Plus(32) != 0.0f)
+  if (m_EP.GetEff_Plus(EFF_PLUS_HP_RECOVERY_FLAT) != 0.0f)
   {
-    delta = static_cast<int>(static_cast<float>(delta) + m_EP.GetEff_Plus(32));
+    delta = static_cast<int>(static_cast<float>(delta) + m_EP.GetEff_Plus(EFF_PLUS_HP_RECOVERY_FLAT));
   }
 
   if (!delta)
@@ -1337,13 +1337,13 @@ void CMonster::Loop()
       SendMsg_Change_MonsterState();
     }
 
-    if (!m_EP.GetEff_State(20) && !m_EP.GetEff_State(28))
+    if (!m_EP.GetEff_State(EFF_STATE_INSUPERABLE) && !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
     {
       if (!m_bStun)
       {
         if (m_bMove)
         {
-          if (m_EP.GetEff_State(6))
+          if (m_EP.GetEff_State(EFF_STATE_MOVE_RESTRICTED))
           {
             const float moveSpeed = GetMoveSpeed();
             Move(moveSpeed);
@@ -1475,13 +1475,13 @@ float CMonster::GetSkillDelayTime(CMonsterSkill *pSkill)
   {
     if (skillType == 1)
     {
-      const float effPlus = m_EP.GetEff_Plus(13);
+      const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13);
       return nextDelay + (effPlus * 2.0f);
     }
   }
   else
   {
-    const float effPlus = m_EP.GetEff_Plus(12);
+    const float effPlus = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
     return nextDelay + (effPlus * 2.0f);
   }
   return nextDelay;
@@ -1522,7 +1522,7 @@ int CMonster::_AssistSF_Cont_Dmg(CCharacter *pDst, CMonsterSkill *pskill)
   {
     if (skillType <= 2)
     {
-      if (m_EP.GetEff_State(4))
+      if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_4))
       {
         return 0;
       }
@@ -1550,7 +1550,7 @@ int CMonster::_AssistSF_Cont_Dmg(CCharacter *pDst, CMonsterSkill *pskill)
     }
     else if (skillType == 3)
     {
-      if (m_EP.GetEff_State(4))
+      if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_4))
       {
         return 0;
       }
@@ -1751,7 +1751,7 @@ __int64 CMonster::Attack(CCharacter *pDst, CMonsterSkill *pskill)
     }
     case 3:
     {
-      if (m_EP.GetEff_State(1))
+      if (m_EP.GetEff_State(EFF_STATE_FORCE_RESTRICTED))
       {
         return 0;
       }
@@ -1884,7 +1884,7 @@ char CMonster::make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, 
   {
     pAP->byEffectCode = 0;
     pAP->nLevel = static_cast<int>(pSkill->GetSFLv());
-    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + m_EP.GetEff_Plus(19));
+    pAP->nLevel = static_cast<int>(static_cast<float>(pAP->nLevel) + m_EP.GetEff_Plus(EFF_PLUS_SKILL_LEVEL));
     if (pAP->nLevel > 7)
     {
       pAP->nLevel = 7;
@@ -3035,7 +3035,7 @@ unsigned __int8 CMonster::InsertSFContEffect(
     float effRate = FLOAT_1_0;
     if (!byContCode && byEffectCode == 1)
     {
-      effRate = m_EP.GetEff_Rate(8);
+      effRate = m_EP.GetEff_Rate(EFF_RATE_FORCE_CONT_DURATION);
     }
 
     unsigned __int16 contEffectSec = contTime;

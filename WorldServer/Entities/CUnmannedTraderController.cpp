@@ -808,9 +808,9 @@ unsigned __int8 CUnmannedTraderController::SelectBuy(_qry_case_unmandtrader_buy_
             pData->List[j].dwSeller = sellerInfo.dwSeller;
             pData->List[j].byRaceSexCode = sellerInfo.byRaceSexCode;
             totalSales = salesTotals[0] + sellerInfo.dwDalant;
-            if (totalSales > 2000000000ULL)
+            if (totalSales > static_cast<unsigned __int64>(MAX_DALANT))
             {
-              totalSales = 2000000000ULL;
+              totalSales = MAX_DALANT;
             }
             pData->List[j].dwDalant = static_cast<unsigned int>(totalSales);
             pData->List[j].dwGuildSerial = sellerInfo.dwGuildSerial;

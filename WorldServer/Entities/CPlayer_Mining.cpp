@@ -315,7 +315,7 @@ void CPlayer::pc_MineComplete()
           if (item->m_bLoad
               && item->m_byTableCode == 17
               && item->m_wItemIndex == targetOreIndex
-              && item->m_dwDur < 99
+              && item->m_dwDur < MAX_ITEM_OVERLAP
               && !item->m_bLock)
           {
             targetSlot = static_cast<unsigned __int8>(slotIndex);
@@ -573,13 +573,13 @@ void CPlayer::pc_MineStart(
     const bool isPcBang = m_pUserDB->m_BillingInfo.IsPcBangType();
     int delayMs = GetResDummyDelayForMining(m_pCurMap->m_pResDummy[byMineIndex], resDummySector, isPcBang);
 
-    const float mineSpeedBuff = m_EP.GetEff_Have(7);
+    const float mineSpeedBuff = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_7);
     if (mineSpeedBuff > 1.0f)
     {
       delayMs = static_cast<int>(static_cast<float>(delayMs) / mineSpeedBuff);
     }
 
-    const float mineSpeedRate = m_EP.GetEff_Rate(37);
+    const float mineSpeedRate = m_EP.GetEff_Rate(EFF_RATE_MINING_SPEED);
     if (mineSpeedRate > 1.0f)
     {
       delayMs = static_cast<int>(static_cast<float>(delayMs) / mineSpeedRate);
@@ -791,7 +791,7 @@ void CPlayer::pc_OreIntoBag(
     {
       resultCode = 11;
     }
-    else if (targetItem->m_dwDur + byAddAmount > 99)
+    else if (targetItem->m_dwDur + byAddAmount > MAX_ITEM_OVERLAP)
     {
       resultCode = 6;
     }

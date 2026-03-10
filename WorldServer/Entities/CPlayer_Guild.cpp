@@ -1277,7 +1277,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
   {
     const double totalDalant = static_cast<double>(guild->GetTotalDalant()) + static_cast<double>(dwPushDalant);
     const double totalGold = static_cast<double>(guild->GetTotalGold()) + static_cast<double>(dwPushGold);
-    if (totalDalant > 1000000000.0 || totalGold > 500000.0)
+    if (totalDalant > 1000000000.0 || totalGold > static_cast<double>(MAX_GOLD))
     {
       result = 104;
     }

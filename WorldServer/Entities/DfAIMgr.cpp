@@ -1374,7 +1374,7 @@ void DfAIMgr::ChangeTargetPos(CMonster *pMon, float *pTarPos)
     return;
   }
 
-  if (pMon->m_EP.GetEff_State(6))
+  if (pMon->m_EP.GetEff_State(EFF_STATE_MOVE_RESTRICTED))
   {
     return;
   }

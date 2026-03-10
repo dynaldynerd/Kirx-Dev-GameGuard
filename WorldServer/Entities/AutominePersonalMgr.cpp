@@ -448,7 +448,7 @@ char AutominePersonalMgr::install(int n, const _personal_automine_install_clzo *
   }
 
   const double playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(player->m_id.wIndex);
-  const float effDelay = player->m_EP.GetEff_Have(7) * player->m_EP.GetEff_Have(37);
+  const float effDelay = player->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_7) * player->m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_37);
   const float delayProf = effDelay * static_cast<float>(playerPenalty);
 
   if (machine->regist_to_map(

@@ -3824,13 +3824,13 @@ void CUserDB::Reged_Char_Complete(
       if (m_RegedList[k].m_bySlotIndex != 255)
       {
         memcpy_0(&result.RegedList[charNum], &m_RegedList[k], sizeof(result.RegedList[charNum]));
-        if (result.RegedList[charNum].m_dwDalant > 2000000000)
+        if (result.RegedList[charNum].m_dwDalant > MAX_DALANT)
         {
-          result.RegedList[charNum].m_dwDalant = 2000000000;
+          result.RegedList[charNum].m_dwDalant = MAX_DALANT;
         }
-        if (result.RegedList[charNum].m_dwGold > 500000)
+        if (result.RegedList[charNum].m_dwGold > MAX_GOLD)
         {
-          result.RegedList[charNum].m_dwGold = 500000;
+          result.RegedList[charNum].m_dwGold = MAX_GOLD;
         }
         if (!m_RegedList[k].m_byLevel)
         {

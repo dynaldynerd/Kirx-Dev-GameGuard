@@ -336,7 +336,7 @@ if (this->m_wInx >= 0x9E4u || byType >= 2u)
   {
     return static_cast<unsigned __int8>(-55);
   }
-  if (pRequest->dwPrice > 2000000000)
+  if (pRequest->dwPrice > MAX_DALANT)
   {
     return 22;
   }
@@ -931,7 +931,7 @@ if (this->m_wInx >= 0x9E4u || byType >= 2u)
   {
     return static_cast<unsigned __int8>(-55);
   }
-  if (dwPrice > 2000000000)
+  if (dwPrice > MAX_DALANT)
   {
     return 22;
   }

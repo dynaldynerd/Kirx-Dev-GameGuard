@@ -337,11 +337,11 @@ unsigned __int8 CMoveMapLimitInfoPortal::SubProcGotoLimitZone(
   {
     return 28;
   }
-  if (player->m_EP.GetEff_State(20))
+  if (player->m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return 29;
   }
-  if (player->m_EP.GetEff_State(28))
+  if (player->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return 29;
   }

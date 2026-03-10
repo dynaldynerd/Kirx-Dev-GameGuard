@@ -2800,12 +2800,13 @@ bool CNetworkEX::BuyStoreRequest(unsigned int n, char *pBuf)
       return false;
     }
     const unsigned __int8 amount = request->OfferList[j].byAmount;
-    if (!amount || amount > 99)
+    if (!amount || amount > MAX_ITEM_OVERLAP)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
-        "odd.. %s: BuyStoreRequest().. if(pRecv->OfferList[i].byAmount < 1 || pRecv->OfferList[i].byAmount > 99)",
-        charName);
+        "odd.. %s: BuyStoreRequest().. if(pRecv->OfferList[i].byAmount < 1 || pRecv->OfferList[i].byAmount > %d)",
+        charName,
+        MAX_ITEM_OVERLAP);
       return false;
     }
     const unsigned __int8 storageCode = request->OfferList[j].byStorageCode;
@@ -2865,7 +2866,7 @@ bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
   for (int j = 0; j < sellNum; ++j)
   {
     const unsigned __int8 amount = request->Item[j].byAmount;
-    if (!amount || amount > 99)
+    if (!amount || amount > MAX_ITEM_OVERLAP)
     {
       const char *charName = player->m_Param.GetCharNameA();
       m_LogFile.Write(
@@ -3243,7 +3244,7 @@ bool CNetworkEX::ItemboxTakeRequest(unsigned int n, char *pBuf)
   const unsigned __int16 boxIndex = request->wItemBoxIndex;
   if (boxIndex < MAX_ITEMBOX)
   {
-    if (!player->m_EP.GetEff_State(26))
+    if (!player->m_EP.GetEff_State(EFF_STATE_INVISIBLE))
     {
       player->pc_TakeGroundingItem(&g_ItemBox[boxIndex], request->wAddSerial);
     }
@@ -3268,7 +3269,7 @@ bool CNetworkEX::ThrowStorageRequest(unsigned int n, _throw_storage_request_clzo
 
   if (!item->byStorageCode || item->byStorageCode == 1 || item->byStorageCode == 2)
   {
-    if (!player->m_EP.GetEff_State(26))
+    if (!player->m_EP.GetEff_State(EFF_STATE_INVISIBLE))
     {
       player->pc_ThrowStorageItem(item);
     }
@@ -4274,7 +4275,7 @@ bool CNetworkEX::ChatCircleRequest(unsigned int n, char *pBuf)
   {
     return true;
   }
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     return true;
   }
@@ -4305,7 +4306,7 @@ bool CNetworkEX::ChatFarRequest(unsigned int n, char *pBuf)
   {
     return true;
   }
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     return true;
   }
@@ -4337,7 +4338,7 @@ bool CNetworkEX::ChatPartyRequest(unsigned int n, char *pBuf)
   {
     return true;
   }
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     return true;
   }
@@ -4366,7 +4367,7 @@ bool CNetworkEX::ChatRaceRequest(unsigned int n, char *pBuf)
   {
     return true;
   }
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     return true;
   }
@@ -4773,7 +4774,7 @@ bool CNetworkEX::ChatGuildRequest(unsigned int n, char *pBuf)
   {
     return true;
   }
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     return true;
   }
@@ -5813,7 +5814,7 @@ char CNetworkEX::ResSeparationRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount < 99)
+  if (moveAmount < MAX_ITEM_OVERLAP)
   {
     player->pc_ResSeparation(request->wStartSerial, moveAmount);
     return 1;
@@ -5837,7 +5838,7 @@ char CNetworkEX::ResDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount < 99)
+  if (moveAmount < MAX_ITEM_OVERLAP)
   {
     player->pc_ResDivision(
       request->wStartSerial,
@@ -5864,7 +5865,7 @@ char CNetworkEX::PotionSocketSeparationRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount <= 99)
+  if (moveAmount <= MAX_ITEM_OVERLAP)
   {
     player->pc_PotionSeparation(request->wStartSerial, moveAmount);
     return 1;
@@ -5888,7 +5889,7 @@ char CNetworkEX::PotionSocketDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 moveAmount = static_cast<unsigned __int8>(request->byMoveAmount);
-  if (moveAmount <= 99)
+  if (moveAmount <= MAX_ITEM_OVERLAP)
   {
     player->pc_PotionDivision(
       request->wStartSerial,
@@ -6472,7 +6473,7 @@ char CNetworkEX::TrunkResDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 99)
+  if (moveAmount >= MAX_ITEM_OVERLAP)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6510,7 +6511,7 @@ char CNetworkEX::TrunkPotionDivisionRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 99)
+  if (moveAmount >= MAX_ITEM_OVERLAP)
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -6696,7 +6697,7 @@ char CNetworkEX::TrunkIoMergeRequest(int n, char *pBuf)
   }
 
   const unsigned __int16 moveAmount = request->wMoveAmount;
-  if (moveAmount >= 99 || moveAmount == 0)
+  if (moveAmount >= MAX_ITEM_OVERLAP || moveAmount == 0)
   {
     m_LogFile.Write(
       "odd.. %s: TrunkIoMergeRequest() : if(pRecv->wMoveAmount >= max_overlap_num || pRecv->wMoveAmount == 0)",
@@ -7066,7 +7067,7 @@ char CNetworkEX::ResCuttingRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 processNum = static_cast<unsigned __int8>(request->byProcessNum);
-  if (processNum <= 99)
+  if (processNum <= MAX_ITEM_OVERLAP)
   {
     player->pc_OreCutting(request->wOreSerial, processNum);
     return 1;
@@ -7089,7 +7090,7 @@ char CNetworkEX::OreIntoBagRequest(int n, char *pBuf)
   }
 
   const unsigned __int8 addAmount = static_cast<unsigned __int8>(request->byAddAmount);
-  if (addAmount <= 99)
+  if (addAmount <= MAX_ITEM_OVERLAP)
   {
     const int resIndex = request->wResIndex;
     const int recordNum = g_Main.m_tblItemData[18].GetRecordNum();
@@ -7137,7 +7138,7 @@ char CNetworkEX::PartyJoinInvitation(int n, char *pBuf)
     return 1;
   }
 
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     player->SendMsg_JadeEffectErr(1u);
     return 1;
@@ -7637,7 +7638,7 @@ char CNetworkEX::MakeTowerRequest(int n, char *pBuf)
             charName);
           return 0;
         }
-        if (amount > 99)
+        if (amount > MAX_ITEM_OVERLAP)
         {
           const char *charName = player->m_Param.GetCharNameA();
           m_LogFile.Write(
@@ -7809,13 +7810,13 @@ char CNetworkEX::DTradeAskRequest(int n, char *pBuf)
     return 1;
   }
 
-  if (player->m_EP.GetEff_Have(50) > 0.0)
+  if (player->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0)
   {
     player->SendMsg_JadeEffectErr(3u);
     return 1;
   }
 
-  if (player->m_EP.GetEff_State(26) || targetPlayer->m_EP.GetEff_State(26))
+  if (player->m_EP.GetEff_State(EFF_STATE_INVISIBLE) || targetPlayer->m_EP.GetEff_State(EFF_STATE_INVISIBLE))
   {
     player->SendMsg_DTradeAskResult(32);
     return 1;
@@ -9247,7 +9248,7 @@ char CNetworkEX::ATradeRegItemRequest(int n, char *pBuf)
     const int recordNum = g_Main.m_tblItemData[request->byItemTableCode].GetRecordNum();
     if (request->wItemIndex < recordNum)
     {
-      if (request->byAmount <= 99)
+      if (request->byAmount <= MAX_ITEM_OVERLAP)
       {
         CUnmannedTraderController *controller = CUnmannedTraderController::Instance();
         controller->Regist(static_cast<unsigned __int16>(n), request);

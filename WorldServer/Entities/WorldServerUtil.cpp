@@ -173,26 +173,26 @@ char *cvt_string(int nVal)
 
 bool CanAddMoneyForMaxLimMoney(unsigned __int64 ui64AddMoney, unsigned __int64 ui64HasMoney)
 {
-  if (ui64AddMoney > 2000000000)
+  if (ui64AddMoney > MAX_DALANT)
   {
     return false;
   }
-  if (ui64HasMoney <= 2000000000)
+  if (ui64HasMoney <= MAX_DALANT)
   {
-    return ui64AddMoney <= 2000000000ULL - ui64HasMoney;
+    return ui64AddMoney <= static_cast<unsigned __int64>(MAX_DALANT) - ui64HasMoney;
   }
   return false;
 }
 
 bool CanAddMoneyForMaxLimGold(unsigned __int64 ui64AddGold, unsigned __int64 ui64HasGold)
 {
-  if (ui64AddGold > 500000)
+  if (ui64AddGold > MAX_GOLD)
   {
     return false;
   }
-  if (ui64HasGold <= 500000)
+  if (ui64HasGold <= MAX_GOLD)
   {
-    return ui64AddGold <= 500000ULL - ui64HasGold;
+    return ui64AddGold <= static_cast<unsigned __int64>(MAX_GOLD) - ui64HasGold;
   }
   return false;
 }

@@ -373,7 +373,7 @@ void CPlayer::pc_ResDivision(unsigned __int16 wStartSerial, unsigned __int16 wTa
             {
               if (startOre->m_dwDur >= byMoveAmount)
               {
-                if (targetOre->m_dwDur + byMoveAmount > 99)
+                if (targetOre->m_dwDur + byMoveAmount > MAX_ITEM_OVERLAP)
                 {
                   resultCode = 9;
                 }
@@ -446,7 +446,7 @@ void CPlayer::pc_PotionDivision(unsigned __int16 wSerial, unsigned __int16 wTarS
           {
             if (sourcePotion->m_dwDur >= byAmount)
             {
-              if (targetPotion->m_dwDur + byAmount > 99)
+              if (targetPotion->m_dwDur + byAmount > MAX_ITEM_OVERLAP)
               {
                 resultCode = -4;
               }

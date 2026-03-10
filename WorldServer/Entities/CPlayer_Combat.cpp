@@ -586,7 +586,7 @@ unsigned __int8 CPlayer::skill_process(
   {
     return 21;
   }
-  if (skillField->m_nContEffectType == 1 && m_EP.GetEff_State(2))
+  if (skillField->m_nContEffectType == 1 && m_EP.GetEff_State(EFF_STATE_UNKNOWN_2))
   {
     return 7;
   }
@@ -624,18 +624,18 @@ unsigned __int8 CPlayer::skill_process(
   {
     return 13;
   }
-  if (target->m_EP.GetEff_State(20))
+  if (target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     if (skillField->m_nTempEffectType == -1 || !IsUsableTempEffectAtStoneState(skillField->m_nTempEffectType))
     {
       return 24;
     }
   }
-  if (target->m_EP.GetEff_State(28))
+  if (target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     return 24;
   }
-  if (m_EP.GetEff_State(21))
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     return 25;
   }
@@ -705,7 +705,7 @@ unsigned __int8 CPlayer::skill_process(
   if (!nEffectCode)
   {
     const float totalSkillLevel = static_cast<float>(m_pmMst.GetSkillLv(static_cast<unsigned __int8>(nSkillIndex)))
-      + m_EP.GetEff_Plus(19);
+      + m_EP.GetEff_Plus(EFF_PLUS_SKILL_LEVEL);
     skillLevel = static_cast<int>(totalSkillLevel);
     if (skillLevel > 7)
     {
@@ -795,7 +795,7 @@ unsigned __int8 CPlayer::skill_process(
 
     SendMsg_Recover();
     DeleteUseConsumeItem(consumeItems, consumeCount, overlap);
-    const float addDelay = m_EP.GetEff_Plus(12);
+    const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
     _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(skillField->m_fActDelay + addDelay));
   }
 
@@ -870,11 +870,11 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
   {
     byErrCode = 28;
   }
-  else if (m_EP.GetEff_State(20) || m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE) || m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     byErrCode = 24;
   }
-  else if (m_EP.GetEff_State(21))
+  else if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     byErrCode = 25;
   }
@@ -955,12 +955,12 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
   {
     byErrCode = 13;
   }
-  if (!byErrCode && target->m_EP.GetEff_State(20)
+  if (!byErrCode && target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE)
       && (forceFld->m_nTempEffectType == -1 || !IsUsableTempEffectAtStoneState(forceFld->m_nTempEffectType)))
   {
     byErrCode = 24;
   }
-  if (!byErrCode && target->m_EP.GetEff_State(28))
+  if (!byErrCode && target->m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     byErrCode = 24;
   }
@@ -1034,7 +1034,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
                   * static_cast<float>(FORCE_LIVER_ACCUM_RATE - 1.0f));
           }
 
-          const float effHave = m_EP.GetEff_Have(6);
+          const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_6);
           if (effHave > 1.0f)
           {
             alter = static_cast<int>(
@@ -1058,7 +1058,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
 
       ApplyGaugeConsumeAndSendRecover(this, delPoint);
       DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
-      const float addDelay = m_EP.GetEff_Plus(13);
+      const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13);
       _ATTACK_DELAY_CHECKER::SetDelay(
         &m_AttDelayChker,
         static_cast<unsigned int>(forceFld->m_fActDelay + addDelay));
@@ -1092,11 +1092,11 @@ void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDs
   {
     byErrCode = 28;
   }
-  else if (m_EP.GetEff_State(20) || m_EP.GetEff_State(28))
+  else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE) || m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     byErrCode = 24;
   }
-  else if (m_EP.GetEff_State(21))
+  else if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_21))
   {
     byErrCode = 25;
   }
@@ -1238,11 +1238,11 @@ void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDs
       int attackDelay = static_cast<int>(m_pmWpn.GetAttackDelay(level, addDelay));
       if (m_pmWpn.byWpType != 11 && !m_pmWpn.byWpClass)
       {
-        attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(9));
+        attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_9));
       }
       if (m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
       {
-        attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(11));
+        attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11));
       }
       _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(attackDelay));
 
@@ -1694,7 +1694,7 @@ void CPlayer::pc_MakeTowerRequest(
 
   if (!byErrCode)
   {
-    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(7));
+    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(EFF_RATE_FP_COST));
     if (needFp > GetFP())
     {
       byErrCode = 14;
@@ -1816,7 +1816,7 @@ void CPlayer::pc_MakeTowerRequest(
       ++m_pmTwr.m_nCount;
       dwTowerObjSerial = tower->m_dwObjSerial;
       DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
-      const float addDelay = m_EP.GetEff_Plus(12);
+      const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
       _ATTACK_DELAY_CHECKER::SetDelay(
         &m_AttDelayChker,
         static_cast<unsigned int>(classSkill->m_fActDelay + addDelay));
@@ -1972,7 +1972,7 @@ void CPlayer::pc_MakeTrapRequest(
   }
   if (!byErrCode)
   {
-    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(7));
+    needFp = static_cast<int>(static_cast<float>(classSkill->m_nNeedFP) * m_EP.GetEff_Rate(EFF_RATE_FP_COST));
     if (needFp > GetFP())
     {
       byErrCode = 14;
@@ -2015,7 +2015,7 @@ void CPlayer::pc_MakeTrapRequest(
       SendMsg_MadeTrapNumInform(static_cast<char>(m_pmTrp.m_nCount));
       dwTrapObjSerial = trap->m_dwObjSerial;
       DeleteUseConsumeItem(consumeItems, consumeCounts, consumeOverlap);
-      const float addDelay = m_EP.GetEff_Plus(12);
+      const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
       _ATTACK_DELAY_CHECKER::SetDelay(
         &m_AttDelayChker,
         static_cast<unsigned int>(classSkill->m_fActDelay + addDelay));
@@ -2110,7 +2110,7 @@ void CPlayer::_TrapReturn(CTrap *pTrap, unsigned __int16 wAddSerial)
       && targetItem->m_byTableCode == static_cast<unsigned __int8>(tableCode)
       && targetItem->m_wItemIndex == static_cast<unsigned __int16>(itemRecord->m_dwIndex))
   {
-    if (targetItem->m_dwDur + 1 <= 99)
+    if (targetItem->m_dwDur + 1 <= MAX_ITEM_OVERLAP)
     {
       const bool isProtectItem = IsProtectItem(tableCode) != 0;
       (void)isProtectItem;
@@ -2732,11 +2732,11 @@ __int64 CPlayer::GetAvoidRate()
 {
   if (m_fTalik_AvoidPoint <= 0.0f)
   {
-    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3)));
+    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE)));
   }
 
   const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - CalcDPRate()));
-  return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(3) - static_cast<float>(talikPenalty)));
+  return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE) - static_cast<float>(talikPenalty)));
 }
 
 __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
@@ -2753,7 +2753,7 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
     bool shieldIgnore = false;
     if (pAttChar && pAttChar->m_ObjID.m_byID == 0)
     {
-      shieldIgnore = pAttChar->m_EP.GetEff_State(11);
+      shieldIgnore = pAttChar->m_EP.GetEff_State(EFF_STATE_UNKNOWN_11);
       if (!shieldIgnore)
       {
         CCharacter *playerAttacker = nullptr;
@@ -2762,12 +2762,12 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
           playerAttacker = pAttChar;
         }
 
-        if (pAttChar->m_EP.GetEff_Plus(28) > 0.0f || playerAttacker)
+        if (pAttChar->m_EP.GetEff_Plus(EFF_PLUS_SHIELD_IGNORE_RATE) > 0.0f || playerAttacker)
         {
-          float ignoreChance = pAttChar->m_EP.GetEff_Plus(28);
+          float ignoreChance = pAttChar->m_EP.GetEff_Plus(EFF_PLUS_SHIELD_IGNORE_RATE);
           if (playerAttacker)
           {
-            ignoreChance += pAttChar->m_EP.GetEff_Plus(41);
+            ignoreChance += pAttChar->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_41);
           }
 
           if ((rand() % 100) <= static_cast<int>(ignoreChance))
@@ -2807,7 +2807,7 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
     {
       const int shieldMastery = m_pmMst.GetMasteryPerMast(2u, 0);
       int blockChance = static_cast<int>((static_cast<float>(shieldMastery) / 99.0f) * 20.0f + 5.0f);
-      blockChance = static_cast<int>(static_cast<float>(blockChance) + m_EP.GetEff_Plus(29));
+      blockChance = static_cast<int>(static_cast<float>(blockChance) + m_EP.GetEff_Plus(EFF_PLUS_SHIELD_BLOCK_RATE));
       if (blockChance > 100)
       {
         blockChance = 100;
@@ -2849,7 +2849,7 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
         defenseValue += partDefense[index] * s_fPartGravity[index];
       }
       defenseValue += shieldRecord->m_fDefFc;
-      defenseValue *= m_EP.GetEff_Rate(17);
+      defenseValue *= m_EP.GetEff_Rate(EFF_RATE_DEFENSE);
     }
     else
     {
@@ -2873,10 +2873,10 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
       *pnConvertPart = m_nLastBeatenPart;
     }
 
-    defenseValue *= m_EP.GetEff_Rate(33);
+    defenseValue *= m_EP.GetEff_Rate(EFF_RATE_ARMOR_DEFENSE);
     if (IsSiegeMode())
     {
-      defenseValue *= m_EP.GetEff_Rate(24);
+      defenseValue *= m_EP.GetEff_Rate(EFF_RATE_SIEGE_DEFENSE);
     }
   }
 
@@ -2909,11 +2909,11 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
     if (m_fTalik_DefencePoint > 0.0f)
     {
       const float talikPenalty = m_fTalik_DefencePoint * (1.0f - CalcDPRate());
-      defenseValue *= (m_EP.GetEff_Rate(6) - talikPenalty);
+      defenseValue *= (m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE) - talikPenalty);
     }
     else
     {
-      defenseValue *= m_EP.GetEff_Rate(6);
+      defenseValue *= m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE);
     }
   }
 
@@ -3015,10 +3015,10 @@ if (!IsRidingUnit())
 
 __int64 CPlayer::GetFireTol()
 {
-  const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(15);
-  int value = static_cast<int>(total * m_EP.GetEff_Rate(25));
+  const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(EFF_PLUS_FIRE_TOLERANCE);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_FIRE_TOLERANCE));
   value = ClampToleranceValue(value);
-  if (m_EP.GetEff_State(19) && value > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && value > 0)
   {
     value = -value;
   }
@@ -3047,10 +3047,10 @@ __int64 CPlayer::GetObjRace()
 
 __int64 CPlayer::GetSoilTol()
 {
-  const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(17);
-  int value = static_cast<int>(total * m_EP.GetEff_Rate(27));
+  const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(EFF_PLUS_SOIL_TOLERANCE);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_SOIL_TOLERANCE));
   value = ClampToleranceValue(value);
-  if (m_EP.GetEff_State(19) && value > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && value > 0)
   {
     value = -value;
   }
@@ -3059,10 +3059,10 @@ __int64 CPlayer::GetSoilTol()
 
 __int64 CPlayer::GetWaterTol()
 {
-  const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(16);
-  int value = static_cast<int>(total * m_EP.GetEff_Rate(26));
+  const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(EFF_PLUS_WATER_TOLERANCE);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WATER_TOLERANCE));
   value = ClampToleranceValue(value);
-  if (m_EP.GetEff_State(19) && value > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && value > 0)
   {
     value = -value;
   }
@@ -3107,10 +3107,10 @@ float CPlayer::GetWidth()
 
 __int64 CPlayer::GetWindTol()
 {
-  const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(18);
-  int value = static_cast<int>(total * m_EP.GetEff_Rate(28));
+  const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(EFF_PLUS_WIND_TOLERANCE);
+  int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WIND_TOLERANCE));
   value = ClampToleranceValue(value);
-  if (m_EP.GetEff_State(19) && value > 0)
+  if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && value > 0)
   {
     value = -value;
   }
@@ -3152,11 +3152,11 @@ char CPlayer::IsRecvableContEffect()
   {
     return 0;
   }
-  if (m_EP.GetEff_State(20))
+  if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
     return 0;
   }
-  return m_EP.GetEff_State(28) ? 0 : 1;
+  return m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE) ? 0 : 1;
 }
 
 bool CPlayer::Is_Battle_Mode()

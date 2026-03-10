@@ -192,14 +192,14 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
   if (m_pp->pDst)
   {
     bool isAvoided = false;
-    avoidState14 = m_pp->pDst->m_EP.GetEff_State(14);
+    avoidState14 = m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_14);
     if (avoidState14)
     {
       isAvoided = true;
     }
-    else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+    else if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
     {
-      avoidRate27 = m_pp->pDst->m_EP.GetEff_Plus(27);
+      avoidRate27 = m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27);
       avoidRoll = static_cast<float>(rand() % 100);
       if (avoidRate27 > avoidRoll)
       {
@@ -215,7 +215,7 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
         const float targetRange = m_pp->pDst->GetAttackRange();
         const float attackerWidth = m_pAttChar->GetWidth();
         const float rangeLimit =
-          targetRange + (attackerWidth / 2.0f) + m_pp->pDst->m_EP.GetEff_Plus(4);
+          targetRange + (attackerWidth / 2.0f) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_4);
         const float dist = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
         if (rangeLimit >= dist)
         {
@@ -227,7 +227,7 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
         }
       }
 
-      if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+      if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
       {
         m_DamList[0].m_pChar = m_pp->pDst;
         m_DamList[0].m_nDamage = 0;
@@ -244,7 +244,7 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
       return;
     }
 
-    if (m_pp->pDst->m_EP.GetEff_State(8))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_8))
     {
       canHit = false;
     }
@@ -331,23 +331,23 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
     if (animus && animus->m_pMaster)
     {
       const float attackFc0 = GetAttackFC(animus->m_pMaster, 2u, true, false);
-      const float effRate0 = animus->m_pMaster->m_EP.GetEff_Rate(57);
+      const float effRate0 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_57);
       const float add0 = attackFc0 * (effRate0 - 1.0f);
 
       const float attackFc1 = GetAttackFC(animus->m_pMaster, 0, true, false);
-      const float effRate1 = animus->m_pMaster->m_EP.GetEff_Rate(58);
+      const float effRate1 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_58);
       const float add1 = attackFc1 * (effRate1 - 1.0f);
 
       const float attackFc2 = GetAttackFC(animus->m_pMaster, 0, false, false);
-      const float effRate2 = animus->m_pMaster->m_EP.GetEff_Rate(59);
+      const float effRate2 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_59);
       const float add2 = attackFc2 * (effRate2 - 1.0f);
 
       const float attackFc3 = GetAttackFC(animus->m_pMaster, 1u, true, false);
-      const float effRate3 = animus->m_pMaster->m_EP.GetEff_Rate(60);
+      const float effRate3 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_60);
       const float add3 = attackFc3 * (effRate3 - 1.0f);
 
       const float attackFc4 = GetAttackFC(animus->m_pMaster, 1u, false, false);
-      const float effRate4 = animus->m_pMaster->m_EP.GetEff_Rate(61);
+      const float effRate4 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_61);
       const float add4 = attackFc4 * (effRate4 - 1.0f);
 
       normalAttack = (((normalAttack + add0) + add1) + add2) + add3 + add4;
@@ -357,7 +357,7 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
 
   if (m_pp->nWpType == 7)
   {
-    const float rate = m_pAttChar->m_EP.GetEff_Rate(29);
+    const float rate = m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_LAUNCHER_ATTACK);
     normalAttack *= rate;
     effAttack *= rate;
   }
@@ -451,18 +451,18 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
 
   if (m_pp->pDst)
   {
-    if (m_pp->pDst->m_EP.GetEff_State(8))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_8))
     {
       canHit = false;
     }
     else
     {
-      const float baseChance = m_pAttChar->m_EP.GetEff_Plus(31) + 100.0f;
+      const float baseChance = m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_31) + 100.0f;
       const int avoid = m_pp->pDst->GetAvoidRate();
       int chance = static_cast<int>(baseChance - static_cast<float>(avoid));
       if (!m_pAttChar->m_ObjID.m_byID)
       {
-        const float add = m_pAttChar->m_EP.GetEff_Plus(40);
+        const float add = m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_ATTACK_ACCURACY);
         chance = static_cast<int>(static_cast<float>(chance) + add);
       }
       if (chance < 0)
@@ -492,9 +492,9 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
   }
 
   float normalAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(false));
-  normalAttack *= m_pAttChar->m_EP.GetEff_Rate(4);
+  normalAttack *= m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK);
   float effAttack = static_cast<float>(m_pp->nAddAttPnt + _CalcForceAttPnt(bUseEffBullet));
-  effAttack *= m_pAttChar->m_EP.GetEff_Rate(4);
+  effAttack *= m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK);
 
   if (!m_pAttChar->m_ObjID.m_byID
     && (g_HolySys.GetDestroyerSerial() == m_pAttChar->m_dwObjSerial
@@ -608,12 +608,12 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
     {
       if (bUnit)
       {
-        value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(32))
+        value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
           + static_cast<float>(mastery);
       }
       else
       {
-        value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * pPlayer->m_EP.GetEff_Rate(32))
+        value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
           + static_cast<float>(mastery);
       }
       if (!bNear || GetWeaponClass(weaponItem->m_wItemIndex))
@@ -622,27 +622,27 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
         {
           return 0.0f;
         }
-        return value * pPlayer->m_EP.GetEff_Rate(3);
+        return value * pPlayer->m_EP.GetEff_Rate(EFF_RATE_RANGED_SKILL_ATTACK);
       }
-      return value * pPlayer->m_EP.GetEff_Rate(2);
+      return value * pPlayer->m_EP.GetEff_Rate(EFF_RATE_CLOSE_RANGE_SKILL_ATTACK);
     }
     if (bUnit)
     {
-      return (weaponRecord->m_fMAMinAF * pPlayer->m_EP.GetEff_Rate(32))
+      return (weaponRecord->m_fMAMinAF * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
         + static_cast<float>(pPlayer->m_pmMst.m_mtyStaff);
     }
-    return (static_cast<float>(pPlayer->m_pmWpn.nMaMaxAF) * pPlayer->m_EP.GetEff_Rate(32))
+    return (static_cast<float>(pPlayer->m_pmWpn.nMaMaxAF) * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
       + static_cast<float>(pPlayer->m_pmMst.m_mtyStaff);
   }
 
   if (bUnit)
   {
-    value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(32))
+    value = (weaponRecord->m_fGAMinAF * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
       + static_cast<float>(CPlayer::s_nAddMstFc[mastery]);
   }
   else
   {
-    value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * pPlayer->m_EP.GetEff_Rate(32))
+    value = (static_cast<float>(pPlayer->m_pmWpn.nGaMaxAF) * pPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE))
       + static_cast<float>(CPlayer::s_nAddMstFc[mastery]);
   }
 
@@ -652,10 +652,10 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
     {
       return 0.0f;
     }
-    return value * pPlayer->m_EP.GetEff_Rate(1);
+    return value * pPlayer->m_EP.GetEff_Rate(EFF_RATE_RANGED_ATTACK);
   }
 
-  return value * pPlayer->m_EP.GetEff_Rate(0);
+  return value * pPlayer->m_EP.GetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK);
 }
 
 __int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
@@ -689,7 +689,7 @@ __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
     midAttack = static_cast<int>(((m_pp->nMaxAF + m_pp->nMinAF) / 2.0f) + 0.5f);
   }
 
-  if (m_pAttChar->m_EP.GetEff_State(9))
+  if (m_pAttChar->m_EP.GetEff_State(EFF_STATE_UNKNOWN_9))
   {
     return maxAttack;
   }
@@ -701,10 +701,10 @@ __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
   if (m_pp->nMaxAttackPnt >= 0)
   {
     const int randValue = m_pAttChar->m_rtPer100.GetRand();
-    int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
+    int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
     if (m_pp->pDst && m_pp->pDst != m_pAttChar)
     {
-      minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+      minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
       minSel += static_cast<int>(MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack));
     }
     if (minSel < 0)
@@ -713,10 +713,10 @@ __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
     }
 
     int maxSel = static_cast<int>(
-      static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
+      static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
     if (m_pp->pDst && m_pp->pDst != m_pAttChar)
     {
-      maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+      maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
       maxSel += static_cast<int>(MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack));
     }
     if (maxSel < 0)
@@ -826,10 +826,10 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
     static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f)));
 
   const int randValue = m_pAttChar->m_rtPer100.GetRand();
-  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
+  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+    minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
     minSel += static_cast<int>(MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack));
   }
   if (minSel < 0)
@@ -838,10 +838,10 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
   }
 
   int maxSel = static_cast<int>(
-    static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
+    static_cast<float>(m_pp->nMaxSel + m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+    maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
     maxSel += static_cast<int>(MonsterCritical_Exception_Rate(reinterpret_cast<CMonster *>(m_pp->pDst), m_pp->bBackAttack));
   }
   if (maxSel < 0)

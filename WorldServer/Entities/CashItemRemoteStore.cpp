@@ -865,7 +865,7 @@ __int64 CashItemRemoteStore::_check_buyitem(
   {
     return 11;
   }
-  if (pCsItem->byOverlapNum > 99)
+  if (pCsItem->byOverlapNum > MAX_ITEM_OVERLAP)
   {
     return 6;
   }

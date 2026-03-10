@@ -39,14 +39,14 @@ void CMonsterAttack::AttackMonsterGen(_attack_param *pParam, bool bMustMiss)
   if (m_pp->pDst)
   {
     bool isAvoidState = false;
-    if (m_pp->pDst->m_EP.GetEff_State(14))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
     {
       isAvoidState = true;
     }
-    else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+    else if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
     {
       const float randValue = static_cast<float>(rand() % 100);
-      const float avoidRate = m_pp->pDst->m_EP.GetEff_Plus(27);
+      const float avoidRate = m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27);
       if (avoidRate > randValue)
       {
         isAvoidState = true;
@@ -60,7 +60,7 @@ void CMonsterAttack::AttackMonsterGen(_attack_param *pParam, bool bMustMiss)
         const float targetRange = m_pp->pDst->GetAttackRange();
         const float attackerWidth = m_pAttChar->GetWidth();
         const float maxRange = targetRange + (attackerWidth / 2.0f);
-        const float rangeBonus = m_pp->pDst->m_EP.GetEff_Plus(4);
+        const float rangeBonus = m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_4);
         const float limitRange = maxRange + rangeBonus;
         const float distance = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
         if (limitRange >= distance)
@@ -73,7 +73,7 @@ void CMonsterAttack::AttackMonsterGen(_attack_param *pParam, bool bMustMiss)
         }
       }
 
-      if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+      if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
       {
         m_DamList[0].m_pChar = m_pp->pDst;
         m_DamList[0].m_nDamage = 0;
@@ -90,7 +90,7 @@ void CMonsterAttack::AttackMonsterGen(_attack_param *pParam, bool bMustMiss)
       return;
     }
 
-    if (m_pp->pDst->m_EP.GetEff_State(8))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_8))
     {
       hitSuccess = false;
     }
@@ -122,7 +122,7 @@ void CMonsterAttack::AttackMonsterGen(_attack_param *pParam, bool bMustMiss)
   float attackRate = FLOAT_1_0;
   if (m_pp->nWpType == 7)
   {
-    attackRate = m_pAttChar->m_EP.GetEff_Rate(29);
+    attackRate = m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_LAUNCHER_ATTACK);
   }
   else
   {
@@ -205,14 +205,14 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
   if (m_pp->pDst)
   {
     bool isAvoidState = false;
-    if (m_pp->pDst->m_EP.GetEff_State(14))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_14))
     {
       isAvoidState = true;
     }
-    else if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+    else if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
     {
       const float randValue = static_cast<float>(rand() % 100);
-      const float avoidRate = m_pp->pDst->m_EP.GetEff_Plus(27);
+      const float avoidRate = m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27);
       if (avoidRate > randValue)
       {
         isAvoidState = true;
@@ -226,7 +226,7 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
         const float targetRange = m_pp->pDst->GetAttackRange();
         const float attackerWidth = m_pAttChar->GetWidth();
         const float maxRange = targetRange + (attackerWidth / 2.0f);
-        const float rangeBonus = m_pp->pDst->m_EP.GetEff_Plus(4);
+        const float rangeBonus = m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_4);
         const float limitRange = maxRange + rangeBonus;
         const float distance = GetSqrt(m_pp->pDst->m_fCurPos, m_pAttChar->m_fCurPos);
         if (limitRange >= distance)
@@ -239,7 +239,7 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
         }
       }
 
-      if (m_pp->pDst->m_EP.GetEff_Plus(27) > 0.0f)
+      if (m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_27) > 0.0f)
       {
         m_DamList[0].m_pChar = m_pp->pDst;
         m_DamList[0].m_nDamage = 0;
@@ -248,13 +248,13 @@ void CMonsterAttack::AttackMonsterSkill(_attack_param *pParam)
       }
     }
 
-    if (m_pp->pDst->m_EP.GetEff_State(8))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_8))
     {
       hitSuccess = false;
     }
     else
     {
-      const float accValue = m_pAttChar->m_EP.GetEff_Plus(30) + 150.0f;
+      const float accValue = m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_30) + 150.0f;
       const int avoidRate = m_pp->pDst->GetAvoidRate();
       int checkValue = static_cast<int>(accValue - static_cast<float>(avoidRate));
       if (checkValue <= 0)
@@ -344,13 +344,13 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
 
   if (m_pp->pDst)
   {
-    if (m_pp->pDst->m_EP.GetEff_State(8))
+    if (m_pp->pDst->m_EP.GetEff_State(EFF_STATE_UNKNOWN_8))
     {
       hitSuccess = false;
     }
     else
     {
-      const float accValue = m_pAttChar->m_EP.GetEff_Plus(31) + 100.0f;
+      const float accValue = m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_31) + 100.0f;
       const int avoidRate = m_pp->pDst->GetAvoidRate();
       int checkValue = static_cast<int>(accValue - static_cast<float>(avoidRate));
       if (checkValue <= 0)
@@ -373,7 +373,7 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
     float attackPower = static_cast<float>(_CalcForceAttPnt(false));
     const float forceRate = g_MonsterSetInfoData.GetMonsterForcePowerRate();
     attackPower *= forceRate;
-    const float attFc = m_pAttChar->m_EP.GetEff_Rate(4);
+    const float attFc = m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK);
     attackPower *= ModifyMonsterAttFc(attFc);
 
     const int skillType = forceField->m_nEffectGroup;
@@ -480,10 +480,10 @@ __int64 CMonsterAttack::_CalcMonSkillAttPnt()
 
   const int randValue = m_pAttChar->m_rtPer100.GetRand();
 
-  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(14));
+  int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+    minSel = static_cast<int>(static_cast<float>(minSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
   }
   if (minSel < 0)
   {
@@ -493,7 +493,7 @@ __int64 CMonsterAttack::_CalcMonSkillAttPnt()
   int maxSel = m_pp->nMaxSel + m_pp->nMinSel;
   if (m_pp->pDst && m_pp->pDst != m_pAttChar)
   {
-    maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(37));
+    maxSel = static_cast<int>(static_cast<float>(maxSel) + m_pp->pDst->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_37));
   }
   if (maxSel < 0)
   {

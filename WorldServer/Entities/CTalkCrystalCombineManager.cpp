@@ -114,8 +114,8 @@ void _talk_crystal_matrial_combine_node::Make(int nMakeCount)
   m_nMakeCount = nMakeCount;
   if (IsOverLapItem(m_MakeItem.m_byTableCode))
   {
-    m_nRequiredSlotCount = m_nMakeCount / 99;
-    if (m_nMakeCount % 99 > 0)
+    m_nRequiredSlotCount = m_nMakeCount / MAX_ITEM_OVERLAP;
+    if (m_nMakeCount % MAX_ITEM_OVERLAP > 0)
     {
       ++m_nRequiredSlotCount;
     }
@@ -390,12 +390,14 @@ char CTalkCrystalCombineManager::Doit(
     if (IsOverLapItem(node->m_MakeItem.m_byTableCode))
     {
       node->m_MakeItem.m_dwDur = static_cast<unsigned int>(node->m_nMakeCount);
-      const unsigned __int8 fullStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur / 99);
-      const unsigned __int8 remainStack = static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur % 99);
+      const unsigned __int8 fullStack =
+        static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur / MAX_ITEM_OVERLAP);
+      const unsigned __int8 remainStack =
+        static_cast<unsigned __int8>(node->m_MakeItem.m_dwDur % MAX_ITEM_OVERLAP);
 
       for (unsigned __int8 m = 0; m < fullStack; ++m)
       {
-        node->m_MakeItem.m_dwDur = 99;
+        node->m_MakeItem.m_dwDur = MAX_ITEM_OVERLAP;
         node->m_MakeItem.m_wSerial = pPlayer->m_Param.GetNewItemSerial();
         pPlayer->Emb_AddStorage(0, &node->m_MakeItem, 0, 1);
         pPlayer->SendMsg_RewardAddItem(&node->m_MakeItem, 0);

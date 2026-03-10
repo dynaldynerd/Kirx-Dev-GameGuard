@@ -926,13 +926,13 @@ unsigned __int8 CMainThread::check_min_max_guild_money(
     changed = true;
   }
 
-  if (guildData.dDalant <= 1000000000.0 || guildData.dGold <= 500000.0)
+  if (guildData.dDalant <= 1000000000.0 || guildData.dGold <= static_cast<double>(MAX_GOLD))
   {
     if (guildData.dDalant <= 1000000000.0)
     {
-      if (guildData.dGold > 500000.0)
+      if (guildData.dGold > static_cast<double>(MAX_GOLD))
       {
-        guildData.dGold = 500000.0;
+        guildData.dGold = static_cast<double>(MAX_GOLD);
         changed = true;
       }
     }
@@ -945,7 +945,7 @@ unsigned __int8 CMainThread::check_min_max_guild_money(
   else
   {
     guildData.dDalant = 1000000000.0;
-    guildData.dGold = 500000.0;
+    guildData.dGold = static_cast<double>(MAX_GOLD);
     changed = true;
   }
 

@@ -1013,7 +1013,7 @@ bool CDarkHoleChannel::CanYouEnterHole(CPlayer *pEnter)
         return true;
       }
     }
-    return pEnter->m_EP.GetEff_Have(50) > 0.0f;
+    return pEnter->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) > 0.0f;
   }
 
   if (m_dwOpenerSerial == pEnter->m_dwObjSerial)

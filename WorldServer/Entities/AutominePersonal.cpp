@@ -1149,7 +1149,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     if (!inventoryItem->m_bLoad
         || inventoryItem->m_byTableCode != 17
         || inventoryItem->m_wItemIndex != oreItemIndex
-        || inventoryItem->m_dwDur >= 99
+        || inventoryItem->m_dwDur >= MAX_ITEM_OVERLAP
         || inventoryItem->m_bLock)
     {
       continue;

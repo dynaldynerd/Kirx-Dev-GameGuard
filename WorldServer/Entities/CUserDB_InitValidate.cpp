@@ -175,25 +175,25 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
     if ( pDataUpdated )
       *pDataUpdated = 1;
   }
-  if ( pData->dbAvator.m_dwDalant > 2000000000 )
+  if ( pData->dbAvator.m_dwDalant > MAX_DALANT )
   {
     CUserDB::s_logAvatorDB.Write(
       "%d > DataValidCheckRevise DALANT (%u) (ADJUST %d)",
       pData->dbAvator.m_dwRecordNum,
       pData->dbAvator.m_dwDalant,
-      2000000000);
-    pData->dbAvator.m_dwDalant = 2000000000;
+      MAX_DALANT);
+    pData->dbAvator.m_dwDalant = MAX_DALANT;
     if ( pDataUpdated )
       *pDataUpdated = 1;
   }
-  if ( pData->dbAvator.m_dwGold > 500000 )
+  if ( pData->dbAvator.m_dwGold > MAX_GOLD )
   {
     CUserDB::s_logAvatorDB.Write(
       "%d > DataValidCheckRevise GOLD (%u) (ADJUST %d)",
       pData->dbAvator.m_dwRecordNum,
       pData->dbAvator.m_dwGold,
-      500000);
-    pData->dbAvator.m_dwGold = 500000;
+      MAX_GOLD);
+    pData->dbAvator.m_dwGold = MAX_GOLD;
     if ( pDataUpdated )
       *pDataUpdated = 1;
   }
@@ -238,15 +238,15 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
       if ( pDataUpdated )
         *pDataUpdated = 1;
     }
-    if ( pData->dbTrunk.dGold > 500000.0 )
+    if ( pData->dbTrunk.dGold > static_cast<double>(MAX_GOLD) )
     {
-      logAdjustValue = 500000;
+      logAdjustValue = MAX_GOLD;
       CUserDB::s_logAvatorDB.Write(
         "%d > DataValidCheckRevise Trunk GOLD (%f) (ADJUST %d)",
         pData->dbAvator.m_dwRecordNum,
         pData->dbTrunk.dGold,
         logAdjustValue);
-      pData->dbTrunk.dGold = 500000.0;
+      pData->dbTrunk.dGold = static_cast<double>(MAX_GOLD);
       if ( pDataUpdated )
         *pDataUpdated = 1;
     }
@@ -296,7 +296,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
           *pDataUpdated = 1;
         continue;
       }
-      if ( invenEntry->dwDur > 99 )
+      if ( invenEntry->dwDur > MAX_ITEM_OVERLAP )
       {
         CUserDB::s_logAvatorDB.Write(
           "%d > DataValidCheckRevise INVEN.. AMOUNT: %d, (%d : %d) (ADJUST)",
@@ -304,7 +304,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
           static_cast<unsigned int>(invenEntry->dwDur),
           invenKey->byTableCode,
           invenKey->wItemIndex);
-        invenEntry->dwDur = 99;
+        invenEntry->dwDur = MAX_ITEM_OVERLAP;
         if ( pDataUpdated )
           *pDataUpdated = 1;
       }
@@ -560,7 +560,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
                 *pDataUpdated = 1;
               continue;
             }
-            if ( trunkEntry->dwDur > 99 )
+            if ( trunkEntry->dwDur > MAX_ITEM_OVERLAP )
             {
               CUserDB::s_logAvatorDB.Write(
                 "%d > DataValidCheckRevise TRUNK.. AMOUNT: %d, (%d : %d) (ADJUST)",
@@ -568,7 +568,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
                 static_cast<unsigned int>(trunkEntry->dwDur),
                 trunkKey->byTableCode,
                 trunkKey->wItemIndex);
-              trunkEntry->dwDur = 99;
+              trunkEntry->dwDur = MAX_ITEM_OVERLAP;
               if ( pDataUpdated )
                 *pDataUpdated = 1;
             }

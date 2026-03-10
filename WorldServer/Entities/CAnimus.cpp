@@ -589,13 +589,13 @@ void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _a
   pAP->nMaxAF = m_Skill[nSkillIndex].m_MaxDmg;
   if (m_byRoleCode == 4)
   {
-    pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF) * m_pMaster->m_EP.GetEff_Rate(22));
+    pAP->nMaxAF = static_cast<int>(static_cast<float>(pAP->nMaxAF) * m_pMaster->m_EP.GetEff_Rate(EFF_RATE_ANIMUS_ATTACK));
   }
   pAP->nMinSel = m_Skill[nSkillIndex].m_MinProb;
   pAP->nMaxSel = m_Skill[nSkillIndex].m_MaxProb;
   if (m_byRoleCode == 2)
   {
-    pAP->nMaxSel = static_cast<int>(static_cast<float>(pAP->nMaxSel) - m_pMaster->m_EP.GetEff_Plus(39));
+    pAP->nMaxSel = static_cast<int>(static_cast<float>(pAP->nMaxSel) - m_pMaster->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_39));
     pAP->nAttactType = 6;
     pAP->nExtentRange = 15;
     if (pDst)
@@ -927,7 +927,7 @@ char CAnimus::Heal(unsigned int skill)
     return 0;
   }
 
-  const float effectRate = m_pMaster->m_EP.GetEff_Rate(31);
+  const float effectRate = m_pMaster->m_EP.GetEff_Rate(EFF_RATE_ANIMUS_HEAL);
   const int addHP = static_cast<int>(m_Skill[skill].GetDmg(effectRate));
   if (addHP <= 0)
   {
@@ -1289,7 +1289,7 @@ __int64 CAnimus::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
 int baseDefFc = m_pRecord->m_nStdDefFc;
   if (m_pMaster != nullptr && m_byRoleCode == 1)
   {
-    baseDefFc = static_cast<int>(static_cast<float>(baseDefFc) * m_pMaster->m_EP.GetEff_Rate(30));
+    baseDefFc = static_cast<int>(static_cast<float>(baseDefFc) * m_pMaster->m_EP.GetEff_Rate(EFF_RATE_ANIMUS_DEFENSE));
   }
   return static_cast<unsigned int>(baseDefFc);
 }

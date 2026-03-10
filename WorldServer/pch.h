@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 
+#include "Entities/GlobalObjectDefs.h"
 #include "Entities/CMainThread.h"
 
 #pragma comment(lib, "Ws2_32.lib")

@@ -578,7 +578,7 @@ void CPlayer::pc_DTradeAskRequest(unsigned __int16 wDstIndex)
     && !dst->m_bCorpse
     && dst->m_pCurMap == this->m_pCurMap
     && dst->GetCurSecNum() != static_cast<unsigned int>(-1)
-    && dst->m_EP.GetEff_Have(50) <= 0.0f)
+    && dst->m_EP.GetEff_Have(EFF_HAVE_HIDE_NAME) <= 0.0f)
   {
     if (this->m_pmTrd.bDTradeMode || dst->m_pmTrd.bDTradeMode)
     {
@@ -1199,8 +1199,8 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
         break;
       }
 
-      if (current->m_pmTrd.dwDTrade_Dalant > 2000000000
-          || current->m_pmTrd.dwDTrade_Gold > 500000)
+      if (current->m_pmTrd.dwDTrade_Dalant > MAX_DALANT
+          || current->m_pmTrd.dwDTrade_Gold > MAX_GOLD)
       {
         resultCode = 5;
         break;

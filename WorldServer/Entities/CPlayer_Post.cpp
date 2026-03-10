@@ -359,7 +359,7 @@ void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
   if (post->m_dwGold)
   {
     const unsigned int money = GetMoney(1u);
-    if (post->m_dwGold + money > 500000)
+    if (post->m_dwGold + money > MAX_GOLD)
     {
       SendMsg_PostItemGold(15);
       return;
@@ -448,7 +448,7 @@ void CPlayer::pc_PostReturnConfirmRequest(unsigned int dwPostSerial)
   }
 
   const unsigned int money = GetMoney(1u);
-  if (post->m_dwGold + money + 5 > 500000)
+  if (post->m_dwGold + money + 5 > MAX_GOLD)
   {
     SendMsg_PostReturnConfirm(15, dwPostSerial);
     return;

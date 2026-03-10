@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GlobalObjectDefs.h"
 #include "IdaCompat.h"
 #include "InvenKey.h"
 #include "CLogFile.h"
@@ -133,7 +134,7 @@ void TInventory<T>::clear()
 template <typename T>
 TInvenSlot<T>::TInvenSlot()
   : m_nOverlapNum(0),
-    m_nMaxOverlapNum(99)
+    m_nMaxOverlapNum(MAX_ITEM_OVERLAP)
 {
   memset_0(this, 0, sizeof(T));
 }

@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <intrin.h>
+#include <memory>
 
 namespace
 {
@@ -3132,6 +3133,8 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
 {
     constexpr float eyePoint = 16.0f;
     constexpr float maxDistance = 100000.0f;
+    constexpr int visitedLineIdCapacity = 10000;
+    constexpr int visitedLineIdScanLimit = visitedLineIdCapacity - 1;
 
     mColFaceId = -1;
     dword_184A7B2F0 = 0;
@@ -3141,7 +3144,8 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
 
     int leafCount = 0;
     __int16 leafIds[32000];
-    int visitedLineIds[10000];
+    std::unique_ptr<int[]> visitedLineIds = std::make_unique<int[]>(visitedLineIdCapacity);
+    int visitedLineCount = 0;
     GetLeafList(a2, a3, &leafCount, leafIds, 32000);
 
     if (mCFLineNum < 2)
@@ -3156,7 +3160,6 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
     int frontCrashCount = 0;
     int frontEpsilonCount = 0;
     int lastFrontEpsilonCount = 0;
-    int visitedLineCount = 0;
     float nearestDistance = maxDistance;
     float bestCrossPoint[3] = {0.0f, 0.0f, 0.0f};
 
@@ -3217,9 +3220,9 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
             }
 
             bool alreadyVisited = false;
-            for (int visitedIndex = 0; visitedIndex < visitedLineCount; ++visitedIndex)
+            for (int visitedLineIndex = 0; visitedLineIndex < visitedLineCount; ++visitedLineIndex)
             {
-                if (visitedLineIds[visitedIndex] == lineId)
+                if (visitedLineIds[visitedLineIndex] == lineId)
                 {
                     alreadyVisited = true;
                     break;
@@ -3230,10 +3233,17 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
                 continue;
             }
 
-            visitedLineIds[visitedLineCount++] = lineId;
-            if (lineId >= 10000)
+            if (visitedLineCount < visitedLineIdCapacity)
             {
-                visitedLineCount = 9999;
+                visitedLineIds[visitedLineCount++] = lineId;
+                if (visitedLineCount >= visitedLineIdCapacity)
+                {
+                    visitedLineCount = visitedLineIdScanLimit;
+                }
+            }
+            else
+            {
+                visitedLineIds[visitedLineIdCapacity - 1] = lineId;
             }
 
             const float dx = crossPoint[1] - a2[1];

@@ -64,6 +64,26 @@
 #define MAX_NUCLEAR_BOMB 9
 #endif
 
+#ifndef MAX_DALANT
+#define MAX_DALANT 2000000000
+#endif
+
+#ifndef MAX_GOLD
+#define MAX_GOLD 500000
+#endif
+
+#ifndef MAX_TRUNK_DALANT
+#define MAX_TRUNK_DALANT 1000000000
+#endif
+
+#ifndef MAX_TRUNK_GOLD
+#define MAX_TRUNK_GOLD 500000
+#endif
+
+#ifndef MAX_ITEM_OVERLAP
+#define MAX_ITEM_OVERLAP 99
+#endif
+
 // NormalGuildBattle.ini mapcnt=3 and per-map counts: 1PGoalPosCnt=1, 2PGoalPosCnt=1, BallRegenPosCnt=3.
 #ifndef MAX_GUILD_BATTLE_FIELD
 #define MAX_GUILD_BATTLE_FIELD 3

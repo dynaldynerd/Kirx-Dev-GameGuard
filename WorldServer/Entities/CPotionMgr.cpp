@@ -363,7 +363,7 @@ unsigned int CPotionMgr::PreCheckPotion(
     }
   }
 
-  if (pUsePlayer->m_EP.GetEff_Have(58) == 0.0f
+  if (pUsePlayer->m_EP.GetEff_Have(EFF_HAVE_POTION_DELAY_BYPASS) == 0.0f
       && !pUsePlayer->m_PotionParam.IsUsableActDelay(static_cast<unsigned __int8>(pfB->m_nDelayType), nCurTime))
   {
     return 9;
@@ -1009,7 +1009,7 @@ void CPotionMgr::InsertMovePotionStoneEffect(CPlayer *pApplyPlayer)
     return;
   }
 
-  pApplyPlayer->m_EP.SetEff_State(28, true);
+  pApplyPlayer->m_EP.SetEff_State(EFF_STATE_INSUPERABLE_MOVE, true);
   const unsigned int now = _sf_continous::GetSFContCurTime();
   pApplyPlayer->m_PotionParam.m_StoneOfMovePotionData.Set(440, now, 10);
 }
@@ -1673,7 +1673,7 @@ bool __fastcall DE_Potion_HP_In_Value(
   }
 
   const float hp = static_cast<float>(pTargetChar->GetHP());
-  const float effRate = pTargetChar->m_EP.GetEff_Rate(18);
+  const float effRate = pTargetChar->m_EP.GetEff_Rate(EFF_RATE_HP_GAIN);
   const int nHP = static_cast<int>(hp + fEffectValue * effRate);
   return pTargetChar->SetHP(nHP, false) != 0;
 }
@@ -1695,7 +1695,7 @@ bool __fastcall DE_Potion_FP_In_Value(
 
   CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
   const float fp = static_cast<float>(targetPlayer->GetFP());
-  const float effRate = targetPlayer->m_EP.GetEff_Rate(19);
+  const float effRate = targetPlayer->m_EP.GetEff_Rate(EFF_RATE_FP_GAIN);
   const int nFP = static_cast<int>(fp + fEffectValue * effRate);
   return targetPlayer->SetFP(nFP, false);
 }
@@ -1717,7 +1717,7 @@ bool __fastcall DE_Potion_SP_In_Value(
 
   CPlayer *targetPlayer = static_cast<CPlayer *>(pTargetChar);
   const float sp = static_cast<float>(targetPlayer->GetSP());
-  const float effRate = targetPlayer->m_EP.GetEff_Rate(20);
+  const float effRate = targetPlayer->m_EP.GetEff_Rate(EFF_RATE_SP_GAIN);
   const int nSP = static_cast<int>(sp + fEffectValue * effRate);
   return targetPlayer->SetSP(nSP, false);
 }
