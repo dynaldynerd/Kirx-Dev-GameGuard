@@ -162,7 +162,15 @@ int _STORAGE_LIST::GetIndexEmptyCon()
 
 int _STORAGE_LIST::GetNumUseCon() const
 {
-  return m_nUsedNum;
+  unsigned int count = 0;
+  for (int index = 0; index < m_nUsedNum; ++index)
+  {
+    if (m_pStorageList[index].m_bLoad)
+    {
+      ++count;
+    }
+  }
+  return static_cast<int>(count);
 }
 
 int _STORAGE_LIST::GetNumEmptyCon()
