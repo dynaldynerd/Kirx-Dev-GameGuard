@@ -57,7 +57,7 @@ int s_Mon_nLimitAngle[2][8] = {
 
 _attack_param::_attack_param()
 {
-  memset_0(this, 0, sizeof(_attack_param));
+  std::memset(this, 0, sizeof(_attack_param));
 }
 
 SKILL::SKILL()

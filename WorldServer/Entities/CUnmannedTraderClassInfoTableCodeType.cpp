@@ -9,7 +9,7 @@
 CUnmannedTraderClassInfoTableCodeType::CUnmannedTraderClassInfoTableCodeType(unsigned int dwID)
   : CUnmannedTraderClassInfoTableType(dwID), m_vecCodeList()
 {
-  strcpy_0(this->m_szTypeName, "table and code");
+  std::strcpy(this->m_szTypeName, "table and code");
 }
 
 CUnmannedTraderClassInfoTableCodeType::~CUnmannedTraderClassInfoTableCodeType()

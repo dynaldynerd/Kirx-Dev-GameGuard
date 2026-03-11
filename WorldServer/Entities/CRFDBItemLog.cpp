@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRFDBItemLog.h"
 
@@ -14,7 +14,7 @@ CRFDBItemLog::~CRFDBItemLog() = default;
 bool CRFDBItemLog::CreateTblLtd(int nKorTime)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     "CREATE TABLE [dbo].[tbl_ltd_%d] ( [Serial] [int] IDENTITY (1, 1) NOT NULL , [LogSerial] [datetime] NOT NULL, [MainTy"
@@ -38,7 +38,7 @@ bool CRFDBItemLog::CreateTblLtd(int nKorTime)
 bool CRFDBItemLog::CreateTblLtd_Expend(int nKorTime)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     " CREATE TABLE [dbo].[tbl_ltd_expend_%d] ( [LogSerial] [datetime] NOT NULL, [SubType] [tinyint] NOT NULL, [Expend] [n"
@@ -53,7 +53,7 @@ bool CRFDBItemLog::CreateTblLtd_Expend(int nKorTime)
 bool CRFDBItemLog::CreateTblLtd_ItemInfo(int nKorTime)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     " CREATE TABLE [dbo].[tbl_ltd_iteminfo_%d] ( [LogSerial] [datetime] NOT NULL, [SubType] [tinyint] NOT NULL, [ItemC] ["
@@ -69,7 +69,7 @@ bool CRFDBItemLog::CreateTblLtd_ItemInfo(int nKorTime)
 bool CRFDBItemLog::insert_ltd(_LTD *pl)
 {
   char buffer[528]{};
-  memset_0(buffer, 0, 512);
+  std::memset(buffer, 0, 512);
   sprintf(
     buffer,
     "insert into [dbo].[tbl_ltd_%d](LogSerial, MainType, SubType, AccountSerial, CharSerial) values ('%04d-%02d-%02d %02d"
@@ -92,7 +92,7 @@ bool CRFDBItemLog::insert_ltd(_LTD *pl)
 bool CRFDBItemLog::insert_iteminfo(_LTD_ITEMINFO *pi, unsigned __int8 byIndex)
 {
   char buffer[264]{};
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   sprintf(
     buffer,
     "insert into tbl_ltd_iteminfo_%d (LogSerial, SubType, ItemC, ItemU, ItemD, ItemO, Name) values ('%04d-%02d-%02d %02d:"
@@ -117,7 +117,7 @@ bool CRFDBItemLog::insert_iteminfo(_LTD_ITEMINFO *pi, unsigned __int8 byIndex)
 bool CRFDBItemLog::insert_expend(_LTD_EXPEND *pe)
 {
   char buffer[528]{};
-  memset_0(buffer, 0, 512);
+  std::memset(buffer, 0, 512);
   sprintf(
     buffer,
     "insert into tbl_ltd_expend_%d(LogSerial, SubType, Expend)values ('%04d-%02d-%02d %02d:%02d:%02d.%03d', %d, '%s')",

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -65,9 +65,9 @@ _worlddb_character_base_info_array characterData{};
 
     pRegedList[slotIndex].m_bySlotIndex = slotIndex;
     pRegedList[slotIndex].m_dwRecordNum = characterData.CharacterInfo[j].dwSerial;
-    strcpy_0(pRegedList[slotIndex].m_wszAvatorName, characterData.CharacterInfo[j].wszName);
+    std::strcpy(pRegedList[slotIndex].m_wszAvatorName, characterData.CharacterInfo[j].wszName);
     pRegedList[slotIndex].m_byRaceSexCode = characterData.CharacterInfo[j].byRace;
-    strcpy_0(pRegedList[slotIndex].m_szClassCode, characterData.CharacterInfo[j].szClassCode);
+    std::strcpy(pRegedList[slotIndex].m_szClassCode, characterData.CharacterInfo[j].szClassCode);
     pRegedList[slotIndex].m_byLevel = characterData.CharacterInfo[j].byLevel;
     pRegedList[slotIndex].m_dwDalant = characterData.CharacterInfo[j].dwDalant;
     pRegedList[slotIndex].m_dwGold = characterData.CharacterInfo[j].dwGold;
@@ -83,7 +83,7 @@ _worlddb_character_base_info_array characterData{};
   }
 
   _worlddb_arrange_char_info arrangeData{};
-  memset_0(&arrangeData, 0, sizeof(arrangeData));
+  std::memset(&arrangeData, 0, sizeof(arrangeData));
   result = m_pWorldDB->Select_NotArrangeCharacter(dwAccountSerial, &arrangeData);
   if (result == 1)
   {
@@ -92,7 +92,7 @@ _worlddb_character_base_info_array characterData{};
 
   for (int j = 0; j < arrangeData.byCount; ++j)
   {
-    memcpy_0(&pArrangedList[j], &arrangeData.ArrangeChar[j], sizeof(_NOT_ARRANGED_AVATOR_DB));
+    std::memcpy(&pArrangedList[j], &arrangeData.ArrangeChar[j], sizeof(_NOT_ARRANGED_AVATOR_DB));
   }
 
   return 0;
@@ -619,7 +619,7 @@ unsigned __int8 CMainThread::db_char_set_alive(
   }
 
   char destName[44]{};
-  strcpy_0(destName, szReviveMapCode);
+  std::strcpy(destName, szReviveMapCode);
   if (destName[0] == '*' || destName[0] == '!')
   {
     return 47;
@@ -643,7 +643,7 @@ unsigned __int8 CMainThread::db_char_set_alive(
 
   for (int j = 0; j < 3; ++j)
   {
-    if (!strcmp_0(destName, kNonMakeName[j]))
+    if (!std::strcmp(destName, kNonMakeName[j]))
     {
       return 47;
     }
@@ -659,9 +659,9 @@ unsigned __int8 CMainThread::db_char_set_alive(
   m_pWorldDB->Select_CharacterBaseInfo(dwDalant, &baseInfo);
   pReged->m_bySlotIndex = byReviveStat;
   pReged->m_dwRecordNum = dwDalant;
-  strcpy_0(pReged->m_wszAvatorName, baseInfo.wszName);
+  std::strcpy(pReged->m_wszAvatorName, baseInfo.wszName);
   pReged->m_byRaceSexCode = baseInfo.byRace;
-  strcpy_0(pReged->m_szClassCode, baseInfo.szClassCode);
+  std::strcpy(pReged->m_szClassCode, baseInfo.szClassCode);
   pReged->m_byLevel = baseInfo.byLevel;
   pReged->m_dwDalant = baseInfo.dwDalant;
   pReged->m_dwGold = baseInfo.dwGold;
@@ -1136,7 +1136,7 @@ unsigned __int8 CMainThread::_db_Update_Cash_LimSale(_db_cash_limited_sale *pNew
   char source[160]{};
   char buffer[2052]{};
   sprintf_s(buffer, 2048, "UPDATE tbl_Cash_LimSale Set ");
-  int baseLen = static_cast<int>(strlen_0(buffer));
+  int baseLen = static_cast<int>(std::strlen(buffer));
   if (pNewData->byDck != pOldData->byDck)
   {
     sprintf(source, "DCK=%d,", pNewData->byDck);
@@ -1161,14 +1161,14 @@ unsigned __int8 CMainThread::_db_Update_Cash_LimSale(_db_cash_limited_sale *pNew
     }
   }
 
-  if (strlen_0(buffer) <= static_cast<size_t>(baseLen))
+  if (std::strlen(buffer) <= static_cast<size_t>(baseLen))
   {
-    memset_0(buffer, 0, baseLen);
+    std::memset(buffer, 0, baseLen);
   }
   else
   {
     sprintf_s(source, 128, "WHERE [index] = 1");
-    buffer[strlen_0(buffer) - 1] = ' ';
+    buffer[std::strlen(buffer) - 1] = ' ';
     strcat_s(buffer, 2048, source);
     m_pWorldDB->ExecUpdateQuery(buffer, true);
   }
@@ -1218,7 +1218,7 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   char buffer[2052]{};
 
   sprintf_s(buffer, 2048, "UPDATE tbl_GoldBoxItem Set ");
-  int baseLen = static_cast<int>(strlen_0(buffer));
+  int baseLen = static_cast<int>(std::strlen(buffer));
   if (pNewData->bydck != pOldData->bydck)
   {
     sprintf(source, "DCK=%d,", pNewData->bydck);
@@ -1268,14 +1268,14 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
     }
   }
 
-  if (strlen_0(buffer) <= static_cast<size_t>(baseLen))
+  if (std::strlen(buffer) <= static_cast<size_t>(baseLen))
   {
-    memset_0(buffer, 0, baseLen);
+    std::memset(buffer, 0, baseLen);
   }
   else
   {
     sprintf_s(source, 128, "WHERE serial=%d", nDBSerial);
-    buffer[strlen_0(buffer) - 1] = ' ';
+    buffer[std::strlen(buffer) - 1] = ' ';
     strcat_s(buffer, 2048, source);
     m_pWorldDB->ExecUpdateQuery(buffer, true);
   }
@@ -1313,7 +1313,7 @@ char CMainThread::_db_Update_Inven(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_inven SET ");
-  unsigned int baseLen = static_cast<unsigned int>(strlen_0(buffer));
+  unsigned int baseLen = static_cast<unsigned int>(std::strlen(buffer));
   unsigned __int8 maxSlots = static_cast<unsigned __int8>(20 * pNewData->dbAvator.m_byBagNum);
 
   for (int j = 0; j < maxSlots; ++j)
@@ -1327,17 +1327,17 @@ char CMainThread::_db_Update_Inven(
         if (newKey != oldKey)
         {
           sprintf(source, "K%d=%d,", j, newKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].dwDur != pOldData->dbInven.m_List[j].dwDur)
         {
           sprintf(source, "D%d=%I64d,", j, pNewData->dbInven.m_List[j].dwDur);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].dwUpt != pOldData->dbInven.m_List[j].dwUpt)
         {
           sprintf(source, "U%d=%d,", j, pNewData->dbInven.m_List[j].dwUpt);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].byCsMethod)
         {
@@ -1348,7 +1348,7 @@ char CMainThread::_db_Update_Inven(
             newTime = pNewData->dbInven.m_List[j].dwT - g_Main.m_tmDbUpdate;
             oldTime = pOldData->dbInven.m_List[j].dwT - g_Main.m_tmDbUpdate;
             sprintf(source, "T%d=%d,", j, newTime);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
           else if (pNewData->dbInven.m_List[j].byCsMethod == 2)
           {
@@ -1357,14 +1357,14 @@ char CMainThread::_db_Update_Inven(
             if (newTime != oldTime)
             {
               sprintf(source, "T%d=%d,", j, newTime);
-              strcat_0(buffer, source);
+              std::strcat(buffer, source);
             }
           }
         }
         if (pNewData->dbInven.m_List[j].lnUID != pOldData->dbInven.m_List[j].lnUID)
         {
           sprintf(source, "S%d=%I64d,", j, pNewData->dbInven.m_List[j].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else
@@ -1392,26 +1392,26 @@ char CMainThread::_db_Update_Inven(
           newTime,
           j,
           pNewData->dbInven.m_List[j].lnUID);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbInven.m_List[j].Key.IsFilled())
     {
       int newKey = pNewData->dbInven.m_List[j].Key.CovDBKey();
       sprintf(source, "K%d=%d,", j, newKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  if (strlen_0(buffer) <= baseLen)
+  if (std::strlen(buffer) <= baseLen)
   {
-    memset_0(buffer, 0, baseLen);
+    std::memset(buffer, 0, baseLen);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    buffer[strlen_0(buffer) - 1] = ' ';
-    strcat_0(buffer, source);
+    buffer[std::strlen(buffer) - 1] = ' ';
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1510,7 +1510,7 @@ bool CMainThread::_db_Update_MacroData(
     {
       for (int k = 0; k < 5; ++k)
       {
-        if (strcmp_0(pMacro->mcr_Chat[j].Chat[k], pOldMacro->mcr_Chat[j].Chat[k]))
+        if (std::strcmp(pMacro->mcr_Chat[j].Chat[k], pOldMacro->mcr_Chat[j].Chat[k]))
         {
           changed = 0;
           break;

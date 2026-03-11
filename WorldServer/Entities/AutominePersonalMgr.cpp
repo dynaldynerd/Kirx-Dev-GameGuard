@@ -173,7 +173,7 @@ char AutominePersonalMgr::db_load_inven(unsigned int dwSerial, _PERSONALAMINE_IN
     }
     else
     {
-      memcpy_0(&pCon->m_List[j], &inven.list[j], 4u);
+      std::memcpy(&pCon->m_List[j], &inven.list[j], 4u);
       pCon->m_List[j].dwDur = inven.list[j].byNum;
     }
   }
@@ -249,7 +249,7 @@ unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage 
       std::memset(buffer, 0, 10240);
       sprintf(buffer, "update [dbo].[tbl_aminepersonal_inven] set ");
 
-      int len = static_cast<int>(strlen_0(buffer));
+      int len = static_cast<int>(std::strlen(buffer));
       for (int j = 0; j < updateQuery->byChangeCount; ++j)
       {
         const _qry_case_make_storage_update_entry &entry = entries[j];
@@ -257,7 +257,7 @@ unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage 
         sprintf(dest, ",K%d=%d,N%d=%d,", entry.bySlot, entry.dwItemKey, entry.bySlot, entry.byAmount);
       }
 
-      len = static_cast<int>(strlen_0(buffer));
+      len = static_cast<int>(std::strlen(buffer));
       sprintf(&buffer[len - 1], " where avatorserial = %d", updateQuery->base.dwAvatorSerial);
       if (g_Main.m_pWorldDB->update_amine_personal(buffer))
       {

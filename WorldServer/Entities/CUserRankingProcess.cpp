@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUserRankingProcess.h"
 
@@ -70,7 +70,7 @@ CUserRankingProcess::CUserRankingProcess()
   m_tFailStartTime = -1;
   m_iPvpSaveJobIndexOffset = 0;
   m_iPvpRankDataVersionUpSendOffset = 0;
-  memset_0(m_szPvpRankDate, 0, sizeof(m_szPvpRankDate));
+  std::memset(m_szPvpRankDate, 0, sizeof(m_szPvpRankDate));
 }
 
 CUserRankingProcess::~CUserRankingProcess() = default;
@@ -300,7 +300,7 @@ char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
   {
     g_Main.m_logLoadingError.Write("Race_%d Ranking Start!!", race);
     _PVP_RANK_DATA *rankData = m_vecPvpRankDataCurrent[race];
-    memset_0(rankData, 0, 5500);
+    std::memset(rankData, 0, 5500);
 
     const unsigned __int8 selectResult = g_Main.m_pWorldDB->Select_PvpRankInfo(
       static_cast<unsigned __int8>(race),
@@ -324,7 +324,7 @@ char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
     {
       for (int index = 0; index < 9; ++index)
       {
-        if (!strlen_0(rankData[index].wszName))
+        if (!std::strlen(rankData[index].wszName))
         {
           m_dwUpdateRaceBossSerial[race][index] = static_cast<unsigned int>(-1);
         }
@@ -351,7 +351,7 @@ void CPvpUserRankingInfo::ClearTomorrowPvpRankData()
     _PVP_RANK_DATA *tomorrow = m_vecPvpRankDataTomorrow[j];
     if (tomorrow)
     {
-      memset_0(tomorrow, 0, 5500);
+      std::memset(tomorrow, 0, 5500);
     }
   }
 }
@@ -375,7 +375,7 @@ void CPvpUserRankingInfo::DoDayChangedWork(CLogFile *pkLogger)
       return;
     }
 
-    memcpy_0(m_vecPvpRankDataCurrent[j], m_vecPvpRankDataTomorrow[j], 5500);
+    std::memcpy(m_vecPvpRankDataCurrent[j], m_vecPvpRankDataTomorrow[j], 5500);
   }
 
   PvpRankDataPacking(pkLogger);
@@ -435,7 +435,7 @@ void CPvpUserRankingInfo::SendMsg_PvpRankListData(
   result.byVersion = byVersion;
   result.byPage = byPage;
   result.wRankDataLen = packed->wDataLen;
-  memcpy_0(result.szPvpRankData, packed->szPackedData, packed->wDataLen);
+  std::memcpy(result.szPvpRankData, packed->szPackedData, packed->wDataLen);
 
   unsigned __int8 type[2]{13, 20};
   const unsigned __int16 len = static_cast<unsigned __int16>(result.size());
@@ -479,23 +479,23 @@ void CPvpUserRankingInfo::PvpRankDataPacking(CLogFile *pkLogger)
       for (unsigned int rankIndex = baseIndex; rankIndex < baseIndex + 10; ++rankIndex)
       {
         _PVP_RANK_DATA *rankData = m_vecPvpRankDataCurrent[race];
-        unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(rankData[rankIndex].wszName) + 1);
+        unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(rankData[rankIndex].wszName) + 1);
         if (nameLen <= 1)
         {
           break;
         }
 
         packedBuffer[dataLen++] = static_cast<char>(nameLen);
-        memcpy_0(packedBuffer + dataLen, rankData[rankIndex].wszName, nameLen);
+        std::memcpy(packedBuffer + dataLen, rankData[rankIndex].wszName, nameLen);
         dataLen += nameLen;
 
         packedBuffer[dataLen++] = static_cast<char>(rankData[rankIndex].byRank);
         packedBuffer[dataLen++] = static_cast<char>(rankData[rankIndex].byGrade);
 
         unsigned __int8 guildNameLen =
-          static_cast<unsigned __int8>(strlen_0(rankData[rankIndex].wszGuildName) + 1);
+          static_cast<unsigned __int8>(std::strlen(rankData[rankIndex].wszGuildName) + 1);
         packedBuffer[dataLen++] = static_cast<char>(guildNameLen);
-        memcpy_0(packedBuffer + dataLen, rankData[rankIndex].wszGuildName, guildNameLen);
+        std::memcpy(packedBuffer + dataLen, rankData[rankIndex].wszGuildName, guildNameLen);
         dataLen += guildNameLen;
 
         packedBuffer[dataLen++] = static_cast<char>(
@@ -977,7 +977,7 @@ void CUserRankingProcess::ProcRankStart()
   }
 
   char szDate[48];
-  memset_0(szDate, 0, 9u);
+  std::memset(szDate, 0, 9u);
   GetDateStrAfterDay(szDate, 9, 1u);
 
   _qry_case_rank_racerank_guildrank qry;

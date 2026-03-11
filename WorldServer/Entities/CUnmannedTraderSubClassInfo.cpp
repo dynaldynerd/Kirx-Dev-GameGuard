@@ -5,13 +5,13 @@
 CUnmannedTraderSubClassInfo::CUnmannedTraderSubClassInfo(unsigned int dwID)
   : m_szName{}, m_dwID(dwID)
 {
-  strcpy_0(this->m_szName, "NONE");
+  std::strcpy(this->m_szName, "NONE");
 }
 
 CUnmannedTraderSubClassInfo::CUnmannedTraderSubClassInfo(const CUnmannedTraderSubClassInfo *lhs)
   : m_szName{}, m_dwID(0)
 {
-  strcpy_0(this->m_szName, "NONE");
+  std::strcpy(this->m_szName, "NONE");
   Copy(lhs);
 }
 
@@ -22,7 +22,7 @@ CUnmannedTraderSubClassInfo::~CUnmannedTraderSubClassInfo()
 const CUnmannedTraderSubClassInfo *CUnmannedTraderSubClassInfo::Copy(const CUnmannedTraderSubClassInfo *lhs)
 {
   this->m_dwID = lhs->m_dwID;
-  strcpy_0(this->m_szName, lhs->m_szName);
+  std::strcpy(this->m_szName, lhs->m_szName);
   return this;
 }
 

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "Voter.h"
 
@@ -51,8 +51,8 @@ int Voter::Doit(Cmd cmd, CPlayer *player, char *payload)
 
 void Voter::_MakeVotePaper()
 {
-  memset_0(_kCandidateInfo, 0, sizeof(_kCandidateInfo));
-  memset_0(_kVoteScoreInfo, 0, sizeof(_kVoteScoreInfo));
+  std::memset(_kCandidateInfo, 0, sizeof(_kCandidateInfo));
+  std::memset(_kVoteScoreInfo, 0, sizeof(_kVoteScoreInfo));
 
   for (int race = 0; race < 3; ++race)
   {
@@ -210,7 +210,7 @@ int Voter::_Vote(CPlayer *player, char *payload)
 
     const unsigned __int8 voteScore = (player->m_Param.m_byPvPGrade < 4u) ? 1u : 2u;
     char *candidateName = payload + 1;
-    if (!strcmp_0(player->m_Param.GetCharNameW(), candidateName))
+    if (!std::strcmp(player->m_Param.GetCharNameW(), candidateName))
     {
       PatriarchElectProcessor::Instance()->m_dwNonvoteCnt[raceCode] += voteScore;
       abstention = true;
@@ -398,7 +398,7 @@ bool Voter::IsRegistedVotePaper(unsigned __int8 raceCode, char *candidateName)
 {
   for (int index = 0; index < _kCandidateInfo[raceCode].byCnt; ++index)
   {
-    if (!strcmp_0(_kCandidateInfo[raceCode].body[index].wszAvatorName, candidateName))
+    if (!std::strcmp(_kCandidateInfo[raceCode].body[index].wszAvatorName, candidateName))
     {
       return true;
     }

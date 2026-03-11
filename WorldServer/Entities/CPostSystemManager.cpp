@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPostSystemManager.h"
 
@@ -548,7 +548,7 @@ char CPostSystemManager::PostSendRequest(
       if (player
           && player->m_bOper
           && player->m_bLive
-          && !strcmp_0(wszRecvName, player->m_pUserDB->m_AvatorData.dbAvator.m_wszAvatorName))
+          && !std::strcmp(wszRecvName, player->m_pUserDB->m_AvatorData.dbAvator.m_wszAvatorName))
       {
         if (g_Main.m_pTimeLimitMgr->GetPlayerStatus(player->m_id.wIndex) == 99)
         {
@@ -590,13 +590,13 @@ char CPostSystemManager::PostSendRequest(
     errCode = 16;
   }
 
-  if (!strlen_0(wszTitle) || !strlen_0(wszRecvName))
+  if (!std::strlen(wszTitle) || !std::strlen(wszRecvName))
   {
     errCode = 8;
   }
-  if (!strlen_0(wszContent))
+  if (!std::strlen(wszContent))
   {
-    strcpy_0(wszContent, " ");
+    std::strcpy(wszContent, " ");
   }
 
   if (!errCode)

@@ -4,7 +4,7 @@
 
 CLuaCommand::CLuaCommand()
 {
-  memset_0(m_strBuff, 0, sizeof(m_strBuff));
+  std::memset(m_strBuff, 0, sizeof(m_strBuff));
   m_byCommand = 0;
 }
 

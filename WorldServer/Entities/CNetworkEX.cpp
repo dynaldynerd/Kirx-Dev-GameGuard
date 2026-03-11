@@ -166,7 +166,7 @@ CNetWorking::CNetWorking()
   }
 
   m_bUseFG = true;
-  memset_0(m_szServerName, 0, sizeof(m_szServerName));
+  std::memset(m_szServerName, 0, sizeof(m_szServerName));
 }
 
 CNetWorking::~CNetWorking()
@@ -238,7 +238,7 @@ bool CNetWorking::SetNetSystem(
 
   std::memset(returnedString, 0, 16);
   GetPrivateProfileStringA("FireGuard Use", "Use", "TRUE", returnedString, 16, ".\\fireguard\\fgrs.ini");
-  this->m_bUseFG = strcmp_0(returnedString, "FALSE") != 0;
+  this->m_bUseFG = std::strcmp(returnedString, "FALSE") != 0;
 
   GetPrivateProfileStringA("System", "WorldName", "X", this->m_szServerName, 33, "..\\WorldInfo\\WorldInfo.ini");
   if (this->m_szServerName[0] == 'X')
@@ -264,7 +264,7 @@ bool CNetWorking::SetNetSystem(
         *(slash + 1) = 0;
       }
       strcat_s(filename, 260, "fireguard\\");
-      const int pathLen = strlen_0(filename);
+      const int pathLen = std::strlen(filename);
       if (AddEnvVariable("path", filename, pathLen) <= 0)
       {
         this->m_LogFile.Write("SetNetSystem(%d) CCRFG SERVER : AddEnvVariable() Fail", nIndex);
@@ -274,7 +274,7 @@ bool CNetWorking::SetNetSystem(
       if (this->m_bUseFG)
       {
         g_pfnCallBack.pfunc = CcrFgCallback;
-        const unsigned int nameLen = strlen_0(this->m_szServerName);
+        const unsigned int nameLen = std::strlen(this->m_szServerName);
         const int result = _CcrFG_rs_Initialize(
           reinterpret_cast<int (__fastcall *)(int, void *, void *, int, void *)>(g_pfnCallBack.pfunc),
           reinterpret_cast<unsigned __int8 *>(this->m_szServerName),
@@ -402,10 +402,10 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
   {
     CUserDB *user = &g_UserDB[dwIndex];
     char accountId[48]{};
-    strcpy_0(accountId, "null");
+    std::strcpy(accountId, "null");
     if (user->m_bActive)
     {
-      strcpy_0(accountId, user->m_szAccountID);
+      std::strcpy(accountId, user->m_szAccountID);
     }
 
     _socket *socket = GetSocket(0, dwIndex);
@@ -420,10 +420,10 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
   {
     CUserDB *user = &g_UserDB[dwIndex];
     char accountId[48]{};
-    strcpy_0(accountId, "null");
+    std::strcpy(accountId, "null");
     if (user->m_bActive)
     {
-      strcpy_0(accountId, user->m_szAccountID);
+      std::strcpy(accountId, user->m_szAccountID);
     }
 
     _socket *socket = GetSocket(0, dwIndex);
@@ -2464,9 +2464,9 @@ bool CNetworkEX::GotoAvatorRequest(unsigned int n, const _goto_avator_request_cl
   }
 
   char nameBuffer[17]{};
-  memcpy_0(nameBuffer, request->wszAvatorName, sizeof(request->wszAvatorName));
+  std::memcpy(nameBuffer, request->wszAvatorName, sizeof(request->wszAvatorName));
   nameBuffer[16] = '\0';
-  if (strlen_0(nameBuffer) <= 16)
+  if (std::strlen(nameBuffer) <= 16)
   {
     if (player->m_byUserDgr)
     {
@@ -3938,9 +3938,9 @@ bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char
   else
   {
     const _enter_world_request_zone *request = reinterpret_cast<_enter_world_request_zone *>(pBuf);
-    if (strlen_0(request->szClientVerCheckKey) == 32)
+    if (std::strlen(request->szClientVerCheckKey) == 32)
     {
-      if (strcmp_0(CMainThread::ms_szClientVerCheck, "X")
+      if (std::strcmp(CMainThread::ms_szClientVerCheck, "X")
           && strncmp(CMainThread::ms_szClientVerCheck, request->szClientVerCheckKey, 32))
       {
         m_LogFile.Write(
@@ -4032,16 +4032,16 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
   }
 
   char charName[17]{};
-  memcpy_0(charName, request->wszCharName, 16);
+  std::memcpy(charName, request->wszCharName, 16);
   charName[16] = '\0';
 
-  if (strlen_0(charName) <= 16)
+  if (std::strlen(charName) <= 16)
   {
     if (static_cast<unsigned __int8>(request->bySlotIndex) < 3u)
     {
       if (static_cast<unsigned __int8>(request->byRaceSexCode) < 5u)
       {
-        if (strlen_0(request->wszClassCode) <= 4)
+        if (std::strlen(request->wszClassCode) <= 4)
         {
           if (Major_Add_Character)
           {
@@ -4151,10 +4151,10 @@ bool CNetworkEX::AliveCharRequest(int n, char *pBuf)
   }
 
   char charName[17]{};
-  memcpy_0(charName, request->wszNewName, 16);
+  std::memcpy(charName, request->wszNewName, 16);
   charName[16] = '\0';
 
-  if (strlen_0(charName) <= 16)
+  if (std::strlen(charName) <= 16)
   {
     if (static_cast<unsigned __int8>(request->bySlotIndex) < 3u)
     {
@@ -4185,7 +4185,7 @@ bool CNetworkEX::AliveCharRequest(int n, char *pBuf)
 bool CNetworkEX::NotifyLocalTimeRequest(int n, char *pBuf)
 {
 _notify_local_time_result_zocl result{};
-  memset_0(&result, 0, sizeof(result));
+  std::memset(&result, 0, sizeof(result));
   unsigned __int8 type[2]{1, 27};
 
   CPlayer *player = &g_Player[n];
@@ -4253,7 +4253,7 @@ bool CNetworkEX::ChatOperatorRequest(unsigned int n, char *pBuf)
     else
     {
       char chatData[272]{};
-      memcpy_0(chatData, request->wszChatData, messageSize);
+      std::memcpy(chatData, request->wszChatData, messageSize);
       chatData[messageSize] = 0;
       player->pc_ChatOperatorRequest(raceCode, chatData);
     }
@@ -4291,7 +4291,7 @@ bool CNetworkEX::ChatCircleRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatCircleRequest(chatData);
   }
@@ -4321,9 +4321,9 @@ bool CNetworkEX::ChatFarRequest(unsigned int n, char *pBuf)
   {
     char name[56]{};
     char chatData[272]{};
-    memcpy_0(name, request->wszName, 16);
+    std::memcpy(name, request->wszName, 16);
     name[16] = 0;
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatFarRequest(name, chatData);
   }
@@ -4352,7 +4352,7 @@ bool CNetworkEX::ChatPartyRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatPartyRequest(chatData);
   }
@@ -4381,7 +4381,7 @@ bool CNetworkEX::ChatRaceRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatRaceRequest(chatData);
   }
@@ -4406,7 +4406,7 @@ bool CNetworkEX::ChatCheatRequest(unsigned int n, char *pBuf)
   else
   {
     char command[272]{};
-    memcpy_0(command, request->wszChatData, size);
+    std::memcpy(command, request->wszChatData, size);
     command[size] = 0;
     ProcessCheatCommand(player, command);
   }
@@ -4439,7 +4439,7 @@ bool CNetworkEX::ChatMgrWhisperRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatMgrWhisperRequest(chatData);
   }
@@ -4475,7 +4475,7 @@ bool CNetworkEX::ChatMapRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatMapRequest(chatData);
   }
@@ -4502,7 +4502,7 @@ bool CNetworkEX::ChatRaceBossRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatRaceBossRequest(chatData);
   }
@@ -4529,7 +4529,7 @@ bool CNetworkEX::ChatGuildEstSenRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatGuildEstSenRequest(chatData);
   }
@@ -4556,7 +4556,7 @@ bool CNetworkEX::ChatRePresentationRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatRePresentationRequest(chatData);
   }
@@ -4592,7 +4592,7 @@ bool CNetworkEX::ChatAllRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatAllRequest(chatData);
   }
@@ -4625,7 +4625,7 @@ bool CNetworkEX::ChatGreetingMsg_GM(unsigned int n, char *pBuf)
   if (IsSQLValidString(request->wszChatData))
   {
     char msg[272]{};
-    memcpy_0(msg, request->wszChatData, size);
+    std::memcpy(msg, request->wszChatData, size);
     msg[size] = 0;
     char *charName = player->m_Param.GetCharNameW();
     g_Main.pc_SetMainGreetingMsg( charName, msg);
@@ -4672,7 +4672,7 @@ bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
   if (IsSQLValidString(request->wszChatData))
   {
     char msg[272]{};
-    memcpy_0(msg, request->wszChatData, size);
+    std::memcpy(msg, request->wszChatData, size);
     msg[size] = 0;
     char *bossName = player->m_Param.GetCharNameA();
     const int senderRace = player->m_Param.GetRaceCode();
@@ -4719,7 +4719,7 @@ bool CNetworkEX::ChatGreetingMsg_GUILD(unsigned int n, char *pBuf)
         if (IsSQLValidString(request->wszChatData))
         {
           char msg[272]{};
-          memcpy_0(msg, request->wszChatData, size);
+          std::memcpy(msg, request->wszChatData, size);
           msg[size] = 0;
           if (player->m_Param.m_pGuild)
           {
@@ -4759,7 +4759,7 @@ bool CNetworkEX::ChatTradeRequestMsg(unsigned int n, char *pBuf)
   else
   {
     char tradeMsg[272]{};
-    memcpy_0(tradeMsg, request->wszChatData, messageSize);
+    std::memcpy(tradeMsg, request->wszChatData, messageSize);
     tradeMsg[messageSize] = 0;
     player->pc_ChatTradeRequestMsg(static_cast<unsigned __int8>(request->byRaceCode), tradeMsg);
   }
@@ -4788,7 +4788,7 @@ bool CNetworkEX::ChatGuildRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatGuildRequest(request->dwDstSerial, chatData);
   }
@@ -4813,7 +4813,7 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
     for (int j = 0; j < transNum; ++j)
     {
       unsigned __int8 nameLen = 0;
-      memcpy_0(&nameLen, src, 1u);
+      std::memcpy(&nameLen, src, 1u);
       ++src;
       if (nameLen > 16)
       {
@@ -4821,13 +4821,13 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
         m_LogFile.Write("odd.. %s: ChatMultiFarRequest()..  if(byNameLen > max_name_len)", charName);
         return true;
       }
-      memcpy_0(dstNames[j].name, src, nameLen);
+      std::memcpy(dstNames[j].name, src, nameLen);
       dstNames[j].name[nameLen] = 0;
       src += nameLen;
     }
 
     unsigned __int8 msgSize = 0;
-    memcpy_0(&msgSize, src, 1u);
+    std::memcpy(&msgSize, src, 1u);
     ++src;
     if (msgSize == 255)
     {
@@ -4837,7 +4837,7 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
     else
     {
       char msg[264]{};
-      memcpy_0(msg, src, msgSize);
+      std::memcpy(msg, src, msgSize);
       src += msgSize;
       msg[msgSize] = 0;
       player->pc_ChatMultiFarRequest(transNum, dstNames, msg);
@@ -4870,7 +4870,7 @@ bool CNetworkEX::ChatRaceBossCryRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatRaceBossCryRequest(chatData);
   }
@@ -4897,7 +4897,7 @@ bool CNetworkEX::ChatGmNoticeRequest(unsigned int n, char *pBuf)
   else
   {
     char chatData[272]{};
-    memcpy_0(chatData, request->wszChatData, size);
+    std::memcpy(chatData, request->wszChatData, size);
     chatData[size] = 0;
     player->pc_ChatGmNoticeRequest(chatData);
   }
@@ -5217,7 +5217,7 @@ bool CNetworkEX::CheckIsBlockIPResult(unsigned int n, const _check_is_block_ip_r
       }
 
       _server_notify_inform_zone notify{};
-      memset_0(&notify.dwPushIP, 0, sizeof(notify.dwPushIP));
+      std::memset(&notify.dwPushIP, 0, sizeof(notify.dwPushIP));
       notify.wMsgCode = 10;
       notify.dwPushIP = request->ulIP;
       unsigned __int8 type[2]{1, 16};
@@ -5296,16 +5296,16 @@ bool CNetworkEX::ManageClientForceExitRequest()
   {
     if (choice == 1)
     {
-      memset_0(g_Monster, 0, 8uLL);
+      std::memset(g_Monster, 0, 8uLL);
     }
     else if (choice == 2)
     {
-      memset_0(this, 0, sizeof(CNetworkEX));
+      std::memset(this, 0, sizeof(CNetworkEX));
     }
   }
   else
   {
-    memset_0(&g_Main, 0, sizeof(g_Main));
+    std::memset(&g_Main, 0, sizeof(g_Main));
   }
   return true;
 }
@@ -5339,7 +5339,7 @@ char msgBuf[1312]{};
   const unsigned __int16 msgLen = request->wMsgSize;
   if (msgLen < 1280)
   {
-    memcpy_0(msgBuf, request->wszMsg, msgLen);
+    std::memcpy(msgBuf, request->wszMsg, msgLen);
     msgBuf[msgLen] = 0;
     g_Main.pc_AllUserMsgInform( msgBuf);
   }
@@ -5483,8 +5483,8 @@ bool CNetworkEX::SendRaceBossMsgFromWebRequest(int n, const _send_race_boss_msg_
 {
   _qry_case_sendwebracebosssms qry{};
   qry.dwWebSendDBID = request->dwWebSendDBID;
-  strcpy_0(qry.szCharacterName, request->szCharacterName);
-  strcpy_0(qry.wszMsg, request->wszMsg);
+  std::strcpy(qry.szCharacterName, request->szCharacterName);
+  std::strcpy(qry.wszMsg, request->wszMsg);
   const unsigned __int16 size = qry.size();
   g_Main.PushDQSData( 0, nullptr, 25, reinterpret_cast<char *>(&qry), size);
   return true;
@@ -5583,7 +5583,7 @@ char CNetworkEX::BossSMSMsgRequest(int n, char *pBuf)
     if (IsSQLValidString(request->wszChatData))
     {
       char msg[72]{};
-      memcpy_0(msg, request->wszChatData, msgSize);
+      std::memcpy(msg, request->wszChatData, msgSize);
       msg[msgSize] = 0;
       CRaceBossMsgController::Instance()->Send(sender, msg);
       return 1;
@@ -5714,7 +5714,7 @@ bool CNetworkEX::CancelRaceBossSMSMsg(int n, char *pBuf)
 bool CNetworkEX::ConnectionStatusRequest(int n)
 {
 _connection_status_result_zoct result{};
-  memset_0(&result, 0, sizeof(result));
+  std::memset(&result, 0, sizeof(result));
   for (unsigned __int8 index = 0; index < 6u; ++index)
   {
     result.bStatus[index] = 0;
@@ -6345,13 +6345,13 @@ char CNetworkEX::TrunkEstRequest(int n, char *pBuf)
   }
 
   char password[128]{};
-  memcpy_0(password, request->wszPassword, 12);
+  std::memcpy(password, request->wszPassword, 12);
   password[12] = 0;
 
   const unsigned __int8 hintIndex = static_cast<unsigned __int8>(request->byHintIndex);
 
   char hintAnswer[128]{};
-  memcpy_0(hintAnswer, request->wszHintAnswer, 16);
+  std::memcpy(hintAnswer, request->wszHintAnswer, 16);
   hintAnswer[16] = 0;
 
   player->pc_TrunkEstRequest(password, hintIndex, hintAnswer);
@@ -6368,7 +6368,7 @@ char CNetworkEX::TrunkDownloadRequest(int n, char *pBuf)
   }
 
   char password[128]{};
-  memcpy_0(password, request->wszPassword, 12);
+  std::memcpy(password, request->wszPassword, 12);
   password[12] = 0;
 
   player->pc_TrunkDownloadRequest(password);
@@ -6385,17 +6385,17 @@ char CNetworkEX::TrunkChangePasswdRequest(int n, char *pBuf)
   }
 
   char prevPassword[128]{};
-  memcpy_0(prevPassword, request->wszPrevPassword, 12);
+  std::memcpy(prevPassword, request->wszPrevPassword, 12);
   prevPassword[12] = 0;
 
   char changedPassword[128]{};
-  memcpy_0(changedPassword, request->wszChangedPassword, 12);
+  std::memcpy(changedPassword, request->wszChangedPassword, 12);
   changedPassword[12] = 0;
 
   const unsigned __int8 hintIndex = static_cast<unsigned __int8>(request->byHintIndex);
 
   char hintAnswer[128]{};
-  memcpy_0(hintAnswer, request->wszHintAnswer, 16);
+  std::memcpy(hintAnswer, request->wszHintAnswer, 16);
   hintAnswer[16] = 0;
 
   player->pc_TrunkChangePasswdRequest(prevPassword, changedPassword, hintIndex, hintAnswer);
@@ -6759,7 +6759,7 @@ char CNetworkEX::TrunkHintAnswerRequest(int n, const _trunk_hint_answer_request_
   }
 
   char answer[128]{};
-  memcpy_0(answer, request->wszAnswer, sizeof(request->wszAnswer));
+  std::memcpy(answer, request->wszAnswer, sizeof(request->wszAnswer));
   answer[16] = 0;
 
   player->pc_TrunkHintAnswerRequest(answer);
@@ -6877,7 +6877,7 @@ char CNetworkEX::RequestPatriarchPunishment(int n, char *pBuf)
       {
         char content[1296];
         memset(content, 0, 1280);
-        memcpy_0(content, request->wszContent, contentSize);
+        std::memcpy(content, request->wszContent, contentSize);
         content[contentSize] = 0;
         player->pc_RequestPatriarchPunishment(punishmentType, request->wszCharName, content);
         return 1;
@@ -6938,9 +6938,9 @@ char CNetworkEX::RequestUILockInit(int n, char *pBuf)
   memset(uiLockPwConfirm, 0, 13);
   memset(uiLockHintAnswer, 0, 17);
 
-  memcpy_0(uiLockPw, request->uszUILockPW, 12);
-  memcpy_0(uiLockPwConfirm, request->uszUILockPWConfirm, 12);
-  memcpy_0(uiLockHintAnswer, request->uszHintAnswer, 16);
+  std::memcpy(uiLockPw, request->uszUILockPW, 12);
+  std::memcpy(uiLockPwConfirm, request->uszUILockPWConfirm, 12);
+  std::memcpy(uiLockHintAnswer, request->uszHintAnswer, 16);
 
   player->pc_RequestUILockInit(
     userDb,
@@ -7317,10 +7317,10 @@ char CNetworkEX::AwayPartyInvitation(int n, const _away_party_invitation_request
     return 1;
   }
 
-  memcpy_0(inviteeName, request->wszCharName, sizeof(request->wszCharName));
+  std::memcpy(inviteeName, request->wszCharName, sizeof(request->wszCharName));
   inviteeName[16] = 0;
 
-  if (!strlen_0(inviteeName))
+  if (!std::strlen(inviteeName))
   {
     const char *charName = player->m_Param.GetCharNameA();
     m_LogFile.Write(
@@ -7329,7 +7329,7 @@ char CNetworkEX::AwayPartyInvitation(int n, const _away_party_invitation_request
     return 0;
   }
 
-  if (strlen_0(inviteeName) <= 16)
+  if (std::strlen(inviteeName) <= 16)
   {
     player->pc_AwaypartyInvitationRequest(inviteeName);
     return 1;
@@ -8723,7 +8723,7 @@ char CNetworkEX::ProposeVoteRequest(int n, char *pBuf)
       if (limGrade <= 7u)
       {
         char content[1296];
-        memcpy_0(content, request->wszContent, contentSize);
+        std::memcpy(content, request->wszContent, contentSize);
         content[contentSize] = 0;
         player->pc_ProposeVoteRequest(limGrade, content);
         return 1;
@@ -8792,7 +8792,7 @@ char CNetworkEX::ObjectServerPosRequest(unsigned int n, char *pBuf)
   msg.dwObjSerial = request->dwObjSerial;
   if (!resultCode && target)
   {
-    memcpy_0(msg.fServerPos, target->m_fCurPos, sizeof(msg.fServerPos));
+    std::memcpy(msg.fServerPos, target->m_fCurPos, sizeof(msg.fServerPos));
   }
 
   unsigned __int8 type[2]{20, 2};
@@ -8813,7 +8813,7 @@ char CNetworkEX::GuildEstablishRequest(int n, const _guild_establish_request_clz
   }
 
   char guildName[144];
-  memcpy_0(guildName, request->wszGuildName, sizeof(request->wszGuildName));
+  std::memcpy(guildName, request->wszGuildName, sizeof(request->wszGuildName));
   guildName[16] = 0;
   player->pc_GuildEstablishRequest(guildName);
   return 1;
@@ -8844,7 +8844,7 @@ char CNetworkEX::GuildJoinApplyRequest(int n, const _guild_join_apply_request_cl
   if (player->m_bOper)
   {
     char guildName[144];
-    memcpy_0(guildName, request->wszGuildName, sizeof(request->wszGuildName));
+    std::memcpy(guildName, request->wszGuildName, sizeof(request->wszGuildName));
     guildName[16] = 0;
     player->pc_GuildJoinApplyRequest(guildName);
   }
@@ -8905,7 +8905,7 @@ char CNetworkEX::GuildOfferSuggestRequest(int n, char *pBuf)
   }
 
   char comment[96];
-  memcpy_0(comment, request->wszComment, commentSize);
+  std::memcpy(comment, request->wszComment, commentSize);
   comment[commentSize] = 0;
   player->pc_GuildOfferSuggestRequest(
     request->byMatterType,
@@ -9398,7 +9398,7 @@ char CNetworkEX::BuddyAddRequest(int n, char *pBuf)
   const unsigned __int16 dstIndex = request->wDstIndex;
   if (dstIndex == 65535)
   {
-    memcpy_0(dstName, request->wszDstName, 16);
+    std::memcpy(dstName, request->wszDstName, 16);
     dstName[16] = 0;
   }
   else if (dstIndex >= MAX_PLAYER)

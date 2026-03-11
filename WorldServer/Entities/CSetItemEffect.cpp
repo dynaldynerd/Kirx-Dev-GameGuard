@@ -159,53 +159,53 @@ char CSetItemEffect::Check_Base_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *
       continue;
     }
 
-    strcpy_0(itemCode, record->m_strCode);
+    std::strcpy(itemCode, record->m_strCode);
     switch (j)
     {
       case 0:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_upper))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_upper))
         {
           ++matchCount;
         }
         break;
       case 1:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_lower))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_lower))
         {
           ++matchCount;
         }
         break;
       case 2:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_gauntlet))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_gauntlet))
         {
           ++matchCount;
         }
         break;
       case 3:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_shoes))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_shoes))
         {
           ++matchCount;
         }
         break;
       case 4:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_head))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_head))
         {
           ++matchCount;
         }
         break;
       case 5:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_shield))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_shield))
         {
           ++matchCount;
         }
         break;
       case 6:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_weapon))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_weapon))
         {
           ++matchCount;
         }
         break;
       case 7:
-        if (!strcmp_0(itemCode, pSetFld->m_strset_cloak))
+        if (!std::strcmp(itemCode, pSetFld->m_strset_cloak))
         {
           ++matchCount;
         }
@@ -243,26 +243,26 @@ char CSetItemEffect::Check_Other_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld 
       continue;
     }
 
-    strcpy_0(itemCode, record->m_strCode);
-    if (!amulet1Matched && !strcmp_0(itemCode, pSetFld->m_strset_amulet1))
+    std::strcpy(itemCode, record->m_strCode);
+    if (!amulet1Matched && !std::strcmp(itemCode, pSetFld->m_strset_amulet1))
     {
       ++matchCount;
       amulet1Matched = true;
       continue;
     }
-    if (!amulet2Matched && !strcmp_0(itemCode, pSetFld->m_strset_amulet2))
+    if (!amulet2Matched && !std::strcmp(itemCode, pSetFld->m_strset_amulet2))
     {
       ++matchCount;
       amulet2Matched = true;
       continue;
     }
-    if (!ring1Matched && !strcmp_0(itemCode, pSetFld->m_strset_ring1))
+    if (!ring1Matched && !std::strcmp(itemCode, pSetFld->m_strset_ring1))
     {
       ++matchCount;
       ring1Matched = true;
       continue;
     }
-    if (!ring2Matched && !strcmp_0(itemCode, pSetFld->m_strset_ring2))
+    if (!ring2Matched && !std::strcmp(itemCode, pSetFld->m_strset_ring2))
     {
       ++matchCount;
       ring2Matched = true;

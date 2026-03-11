@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "EconomySystemFunctions.h"
 
@@ -298,7 +298,7 @@ void eUpdateEconomySystem(bool *pbChangeDay)
   const int avgCora = static_cast<int>(e_dwUserCumCount[1] / e_dwMinCount);
   const int avgAccretia = static_cast<int>(e_dwUserCumCount[2] / e_dwMinCount);
   e_dwMinCount = 0;
-  memset_0(e_dwUserCumCount, 0, sizeof(e_dwUserCumCount));
+  std::memset(e_dwUserCumCount, 0, sizeof(e_dwUserCumCount));
 
   for (int race = 0; race < 3; ++race)
   {
@@ -336,8 +336,8 @@ void eUpdateEconomySystem(bool *pbChangeDay)
   {
     _log_sheet_economy qryData{};
     qryData.dwDate = e_EconomySystem.m_dwLastDate;
-    memcpy_0(qryData.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(qryData.dTradeDalant));
-    memcpy_0(qryData.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(qryData.dTradeGold));
+    std::memcpy(qryData.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(qryData.dTradeDalant));
+    std::memcpy(qryData.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(qryData.dTradeGold));
     qryData.nMgrValue = 1000;
     for (int race = 0; race < 3; ++race)
     {
@@ -400,8 +400,8 @@ void eUpdateEconomySystem(bool *pbChangeDay)
     }
 
     _economy_history_data src{};
-    memcpy_0(src.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(src.dTradeGold));
-    memcpy_0(src.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(src.dTradeDalant));
+    std::memcpy(src.dTradeGold, e_EconomySystem.m_dCurTradeGold, sizeof(src.dTradeGold));
+    std::memcpy(src.dTradeDalant, e_EconomySystem.m_dCurTradeDalant, sizeof(src.dTradeDalant));
     for (int race = 0; race < 3; ++race)
     {
       src.wEconomyGuide[race] = e_EconomySystem.m_CurRate[race].wEconomyGuide;
@@ -412,8 +412,8 @@ void eUpdateEconomySystem(bool *pbChangeDay)
       }
     }
 
-    memcpy_0(e_EconomyHistory, &e_EconomyHistory[1], sizeof(_economy_history_data) * 11);
-    memcpy_0(&e_EconomyHistory[11], &src, sizeof(_economy_history_data));
+    std::memcpy(e_EconomyHistory, &e_EconomyHistory[1], sizeof(_economy_history_data) * 11);
+    std::memcpy(&e_EconomyHistory[11], &src, sizeof(_economy_history_data));
     _UpdateRateSendToAllPlayer();
   }
 

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "cStaticMember_Player.h"
@@ -301,12 +301,12 @@ char CPlayer::dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode)
       continue;
     }
 
-    if (!strcmp_0(record->m_strCode, pszItemCode))
+    if (!std::strcmp(record->m_strCode, pszItemCode))
     {
       this->SendMsg_DeleteStorageInform(0, src->m_wSerial);
       this->Emb_DelStorage(0, j, 0, 1, "CPlayer::dev_inven_empty()");
     }
-    memcpy_0(&items[itemCount++], src, sizeof(_STORAGE_LIST::_db_con));
+    std::memcpy(&items[itemCount++], src, sizeof(_STORAGE_LIST::_db_con));
   }
 
   CPlayer::s_MgrItemHistory.cheat_del_item(
@@ -410,7 +410,7 @@ bool CPlayer::dev_full_force()
       src.m_dwLv = 268435455;
       if (this->Emb_AddStorage(3u, &src, 1, 1))
       {
-        memcpy_0(&items[count++], &src, sizeof(_STORAGE_LIST::_db_con));
+        std::memcpy(&items[count++], &src, sizeof(_STORAGE_LIST::_db_con));
       }
     }
   }
@@ -574,7 +574,7 @@ char CPlayer::dev_inven_empty()
     this->SendMsg_DeleteStorageInform(0, src->m_wSerial);
     if (this->Emb_DelStorage(0, j, 0, 1, "CPlayer::dev_inven_empty()"))
     {
-      memcpy_0(&items[count++], src, sizeof(_STORAGE_LIST::_db_con));
+      std::memcpy(&items[count++], src, sizeof(_STORAGE_LIST::_db_con));
     }
   }
 
@@ -1582,7 +1582,7 @@ char CPlayer::dev_view_method(char *pwszDstName)
   CPlayer *target = nullptr;
   if (pwszDstName)
   {
-    const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszDstName));
+    const unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(pwszDstName));
     for (int j = 0; j < MAX_PLAYER; ++j)
     {
       CPlayer *player = &g_Player[j];
@@ -1919,7 +1919,7 @@ char CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
     if ( !destinationPortal )
       return 0;
     if ( !destinationMap->GetRandPosInDummy( destinationPortal->m_pDumPos, newPos, 1) )
-      memcpy_0(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 12);
+      std::memcpy(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 12);
     this->OutOfMap( destinationMap, 0, 4u, newPos);
     const unsigned __int8 mapCode = this->m_Param.GetMapCode();
     this->SendMsg_GotoRecallResult( 0, mapCode, newPos, 4u);
@@ -1967,7 +1967,7 @@ char CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
     return 0;
   }
 
-  const size_t nameLen = strlen_0(pszNPCName);
+  const size_t nameLen = std::strlen(pszNPCName);
   for (int j = 0; j < storeList->m_nItemStoreNum; ++j)
   {
     CItemStore *store = &storeList->m_ItemStore[j];
@@ -2109,7 +2109,7 @@ char CPlayer::mgr_item_telekinesis()
         }
 
         _STORAGE_LIST::_db_con item;
-        memcpy_0(&item, &itemBox->m_Item, sizeof(item));
+        std::memcpy(&item, &itemBox->m_Item, sizeof(item));
         if (item.m_byTableCode == 19)
         {
           continue;
@@ -2323,7 +2323,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
         ReturnedString,
         128,
         ".\\Script\\SystemGuardTower.ini");
-      if ( !strcmp_0(ReturnedString, "NULL") )
+      if ( !std::strcmp(ReturnedString, "NULL") )
       {
         nIniIndex = iniSlotIndex;
         break;
@@ -2583,8 +2583,8 @@ char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char
     CUserDB *targetUserDb; // [rsp+40h] [rbp-168h]
     char blockType; // [rsp+60h] [rbp-148h] BYREF
     int blockPeriod; // [rsp+61h] [rbp-147h]
-    _BYTE targetGlobalId[8]; // [rsp+65h] [rbp-143h] BYREF
-    _BYTE gmWorldId[6]; // [rsp+6Dh] [rbp-13Bh] BYREF
+    unsigned __int8 targetGlobalId[8]; // [rsp+65h] [rbp-143h] BYREF
+    unsigned __int8 gmWorldId[6]; // [rsp+6Dh] [rbp-13Bh] BYREF
     char reasonText[32]; // [rsp+73h] [rbp-135h] BYREF
     char gmName[32]; // [rsp+93h] [rbp-115h] BYREF
     unsigned int accountSerial; // [rsp+B3h] [rbp-F5h]
@@ -2597,12 +2597,12 @@ char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char
       blockType = byBlockType;
       blockPeriod = iPeriod;
       accountSerial = targetUserDb->m_dwAccountSerial;
-      memcpy_0(targetGlobalId, &targetUserDb->m_gidGlobal, sizeof(targetGlobalId));
-      memcpy_0(gmWorldId, &this->m_pUserDB->m_idWorld, sizeof(gmWorldId));
+      std::memcpy(targetGlobalId, &targetUserDb->m_gidGlobal, sizeof(targetGlobalId));
+      std::memcpy(gmWorldId, &this->m_pUserDB->m_idWorld, sizeof(gmWorldId));
       strncpy(reasonText, uszReason, 31);
       gmCharacterName = this->m_Param.GetCharNameW();
       strncpy(gmName, gmCharacterName, 31);
-      memcpy_0(messageType, "2n", 2);
+      std::memcpy(messageType, "2n", 2);
       g_Network.m_pProcess[1]->LoadSendMsg( 0, messageType, &blockType, 87);
       return 1;
     }

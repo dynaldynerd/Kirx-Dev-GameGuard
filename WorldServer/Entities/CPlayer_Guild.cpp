@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -127,7 +127,7 @@ void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
   if (pApplyGuild)
   {
     packet.dwGuildSerial = pApplyGuild->m_dwSerial;
-    strcpy_0(packet.wszGuildName, pApplyGuild->m_wszName);
+    std::strcpy(packet.wszGuildName, pApplyGuild->m_wszName);
   }
   else
   {
@@ -326,7 +326,7 @@ void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
 
       guildMaster->SendMsg_GuildEstablishFail(255);
       guildMaster->AddDalant(estConsumeDalant, 0);
-      strcpy_0(guildNameWide, query->in_w_guildName);
+      std::strcpy(guildNameWide, query->in_w_guildName);
       W2M(guildNameWide, guildNameAnsi, 128);
       CPlayer::s_MgrItemHistory.guild_est_money_rollback(
         guildMaster->m_ObjID.m_wIndex,
@@ -348,7 +348,7 @@ void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
   {
     _guild_member_info &memberInfo = members[memberSlot];
     memberInfo.dwSerial = query->in_memberserial[memberSlot];
-    strcpy_0(memberInfo.wszName, &query->tmp_w_membername[17 * memberSlot]);
+    std::strcpy(memberInfo.wszName, &query->tmp_w_membername[17 * memberSlot]);
     memberInfo.byLv = query->tmp_lv[memberSlot];
     memberInfo.dwPvpPoint = query->tmp_pvp[memberSlot];
     memberInfo.byClassInGuild = 0;
@@ -422,7 +422,7 @@ void CPlayer::Guild_Join_Accept_Complete(_DB_QRY_SYN_DATA *pData)
 
   _guild_member_info memberSheet{};
   memberSheet.dwSerial = applicant->m_dwObjSerial;
-  strcpy_0(memberSheet.wszName, applicant->m_Param.GetCharNameW());
+  std::strcpy(memberSheet.wszName, applicant->m_Param.GetCharNameW());
   memberSheet.byLv = static_cast<unsigned __int8>(applicant->GetLevel());
   memberSheet.dwPvpPoint = static_cast<int>(applicant->m_Param.GetPvPPoint());
   memberSheet.byClassInGuild = applicant->m_Param.GetClassInGuild();
@@ -636,7 +636,7 @@ void CPlayer::Guild_Push_Money_Complete(_DB_QRY_SYN_DATA *pData)
 
   guild->m_byMoneyOutputKind = 0;
   unsigned __int8 date[4]{};
-  memcpy_0(date, query->in_date, sizeof(date));
+  std::memcpy(date, query->in_date, sizeof(date));
   guild->IOMoney(
     query->in_w_pushername,
     query->in_pusherserial,
@@ -682,7 +682,7 @@ void CPlayer::Guild_Pop_Money_Complete(_DB_QRY_SYN_DATA *pData)
   }
 
   unsigned __int8 date[4]{};
-  memcpy_0(date, query->in_date, sizeof(date));
+  std::memcpy(date, query->in_date, sizeof(date));
   guild->IOMoney(
     query->in_w_popername,
     query->in_poperserial,
@@ -767,7 +767,7 @@ void CPlayer::Guild_Buy_Emblem_Complete(_DB_QRY_SYN_DATA *pData)
 
   guild->m_byMoneyOutputKind = 1;
   unsigned __int8 date[4]{};
-  memcpy_0(date, query->in_date, sizeof(date));
+  std::memcpy(date, query->in_date, sizeof(date));
   guild->IOMoney(
     query->tmp_w_suggestorname,
     query->in_suggestorSerial,
@@ -959,7 +959,7 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
       memberPvpPoints[partySlot] = static_cast<unsigned int>(static_cast<int>(member->m_Param.GetPvPPoint()));
       memberLevels[partySlot] = static_cast<unsigned __int8>(member->m_Param.GetLevel());
       memberGrades[partySlot] = member->m_Param.m_byPvPGrade;
-      strcpy_0(&memberNames[17 * partySlot], member->m_Param.GetCharNameW());
+      std::strcpy(&memberNames[17 * partySlot], member->m_Param.GetCharNameW());
       ++memberCount;
     }
   }
@@ -985,7 +985,7 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
     for (int guildIndex = 0; guildIndex < MAX_GUILD; ++guildIndex)
     {
       if ((g_Guild[guildIndex].IsFill() || g_Guild[guildIndex].m_bDBWait)
-          && !strcmp_0(pwszGuildName, g_Guild[guildIndex].m_wszName))
+          && !std::strcmp(pwszGuildName, g_Guild[guildIndex].m_wszName))
       {
         resultCode = 4;
         break;
@@ -1027,7 +1027,7 @@ void CPlayer::pc_GuildEstablishRequest(char *pwszGuildName)
   query.tmp_Esterserial = this->m_id.dwSerial;
   query.in_guildRace = static_cast<unsigned __int8>(this->m_Param.GetRaceCode());
   query.in_membernum = memberCount;
-  strcpy_0(query.in_w_guildName, pwszGuildName);
+  std::strcpy(query.in_w_guildName, pwszGuildName);
   std::memcpy(query.in_memberindex, memberIndices, sizeof(query.in_memberindex));
   std::memcpy(query.in_memberserial, memberSerials, sizeof(query.in_memberserial));
   std::memcpy(query.tmp_pvp, memberPvpPoints, sizeof(query.tmp_pvp));
@@ -1295,7 +1295,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
     query.in_date[1] = GetCurrentDay();
     query.in_date[2] = GetCurrentHour();
     query.in_date[3] = GetCurrentMin();
-    strcpy_0(query.in_w_pushername, this->m_Param.GetCharNameW());
+    std::strcpy(query.in_w_pushername, this->m_Param.GetCharNameW());
 
     if (g_Main.PushDQSData(-1, nullptr, 19, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
     {
@@ -1393,7 +1393,7 @@ void CPlayer::pc_GuildRoomRentRequest(_guildroom_rent_request_clzo *pProtocol)
   query.in_date[1] = static_cast<unsigned __int8>(GetCurrentDay());
   query.in_date[2] = static_cast<unsigned __int8>(GetCurrentHour());
   query.in_date[3] = static_cast<unsigned __int8>(GetCurrentMin());
-  strcpy_0(query.in_w_popername, "GuildRoom Rent");
+  std::strcpy(query.in_w_popername, "GuildRoom Rent");
   g_Main.PushDQSData(
     -1,
     nullptr,

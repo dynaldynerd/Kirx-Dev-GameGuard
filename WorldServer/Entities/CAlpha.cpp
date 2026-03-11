@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CAlpha.h"
 #include "CBsp.h"
@@ -10,7 +10,7 @@ void ByteSortForShort(unsigned int count, unsigned int *srcValue, __int16 *srcKe
 {
   unsigned __int16 sortCount[260] = {};
 
-  memset_0(sortCount, 0, sizeof(sortCount));
+  std::memset(sortCount, 0, sizeof(sortCount));
   for (unsigned int i = 0; i < count; ++i)
   {
     const unsigned int lowByte = static_cast<unsigned __int8>(srcKey[i]);
@@ -30,7 +30,7 @@ void ByteSortForShort(unsigned int count, unsigned int *srcValue, __int16 *srcKe
     tmpKey[dstIndex] = srcKey[i];
   }
 
-  memset_0(sortCount, 0, sizeof(sortCount));
+  std::memset(sortCount, 0, sizeof(sortCount));
   for (unsigned int i = 0; i < count; ++i)
   {
     const unsigned int highByte = *(reinterpret_cast<unsigned __int8 *>(&srcKey[i]) + 1);
@@ -64,9 +64,9 @@ CAlpha::CAlpha()
 
 CAlpha::~CAlpha()
 {
-  Dfree(reinterpret_cast<_DWORD *>(mTempAlphaFaceZ));
+  Dfree(reinterpret_cast<unsigned int *>(mTempAlphaFaceZ));
   Dfree(mTempAlphaFace);
-  Dfree(reinterpret_cast<_DWORD *>(mAlphaFaceZ));
+  Dfree(reinterpret_cast<unsigned int *>(mAlphaFaceZ));
   Dfree(mAlphaFace);
 }
 
@@ -149,7 +149,7 @@ unsigned int *CAlpha::SortAlphaStack(float *const cameraPos)
     const float dx = point[0] - cameraPos[0];
     const float dy = point[1] - cameraPos[1];
     const float dz = point[2] - cameraPos[2];
-    mAlphaFaceZ[i] = static_cast<__int16>(sqrtf_0((dx * dx) + (dy * dy) + (dz * dz)));
+    mAlphaFaceZ[i] = static_cast<__int16>(std::sqrt((dx * dx) + (dy * dy) + (dz * dz)));
   }
 
   if (mAlphaFaceCnt == 0)

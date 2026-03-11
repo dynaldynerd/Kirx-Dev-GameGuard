@@ -30,7 +30,7 @@ void Task::SetTask(int nTaskCode, const unsigned __int8 *p, unsigned __int64 siz
 {
   _bFill = true;
   _nTaskCode = nTaskCode;
-  memcpy_0(&_tmReg, MyTimer::GetTime(), sizeof(_tmReg));
+  std::memcpy(&_tmReg, MyTimer::GetTime(), sizeof(_tmReg));
   if (size >= _nMaxBufSize
       && _CrtDbgReportW(
            2,
@@ -43,7 +43,7 @@ void Task::SetTask(int nTaskCode, const unsigned __int8 *p, unsigned __int64 siz
     __debugbreak();
   }
   _nBufSize = size;
-  memcpy_0(_pBuf, p, _nBufSize);
+  std::memcpy(_pBuf, p, _nBufSize);
 }
 
 unsigned __int8 *Task::GetTaskBuf()

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CLogTypeDBTaskManager.h"
 
@@ -74,7 +74,7 @@ bool CLogTypeDBTask::Set(unsigned __int8 byQueryType, char *pcData, unsigned __i
     return false;
   }
 
-  memcpy_0(m_pcData, pcData, wSize);
+  std::memcpy(m_pcData, pcData, wSize);
   m_eQueryType = static_cast<LOG_TYPE_DB_TASK_TYPE>(byQueryType);
   return true;
 }

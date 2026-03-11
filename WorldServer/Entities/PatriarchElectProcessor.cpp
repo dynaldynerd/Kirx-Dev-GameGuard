@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "PatriarchElectProcessor.h"
 
@@ -818,7 +818,7 @@ bool PatriarchElectProcessor::CheatSetPatriarch(CPlayer *pOne, int eClass)
   else
   {
     patriarchGroup->dwGuildSerial = static_cast<unsigned int>(-1);
-    memset_0(patriarchGroup->wszGuildName, 0, sizeof(patriarchGroup->wszGuildName));
+    std::memset(patriarchGroup->wszGuildName, 0, sizeof(patriarchGroup->wszGuildName));
   }
 
   if (pOne->m_Param.GetPvpRank() == static_cast<unsigned int>(-1))
@@ -992,7 +992,7 @@ void PatriarchElectProcessor::CompleteInsertPatriarch(_DB_QRY_SYN_DATA *pData)
         unsigned __int8 type[2]{56, 14};
         _pt_inform_appoint_zocl inform;
         inform.byClassType = static_cast<unsigned __int8>(candidate->eClassType) - 5;
-        strcpy_0(inform.wszAvatorName, candidate->wszName);
+        std::strcpy(inform.wszAvatorName, candidate->wszName);
         const unsigned __int16 size = static_cast<unsigned __int16>(inform.size());
         g_Network.m_pProcess[0]->LoadSendMsg(
           player->m_id.wIndex,
@@ -1013,7 +1013,7 @@ void PatriarchElectProcessor::CompleteInsertPatriarch(_DB_QRY_SYN_DATA *pData)
     result.byLevel = candidate->byLevel;
     result.byClassType = static_cast<unsigned __int8>(candidate->eClassType) - 5;
     result.dPvpPoint = candidate->dPvpPoint;
-    strcpy_0(result.wszAvatorName, candidate->wszName);
+    std::strcpy(result.wszAvatorName, candidate->wszName);
     const unsigned __int16 size = static_cast<unsigned __int16>(result.size());
     g_Network.m_pProcess[0]->LoadSendMsg(
       bossPlayer->m_id.wIndex,

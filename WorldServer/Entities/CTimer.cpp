@@ -7,7 +7,7 @@
 
 CTimer::CTimer()
 {
-  memset_0(this, 0, sizeof(CTimer));
+  std::memset(this, 0, sizeof(CTimer));
   mMinFPS = 1.0f;
 }
 

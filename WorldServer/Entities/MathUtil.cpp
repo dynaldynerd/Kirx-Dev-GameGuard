@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 #include "CEntity.h"
@@ -25,7 +25,7 @@ float GetDist(float *const a1, float *const a2)
 {
     const float dx = *a2 - *a1;
     const float dz = a2[2] - a1[2];
-    return sqrtf_0((dx * dx) + (dz * dz));
+    return std::sqrt((dx * dx) + (dz * dz));
 }
 
 float Get3DSqrt(float *Pos, float *Tar)
@@ -34,7 +34,7 @@ float Get3DSqrt(float *Pos, float *Tar)
     const float dx = *Pos - *Tar;
     const float dy = Pos[1] - Tar[1];
     const float dz = Pos[2] - Tar[2];
-    return sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+    return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
 }
 
 float GetYAngle(float *Pos, float *Tar)
@@ -42,13 +42,13 @@ float GetYAngle(float *Pos, float *Tar)
 
     const float dx = *Tar - *Pos;
     const float dz = Tar[2] - Pos[2];
-    const float dist = sqrtf_0((dx * dx) + (dz * dz));
+    const float dist = std::sqrt((dx * dx) + (dz * dz));
     if (dist == 0.0f)
     {
         return 0.0f;
     }
 
-    const double angle = acos_0(dz / dist);
+    const double angle = std::acos(dz / dist);
     if (dx <= 0.0f)
     {
         return static_cast<float>((-angle) * 65535.0 / 6.283185307 + 32768.0);
@@ -71,14 +71,14 @@ float GetAngle(float *mon, float *plr)
 {
     float dx = mon[0] - plr[0];
     float dz = mon[2] - plr[2];
-    const float len = sqrtf_0((dx * dx) + (dz * dz));
+    const float len = std::sqrt((dx * dx) + (dz * dz));
     if (len > 0.0f)
     {
         dx = dx / len;
         dz = dz / len;
     }
 
-    float angle = acos_0(dx);
+    float angle = std::acos(dx);
     if (!(dz > 0.0f))
     {
         angle = -angle;
@@ -89,7 +89,7 @@ float GetAngle(float *mon, float *plr)
 void Normalize(float *v)
 {
 
-    const float length = sqrtf_0((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
+    const float length = std::sqrt((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
     const double len = length;
     v[0] = v[0] / static_cast<float>(len);
     v[1] = v[1] / static_cast<float>(len);
@@ -229,7 +229,7 @@ void sub_14050C650(float *destination, float *source, float *target)
     const float deltaX = source[0] - target[0];
     const float deltaY = source[1] - target[1];
     const float deltaZ = source[2] - target[2];
-    const float distance = sqrtf_0((deltaY * deltaY) + (deltaX * deltaX) + (deltaZ * deltaZ));
+    const float distance = std::sqrt((deltaY * deltaY) + (deltaX * deltaX) + (deltaZ * deltaZ));
     destination[0] += (deltaX / distance) * 2.0f;
     destination[1] += (deltaY / distance) * 2.0f;
     destination[2] += (deltaZ / distance) * 2.0f;
@@ -290,7 +290,7 @@ float GetFloatMod(float value, float modulus)
 
 void MatrixIdentity(float (*const outMatrix)[4])
 {
-    memset_0(outMatrix, 0, 64);
+    std::memset(outMatrix, 0, 64);
     (*outMatrix)[0] = 1.0f;
     (*outMatrix)[5] = 1.0f;
     (*outMatrix)[10] = 1.0f;
@@ -299,7 +299,7 @@ void MatrixIdentity(float (*const outMatrix)[4])
 
 void MatrixCopy(float (*const outMatrix)[4], float (*const sourceMatrix)[4])
 {
-    memcpy_0(outMatrix, sourceMatrix, 64);
+    std::memcpy(outMatrix, sourceMatrix, 64);
 }
 
 void MatrixMultiply(float (*outMatrix)[4], float (*const leftMatrix)[4], float (*const rightMatrix)[4])
@@ -423,8 +423,8 @@ void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rot
     const double rotationZRadians = rotationZDegrees * 6.283184 / 360.0;
 
     float rotationYMatrix[4][4]{};
-    const float rotationYCos = static_cast<float>(cos_0(rotationYRadians));
-    const float rotationYSin = static_cast<float>(sin_0(rotationYRadians));
+    const float rotationYCos = static_cast<float>(std::cos(rotationYRadians));
+    const float rotationYSin = static_cast<float>(std::sin(rotationYRadians));
     rotationYMatrix[0][0] = rotationYCos;
     rotationYMatrix[0][2] = -rotationYSin;
     rotationYMatrix[1][1] = FLOAT_1_0;
@@ -433,8 +433,8 @@ void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rot
     rotationYMatrix[3][3] = FLOAT_1_0;
 
     float rotationXMatrix[4][4]{};
-    const float rotationXCos = static_cast<float>(cos_0(rotationXRadians));
-    const float rotationXSin = static_cast<float>(sin_0(rotationXRadians));
+    const float rotationXCos = static_cast<float>(std::cos(rotationXRadians));
+    const float rotationXSin = static_cast<float>(std::sin(rotationXRadians));
     rotationXMatrix[0][0] = FLOAT_1_0;
     rotationXMatrix[1][1] = rotationXCos;
     rotationXMatrix[1][2] = rotationXSin;
@@ -446,8 +446,8 @@ void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rot
     MatrixMultiply(combinedRotationMatrix, rotationYMatrix, rotationXMatrix);
 
     float rotationZMatrix[4][4]{};
-    const float rotationZCos = static_cast<float>(cos_0(rotationZRadians));
-    const float rotationZSin = static_cast<float>(sin_0(rotationZRadians));
+    const float rotationZCos = static_cast<float>(std::cos(rotationZRadians));
+    const float rotationZSin = static_cast<float>(std::sin(rotationZRadians));
     rotationZMatrix[0][0] = rotationZCos;
     rotationZMatrix[0][1] = rotationZSin;
     rotationZMatrix[1][0] = -rotationZSin;
@@ -461,8 +461,8 @@ void MatrixRotate(float (*const outMatrix)[4], float rotationXDegrees, float rot
 void MatrixRotateX(float (*const outMatrix)[4], float rotationDegrees)
 {
     const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
-    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
-    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
+    const float rotationCos = static_cast<float>(std::cos(rotationRadians));
+    const float rotationSin = static_cast<float>(std::sin(rotationRadians));
 
     (*outMatrix)[0] = 1.0f;
     (*outMatrix)[1] = 0.0f;
@@ -485,8 +485,8 @@ void MatrixRotateX(float (*const outMatrix)[4], float rotationDegrees)
 void MatrixRotateY(float (*const outMatrix)[4], float rotationDegrees)
 {
     const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
-    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
-    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
+    const float rotationCos = static_cast<float>(std::cos(rotationRadians));
+    const float rotationSin = static_cast<float>(std::sin(rotationRadians));
 
     (*outMatrix)[1] = 0.0f;
     (*outMatrix)[0] = rotationCos;
@@ -509,8 +509,8 @@ void MatrixRotateY(float (*const outMatrix)[4], float rotationDegrees)
 void MatrixRotateZ(float (*const outMatrix)[4], float rotationDegrees)
 {
     const double rotationRadians = rotationDegrees * 6.283184 / 360.0;
-    const float rotationCos = static_cast<float>(cos_0(rotationRadians));
-    const float rotationSin = static_cast<float>(sin_0(rotationRadians));
+    const float rotationCos = static_cast<float>(std::cos(rotationRadians));
+    const float rotationSin = static_cast<float>(std::sin(rotationRadians));
 
     (*outMatrix)[0] = rotationCos;
     (*outMatrix)[5] = rotationCos;
@@ -569,15 +569,15 @@ void QuaternionSlerp(
         endW = blendedStartZ;
         blendedEndX = -blendedStartY;
         blendedEndZ = -blendedStartW;
-        startWeight = static_cast<float>(sin_0((0.5f - blendFactor) * 3.141592f));
-        endWeight = static_cast<float>(sin_0(blendFactor * 3.141592f));
+        startWeight = static_cast<float>(std::sin((0.5f - blendFactor) * 3.141592f));
+        endWeight = static_cast<float>(std::sin(blendFactor * 3.141592f));
     }
     else if ((1.0f - dotProduct) >= 0.050000001f)
     {
-        const float angle = acosf_0(dotProduct);
-        const float sineAngle = sinf_0(angle);
-        startWeight = sinf_0((1.0f - blendFactor) * angle) / sineAngle;
-        endWeight = sinf_0(angle * blendFactor) / sineAngle;
+        const float angle = std::acosf(dotProduct);
+        const float sineAngle = std::sinf(angle);
+        startWeight = std::sinf((1.0f - blendFactor) * angle) / sineAngle;
+        endWeight = std::sinf(angle * blendFactor) / sineAngle;
     }
     else
     {

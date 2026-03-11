@@ -54,7 +54,7 @@ const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszGMCmp[] = "[GameMaster]";
-size_t nGMCmpLen = strlen_0(wszGMCmp);
+size_t nGMCmpLen = std::strlen(wszGMCmp);
 
 CUserDB::CUserDB()
 {
@@ -84,14 +84,14 @@ CUserDB::~CUserDB()
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
 {
-  const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(pwszName));
+  const unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(pwszName));
   for (int index = 0; index < nMax; ++index)
   {
     CUserDB &entry = pList[index];
     if (entry.m_bActive
         && entry.m_bField
         && entry.m_byNameLen == nameLen
-        && !strncmp_0(entry.m_wszAvatorName, pwszName, nameLen))
+        && !std::strncmp(entry.m_wszAvatorName, pwszName, nameLen))
     {
       return &entry;
     }
@@ -165,16 +165,16 @@ bool CUserDB::Update_Map(unsigned __int8 map, float *pos)
 
 char CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
 {
-  if (strlen_0(pszMapCode) > 11)
+  if (std::strlen(pszMapCode) > 11)
   {
     return 0;
   }
-  if (strlen_0(pDummyCode) > 11)
+  if (std::strlen(pDummyCode) > 11)
   {
     return 0;
   }
-  strcpy_0(m_AvatorData.dbAvator.m_szBindMapCode, pszMapCode);
-  strcpy_0(m_AvatorData.dbAvator.m_szBindDummy, pDummyCode);
+  std::strcpy(m_AvatorData.dbAvator.m_szBindMapCode, pszMapCode);
+  std::strcpy(m_AvatorData.dbAvator.m_szBindDummy, pDummyCode);
 return 1;
 }
 
@@ -218,7 +218,7 @@ char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
   {
     if (m_AvatorData.dbQuest.m_List[bySlotIndex].byQuestType == 255)
     {
-      memcpy_0(
+      std::memcpy(
         &m_AvatorData.dbQuest.m_List[bySlotIndex],
         pSlotData,
         sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
@@ -278,7 +278,7 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
       return 0;
     }
 
-    memcpy_0(
+    std::memcpy(
       &m_AvatorData.dbQuest.m_List[bySlotIndex],
       pSlotData,
       sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
@@ -329,7 +329,7 @@ char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST
 
   m_AvatorData.dbCutting.Init();
   m_AvatorData.dbCutting.m_byLeftNum = resnum;
-  memcpy_0(m_AvatorData.dbCutting.m_List, plist, sizeof(_CUTTING_DB_BASE::_LIST) * resnum);
+  std::memcpy(m_AvatorData.dbCutting.m_List, plist, sizeof(_CUTTING_DB_BASE::_LIST) * resnum);
   m_bDataUpdate = true;
   return 1;
 }
@@ -375,7 +375,7 @@ char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_N
 {
   if (byIndex < 70)
   {
-    memcpy_0(
+    std::memcpy(
       &m_AvatorData.dbQuest.m_History[byIndex],
       pHisData,
       sizeof(m_AvatorData.dbQuest.m_History[byIndex]));
@@ -400,7 +400,7 @@ char CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BAS
     return 0;
   }
 
-  strcpy_0(m_AvatorData.dbQuest.m_StartHistory[byIndex].szQuestCode, pHisData->szQuestCode);
+  std::strcpy(m_AvatorData.dbQuest.m_StartHistory[byIndex].szQuestCode, pHisData->szQuestCode);
   m_AvatorData.dbQuest.m_StartHistory[byIndex].byLevel = pHisData->byLevel;
   GetLocalTime(&m_AvatorData.dbQuest.m_StartHistory[byIndex].tmStartTime);
   m_AvatorData.dbQuest.m_StartHistory[byIndex].nEndTime = pHisData->nEndTime;
@@ -427,7 +427,7 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
   sprintf(buffer, "CLOSE>> ForceCloseCommand Type: %d, ID: %s Reason : ", byKickType, m_szAccountID);
   if (pszCause)
   {
-    strcat_0(buffer, pszCause);
+    std::strcat(buffer, pszCause);
   }
   g_Network.Close(0, m_idWorld.wIndex, bSlow, buffer);
 }
@@ -450,14 +450,14 @@ void CUserDB::Inform_For_Exit_By_FireguardBlock()
 
 void CUserDB::ClearBillingData()
 {
-  memset_0(&m_BillingInfo, 0, sizeof(m_BillingInfo));
+  std::memset(&m_BillingInfo, 0, sizeof(m_BillingInfo));
 }
 
 void CUserDB::SetBillingData(_BILLING_INFO *pBillingInfo)
 {
   if (pBillingInfo)
   {
-    memcpy_0(&m_BillingInfo, pBillingInfo, sizeof(m_BillingInfo));
+    std::memcpy(&m_BillingInfo, pBillingInfo, sizeof(m_BillingInfo));
   }
   m_BillingInfo.bPCCheat = 0;
 }
@@ -468,15 +468,15 @@ void CUserDB::SetBillingData(char *szCMSCode, __int16 iType, int lRemainTime, _S
   m_BillingInfo.lRemainTime = lRemainTime;
   if (iType == 6 || iType == 7)
   {
-    memcpy_0(m_BillingInfo.szCMS, szCMSCode, sizeof(m_BillingInfo.szCMS));
+    std::memcpy(m_BillingInfo.szCMS, szCMSCode, sizeof(m_BillingInfo.szCMS));
   }
   else
   {
-    memset_0(m_BillingInfo.szCMS, 0, sizeof(m_BillingInfo.szCMS));
+    std::memset(m_BillingInfo.szCMS, 0, sizeof(m_BillingInfo.szCMS));
   }
   if (pstEndDate)
   {
-    memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
+    std::memcpy(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
   }
   if (!g_Main.IsReleaseServiceMode() && m_BillingInfo.bPCCheat)
   {
@@ -501,7 +501,7 @@ void CUserDB::SendMsg_BillingInfo()
   _current_billing_type_inform_zocl msg{};
   msg.iType = m_BillingInfo.iType;
   msg.lRemainMin = m_BillingInfo.lRemainTime;
-  memcpy_0(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
+  std::memcpy(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
 
   unsigned __int8 pbyType[2]{29, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), 22);
@@ -544,9 +544,9 @@ void CUserDB::UILockInfo_Init(const _uilock_init_result_acwr *request)
     msg.byRet = 0;
     msg.byUILock_HintIndex = request->byHintIndex;
     m_byUILock = 1;
-    strcpy_0(m_szUILock_PW, request->uszUILockPW);
+    std::strcpy(m_szUILock_PW, request->uszUILockPW);
     m_byUILock_HintIndex = request->byHintIndex;
-    strcpy_0(m_uszUILock_HintAnswer, request->uszHintAnswer);
+    std::strcpy(m_uszUILock_HintAnswer, request->uszHintAnswer);
   }
 
   unsigned __int8 pbyType[2]{13, 128};
@@ -582,9 +582,9 @@ void CUserDB::UILockInfo_Update(const _uilock_update_result_acwr *request)
     {
       msg.byRet = 0;
       m_byUILock = 2;
-      strcpy_0(m_szUILock_PW, request->uszUILockPW);
+      std::strcpy(m_szUILock_PW, request->uszUILockPW);
       m_byUILock_HintIndex = request->byHintIndex;
-      strcpy_0(m_uszUILock_HintAnswer, request->uszHintAnswer);
+      std::strcpy(m_uszUILock_HintAnswer, request->uszHintAnswer);
     }
   }
   else
@@ -1031,7 +1031,7 @@ bool CUserDB::Update_UnitInsert(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIS
   {
     if (m_AvatorData.dbUnit.m_List[bySlotIndex].byFrame == 255)
     {
-      memcpy_0(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
+      std::memcpy(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
       m_bDataUpdate = true;
       return true;
     }
@@ -1087,7 +1087,7 @@ bool CUserDB::Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST 
         bySlotIndex);
       return false;
     }
-    memcpy_0(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
+    std::memcpy(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
     m_bDataUpdate = true;
     return true;
   }
@@ -1503,19 +1503,19 @@ void CUserDB::DelPostData(unsigned int dwIndex)
     m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwUpt = 0;
     m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].dwGold = 0;
     m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].lnUID = 0;
-    memset_0(
+    std::memset(
       m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszSendName,
       0,
       sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszSendName));
-    memset_0(
+    std::memset(
       m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszRecvName,
       0,
       sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszRecvName));
-    memset_0(
+    std::memset(
       m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszTitle,
       0,
       sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszTitle));
-    memset_0(
+    std::memset(
       m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszContent,
       0,
       sizeof(m_AvatorData.dbPostData.dbPost.m_PostList[dwIndex].wszContent));
@@ -2159,7 +2159,7 @@ bool CUserDB::Enter_Account(
   if (!valid)
   {
     _logout_account_request_wrac msg{};
-    memcpy_0(&msg, &m_gidGlobal, sizeof(msg));
+    std::memcpy(&msg, &m_gidGlobal, sizeof(msg));
     unsigned __int8 type[2]{1, 5};
     const unsigned __int16 len = msg.size();
     g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
@@ -2169,11 +2169,11 @@ bool CUserDB::Enter_Account(
   m_bActive = true;
   m_dwOperLobbyTime = GetTickCount();
   m_dwAccountSerial = dwAccountSerial;
-  strcpy_0(m_szAccountID, waitData->m_szAccountID);
+  std::strcpy(m_szAccountID, waitData->m_szAccountID);
   m_byUserDgr = waitData->m_byUserDgr;
   m_bySubDgr = waitData->m_bySubDgr;
   m_dwIP = dwIP;
-  memcpy_0(&m_gidGlobal, &waitData->m_gidGlobal, sizeof(m_gidGlobal));
+  std::memcpy(&m_gidGlobal, &waitData->m_gidGlobal, sizeof(m_gidGlobal));
   m_dwTotalPlayMin = 0;
   m_dwSerial = static_cast<unsigned int>(-1);
   m_bDBWaitState = false;
@@ -2229,8 +2229,8 @@ bool CUserDB::Enter_Account(
   if (!retCode)
   {
     _enter_world_request_wrac request{};
-    memcpy_0(&request, &m_gidGlobal, 8u);
-    memcpy_0(&request.idLocal, &m_idWorld, sizeof(request.idLocal));
+    std::memcpy(&request, &m_gidGlobal, 8u);
+    std::memcpy(&request.idLocal, &m_idWorld, sizeof(request.idLocal));
     request.ulConnectIP = m_ipAddress;
     unsigned __int8 type[2]{1, 10};
     const unsigned __int16 len = static_cast<unsigned __int16>(request.size());
@@ -2270,16 +2270,16 @@ bool CUserDB::Lobby_Char_Request()
   g_Player[m_idWorld.wIndex].NetClose(true);
   _qry_sheet_lobby qry;
   qry.dwAvatorSerial = m_dwSerial;
-  memcpy_0(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+  std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
 
   _AVATOR_DATA *contData = IsContPushBefore();
   if (contData)
   {
-    memcpy_0(&qry.OldData, contData, sizeof(qry.OldData));
+    std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
   }
   else
   {
-    memcpy_0(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+    std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
   }
 
   qry.bUpdateRefineCnt = false;
@@ -2335,7 +2335,7 @@ bool CUserDB::Reged_Char_Request()
   in_addr addr{};
   addr.S_un.S_addr = m_ipAddress;
   char *ipText = inet_ntoa(addr);
-  strcpy_0(qry.in_szIP, ipText);
+  std::strcpy(qry.in_szIP, ipText);
 
   const int size = static_cast<int>(qry.size());
   if (!g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 0u, reinterpret_cast<char *>(&qry), size))
@@ -2389,7 +2389,7 @@ bool CUserDB::Insert_Char_Request(
   }
   for (int k = 0; !invalidName && k < 3; ++k)
   {
-    if (!strcmp_0(pwszCharName, wszNonMakeName_0[k]))
+    if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
     {
       invalidName = true;
       break;
@@ -2399,7 +2399,7 @@ bool CUserDB::Insert_Char_Request(
   if (!invalidName)
   {
     CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-    if ((m_byUserDgr != 2 && strlen_0(pwszCharName) >= nGMCmpLen
+    if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
          && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
         || !manager->IsNormalString(pwszCharName))
     {
@@ -2428,12 +2428,12 @@ bool CUserDB::Insert_Char_Request(
       s_MgrLobbyHistory.add_char_request(m_szLobbyHistoryFileName);
       _qry_sheet_insert qry;
       qry.dwAccountSerial = m_dwAccountSerial;
-      strcpy_0(qry.szAccountID, m_szAccountID);
-      strcpy_0(qry.InsertData.m_wszAvatorName, pwszCharName);
+      std::strcpy(qry.szAccountID, m_szAccountID);
+      std::strcpy(qry.InsertData.m_wszAvatorName, pwszCharName);
       qry.InsertData.m_byRaceSexCode = byRaceSexCode;
       qry.InsertData.m_bySlotIndex = bySlotIndex;
       qry.InsertData.m_dwBaseShape = dwBaseShape;
-      strcpy_0(qry.InsertData.m_szClassCode, record->m_strCode);
+      std::strcpy(qry.InsertData.m_szClassCode, record->m_strCode);
       const int size = static_cast<int>(qry.size());
       if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 1u, reinterpret_cast<char *>(&qry), size))
       {
@@ -2477,7 +2477,7 @@ bool CUserDB::Delete_Char_Request(unsigned __int8 bySlotIndex)
   if (exist)
   {
     _del_char_result_zone result{};
-    memset_0(&result, 0, sizeof(result));
+    std::memset(&result, 0, sizeof(result));
     if (exist == 1)
     {
       result.byRetCode = 74;
@@ -2547,7 +2547,7 @@ bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
   {
     m_ss.bSelect = false;
     _sel_char_result_zone result{};
-    memset_0(&result, 0, sizeof(result));
+    std::memset(&result, 0, sizeof(result));
     if (exist == 1)
     {
       result.byRetCode = 74;
@@ -2569,7 +2569,7 @@ bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
   _qry_sheet_load qry{};
   qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
   qry.dwCheckSum = 0;
-  memcpy_0(&qry.LoadData, &m_RegedList[bySlotIndex], 269);
+  std::memcpy(&qry.LoadData, &m_RegedList[bySlotIndex], 269);
 
   const int size = static_cast<int>(qry.size());
   if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 3u, reinterpret_cast<char *>(&qry), size))
@@ -2638,12 +2638,12 @@ bool CUserDB::Alive_Char_Request(
       {
         if (byCase)
         {
-          if (!strcmp_0(m_NotArrangedChar[k].wszName, pwszName))
+          if (!std::strcmp(m_NotArrangedChar[k].wszName, pwszName))
           {
             break;
           }
         }
-        else if (strcmp_0(m_NotArrangedChar[k].wszName, pwszName))
+        else if (std::strcmp(m_NotArrangedChar[k].wszName, pwszName))
         {
           break;
         }
@@ -2677,7 +2677,7 @@ bool CUserDB::Alive_Char_Request(
     _qry_case_alive_char qry;
     qry.in_byCase = byCase;
     qry.in_dwSerial = dwSerial;
-    strcpy_0(qry.in_w_szName, pwszName);
+    std::strcpy(qry.in_w_szName, pwszName);
     qry.in_bySlot = bySlotIndex;
     const int size = static_cast<int>(qry.size());
     if (g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 23, reinterpret_cast<char *>(&qry), size))
@@ -2701,7 +2701,7 @@ void CUserDB::Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *
   if (!byRetCode && pInsertData)
   {
     slotIndex = pInsertData->m_bySlotIndex;
-    memcpy_0(&m_RegedList[slotIndex], pInsertData, 69);
+    std::memcpy(&m_RegedList[slotIndex], pInsertData, 69);
   }
 
   s_MgrLobbyHistory.add_char_complete(byRetCode, pInsertData, m_szLobbyHistoryFileName);
@@ -2733,7 +2733,7 @@ _AVATOR_DATA *CUserDB::IsContPushBefore()
     return nullptr;
   }
 
-  if (!memcmp_0(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
+  if (!std::memcmp(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
   {
     auto *query = reinterpret_cast<_qry_case_contsave *>(m_pDBPushData->m_sData);
     if (query->dwAvatorSerial == m_dwSerial)
@@ -2776,16 +2776,16 @@ void CUserDB::Exit_Account_Request()
     {
       _qry_sheet_logout qry{};
       qry.dwAvatorSerial = m_dwSerial;
-      memcpy_0(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+      std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
 
       _AVATOR_DATA *contData = IsContPushBefore();
       if (contData)
       {
-        memcpy_0(&qry.OldData, contData, sizeof(qry.OldData));
+        std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
       }
       else
       {
-        memcpy_0(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+        std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
       }
 
       qry.bCheckLowHigh = !m_bNoneUpdateData;
@@ -2825,7 +2825,7 @@ void CUserDB::Exit_Account_Complete(unsigned __int8 byRetCode)
   m_bDBWaitState = false;
 
   _logout_account_request_wrac msg{};
-  memcpy_0(&msg, &m_gidGlobal, sizeof(msg));
+  std::memcpy(&msg, &m_gidGlobal, sizeof(msg));
   unsigned __int8 type[2] = {1, 5};
   const unsigned __int16 len = msg.size();
   g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&msg), len);
@@ -2871,7 +2871,7 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
     m_szLobbyHistoryFileName);
 
   _enter_lobby_report_wrac report{};
-  memcpy_0(&report, &m_gidGlobal, sizeof(report));
+  std::memcpy(&report, &m_gidGlobal, sizeof(report));
   unsigned __int8 type[2] = {1, 13};
   const unsigned __int16 len = report.size();
   g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&report), len);
@@ -2887,14 +2887,14 @@ void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAv
 
   _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *startHistory = m_AvatorData_bk.dbQuest.m_StartHistory;
   unsigned int listCount = m_AvatorData_bk.dbQuest.dwListCnt;
-  memcpy_0(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
+  std::memcpy(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
   m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
   m_AvatorData_bk.dbQuest.dwListCnt = listCount;
 
   const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
   for (unsigned int j = 0; j < addCount; ++j)
   {
-    memcpy_0(
+    std::memcpy(
       &m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
       &m_AvatorData.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt],
       sizeof(m_AvatorData_bk.dbQuest.m_StartHistory[m_AvatorData_bk.dbQuest.dwListCnt]));
@@ -2922,7 +2922,7 @@ void CUserDB::Alive_Char_Complete(
     {
       if (m_RegedList[slotIndex].m_bySlotIndex == 255)
       {
-        memcpy_0(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
+        std::memcpy(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
         m_RegedList[slotIndex].UpdateEquipLv();
         for (int j = 0; j < 50; ++j)
         {
@@ -2963,7 +2963,7 @@ void CUserDB::Alive_Char_Complete(
   if (!resultCode)
   {
     msg.dwSerial = dwSerial;
-    memcpy_0(&msg.AliveChar, &m_RegedList[slotIndex], sizeof(msg.AliveChar));
+    std::memcpy(&msg.AliveChar, &m_RegedList[slotIndex], sizeof(msg.AliveChar));
   }
 
   unsigned __int8 type[2] = {1, 23};
@@ -3171,7 +3171,7 @@ void _BUDDY_DB_BASE::Init()
 
 _INVENKEY &_INVENKEY::operator=(const _INVENKEY &rhs)
 {
-  memcpy_0(this, &rhs, sizeof(_INVENKEY));
+  std::memcpy(this, &rhs, sizeof(_INVENKEY));
   return *this;
 }
 
@@ -3243,14 +3243,14 @@ _NOT_ARRANGED_AVATOR_DB::_NOT_ARRANGED_AVATOR_DB()
 
 void _NOT_ARRANGED_AVATOR_DB::Init()
 {
-  memset_0(this, 0, sizeof(_NOT_ARRANGED_AVATOR_DB));
+  std::memset(this, 0, sizeof(_NOT_ARRANGED_AVATOR_DB));
   dwSerial = static_cast<unsigned int>(-1);
 }
 
 char CUserDB::Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName)
 {
   m_AvatorData.dbBuddy.m_List[bySlotIndex].dwSerial = dwAdderSerial;
-  strcpy_0(m_AvatorData.dbBuddy.m_List[bySlotIndex].wszName, pwszAdderName);
+  std::strcpy(m_AvatorData.dbBuddy.m_List[bySlotIndex].wszName, pwszAdderName);
   m_bDataUpdate = true;
   return 1;
 }
@@ -3268,7 +3268,7 @@ char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16
   GetLocalTime(&systemTime);
 
   char buffer[56]{};
-  memset_0(buffer, 0, 30);
+  std::memset(buffer, 0, 30);
   m_AvatorData.dbSupplement.wScanerCnt += wScanerCnt;
   sprintf_s(
     buffer,
@@ -3440,12 +3440,12 @@ char CUserDB::Update_WindowInfo(
   unsigned int dwInven,
   unsigned int *pdwInvenBag)
 {
-  memcpy_0(m_AvatorData.dbLink.m_dwSkill, pdwSkill, sizeof(m_AvatorData.dbLink.m_dwSkill));
-  memcpy_0(m_AvatorData.dbLink.m_dwForce, pdwForce, sizeof(m_AvatorData.dbLink.m_dwForce));
-  memcpy_0(m_AvatorData.dbLink.m_dwCharacter, pdwChar, sizeof(m_AvatorData.dbLink.m_dwCharacter));
-  memcpy_0(m_AvatorData.dbLink.m_dwAnimus, pdwAnimus, sizeof(m_AvatorData.dbLink.m_dwAnimus));
+  std::memcpy(m_AvatorData.dbLink.m_dwSkill, pdwSkill, sizeof(m_AvatorData.dbLink.m_dwSkill));
+  std::memcpy(m_AvatorData.dbLink.m_dwForce, pdwForce, sizeof(m_AvatorData.dbLink.m_dwForce));
+  std::memcpy(m_AvatorData.dbLink.m_dwCharacter, pdwChar, sizeof(m_AvatorData.dbLink.m_dwCharacter));
+  std::memcpy(m_AvatorData.dbLink.m_dwAnimus, pdwAnimus, sizeof(m_AvatorData.dbLink.m_dwAnimus));
   m_AvatorData.dbLink.m_dwInven = dwInven;
-  memcpy_0(m_AvatorData.dbLink.m_dwInvenBag, pdwInvenBag, sizeof(m_AvatorData.dbLink.m_dwInvenBag));
+  std::memcpy(m_AvatorData.dbLink.m_dwInvenBag, pdwInvenBag, sizeof(m_AvatorData.dbLink.m_dwInvenBag));
   return 1;
 }
 
@@ -3486,7 +3486,7 @@ char CUserDB::Update_Macro(char *pBuf)
         return 1;
       }
 
-      memset_0(macro->mcr_Chat[belt].Chat[slot], 0, 81);
+      std::memset(macro->mcr_Chat[belt].Chat[slot], 0, 81);
       strncpy(macro->mcr_Chat[belt].Chat[slot], chat, 81);
     }
   }
@@ -3497,7 +3497,7 @@ char CUserDB::Update_Macro(char *pBuf)
 
 void CUserDB::Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
 {
-  strcpy_0(m_AvatorData.dbBossCry.m_List[bySlot].wszCryMsg, pwszCryMsg);
+  std::strcpy(m_AvatorData.dbBossCry.m_List[bySlot].wszCryMsg, pwszCryMsg);
 }
 
 char CUserDB::Update_BagNum(unsigned __int8 bagnum)
@@ -3643,7 +3643,7 @@ char CUserDB::InitClass(char *pszClassCode)
     m_AvatorData.dbAvator.m_byLastClassGrade = nextHistory;
   }
 
-  strcpy_0(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
+  std::strcpy(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
   for (j = 0; j < 3; ++j)
   {
     m_AvatorData.dbAvator.m_zClassHistory[j] = -1;
@@ -3663,7 +3663,7 @@ char CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNu
     return 0;
   }
 
-  strcpy_0(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
+  std::strcpy(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
   m_AvatorData.dbAvator.m_zClassHistory[byHistoryRecordNum] = static_cast<signed __int16>(wHistoryClassIndex);
   if (byHistoryRecordNum + 1 > m_AvatorData.dbAvator.m_byLastClassGrade)
   {
@@ -3695,8 +3695,8 @@ void CUserDB::WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *s
   _log_change_class_after_init_class query{};
   query.dwCharacSerial = m_dwSerial;
   query.byType = byType;
-  strcpy_0(query.szPrevClassCode, szPrevClass);
-  strcpy_0(query.szNextClassCode, m_AvatorData.dbAvator.m_szClassCode);
+  std::strcpy(query.szPrevClassCode, szPrevClass);
+  std::strcpy(query.szNextClassCode, m_AvatorData.dbAvator.m_szClassCode);
   query.nClassInitCnt = static_cast<int>(m_AvatorData.dbAvator.m_dwClassInitCnt);
   query.byLastClassGrade = m_AvatorData.dbAvator.m_byLastClassGrade;
   query.dwYear = static_cast<unsigned __int16>(localTime.tm_year + 1900);
@@ -3773,16 +3773,16 @@ char CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
 {
   _AVATOR_DATA snapshot{};
   snapshot = _AVATOR_DATA();
-  memcpy_0(&snapshot, &this->m_AvatorData, sizeof(snapshot));
-  memcpy_0(&this->m_AvatorData, pSrc, sizeof(this->m_AvatorData));
-  strcpy_0(this->m_AvatorData.dbAvator.m_wszAvatorName, snapshot.dbAvator.m_wszAvatorName);
+  std::memcpy(&snapshot, &this->m_AvatorData, sizeof(snapshot));
+  std::memcpy(&this->m_AvatorData, pSrc, sizeof(this->m_AvatorData));
+  std::strcpy(this->m_AvatorData.dbAvator.m_wszAvatorName, snapshot.dbAvator.m_wszAvatorName);
   this->m_AvatorData.dbAvator.m_dwRecordNum = snapshot.dbAvator.m_dwRecordNum;
   this->m_AvatorData.dbAvator.m_byRaceSexCode = snapshot.dbAvator.m_byRaceSexCode;
   this->m_AvatorData.dbAvator.m_bySlotIndex = snapshot.dbAvator.m_bySlotIndex;
   this->m_AvatorData.dbAvator.m_dwBaseShape = snapshot.dbAvator.m_dwBaseShape;
   this->m_AvatorData.dbAvator.m_dwLastConnTime = snapshot.dbAvator.m_dwLastConnTime;
   this->m_AvatorData.dbAvator.m_byMapCode = snapshot.dbAvator.m_byMapCode;
-  memcpy_0(
+  std::memcpy(
     this->m_AvatorData.dbAvator.m_fStartPos,
     snapshot.dbAvator.m_fStartPos,
     sizeof(this->m_AvatorData.dbAvator.m_fStartPos));
@@ -3803,7 +3803,7 @@ void CUserDB::Reged_Char_Complete(
 
   if (!byRetCode)
   {
-    memcpy_0(m_RegedList, pRegedList, sizeof(m_RegedList));
+    std::memcpy(m_RegedList, pRegedList, sizeof(m_RegedList));
     for (int j = 0; j < 3; ++j)
     {
       _REGED *reged = &m_RegedList[j];
@@ -3823,7 +3823,7 @@ void CUserDB::Reged_Char_Complete(
     {
       if (m_RegedList[k].m_bySlotIndex != 255)
       {
-        memcpy_0(&result.RegedList[charNum], &m_RegedList[k], sizeof(result.RegedList[charNum]));
+        std::memcpy(&result.RegedList[charNum], &m_RegedList[k], sizeof(result.RegedList[charNum]));
         if (result.RegedList[charNum].m_dwDalant > MAX_DALANT)
         {
           result.RegedList[charNum].m_dwDalant = MAX_DALANT;
@@ -3856,7 +3856,7 @@ void CUserDB::Reged_Char_Complete(
   const unsigned __int16 len = result.size();
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&result), len);
 
-  memcpy_0(m_NotArrangedChar, pArrangedList, sizeof(m_NotArrangedChar));
+  std::memcpy(m_NotArrangedChar, pArrangedList, sizeof(m_NotArrangedChar));
   s_MgrLobbyHistory.reged_char_complete(byRetCode, charNum, pRegedList, m_szLobbyHistoryFileName);
   if (!byRetCode && m_bChatLock)
   {
@@ -3871,7 +3871,7 @@ void CUserDB::Reged_Char_Complete(
     {
       if (pArrangedList[m].dwSerial != static_cast<unsigned int>(-1))
       {
-        memcpy_0(&info.CharList[charNum++], &pArrangedList[m], sizeof(info.CharList[0]));
+        std::memcpy(&info.CharList[charNum++], &pArrangedList[m], sizeof(info.CharList[0]));
       }
     }
     info.byCharNum = static_cast<unsigned __int8>(charNum);
@@ -3936,13 +3936,13 @@ void CUserDB::Select_Char_Complete(
   bool dataUpdated = false;
   if (!byRetCode)
   {
-    memcpy_0(&m_AvatorData, pLoadData, sizeof(m_AvatorData));
-    memcpy_0(&m_AvatorData_bk, pLoadData, sizeof(m_AvatorData_bk));
+    std::memcpy(&m_AvatorData, pLoadData, sizeof(m_AvatorData));
+    std::memcpy(&m_AvatorData_bk, pLoadData, sizeof(m_AvatorData_bk));
 
     const unsigned int startCount = g_Main.m_dwStartNPCQuestCnt[m_AvatorData_bk.dbAvator.m_byRaceSexCode / 2];
     auto *startHistory = new (std::nothrow) _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY[startCount];
     m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
-    memcpy_0(
+    std::memcpy(
       m_AvatorData_bk.dbQuest.m_StartHistory,
       m_AvatorData.dbQuest.m_StartHistory,
       89 * startCount);
@@ -4049,9 +4049,9 @@ void CUserDB::Select_Char_Complete(
     m_AvatorData_bk.dbTrunk.dGold = dTrunkOldGold;
     m_AvatorData_bk.dbTrunk.byExtSlotNum = byExtTrunkOldSlot;
 
-    strcpy_0(m_wszAvatorName, pLoadData->dbAvator.m_wszAvatorName);
+    std::strcpy(m_wszAvatorName, pLoadData->dbAvator.m_wszAvatorName);
     W2M(pLoadData->dbAvator.m_wszAvatorName, m_aszAvatorName, 17);
-    m_byNameLen = strlen_0(m_wszAvatorName);
+    m_byNameLen = std::strlen(m_wszAvatorName);
     m_tmrCheckPlayMin.TermTimeRun();
     m_dwSerial = pLoadData->dbAvator.m_dwRecordNum;
     slotIndex = pLoadData->dbAvator.m_bySlotIndex;
@@ -4086,8 +4086,8 @@ void CUserDB::Select_Char_Complete(
     }
 
     _select_avator_report_wrac report{};
-    memcpy_0(&report, &m_gidGlobal, sizeof(report.gidGlobal));
-    strcpy_0(report.wszCharName, m_wszAvatorName);
+    std::memcpy(&report, &m_gidGlobal, sizeof(report.gidGlobal));
+    std::strcpy(report.wszCharName, m_wszAvatorName);
     report.wszCharName[16] = 0;
     report.dwAvatorSerial = m_dwSerial;
     report.byLevel = pLoadData->dbAvator.m_byLevel;
@@ -4100,8 +4100,8 @@ void CUserDB::Select_Char_Complete(
 
     if (g_Network.m_bUseFG)
     {
-      const size_t nameLen = strlen_0(m_wszAvatorName);
-      const unsigned int accLen = static_cast<unsigned int>(strlen_0(m_szAccountID));
+      const size_t nameLen = std::strlen(m_wszAvatorName);
+      const unsigned int accLen = static_cast<unsigned int>(std::strlen(m_szAccountID));
       void *context = _CcrFG_rs_CreateUserContext(
         m_dwAccountSerial,
         reinterpret_cast<unsigned __int8 *>(m_szAccountID),
@@ -4134,9 +4134,9 @@ void CUserDB::Select_Char_Complete(
 void CUserDB::WriteLog_CharSelect()
 {
   _log_case_charselect logData{};
-  strcpy_0(logData.szID, m_szAccountID);
+  std::strcpy(logData.szID, m_szAccountID);
   logData.dwIDSerial = m_dwAccountSerial;
-  strcpy_0(logData.wszName, m_wszAvatorName);
+  std::strcpy(logData.wszName, m_wszAvatorName);
   logData.dwNameSerial = m_dwSerial;
 
   __time64_t now = 0;
@@ -4155,7 +4155,7 @@ void CUserDB::WriteLog_CharSelect()
 
 char CUserDB::Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN)
 {
-  memcpy_0(&m_AvatorData.dbItemCombineEx, pItemCombineDB_IN, sizeof(m_AvatorData.dbItemCombineEx));
+  std::memcpy(&m_AvatorData.dbItemCombineEx, pItemCombineDB_IN, sizeof(m_AvatorData.dbItemCombineEx));
   m_bDataUpdate = 1;
   return 1;
 }

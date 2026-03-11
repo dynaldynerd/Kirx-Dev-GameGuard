@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CTransportShip.h"
 
@@ -98,8 +98,8 @@ bool CTransportShip::InitShip(CMapData *pLinkShipMap,
     }
   }
 
-  memset_0(this->m_NewMember, 0, sizeof(this->m_NewMember));
-  memset_0(this->m_OldMember, 0, sizeof(this->m_OldMember));
+  std::memset(this->m_NewMember, 0, sizeof(this->m_NewMember));
+  std::memset(this->m_OldMember, 0, sizeof(this->m_OldMember));
   return true;
 }
 
@@ -113,8 +113,8 @@ void CTransportShip::AlterState(bool bAnchor, unsigned __int8 byDirect, int nPas
 
   if (m_bAnchor)
   {
-    memcpy_0(m_OldMember, m_NewMember, sizeof(m_OldMember));
-    memset_0(m_NewMember, 0, sizeof(m_NewMember));
+    std::memcpy(m_OldMember, m_NewMember, sizeof(m_OldMember));
+    std::memset(m_NewMember, 0, sizeof(m_NewMember));
     m_listLogoffMember.ResetList();
     if (nNextSubEventTerm <= nPassMin)
     {
@@ -130,7 +130,7 @@ void CTransportShip::AlterState(bool bAnchor, unsigned __int8 byDirect, int nPas
   {
     m_MgrTicket[m_byDirect].dwNextUpdateTime = GetLoopTime();
     KickFreeMember();
-    memset_0(m_OldMember, 0, sizeof(m_OldMember));
+    std::memset(m_OldMember, 0, sizeof(m_OldMember));
   }
 
   SendMsg_TransportShipState(-1);
@@ -342,7 +342,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
   if (sourceItem)
   {
     _STORAGE_LIST::_db_con itemCopy;
-    memcpy_0(&itemCopy, sourceItem, sizeof(itemCopy));
+    std::memcpy(&itemCopy, sourceItem, sizeof(itemCopy));
 
     if (pExiter->Emb_DelStorage(0, foundIndex, 0, 1, "CTransportShip::Ticketting()"))
     {
@@ -477,7 +477,7 @@ void CTransportShip::CheckTicket_Pass(CPlayer *pPtr, int nPortalIndex)
   float newPos[3]{};
   if (!targetMap->GetRandPosInDummy(targetPortal->m_pDumPos, newPos, 1))
   {
-    memcpy_0(newPos, targetPortal->m_pDumPos->m_fCenterPos, sizeof(newPos));
+    std::memcpy(newPos, targetPortal->m_pDumPos->m_fCenterPos, sizeof(newPos));
   }
 
   if (pPtr->m_pUserDB)
@@ -509,7 +509,7 @@ void CTransportShip::CheckTicket_Kick(CPlayer *pPtr, int nPortalIndex)
   float newPos[3]{};
   if (!targetMap->GetRandPosInDummy(targetPortal->m_pDumPos, newPos, 1))
   {
-    memcpy_0(newPos, targetPortal->m_pDumPos->m_fCenterPos, sizeof(newPos));
+    std::memcpy(newPos, targetPortal->m_pDumPos->m_fCenterPos, sizeof(newPos));
   }
 
   pPtr->OutOfMap(targetMap, 0, 1, newPos);
@@ -588,7 +588,7 @@ int CTransportShip::GetLeftTicketIncludeReserNum(char *pszTarMapCode, int nAdd)
   int leftTicket = 0;
   for (int j = 0; j < 2; ++j)
   {
-    if (!strcmp_0(m_pLinkPortMap[j]->m_pMapSet->m_strCode, pszTarMapCode))
+    if (!std::strcmp(m_pLinkPortMap[j]->m_pMapSet->m_strCode, pszTarMapCode))
     {
       leftTicket = m_MgrTicket[j].nCurTicketNum - m_MgrTicket[j].nReserTicketNum;
       if (leftTicket < 0)

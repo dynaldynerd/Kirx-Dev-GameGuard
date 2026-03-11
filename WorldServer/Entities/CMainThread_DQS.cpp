@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -231,10 +231,10 @@ void CMainThread::OnDQSRun()
         auto *economyLog = reinterpret_cast<_log_sheet_economy *>(queryEntry->m_sData);
         _worlddb_economy_history_info pEconomyData{};
         pEconomyData.dwManageValue = static_cast<unsigned int>(economyLog->nMgrValue);
-        memcpy_0(pEconomyData.dTradeGold, economyLog->dTradeGold, sizeof(pEconomyData.dTradeGold));
-        memcpy_0(pEconomyData.dTradeDalant, economyLog->dTradeDalant, sizeof(pEconomyData.dTradeDalant));
-        memcpy_0(pEconomyData.dMineOre, economyLog->dCutOre, sizeof(pEconomyData.dMineOre));
-        memcpy_0(pEconomyData.dCutOre, &economyLog->dCutOre[3], sizeof(pEconomyData.dCutOre));
+        std::memcpy(pEconomyData.dTradeGold, economyLog->dTradeGold, sizeof(pEconomyData.dTradeGold));
+        std::memcpy(pEconomyData.dTradeDalant, economyLog->dTradeDalant, sizeof(pEconomyData.dTradeDalant));
+        std::memcpy(pEconomyData.dMineOre, economyLog->dCutOre, sizeof(pEconomyData.dMineOre));
+        std::memcpy(pEconomyData.dCutOre, &economyLog->dCutOre[3], sizeof(pEconomyData.dCutOre));
         db_Insert_Economy_History(economyLog->dwDate, &pEconomyData);
         break;
       }
@@ -2712,7 +2712,7 @@ void CMainThread::CompleteUpdateSetLimitRun(char byRet, char *pData)
   auto *limitRunRequest = reinterpret_cast<_manage_client_limit_run_request_acwr *>(pData);
   _manage_client_limit_run_result_wrac result{};
   result.byRet = static_cast<unsigned __int8>(byRet);
-  memcpy_0(&result.idLocal, limitRunRequest, sizeof(result.idLocal));
+  std::memcpy(&result.idLocal, limitRunRequest, sizeof(result.idLocal));
   result.byLoginServerIndex = limitRunRequest->byCode;
 
   unsigned __int8 type[16]{};

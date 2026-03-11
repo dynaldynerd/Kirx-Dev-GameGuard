@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "ClassOrderProcessor.h"
 #include "PatriarchElectProcessor.h"
@@ -251,7 +251,7 @@ int ClassOrderProcessor::_RequestDischarge(CPlayer *player, char *data)
   CandidateMgr::_candidate_info *candidate = candidateMgr->GetPatriarchGroup(playerRace, classType);
   if (candidate == nullptr)
     return 23;
-  if (strcmp_0(candidate->wszName, data + 1) != 0)
+  if (std::strcmp(candidate->wszName, data + 1) != 0)
     return 24;
   if (!candidateMgr->DischargePatriarchGroup(playerRace, classType))
     return 23;
@@ -312,12 +312,12 @@ void ClassOrderProcessor::SendMsg_QueryAppointResult(
   char *pwszAvatorName)
 {
   unsigned __int8 pbyType[36]{};
-  memcpy_0(pbyType, "8\t", 2u);
+  std::memcpy(pbyType, "8\t", 2u);
 
   _pt_query_appoint_zocl msg{};
   msg.byRet = byRet;
   msg.byClassType = byClassType;
-  strcpy_0(msg.wszAvatorName, pwszAvatorName);
+  std::strcpy(msg.wszAvatorName, pwszAvatorName);
 
   const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
   g_Network.m_pProcess[0]->LoadSendMsg(wIndex, pbyType, reinterpret_cast<char *>(&msg), len);
@@ -348,7 +348,7 @@ void ClassOrderProcessor::UpdatePacket(unsigned __int8 byRace, unsigned __int8 b
     _kSend[byRace].body[classIndex].byClassType =
       static_cast<unsigned __int8>(static_cast<unsigned __int8>(group->eClassType) - 5);
     _kSend[byRace].body[classIndex].dPvpPoint = group->dPvpPoint;
-    strcpy_0(_kSend[byRace].body[classIndex].wszAvatorName, group->wszName);
+    std::strcpy(_kSend[byRace].body[classIndex].wszAvatorName, group->wszName);
   }
   else
   {

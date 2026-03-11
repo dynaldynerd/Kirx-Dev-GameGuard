@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPostData.h"
 
@@ -19,10 +19,10 @@ void CPostData::Init()
   m_byErrCode = 0;
   m_bySendRace = 0;
   m_dwSenderSerial = 0;
-  memset_0(m_wszSendName, 0, sizeof(m_wszSendName));
-  memset_0(m_wszRecvName, 0, sizeof(m_wszRecvName));
-  memset_0(m_wszTitle, 0, sizeof(m_wszTitle));
-  memset_0(m_wszContent, 0, sizeof(m_wszContent));
+  std::memset(m_wszSendName, 0, sizeof(m_wszSendName));
+  std::memset(m_wszRecvName, 0, sizeof(m_wszRecvName));
+  std::memset(m_wszTitle, 0, sizeof(m_wszTitle));
+  std::memset(m_wszContent, 0, sizeof(m_wszContent));
   m_Key.SetRelease();
   m_dwDur = 0;
   m_dwUpt = 268435455;

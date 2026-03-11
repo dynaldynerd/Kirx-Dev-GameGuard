@@ -24,7 +24,7 @@ CGameStatistics::_DAY::_DAY()
 
 void CGameStatistics::_DAY::init()
 {
-  memset_0(this, 0, sizeof(CGameStatistics::_DAY));
+  std::memset(this, 0, sizeof(CGameStatistics::_DAY));
 }
 
 CGameStatistics::CGameStatistics()

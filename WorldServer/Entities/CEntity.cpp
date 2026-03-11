@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CEntity.h"
 #include "CMainThread.h"
@@ -126,7 +126,7 @@ static void ExtractVertex(
     }
     else
     {
-      memcpy_0(outVertex, compVertex, 12LL * num);
+      std::memcpy(outVertex, compVertex, 12LL * num);
     }
   }
   else
@@ -354,7 +354,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
   mTrack = reinterpret_cast<unsigned char *>(mObject) + sizeof(_ANI_OBJECT) * mObjectNum;
   mOrgUV = reinterpret_cast<float (*)[2]>(mTrack + mHeader.Track.size);
 
-  memcpy_0(mTrack, track, mHeader.Track.size);
+  std::memcpy(mTrack, track, mHeader.Track.size);
   ConvAniObject(mObjectNum, mTrack, readObject, mObject);
 
   if (mFlag & 2)
@@ -483,7 +483,7 @@ __int64 CEntity::LoadEntity(char *a2, unsigned int a3)
         float nx = normalAcc[3 * vid];
         float ny = normalAcc[3 * vid + 1];
         float nz = normalAcc[3 * vid + 2];
-        float len = sqrtf_0(nx * nx + ny * ny + nz * nz);
+        float len = std::sqrt(nx * nx + ny * ny + nz * nz);
         if (len != 0.0f)
         {
           nx /= len;
@@ -895,7 +895,7 @@ void CEntity::SetVertexShaderID(_ENTITY_LIST *a2, float (*const a3)[4], unsigned
     Vector3fTransform(transformedDir, stState.mMainLightNomal, reinterpret_cast<float (*)[4]>(invWorld));
 
     const float dirLength =
-      sqrtf_0((transformedDir[0] * transformedDir[0]) + (transformedDir[1] * transformedDir[1]) + (transformedDir[2] * transformedDir[2]));
+      std::sqrt((transformedDir[0] * transformedDir[0]) + (transformedDir[1] * transformedDir[1]) + (transformedDir[2] * transformedDir[2]));
     transformedDir[0] /= dirLength;
     transformedDir[1] /= dirLength;
     transformedDir[2] /= dirLength;
@@ -932,7 +932,7 @@ __int64 CEntity::DrawEntity(float (*const a2)[4], unsigned int a3, double a4)
     if (SLOBYTE(mFlag) < 0)
     {
       float billboard[16]{};
-      memcpy_0(billboard, &dword_184A79AEC, sizeof(billboard));
+      std::memcpy(billboard, &dword_184A79AEC, sizeof(billboard));
       billboard[12] = 0.0f;
       billboard[13] = 0.0f;
       billboard[14] = 0.0f;
@@ -1009,7 +1009,7 @@ __int64 CEntity::DrawEntityVS(_ENTITY_LIST *a2, float (*const a3)[4], unsigned i
     if (SLOBYTE(mFlag) < 0)
     {
       float billboard[16]{};
-      memcpy_0(billboard, &dword_184A79AEC, sizeof(billboard));
+      std::memcpy(billboard, &dword_184A79AEC, sizeof(billboard));
       billboard[12] = 0.0f;
       billboard[13] = 0.0f;
       billboard[14] = 0.0f;

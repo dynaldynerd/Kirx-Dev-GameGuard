@@ -53,7 +53,7 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
       returnedString,
       128u,
       kDarkHoleQuestIndexIni);
-    if (!strcmp_0(returnedString, kDarkHoleQuestNoMatch))
+    if (!std::strcmp(returnedString, kDarkHoleQuestNoMatch))
       MyMessageBox("Quest Dungeon Load Error", "%s item no match quest", record->m_strCode);
     char buffer[144]{};
     sprintf(buffer, kDarkHoleQuestPathFmt, returnedString);

@@ -21,7 +21,7 @@ static_assert(sizeof(_pt_result_fcandidacy_list_zocl) == 23501, "Candidate list 
 
 _pt_result_fcandidacy_list_zocl::_pt_result_fcandidacy_list_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 unsigned __int16 _pt_result_fcandidacy_list_zocl::size() const
@@ -52,7 +52,7 @@ bool CandidateRegister::Initialize()
 
   ElectProcessor::Initialize();
   m_bInitCandidate = false;
-  memset_0(m_kSend, 0, sizeof(m_kSend));
+  std::memset(m_kSend, 0, sizeof(m_kSend));
   return true;
 }
 
@@ -154,12 +154,12 @@ void CandidateRegister::_SortCandidacyByPvpPoint(unsigned __int8 byRace)
       if (m_kSend[byRace].Candidacy[left].dPvpPoint > m_kSend[byRace].Candidacy[right].dPvpPoint)
       {
         _pt_result_fcandidacy_list_zocl::__candi_info temp{};
-        memcpy_0(&temp, &m_kSend[byRace].Candidacy[left], sizeof(temp));
-        memcpy_0(
+        std::memcpy(&temp, &m_kSend[byRace].Candidacy[left], sizeof(temp));
+        std::memcpy(
           &m_kSend[byRace].Candidacy[left],
           &m_kSend[byRace].Candidacy[right],
           sizeof(m_kSend[byRace].Candidacy[left]));
-        memcpy_0(&m_kSend[byRace].Candidacy[right], &temp, sizeof(m_kSend[byRace].Candidacy[right]));
+        std::memcpy(&m_kSend[byRace].Candidacy[right], &temp, sizeof(m_kSend[byRace].Candidacy[right]));
       }
     }
   }
@@ -280,7 +280,7 @@ void CandidateRegister::_UpdatePacketWin(unsigned __int8 byRace, char *wszName, 
 
   for (int index = 0; index < m_kSend[byRace].byCnt; ++index)
   {
-    if (!strcmp_0(m_kSend[byRace].Candidacy[index].wszAvatorName, wszName))
+    if (!std::strcmp(m_kSend[byRace].Candidacy[index].wszAvatorName, wszName))
     {
       m_kSend[byRace].Candidacy[index].dwWinCnt = dwWinCnt;
       return;

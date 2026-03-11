@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -23,7 +23,7 @@ _EMBELLKEY EmbellKeyFromDb(int key)
 _COMBINEKEY CombineKeyFromDb(int key)
 {
   _COMBINEKEY decoded{};
-  memcpy_0(&decoded, &key, sizeof(key));
+  std::memcpy(&decoded, &key, sizeof(key));
   return decoded;
 }
 } // namespace
@@ -69,16 +69,16 @@ unsigned __int8 CMainThread::_db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *
   _worlddb_character_base_info characterData;
   unsigned __int8 dbResult;
 
-  memset_0(&characterData, 0, sizeof(characterData));
+  std::memset(&characterData, 0, sizeof(characterData));
   dbResult = this->m_pWorldDB->Select_CharacterBaseInfo(dwSerial, &characterData);
   if ( dbResult == 1 )
     return 24;
   if ( dbResult == 2 )
     return 24;
-  strcpy_0(pCon->dbAvator.m_wszAvatorName, characterData.wszName);
+  std::strcpy(pCon->dbAvator.m_wszAvatorName, characterData.wszName);
   pCon->dbAvator.m_dwRecordNum = dwSerial;
   pCon->dbAvator.m_byRaceSexCode = characterData.byRace;
-  strcpy_0(pCon->dbAvator.m_szClassCode, characterData.szClassCode);
+  std::strcpy(pCon->dbAvator.m_szClassCode, characterData.szClassCode);
   pCon->dbAvator.m_bySlotIndex = characterData.bySlotIndex;
   pCon->dbAvator.m_byLevel = characterData.byLevel;
   pCon->dbAvator.m_dwDalant = characterData.dwDalant;
@@ -100,7 +100,7 @@ unsigned __int8 CMainThread::_db_Load_Buddy(unsigned int dwSerial, _BUDDY_DB_BAS
   _worlddb_buddy_info buddyData;
   unsigned __int8 dbResult;
 
-  memset_0(&buddyData, 0, sizeof(buddyData));
+  std::memset(&buddyData, 0, sizeof(buddyData));
   dbResult = this->m_pWorldDB->Select_Buddy(dwSerial, &buddyData);
   if ( dbResult == 1 )
     return 24;
@@ -115,7 +115,7 @@ unsigned __int8 CMainThread::_db_Load_Buddy(unsigned int dwSerial, _BUDDY_DB_BAS
   {
     pBuddy->m_List[buddyIndex].dwSerial = buddyData.BuddyData[buddyIndex].dwSerial;
     if ( buddyData.BuddyData[buddyIndex].dwSerial != -1 )
-      strcpy_0(pBuddy->m_List[buddyIndex].wszName, buddyData.BuddyData[buddyIndex].wszName);
+      std::strcpy(pBuddy->m_List[buddyIndex].wszName, buddyData.BuddyData[buddyIndex].wszName);
   }
   return 0;
 }
@@ -125,7 +125,7 @@ unsigned __int8 CMainThread::_db_Load_CryMsg(unsigned int dwSerial, _CRYMSG_DB_B
   _worlddb_crymsg_info cryMessageData;
   unsigned __int8 dbResult;
 
-  memset_0(&cryMessageData, 0, sizeof(cryMessageData));
+  std::memset(&cryMessageData, 0, sizeof(cryMessageData));
   dbResult = this->m_pWorldDB->Select_BossCryMsg(dwSerial, &cryMessageData);
   if ( dbResult == 1 )
     return 24;
@@ -137,7 +137,7 @@ unsigned __int8 CMainThread::_db_Load_CryMsg(unsigned int dwSerial, _CRYMSG_DB_B
       return 24;
   }
   for ( int cryIndex = 0; cryIndex < 10; ++cryIndex )
-    strcpy_0(pBossCry->m_List[cryIndex].wszCryMsg, cryMessageData.CryMsgData[cryIndex].wszCryMsg);
+    std::strcpy(pBossCry->m_List[cryIndex].wszCryMsg, cryMessageData.CryMsgData[cryIndex].wszCryMsg);
   return 0;
 }
 
@@ -153,8 +153,8 @@ unsigned __int8 CMainThread::_db_Load_General(
   int leftResOffset = 0;
 
   memset(parseBuffer, 0, 128);
-  memset_0(parseBuffer, 0, 128);
-  memset_0(&characterData, 0, sizeof(characterData));
+  std::memset(parseBuffer, 0, 128);
+  std::memset(&characterData, 0, sizeof(characterData));
 
   const unsigned __int8 dbResult = this->m_pWorldDB->Select_CharacterGeneralInfo(dwSerial, &characterData);
   if ( dbResult == 1 )
@@ -175,23 +175,23 @@ unsigned __int8 CMainThread::_db_Load_General(
   pCon->dbAvator.m_fStartPos[2] = characterData.fStartPos[2];
   pCon->dbAvator.m_dwTotalPlayMin = characterData.dwTotalPlayMin;
 
-  strcpy_0(leftResListBuffer, characterData.szLeftResList);
+  std::strcpy(leftResListBuffer, characterData.szLeftResList);
   pCon->dbCutting.Init();
   if ( leftResListBuffer[0] != '*' )
   {
-    leftResLength = static_cast<int>(strlen_0(leftResListBuffer));
+    leftResLength = static_cast<int>(std::strlen(leftResListBuffer));
     if ( !(leftResLength % 5) )
     {
       pCon->dbCutting.m_byLeftNum = static_cast<unsigned __int8>(leftResLength / 5);
       leftResOffset = 0;
       for ( int leftResIndex = 0; leftResIndex < pCon->dbCutting.m_byLeftNum; ++leftResIndex )
       {
-        memcpy_0(parseBuffer, &leftResListBuffer[leftResOffset], 2uLL);
+        std::memcpy(parseBuffer, &leftResListBuffer[leftResOffset], 2uLL);
         parseBuffer[2] = 0;
         leftResOffset += 2;
         pCon->dbCutting.m_List[leftResIndex].Key.byTableCode = 18;
         pCon->dbCutting.m_List[leftResIndex].Key.wItemIndex = static_cast<unsigned __int16>(atoi(parseBuffer));
-        memcpy_0(parseBuffer, &leftResListBuffer[leftResOffset], 3uLL);
+        std::memcpy(parseBuffer, &leftResListBuffer[leftResOffset], 3uLL);
         parseBuffer[3] = 0;
         leftResOffset += 3;
         pCon->dbCutting.m_List[leftResIndex].dwDur = static_cast<unsigned int>(atoi(parseBuffer));
@@ -261,12 +261,12 @@ unsigned __int8 CMainThread::_db_Load_General(
   pCon->dbAvator.m_byLastClassGrade = characterData.byLastClassGrade;
   pCon->dbAvator.m_dPvPPoint = characterData.dPvPPoint;
   pCon->dbAvator.m_dPvPCashBag = characterData.dPvPCashBag;
-  memcpy_0(
+  std::memcpy(
     pCon->dbAvator.m_szBindMapCode,
     characterData.szBindMapCode,
     sizeof(pCon->dbAvator.m_szBindMapCode));
   pCon->dbAvator.m_szBindMapCode[11] = 0;
-  memcpy_0(
+  std::memcpy(
     pCon->dbAvator.m_szBindDummy,
     characterData.szBindDummy,
     sizeof(pCon->dbAvator.m_szBindDummy));
@@ -288,7 +288,7 @@ unsigned __int8 CMainThread::_db_Load_Inven(
   _worlddb_inven_info invenData;
   unsigned __int8 dbResult;
 
-  memset_0(&invenData, 0, sizeof(invenData));
+  std::memset(&invenData, 0, sizeof(invenData));
   dbResult = this->m_pWorldDB->Select_Inven(dwSerial, byBagNum, &invenData);
   if ( dbResult == 1 )
     return 24;
@@ -317,7 +317,7 @@ unsigned __int8 CMainThread::_db_Load_ItemCombineEx(unsigned int dwSerial, _ITEM
   _worlddb_itemcombineex_info itemCombineExInfo;
   unsigned __int8 dbResult;
 
-  memset_0(&itemCombineExInfo, 0, sizeof(itemCombineExInfo));
+  std::memset(&itemCombineExInfo, 0, sizeof(itemCombineExInfo));
   dbResult = this->m_pWorldDB->Select_ItemCombineEx(dwSerial, &itemCombineExInfo);
   if ( dbResult == 1 )
     return 24;
@@ -388,7 +388,7 @@ unsigned __int8 CMainThread::_db_Load_MacroData(
 {
   unsigned __int8 dbResult = 0;
 
-  memset_0(pMacro, 0, sizeof(_AIOC_A_MACRODATA));
+  std::memset(pMacro, 0, sizeof(_AIOC_A_MACRODATA));
   dbResult = this->m_pWorldDB->Select_MacroData(dwSerial, pMacro);
   if ( dbResult == 2 )
   {
@@ -418,11 +418,11 @@ unsigned __int8 CMainThread::_db_Load_MacroData(
     }
     for ( int chatIndex = 0; chatIndex < 2; ++chatIndex )
     {
-      memset_0(&pMacro->mcr_Chat[chatIndex], 0, 256);
-      memset_0(pMacro->mcr_Chat[chatIndex].Chat[1], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[1]));
-      memset_0(pMacro->mcr_Chat[chatIndex].Chat[2], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[2]));
-      memset_0(pMacro->mcr_Chat[chatIndex].Chat[3], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[3]));
-      memset_0(pMacro->mcr_Chat[chatIndex].Chat[4], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[4]));
+      std::memset(&pMacro->mcr_Chat[chatIndex], 0, 256);
+      std::memset(pMacro->mcr_Chat[chatIndex].Chat[1], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[1]));
+      std::memset(pMacro->mcr_Chat[chatIndex].Chat[2], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[2]));
+      std::memset(pMacro->mcr_Chat[chatIndex].Chat[3], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[3]));
+      std::memset(pMacro->mcr_Chat[chatIndex].Chat[4], 0, sizeof(pMacro->mcr_Chat[chatIndex].Chat[4]));
     }
   }
   else if ( dbResult == 1 )
@@ -451,7 +451,7 @@ unsigned __int8 CMainThread::_db_Load_NpcQuest_History(
   }
   for ( int historyIndex = 0; historyIndex < 70; ++historyIndex )
   {
-    strcpy_0(pCon->m_History[historyIndex].szQuestCode, npcQuestHistory.List[historyIndex].szQuestCode);
+    std::strcpy(pCon->m_History[historyIndex].szQuestCode, npcQuestHistory.List[historyIndex].szQuestCode);
     pCon->m_History[historyIndex].byLevel = npcQuestHistory.List[historyIndex].byLevel;
     pCon->m_History[historyIndex].dwEventEndTime = npcQuestHistory.List[historyIndex].dwEventEndTime;
   }
@@ -576,7 +576,7 @@ unsigned __int8 CMainThread::_db_Load_PvpOrderView(
   _pvporderview_info orderViewInfo;
   unsigned __int8 dbResult;
 
-  memset_0(&orderViewInfo, 0, sizeof(orderViewInfo));
+  std::memset(&orderViewInfo, 0, sizeof(orderViewInfo));
   dbResult = this->m_pWorldDB->Select_PvpOrderViewInfo(dwSerial, &orderViewInfo);
   if ( dbResult == 1 )
     return 24;
@@ -612,7 +612,7 @@ unsigned __int8 CMainThread::_db_Load_PvpPointLimitData(
   _pvppointlimit_info limitInfo;
   unsigned __int8 dbResult;
 
-  memset_0(&limitInfo, 0, sizeof(limitInfo));
+  std::memset(&limitInfo, 0, sizeof(limitInfo));
   dbResult = this->m_pWorldDB->Select_PvpPointLimitInfo(dwSerial, &limitInfo);
   if ( dbResult == 1 )
     return 24;
@@ -640,7 +640,7 @@ unsigned __int8 CMainThread::_db_Load_Quest( unsigned int dwSerial, _QUEST_DB_BA
   _worlddb_quest_array questData;
   unsigned __int8 dbResult;
 
-  memset_0(&questData, 0, sizeof(questData));
+  std::memset(&questData, 0, sizeof(questData));
   dbResult = this->m_pWorldDB->Select_Quest(dwSerial, &questData);
   if ( dbResult == 1 )
     return 24;
@@ -732,7 +732,7 @@ unsigned __int8 CMainThread::_db_Load_Start_NpcQuest_History(
   {
     for (unsigned int j = 0; j < pdwCount.dwListCnt; ++j)
     {
-      strcpy_0(pCon->m_StartHistory[j].szQuestCode, pdwCount.List[j].szQuestCode);
+      std::strcpy(pCon->m_StartHistory[j].szQuestCode, pdwCount.List[j].szQuestCode);
       pCon->m_StartHistory[j].byLevel = pdwCount.List[j].byLevel;
       pCon->m_StartHistory[j].nEndTime = pdwCount.List[j].nEndTime;
     }
@@ -776,11 +776,11 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
     memset(scannerBuffer, 0, 64);
     memset(scannerCountString, 0, 10);
     sprintf_s(scannerBuffer, 64, "%I64u", scannerCounter);
-    memcpy_0(scannerCountString, scannerBuffer, 9uLL);
+    std::memcpy(scannerCountString, scannerBuffer, 9uLL);
     pDbSupplement->dwScanerGetDate = atoi(scannerCountString);
-    memset_0(scannerCountString, 0, 10);
-    const size_t scannerBufferLength = strlen_0(scannerBuffer);
-    memcpy_0(scannerCountString, &scannerBuffer[9], scannerBufferLength - 9);
+    std::memset(scannerCountString, 0, 10);
+    const size_t scannerBufferLength = std::strlen(scannerBuffer);
+    std::memcpy(scannerCountString, &scannerBuffer[9], scannerBufferLength - 9);
     pDbSupplement->wScanerCnt = atoi(scannerCountString);
   }
   else
@@ -827,7 +827,7 @@ unsigned __int8 CMainThread::_db_Load_Trade(
   _worlddb_trade_info tradeData;
   unsigned __int8 dbResult;
 
-  memset_0(&tradeData, 0, sizeof(tradeData));
+  std::memset(&tradeData, 0, sizeof(tradeData));
   dbResult = this->m_pWorldDB->Select_Trade(0, dwSerial, byRace, &tradeData);
   if ( dbResult == 1 )
     return 24;
@@ -860,7 +860,7 @@ unsigned __int8 CMainThread::_db_Load_Trunk(
   unsigned __int8 trunkResult;
   unsigned __int8 trunkExtendResult;
 
-  memset_0(&trunkData, 0, sizeof(trunkData));
+  std::memset(&trunkData, 0, sizeof(trunkData));
   trunkResult = this->m_pWorldDB->Select_AccountTrunk(dwAccountSerial, byRace, &trunkData);
   if ( trunkResult == 1 )
     return 24;
@@ -872,11 +872,11 @@ unsigned __int8 CMainThread::_db_Load_Trunk(
       return 24;
   }
   pTrunk->bySlotNum = trunkData.bySlotNum;
-  strcpy_0(pTrunk->wszPasswd, trunkData.wszPasswd);
+  std::strcpy(pTrunk->wszPasswd, trunkData.wszPasswd);
   pTrunk->dDalant = trunkData.dDalant;
   pTrunk->dGold = trunkData.dGold;
   pTrunk->byHintIndex = trunkData.byHintIndex;
-  strcpy_0(pTrunk->wszHintAnswer, trunkData.wszHintAnswer);
+  std::strcpy(pTrunk->wszHintAnswer, trunkData.wszHintAnswer);
   for ( int slotIndex = 0; slotIndex < 100; ++slotIndex )
   {
     if ( slotIndex >= trunkData.bySlotNum )
@@ -931,7 +931,7 @@ unsigned __int8 CMainThread::_db_Load_UI(
   _worlddb_userinterface_info userInterfaceInfo;
   unsigned __int8 dbResult;
 
-  memset_0(&userInterfaceInfo, 0, sizeof(userInterfaceInfo));
+  std::memset(&userInterfaceInfo, 0, sizeof(userInterfaceInfo));
   dbResult = this->m_pWorldDB->Select_UserInterface(dwSerial, &userInterfaceInfo);
   if ( dbResult == 1 )
     return 24;
@@ -949,11 +949,11 @@ unsigned __int8 CMainThread::_db_Load_UI(
     pSfcont->m_List[0][forceIndex].dwKey = userInterfaceInfo.dwDamageCForce[forceIndex];
     pSfcont->m_List[1][forceIndex].dwKey = userInterfaceInfo.dwHelpCForce[forceIndex];
   }
-  memcpy_0(pLink->m_dwSkill, userInterfaceInfo.dwSkill, sizeof(pLink->m_dwSkill));
-  memcpy_0(pLink->m_dwForce, userInterfaceInfo.dwForce, sizeof(pLink->m_dwForce));
-  memcpy_0(pLink->m_dwCharacter, userInterfaceInfo.dwCharacter, sizeof(pLink->m_dwCharacter));
-  memcpy_0(pLink->m_dwAnimus, userInterfaceInfo.dwAnimus, sizeof(pLink->m_dwAnimus));
-  memcpy_0(pLink->m_dwInvenBag, userInterfaceInfo.dwInvenBag, sizeof(pLink->m_dwInvenBag));
+  std::memcpy(pLink->m_dwSkill, userInterfaceInfo.dwSkill, sizeof(pLink->m_dwSkill));
+  std::memcpy(pLink->m_dwForce, userInterfaceInfo.dwForce, sizeof(pLink->m_dwForce));
+  std::memcpy(pLink->m_dwCharacter, userInterfaceInfo.dwCharacter, sizeof(pLink->m_dwCharacter));
+  std::memcpy(pLink->m_dwAnimus, userInterfaceInfo.dwAnimus, sizeof(pLink->m_dwAnimus));
+  std::memcpy(pLink->m_dwInvenBag, userInterfaceInfo.dwInvenBag, sizeof(pLink->m_dwInvenBag));
   pLink->m_dwInven = userInterfaceInfo.dwInven;
   pLink->m_byLinkBoardLock = userInterfaceInfo.byLinkBoardLock;
   return 0;
@@ -964,7 +964,7 @@ unsigned __int8 CMainThread::_db_Load_Unit( unsigned int dwSerial, _UNIT_DB_BASE
   _worlddb_unit_info_array unitInfoArray;
   unsigned __int8 dbResult;
 
-  memset_0(&unitInfoArray, 0, sizeof(unitInfoArray));
+  std::memset(&unitInfoArray, 0, sizeof(unitInfoArray));
   dbResult = this->m_pWorldDB->Select_Unit(dwSerial, &unitInfoArray);
   if ( dbResult == 1 )
     return 24;

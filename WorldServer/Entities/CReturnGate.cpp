@@ -74,7 +74,7 @@ void CReturnGate::GetInfo(_open_return_gate_inform_zocl *Info)
   Info->wGateInx = m_ObjID.m_wIndex;
   Info->dwOpenerSerial = m_dwOwnerSerial;
   const char *charName = m_pkOwner->m_Param.GetCharNameW();
-  strcpy_0(Info->wszOpenerName, charName);
+  std::strcpy(Info->wszOpenerName, charName);
   FloatToShort(m_fCurPos, Info->zPos, 3);
 }
 
@@ -145,7 +145,7 @@ void CReturnGate::SendMsg_Create()
   payload.wGateInx = m_ObjID.m_wIndex;
   payload.dwObjSerial = m_dwObjSerial;
   payload.dwOpenerSerial = m_dwOwnerSerial;
-  strcpy_0(payload.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
+  std::strcpy(payload.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
   FloatToShort(m_fCurPos, payload.zPos, 3);
 
   unsigned __int8 type[2] = {8, 7};
@@ -158,7 +158,7 @@ void CReturnGate::SendMsg_FixPosition(int n)
   msg.wGateInx = m_ObjID.m_wIndex;
   msg.dwObjSerial = m_dwObjSerial;
   msg.dwOpenerSerial = m_dwOwnerSerial;
-  strcpy_0(msg.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
+  std::strcpy(msg.wszOpenerName, m_pkOwner->m_Param.GetCharNameW());
   FloatToShort(m_fCurPos, msg.zPos, 3);
 
   unsigned __int8 packetType[2] = {4, static_cast<unsigned __int8>(-86)};
@@ -183,7 +183,7 @@ void CReturnGate::SendMsg_MovePortal(CPlayer *pkObj)
   _move_potal_result_zocl msg{};
   msg.byRet = 0;
   msg.byMapIndex = static_cast<char>(m_pDestMap->m_pMapSet->m_dwIndex);
-  memcpy_0(msg.fStartPos, m_fBindPos, sizeof(msg.fStartPos));
+  std::memcpy(msg.fStartPos, m_fBindPos, sizeof(msg.fStartPos));
   msg.byZoneCode = 2;
   unsigned __int8 pbyType[2] = {8, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(

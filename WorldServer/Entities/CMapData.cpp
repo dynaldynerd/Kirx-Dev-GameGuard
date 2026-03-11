@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMapData.h"
 
@@ -426,16 +426,16 @@ __int64 CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
   _EXT_DUMMY *extDummy = &m_Dummy.mDummy[dumPos->m_wLineIndex];
   for (int j = 0; j < 3; ++j)
   {
-    memcpy_0(extDummy->mBBmin, dummy->m_fMinLocal[j], sizeof(extDummy->mBBmin));
-    memcpy_0(extDummy->mBBmax, dummy->m_fMaxLocal[j], sizeof(extDummy->mBBmax));
+    std::memcpy(extDummy->mBBmin, dummy->m_fMinLocal[j], sizeof(extDummy->mBBmin));
+    std::memcpy(extDummy->mBBmax, dummy->m_fMaxLocal[j], sizeof(extDummy->mBBmax));
     if (m_Dummy.IsInBBox(dumPos->m_wLineIndex, pCurPos))
     {
       sectorIndex = static_cast<unsigned int>(j);
       break;
     }
   }
-  memcpy_0(extDummy->mBBmin, dummy->m_fMinLocal[2], sizeof(extDummy->mBBmin));
-  memcpy_0(extDummy->mBBmax, dummy->m_fMaxLocal[2], sizeof(extDummy->mBBmax));
+  std::memcpy(extDummy->mBBmin, dummy->m_fMinLocal[2], sizeof(extDummy->mBBmin));
+  std::memcpy(extDummy->mBBmax, dummy->m_fMaxLocal[2], sizeof(extDummy->mBBmax));
   return sectorIndex;
 }
 
@@ -1056,7 +1056,7 @@ int CMapData::GetPortalInx(char *pPortalCode)
 {
   for (int j = 0; j < m_nPortalNum; ++j)
   {
-    if (!strcmp_0(pPortalCode, m_pPortal[j].m_pPortalRec->m_strCode))
+    if (!std::strcmp(pPortalCode, m_pPortal[j].m_pPortalRec->m_strCode))
     {
       return j;
     }
@@ -1084,7 +1084,7 @@ _portal_dummy *CMapData::GetLinkPortal(char *pPortalCode)
 {
   for (int index = 0; index < m_nPortalNum; ++index)
   {
-    if (!strcmp_0(m_pPortal[index].m_pPortalRec->m_strLinkPortalCode, pPortalCode))
+    if (!std::strcmp(m_pPortal[index].m_pPortalRec->m_strLinkPortalCode, pPortalCode))
     {
       return &m_pPortal[index];
     }
@@ -1234,7 +1234,7 @@ void CMapData::GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecN
   }
   else
   {
-    memset_0(pRect, 0, sizeof(_pnt_rect));
+    std::memset(pRect, 0, sizeof(_pnt_rect));
   }
 }
 

@@ -23,7 +23,7 @@ _event_set::_monster_set::_state::_state()
 
 void _event_set::_monster_set::_state::init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _event_set::_monster_set::_monster_set()
@@ -38,7 +38,7 @@ _event_set::_event_set()
 
 void _event_set::init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _event_set_looting::_event_set_looting()
@@ -48,7 +48,7 @@ _event_set_looting::_event_set_looting()
 
 void _event_set_looting::init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 CMonsterEventSet::CMonsterEventSet()
@@ -74,7 +74,7 @@ bool CMonsterEventSet::IsINIFileChanged(const char *pszFileName, _FILETIME ftCur
 bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPlayer *pOne)
 {
   char loadMessage[516]{};
-  strcpy_0(loadMessage, "without reload ini file");
+  std::strcpy(loadMessage, "without reload ini file");
 
   if (!m_bLoadEventLooting)
   {
@@ -85,7 +85,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
 
   if (IsINIFileChanged(".\\Initialize\\EventSet.ini", m_ftWrite))
   {
-    memset_0(m_EventSet, 0, sizeof(m_EventSet));
+    std::memset(m_EventSet, 0, sizeof(m_EventSet));
     if (!LoadEventSet(loadMessage))
     {
       sprintf(pwszErrCode, "Reload INI file fail!!! : %s", loadMessage);
@@ -101,7 +101,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
   for (int j = 0; j < 10; ++j)
   {
     _event_set *eventSet = &m_EventSet[j];
-    if (strcmp_0(eventSet->m_strId, pszEventCode) != 0)
+    if (std::strcmp(eventSet->m_strId, pszEventCode) != 0)
     {
       continue;
     }
@@ -129,7 +129,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
       if (monsterSet->bUnknownMap)
       {
         monsterSet->pMap = pOne->m_pCurMap;
-        memcpy_0(monsterSet->fPos, pOne->m_fCurPos, sizeof(monsterSet->fPos));
+        std::memcpy(monsterSet->fPos, pOne->m_fCurPos, sizeof(monsterSet->fPos));
       }
 
       int spawnRange = static_cast<int>(monsterSet->wNum) * 20;
@@ -149,7 +149,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
         float pos[3]{};
         if (!monsterSet->pMap->GetRandPosVirtualDumExcludeStdRange(monsterSet->fPos, spawnRange, 0, pos))
         {
-          memcpy_0(pos, monsterSet->fPos, sizeof(pos));
+          std::memcpy(pos, monsterSet->fPos, sizeof(pos));
         }
 
         CMonster *repMonster = CreateRepMonster(
@@ -188,7 +188,7 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
 
   if (matchedEventCount)
   {
-    strcpy_0(pwszErrCode, loadMessage);
+    std::strcpy(pwszErrCode, loadMessage);
     g_Main.m_logEvent.Write("Start Event Set (by cheat) >> %s", pszEventCode);
     return true;
   }
@@ -207,7 +207,7 @@ bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
   for (int j = 0; j < 10; ++j)
   {
     _event_set *eventSet = &m_EventSet[j];
-    if (strcmp_0(eventSet->m_strId, pszEventCode) != 0)
+    if (std::strcmp(eventSet->m_strId, pszEventCode) != 0)
     {
       continue;
     }
@@ -317,7 +317,7 @@ void CMonsterEventSet::CheckEventSetRespawn()
           float spawnPos[3]{};
           if (!monsterSet->pMap->GetRandPosVirtualDumExcludeStdRange(monsterSet->fPos, regenRange, 0, spawnPos))
           {
-            memcpy_0(spawnPos, monsterSet->fPos, sizeof(spawnPos));
+            std::memcpy(spawnPos, monsterSet->fPos, sizeof(spawnPos));
           }
 
           CMonster *monster = CreateRepMonster(
@@ -432,7 +432,7 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
       continue;
     }
 
-    memset_0(tokenStorage, 0, sizeof(tokenStorage));
+    std::memset(tokenStorage, 0, sizeof(tokenStorage));
     const int parsedCount = ParsingCommandA(buffer, 10, tokens, 64);
     if (parsedCount == 1)
     {
@@ -458,14 +458,14 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
 
     if (eventSet->m_strId[0] == '\0')
     {
-      strcpy_0(eventSet->m_strId, token0);
+      std::strcpy(eventSet->m_strId, token0);
     }
 
     _event_set::_monster_set *monsterSet = GetMonsterSet(eventSet);
 
     char mapCodeUpper[72]{};
-    strcpy_0(mapCodeUpper, token1);
-    if (!strcmp_0(_strupr(mapCodeUpper), "UNKNOWN"))
+    std::strcpy(mapCodeUpper, token1);
+    if (!std::strcmp(_strupr(mapCodeUpper), "UNKNOWN"))
     {
       monsterSet->pMap = nullptr;
       monsterSet->fPos[0] = -1.0f;
@@ -571,7 +571,7 @@ bool CMonsterEventSet::LoadEventSetLooting()
   }
 
   m_ftLootingWrite = ftWrite;
-  memset_0(m_EventSetLootingList, 0, sizeof(m_EventSetLootingList));
+  std::memset(m_EventSetLootingList, 0, sizeof(m_EventSetLootingList));
 
   FILE *stream = nullptr;
   if (fopen_s(&stream, ".\\Initialize\\EventSetLooting.ini", "r+t"))
@@ -593,15 +593,15 @@ bool CMonsterEventSet::LoadEventSetLooting()
       continue;
     }
 
-    const size_t lootingTagLen = strlen_0("[Looting]");
-    if (!strncmp_0(buffer, "[Looting]", lootingTagLen))
+    const size_t lootingTagLen = std::strlen("[Looting]");
+    if (!std::strncmp(buffer, "[Looting]", lootingTagLen))
     {
       inItemSection = false;
       continue;
     }
 
-    const size_t itemTagLen = strlen_0("[Item]");
-    if (!strncmp_0(buffer, "[Item]", itemTagLen))
+    const size_t itemTagLen = std::strlen("[Item]");
+    if (!std::strncmp(buffer, "[Item]", itemTagLen))
     {
       inItemSection = true;
       continue;
@@ -634,7 +634,7 @@ bool CMonsterEventSet::LoadEventSetLooting()
 
       _event_set_looting::_event_item *item =
         &eventLooting->stEventItemList[eventLooting->nItemCount];
-      strcpy_0(item->strCode, token1);
+      std::strcpy(item->strCode, token1);
       item->wDropCount = static_cast<unsigned __int16>(std::atoi(token2));
       item->wDuration = static_cast<unsigned __int16>(std::atoi(token3));
       item->byProb = static_cast<unsigned __int8>(std::atoi(token4));
@@ -643,7 +643,7 @@ bool CMonsterEventSet::LoadEventSetLooting()
     else
     {
       _event_set_looting *entry = &m_EventSetLootingList[lootingCount];
-      strcpy_0(entry->strCode, token0);
+      std::strcpy(entry->strCode, token0);
       entry->wMagnifications = static_cast<unsigned __int16>(std::atoi(token1));
       entry->wRange = static_cast<unsigned __int16>(std::atoi(token2));
       entry->bWithHolyScanner = std::atoi(token3);
@@ -661,7 +661,7 @@ _event_set_looting *CMonsterEventSet::GetEvenSetLooting(const char *pszCode)
 {
   for (int j = 0; j < 100; ++j)
   {
-    if (!strcmp_0(m_EventSetLootingList[j].strCode, pszCode))
+    if (!std::strcmp(m_EventSetLootingList[j].strCode, pszCode))
     {
       return &m_EventSetLootingList[j];
     }

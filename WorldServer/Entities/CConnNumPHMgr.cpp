@@ -17,7 +17,7 @@ CConnNumPHMgr::CConnNumPHMgr()
 
 void CConnNumPHMgr::__cnt_per_h::Init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 int CConnNumPHMgr::__cnt_per_h::GetAverageUserNumPerHour()

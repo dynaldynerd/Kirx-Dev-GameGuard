@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CChiNetworkEX.h"
 
@@ -255,7 +255,7 @@ void CChiNetworkEX::Send_IP(CPlayer *pOne)
 void CChiNetworkEX::Send_Login(CPlayer *pOne)
 {
   char sendData[13]{};
-  memcpy_0(sendData, pOne->m_pUserDB->m_szAccountID, sizeof(sendData));
+  std::memcpy(sendData, pOne->m_pUserDB->m_szAccountID, sizeof(sendData));
 
   const unsigned __int16 packetLength = 13;
   CUserDB *userDb = pOne->m_pUserDB;
@@ -273,7 +273,7 @@ void CChiNetworkEX::Send_Logout(CPlayer *pOne)
   }
 
   char sendData[13]{};
-  memcpy_0(sendData, pOne->m_pUserDB->m_szAccountID, sizeof(sendData));
+  std::memcpy(sendData, pOne->m_pUserDB->m_szAccountID, sizeof(sendData));
 
   const unsigned __int16 packetLength = 13;
   CUserDB *userDb = pOne->m_pUserDB;

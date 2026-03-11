@@ -43,27 +43,27 @@ CashItemRemoteStore::CashMap *CashItemRemoteStore::_phmapTbl;
 
 _cash_discount_ini_::_cash_discount_ini_()
 {
-  memset_0(this, 0, sizeof(_cash_discount_ini_));
+  std::memset(this, 0, sizeof(_cash_discount_ini_));
 }
 
 _cash_discount_::_cash_discount_()
 {
-  memset_0(this, 0, sizeof(_cash_discount_));
+  std::memset(this, 0, sizeof(_cash_discount_));
 }
 
 _cash_event_ini::_cash_event_ini()
 {
-  memset_0(this, 0, sizeof(_cash_event_ini));
+  std::memset(this, 0, sizeof(_cash_event_ini));
 }
 
 _cash_event::_cash_event()
 {
-  memset_0(this, 0, sizeof(_cash_event));
+  std::memset(this, 0, sizeof(_cash_event));
 }
 
 _con_event_::_con_event_()
 {
-  memset_0(this, 0, sizeof(_con_event_));
+  std::memset(this, 0, sizeof(_con_event_));
 }
 
 CashItemRemoteStore::CashItemRemoteStore()
@@ -75,7 +75,7 @@ CashItemRemoteStore::~CashItemRemoteStore() = default;
 
 CashItemRemoteStore::_remain_num_of_good::_remain_num_of_good()
 {
-  memset_0(this, 0, sizeof(CashItemRemoteStore::_remain_num_of_good));
+  std::memset(this, 0, sizeof(CashItemRemoteStore::_remain_num_of_good));
 }
 
 CashItemRemoteStore *CashItemRemoteStore::Instance()
@@ -317,7 +317,7 @@ bool CashItemRemoteStore::CheatBuy(unsigned __int16 wSock, char *szItemCode, cha
   }
 
   _request_csi_buy_clzo packet{};
-  memset_0(&packet, 0, sizeof(packet));
+  std::memset(&packet, 0, sizeof(packet));
   packet.nNum = 1;
   packet.item[0].nPrice = cashRecord->m_nCsPrice;
   packet.item[0].byDiscount = static_cast<unsigned __int8>(cashRecord->m_nCsDiscount);
@@ -635,7 +635,7 @@ char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clz
   }
 
   _result_csi_buy_zocl sendResult{};
-  memset_0(&sendResult, 0, sizeof(sendResult));
+  std::memset(&sendResult, 0, sizeof(sendResult));
 
   _request_csi_buy_clzo::__item *lastSrcItem = nullptr;
   bool couponUsed = false;
@@ -1480,7 +1480,7 @@ char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
   m_cash_event[byEventType].m_ini.m_byHour[0] = tmValue.tm_hour;
   m_cash_event[byEventType].m_ini.m_byMinute[0] = tmValue.tm_min;
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = m_cash_event[byEventType].m_ini.m_wYear[1] - 1900;
   tmValue.tm_mon = m_cash_event[byEventType].m_ini.m_byMonth[1] - 1;
   tmValue.tm_mday = m_cash_event[byEventType].m_ini.m_byDay[1] + m_cash_event[byEventType].m_ini.m_byRepeatDay;
@@ -1512,8 +1512,8 @@ void CashItemRemoteStore::Set_LimitedSale_DCK(unsigned __int8 /*byEventType*/, u
 void CashItemRemoteStore::Set_LimitedSale_Event()
 {
   _cash_lim_sale tmp{};
-  memcpy_0(&tmp, &m_lim_event_New, sizeof(tmp));
-  memcpy_0(&m_lim_event, &tmp, sizeof(m_lim_event));
+  std::memcpy(&tmp, &m_lim_event_New, sizeof(tmp));
+  std::memcpy(&m_lim_event, &tmp, sizeof(m_lim_event));
 }
 
 void CashItemRemoteStore::Inform_CashEvent_Status_All(
@@ -1846,19 +1846,19 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
   sprintf_s(buffer, 256, "%s\\Shop_%u.sys", logDir, logTime);
   _kLoggers[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   logTime = GetKorLocalTime();
   sprintf_s(buffer, 256, "%s\\Shop_%u.prc", logDir, logTime);
   _kLoggers[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   logTime = GetKorLocalTime();
   sprintf_s(buffer, 256, "%s\\DiscountRate_%u.log", logDir, logTime);
   m_cde.m_cde_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   for (int j = 0; j < 3; ++j)
   {
-    memset_0(buffer, 0, 256);
+    std::memset(buffer, 0, 256);
     logTime = GetKorLocalTime();
     sprintf_s(buffer, 256, "%s\\CashEvent_%dType_%u.log", logDir, j, logTime);
     m_cash_event[j].m_event_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
@@ -1872,7 +1872,7 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
     m_cash_event[j].m_event_log.Write(kEventTypeExpired);
   }
 
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   logTime = GetKorLocalTime();
   sprintf_s(buffer, 256, "%s\\ConditionalEvent_%u.log", logDir, logTime);
   m_con_event.m_conevent_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
@@ -2382,7 +2382,7 @@ void CashItemRemoteStore::load_con_event_ini(_con_event_ini *pIni, _FILETIME *pf
             pIni->m_szStartMsg,
             8,
             "./initialize/condistional_event.ini");
-          if (!strcmp_0(pIni->m_szStartMsg, "FALSE"))
+          if (!std::strcmp(pIni->m_szStartMsg, "FALSE"))
           {
             pIni->m_bUseConEvent = 0;
           }
@@ -2395,7 +2395,7 @@ void CashItemRemoteStore::load_con_event_ini(_con_event_ini *pIni, _FILETIME *pf
               pIni->m_szMiddletMsg,
               8,
               "./initialize/condistional_event.ini");
-            if (!strcmp_0(pIni->m_szMiddletMsg, "FALSE"))
+            if (!std::strcmp(pIni->m_szMiddletMsg, "FALSE"))
             {
               pIni->m_bUseConEvent = 0;
             }
@@ -2408,7 +2408,7 @@ void CashItemRemoteStore::load_con_event_ini(_con_event_ini *pIni, _FILETIME *pf
                 pIni->m_szEndMsg,
                 8,
                 "./initialize/condistional_event.ini");
-              if (!strcmp_0(pIni->m_szEndMsg, "FALSE"))
+              if (!std::strcmp(pIni->m_szEndMsg, "FALSE"))
               {
                 pIni->m_bUseConEvent = 0;
               }
@@ -2447,9 +2447,9 @@ void CashItemRemoteStore::Check_Conditional_Event_INI()
       m_con_event.m_ini.m_byEventKind = newIni.m_byEventKind;
       m_con_event.m_ini.m_dwCashMin = newIni.m_dwCashMin;
       m_con_event.m_ini.m_iEventTime = newIni.m_iEventTime;
-      strcpy_0(m_con_event.m_ini.m_szStartMsg, newIni.m_szStartMsg);
-      strcpy_0(m_con_event.m_ini.m_szMiddletMsg, newIni.m_szMiddletMsg);
-      strcpy_0(m_con_event.m_ini.m_szEndMsg, newIni.m_szEndMsg);
+      std::strcpy(m_con_event.m_ini.m_szStartMsg, newIni.m_szStartMsg);
+      std::strcpy(m_con_event.m_ini.m_szMiddletMsg, newIni.m_szMiddletMsg);
+      std::strcpy(m_con_event.m_ini.m_szEndMsg, newIni.m_szEndMsg);
     }
   }
 }
@@ -2755,7 +2755,7 @@ void CashItemRemoteStore::load_cde_ini(_cash_discount_ini_ *pIni, _FILETIME *pft
                           if (static_cast<unsigned int>(value) < 60)
                           {
                             pIni->m_byMinute[1] = static_cast<unsigned __int8>(value);
-                            memset_0(&tmValue, 0, sizeof(tmValue));
+                            std::memset(&tmValue, 0, sizeof(tmValue));
                             tmValue.tm_year = pIni->m_wYear[1] - 1900;
                             tmValue.tm_mon = pIni->m_byMonth[1] - 1;
                             tmValue.tm_mday = pIni->m_byDay[1];
@@ -2832,7 +2832,7 @@ void CashItemRemoteStore::load_cde_ini(_cash_discount_ini_ *pIni, _FILETIME *pft
                               {
                                 pIni->m_bRepeat = 0;
                               }
-                              memset_0(&tmValue, 0, sizeof(tmValue));
+                              std::memset(&tmValue, 0, sizeof(tmValue));
                               tmValue.tm_year = pIni->m_wYear[2] - 1900;
                               tmValue.tm_mon = pIni->m_byMonth[2] - 1;
                               tmValue.tm_mday = pIni->m_byDay[2];
@@ -2962,7 +2962,7 @@ char CashItemRemoteStore::ChangeDiscountEventTime()
   m_cde.m_ini.m_byHour[0] = tmValue.tm_hour;
   m_cde.m_ini.m_byMinute[0] = tmValue.tm_min;
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = m_cde.m_ini.m_wYear[1] - 1900;
   tmValue.tm_mon = m_cde.m_ini.m_byMonth[1] - 1;
   tmValue.tm_mday = m_cde.m_ini.m_byDay[1] + m_cde.m_ini.m_byRepeatDay;
@@ -3371,7 +3371,7 @@ bool CashItemRemoteStore::SetNextDiscountEventTime()
     return false;
   }
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = m_cde.m_ini.m_wYear[1] - 1900;
   tmValue.tm_mon = m_cde.m_ini.m_byMonth[1] - 1;
   tmValue.tm_mday = m_cde.m_ini.m_byDay[1] + m_cde.m_ini.m_byRepeatDay;
@@ -3431,7 +3431,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
     return;
   }
 
-  if (!strcmp_0(pEventType, "NULL"))
+  if (!std::strcmp(pEventType, "NULL"))
   {
     return;
   }
@@ -3448,7 +3448,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
   }
   *pft = ftWrite;
 
-  if (!strcmp_0(pEventType, "Limit Sale"))
+  if (!std::strcmp(pEventType, "Limit Sale"))
   {
     _FILETIME ftLimit{};
     if (GetLastWriteFileTime("./Initialize/cash_discount_limitsale.ini", &ftLimit))
@@ -3579,7 +3579,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
                             if (value < 60)
                             {
                               pIni->m_byMinute[1] = static_cast<unsigned __int8>(value);
-                              memset_0(&tmValue, 0, sizeof(tmValue));
+                              std::memset(&tmValue, 0, sizeof(tmValue));
                               tmValue.tm_year = pIni->m_wYear[1] - 1900;
                               tmValue.tm_mon = pIni->m_byMonth[1] - 1;
                               tmValue.tm_mday = pIni->m_byDay[1];
@@ -3659,7 +3659,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
                                 {
                                   pIni->m_bRepeat = 0;
                                 }
-                                memset_0(&tmValue, 0, sizeof(tmValue));
+                                std::memset(&tmValue, 0, sizeof(tmValue));
                                 tmValue.tm_year = pIni->m_wYear[2] - 1900;
                                 tmValue.tm_mon = pIni->m_byMonth[2] - 1;
                                 tmValue.tm_mday = pIni->m_byDay[2];
@@ -3842,7 +3842,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
     }
     pIni->m_byMinute[1] = static_cast<unsigned __int8>(value);
 
-    if (!strcmp_0(pEventType, "Set"))
+    if (!std::strcmp(pEventType, "Set"))
     {
       value = GetPrivateProfileIntA(pEventType, "SetA_Discout", 0, "./initialize/cash_discount.ini");
       if (value >= 100)
@@ -3874,7 +3874,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
       pIni->m_byDiscout[3] = static_cast<unsigned __int8>(value);
     }
 
-    memset_0(&tmValue, 0, sizeof(tmValue));
+    std::memset(&tmValue, 0, sizeof(tmValue));
     tmValue.tm_year = pIni->m_wYear[1] - 1900;
     tmValue.tm_mon = pIni->m_byMonth[1] - 1;
     tmValue.tm_mday = pIni->m_byDay[1];
@@ -3934,7 +3934,7 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
       {
         pIni->m_bRepeat = 0;
       }
-      memset_0(&tmValue, 0, sizeof(tmValue));
+      std::memset(&tmValue, 0, sizeof(tmValue));
       tmValue.tm_year = pIni->m_wYear[2] - 1900;
       tmValue.tm_mon = pIni->m_byMonth[2] - 1;
       tmValue.tm_mday = pIni->m_byDay[2];
@@ -3953,14 +3953,14 @@ void CashItemRemoteStore::Load_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, 
 
 void CashItemRemoteStore::Load_LimitedSale_Event_INI(_cash_event_ini *pIni, _FILETIME *pft, char *pEventType)
 {
-  if (pIni && pft && strcmp_0(pEventType, "NULL"))
+  if (pIni && pft && std::strcmp(pEventType, "NULL"))
   {
     char codeKey[20];
     char countKey[20];
-    memset_0(codeKey, 0, sizeof(codeKey));
-    memset_0(countKey, 0, sizeof(countKey));
+    std::memset(codeKey, 0, sizeof(codeKey));
+    std::memset(countKey, 0, sizeof(countKey));
 
-    if (!strcmp_0(pEventType, "Limit Sale"))
+    if (!std::strcmp(pEventType, "Limit Sale"))
     {
       pIni->m_byLimited_sale_num = static_cast<unsigned __int8>(GetPrivateProfileIntA(
         pEventType,
@@ -4045,7 +4045,7 @@ void CashItemRemoteStore::Set_LimitedSale_count(unsigned __int8 byTableCode, uns
 
 void CashItemRemoteStore::Set_DB_LimitedSale_Event()
 {
-  memcpy_0(&m_lim_event_New, &m_lim_event, sizeof(m_lim_event_New));
+  std::memcpy(&m_lim_event_New, &m_lim_event, sizeof(m_lim_event_New));
 
   qry_case_cash_limsale pQryData;
   pQryData.NewSale.byDck = m_lim_event_New.DCK;
@@ -4067,7 +4067,7 @@ void CashItemRemoteStore::Set_DB_LimitedSale_Event()
   const int nSize = static_cast<int>(pQryData.size());
   if (g_Main.PushDQSData(-1, nullptr, 158, reinterpret_cast<char *>(&pQryData), nSize))
   {
-    memcpy_0(&m_lim_event_Old, &m_lim_event_New, sizeof(m_lim_event_Old));
+    std::memcpy(&m_lim_event_Old, &m_lim_event_New, sizeof(m_lim_event_Old));
   }
 }
 
@@ -4085,8 +4085,8 @@ void CashItemRemoteStore::Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sh
   }
 
   _cash_lim_sale tmp{};
-  memcpy_0(&tmp, &m_lim_event_New, sizeof(tmp));
-  memcpy_0(&m_lim_event_Old, &tmp, sizeof(m_lim_event_Old));
+  std::memcpy(&tmp, &m_lim_event_New, sizeof(tmp));
+  std::memcpy(&m_lim_event_Old, &tmp, sizeof(m_lim_event_Old));
 }
 
 unsigned __int16 CashItemRemoteStore::BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex)
@@ -4221,7 +4221,7 @@ bool CashItemRemoteStore::SetNextEventTime(unsigned __int8 byEventType)
     return false;
   }
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = m_cash_event[byEventType].m_ini.m_wYear[1] - 1900;
   tmValue.tm_mon = m_cash_event[byEventType].m_ini.m_byMonth[1] - 1;
   tmValue.tm_mday = m_cash_event[byEventType].m_ini.m_byDay[1] + m_cash_event[byEventType].m_ini.m_byRepeatDay;

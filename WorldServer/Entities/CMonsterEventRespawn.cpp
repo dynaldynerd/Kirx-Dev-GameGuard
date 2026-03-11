@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMonsterEventRespawn.h"
 
@@ -45,7 +45,7 @@ CMonsterEventRespawn::~CMonsterEventRespawn()
 
 void _event_respawn::_state::init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCode)
@@ -54,7 +54,7 @@ bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCo
   for (int j = 0; j < m_nLoadEventRespawn; ++j)
   {
     _event_respawn *candidate = &m_EventRespawn[j];
-    if (candidate->bLoad && !strcmp_0(candidate->szScriptName, pszEventCode))
+    if (candidate->bLoad && !std::strcmp(candidate->szScriptName, pszEventCode))
     {
       eventRespawn = candidate;
       break;
@@ -121,7 +121,7 @@ bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCod
   for (int j = 0; j < m_nLoadEventRespawn; ++j)
   {
     _event_respawn *candidate = &m_EventRespawn[j];
-    if (candidate->bLoad && !strcmp_0(candidate->szScriptName, pszEventCode))
+    if (candidate->bLoad && !std::strcmp(candidate->szScriptName, pszEventCode))
     {
       eventRespawn = candidate;
       break;
@@ -215,7 +215,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
   if (!s_iniExtLenInit)
   {
     s_iniExtLenInit = true;
-    s_iniExtLen = strlen_0(".ini");
+    s_iniExtLen = std::strlen(".ini");
   }
 
   int fileCount = 0;
@@ -226,7 +226,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
   {
     do
     {
-      const int fileNameLen = static_cast<int>(strlen_0(findData.cFileName));
+      const int fileNameLen = static_cast<int>(std::strlen(findData.cFileName));
       const int baseNameLen = fileNameLen - static_cast<int>(s_iniExtLen);
       strncpy(&fileBaseNames[64 * fileCount], findData.cFileName, baseNameLen);
       fileBaseNames[64 * fileCount + baseNameLen] = '\0';
@@ -242,7 +242,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
     sprintf(buffer, ".\\EventRespawn\\%s.ini", &fileBaseNames[64 * fileIndex]);
 
     _event_respawn *eventRespawn = &m_EventRespawn[loadedCount];
-    strcpy_0(eventRespawn->szScriptName, &fileBaseNames[64 * fileIndex]);
+    std::strcpy(eventRespawn->szScriptName, &fileBaseNames[64 * fileIndex]);
 
     const int monSetNum = GetPrivateProfileIntA("MONSTER", "set", -1, buffer);
     if (monSetNum == -1)
@@ -270,7 +270,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
       char returnedString[72]{};
       sprintf(keyName, "code%d", k);
       GetPrivateProfileStringA("MONSTER", keyName, "X", returnedString, 64, buffer);
-      if (!strcmp_0(returnedString, "X"))
+      if (!std::strcmp(returnedString, "X"))
       {
         g_Main.m_logLoadingError.Write(
           "Monster Respawn Load Error : %s >> mon code error : %d) %s",
@@ -401,7 +401,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
         sprintf(keyName, "monster %d", n + 1);
         GetPrivateProfileStringA("REWARD ITEM", keyName, "ALL", monCode, 128, buffer);
         _base_fld *dstMonRecord = nullptr;
-        if (strcmp_0(monCode, "ALL"))
+        if (std::strcmp(monCode, "ALL"))
         {
           dstMonRecord = g_Main.m_tblMonster.GetRecord(monCode);
           if (!dstMonRecord)

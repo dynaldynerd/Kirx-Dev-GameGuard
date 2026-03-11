@@ -9,7 +9,7 @@ _qry_case_lobby_logout::_qry_case_lobby_logout()
 
 void _qry_case_lobby_logout::init()
 {
-  memset_0(this, 0, sizeof(_qry_case_lobby_logout));
+  std::memset(this, 0, sizeof(_qry_case_lobby_logout));
   for (int j = 0; j < 3; ++j)
   {
     RegeList[j].bySlotIndex = static_cast<unsigned __int8>(-1);

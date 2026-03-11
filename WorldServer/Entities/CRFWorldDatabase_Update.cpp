@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRFWorldDatabase.h"
 #include "DqsDbStructs.h"
@@ -460,7 +460,7 @@ char CRFWorldDatabase::Update_CharacterData(unsigned int dwSerial, _worlddb_upda
 bool CRFWorldDatabase::Update_IncreaseWeeklyGuildKillPvpPointSum(unsigned int dwSerial, long double dPvpPoint)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(buffer, "{ CALL pUpdate_WeeklyGuildKillPVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
   return ExecUpdateQuery( buffer, true);
 }
@@ -486,7 +486,7 @@ bool CRFWorldDatabase::Update_CristalBattleCharInfo(
   diePoint[byHSKTime] = wDiePoint;
 
   char buffer[280]{};
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   sprintf(
     buffer,
     "Update tbl_general set Pvp_0=%d, Pk_0=%d, Pvp_1=%d, Pk_1=%d, Pvp_2=%d, Pk_2=%d, CharacterGrade=%d, Die_0=%d, Die_1=%"

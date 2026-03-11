@@ -13,6 +13,6 @@ struct  _update_candidate_wincount_packing
 
 inline _update_candidate_wincount_packing::_update_candidate_wincount_packing()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 

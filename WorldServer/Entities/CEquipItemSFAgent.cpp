@@ -159,7 +159,7 @@ CEquipItemSFAgent::_requireSlot::_requireSlot()
 
 void CEquipItemSFAgent::_requireSlot::Init()
 {
-  memset_0(this, 0, sizeof(CEquipItemSFAgent::_requireSlot));
+  std::memset(this, 0, sizeof(CEquipItemSFAgent::_requireSlot));
 }
 
 char CEquipItemSFAgent::GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld)

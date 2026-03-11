@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CItemStoreManager.h"
 #include "CItemStore.h"
@@ -409,10 +409,10 @@ void CItemStoreManager::MakeLimitItemUpdateQuery(
     strcat_s(pszQuery, nBufSize, buffer);
   }
 
-  pszQuery[strlen_0(pszQuery) - 1] = 32;
+  pszQuery[std::strlen(pszQuery) - 1] = 32;
   sprintf_s(buffer, 128, "where serial=%d", dwSerial);
   strcat_s(pszQuery, nBufSize, buffer);
-  strlen_0(pszQuery);
+  std::strlen(pszQuery);
 }
 
 CMapItemStoreList *CItemStoreManager::GetInstanceStoreListBySerial(int nSerial)
@@ -628,7 +628,7 @@ void CItemStoreManager::SetEnforceInitNormalStore()
       CItemStore *store = &list->m_ItemStore[k];
       for (int codeIdx = found; codeIdx < 3; ++codeIdx)
       {
-        if (!strcmp_0(codes[codeIdx], store->m_pRec->m_strStore_NPCcode))
+        if (!std::strcmp(codes[codeIdx], store->m_pRec->m_strStore_NPCcode))
         {
           m_pLimitInitNormalStore[found++] = store;
           break;
@@ -673,7 +673,7 @@ char CItemStoreManager::ResetInstanceItemStore(unsigned __int8 byStoreType, int 
         query.dwCount = list->m_nItemStoreNum;
         query.pEntry = static_cast<_qry_case_disable_instance_store_entry *>(
           operator new[](saturated_mul(query.dwCount, sizeof(_qry_case_disable_instance_store_entry))));
-        memset_0(query.pEntry, 0, sizeof(_qry_case_disable_instance_store_entry) * list->m_nItemStoreNum);
+        std::memset(query.pEntry, 0, sizeof(_qry_case_disable_instance_store_entry) * list->m_nItemStoreNum);
       }
 
       int removed = 0;

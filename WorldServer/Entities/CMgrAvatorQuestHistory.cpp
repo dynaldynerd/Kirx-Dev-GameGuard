@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMgrAvatorQuestHistory.h"
 
@@ -93,14 +93,14 @@ unsigned int CMgrAvatorQuestHistory::GetTotalWaitSize()
 
 void CMgrAvatorQuestHistory::WriteFile(char *pszFileName, char *pszLog)
 {
-  const unsigned int size = strlen_0(pszLog);
+  const unsigned int size = std::strlen(pszLog);
   unsigned int outIndex[4]{};
   if (size < 0x12C && m_listLogDataEmpty.PopNode_Front(outIndex))
   {
     __LOG_DATA *entry = &m_LogData[outIndex[0]];
-    strcpy_0(entry->szFileName, pszFileName);
+    std::strcpy(entry->szFileName, pszFileName);
     entry->nLen = size;
-    memcpy_0(entry->sData, pszLog, size);
+    std::memcpy(entry->sData, pszLog, size);
     entry->sData[size] = 0;
     m_listLogData.PushNode_Back(outIndex[0]);
     return;
@@ -172,9 +172,9 @@ void CMgrAvatorQuestHistory::init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQu
   char sData[10000]{};
   char sBuf[128]{};
   sprintf(sBuf, "%s [%s]\n", pszAvatorName, m_szCurTime);
-  strcat_0(sData, sBuf);
+  std::strcat(sData, sBuf);
   sprintf(sBuf, "START\n");
-  strcat_0(sData, sBuf);
+  std::strcat(sData, sBuf);
   for (int slotIndex = 0; slotIndex < 30; ++slotIndex)
   {
     _QUEST_DB_BASE::_LIST *quest = &pQuestDB->m_List[slotIndex];
@@ -184,12 +184,12 @@ void CMgrAvatorQuestHistory::init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQu
       if (record)
       {
         sprintf(sBuf, "\t%d: %s\n", slotIndex, record->m_strCode);
-        strcat_0(sData, sBuf);
+        std::strcat(sData, sBuf);
       }
     }
   }
   sprintf(sBuf, "\n");
-  strcat_0(sData, sBuf);
+  std::strcat(sData, sBuf);
   WriteFile(pszFileName, sData);
 }
 

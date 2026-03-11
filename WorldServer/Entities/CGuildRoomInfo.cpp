@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CGuildRoomInfo.h"
 
@@ -156,7 +156,7 @@ char CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, 
   m_pLayerSet->ActiveLayer(pMB);
 
   tagTIMESTAMP_STRUCT restoreTs{};
-  memcpy_0(&restoreTs, ts, sizeof(restoreTs));
+  std::memcpy(&restoreTs, ts, sizeof(restoreTs));
   SetRoomTime_Restore(&restoreTs);
   return 1;
 }

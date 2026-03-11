@@ -632,7 +632,7 @@ void CHolyKeeper::CheckAttack()
     return;
 
   m_ap.pDst = target;
-  memcpy_0(m_ap.fArea, target->m_fCurPos, sizeof(m_ap.fArea));
+  std::memcpy(m_ap.fArea, target->m_fCurPos, sizeof(m_ap.fArea));
   m_ap.nPart = 0;
 
   m_at->AttackGen(&m_ap, false, false);
@@ -745,7 +745,7 @@ void CHolyKeeper::CheckCurPos()
     return;
 
   m_pLastMoveTarget = nullptr;
-  memcpy_0(m_fCurPos, m_pPosCreate->m_fCenterPos, sizeof(m_fCurPos));
+  std::memcpy(m_fCurPos, m_pPosCreate->m_fCenterPos, sizeof(m_fCurPos));
   Stop();
   g_Main.m_logSystemError.Write("Out of Area Keeper");
 }

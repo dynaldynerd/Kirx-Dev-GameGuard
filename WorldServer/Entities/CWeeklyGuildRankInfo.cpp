@@ -266,7 +266,7 @@ char CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData
     m_ppkInfo[m]->m_dwInx = m;
     m_ppkInfo[m]->m_wRank = pkInfo->list[m].wRank;
     m_ppkInfo[m]->m_dwSerial = pkInfo->list[m].dwSerial;
-    strcpy_0(m_ppkInfo[m]->m_wszGuildName, pkInfo->list[m].wszGuildName);
+    std::strcpy(m_ppkInfo[m]->m_wszGuildName, pkInfo->list[m].wszGuildName);
     m_ppkInfo[m]->m_byGrade = pkInfo->list[m].byGrade;
     m_ppkInfo[m]->m_dKillPvpPoint = pkInfo->list[m].dKillPvpPoint;
     m_ppkInfo[m]->m_dGuildBattlePvpPoint = pkInfo->list[m].dGuildBattlePvpPoint;
@@ -279,7 +279,7 @@ char CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData
     for (int ii = 0; ii < m_pkSendList[n].byCnt; ++ii)
     {
       m_pkSendList[n].list[ii].byRank = m_ppkRaceStartPos[n][ii]->m_wRank;
-      strcpy_0(m_pkSendList[n].list[ii].wszGuildName, m_ppkRaceStartPos[n][ii]->m_wszGuildName);
+      std::strcpy(m_pkSendList[n].list[ii].wszGuildName, m_ppkRaceStartPos[n][ii]->m_wszGuildName);
       m_pkSendList[n].list[ii].byGrade = m_ppkRaceStartPos[n][ii]->m_byGrade;
       m_pkSendList[n].list[ii].dwPvpPoint =
         static_cast<int>(m_ppkRaceStartPos[n][ii]->m_dKillPvpPoint + m_ppkRaceStartPos[n][ii]->m_dGuildBattlePvpPoint);
@@ -311,7 +311,7 @@ char CWeeklyGuildRankInfo::LoadOwner(_weeklyguildrank_owner_info *pkInfo)
       {
         const int infoIndex = baseIndex + k;
         m_kOwnerInfo[j][k].m_dwSerial = pkInfo->list[infoIndex].dwSerial;
-        strcpy_0(m_kOwnerInfo[j][k].m_wszGuildName, pkInfo->list[infoIndex].wszGuildName);
+        std::strcpy(m_kOwnerInfo[j][k].m_wszGuildName, pkInfo->list[infoIndex].wszGuildName);
         m_kOwnerInfo[j][k].m_byRace = pkInfo->list[infoIndex].byRace;
         m_kOwnerInfo[j][k].m_wRank = pkInfo->list[infoIndex].wRank;
         m_kOwnerInfo[j][k].m_byGrade = pkInfo->list[infoIndex].byGrade;
@@ -492,7 +492,7 @@ void CWeeklyGuildRankInfo::Send(
       if (found < 0)
       {
         m_pkSendList[byTabRace].list[10].byRank = 0;
-        memset_0(
+        std::memset(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           0,
           sizeof(m_pkSendList[byTabRace].list[10].wszGuildName));
@@ -503,7 +503,7 @@ void CWeeklyGuildRankInfo::Send(
       else
       {
         m_pkSendList[byTabRace].list[10].byRank = m_ppkRaceStartPos[bySelfRace][found]->m_wRank;
-        strcpy_0(
+        std::strcpy(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszGuildName);
         m_pkSendList[byTabRace].list[10].byGrade = m_ppkRaceStartPos[bySelfRace][found]->m_byGrade;

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CItemStore.h"
 
@@ -17,12 +17,12 @@
 
 _good_storage_info::_good_storage_info()
 {
-  memset_0(this, 0, sizeof(_good_storage_info));
+  std::memset(this, 0, sizeof(_good_storage_info));
 }
 
 void _limit_item_info::init()
 {
-  memset_0(this, 0, sizeof(_limit_item_info));
+  std::memset(this, 0, sizeof(_limit_item_info));
 }
 
 _limit_item_info::_limit_item_info()
@@ -32,7 +32,7 @@ _limit_item_info::_limit_item_info()
 
 CItemStore::CItemStore()
 {
-  memset_0(this, 0, sizeof(CItemStore));
+  std::memset(this, 0, sizeof(CItemStore));
 }
 
 CItemStore::~CItemStore()
@@ -626,7 +626,7 @@ unsigned int CItemStore::CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoney
 void CItemStore::SetZeroTradeMoney()
 {
   m_dwLastTradePoint = 0;
-  memset_0(m_dwLastTradeActPoint, 0, sizeof(m_dwLastTradeActPoint));
+  std::memset(m_dwLastTradeActPoint, 0, sizeof(m_dwLastTradeActPoint));
   m_dwLastTradeDalant = 0;
   m_dwLastTradeGold = 0;
 }

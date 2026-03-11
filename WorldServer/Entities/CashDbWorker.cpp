@@ -321,7 +321,7 @@ void CashDbWorker::_complete_tsk_cash_update(Task *pkTsk)
           auto *dupItem = &psheet->in_item[nNum];
           dupItem->in_lnUID = UIDGenerator::getuid(g_Main.m_byWorldCode);
           dupItem->in_nPrice = 0;
-          memcpy_0(&sheetplus.in_item[static_cast<unsigned __int64>(extraCount)], dupItem, sizeof(sheetplus.in_item[0]));
+          std::memcpy(&sheetplus.in_item[static_cast<unsigned __int64>(extraCount)], dupItem, sizeof(sheetplus.in_item[0]));
           sheetplus.in_item[static_cast<unsigned __int64>(extraCount)].in_lnUID = dupItem->in_lnUID;
           sheetplus.in_item[static_cast<unsigned __int64>(extraCount)].in_nPrice = dupItem->in_nPrice;
           sheetplus.in_item[static_cast<unsigned __int64>(extraCount)].in_nLendType = dupItem->in_nEventType;
@@ -637,7 +637,7 @@ bool CashDbWorker::_init_loggers()
   sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\PartiallyPaid\\%u.his", logTime);
   _kLogger[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  memset_0(buffer, 0, sizeof(buffer));
+  std::memset(buffer, 0, sizeof(buffer));
   logTime = GetKorLocalTime();
   sprintf_s(buffer, "..\\ZoneServerLog\\SystemLog\\PartiallyPaid\\%u.sys", logTime);
   _kLogger[0].SetWriteLogFile(buffer, 1, 0, 1, 1);

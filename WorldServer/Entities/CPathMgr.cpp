@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPathMgr.h"
 
@@ -11,7 +11,7 @@ CPathMgr CPathMgr::ms_BackupPath;
 CPathMgr::CPathMgr()
 {
   Init();
-  memset_0(m_PosPool, 0, sizeof(m_PosPool));
+  std::memset(m_PosPool, 0, sizeof(m_PosPool));
 }
 
 CPathMgr::~CPathMgr()
@@ -36,7 +36,7 @@ int CPathMgr::PopNextPath(float *pPos)
   {
     return 0;
   }
-  memcpy_0(pPos, m_PosPool[m_StartPos], 12);
+  std::memcpy(pPos, m_PosPool[m_StartPos], 12);
   ++m_StartPos;
   --m_Size;
   if (m_StartPos >= 16)
@@ -66,7 +66,7 @@ int CPathMgr::SearchPathA(CMonster *pMon, float *vTarPos, int bBackupRestore)
   {
     m_Size = 1;
     m_StartPos = 0;
-    memcpy_0(m_PosPool, vTarPos, 12);
+    std::memcpy(m_PosPool, vTarPos, 12);
     return m_Size;
   }
 
@@ -92,6 +92,6 @@ void CPathMgr::Copy(CPathMgr *pDst)
   pDst->m_StartPos = m_StartPos;
   for (int j = m_StartPos; j < m_Size + m_StartPos; ++j)
   {
-    memcpy_0(pDst->m_PosPool[j], m_PosPool[j], sizeof(pDst->m_PosPool[j]));
+    std::memcpy(pDst->m_PosPool[j], m_PosPool[j], sizeof(pDst->m_PosPool[j]));
   }
 }

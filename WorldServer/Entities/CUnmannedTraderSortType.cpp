@@ -8,8 +8,8 @@
 CUnmannedTraderSortType::CUnmannedTraderSortType(unsigned int dwID)
   : m_dwID(dwID), m_szTypeName{}, m_szQuery{}
 {
-  strcpy_0(this->m_szTypeName, CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name);
-  strcpy_0(this->m_szQuery, CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query);
+  std::strcpy(this->m_szTypeName, CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Type_Name);
+  std::strcpy(this->m_szQuery, CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Sort_Query);
 }
 
 CUnmannedTraderSortType::~CUnmannedTraderSortType()
@@ -41,8 +41,8 @@ bool CUnmannedTraderSortType::LoadXML(TiXmlElement *pkElemSortType, CLogFile *kL
     return false;
   }
 
-  strcpy_0(this->m_szTypeName, typeName);
-  strcpy_0(this->m_szQuery, query);
+  std::strcpy(this->m_szTypeName, typeName);
+  std::strcpy(this->m_szQuery, query);
   return true;
 }
 
@@ -63,7 +63,7 @@ char *CUnmannedTraderSortType::GetQuery()
 const CUnmannedTraderSortType *CUnmannedTraderSortType::operator=(const CUnmannedTraderSortType *lhs)
 {
   this->m_dwID = lhs->m_dwID;
-  strcpy_0(this->m_szTypeName, lhs->m_szTypeName);
-  strcpy_0(this->m_szQuery, lhs->m_szQuery);
+  std::strcpy(this->m_szTypeName, lhs->m_szTypeName);
+  std::strcpy(this->m_szQuery, lhs->m_szQuery);
   return this;
 }

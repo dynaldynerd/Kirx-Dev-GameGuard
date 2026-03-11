@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -310,7 +310,7 @@ void CPlayer::SendMsg_BuddyAddFail(char byRetCode, char *pwszDstName)
 
   _buddy_add_fail_zocl msg{};
   msg.byRetCode = byRetCode;
-  strcpy_0(msg.wszDstName, pwszDstName);
+  std::strcpy(msg.wszDstName, pwszDstName);
 
   unsigned __int8 type[2] = {31, 10};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -325,7 +325,7 @@ void CPlayer::SendMsg_BuddyAddAsk(
   _buddy_add_ask_zocl msg{};
   msg.wAskerIndex = wAskerIndex;
   msg.dwAskerSerial = dwAskerSerial;
-  strcpy_0(msg.wszAskerName, pwszAskerName);
+  std::strcpy(msg.wszAskerName, pwszAskerName);
 
   unsigned __int8 type[2] = {31, 11};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -348,7 +348,7 @@ void CPlayer::SendMsg_BuddyAddAnswerResult(
   msg.dwAdderSerial = dwSerial;
   if (!byRetCode)
   {
-    memcpy_0(msg.wszAdderName, pwszCharName, 16u);
+    std::memcpy(msg.wszAdderName, pwszCharName, 16u);
     msg.wszAdderName[16] = 0;
   }
 
@@ -417,7 +417,7 @@ void CPlayer::SendMsg_PartyJoinJoinerResult()
     {
       msg.List[index].wIndex = partyMembers[index]->m_id.wIndex;
       msg.List[index].dwSerial = partyMembers[index]->m_id.dwSerial;
-      strcpy_0(msg.List[index].wszAvatorName, partyMembers[index]->m_wszName);
+      std::strcpy(msg.List[index].wszAvatorName, partyMembers[index]->m_wszName);
     }
   }
 
@@ -436,7 +436,7 @@ void CPlayer::SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootSh
 
   _party_join_member_result_zocl msg{};
   msg.dwJoinerSerial = pJoiner->m_id.dwSerial;
-  strcpy_0(msg.wszJoinerName, pJoiner->m_wszName);
+  std::strcpy(msg.wszJoinerName, pJoiner->m_wszName);
   msg.byLootShareMode = static_cast<unsigned __int8>(byLootShareMode);
   msg.wIndex = pJoiner->m_id.wIndex;
 
@@ -465,7 +465,7 @@ void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
   _away_party_join_invitation_question_zocl msg{};
   msg.idBoss.wIndex = m_ObjID.m_wIndex;
   msg.idBoss.dwSerial = m_dwObjSerial;
-  strcpy_0(msg.wszCharName, m_Param.GetCharNameA());
+  std::strcpy(msg.wszCharName, m_Param.GetCharNameA());
 
   unsigned __int8 type[2] = {16, 33};
   g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
@@ -1120,7 +1120,7 @@ void CPlayer::pc_BuddyDownloadRequest()
   void *cursor = msg.sData;
 
   const unsigned __int8 buddyCount = static_cast<unsigned __int8>(m_pmBuddy.GetBuddyNum());
-  memcpy_0(cursor, &buddyCount, 1uLL);
+  std::memcpy(cursor, &buddyCount, 1uLL);
   cursor = static_cast<char *>(cursor) + 1;
   ++dataSize;
 
@@ -1129,31 +1129,31 @@ void CPlayer::pc_BuddyDownloadRequest()
     _BUDDY_LIST::__list *buddy = &m_pmBuddy.m_List[index];
     if (buddy->fill())
     {
-      const unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(buddy->wszName));
-      memcpy_0(cursor, &nameLen, 1uLL);
+      const unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(buddy->wszName));
+      std::memcpy(cursor, &nameLen, 1uLL);
       cursor = static_cast<char *>(cursor) + 1;
       ++dataSize;
 
-      memcpy_0(cursor, buddy->wszName, nameLen);
+      std::memcpy(cursor, buddy->wszName, nameLen);
       cursor = static_cast<char *>(cursor) + nameLen;
       dataSize += nameLen;
 
-      memcpy_0(cursor, buddy, 4uLL);
+      std::memcpy(cursor, buddy, 4uLL);
       cursor = static_cast<char *>(cursor) + 4;
       dataSize += 4;
 
       const unsigned __int8 isOnline = buddy->pPtr ? 1 : 0;
-      memcpy_0(cursor, &isOnline, 1uLL);
+      std::memcpy(cursor, &isOnline, 1uLL);
       cursor = static_cast<char *>(cursor) + 1;
       ++dataSize;
 
       if (buddy->pPtr)
       {
-        memcpy_0(cursor, &buddy->pPtr->m_wRegionMapIndex, 1uLL);
+        std::memcpy(cursor, &buddy->pPtr->m_wRegionMapIndex, 1uLL);
         cursor = static_cast<char *>(cursor) + 1;
         ++dataSize;
 
-        memcpy_0(cursor, &buddy->pPtr->m_wRegionIndex, 1uLL);
+        std::memcpy(cursor, &buddy->pPtr->m_wRegionIndex, 1uLL);
         cursor = static_cast<char *>(cursor) + 1;
         ++dataSize;
       }
@@ -1843,7 +1843,7 @@ void CPlayer::SendMsg_RefeshGroupTargetPosition(char byGroupType)
   packet.byMapCode = static_cast<char>(groupObject->m_pCurMap->m_pMapSet->m_dwIndex);
   packet.byID = static_cast<char>(this->m_GroupTargetObject[groupIndex].byID);
   packet.dwSerial = this->m_GroupTargetObject[groupIndex].dwSerial;
-  memcpy_0(packet.fPos, groupObject->m_fCurPos, sizeof(packet.fPos));
+  std::memcpy(packet.fPos, groupObject->m_fCurPos, sizeof(packet.fPos));
 
   unsigned __int8 type[2] = {13, 110};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
@@ -1892,7 +1892,7 @@ void CPlayer::SendMsg_GroupTargetInform(char byGroupType, const char *pwszName)
 {
   _group_target_inform_zocl packet{};
   packet.byGroupType = byGroupType;
-  strcpy_0(packet.wszTargetName, pwszName);
+  std::strcpy(packet.wszTargetName, pwszName);
 
   unsigned __int8 type[2] = {13, 111};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -2148,7 +2148,7 @@ void CPlayer::pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwS
       CPlayer *targetPlayer = static_cast<CPlayer *>(pTar);
       if (targetPlayer->m_bOper)
       {
-        strcpy_0(targetName, targetPlayer->m_Param.GetCharNameW());
+        std::strcpy(targetName, targetPlayer->m_Param.GetCharNameW());
       }
     }
 
@@ -2378,7 +2378,7 @@ void CPlayer::pc_SetGroupMapPointRequest(unsigned __int8 byGroupType, float *pzT
       return;
     }
 
-    if (strcmp_0(this->m_pCurMap->m_pMapSet->m_strCode, "resources"))
+    if (std::strcmp(this->m_pCurMap->m_pMapSet->m_strCode, "resources"))
     {
       this->SendMsg_SetGroupMapPoint(3, byGroupType, mapCode, pzTar, 0);
       return;
@@ -2594,7 +2594,7 @@ void CPlayer::SendMsg_RaceBossCryMsg()
 
   for (int index = 0; index < 10; ++index)
   {
-    strcpy_0(packet.wszCryMsg[index], this->m_pmCryMsg.m_List[index].wszCryMsg);
+    std::strcpy(packet.wszCryMsg[index], this->m_pmCryMsg.m_List[index].wszCryMsg);
   }
 
   unsigned __int8 type[2]{13, 105};
@@ -2620,7 +2620,7 @@ void CPlayer::pc_SetRaceBossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
     CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
     if (nationSetting->IsNormalString(pwszCryMsg))
     {
-      strcpy_0(this->m_pmCryMsg.m_List[bySlot].wszCryMsg, pwszCryMsg);
+      std::strcpy(this->m_pmCryMsg.m_List[bySlot].wszCryMsg, pwszCryMsg);
       this->m_pUserDB->Update_BossCryMsg(bySlot, pwszCryMsg);
     }
   }
@@ -2799,8 +2799,8 @@ void CPlayer::SendMsg_GM_Greeting(char *wszGMName, char *wszMsg)
   msg.bySenderRace = this->m_Param.GetRaceCode();
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszGMName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
+  msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
+  std::memcpy(msg.wszChatData, wszMsg, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
 
   unsigned __int8 type[2] = {2, 11};
@@ -2820,8 +2820,8 @@ void CPlayer::SendMsg_RACE_Greeting(char *wszBossName, char *wszMsg)
   msg.bySenderRace = this->m_Param.GetRaceCode();
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszBossName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
+  msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
+  std::memcpy(msg.wszChatData, wszMsg, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
 
   unsigned __int8 type[2] = {2, 11};
@@ -2841,8 +2841,8 @@ void CPlayer::SendMsg_GUILD_Greeting(char *wszName, char *wszMsg)
   msg.bySenderRace = this->m_Param.GetRaceCode();
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszName);
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(wszMsg));
-  memcpy_0(msg.wszChatData, wszMsg, msg.bySize);
+  msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
+  std::memcpy(msg.wszChatData, wszMsg, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
 
   unsigned __int8 type[2] = {2, 11};

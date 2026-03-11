@@ -9,7 +9,7 @@
 CUnmannedTraderClassInfoTableType::CUnmannedTraderClassInfoTableType(unsigned int dwID)
   : CUnmannedTraderClassInfo(dwID), m_byTableCode(static_cast<unsigned char>(-1)), m_vecSubClass()
 {
-  strcpy_0(this->m_szTypeName, "table");
+  std::strcpy(this->m_szTypeName, "table");
 }
 
 CUnmannedTraderClassInfoTableType::~CUnmannedTraderClassInfoTableType()
@@ -145,7 +145,7 @@ bool CUnmannedTraderClassInfoTableType::LoadXML(
   }
 
   this->m_byTableCode = static_cast<unsigned char>(tableIndex);
-  strcpy_0(this->m_szClassName, className);
+  std::strcpy(this->m_szClassName, className);
   return true;
 }
 

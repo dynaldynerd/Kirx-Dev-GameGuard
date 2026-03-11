@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -109,7 +109,7 @@ bool AP_BatterySlot::extract(_STORAGE_LIST::_db_con *pout_item)
     return false;
   }
 
-  memcpy_0(pout_item, &battery_, sizeof(_STORAGE_LIST::_db_con));
+  std::memcpy(pout_item, &battery_, sizeof(_STORAGE_LIST::_db_con));
   m_bFill = false;
   battery_.m_bLoad = 0;
   battery_.m_dwDur = 0;
@@ -168,10 +168,10 @@ bool AP_BatterySlot::is_private_item(_STORAGE_LIST::_db_con *pItem)
     return false;
   }
 
-  return strcmp_0(record->m_strCode, "itttt04") == 0
-      || strcmp_0(record->m_strCode, "itttt05") == 0
-      || strcmp_0(record->m_strCode, "itcsa01") == 0
-      || strcmp_0(record->m_strCode, "itcsa02") == 0;
+  return std::strcmp(record->m_strCode, "itttt04") == 0
+      || std::strcmp(record->m_strCode, "itttt05") == 0
+      || std::strcmp(record->m_strCode, "itcsa01") == 0
+      || std::strcmp(record->m_strCode, "itcsa02") == 0;
 }
 
 int AP_BatterySlot::insert(_STORAGE_LIST::_db_con *pItem)
@@ -193,7 +193,7 @@ int AP_BatterySlot::insert(_STORAGE_LIST::_db_con *pItem)
 
   m_bFill = true;
   battery_.m_bLoad = 1;
-  memcpy_0(&battery_, pItem, sizeof(battery_));
+  std::memcpy(&battery_, pItem, sizeof(battery_));
   return 0;
 }
 
@@ -292,7 +292,7 @@ bool AutominePersonal::regist_to_map(
   send_installed();
 
   m_bInstalled = true;
-  memset_0(m_dwMineCount, 0, sizeof(m_dwMineCount));
+  std::memset(m_dwMineCount, 0, sizeof(m_dwMineCount));
 
   CPlayer::s_MgrItemHistory.personal_amine_itemlog(
     "INSTALL",
@@ -537,7 +537,7 @@ void AutominePersonal::send_installed()
   packet.dwOwnerSerial = get_ownerserial();
   packet.wItemSerial = m_pItem->m_wSerial;
   packet.wItemTblIndex = m_pItem->m_wItemIndex;
-  memcpy_0(packet.fPos, m_fCurPos, sizeof(packet.fPos));
+  std::memcpy(packet.fPos, m_fCurPos, sizeof(packet.fPos));
   packet.byFilledSlotCnt = m_byFilledSlotCnt;
 
   unsigned __int8 type[2] = {14, 45};
@@ -930,7 +930,7 @@ void AutominePersonal::SendMsg_FixPosition(int n)
   packet.wObjIndex = m_ObjID.m_wIndex;
   packet.dwObjSerial = m_dwObjSerial;
   packet.wItemTblIndex = m_pItem->m_wItemIndex;
-  memcpy_0(packet.fFixPos, m_fCurPos, sizeof(packet.fFixPos));
+  std::memcpy(packet.fFixPos, m_fCurPos, sizeof(packet.fFixPos));
   packet.wItemSerial = m_pItem->m_wSerial;
   packet.byAct = static_cast<unsigned __int8>(m_bStart);
   packet.dwOwnerSeiral = get_ownerserial();
@@ -1167,7 +1167,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;
-    memcpy_0(&minedItem, inventoryItem, sizeof(minedItem));
+    std::memcpy(&minedItem, inventoryItem, sizeof(minedItem));
     minedItem.m_dwDur = 1;
     break;
   }
@@ -1193,7 +1193,7 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;
-    memcpy_0(&minedItem, &newOre, sizeof(minedItem));
+    std::memcpy(&minedItem, &newOre, sizeof(minedItem));
     minedItem.m_dwDur = 1;
   }
 

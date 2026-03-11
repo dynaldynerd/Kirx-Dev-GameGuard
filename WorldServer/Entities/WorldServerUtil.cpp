@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 #include "R3EngineStateOverlay.h"
@@ -134,7 +134,7 @@ unsigned int GetLoopTime()
 
 CPlayer *GetPtrPlayerFromName(CPlayer *pData, int nNum, char *pwszName)
 {
-  const unsigned __int8 nameLength = static_cast<unsigned __int8>(strlen_0(pwszName));
+  const unsigned __int8 nameLength = static_cast<unsigned __int8>(std::strlen(pwszName));
   for (int j = 0; j < nNum; ++j)
   {
     CPlayer *player = &pData[j];
@@ -984,10 +984,10 @@ char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
 
   strcpy_s(g_szLv, "00000000");
   _itoa_s(dwLvBit, szBufUpt, 16);
-  const size_t len = strlen_0(szBufUpt);
-  memcpy_0(&g_szLv[8 - len], szBufUpt, len);
+  const size_t len = std::strlen(szBufUpt);
+  std::memcpy(&g_szLv[8 - len], szBufUpt, len);
   g_szLv[8] = '\0';
-  if (!strcmp_0(&g_szLv[1], "fffffff"))
+  if (!std::strcmp(&g_szLv[1], "fffffff"))
   {
     g_szLv[2] = '\0';
   }
@@ -1793,8 +1793,8 @@ int GetStaffMastery(unsigned int *pdwForceLvCum)
 
 void InitMasteryFormula(CRecordData *pSkillData, CRecordData *pForceData)
 {
-  memset_0(s_nSkillLvPerMastery, -1, sizeof(s_nSkillLvPerMastery));
-  memset_0(s_nForceLvPerMastery, -1, sizeof(s_nForceLvPerMastery));
+  std::memset(s_nSkillLvPerMastery, -1, sizeof(s_nSkillLvPerMastery));
+  std::memset(s_nForceLvPerMastery, -1, sizeof(s_nForceLvPerMastery));
   for (int n = 0;; ++n)
   {
     const int recordNum = pSkillData->GetRecordNum();
@@ -4122,7 +4122,7 @@ int ParsingCommandW(char *pwszSrc, int nMaxWordNum, char **ppwszDst, int nMaxWor
 
     if (*src == '\0')
     {
-      return strlen_0(ppwszDst[j]) ? (j + 1) : j;
+      return std::strlen(ppwszDst[j]) ? (j + 1) : j;
     }
 
     if (dst == ppwszDst[j])
@@ -4229,7 +4229,7 @@ void clear_file(const char *directory, int keepCount)
   char entryPath[272]{};
   while (FindNextFileA(findHandle, &findData))
   {
-    if (!strcmp_0(".", findData.cFileName) || !strcmp_0("..", findData.cFileName))
+    if (!std::strcmp(".", findData.cFileName) || !std::strcmp("..", findData.cFileName))
     {
       continue;
     }
@@ -4306,7 +4306,7 @@ void StripPath(char *szPath)
 
   const size_t keepLen = std::strlen(lastSlash + 1);
   char temp[256]{};
-  memcpy_0(temp, lastSlash + 1, static_cast<unsigned int>(keepLen));
+  std::memcpy(temp, lastSlash + 1, static_cast<unsigned int>(keepLen));
   temp[keepLen] = '\0';
   strcpy_s(szPath, 256, temp);
 }
@@ -4327,7 +4327,7 @@ char W2M(char *lpwStr, char *szTran, unsigned int wTranBuffSize)
     return 0;
   }
 
-  if (strlen_0(lpwStr) + 1 > wTranBuffSize)
+  if (std::strlen(lpwStr) + 1 > wTranBuffSize)
   {
     return 0;
   }
@@ -4343,12 +4343,12 @@ char M2W(char *lpStr, char *wszTran, unsigned int wTranBuffSize)
     return 0;
   }
 
-  if (strlen_0(lpStr) + 1 > wTranBuffSize)
+  if (std::strlen(lpStr) + 1 > wTranBuffSize)
   {
     return 0;
   }
 
-  strcpy_0(wszTran, lpStr);
+  std::strcpy(wszTran, lpStr);
   return 1;
 }
 
@@ -4672,7 +4672,7 @@ _R3MATERIAL *LoadIndependenceR3M(char *szFileName)
   int matNum = 0;
   fread(&matNum, 4, 1, fp);
   auto *mat = static_cast<_R3MATERIAL *>(Dmalloc(sizeof(_R3MATERIAL) * matNum));
-  memset_0(mat, 0, sizeof(_R3MATERIAL) * matNum);
+  std::memset(mat, 0, sizeof(_R3MATERIAL) * matNum);
 
   int startId = static_cast<int>(GetNowR3D3DTexCnt()) - 1;
   mat[0].m_iMatNum = matNum;
@@ -4741,7 +4741,7 @@ _R3MATERIAL *LoadSubMaterial(char *szFileName)
         if (matNum >= 1024)
           Error(aAo_2, byte_140883769);
         mat = static_cast<_R3MATERIAL *>(Dmalloc(sizeof(_R3MATERIAL) * matNum));
-        memset_0(mat, 0, sizeof(_R3MATERIAL) * matNum);
+        std::memset(mat, 0, sizeof(_R3MATERIAL) * matNum);
         fscanf(fp, "%s", String);
         if (matNum > 0)
         {
@@ -4991,9 +4991,9 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
   if (!qword_184A79D70)
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
-    memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
+    std::memset(qword_184A79D70, 0, 144LL * dword_140978968);
     qword_184A79D68 = Dmalloc(16 * dword_140978960);
-    memset_0(qword_184A79D68, 0, 16LL * dword_140978960);
+    std::memset(qword_184A79D68, 0, 16LL * dword_140978960);
     textureTable = GetTextureTable();
   }
 
@@ -5004,7 +5004,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
       static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
     const int oldMaxCount = dword_140978968;
     qword_184A79D70 = textureTable;
-    memset_0(&textureTable[dword_140978968], 0, 144uLL * 16);
+    std::memset(&textureTable[dword_140978968], 0, 144uLL * 16);
     textureCount = dword_140978964;
     dword_140978968 = oldMaxCount + 16;
   }
@@ -5060,7 +5060,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
       static_cast<unsigned int *>(ReAlloc(qword_184A79D68, 16 * dword_140978960, 16 * (dword_140978960 + texNum)));
     const int oldSlotCount = dword_140978960;
     qword_184A79D68 = newSlots;
-    memset_0(&newSlots[4 * oldSlotCount], 0, 16LL * texNum);
+    std::memset(&newSlots[4 * oldSlotCount], 0, 16LL * texNum);
     dword_140978960 = oldSlotCount + texNum;
   }
 
@@ -5083,10 +5083,10 @@ int R3GetPreTextureId(char *szFileName)
   else
   {
     qword_184A79D70 = Dmalloc(144 * dword_140978968);
-    memset_0(qword_184A79D70, 0, 144LL * dword_140978968);
+    std::memset(qword_184A79D70, 0, 144LL * dword_140978968);
     textureSlots = static_cast<R3TextureSlot *>(Dmalloc(16 * dword_140978960));
     qword_184A79D68 = textureSlots;
-    memset_0(textureSlots, 0, 16LL * dword_140978960);
+    std::memset(textureSlots, 0, 16LL * dword_140978960);
     textureTable = GetTextureTable();
     textureSlotCount = dword_140978960;
   }
@@ -5098,7 +5098,7 @@ int R3GetPreTextureId(char *szFileName)
       static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
     const int oldMaxCount = dword_140978968;
     qword_184A79D70 = textureTable;
-    memset_0(&textureTable[dword_140978968], 0, 144uLL * 16);
+    std::memset(&textureTable[dword_140978968], 0, 144uLL * 16);
     textureSlots = GetTextureSlots();
     textureSlotCount = dword_140978960;
     textureCount = dword_140978964;
@@ -5152,7 +5152,7 @@ int R3GetPreTextureId(char *szFileName)
     R3TextureSlot *expandedSlots =
       static_cast<R3TextureSlot *>(ReAlloc(textureSlots, 16 * textureSlotCount, 16 * (textureSlotCount + 16)));
     qword_184A79D68 = expandedSlots;
-    memset_0(&expandedSlots[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
+    std::memset(&expandedSlots[dword_140978960], 0, sizeof(R3TextureSlot) * 16);
     dword_140978960 += 16;
     nextTextureId = dword_14097895C;
   }
@@ -5286,7 +5286,7 @@ __int64 GetNowR3D3DTexCnt()
 void SetNowR3D3DTexCnt(int cnt)
 {
   if (cnt < dword_14097895C)
-    memset_0(&GetTextureSlots()[cnt], 0, sizeof(R3TextureSlot) * (dword_14097895C - cnt));
+    std::memset(&GetTextureSlots()[cnt], 0, sizeof(R3TextureSlot) * (dword_14097895C - cnt));
   dword_14097895C = cnt;
 }
 
@@ -5671,7 +5671,7 @@ void Error(char *source, char *msg)
 
   static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-ì—ì„œ"
   char *suffixDst = &fullMessage[std::strlen(fullMessage) + 1];
-  memcpy_0(suffixDst - 1, asc_140884708, sizeof(asc_140884708));
+  std::memcpy(suffixDst - 1, asc_140884708, sizeof(asc_140884708));
   errorHandler(fullMessage);
 }
 
@@ -5751,7 +5751,7 @@ void *ReAlloc(void *ptr, unsigned int oldSize, unsigned int newSize)
     copySize = newSize;
   void *dst = Dmalloc(static_cast<int>(newSize));
   if (dst && ptr && copySize)
-    memcpy_0(dst, ptr, copySize);
+    std::memcpy(dst, ptr, copySize);
   Dfree(ptr);
   return dst;
 }
@@ -5963,7 +5963,7 @@ if (!outTex)
       *outPtr = nullptr;
       return -1;
     }
-    memcpy_0(tex->m_Data, data, size);
+    std::memcpy(tex->m_Data, data, size);
     tex->m_Size = size;
   }
   *outPtr = tex;
@@ -6058,7 +6058,7 @@ static void sub_140502610(_R3MATERIAL *material)
   if (!material)
     return;
 
-  memset_0(material, 0, sizeof(_R3MATERIAL));
+  std::memset(material, 0, sizeof(_R3MATERIAL));
   for (int i = 0; i < 7; ++i)
   {
     _ONE_LAYER *const layer = &material->m_Layer[i];
@@ -7220,10 +7220,10 @@ void GetYBillboardMatrix(D3DXMATRIX *out, float *const src, float *const dst)
     return;
   }
 
-  const float angle = atanf_0((dst[2] - src[2]) / dx);
+  const float angle = std::atan((dst[2] - src[2]) / dx);
   D3DXMatrixIdentity_0(out);
-  const float c = cosf_0(angle);
-  const float s = sinf_0(angle);
+  const float c = std::cosf(angle);
+  const float s = std::sinf(angle);
   out->_11 = c;
   out->_13 = -s;
   out->_31 = s;

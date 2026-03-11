@@ -81,7 +81,7 @@ __int64 __fastcall AddEnvVariable(const char *lpName, char *lpValue, int nValueL
         free(block);
       }
       block = malloc(static_cast<int>(size));
-      memset_0(block, 0, static_cast<int>(size));
+      std::memset(block, 0, static_cast<int>(size));
 
       existingSize = GetEnvironmentVariableA(lpName, static_cast<LPSTR>(block), size);
       if (!existingSize)
@@ -91,7 +91,7 @@ __int64 __fastcall AddEnvVariable(const char *lpName, char *lpValue, int nValueL
 
       if (size >= static_cast<DWORD>(nValueLen + existingSize))
       {
-        if (strcmp_0(lpName, "path") && strcmp_0(lpName, "PATHEXT"))
+        if (std::strcmp(lpName, "path") && std::strcmp(lpName, "PATHEXT"))
         {
           strcat_s(static_cast<char *>(block), static_cast<int>(size), source);
         }

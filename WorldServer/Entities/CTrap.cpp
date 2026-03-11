@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -51,7 +51,7 @@ bool CTrap::Create(_trap_create_setdata *pData)
   m_pMaster = pData->pMaster;
   m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
   const char *charNameW = pData->pMaster->m_Param.GetCharNameW();
-  strcpy_0(m_wszMasterName, charNameW);
+  std::strcpy(m_wszMasterName, charNameW);
   W2M(m_wszMasterName, m_aszMasterName, sizeof(m_aszMasterName));
   m_dMasterPvPPoint = pData->pMaster->m_Param.GetPvPPoint();
   m_byRaceCode = static_cast<unsigned __int8>(pData->pMaster->m_Param.GetRaceCode());
@@ -109,7 +109,7 @@ CTrap *CreateTrap(CMapData *pMap, unsigned __int16 wLayer, float *fPos, CPlayer 
     return nullptr;
   }
 
-  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
   data.pMaster = pMaster;
   data.nTrapMaxAttackPnt = pMaster->m_nTrapMaxAttackPnt;
   if (trap->Create(&data))

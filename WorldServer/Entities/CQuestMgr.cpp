@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CQuestMgr.h"
 
@@ -512,7 +512,7 @@ _quest_check_result *CQuestMgr::CheckReqAct(
 
         wActCount = static_cast<unsigned __int16>(action->m_nReqAct);
       }
-      else if (strcmp_0(action->m_strActSub, pszReqCode))
+      else if (std::strcmp(action->m_strActSub, pszReqCode))
       {
         continue;
       }
@@ -588,7 +588,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
 
   _QUEST_DB_BASE::_LIST *slot = &m_pMaster->m_Param.m_QuestDB.m_List[byQuestDBSlot];
   _QUEST_DB_BASE::_LIST backup{};
-  memcpy_0(&backup, slot, sizeof(backup));
+  std::memcpy(&backup, slot, sizeof(backup));
 
   if (slot->wIndex == 65535)
   {
@@ -628,7 +628,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
           failed = 1;
         }
       }
-      else if (!pszCode || !strcmp_0(pszCode, record->m_QuestFailCond[j].m_strFailCode))
+      else if (!pszCode || !std::strcmp(pszCode, record->m_QuestFailCond[j].m_strFailCode))
       {
         failed = 1;
       }
@@ -651,7 +651,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
     DeleteQuestData(byQuestDBSlot);
     m_pMaster->m_pUserDB->Update_QuestDelete(byQuestDBSlot);
 
-    if (!record->m_nLinkDummyCond && strcmp_0(record->m_strLinkDummyCode, "-1"))
+    if (!record->m_nLinkDummyCond && std::strcmp(record->m_strLinkDummyCode, "-1"))
     {
       _dummy_position *dummy = m_pMaster->m_pCurMap->GetDummyPostion(record->m_strLinkDummyCode);
       if (dummy)
@@ -666,7 +666,7 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
       }
     }
 
-    if (!strcmp_0(record->m_strFailLinkQuest, "-1"))
+    if (!std::strcmp(record->m_strFailLinkQuest, "-1"))
     {
       return failed;
     }
@@ -929,7 +929,7 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
     _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[j];
     if (history.byLevel == 255)
     {
-      strcpy_0(history.szQuestCode, pszQuestCode);
+      std::strcpy(history.szQuestCode, pszQuestCode);
       history.byLevel = byLevel;
       history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
       return static_cast<unsigned __int8>(j);
@@ -942,7 +942,7 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
   }
 
   _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[bestIndex];
-  strcpy_0(history.szQuestCode, pszQuestCode);
+  std::strcpy(history.szQuestCode, pszQuestCode);
   history.byLevel = byLevel;
   history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
   return static_cast<unsigned __int8>(bestIndex);
@@ -1028,7 +1028,7 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
             ? static_cast<_QuestHappenEvent_fld *>(
                 CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1))
             : nullptr;
-          if (record && strcmp_0(record->m_strCode, pszEventCode))
+          if (record && std::strcmp(record->m_strCode, pszEventCode))
           {
             record = nullptr;
           }
@@ -1043,7 +1043,7 @@ _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(
     record = CQuestMgr::s_tblQuestHappenEvent
       ? static_cast<_QuestHappenEvent_fld *>(CQuestMgr::s_tblQuestHappenEvent[HappenType].GetRecord(record->m_dwIndex + 1))
       : nullptr;
-    if (record && strcmp_0(record->m_strCode, pszEventCode))
+    if (record && std::strcmp(record->m_strCode, pszEventCode))
     {
       record = nullptr;
     }
@@ -1333,7 +1333,7 @@ char CQuestMgr::__CheckCond_Class(char *pszClassCode)
     {
       break;
     }
-    if (!strcmp_0(effectRecord->m_strCode, pszClassCode))
+    if (!std::strcmp(effectRecord->m_strCode, pszClassCode))
     {
       return 1;
     }
@@ -1411,11 +1411,11 @@ char codeBuf[32]{};
   char indexBuf[32]{};
   char levelBuf[16]{};
 
-  memcpy_0(codeBuf, pszMasteryPack, 1u);
+  std::memcpy(codeBuf, pszMasteryPack, 1u);
   codeBuf[1] = 0;
-  memcpy_0(indexBuf, pszMasteryPack + 1, 2u);
+  std::memcpy(indexBuf, pszMasteryPack + 1, 2u);
   indexBuf[2] = 0;
-  memcpy_0(levelBuf, pszMasteryPack + 3, 2u);
+  std::memcpy(levelBuf, pszMasteryPack + 3, 2u);
   levelBuf[2] = 0;
 
   const int code = atoi(codeBuf);

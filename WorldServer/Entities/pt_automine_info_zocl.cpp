@@ -4,7 +4,7 @@
 
 _DB_LOAD_AUTOMINE_MACHINE::_DB_LOAD_AUTOMINE_MACHINE()
 {
-  memset_0(this, 0, sizeof(_DB_LOAD_AUTOMINE_MACHINE));
+  std::memset(this, 0, sizeof(_DB_LOAD_AUTOMINE_MACHINE));
 }
 
 __int64 _DB_LOAD_AUTOMINE_MACHINE::size()

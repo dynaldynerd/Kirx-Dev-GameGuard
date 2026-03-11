@@ -123,7 +123,7 @@ bool CHolyStoneSystem::InitHolySystem()
     data.m_pMap = stoneData->pCreateMap;
     data.m_nLayerIndex = 0;
     data.m_pRecordSet = stoneData->pRec;
-    memcpy_0(data.m_fStartPos, stoneData->CreateDummy.m_fCenterPos, sizeof(data.m_fStartPos));
+    std::memcpy(data.m_fStartPos, stoneData->CreateDummy.m_fCenterPos, sizeof(data.m_fStartPos));
     data.pDumPosition = &stoneData->CreateDummy;
     data.byMasterRace = static_cast<unsigned char>(stoneData->nRace);
     g_Stone[j].Create(&data);
@@ -322,7 +322,7 @@ void CHolyStoneSystem::SendSMS_MineTimeExtend(int nControlSec)
 bool CHolyStoneSystem::ContinueStartSystem()
 {
   int storedStoneHp[3]{};
-  memcpy_0(storedStoneHp, m_SaveData.m_nStoneHP_Buffer, sizeof(storedStoneHp));
+  std::memcpy(storedStoneHp, m_SaveData.m_nStoneHP_Buffer, sizeof(storedStoneHp));
 
   if (!SetScene(m_SaveData.m_byNumOfTime, m_SaveData.m_nSceneCode, m_SaveData.m_dwPassTimeInScene, 2))
   {
@@ -389,7 +389,7 @@ void CHolyStoneSystem::AlterSchedule(unsigned __int8 byScheduleCode, unsigned __
       m_bScheduleCodePre = 0;
       const unsigned int prevHolyMasterRace = static_cast<unsigned int>(m_SaveData.m_nHolyMasterRace);
       int prevStoneHp[3]{};
-      memcpy_0(prevStoneHp, m_SaveData.m_nStoneHP_Buffer, sizeof(prevStoneHp));
+      std::memcpy(prevStoneHp, m_SaveData.m_nStoneHP_Buffer, sizeof(prevStoneHp));
 
       SetScene(byNumOfTime, 1, 0, 0);
 
@@ -899,7 +899,7 @@ void CHolyStoneSystem::CreateHolyStone()
 
   char result[132]{};
   GetPrivateProfileStringA("Rule", iniKey, "0", result, 128, "..\\WorldInfo\\WorldInfo.ini");
-  if (!strcmp_0(result, "0"))
+  if (!std::strcmp(result, "0"))
   {
     GetPrivateProfileStringA("Rule", "CrystalHPMultiple", "1", result, 128, "..\\WorldInfo\\WorldInfo.ini");
   }
@@ -948,7 +948,7 @@ void CHolyStoneSystem::CreateHolyKeeper(int nCreateType)
   data.m_pMap = m_HolyKeeperData.pCreateMap;
   data.m_nLayerIndex = 0;
   data.m_pRecordSet = m_HolyKeeperData.pRec;
-  memcpy_0(data.m_fStartPos, m_HolyKeeperData.CreateDummy.m_fCenterPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, m_HolyKeeperData.CreateDummy.m_fCenterPos, sizeof(data.m_fStartPos));
   data.pPosCreate = &m_HolyKeeperData.CreateDummy;
   data.pPosActive = &m_HolyKeeperData.ActiveDummy;
   data.pPosCenter = &m_HolyKeeperData.CenterDummy;
@@ -1101,7 +1101,7 @@ void CHolyStoneSystem::SendIsArriveDestroyer(char byArrive)
   msg.byArrive = byArrive;
   msg.byRaceCode = static_cast<char>(m_pkDestroyer->m_Param.GetRaceCode());
   const char *charName = m_pkDestroyer->m_Param.GetCharNameW();
-  memcpy_0(msg.wszCharName, charName, 16);
+  std::memcpy(msg.wszCharName, charName, 16);
   msg.wszCharName[16] = 0;
   msg.dwObjSerial = m_SaveData.m_dwDestroyerSerial;
 
@@ -1133,7 +1133,7 @@ void CHolyStoneSystem::SendMsg_to_webagent_about_last_attacker_for_keeper(CPlaye
 
   if (pPlayer)
   {
-    strcpy_0(msg.uszKeeperHitter, pPlayer->m_Param.GetCharNameW());
+    std::strcpy(msg.uszKeeperHitter, pPlayer->m_Param.GetCharNameW());
     msg.bByAnimus = bByAnimus;
 
     unsigned __int8 type[2]{};
@@ -1166,8 +1166,8 @@ void CHolyStoneSystem::SendMsg_CreateHolyMaster(CPlayer *pkDestroyer, int nContr
   msg.byPlayerRaceCode = static_cast<unsigned __int8>(m_SaveData.m_nHolyMasterRace);
 
   const char *masterName = pkDestroyer->m_Param.GetCharNameW();
-  msg.byNameLen = static_cast<unsigned __int8>(strlen_0(masterName) + 1);
-  strcpy_0(msg.wszName, masterName);
+  msg.byNameLen = static_cast<unsigned __int8>(std::strlen(masterName) + 1);
+  std::strcpy(msg.wszName, masterName);
 
   msg.nControlSec = nControlSec;
   msg.dwObjSerial = m_SaveData.m_dwDestroyerSerial;
@@ -1227,14 +1227,14 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
 
   _holy_complete_quest_inform_zowb msg{};
   msg.nWorldCode = g_Main.m_byWorldCode;
-  strcpy_0(msg.szWorldName, g_Main.m_szWorldName);
+  std::strcpy(msg.szWorldName, g_Main.m_szWorldName);
 
   msg.byMasterRaceCode = static_cast<unsigned __int8>(GetHolyMasterRace());
   msg.byDestoryRaceCode = static_cast<unsigned __int8>(byDestroyedRace);
-  strcpy_0(msg.wszMasterName, pwszMasterName);
+  std::strcpy(msg.wszMasterName, pwszMasterName);
   msg.byMasterLv = byMasterLv;
 
-  memcpy_0(msg.szMasterClass, szMasterClass, 4);
+  std::memcpy(msg.szMasterClass, szMasterClass, 4);
   msg.szMasterClass[4] = 0;
 
   const int holyMasterRace = GetHolyMasterRace();
@@ -1246,7 +1246,7 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     {
       for (int j = 0; j < 5; ++j)
       {
-        strcpy_0(msg.wszMasterRaceSubBoss[j], rankData[j + 1].wszName);
+        std::strcpy(msg.wszMasterRaceSubBoss[j], rankData[j + 1].wszName);
       }
     }
   }
@@ -1256,7 +1256,7 @@ void CHolyStoneSystem::SendSMS_CompleteQuest(
     const _PVP_RANK_DATA *rankData = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentPvpRankData(race, 0);
     if (rankData && rankData->wszName[0])
     {
-      strcpy_0(msg.wszRaceBossName[race], rankData->wszName);
+      std::strcpy(msg.wszRaceBossName[race], rankData->wszName);
       msg.wszRaceBossName[race][16] = 0;
     }
     else
@@ -1710,7 +1710,7 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
 {
   _holy_stone_hp_inform_zocl msg{};
 
-  memset_0(&msg, 0, sizeof(msg));
+  std::memset(&msg, 0, sizeof(msg));
   for (int j = 0; j < 3; ++j)
   {
     msg.wHPRate[j] = static_cast<unsigned __int16>(g_Stone[j].CalcCurHPRate());
@@ -2091,11 +2091,11 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
   {
     _holy_quest_report_wrac report{};
     report.byRaceCode = static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode());
-    strcpy_0(report.wszCharName, pAtter->m_Param.GetCharNameW());
+    std::strcpy(report.wszCharName, pAtter->m_Param.GetCharNameW());
     report.byDestroyedRaceCode = byDestroyStoneRaceCode;
 
     unsigned __int8 type[2]{};
-    memcpy_0(type, "2e", 2);
+    std::memcpy(type, "2e", 2);
     g_Network.m_pProcess[1]->LoadSendMsg(
       0,
       type,

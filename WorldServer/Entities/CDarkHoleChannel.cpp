@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -241,7 +241,7 @@ void CDarkHoleChannel::ChangeMonster()
     {
       CMonster *monster = aliveMonsters[m];
       _monster_create_setdata data{};
-      memcpy_0(data.m_fStartPos, monster->m_fCreatePos, sizeof(data.m_fStartPos));
+      std::memcpy(data.m_fStartPos, monster->m_fCreatePos, sizeof(data.m_fStartPos));
       data.m_nLayerIndex = monster->m_wMapLayerIndex;
       data.m_pMap = monster->m_pCurMap;
       data.m_pRecordSet = changeMonster->pMonsterFldB;
@@ -534,7 +534,7 @@ char CDarkHoleChannel::ClearMember(CPlayer *pMember, bool bDisconnect, _dh_playe
 
   if (poutPlayerPos)
   {
-    memcpy_0(poutPlayerPos, &target->LastPos, sizeof(_dh_player_mgr::_pos));
+    std::memcpy(poutPlayerPos, &target->LastPos, sizeof(_dh_player_mgr::_pos));
   }
 
   target->Init();
@@ -591,7 +591,7 @@ void CDarkHoleChannel::SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __in
 void CDarkHoleChannel::SendMsg_RealMsgInform(char *pMsg)
 {
   _darkhole_real_msg_inform_zocl msg{};
-  strcpy_0(msg.szMsg, pMsg);
+  std::strcpy(msg.szMsg, pMsg);
 
   unsigned __int8 type[2] = {35, 18};
   for (int j = 0; j < 32; ++j)
@@ -625,11 +625,11 @@ void CDarkHoleChannel::SendMsg_RealAddLimTime(int nAddSec, char *pMsg)
 
   if (pMsg)
   {
-    strcpy_0(msg.szMsg, pMsg);
+    std::strcpy(msg.szMsg, pMsg);
   }
   else
   {
-    strcpy_0(msg.szMsg, "-1");
+    std::strcpy(msg.szMsg, "-1");
   }
 
   unsigned __int8 type[2] = {35, 19};
@@ -889,7 +889,7 @@ void CDarkHoleChannel::OpenDungeon(
   m_dwOpenerSerial = pOpener->m_dwObjSerial;
 
   const char *name = pOpener->m_Param.GetCharNameW();
-  strcpy_0(m_wszOpenerName, name);
+  std::strcpy(m_wszOpenerName, name);
   W2M(m_wszOpenerName, m_aszOpenerName, 17);
 
   m_nOpenerDegree = pOpener->m_pUserDB->m_byUserDgr;
@@ -1118,7 +1118,7 @@ void CDarkHoleChannel::SendMsg_NewMember(CPlayer *pNewMember, bool bReconnect)
   _darkhole_new_member_inform_zocl msg{};
   msg.dwNewMemberSerial = pNewMember->m_dwObjSerial;
   const char *name = pNewMember->m_Param.GetCharNameW();
-  strcpy_0(msg.wszNewMemberName, name);
+  std::strcpy(msg.wszNewMemberName, name);
   msg.bReconnect = bReconnect;
 
   unsigned __int8 type[2]{35, 1};
@@ -1141,7 +1141,7 @@ void CDarkHoleChannel::SendMsg_QuestInfo(CPlayer *pDst)
 {
   _darkhole_quest_info_inform_zocl msg{};
   msg.dwLimTimeSec = static_cast<unsigned int>(-1);
-  strcpy_0(msg.szDescirptCode, m_pQuestSetup->szDescirptCode);
+  std::strcpy(msg.szDescirptCode, m_pQuestSetup->szDescirptCode);
   msg.dwPassTimeSec = (timeGetTime() - m_dwQuestStartTime) / 1000;
 
   _dh_reward_sub_setup *reward =
@@ -1158,7 +1158,7 @@ void CDarkHoleChannel::SendMsg_QuestInfo(CPlayer *pDst)
 void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
 {
   _darkhole_mission_info_inform_zocl msg;
-  strcpy_0(msg.szDescirptCode, m_MissionMgr.pCurMssionPtr->szDescirptCode);
+  std::strcpy(msg.szDescirptCode, m_MissionMgr.pCurMssionPtr->szDescirptCode);
   if (m_MissionMgr.GetLimMSecTime() == -1)
   {
     msg.dwLimTimeSec = static_cast<unsigned int>(-1);
@@ -1185,7 +1185,7 @@ void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
       msg.Job[j].wRecordIndex = static_cast<unsigned __int16>(-1);
     }
     msg.Job[j].zNeedCount = static_cast<__int16>(job->JobSetup.nEventCount);
-    strcpy_0(msg.Job[j].szDescirptCode, job->szDescirptCode);
+    std::strcpy(msg.Job[j].szDescirptCode, job->szDescirptCode);
     msg.Job[j].bPass = m_MissionMgr.Count[j].bPass;
     msg.Job[j].wCurCount = static_cast<unsigned __int16>(m_MissionMgr.Count[j].nCount);
     msg.Job[j].bDisable = true;
@@ -1193,7 +1193,7 @@ void CDarkHoleChannel::SendMsg_MissionInfo(CPlayer *pDst)
     _dh_mission_mgr::_if_change *ifChange = m_MissionMgr.SearchCurMissionCont();
     if (ifChange && ifChange->pszDespt)
     {
-      strcpy_0(msg.szDescirptCode, ifChange->pszDespt);
+      std::strcpy(msg.szDescirptCode, ifChange->pszDespt);
     }
   }
 
@@ -1215,7 +1215,7 @@ void CDarkHoleChannel::SendMsg_MemberInfo(CPlayer *pDst)
     {
       msg.List[memberCount].dwSerial = entry->dwSerial;
       const char *name = entry->pOne->m_Param.GetCharNameW();
-      strcpy_0(msg.List[memberCount].wszName, name);
+      std::strcpy(msg.List[memberCount].wszName, name);
       ++memberCount;
     }
   }
@@ -1352,7 +1352,7 @@ void CDarkHoleChannel::CheckCurrentMission()
       const int portalCount = (useMap->m_nPortalNum >= 128) ? 128 : useMap->m_nPortalNum;
       for (int portalIndex = 0; portalIndex < portalCount; ++portalIndex)
       {
-        if (!strcmp_0(useMap->m_pPortal[portalIndex].m_pDumPos->m_szCode, reactSetup->pPortalDummy->m_szCode))
+        if (!std::strcmp(useMap->m_pPortal[portalIndex].m_pDumPos->m_szCode, reactSetup->pPortalDummy->m_szCode))
         {
           m_MissionMgr.OpenPortal(portalIndex);
           SendMsg_OpenPortalByReact(static_cast<unsigned __int16>(portalIndex));
@@ -1604,7 +1604,7 @@ void CDarkHoleChannel::CheckInnerEventDummy()
         if (!respawnAct->bStart
             && respawnAct->pData->bCallEvent
             && respawnAct->pData->pszDefineCode
-            && !strcmp_0(respawnAct->pData->pszDefineCode, innerCheck->pszRespawnCode))
+            && !std::strcmp(respawnAct->pData->pszDefineCode, innerCheck->pszRespawnCode))
         {
           respawnAct->bStart = 1;
           break;
@@ -1992,7 +1992,7 @@ void CDarkHoleChannel::SendMsg_MissionPass()
   {
     completeMsg = missionCont->pszComMsg;
   }
-  strcpy_0(msg.szCompleteMsgCode, completeMsg);
+  std::strcpy(msg.szCompleteMsgCode, completeMsg);
 
   unsigned __int8 type[2]{35, 10};
   for (int index = 0; index < 32; ++index)
@@ -2012,7 +2012,7 @@ void CDarkHoleChannel::SendMsg_MissionPass()
 void CDarkHoleChannel::SendMsg_NewMission()
 {
   _darkhole_new_mission_inform_zocl msg{};
-  strcpy_0(msg.szDescirptCode, m_MissionMgr.pCurMssionPtr->szDescirptCode);
+  std::strcpy(msg.szDescirptCode, m_MissionMgr.pCurMssionPtr->szDescirptCode);
   if (m_MissionMgr.GetLimMSecTime() == -1)
   {
     msg.dwLimTimeSec = static_cast<unsigned int>(-1);
@@ -2032,13 +2032,13 @@ void CDarkHoleChannel::SendMsg_NewMission()
     msg.Job[jobIndex].wRecordIndex = job->JobSetup.pEventFld ? job->JobSetup.pEventFld->m_dwIndex
                                                               : static_cast<unsigned __int16>(-1);
     msg.Job[jobIndex].zNeedCount = static_cast<__int16>(job->JobSetup.nEventCount);
-    strcpy_0(msg.Job[jobIndex].szDescirptCode, job->szDescirptCode);
+    std::strcpy(msg.Job[jobIndex].szDescirptCode, job->szDescirptCode);
     msg.Job[jobIndex].bDisable = true;
 
     _dh_mission_mgr::_if_change *missionCont = m_MissionMgr.SearchCurMissionCont();
     if (missionCont && missionCont->pszDespt)
     {
-      strcpy_0(msg.szDescirptCode, missionCont->pszDespt);
+      std::strcpy(msg.szDescirptCode, missionCont->pszDespt);
     }
   }
 

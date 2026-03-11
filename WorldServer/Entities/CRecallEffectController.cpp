@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRecallEffectController.h"
 
@@ -113,7 +113,7 @@ bool CRecallEffectController::Init(unsigned int infoCount)
     return false;
   }
 
-  memset_0(m_ppkReqeust, 0, sizeof(CRecallRequest *) * infoCount);
+  std::memset(m_ppkReqeust, 0, sizeof(CRecallRequest *) * infoCount);
   for (unsigned int index = 0; index < infoCount; ++index)
   {
     m_ppkReqeust[index] = new CRecallRequest(static_cast<unsigned __int16>(index));
@@ -287,7 +287,7 @@ void CRecallEffectController::SendRecallReqeustResult(char byRet, CPlayer *pkObj
 
   _recall_request_result_zocl msg{};
   msg.byRet = static_cast<unsigned __int8>(byRet);
-  strcpy_0(msg.wszDestName, pkObj->m_Param.GetCharNameW());
+  std::strcpy(msg.wszDestName, pkObj->m_Param.GetCharNameW());
 
   unsigned __int8 type[2] = {17, 32};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -310,7 +310,7 @@ void CRecallEffectController::SendRecallReqeustToDest(
 
   _notify_recall_request_zocl msg{};
   msg.wRequestID = wRequestID;
-  strcpy_0(msg.wszPerformerName, pkPerformer->m_Param.GetCharNameW());
+  std::strcpy(msg.wszPerformerName, pkPerformer->m_Param.GetCharNameW());
 
   unsigned __int8 pbyType[2]{17, 33};
   g_Network.m_pProcess[0]->LoadSendMsg(

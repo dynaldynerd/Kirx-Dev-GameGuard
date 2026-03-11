@@ -29,7 +29,7 @@ char CUserDB::Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum)
 
 char CUserDB::Update_TrunkPassword(char *pwszPassword)
 {
-  strcpy_0(this->m_AvatorData.dbTrunk.wszPasswd, pwszPassword);
+  std::strcpy(this->m_AvatorData.dbTrunk.wszPasswd, pwszPassword);
   this->m_bDataUpdate = 1;
   return 1;
 }
@@ -37,7 +37,7 @@ char CUserDB::Update_TrunkPassword(char *pwszPassword)
 char CUserDB::Update_TrunkHint(unsigned __int8 byHintIndex, char *pwszHintAnswer)
 {
   this->m_AvatorData.dbTrunk.byHintIndex = byHintIndex;
-  strcpy_0(this->m_AvatorData.dbTrunk.wszHintAnswer, pwszHintAnswer);
+  std::strcpy(this->m_AvatorData.dbTrunk.wszHintAnswer, pwszHintAnswer);
   this->m_bDataUpdate = 1;
   return 1;
 }
@@ -96,7 +96,7 @@ char CUserDB::Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, 
           g_Main.m_logSystemError.Write("%s:Update_Upgrade(TRUNK, Idx:%d)", this->m_aszAvatorName, slot);
           return 0;
         }
-        memcpy_0(&key[3], &upg, sizeof(upg));
+        std::memcpy(&key[3], &upg, sizeof(upg));
         break;
       }
       case 7:
@@ -107,7 +107,7 @@ char CUserDB::Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, 
           g_Main.m_logSystemError.Write("%s:Update_Upgrade(EXT_TRUNK, Idx:%d)", this->m_aszAvatorName, slot);
           return 0;
         }
-        memcpy_0(&key[3], &upg, sizeof(upg));
+        std::memcpy(&key[3], &upg, sizeof(upg));
         break;
       }
       default:
@@ -127,7 +127,7 @@ char CUserDB::Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, 
       g_Main.m_logSystemError.Write("%s:Update_Upgrade(INVEN, Idx:%d)", this->m_aszAvatorName, slot);
       return 0;
     }
-    memcpy_0(&key[3], &upg, sizeof(upg));
+    std::memcpy(&key[3], &upg, sizeof(upg));
   }
 
   if (bUpdate)

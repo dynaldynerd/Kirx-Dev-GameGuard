@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CItemBox.h"
 
@@ -219,18 +219,18 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
     {
       CPlayer *throwerPlayer = static_cast<CPlayer *>(pParam->pThrower);
       const char *charNameW = throwerPlayer->m_Param.GetCharNameW();
-      strcpy_0(m_wszThrowerName, charNameW);
+      std::strcpy(m_wszThrowerName, charNameW);
       W2M(m_wszThrowerName, m_aszThrowerName, 17);
       m_dwThrowerCharSerial = throwerPlayer->m_Param.GetCharSerial();
       if (throwerPlayer->m_pUserDB)
       {
-        strcpy_0(m_szThrowerID, throwerPlayer->m_pUserDB->m_szAccountID);
+        std::strcpy(m_szThrowerID, throwerPlayer->m_pUserDB->m_szAccountID);
       }
       m_byThrowerRaceCode = throwerPlayer->m_Param.GetRaceCode();
       m_byThrowerDegree = throwerPlayer->m_byUserDgr;
       if (m_szThrowerItemHistoryFileName)
       {
-        strcpy_0(m_szThrowerItemHistoryFileName, throwerPlayer->m_szItemHistoryFileName);
+        std::strcpy(m_szThrowerItemHistoryFileName, throwerPlayer->m_szItemHistoryFileName);
       }
     }
 
@@ -250,7 +250,7 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
   }
 
   m_byCreateCode = pParam->byCreateCode;
-  memcpy_0(&m_Item, &pParam->Item, sizeof(m_Item));
+  std::memcpy(&m_Item, &pParam->Item, sizeof(m_Item));
   m_dwLootStartTime = GetLoopTime();
   switch (m_byCreateCode)
   {
@@ -449,7 +449,7 @@ CItemBox *CreateItemBox(
   }
 
   _itembox_create_setdata param;
-  memcpy_0(&param.Item, pItem, sizeof(param.Item));
+  std::memcpy(&param.Item, pItem, sizeof(param.Item));
   param.m_pRecordSet = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   if (!param.m_pRecordSet)
   {
@@ -496,7 +496,7 @@ CItemBox *CreateItemBox(
   }
 
   _itembox_create_setdata param;
-  memcpy_0(&param.Item, pItem, sizeof(param.Item));
+  std::memcpy(&param.Item, pItem, sizeof(param.Item));
   param.m_pRecordSet = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   if (!param.m_pRecordSet)
   {
@@ -509,7 +509,7 @@ CItemBox *CreateItemBox(
   param.m_pMap = pMap;
   param.m_nLayerIndex = wLayerIndex;
   param.dwPartyBossSerial = static_cast<unsigned int>(-1);
-  memcpy_0(param.m_fStartPos, pStdPos, sizeof(param.m_fStartPos));
+  std::memcpy(param.m_fStartPos, pStdPos, sizeof(param.m_fStartPos));
   param.byEventItemLootAuth = byEventItemLootAuth;
   param.bHolyScanner = bHolyScanner;
   param.pAttacker = pAttacker;

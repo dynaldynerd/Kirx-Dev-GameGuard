@@ -222,7 +222,7 @@ bool CIndexList::PopNode_Front(unsigned int *pdwOutIndex, char *pInfoData)
   }
   if (pInfoData && node->m_dwInfoDataSize)
   {
-    memcpy_0(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
+    std::memcpy(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
   }
 
   m_Head.m_pNext = node->m_pNext;
@@ -259,7 +259,7 @@ bool CIndexList::FindNode(unsigned int dwIndex, char *pInfoData)
     {
       if (pInfoData && node->m_dwInfoDataSize)
       {
-        memcpy_0(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
+        std::memcpy(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
       }
       node->m_pPrev->m_pNext = node->m_pNext;
       node->m_pNext->m_pPrev = node->m_pPrev;
@@ -293,7 +293,7 @@ bool CIndexList::IsInList(unsigned int dwIndex, char *pInfoData)
     {
       if (pInfoData && node->m_dwInfoDataSize)
       {
-        memcpy_0(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
+        std::memcpy(pInfoData, node->m_pInfo, node->m_dwInfoDataSize);
       }
       m_csList.Unlock();
       return true;
@@ -326,7 +326,7 @@ char CIndexList::CopyFront(unsigned int *pdwOutIndex, char *pInfoData)
 
   if (pInfoData && frontNode->m_dwInfoDataSize)
   {
-    memcpy_0(pInfoData, frontNode->m_pInfo, frontNode->m_dwInfoDataSize);
+    std::memcpy(pInfoData, frontNode->m_pInfo, frontNode->m_dwInfoDataSize);
   }
 
   m_csList.Unlock();

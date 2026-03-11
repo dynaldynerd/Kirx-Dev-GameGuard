@@ -36,7 +36,7 @@ char CCircleZone::Create(CMapData *pkMap, unsigned __int8 byColor)
   _object_create_setdata data;
   data.m_nLayerIndex = 0;
   data.m_pMap = pkMap;
-  memcpy_0(data.m_fStartPos, m_pkGoalPos->m_fCenterPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, m_pkGoalPos->m_fCenterPos, sizeof(data.m_fStartPos));
   data.m_pRecordSet = nullptr;
   if (!CGameObject::Create(&data))
   {

@@ -109,7 +109,7 @@ TInventory<T>::TInventory()
 template <typename T>
 void TInvenSlot<T>::clear()
 {
-  memset_0(this, 0, sizeof(T));
+  std::memset(this, 0, sizeof(T));
   m_nOverlapNum = 0;
 }
 
@@ -136,7 +136,7 @@ TInvenSlot<T>::TInvenSlot()
   : m_nOverlapNum(0),
     m_nMaxOverlapNum(MAX_ITEM_OVERLAP)
 {
-  memset_0(this, 0, sizeof(T));
+  std::memset(this, 0, sizeof(T));
 }
 
 template <typename T>
@@ -211,7 +211,7 @@ int TInvenSlot<T>::push(const T *pItem, unsigned int nNum)
     return 1;
   }
 
-  memcpy_0(&m_Item, pItem, sizeof(T));
+  std::memcpy(&m_Item, pItem, sizeof(T));
   m_nOverlapNum = static_cast<int>(nNum);
   return 0;
 }
@@ -227,7 +227,7 @@ int TInvenSlot<T>::pop(const T *pItem, int nNum)
   m_nOverlapNum -= nNum;
   if (m_nOverlapNum <= 0)
   {
-    memset_0(this, 0, sizeof(T));
+    std::memset(this, 0, sizeof(T));
   }
   return m_nOverlapNum;
 }

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "DfAIMgr.h"
 
@@ -1142,14 +1142,14 @@ __int64 DfAIMgr::CheckAlienation(CMonster *pMon)
   float targetPos[3];
   float src[3];
 
-  targetPos[0] = pMon->m_fCurPos[0] - (sin_0(rad) * static_cast<float>(static_cast<int>(dist)));
-  targetPos[2] = pMon->m_fCurPos[2] - (cos_0(rad) * static_cast<float>(static_cast<int>(dist)));
+  targetPos[0] = pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(static_cast<int>(dist)));
+  targetPos[2] = pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(static_cast<int>(dist)));
   targetPos[1] = pMon->m_fCurPos[1];
 
   if (!pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, targetPos, &src))
   {
     src[1] = pMon->m_fCurPos[1];
-    memcpy_0(targetPos, src, sizeof(targetPos));
+    std::memcpy(targetPos, src, sizeof(targetPos));
   }
 
   DfAIMgr::ChangeTargetPos(pMon, targetPos);
@@ -1197,9 +1197,9 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
         float midPos[3];
 
         tarPos[0] =
-          pMon->m_fCurPos[0] - (sin_0(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(50 - rand() % 100 + dist));
         tarPos[2] =
-          pMon->m_fCurPos[2] - (cos_0(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(50 - rand() % 100 + dist));
         tarPos[1] = pMon->m_fCurPos[1];
 
         if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, tarPos, &midPos))
@@ -1381,8 +1381,8 @@ void DfAIMgr::ChangeTargetPos(CMonster *pMon, float *pTarPos)
 
   static float NewTar[3];
   static float fBeforeTar[3];
-  memcpy_0(NewTar, pTarPos, sizeof(NewTar));
-  memcpy_0(fBeforeTar, pMon->m_fTarPos, sizeof(fBeforeTar));
+  std::memcpy(NewTar, pTarPos, sizeof(NewTar));
+  std::memcpy(fBeforeTar, pMon->m_fTarPos, sizeof(fBeforeTar));
   if (pMon->SetTarPos(NewTar, true))
   {
     if ((pMon->m_fCurPos[0] != pMon->m_fTarPos[0]

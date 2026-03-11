@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderSubClassInfoLevel.h"
 #include "CLogFile.h"
@@ -8,7 +8,7 @@
 CUnmannedTraderSubClassInfoLevel::CUnmannedTraderSubClassInfoLevel(unsigned int dwID)
   : CUnmannedTraderSubClassInfo(dwID), m_byMin(0), m_byMax(0)
 {
-  strcpy_0(this->m_szName, "level");
+  std::strcpy(this->m_szName, "level");
 }
 
 CUnmannedTraderSubClassInfoLevel::~CUnmannedTraderSubClassInfoLevel()

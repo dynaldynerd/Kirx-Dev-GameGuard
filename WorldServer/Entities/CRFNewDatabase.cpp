@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRFNewDatabase.h"
 #include "WorldServerUtil.h"
@@ -18,9 +18,9 @@ CRFNewDatabase::CRFNewDatabase()
   m_hStmtUpdate = nullptr;
   m_bConectionActive = false;
   m_bReconnectFailExit = true;
-  memset_0(m_szOdbcName, 0, sizeof(m_szOdbcName));
-  memset_0(m_szAccountName, 0, sizeof(m_szAccountName));
-  memset_0(m_szPassword, 0, sizeof(m_szPassword));
+  std::memset(m_szOdbcName, 0, sizeof(m_szOdbcName));
+  std::memset(m_szAccountName, 0, sizeof(m_szAccountName));
+  std::memset(m_szPassword, 0, sizeof(m_szPassword));
   m_szLogUpperPath[0] = 0;
 }
 
@@ -71,7 +71,7 @@ void CRFNewDatabase::CheckLogFileHour()
       m_ProcessLogW.SetWriteLogFile(path, 1, 1, 1, 1);
     }
 
-    memset_0(path, 0, sizeof(path));
+    std::memset(path, 0, sizeof(path));
     const unsigned int korLocalTimeA = GetKorLocalTime();
     sprintf_s(
       path,
@@ -84,7 +84,7 @@ void CRFNewDatabase::CheckLogFileHour()
       m_ProcessLogA.SetWriteLogFile(path, 1, 1, 1, 1);
     }
 
-    memset_0(path, 0, sizeof(path));
+    std::memset(path, 0, sizeof(path));
     const unsigned int korLocalTimeErrorW = GetKorLocalTime();
     sprintf_s(
       path,
@@ -97,7 +97,7 @@ void CRFNewDatabase::CheckLogFileHour()
       m_ErrorLogW.SetWriteLogFile(path, 1, 1, 1, 1);
     }
 
-    memset_0(path, 0, sizeof(path));
+    std::memset(path, 0, sizeof(path));
     const unsigned int korLocalTimeErrorA = GetKorLocalTime();
     sprintf_s(
       path,
@@ -425,7 +425,7 @@ bool CRFNewDatabase::ExecUpdateBinaryQuery(const char *strQuery, char *buf, int 
           const signed __int64 chunk = left <= 1024 ? left : 1024;
           const int chunkSize = static_cast<int>(chunk);
           unsigned char data[1032]{};
-          memcpy_0(data, src, chunkSize);
+          std::memcpy(data, src, chunkSize);
 
           const SQLRETURN putRet = SQLPutData(m_hStmtUpdate, data, chunkSize);
           if (static_cast<unsigned int>(putRet) >= -2)
@@ -729,7 +729,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
     m_ProcessLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
   }
 
-  memset_0(buffer, 0, sizeof(buffer));
+  std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateA = GetKorLocalTime();
   sprintf(buffer, "%sDBLog\\DBProcess_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateA);
   if (!m_ProcessLogA.m_bInit)
@@ -737,7 +737,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
     m_ProcessLogA.SetWriteLogFile(buffer, 1, 1, 1, 1);
   }
 
-  memset_0(buffer, 0, sizeof(buffer));
+  std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorW = GetKorLocalTime();
   sprintf(buffer, "%sDBLog\\DBError_%s_%u_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
   if (!m_ErrorLogW.m_bInit)
@@ -745,7 +745,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
     m_ErrorLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
   }
 
-  memset_0(buffer, 0, sizeof(buffer));
+  std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorA = GetKorLocalTime();
   sprintf(buffer, "%sDBLog\\DBError_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
   if (!m_ErrorLogA.m_bInit)
@@ -947,19 +947,19 @@ bool CRFNewDatabase::StartDataBase(const char *odbcName, const char *accountName
     return false;
   }
 
-  const size_t odbcLen = strlen_0(odbcName);
-  memcpy_0(m_szOdbcName, odbcName, odbcLen);
-  memset_0(m_szAccountName, 0, sizeof(m_szAccountName));
-  memset_0(m_szPassword, 0, sizeof(m_szPassword));
+  const size_t odbcLen = std::strlen(odbcName);
+  std::memcpy(m_szOdbcName, odbcName, odbcLen);
+  std::memset(m_szAccountName, 0, sizeof(m_szAccountName));
+  std::memset(m_szPassword, 0, sizeof(m_szPassword));
   if (accountName)
   {
-    const size_t accountLen = strlen_0(accountName);
-    memcpy_0(m_szAccountName, accountName, accountLen);
+    const size_t accountLen = std::strlen(accountName);
+    std::memcpy(m_szAccountName, accountName, accountLen);
   }
   if (passWord)
   {
-    const size_t passLen = strlen_0(passWord);
-    memcpy_0(m_szPassword, passWord, passLen);
+    const size_t passLen = std::strlen(passWord);
+    std::memcpy(m_szPassword, passWord, passLen);
   }
 
   SQLSetConnectAttr(m_hDbc, SQL_ATTR_LOGIN_TIMEOUT, reinterpret_cast<SQLPOINTER>(3), 0);

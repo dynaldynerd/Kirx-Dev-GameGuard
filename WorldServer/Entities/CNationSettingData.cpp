@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CNationSettingData.h"
 
@@ -32,7 +32,7 @@ CNationSettingData::CNationSettingData()
     m_pGameGuardSystem(nullptr)
 {
   strcpy_s(m_szNoneString, sizeof(m_szNoneString), "None");
-  memset_0(m_szVaildKey, 0, sizeof(m_szVaildKey));
+  std::memset(m_szVaildKey, 0, sizeof(m_szVaildKey));
 }
 
 CNationSettingData::~CNationSettingData() = default;
@@ -213,7 +213,7 @@ bool CNationSettingData::CheckDBCSCompleteString(
     return false;
   }
 
-  const size_t length = strlen_0(strData);
+  const size_t length = std::strlen(strData);
   unsigned __int64 characterCount = 0;
   for (size_t index = 0;; ++index)
   {
@@ -326,7 +326,7 @@ bool CNationSettingData::GetFireGuardEnableSetting()
   char returnedString[40];
   memset(returnedString, 0, 16);
   GetPrivateProfileStringA("FireGuard Use", "Use", "X", returnedString, 16, ".\\fireguard\\fgrs.ini");
-  if (!strcmp_0(returnedString, "X"))
+  if (!std::strcmp(returnedString, "X"))
   {
     return false;
   }
@@ -343,7 +343,7 @@ bool CNationSettingData::GetTimeLimitEnableSetting()
   char returnedString[40];
   memset(returnedString, 0, 16);
   GetPrivateProfileStringA("Time Limit", "Use", "X", returnedString, 16, ".\\Initialize\\WorldSystem.ini");
-  if (!strcmp_0(returnedString, "X"))
+  if (!std::strcmp(returnedString, "X"))
   {
     return false;
   }

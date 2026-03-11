@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CGuild.h"
 
@@ -137,8 +137,8 @@ namespace
   {
     GuildRankSortEntry lhs{};
     GuildRankSortEntry rhs{};
-    memcpy_0(&lhs, arg1, sizeof(lhs));
-    memcpy_0(&rhs, arg2, sizeof(rhs));
+    std::memcpy(&lhs, arg1, sizeof(lhs));
+    std::memcpy(&rhs, arg2, sizeof(rhs));
 
     if (lhs.byGrade == rhs.byGrade)
     {
@@ -199,21 +199,21 @@ void CGuild::MakeBuddyPacket()
   int dataSize = 0;
   void *sData = m_Buddy_List->sData;
 
-  memcpy_0(sData, &memberCount, 1u);
+  std::memcpy(sData, &memberCount, 1u);
   sData = static_cast<char *>(sData) + 1;
   ++dataSize;
 
   for (int j = 0; j < memberCount; ++j)
   {
-    memcpy_0(sData, &buddyData[j].dwSerial, 4u);
+    std::memcpy(sData, &buddyData[j].dwSerial, 4u);
     sData = static_cast<char *>(sData) + 4;
     dataSize += 4;
 
-    memcpy_0(sData, &buddyData[j].wMapCode, 2u);
+    std::memcpy(sData, &buddyData[j].wMapCode, 2u);
     sData = static_cast<char *>(sData) + 2;
     dataSize += 2;
 
-    memcpy_0(sData, &buddyData[j].byRegionIndex, 1u);
+    std::memcpy(sData, &buddyData[j].byRegionIndex, 1u);
     sData = static_cast<char *>(sData) + 1;
     ++dataSize;
   }
@@ -261,14 +261,14 @@ void CGuild::EstGuild(
   _guild_member_info *pEstMember)
 {
   m_dwSerial = dwSerial;
-  strcpy_0(m_wszName, pwszName);
+  std::strcpy(m_wszName, pwszName);
   W2M(m_wszName, m_aszName, 17);
 
   s_MgrHistory.GetNewFileName(dwSerial, m_szHistoryFileName);
 
   m_nApplierNum = 0;
   m_nMemberNum = nMemberNum;
-  memcpy_0(m_MemberData, pEstMember, sizeof(_guild_member_info) * nMemberNum);
+  std::memcpy(m_MemberData, pEstMember, sizeof(_guild_member_info) * nMemberNum);
   m_bDBWait = false;
   m_bIOWait = false;
   m_bRankWait = false;
@@ -330,14 +330,14 @@ void CGuild::SetGuild(
 {
   m_dwSerial = dwSerial;
   m_byGrade = byGrade;
-  strcpy_0(m_wszName, pwszName);
+  std::strcpy(m_wszName, pwszName);
   W2M(m_wszName, m_aszName, 17);
   strcpy_s(m_wszGreetingMsg, 256, pwszGreetingMsg);
   s_MgrHistory.GetNewFileName(dwSerial, m_szHistoryFileName);
 
   m_nApplierNum = 0;
   m_nMemberNum = nNum;
-  memcpy_0(m_MemberData, pEstMember, sizeof(_guild_member_info) * nNum);
+  std::memcpy(m_MemberData, pEstMember, sizeof(_guild_member_info) * nNum);
   m_bDBWait = false;
   m_bIOWait = false;
   m_bRankWait = false;
@@ -352,7 +352,7 @@ void CGuild::SetGuild(
   m_nIOMoneyHistoryNum = ioCount;
   if (m_nIOMoneyHistoryNum > 0)
   {
-    memcpy_0(m_IOMoneyHistory, pIOMonHisList, static_cast<size_t>(m_nIOMoneyHistoryNum) * sizeof(_io_money_data));
+    std::memcpy(m_IOMoneyHistory, pIOMonHisList, static_cast<size_t>(m_nIOMoneyHistoryNum) * sizeof(_io_money_data));
   }
 
   m_MasterData.init();
@@ -618,18 +618,18 @@ void CGuild::SendMsg_VoteProcessInform_Continue(_guild_member_info *pMem)
   msg.bActed = pMem->bVote;
   msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
   msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
-  msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(m_SuggestedMatter.wszComment));
-  strcpy_0(msg.wszComment, m_SuggestedMatter.wszComment);
+  msg.byCommentLen = static_cast<unsigned __int8>(std::strlen(m_SuggestedMatter.wszComment));
+  std::strcpy(msg.wszComment, m_SuggestedMatter.wszComment);
 
   if (msg.byMatterType == 4)
   {
-    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
+    std::strcpy(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
     msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkDest->m_byGrade;
     msg.byDestGuildRace = m_GuildBattleSugestMatter.pkDest->m_byRace;
   }
   else if (msg.byMatterType == 5)
   {
-    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
+    std::strcpy(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
     msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkSrc->m_byGrade;
     msg.byDestGuildRace = m_GuildBattleSugestMatter.pkSrc->m_byRace;
   }
@@ -848,18 +848,18 @@ char CGuild::RegSuggestedMatter(
     _guild_member_info *matterDstMember = GetMemberFromSerial(dwMatterDst);
     if (matterDstMember)
     {
-      strcpy_0(m_SuggestedMatter.wszMatterDst, matterDstMember->wszName);
+      std::strcpy(m_SuggestedMatter.wszMatterDst, matterDstMember->wszName);
     }
   }
 
-  memset_0(m_SuggestedMatter.byVoteState, 0, sizeof(m_SuggestedMatter.byVoteState));
+  std::memset(m_SuggestedMatter.byVoteState, 0, sizeof(m_SuggestedMatter.byVoteState));
   if (*pwszComment)
   {
-    strcpy_0(m_SuggestedMatter.wszComment, pwszComment);
+    std::strcpy(m_SuggestedMatter.wszComment, pwszComment);
   }
   else
   {
-    memset_0(m_SuggestedMatter.wszComment, 0, sizeof(m_SuggestedMatter.wszComment));
+    std::memset(m_SuggestedMatter.wszComment, 0, sizeof(m_SuggestedMatter.wszComment));
   }
 
   m_SuggestedMatter.dwStartTime = GetLoopTime();
@@ -932,7 +932,7 @@ void CGuild::SendMsg_VoteProcessInform_Start()
   }
 
   _guild_vote_process_inform_zocl msg{};
-  memset_0(&msg, 0, sizeof(msg));
+  std::memset(&msg, 0, sizeof(msg));
   msg.bStart = true;
   msg.byMatterType = m_SuggestedMatter.byMatterType;
   msg.dwMatterDst = m_SuggestedMatter.dwMatterDst;
@@ -946,18 +946,18 @@ void CGuild::SendMsg_VoteProcessInform_Start()
   msg.bActed = false;
   msg.byApprPoint = m_SuggestedMatter.byVoteState[0];
   msg.byOppoPoint = m_SuggestedMatter.byVoteState[1];
-  msg.byCommentLen = static_cast<unsigned __int8>(strlen_0(m_SuggestedMatter.wszComment));
-  strcpy_0(msg.wszComment, m_SuggestedMatter.wszComment);
+  msg.byCommentLen = static_cast<unsigned __int8>(std::strlen(m_SuggestedMatter.wszComment));
+  std::strcpy(msg.wszComment, m_SuggestedMatter.wszComment);
 
   if (msg.byMatterType == 4)
   {
-    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
+    std::strcpy(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkDest->m_wszName);
     msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkDest->m_byGrade;
     msg.byDestGuildRace = m_GuildBattleSugestMatter.pkDest->m_byRace;
   }
   else if (msg.byMatterType == 5)
   {
-    strcpy_0(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
+    std::strcpy(msg.wszDestGuildName, m_GuildBattleSugestMatter.pkSrc->m_wszName);
     msg.byDestGuildGrade = m_GuildBattleSugestMatter.pkSrc->m_byGrade;
     msg.byDestGuildRace = m_GuildBattleSugestMatter.pkSrc->m_byRace;
   }
@@ -1194,7 +1194,7 @@ _guild_member_info *CGuild::PushMember(_guild_member_info *pSheet)
   {
     if (!m_MemberData[j].IsFill())
     {
-      memcpy_0(&m_MemberData[j], pSheet, sizeof(m_MemberData[j]));
+      std::memcpy(&m_MemberData[j], pSheet, sizeof(m_MemberData[j]));
       m_MemberData[j].byRank = static_cast<unsigned __int8>(m_nMemberNum);
       ++m_nMemberNum;
       MakeDownMemberPacket();
@@ -1211,7 +1211,7 @@ void CGuild::SendMsg_GuildJoinAcceptInform(_guild_member_info *p, unsigned int d
   _guild_join_accept_inform_zocl msg{};
   msg.dwAccepterSerial = dwAcceptSerial;
   msg.dwApplierSerial = p->dwSerial;
-  strcpy_0(msg.wszName, p->wszName);
+  std::strcpy(msg.wszName, p->wszName);
   msg.byClassInGuild = static_cast<char>(p->byClassInGuild);
   msg.byLv = static_cast<char>(p->byLv);
   msg.dwPvpPoint = p->dwPvpPoint;
@@ -1372,7 +1372,7 @@ void CGuild::SendMsg_AddJoinApplier(_guild_applier_info *p)
   _guild_add_join_applier_inform_zocl msg{};
   msg.dwApplierSerial = p->pPlayer->m_dwObjSerial;
   const char *charName = p->pPlayer->m_Param.GetCharNameW();
-  strcpy_0(msg.wszName, charName);
+  std::strcpy(msg.wszName, charName);
   msg.byLv = static_cast<char>(p->pPlayer->GetLevel());
   msg.dwPvpPoint = static_cast<unsigned int>(p->pPlayer->m_Param.GetPvPPoint());
   msg.dwApplyTime = p->dwApplyTime;
@@ -1422,7 +1422,7 @@ void CGuild::MakeDownApplierPacket()
 
   int dataSize = 0;
   void *sData = m_DownPacket_Applier->sData;
-  memcpy_0(sData, &m_nApplierNum, 1u);
+  std::memcpy(sData, &m_nApplierNum, 1u);
   sData = static_cast<char *>(sData) + 1;
   ++dataSize;
 
@@ -1434,30 +1434,30 @@ void CGuild::MakeDownApplierPacket()
       CPlayer *player = info->pPlayer;
       const char *charName = player->m_Param.GetCharNameW();
 
-      char nameLen = static_cast<char>(strlen_0(charName));
-      memcpy_0(sData, &nameLen, 1u);
+      char nameLen = static_cast<char>(std::strlen(charName));
+      std::memcpy(sData, &nameLen, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
-      memcpy_0(sData, charName, nameLen);
+      std::memcpy(sData, charName, nameLen);
       sData = static_cast<char *>(sData) + nameLen;
       dataSize += nameLen;
 
-      memcpy_0(sData, &player->m_dwObjSerial, 4u);
+      std::memcpy(sData, &player->m_dwObjSerial, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;
 
       unsigned __int8 level = player->GetLevel();
-      memcpy_0(sData, &level, 1u);
+      std::memcpy(sData, &level, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
       int pvpPoint = static_cast<int>(player->m_Param.GetPvPPoint());
-      memcpy_0(sData, &pvpPoint, 4u);
+      std::memcpy(sData, &pvpPoint, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;
 
-      memcpy_0(sData, &info->dwApplyTime, 4u);
+      std::memcpy(sData, &info->dwApplyTime, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;
     }
@@ -1492,16 +1492,16 @@ void CGuild::MakeDownMemberPacket()
   int dataSize = 0;
   void *sData = m_DownPacket_Member->sData;
 
-  unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(m_wszName));
-  memcpy_0(sData, &nameLen, 1u);
+  unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(m_wszName));
+  std::memcpy(sData, &nameLen, 1u);
   sData = static_cast<char *>(sData) + 1;
   ++dataSize;
 
-  memcpy_0(sData, m_wszName, nameLen);
+  std::memcpy(sData, m_wszName, nameLen);
   sData = static_cast<char *>(sData) + nameLen;
   dataSize += nameLen;
 
-  memcpy_0(sData, &m_nMemberNum, 1u);
+  std::memcpy(sData, &m_nMemberNum, 1u);
   sData = static_cast<char *>(sData) + 1;
   ++dataSize;
 
@@ -1510,32 +1510,32 @@ void CGuild::MakeDownMemberPacket()
     _guild_member_info *member = &m_MemberData[j];
     if (member->IsFill())
     {
-      nameLen = static_cast<unsigned __int8>(strlen_0(member->wszName));
-      memcpy_0(sData, &nameLen, 1u);
+      nameLen = static_cast<unsigned __int8>(std::strlen(member->wszName));
+      std::memcpy(sData, &nameLen, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
-      memcpy_0(sData, member->wszName, nameLen);
+      std::memcpy(sData, member->wszName, nameLen);
       sData = static_cast<char *>(sData) + nameLen;
       dataSize += nameLen;
 
-      memcpy_0(sData, member, 4u);
+      std::memcpy(sData, member, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;
 
-      memcpy_0(sData, &member->byLv, 1u);
+      std::memcpy(sData, &member->byLv, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
-      memcpy_0(sData, &member->dwPvpPoint, 4u);
+      std::memcpy(sData, &member->dwPvpPoint, 4u);
       sData = static_cast<char *>(sData) + 4;
       dataSize += 4;
 
-      memcpy_0(sData, &member->byClassInGuild, 1u);
+      std::memcpy(sData, &member->byClassInGuild, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
 
-      memcpy_0(sData, &member->byRank, 1u);
+      std::memcpy(sData, &member->byRank, 1u);
       sData = static_cast<char *>(sData) + 1;
       ++dataSize;
     }
@@ -1550,7 +1550,7 @@ void CGuild::MakeQueryInfoPacket()
   m_QueryPacket_Info->byGrade = m_byGrade;
   m_QueryPacket_Info->dwEmblemBack = m_dwEmblemBack;
   m_QueryPacket_Info->dwEmblemMark = m_dwEmblemMark;
-  strcpy_0(m_QueryPacket_Info->wszGuildName, m_wszName);
+  std::strcpy(m_QueryPacket_Info->wszGuildName, m_wszName);
   m_QueryPacket_Info->dwTotWin = m_dwGuildBattleTotWin;
   m_QueryPacket_Info->dwTotDraw = m_dwGuildBattleTotDraw;
   m_QueryPacket_Info->dwTotLose = m_dwGuildBattleTotLose;
@@ -1808,7 +1808,7 @@ unsigned __int8 CGuild::ManagePopGuildMoney(unsigned int dwDest, unsigned int dw
   qry.in_date[1] = GetCurrentDay();
   qry.in_date[2] = GetCurrentHour();
   qry.in_date[3] = GetCurrentMin();
-  strcpy_0(qry.in_w_popername, member->pPlayer->m_Param.GetCharNameW());
+  std::strcpy(qry.in_w_popername, member->pPlayer->m_Param.GetCharNameW());
 
   const int nSize = static_cast<int>(qry.size());
   if (!g_Main.PushDQSData(-1, nullptr, 20, reinterpret_cast<char *>(&qry), nSize))
@@ -1851,7 +1851,7 @@ unsigned __int8 CGuild::ManageBuyGuildEmblem(unsigned int dwBuyer, unsigned int 
   qry.in_emblemdlant = -static_cast<int>(g_Main.m_GuildCreateEventInfo.GetEmblemDalant());
   qry.tmp_guildindex = m_nIndex;
   qry.in_suggestorSerial = dwBuyer;
-  strcpy_0(qry.tmp_w_suggestorname, kUnknownGuildEmblemName);
+  std::strcpy(qry.tmp_w_suggestorname, kUnknownGuildEmblemName);
   qry.in_date[0] = GetCurrentMonth();
   qry.in_date[1] = GetCurrentDay();
   qry.in_date[2] = GetCurrentHour();
@@ -2006,7 +2006,7 @@ void CGuild::SendMsg_ApplyGuildBattleResultInform(char byRet, char *wszDestGuild
 
   _guild_battle_apply_build_battle_result_zocl msg{};
   msg.byRet = byRet;
-  strcpy_0(msg.wszDestGuildName, wszDestGuildName);
+  std::strcpy(msg.wszDestGuildName, wszDestGuildName);
 
   unsigned __int8 pbyType[2] = {27, 54};
 
@@ -2029,7 +2029,7 @@ void CGuild::SendMsg_GuildBattleRefused(char *pwszName)
   _guild_battle_refuse_notify_zocl msg{};
   unsigned __int8 pbyType[2] = {27, 93};
 
-  strcpy_0(msg.wszGuildName, pwszName);
+  std::strcpy(msg.wszGuildName, pwszName);
 
   if (m_MasterData.pMember)
   {
@@ -2048,7 +2048,7 @@ void CGuild::SendMsg_GuildBattleSuggestResult(unsigned __int8 byRet, char *wszDe
   msg.byRet = byRet;
   if (!byRet && wszDestGuildName)
   {
-    strcpy_0(msg.wszDestGuildName, wszDestGuildName);
+    std::strcpy(msg.wszDestGuildName, wszDestGuildName);
   }
 
   unsigned __int8 type[2] = {27, 53};
@@ -2094,7 +2094,7 @@ char CGuild::SendMsg_GuildBattleProposed(char *pwszName)
   _guild_battle_propose_notify_zocl msg{};
   unsigned __int8 type[2] = {27, 92};
 
-  strcpy_0(msg.wszGuildName, pwszName);
+  std::strcpy(msg.wszGuildName, pwszName);
   if (!m_MasterData.pMember)
   {
     return 0;
@@ -2379,7 +2379,7 @@ void CGuild::PushHistory_IOMoney(
   _io_money_data *entry = nullptr;
   if (m_nIOMoneyHistoryNum >= 100)
   {
-    memcpy_0(m_IOMoneyHistory, &m_IOMoneyHistory[1], sizeof(_io_money_data) * 99);
+    std::memcpy(m_IOMoneyHistory, &m_IOMoneyHistory[1], sizeof(_io_money_data) * 99);
     entry = &m_IOMoneyHistory[99];
   }
   else
@@ -2387,13 +2387,13 @@ void CGuild::PushHistory_IOMoney(
     entry = &m_IOMoneyHistory[m_nIOMoneyHistoryNum++];
   }
 
-  strcpy_0(entry->wszIOerName, pwszIOerName);
+  std::strcpy(entry->wszIOerName, pwszIOerName);
   entry->dwIOerSerial = dwIOerSerial;
   entry->dIODalant = dIODalant;
   entry->dIOGold = dIOGold;
   entry->dLeftDalant = dLeftDalant;
   entry->dLeftGold = dLeftGold;
-  memcpy_0(entry->byDate, pbyDate, sizeof(entry->byDate));
+  std::memcpy(entry->byDate, pbyDate, sizeof(entry->byDate));
 
   SendMsg_IOMoney(dwIOerSerial, dIODalant, dIOGold, bInput, pbyDate);
 }
@@ -2404,7 +2404,7 @@ void CGuild::MakeMoneyIOPacket()
 
   int dataSize = 0;
   void *sData = m_MoneyIO_List->sData;
-  memcpy_0(sData, &m_nIOMoneyHistoryNum, 1uLL);
+  std::memcpy(sData, &m_nIOMoneyHistoryNum, 1uLL);
   sData = static_cast<char *>(sData) + 1;
   ++dataSize;
 
@@ -2412,32 +2412,32 @@ void CGuild::MakeMoneyIOPacket()
   for (int j = 0; j < m_nIOMoneyHistoryNum; ++j)
   {
     _io_money_data *entry = &m_IOMoneyHistory[--historyCount];
-    unsigned __int8 nameLen = static_cast<unsigned __int8>(strlen_0(entry->wszIOerName));
-    memcpy_0(sData, &nameLen, 1uLL);
+    unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(entry->wszIOerName));
+    std::memcpy(sData, &nameLen, 1uLL);
     sData = static_cast<char *>(sData) + 1;
     ++dataSize;
 
-    memcpy_0(sData, entry->wszIOerName, nameLen);
+    std::memcpy(sData, entry->wszIOerName, nameLen);
     sData = static_cast<char *>(sData) + nameLen;
     dataSize += nameLen;
 
-    memcpy_0(sData, &entry->dIODalant, 8uLL);
+    std::memcpy(sData, &entry->dIODalant, 8uLL);
     sData = static_cast<char *>(sData) + 8;
     dataSize += 8;
 
-    memcpy_0(sData, &entry->dIOGold, 8uLL);
+    std::memcpy(sData, &entry->dIOGold, 8uLL);
     sData = static_cast<char *>(sData) + 8;
     dataSize += 8;
 
-    memcpy_0(sData, &entry->dLeftDalant, 8uLL);
+    std::memcpy(sData, &entry->dLeftDalant, 8uLL);
     sData = static_cast<char *>(sData) + 8;
     dataSize += 8;
 
-    memcpy_0(sData, &entry->dLeftGold, 8uLL);
+    std::memcpy(sData, &entry->dLeftGold, 8uLL);
     sData = static_cast<char *>(sData) + 8;
     dataSize += 8;
 
-    memcpy_0(sData, entry->byDate, 4uLL);
+    std::memcpy(sData, entry->byDate, 4uLL);
     sData = static_cast<char *>(sData) + 4;
     dataSize += 4;
   }
@@ -2461,7 +2461,7 @@ void CGuild::SendMsg_IOMoney(
   msg.dIOGold = dIOGold;
   msg.dTotalDalant = GetTotalDalant();
   msg.dTotalGold = GetTotalGold();
-  memcpy_0(msg.byDate, pbyDate, sizeof(msg.byDate));
+  std::memcpy(msg.byDate, pbyDate, sizeof(msg.byDate));
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 27;
@@ -2486,7 +2486,7 @@ void CGuild::SendMsg_IOMoney(
 void CGuild::SetGreetingmsg_GUILD(char *wszgreetmsg)
 {
   _qry_case_guild_greetingmsg qry{};
-  if (strlen_0(wszgreetmsg) <= 255)
+  if (std::strlen(wszgreetmsg) <= 255)
   {
     strcpy_s(m_wszGreetingMsg, 256, wszgreetmsg);
     m_wszGreetingMsg[255] = 0;
@@ -2744,7 +2744,7 @@ void CGuild::SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitt
 
   _guild_manage_committee_inform_zocl msg{};
   msg.bAppoint = (bAppoint != 0);
-  strcpy_0(msg.wszName, pwszCommitteeName);
+  std::strcpy(msg.wszName, pwszCommitteeName);
 
   unsigned __int8 pbyType[16]{};
   pbyType[0] = 27;
@@ -2901,7 +2901,7 @@ unsigned __int8 CGuild::GuildBattleSuggestRequestToDestGuild(
 
 void CGuild::SetTemp(char *pwszName)
 {
-  strcpy_0(m_wszName, pwszName);
+  std::strcpy(m_wszName, pwszName);
   W2M(m_wszName, m_aszName, 17);
   m_bDBWait = 1;
 }
@@ -2934,7 +2934,7 @@ void CGuild::Release()
     m_pGuildCommittee[j] = nullptr;
   }
 
-  memset_0(m_IOMoneyHistory, 0, sizeof(m_IOMoneyHistory));
+  std::memset(m_IOMoneyHistory, 0, sizeof(m_IOMoneyHistory));
 
   m_wszName[0] = 0;
   m_aszName[0] = 0;
@@ -2949,12 +2949,12 @@ void CGuild::Release()
 
   if (m_DownPacket_Member)
   {
-    memset_0(m_DownPacket_Member, 0, sizeof(*m_DownPacket_Member));
+    std::memset(m_DownPacket_Member, 0, sizeof(*m_DownPacket_Member));
   }
 
   if (m_QueryPacket_Info)
   {
-    memset_0(m_QueryPacket_Info, 0, sizeof(*m_QueryPacket_Info));
+    std::memset(m_QueryPacket_Info, 0, sizeof(*m_QueryPacket_Info));
   }
 
   m_bDBWait = false;
@@ -2981,7 +2981,7 @@ CGuild *GetGuildPtrFromName(CGuild *pData, int nNum, char *pwszGuildName)
 {
   for (int j = 0; j < nNum; ++j)
   {
-    if (pData[j].IsFill() && !strcmp_0(pData[j].m_wszName, pwszGuildName))
+    if (pData[j].IsFill() && !std::strcmp(pData[j].m_wszName, pwszGuildName))
     {
       return &pData[j];
     }

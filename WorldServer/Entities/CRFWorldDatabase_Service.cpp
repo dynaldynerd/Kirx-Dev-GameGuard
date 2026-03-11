@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
@@ -387,7 +387,7 @@ __int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
       strcat_s(query, source);
     }
   }
-  query[strlen_0(query) - 1] = ' ';
+  query[std::strlen(query) - 1] = ' ';
   sprintf_s(source, 128, "from tbl_potion_delay where serial=%u", dwSerial);
   strcat_s(query, source);
   if (this->m_bSaveDBLog)
@@ -1108,10 +1108,10 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
   }
 
   sprintf(buffer, "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, ", 50);
-  strcat_0(buffer, "b.serial, b.lv, g.Pvppoint, g.GuildGrade as CurGrade into #tbl_RankInGuild ");
-  strcat_0(buffer, "from tbl_general as g join tbl_base as b on g.serial = b.serial ");
+  std::strcat(buffer, "b.serial, b.lv, g.Pvppoint, g.GuildGrade as CurGrade into #tbl_RankInGuild ");
+  std::strcat(buffer, "from tbl_general as g join tbl_base as b on g.serial = b.serial ");
   sprintf(source, "where g.guildserial=%d and b.dck=0 order by g.Pvppoint desc", dwGuildSerial);
-  strcat_0(buffer, source);
+  std::strcat(buffer, source);
   ret = SQLExecDirectA(m_hStmtUpdate, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
   if (ret && ret != SQL_SUCCESS_WITH_INFO)
   {
@@ -1208,7 +1208,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     "update tbl_general set GuildRank = rank.NewRank\tfrom ( select serial, NewRank from #tbl_RankInGuildAll ) as rank where tbl_general.serial = rank.serial",
     false);
 
-  memset_0(gradeRows, 0, 600);
+  std::memset(gradeRows, 0, 600);
   sprintf(buffer, "select serial, Grade from #tbl_RankInGuildCom order by Grade");
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
@@ -2685,7 +2685,7 @@ char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
   SQLRETURN ret = 0;
   unsigned __int8 count = 0;
 
-  memset_0(query, 0, sizeof(query));
+  std::memset(query, 0, sizeof(query));
   sprintf_s(
     query,
     "select gr.guildserial, g.id, gr.roomtype, gr.roomrace, gr.roomrentdate from tbl_GuildRoom as gr inner join tbl_Guild"
@@ -3765,7 +3765,7 @@ unsigned __int8 CRFWorldDatabase::LoadGuildBattleScheduleInfo(
         SQLGetData(m_hStmtSelect, 2u, 65518, &pkInfo->list[count].dwSLID, 0, &strLenOrInd);
         SQLGetData(m_hStmtSelect, 3u, 65530, &pkInfo->list[count].ucState, 0, &strLenOrInd);
 
-        _WORD targetValue[24]{};
+        unsigned __int16 targetValue[24]{};
         SQLGetData(m_hStmtSelect, 4u, 93, targetValue, 0, &strLenOrInd);
         SQLGetData(m_hStmtSelect, 5u, 65519, &pkInfo->list[count].wTumeMin, 0, &strLenOrInd);
 
@@ -4206,7 +4206,7 @@ unsigned __int8 CRFWorldDatabase::Select_MacroData(unsigned int dwSerial,
     {
       for (unsigned int chatIndex = 0; chatIndex < 5; ++chatIndex)
       {
-        strcpy_0(pMacro->mcr_Chat[fetchedRowCount].Chat[chatIndex], chatColumns[chatIndex]);
+        std::strcpy(pMacro->mcr_Chat[fetchedRowCount].Chat[chatIndex], chatColumns[chatIndex]);
       }
     }
   }

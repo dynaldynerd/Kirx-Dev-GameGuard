@@ -178,7 +178,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     returned,
     64,
     ".\\Initialize\\NewHolySystem.ini");
-  clsHolyStoneSystem->bFreeMining = strcmp_0(returned, "TRUE") == 0;
+  clsHolyStoneSystem->bFreeMining = std::strcmp(returned, "TRUE") == 0;
 
   GetPrivateProfileStringA(
     "HolySystem",
@@ -187,7 +187,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
     returned,
     64,
     ".\\Initialize\\NewHolySystem.ini");
-  clsHolyStoneSystem->m_pMentalPass = strcmp_0(returned, "TRUE") == 0;
+  clsHolyStoneSystem->m_pMentalPass = std::strcmp(returned, "TRUE") == 0;
 
   for (int j = 0; j < clsHolyStoneSystem->m_nHolyStoneNum; ++j)
   {
@@ -276,9 +276,9 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   if (clsHolyStoneSystem->m_HolyKeeperData.pCreateMap)
   {
     char portalName[80]{};
-    memset_0(portalName, 0, 64);
+    std::memset(portalName, 0, 64);
     GetPrivateProfileStringA("PortalDummyName", "BellaDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
-    if (!strcmp_0("NULL", portalName))
+    if (!std::strcmp("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Bella>");
       return false;
@@ -290,9 +290,9 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    memset_0(portalName, 0, 64);
+    std::memset(portalName, 0, 64);
     GetPrivateProfileStringA("PortalDummyName", "CoraDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
-    if (!strcmp_0("NULL", portalName))
+    if (!std::strcmp("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Cora>");
       return false;
@@ -304,9 +304,9 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    memset_0(portalName, 0, 64);
+    std::memset(portalName, 0, 64);
     GetPrivateProfileStringA("PortalDummyName", "AccDummyName", "NULL", portalName, 64, ".\\Initialize\\NewHolySystem.ini");
-    if (!strcmp_0("NULL", portalName))
+    if (!std::strcmp("NULL", portalName))
     {
       MyMessageBox("CHolyStoneSystemDataMgr::LoadIni()", "Holy PortalDummy Setting Error<No Ini Portal Info:Acc>");
       return false;

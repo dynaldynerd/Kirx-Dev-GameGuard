@@ -9,7 +9,7 @@
 
 __guild_list_page::__guild_list_page()
 {
-  memset_0(this, 0, sizeof(__guild_list_page));
+  std::memset(this, 0, sizeof(__guild_list_page));
 }
 
 CGuildList::CGuildList()
@@ -72,7 +72,7 @@ void CGuildList::SendList(unsigned __int16 wIndex, unsigned __int8 byRace, unsig
     msg.byPage = usePage;
     msg.byMaxPage = static_cast<unsigned __int8>(m_byMaxPage[byRace] + 1);
     msg.byListCnt = m_pGuildList[byRace][usePage].byListCnt;
-    memcpy_0(msg.GuildList, m_pGuildList[byRace][usePage].GuildList, sizeof(msg.GuildList));
+    std::memcpy(msg.GuildList, m_pGuildList[byRace][usePage].GuildList, sizeof(msg.GuildList));
 
     unsigned __int8 pbyType[2]{27, 116};
     unsigned __int8 listCount = static_cast<unsigned __int8>(msg.byListCnt);
@@ -100,16 +100,16 @@ void CGuildList::AddList(unsigned __int8 byRace, unsigned __int8 byGrade, char *
   {
     __guild_list_page *page = &m_pGuildList[byRace][++m_byMaxPage[byRace]];
     page->GuildList[page->byListCnt].byGrade = byGrade;
-    strcpy_0(page->GuildList[page->byListCnt].wszGuildName, pwszGuildName);
-    strcpy_0(page->GuildList[page->byListCnt].wszMasterName, pwszMasterName);
+    std::strcpy(page->GuildList[page->byListCnt].wszGuildName, pwszGuildName);
+    std::strcpy(page->GuildList[page->byListCnt].wszMasterName, pwszMasterName);
     ++page->byListCnt;
   }
   else
   {
     __guild_list_page *page = &m_pGuildList[byRace][m_byMaxPage[byRace]];
     page->GuildList[page->byListCnt].byGrade = byGrade;
-    strcpy_0(page->GuildList[page->byListCnt].wszGuildName, pwszGuildName);
-    strcpy_0(page->GuildList[page->byListCnt].wszMasterName, pwszMasterName);
+    std::strcpy(page->GuildList[page->byListCnt].wszGuildName, pwszGuildName);
+    std::strcpy(page->GuildList[page->byListCnt].wszMasterName, pwszMasterName);
     ++page->byListCnt;
   }
 }
@@ -120,7 +120,7 @@ void CGuildList::SetGrade(unsigned __int8 byRace, char *pwszGuildName, unsigned 
   {
     for (int k = 0; k < m_pGuildList[byRace][j].byListCnt; ++k)
     {
-      if (!strcmp_0(m_pGuildList[byRace][j].GuildList[k].wszGuildName, pwszGuildName))
+      if (!std::strcmp(m_pGuildList[byRace][j].GuildList[k].wszGuildName, pwszGuildName))
       {
         m_pGuildList[byRace][j].GuildList[k].byGrade = byGrade;
         return;
@@ -135,9 +135,9 @@ void CGuildList::SetGuildMaster(unsigned __int8 byRace, char *pwszGuildName, cha
   {
     for (int k = 0; k < m_pGuildList[byRace][j].byListCnt; ++k)
     {
-      if (!strcmp_0(m_pGuildList[byRace][j].GuildList[k].wszGuildName, pwszGuildName))
+      if (!std::strcmp(m_pGuildList[byRace][j].GuildList[k].wszGuildName, pwszGuildName))
       {
-        strcpy_0(m_pGuildList[byRace][j].GuildList[k].wszMasterName, pwszMasterName);
+        std::strcpy(m_pGuildList[byRace][j].GuildList[k].wszMasterName, pwszMasterName);
         return;
       }
     }

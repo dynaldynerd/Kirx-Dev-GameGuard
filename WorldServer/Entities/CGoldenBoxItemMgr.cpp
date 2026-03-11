@@ -19,17 +19,17 @@
 
 _goldbox_index::_goldbox_index()
 {
-  memset_0(this, 0, sizeof(_goldbox_index));
+  std::memset(this, 0, sizeof(_goldbox_index));
 }
 
 _golden_box_item_ini::_golden_box_item_ini()
 {
-  memset_0(this, 0, sizeof(_golden_box_item_ini));
+  std::memset(this, 0, sizeof(_golden_box_item_ini));
 }
 
 _golden_box_item_event::_golden_box_item_event()
 {
-  memset_0(this, 0, sizeof(_golden_box_item_event));
+  std::memset(this, 0, sizeof(_golden_box_item_event));
 }
 
 _golden_box_item_event::~_golden_box_item_event()
@@ -38,12 +38,12 @@ _golden_box_item_event::~_golden_box_item_event()
 
 _golden_box_item::_golden_box_item()
 {
-  memset_0(this, 0, sizeof(_golden_box_item));
+  std::memset(this, 0, sizeof(_golden_box_item));
 }
 
 _db_golden_box_item::_db_golden_box_item()
 {
-  memset_0(this, 0, sizeof(_db_golden_box_item));
+  std::memset(this, 0, sizeof(_db_golden_box_item));
 }
 
 CGoldenBoxItemMgr::CGoldenBoxItemMgr()
@@ -153,8 +153,8 @@ void CGoldenBoxItemMgr::PushDQSUpdate()
   constexpr size_t kPayloadSize = 4 + sizeof(_db_golden_box_item) + sizeof(_db_golden_box_item);
   char payload[kPayloadSize]{};
   *reinterpret_cast<int *>(payload) = m_nDBSerial;
-  memcpy_0(payload + 4, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
-  memcpy_0(
+  std::memcpy(payload + 4, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  std::memcpy(
     payload + 4 + sizeof(m_golden_box_item_New),
     &m_golden_box_item_Old,
     sizeof(m_golden_box_item_Old));
@@ -193,8 +193,8 @@ bool CGoldenBoxItemMgr::_init_loggers()
 void CGoldenBoxItemMgr::BoxItemDataCopy()
 {
   _db_golden_box_item temp{};
-  memcpy_0(&temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
-  memcpy_0(&m_golden_box_item_Old, &temp, sizeof(m_golden_box_item_Old));
+  std::memcpy(&temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  std::memcpy(&m_golden_box_item_Old, &temp, sizeof(m_golden_box_item_Old));
 }
 
 _db_golden_box_item *CGoldenBoxItemMgr::GetGodBoxItemInfoPtr()
@@ -268,8 +268,8 @@ char CGoldenBoxItemMgr::SynchINIANDDB()
   Set_ToStruct();
 
   unsigned __int8 temp[sizeof(m_golden_box_item_New)]{};
-  memcpy_0(temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
-  memcpy_0(&m_golden_box_item_Old, temp, sizeof(m_golden_box_item_Old));
+  std::memcpy(temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
+  std::memcpy(&m_golden_box_item_Old, temp, sizeof(m_golden_box_item_Old));
   return 1;
 }
 
@@ -307,9 +307,9 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   std::tm tmValue{};
   char buffer[60];
 
-  memset_0(keyItem, 0, sizeof(keyItem));
-  memset_0(keyNum, 0, sizeof(keyNum));
-  memset_0(keyRate, 0, sizeof(keyRate));
+  std::memset(keyItem, 0, sizeof(keyItem));
+  std::memset(keyNum, 0, sizeof(keyNum));
+  std::memset(keyRate, 0, sizeof(keyRate));
 
   pIni->m_bUse_event = 0;
   pIni->m_EventTime[0] = 0;
@@ -334,7 +334,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
     pIni->m_szStarterBoxCode[0],
     64,
     "./initialize/GoldenBox_Item.ini");
-  if (!strcmp_0(pIni->m_szStarterBoxCode[0], "NULL"))
+  if (!std::strcmp(pIni->m_szStarterBoxCode[0], "NULL"))
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -347,7 +347,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
     pIni->m_szStarterBoxCode[1],
     64,
     "./initialize/GoldenBox_Item.ini");
-  if (!strcmp_0(pIni->m_szStarterBoxCode[1], "NULL"))
+  if (!std::strcmp(pIni->m_szStarterBoxCode[1], "NULL"))
   {
     pIni->m_bUse_event = 0;
     return false;
@@ -398,7 +398,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   }
   pIni->m_byMinute[0] = ret;
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = pIni->m_wYear[0] - 1900;
   tmValue.tm_mon = pIni->m_byMonth[0] - 1;
   tmValue.tm_mday = pIni->m_byDay[0];
@@ -453,7 +453,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   }
   pIni->m_byMinute[1] = ret;
 
-  memset_0(&tmValue, 0, sizeof(tmValue));
+  std::memset(&tmValue, 0, sizeof(tmValue));
   tmValue.tm_year = pIni->m_wYear[1] - 1900;
   tmValue.tm_mon = pIni->m_byMonth[1] - 1;
   tmValue.tm_mday = pIni->m_byDay[1];
@@ -471,7 +471,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
   memset(buffer, 0, 50);
   for (int j = 0; j < pIni->m_byLoopCnt; ++j)
   {
-    memset_0(buffer, 0, 50);
+    std::memset(buffer, 0, 50);
     sprintf_s(buffer, 50, "BoxItem_Code_%d", j);
     ret = GetPrivateProfileStringA(
       "GoldBox_Item",
@@ -480,13 +480,13 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       pIni->m_szGoldenBoxcode[static_cast<__int64>(j)],
       64,
       "./initialize/GoldenBox_Item.ini");
-    if (!strcmp_0(pIni->m_szGoldenBoxcode[static_cast<__int64>(j)], "NULL"))
+    if (!std::strcmp(pIni->m_szGoldenBoxcode[static_cast<__int64>(j)], "NULL"))
     {
       pIni->m_bUse_event = 0;
       return false;
     }
 
-    memset_0(buffer, 0, 50);
+    std::memset(buffer, 0, 50);
     sprintf_s(buffer, 50, "Box_Max_%d", j);
     ret = GetPrivateProfileIntA("GoldBox_Item", buffer, 0, "./initialize/GoldenBox_Item.ini");
     if (ret > 60000)
@@ -496,7 +496,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
     }
     pIni->m_wGoldenBoxmax[j] = static_cast<unsigned __int16>(ret);
 
-    memset_0(buffer, 0, 50);
+    std::memset(buffer, 0, 50);
     sprintf_s(buffer, 50, "GoldBox_Item_Out_List_%d", j);
     ret = GetPrivateProfileIntA(buffer, "List_Count", 0, "./initialize/GoldenBox_Item.ini");
     if (ret > 100)
@@ -512,7 +512,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
       sprintf_s(keyNum, sizeof(keyNum), "Num%d", k);
       sprintf_s(keyRate, sizeof(keyRate), "Rate%d", k);
 
-      memset_0(buffer, 0, 50);
+      std::memset(buffer, 0, 50);
       sprintf_s(buffer, 50, "GoldBox_Item_Out_List_%d", j);
       GetPrivateProfileStringA(
         buffer,
@@ -521,7 +521,7 @@ bool CGoldenBoxItemMgr::Load_Event_INI(_golden_box_item_ini *pIni)
         pIni->m_golden_box_item_list[j][k].m_szLimcode,
         64,
         "./initialize/GoldenBox_Item.ini");
-      if (!strcmp_0(pIni->m_golden_box_item_list[j][k].m_szLimcode, "NULL"))
+      if (!std::strcmp(pIni->m_golden_box_item_list[j][k].m_szLimcode, "NULL"))
       {
         pIni->m_bUse_event = 0;
         return false;
@@ -639,7 +639,7 @@ bool CGoldenBoxItemMgr::SetGoldBoxItemIndex()
     {
       if (record->m_dwOreProbability)
       {
-        strcpy_0(m_pItemIndex[itemIndex].szItemCode, record->m_strCode);
+        std::strcpy(m_pItemIndex[itemIndex].szItemCode, record->m_strCode);
         m_pItemIndex[itemIndex++].wItemIndex = record->m_dwIndex;
       }
 
@@ -736,7 +736,7 @@ char *CGoldenBoxItemMgr::BoxItemOpen(unsigned __int8 byIndex)
   for (int j = 0; j < m_golden_box_item.m_bygolden_item_num[byIndex]; ++j)
   {
     m_pBoxItemOpen[j].m_dwProb = m_golden_box_item.m_golden_box_item_info[byIndex][j].m_wRate;
-    strcpy_0(
+    std::strcpy(
       m_pBoxItemOpen[j].m_itmPdOutput,
       m_golden_box_event.m_ini.m_golden_box_item_list[byIndex][j].m_szLimcode);
     m_pBoxItemOpen[j].m_nPdProCnt = 1;
@@ -746,7 +746,7 @@ char *CGoldenBoxItemMgr::BoxItemOpen(unsigned __int8 byIndex)
     {
       return nullptr;
     }
-    if (strlen_0(itemCode) < 2 || !strncmp(itemCode, "-", 1) || !strncmp(itemCode, "-1", 2))
+    if (std::strlen(itemCode) < 2 || !strncmp(itemCode, "-", 1) || !strncmp(itemCode, "-1", 2))
     {
       return nullptr;
     }
@@ -786,42 +786,42 @@ void CGoldenBoxItemMgr::BoxItemOpenEffectType(
   bool *bCircle)
 {
   *bCircle = true;
-  if (!strcmp_0(szUseItem, "bxgol01"))
+  if (!std::strcmp(szUseItem, "bxgol01"))
   {
     *pbyType = 9;
   }
-  else if (!strcmp_0(szUseItem, "bxgol02"))
+  else if (!std::strcmp(szUseItem, "bxgol02"))
   {
     *pbyType = 10;
   }
-  else if (!strcmp_0(szUseItem, "bxgol03"))
+  else if (!std::strcmp(szUseItem, "bxgol03"))
   {
     *pbyType = 11;
   }
-  else if (!strcmp_0(szUseItem, "bxgol05"))
+  else if (!std::strcmp(szUseItem, "bxgol05"))
   {
     *pbyType = 10;
   }
-  else if (!strcmp_0(szUseItem, "iogld01"))
+  else if (!std::strcmp(szUseItem, "iogld01"))
   {
-    if (!strcmp_0(szNewItem, "iygld01") || !strcmp_0(szNewItem, "iygld02"))
+    if (!std::strcmp(szNewItem, "iygld01") || !std::strcmp(szNewItem, "iygld02"))
     {
       *pbyType = 8;
       *bCircle = false;
     }
   }
-  else if (!strcmp_0(szUseItem, "iogld02"))
+  else if (!std::strcmp(szUseItem, "iogld02"))
   {
     *pbyType = 12;
   }
-  else if (!strcmp_0(szUseItem, "bxgol04"))
+  else if (!std::strcmp(szUseItem, "bxgol04"))
   {
-    if (!strcmp_0(szNewItem, "iygld11"))
+    if (!std::strcmp(szNewItem, "iygld11"))
     {
       *pbyType = 6;
       *bCircle = false;
     }
-    else if (!strcmp_0(szNewItem, "iygld12"))
+    else if (!std::strcmp(szNewItem, "iygld12"))
     {
       *pbyType = 7;
     }
@@ -1112,9 +1112,9 @@ void CGoldenBoxItemMgr::SendMsg_RaceChat(CPlayer *pOne, char *pwszChatData)
   msg.byMessageType = 4;
   msg.bySenderRace = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
   msg.dwSenderSerial = pOne->m_dwObjSerial;
-  strcpy_0(msg.wszSenderName, pOne->m_Param.GetCharNameW());
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszChatData));
-  memcpy_0(msg.wszChatData, pwszChatData, msg.bySize);
+  std::strcpy(msg.wszSenderName, pOne->m_Param.GetCharNameW());
+  msg.bySize = static_cast<unsigned __int8>(std::strlen(pwszChatData));
+  std::memcpy(msg.wszChatData, pwszChatData, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
   msg.byPvpGrade = static_cast<unsigned __int8>(-1);
 

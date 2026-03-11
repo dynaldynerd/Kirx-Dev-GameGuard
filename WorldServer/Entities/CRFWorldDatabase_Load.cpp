@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRFWorldDatabase.h"
 #include "CPotionMgr.h"
@@ -121,10 +121,10 @@ char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_
     {
       sprintf(source, "CryMsg%d, ", j + 1);
     }
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   sprintf(source, "from tbl_CryMsg where Serial = %d", dwSerial);
-  strcat_0(buffer, source);
+  std::strcat(buffer, source);
 
   if (m_bSaveDBLog)
   {

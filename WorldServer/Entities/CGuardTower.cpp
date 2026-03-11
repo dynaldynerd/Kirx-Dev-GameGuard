@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CGuardTower.h"
 
@@ -821,7 +821,7 @@ CGuardTower *CreateSystemTower(
   {
     return nullptr;
   }
-  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
   data.pMaster = nullptr;
   data.byRaceCode = byRaceCode;
   data.pItem = nullptr;

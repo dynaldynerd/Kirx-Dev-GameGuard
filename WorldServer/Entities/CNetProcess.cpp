@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -154,7 +154,7 @@ _SOCK_TYPE_PARAM::_SOCK_TYPE_PARAM()
 
 _total_count::_total_count()
 {
-  memset_0(this, 0, sizeof(_total_count));
+  std::memset(this, 0, sizeof(_total_count));
 }
 
 CNetTimer::CNetTimer()
@@ -375,8 +375,8 @@ char *_NET_BUFFER::GetPopPoint(bool *pbMiss)
         }
 
         const unsigned int tail = m_nMaxSize - popPoint;
-        memcpy_0(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
-        memcpy_0(&m_sTempBuffer[tail], m_sMainBuffer, size - tail);
+        std::memcpy(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
+        std::memcpy(&m_sTempBuffer[tail], m_sMainBuffer, size - tail);
         return m_sTempBuffer;
       }
 
@@ -406,8 +406,8 @@ char *_NET_BUFFER::GetSendPoint(int *pnSendSize, bool *pMiss)
     const unsigned int tail = m_nMaxSize - popPoint;
     if (tail <= m_nEtrSize)
     {
-      memcpy_0(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
-      memcpy_0(&m_sTempBuffer[tail], m_sMainBuffer, *pnSendSize - static_cast<int>(tail));
+      std::memcpy(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
+      std::memcpy(&m_sTempBuffer[tail], m_sMainBuffer, *pnSendSize - static_cast<int>(tail));
       return m_sTempBuffer;
     }
 
@@ -531,7 +531,7 @@ _socket *CNetSocket::GetSocket(unsigned int dwIndex)
 
 bool CNetSocket::SetSocket(_SOCK_TYPE_PARAM *pType, char *pszErrMsg)
 {
-  memcpy_0(&m_SockType, pType, sizeof(m_SockType));
+  std::memcpy(&m_SockType, pType, sizeof(m_SockType));
 
   const size_t count = pType->m_wSocketMaxNum;
   m_Socket = AllocateVector<_socket>(count);
@@ -650,7 +650,7 @@ unsigned int CNetSocket::Accept_Server()
 
   _socket *socketInfo = &m_Socket[emptySocket];
   socketInfo->m_Socket = socketHandle;
-  memcpy_0(&socketInfo->m_Addr, &addr, sizeof(socketInfo->m_Addr));
+  std::memcpy(&socketInfo->m_Addr, &addr, sizeof(socketInfo->m_Addr));
 
   if (m_SockType.m_bAcceptIPCheck)
   {
@@ -1061,16 +1061,16 @@ int CNetProcess::LoadSendMsg(
       return 0;
     }
 
-    memcpy_0(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], Src, 4uLL);
+    std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], Src, 4uLL);
     if (nLen)
     {
-      memcpy_0(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt + 4], szMsg, nLen);
+      std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt + 4], szMsg, nLen);
     }
 
     const int tail = sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
     if (tail < Src[0])
     {
-      memcpy_0(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], Src[0] - tail);
+      std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], Src[0] - tail);
     }
 
     sendBuffer->AddPushPos(Src[0]);
@@ -1090,14 +1090,14 @@ int CNetProcess::LoadSendMsg(
     return 0;
   }
 
-  memcpy_0(&g_FGSendData.sSendBuffer[2], Src, 4uLL);
+  std::memcpy(&g_FGSendData.sSendBuffer[2], Src, 4uLL);
   g_FGSendData.wMsgSize = 6;
   if (nLen)
   {
     g_FGSendData.wMsgSize += nLen;
-    memcpy_0(&g_FGSendData.sSendBuffer[6], szMsg, nLen);
+    std::memcpy(&g_FGSendData.sSendBuffer[6], szMsg, nLen);
   }
-  memcpy_0(g_FGSendData.sSendBuffer, &g_FGSendData.wMsgSize, 2uLL);
+  std::memcpy(g_FGSendData.sSendBuffer, &g_FGSendData.wMsgSize, 2uLL);
 
   const int fgSize = _CcrFG_rs_EncryptPacket(
     Socket->m_hFGContext,
@@ -1120,7 +1120,7 @@ int CNetProcess::LoadSendMsg(
     }
   }
 
-  memcpy_0(g_FGSendData.sSendBuffer, &fgSize, 2uLL);
+  std::memcpy(g_FGSendData.sSendBuffer, &fgSize, 2uLL);
 
   const unsigned int remain = sendBuffer->m_nEtrSize + sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
   if (static_cast<unsigned int>(fgSize) > remain)
@@ -1143,11 +1143,11 @@ int CNetProcess::LoadSendMsg(
     return 0;
   }
 
-  memcpy_0(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], g_FGSendData.sSendBuffer, fgSize);
+  std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], g_FGSendData.sSendBuffer, fgSize);
   const int tail = sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
   if (tail < fgSize)
   {
-    memcpy_0(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], fgSize - tail);
+    std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], fgSize - tail);
   }
 
   sendBuffer->AddPushPos(static_cast<unsigned int>(fgSize));
@@ -1171,7 +1171,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
   char pszErrMsg[132]{};
 
   m_nIndex = nIndex;
-  memcpy_0(&m_Type, pType, sizeof(m_Type));
+  std::memcpy(&m_Type, pType, sizeof(m_Type));
   m_pNetwork = pNetwork;
   m_dwCurTime = timeGetTime();
   m_bUseFG = bUseFG;
@@ -1240,7 +1240,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
   }
 
   strcpy_s(pszErrMsg, sizeof(pszErrMsg), "null");
-  memset_0(&pszErrMsg[5], 0, 123);
+  std::memset(&pszErrMsg[5], 0, 123);
 
   if (!m_NetSocket.SetSocket(&m_Type, pszErrMsg))
   {
@@ -1549,10 +1549,10 @@ bool CNetProcess::StartSpeedHackCheck(unsigned int dwClientIndex, char *pszID)
   }
 
   unsigned int *key = CalcCodeKey(code);
-  memcpy_0(socket->m_dwSpeedHackKey, key, sizeof(socket->m_dwSpeedHackKey));
+  std::memcpy(socket->m_dwSpeedHackKey, key, sizeof(socket->m_dwSpeedHackKey));
 
   char msg[16]{};
-  memcpy_0(msg, code, sizeof(msg));
+  std::memcpy(msg, code, sizeof(msg));
 
   unsigned __int8 type[2]{102, 2};
   if (!LoadSendMsg(dwClientIndex, type, msg, 16))
@@ -1581,7 +1581,7 @@ bool CNetProcess::PushAnsyncConnect(unsigned int dwSocketIndex, sockaddr_in *pAd
     return false;
   }
 
-  memcpy_0(&m_AnsyncConnectData[dwSocketIndex], pAddr, 16);
+  std::memcpy(&m_AnsyncConnectData[dwSocketIndex], pAddr, 16);
   return m_listAnsyncConnect.PushNode_Back(dwSocketIndex);
 }
 
@@ -1622,7 +1622,7 @@ bool CNetProcess::PushKeyCheckList(
     if (node->dwSerial == dwSerial)
     {
       node->dwSerial = dwSerial;
-      memcpy_0(node->dwKey, pdwKey, 4LL * nUseKeyNum);
+      std::memcpy(node->dwKey, pdwKey, 4LL * nUseKeyNum);
       node->dwIP = dwIP;
       node->dwWaitStartTime = timeGetTime();
       return true;
@@ -1636,7 +1636,7 @@ bool CNetProcess::PushKeyCheckList(
   }
 
   m_ndKeyCheck[outIndex[0]].dwSerial = dwSerial;
-  memcpy_0(m_ndKeyCheck[outIndex[0]].dwKey, pdwKey, 4LL * nUseKeyNum);
+  std::memcpy(m_ndKeyCheck[outIndex[0]].dwKey, pdwKey, 4LL * nUseKeyNum);
   m_ndKeyCheck[outIndex[0]].dwIP = dwIP;
   m_ndKeyCheck[outIndex[0]].dwWaitStartTime = timeGetTime();
   return m_listKeyCheck.PushNode_Back(outIndex[0]);
@@ -1942,7 +1942,7 @@ bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER
     {
       _socket *socket = m_NetSocket.GetSocket(dwSocketIndex);
       socket->m_dwResponSpeedHackTime = timeGetTime();
-      memcpy_0(socket->m_dwSpeedHackKey, pMsg, sizeof(socket->m_dwSpeedHackKey));
+      std::memcpy(socket->m_dwSpeedHackKey, pMsg, sizeof(socket->m_dwSpeedHackKey));
       return true;
     }
     case 3:
@@ -1950,7 +1950,7 @@ bool CNetProcess::_InternalPacketProcess(unsigned int dwSocketIndex, _MSG_HEADER
       _socket *socket = m_NetSocket.GetSocket(dwSocketIndex);
       if (socket)
       {
-        if (memcmp_0(pMsg, socket->m_dwSpeedHackKey, 16uLL))
+        if (std::memcmp(pMsg, socket->m_dwSpeedHackKey, 16uLL))
         {
           m_LogHack.Write("SH: %s (key)", socket->m_szID);
           PushCloseNode(dwSocketIndex);
@@ -2214,7 +2214,7 @@ void CNetProcess::_ResponSpeedHack()
       {
         _check_speed_hack_ans ans{};
         unsigned int *key = CalcCodeKey(socket->m_dwSpeedHackKey);
-        memcpy_0(&ans, key, sizeof(ans));
+        std::memcpy(&ans, key, sizeof(ans));
         unsigned __int8 type[2]{102, 3};
         const unsigned __int16 nLen = static_cast<unsigned __int16>(ans.size());
         LoadSendMsg(dwIndex, type, reinterpret_cast<char *>(&ans), nLen);
@@ -2237,10 +2237,10 @@ void CNetProcess::_SendSpeedHackCheckMsg(unsigned int n)
   }
 
   unsigned int *key = CalcCodeKey(code);
-  memcpy_0(socket->m_dwSpeedHackKey, key, sizeof(socket->m_dwSpeedHackKey));
+  std::memcpy(socket->m_dwSpeedHackKey, key, sizeof(socket->m_dwSpeedHackKey));
 
   char msg[16]{};
-  memcpy_0(msg, code, sizeof(msg));
+  std::memcpy(msg, code, sizeof(msg));
   unsigned __int8 type[2]{102, 2};
   LoadSendMsg(n, type, msg, 16);
   socket->m_dwSendSpeedHackTime = timeGetTime();
@@ -2368,7 +2368,7 @@ void CNetProcess::RecvThread(void *pv)
         const int tail = recvBuffer->m_nMaxSize - recvBuffer->m_dwPushPnt;
         if (tail < ret)
         {
-          memcpy_0(recvBuffer->m_sMainBuffer, &recvBuffer->m_sMainBuffer[recvBuffer->m_nMaxSize], ret - tail);
+          std::memcpy(recvBuffer->m_sMainBuffer, &recvBuffer->m_sMainBuffer[recvBuffer->m_nMaxSize], ret - tail);
         }
         recvBuffer->AddPushPos(ret);
         process->m_csRecv[socketIndex].Unlock();

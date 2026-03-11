@@ -481,8 +481,8 @@ void CPartyPlayer::EnterWorld(_WA_AVATOR_CODE *pData, unsigned __int16 wZoneInde
 {
   this->m_bLogin = true;
   this->m_wZoneIndex = wZoneIndex;
-  memcpy_0(&this->m_id, pData, sizeof(this->m_id));
-  strcpy_0(this->m_wszName, pData->m_wszName);
+  std::memcpy(&this->m_id, pData, sizeof(this->m_id));
+  std::strcpy(this->m_wszName, pData->m_wszName);
   this->PartyListInit();
 }
 

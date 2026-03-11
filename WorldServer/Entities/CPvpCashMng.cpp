@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "base_fld.h"
 
@@ -16,12 +16,12 @@ CPvpCashMng *CPvpCashMng::_pkInstance = nullptr;
 
 CPvpCashMng::_talik_recvr_list::_talik_recvr_list()
 {
-  memset_0(this, 0, sizeof(_talik_recvr_list));
+  std::memset(this, 0, sizeof(_talik_recvr_list));
 }
 
 void CPvpCashMng::_class_value::init(_class_value *self)
 {
-  memset_0(self, 0, sizeof(_class_value));
+  std::memset(self, 0, sizeof(_class_value));
 }
 
 CPvpCashMng::_class_value::_class_value()
@@ -31,7 +31,7 @@ CPvpCashMng::_class_value::_class_value()
 
 void CPvpCashMng::_max_point::init(_max_point *self)
 {
-  memset_0(self, 0, sizeof(_max_point));
+  std::memset(self, 0, sizeof(_max_point));
 }
 
 CPvpCashMng::_max_point::_max_point()
@@ -68,7 +68,7 @@ bool CPvpCashMng::LoadData()
 {
   char parseBuffers[2][64];
   char *tokens[3] = {parseBuffers[0], parseBuffers[1], nullptr};
-  memset_0(parseBuffers, 0, sizeof(parseBuffers));
+  std::memset(parseBuffers, 0, sizeof(parseBuffers));
 
   m_TalikList.byTalikNum =
     GetPrivateProfileIntA("TalikRecorver", "TalikNum", -1, ".\\Initialize\\PvpCashPoint.ini");
@@ -86,7 +86,7 @@ bool CPvpCashMng::LoadData()
     const int classCount = GetPrivateProfileIntA("ClassValue", "ClassNum", -1, ".\\Initialize\\PvpCashPoint.ini");
     if (classCount > 0)
     {
-      memset_0(parseBuffers, 0, sizeof(parseBuffers));
+      std::memset(parseBuffers, 0, sizeof(parseBuffers));
       for (int index = 0; index < classCount; ++index)
       {
         if (!Parsing("ClassValue", "Class", tokens, index, 1u))
@@ -161,7 +161,7 @@ char CPvpCashMng::IsTalikItem(const char *strCode)
 {
   for (int j = 0; j < 14; ++j)
   {
-    if (!strcmp_0(m_TalikList.TalikInfo[j].m_pFld->m_strCode, strCode))
+    if (!std::strcmp(m_TalikList.TalikInfo[j].m_pFld->m_strCode, strCode))
     {
       return 1;
     }
@@ -196,7 +196,7 @@ int CPvpCashMng::GetMyClassVal(char *pClass)
 {
   for (int index = 0; index < 50; ++index)
   {
-    if (m_ClassValList[index].m_pFld && !strcmp_0(m_ClassValList[index].m_pFld->m_strCode, pClass))
+    if (m_ClassValList[index].m_pFld && !std::strcmp(m_ClassValList[index].m_pFld->m_strCode, pClass))
     {
       return m_ClassValList[index].byClassVal;
     }
@@ -251,11 +251,11 @@ bool CPvpCashMng::Parsing(
   char buffer[1056];
   char returned[2052];
 
-  memset_0(buffer, 0, sizeof(buffer));
-  memset_0(returned, 0, sizeof(returned));
+  std::memset(buffer, 0, sizeof(buffer));
+  std::memset(returned, 0, sizeof(returned));
   sprintf(buffer, "%s%d", szItem, nInx);
   GetPrivateProfileStringA(szTitle, buffer, "X", returned, 2048, ".\\Initialize\\PvpCashPoint.ini");
-  if (!strcmp_0(returned, "X"))
+  if (!std::strcmp(returned, "X"))
   {
     return false;
   }

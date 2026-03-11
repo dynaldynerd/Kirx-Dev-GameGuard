@@ -12,7 +12,7 @@ struct _pt_notify_final_decision
 
 inline _pt_query_appoint_zocl::_pt_query_appoint_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _pt_query_appoint_zocl::size()
@@ -22,7 +22,7 @@ inline __int64 _pt_query_appoint_zocl::size()
 
 inline _pt_trans_votepaper_zocl::_pt_trans_votepaper_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _pt_trans_votepaper_zocl::size() const
@@ -32,7 +32,7 @@ inline __int64 _pt_trans_votepaper_zocl::size() const
 
 inline _pt_notify_vote_score_zocl::_pt_notify_vote_score_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _pt_notify_vote_score_zocl::size() const

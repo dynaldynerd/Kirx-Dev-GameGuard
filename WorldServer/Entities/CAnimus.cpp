@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CAnimus.h"
 #include "ObjectCreateSetData.h"
@@ -145,7 +145,7 @@ char CAnimus::Create(_animus_create_setdata *pData)
   m_byRoleCode = static_cast<unsigned __int8>(reinterpret_cast<_AnimusItem_fld *>(m_pRecordSet)->m_nAnimusClass);
   m_nMaxAttackPnt = pData->nMaxAttackPnt;
   m_dwMasterSerial = pData->pMaster->m_dwObjSerial;
-  strcpy_0(m_wszMasterName, pData->pMaster->m_Param.GetCharNameW());
+  std::strcpy(m_wszMasterName, pData->pMaster->m_Param.GetCharNameW());
   W2M(m_wszMasterName, m_aszMasterName, 17);
   m_pBeforeTownCheckMap = nullptr;
   CheckPosInTown();

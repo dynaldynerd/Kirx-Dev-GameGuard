@@ -9,5 +9,5 @@ _target_monster_aggro_inform_zocl::_target_monster_aggro_inform_zocl()
 
 void _target_monster_aggro_inform_zocl::Init()
 {
-  memset_0(this, 0, sizeof(_target_monster_aggro_inform_zocl));
+  std::memset(this, 0, sizeof(_target_monster_aggro_inform_zocl));
 }

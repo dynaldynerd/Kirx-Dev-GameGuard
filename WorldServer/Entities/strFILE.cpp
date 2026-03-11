@@ -85,7 +85,7 @@ bool strFILE::word(char *poutszWord)
   if (wordLen <= 0)
     return false;
 
-  memcpy_0(poutszWord, src, wordLen);
+  std::memcpy(poutszWord, src, wordLen);
   poutszWord[wordLen] = '\0';
   return true;
 }

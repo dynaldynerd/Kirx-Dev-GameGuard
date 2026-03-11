@@ -98,11 +98,11 @@ void CChatStealSystem::SendStealMsg(
   _chat_steal_message_gm_zocl msg{};
   msg.byMessageType = byChatType;
   msg.dwSenderSerial = dwSenderSerial;
-  strcpy_0(msg.wszSenderName, pwszSender);
+  std::strcpy(msg.wszSenderName, pwszSender);
   msg.byRaceCode = byRaceCode;
   msg.bFiltering = 0;
-  msg.bySize = static_cast<unsigned __int8>(strlen_0(pwszMessage));
-  memcpy_0(msg.wszChatData, pwszMessage, msg.bySize);
+  msg.bySize = static_cast<unsigned __int8>(std::strlen(pwszMessage));
+  std::memcpy(msg.wszChatData, pwszMessage, msg.bySize);
   msg.wszChatData[msg.bySize] = 0;
   msg.byPvpGrade = pPlayer->m_Param.m_byPvPGrade;
 

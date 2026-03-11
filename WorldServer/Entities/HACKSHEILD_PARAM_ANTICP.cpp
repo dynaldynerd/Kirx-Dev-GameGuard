@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -161,8 +161,8 @@ void HACKSHEILD_PARAM_ANTICP::Init()
   m_nSocketIndex = -1;
   m_dwLastSyncQryTime = 0;
   m_byVerifyState = 0;
-  memset_0(&m_CrcInfo, 0, sizeof(m_CrcInfo));
-  memset_0(m_byGUIDClientInfo, 0, sizeof(m_byGUIDClientInfo));
+  std::memset(&m_CrcInfo, 0, sizeof(m_CrcInfo));
+  std::memset(m_byGUIDClientInfo, 0, sizeof(m_byGUIDClientInfo));
 }
 
 void HACKSHEILD_PARAM_ANTICP::CheckClient()
@@ -188,7 +188,7 @@ void HACKSHEILD_PARAM_ANTICP::CheckClient()
 
   _hs_msg_make_crc_req_msg_zocl msg{};
   msg.wSeq = 0;
-  memcpy_0(msg.byReqMsg, reqPayload, sizeof(msg.byReqMsg));
+  std::memcpy(msg.byReqMsg, reqPayload, sizeof(msg.byReqMsg));
 
   unsigned __int8 type[2]{};
   type[0] = 98;
@@ -251,7 +251,7 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int 
   AntiCpMakeGuidReqMsgFn makeGuidReqMsg = _ResolveMakeGuidReqMsg();
   const unsigned int ret = makeGuidReqMsg ? makeGuidReqMsg(guidRequest, m_byGUIDClientInfo) : 1u;
   msg.wSeq = static_cast<unsigned __int16>(ret);
-  memcpy_0(msg.byGuidReqMsg, guidRequest, sizeof(msg.byGuidReqMsg));
+  std::memcpy(msg.byGuidReqMsg, guidRequest, sizeof(msg.byGuidReqMsg));
 
   unsigned __int8 type[2]{};
   type[0] = 98;

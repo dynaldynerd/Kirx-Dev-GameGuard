@@ -17,5 +17,5 @@ struct  _sel_patriarch_elect_state
 
 inline _sel_patriarch_elect_state::_sel_patriarch_elect_state()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }

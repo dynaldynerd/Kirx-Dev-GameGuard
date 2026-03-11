@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -63,7 +63,7 @@ char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
 
   ++m_nSerial;
   m_byRaceCode = byRaceCode;
-  memset_0(m_dwPoint, 0, sizeof(m_dwPoint));
+  std::memset(m_dwPoint, 0, sizeof(m_dwPoint));
   m_listVote.ResetList();
   m_byLimGrade = byLimGrade;
   m_dwLastBroadcastTime = GetLoopTime();
@@ -76,8 +76,8 @@ char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
   started.nVoteSerial = m_nSerial;
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
-  strcpy_0(started.wszContent, pwszContent);
-  started.wContentSize = strlen_0(pwszContent) + 1;
+  std::strcpy(started.wszContent, pwszContent);
+  started.wContentSize = std::strlen(pwszContent) + 1;
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -94,8 +94,8 @@ char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
 
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
-  strcpy_0(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = strlen_0(pwszContent) + 1;
+  std::strcpy(m_SendStarted.wszContent, pwszContent);
+  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
   m_SendStarted.wLeftSec = 300;
   return 1;
 }
@@ -114,7 +114,7 @@ char CVoteSystem::StartVote(
 
   ++m_nSerial;
   m_byRaceCode = byRaceCode;
-  memset_0(m_dwPoint, 0, sizeof(m_dwPoint));
+  std::memset(m_dwPoint, 0, sizeof(m_dwPoint));
   m_listVote.ResetList();
   m_byLimGrade = 0;
   m_dwLastBroadcastTime = GetLoopTime();
@@ -124,14 +124,14 @@ char CVoteSystem::StartVote(
   m_bPunishment = true;
   m_byPunishType = byPunishType;
   m_dwAvatorSerial = dwSerial;
-  strcpy_0(m_wszCharName, pwszName);
+  std::strcpy(m_wszCharName, pwszName);
 
   _starting_vote_inform_zocl started{};
   started.nVoteSerial = m_nSerial;
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
-  strcpy_0(started.wszContent, pwszContent);
-  started.wContentSize = strlen_0(pwszContent) + 1;
+  std::strcpy(started.wszContent, pwszContent);
+  started.wContentSize = std::strlen(pwszContent) + 1;
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -139,8 +139,8 @@ char CVoteSystem::StartVote(
 
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
-  strcpy_0(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = strlen_0(pwszContent) + 1;
+  std::strcpy(m_SendStarted.wszContent, pwszContent);
+  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
   m_SendStarted.wLeftSec = 300;
 
   for (int index = 0; index < MAX_PLAYER; ++index)
@@ -344,7 +344,7 @@ void CVoteSystem::ProcessPunishment()
 
   _pt_result_punishment_zocl result{};
   result.byType = m_byPunishType;
-  strcpy_0(result.wszCharName, m_wszCharName);
+  std::strcpy(result.wszCharName, m_wszCharName);
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *player = &g_Player[clientIndex];
@@ -361,7 +361,7 @@ void CVoteSystem::ProcessPunishment()
   update.dwAvatorSerial = m_dwAvatorSerial;
   PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
   update.dwElectSerial = processor->GetCurrPatriarchElectSerial();
-  strcpy_0(update.wszCharName, m_wszCharName);
+  std::strcpy(update.wszCharName, m_wszCharName);
 
   const int size = update.size();
   g_Main.PushDQSData(-1, nullptr, 127, reinterpret_cast<char *>(&update), size);

@@ -116,7 +116,7 @@ char CGuildRanking::CheckAndCreateTodayGuildRankTable(char *szDate)
 
 char CGuildRanking::LoadAllGuildData(_worlddb_guild_info *pkInfo)
 {
-  memset_0(pkInfo, 0, sizeof(_worlddb_guild_info));
+  std::memset(pkInfo, 0, sizeof(_worlddb_guild_info));
   if (!g_Main.m_pWorldDB->Select_AllGuildData(pkInfo))
   {
     MyMessageBox("DatabaseInit", "Select_AllGuildData() fail");
@@ -149,7 +149,7 @@ char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
   for (unsigned __int16 j = 0; j < static_cast<unsigned __int16>(pkInfo->wGuildCount); ++j)
   {
     memberCount = 0;
-    memset_0(members, 0, sizeof(members));
+    std::memset(members, 0, sizeof(members));
     if (!LoadMemberInfo(
           pkInfo->GuildData[j].dwMasterSerial,
           pkInfo->GuildData[j].dwGuildSerial,
@@ -160,7 +160,7 @@ char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
     }
 
     ioMoneyHistoryCount = 0;
-    memset_0(ioInfo, 0, sizeof(ioInfo));
+    std::memset(ioInfo, 0, sizeof(ioInfo));
     if (!LoadGuildMoneyIOInfo(pkInfo->GuildData[j].dwGuildSerial, ioInfo, &ioMoneyHistoryCount))
     {
       continue;
@@ -229,7 +229,7 @@ char CGuildRanking::LoadMemberInfo(
     pkMemberInfo[j].byLv = memberInfo.MemberData[j].byLv;
     pkMemberInfo[j].dwPvpPoint = memberInfo.MemberData[j].dwPvpPoint;
     pkMemberInfo[j].byRank = static_cast<unsigned __int8>(memberInfo.MemberData[j].wRank - 1);
-    strcpy_0(pkMemberInfo[j].wszName, memberInfo.MemberData[j].wszName);
+    std::strcpy(pkMemberInfo[j].wszName, memberInfo.MemberData[j].wszName);
 
     if (dwMasterSerial == pkMemberInfo[j].dwSerial
         && pkMemberInfo[j].dwSerial != static_cast<unsigned int>(-1)
@@ -274,7 +274,7 @@ char CGuildRanking::LoadGuildMoneyIOInfo(
   int *pnIOMonHisNum)
 {
   _worlddb_guild_money_io_info ioData{};
-  memset_0(&ioData, 0, sizeof(ioData));
+  std::memset(&ioData, 0, sizeof(ioData));
   if (!g_Main.m_pWorldDB->Select_GuildMoneyIOData(dwGuildSerial, &ioData))
   {
     return 0;
@@ -288,8 +288,8 @@ char CGuildRanking::LoadGuildMoneyIOInfo(
     pkIOInfo[j].dIOGold = ioData.IOData[sourceIndex].dIOGold;
     pkIOInfo[j].dLeftDalant = ioData.IOData[sourceIndex].dLeftDalant;
     pkIOInfo[j].dLeftGold = ioData.IOData[sourceIndex].dLeftGold;
-    memcpy_0(pkIOInfo[j].byDate, ioData.IOData[sourceIndex].byDate, sizeof(pkIOInfo[j].byDate));
-    strcpy_0(pkIOInfo[j].wszIOerName, ioData.IOData[sourceIndex].wszIOerName);
+    std::memcpy(pkIOInfo[j].byDate, ioData.IOData[sourceIndex].byDate, sizeof(pkIOInfo[j].byDate));
+    std::strcpy(pkIOInfo[j].wszIOerName, ioData.IOData[sourceIndex].wszIOerName);
   }
 
   *pnIOMonHisNum = ioData.wRecordCount;
@@ -477,7 +477,7 @@ void CGuildRanking::ClearRefreshData()
     _guild_member_refresh_data *entry = m_vecGuildMemberRefresh[j];
     if (entry)
     {
-      memset_0(entry, 0, sizeof(*entry));
+      std::memset(entry, 0, sizeof(*entry));
     }
   }
 }
@@ -629,7 +629,7 @@ unsigned __int8 CGuildRanking::UpdateRankinGuildStep5(char *szData)
     {
       _worlddb_rankinguild_info rankData{};
       rankData.wRecordCount = 0;
-      memset_0(rankData.MemberData, 0, sizeof(rankData.MemberData));
+      std::memset(rankData.MemberData, 0, sizeof(rankData.MemberData));
       g_Main.m_pWorldDB->Update_RankInGuild_Step5(guildSerial, &rankData);
 
       _guild_member_refresh_data *refresh = m_vecGuildMemberRefresh[m_dwCurProcIndex];

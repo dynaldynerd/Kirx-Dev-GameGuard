@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "IdaCompat.h"
 
@@ -29,7 +29,7 @@ struct   _STORAGE_LIST
 
     _storage_con()
     {
-      memset_0(this, 0, sizeof(_storage_con));
+      std::memset(this, 0, sizeof(_storage_con));
       m_dwLv = 268435455;
     }
   };

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderClassInfoFactory.h"
 #include "CUnmannedTraderClassInfoTableCodeType.h"
@@ -34,7 +34,7 @@ CUnmannedTraderClassInfo *CUnmannedTraderClassInfoFactory::Create(const char *sz
     }
 
     const char *typeName = info->GetTypeName();
-    if (!strcmp_0(typeName, szType))
+    if (!std::strcmp(typeName, szType))
     {
       return info->Create(dwID);
     }
@@ -63,7 +63,7 @@ bool CUnmannedTraderClassInfoFactory::Regist(CUnmannedTraderClassInfo *pkType)
     }
     const char *lhsType = pkType->GetTypeName();
     const char *rhsType = info->GetTypeName();
-    if (!strcmp_0(rhsType, lhsType))
+    if (!std::strcmp(rhsType, lhsType))
     {
       delete pkType;
       return false;

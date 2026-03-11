@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -292,7 +292,7 @@ void CPlayer::SendMsg_NotifyEffectForGetItem(
   packet.wItemIndex = pItem->m_wItemIndex;
   packet.byBoxDur = static_cast<char>(pItem->m_dwDur);
   packet.dwCharSerial = dwCharSerial;
-  strcpy_0(packet.szCharacterName, szCharName);
+  std::strcpy(packet.szCharacterName, szCharName);
 
   unsigned __int8 type[2] = {13, static_cast<unsigned __int8>(-106)};
   if (bCircle)
@@ -790,22 +790,22 @@ void CPlayer::pc_RequestUILockInit(
   if (szUILockPW
       && szUILockPW_Confirm
       && uszUILock_HintAnswer
-      && strlen_0(szUILockPW)
-      && strlen_0(szUILockPW_Confirm)
-      && strlen_0(uszUILock_HintAnswer))
+      && std::strlen(szUILockPW)
+      && std::strlen(szUILockPW_Confirm)
+      && std::strlen(uszUILock_HintAnswer))
   {
-    if (strlen_0(szUILockPW) <= 12
-        && strlen_0(szUILockPW_Confirm) <= 12
-        && strlen_0(uszUILock_HintAnswer) <= 16)
+    if (std::strlen(szUILockPW) <= 12
+        && std::strlen(szUILockPW_Confirm) <= 12
+        && std::strlen(uszUILock_HintAnswer) <= 16)
     {
-      if (!strcmp_0(szUILockPW, szUILockPW_Confirm))
+      if (!std::strcmp(szUILockPW, szUILockPW_Confirm))
       {
-        if (!strcmp_0(szUILockPW, pUserDB->m_szAccount_PW))
+        if (!std::strcmp(szUILockPW, pUserDB->m_szAccount_PW))
         {
           resultCode = 2;
         }
         else if (m_Param.GetTrunkSlotNum()
-                 && !strcmp_0(szUILockPW, m_Param.GetTrunkPasswdW()))
+                 && !std::strcmp(szUILockPW, m_Param.GetTrunkPasswdW()))
         {
           resultCode = 2;
         }
@@ -866,7 +866,7 @@ void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
   }
 
   unsigned __int8 resultCode = 0;
-  if (uszUILockPW && strlen_0(uszUILockPW))
+  if (uszUILockPW && std::strlen(uszUILockPW))
   {
     if (pUserDB->m_byUILock)
     {
@@ -874,7 +874,7 @@ void CPlayer::pc_RequestUILockCertify(CUserDB *pUserDB, char *uszUILockPW)
       {
         resultCode = 2;
       }
-      else if (strcmp_0(pUserDB->m_szUILock_PW, uszUILockPW))
+      else if (std::strcmp(pUserDB->m_szUILock_PW, uszUILockPW))
       {
         ++pUserDB->m_byUILock_FailCnt;
         resultCode = pUserDB->m_byUILock_FailCnt < 5 ? 1 : 4;
@@ -926,30 +926,30 @@ void CPlayer::pc_RequestUILockUpdate(
   if (uszUILockPW
       && uszUILockPW_Confirm
       && uszUILock_HintAnswer
-      && strlen_0(uszUILockPW)
-      && strlen_0(uszUILockPW_Confirm)
-      && strlen_0(uszUILock_HintAnswer))
+      && std::strlen(uszUILockPW)
+      && std::strlen(uszUILockPW_Confirm)
+      && std::strlen(uszUILock_HintAnswer))
   {
-    if (strlen_0(uszUILockPW) <= 12
-        && strlen_0(uszUILockPW_Confirm) <= 12
-        && strlen_0(uszUILock_HintAnswer) <= 16)
+    if (std::strlen(uszUILockPW) <= 12
+        && std::strlen(uszUILockPW_Confirm) <= 12
+        && std::strlen(uszUILock_HintAnswer) <= 16)
     {
       if (m_pUserDB->m_byUILock == 2)
       {
-        if (!strcmp_0(uszUILockPWOld, m_pUserDB->m_szUILock_PW))
+        if (!std::strcmp(uszUILockPWOld, m_pUserDB->m_szUILock_PW))
         {
-          if (!strcmp_0(uszUILockPW, m_pUserDB->m_szUILock_PW))
+          if (!std::strcmp(uszUILockPW, m_pUserDB->m_szUILock_PW))
           {
             resultCode = 8;
           }
-          else if (!strcmp_0(uszUILockPW, uszUILockPW_Confirm))
+          else if (!std::strcmp(uszUILockPW, uszUILockPW_Confirm))
           {
-            if (!strcmp_0(uszUILockPW, m_pUserDB->m_szAccount_PW))
+            if (!std::strcmp(uszUILockPW, m_pUserDB->m_szAccount_PW))
             {
               resultCode = 2;
             }
             else if (m_Param.GetTrunkSlotNum()
-                     && !strcmp_0(uszUILockPW, m_Param.GetTrunkPasswdW()))
+                     && !std::strcmp(uszUILockPW, m_Param.GetTrunkPasswdW()))
             {
               resultCode = 2;
             }
@@ -1017,7 +1017,7 @@ void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
   }
 
   unsigned __int8 resultCode = 0;
-  if (uszHintAnswer && strlen_0(uszHintAnswer))
+  if (uszHintAnswer && std::strlen(uszHintAnswer))
   {
     if (pUserDB->m_byUILock)
     {
@@ -1025,7 +1025,7 @@ void CPlayer::pc_RequestUILockFindPW(CUserDB *pUserDB, char *uszHintAnswer)
       {
         resultCode = 3;
       }
-      else if (strcmp_0(pUserDB->m_uszUILock_HintAnswer, uszHintAnswer))
+      else if (std::strcmp(pUserDB->m_uszUILock_HintAnswer, uszHintAnswer))
       {
         ++pUserDB->m_byUILockFindPassFailCount;
         resultCode = pUserDB->m_byUILockFindPassFailCount < 5 ? 1 : 5;

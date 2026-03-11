@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "NetUtil.h"
 
@@ -26,11 +26,11 @@ __int64 GetIPAddress(char *szAddr)
   }
 
   in_addr addr{};
-  memcpy_0(&addr, *reinterpret_cast<void **>(host->h_addr_list), sizeof(addr));
+  std::memcpy(&addr, *reinterpret_cast<void **>(host->h_addr_list), sizeof(addr));
   const char *src = inet_ntoa(addr);
   if (src)
   {
-    memcpy_0(szAddr, src, 16);
+    std::memcpy(szAddr, src, 16);
     return 1;
   }
 
@@ -47,6 +47,6 @@ __int64 GetIPAddress(sockaddr_in *pAddr)
     return 0;
   }
 
-  memcpy_0(pAddr, *reinterpret_cast<void **>(host->h_addr_list), 4u);
+  std::memcpy(pAddr, *reinterpret_cast<void **>(host->h_addr_list), 4u);
   return 1;
 }

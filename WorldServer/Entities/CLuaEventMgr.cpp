@@ -153,7 +153,7 @@ CLuaEventNode *CLuaEventMgr::SearchEvent(const char *strFileName)
     }
 
     CLuaEventNode *eventNode = m_LuaEventArEx.GetAtPtr(index);
-    if (eventNode && strcmp_0(eventNode->GetName(), strFileName) == 0)
+    if (eventNode && std::strcmp(eventNode->GetName(), strFileName) == 0)
     {
       return eventNode;
     }

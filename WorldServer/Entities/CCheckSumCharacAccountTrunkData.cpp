@@ -14,8 +14,8 @@ CCheckSumCharacAccountTrunkData::CCheckSumCharacAccountTrunkData(
     m_dwAccountSerial(dwAccountSerial),
     m_byRace(byRace)
 {
-  memset_0(m_dwValues, 0, sizeof(m_dwValues));
-  memset_0(m_dValues, 0, sizeof(m_dValues));
+  std::memset(m_dwValues, 0, sizeof(m_dwValues));
+  std::memset(m_dValues, 0, sizeof(m_dValues));
 }
 
 CCheckSumCharacAccountTrunkData::~CCheckSumCharacAccountTrunkData()
@@ -105,7 +105,7 @@ __int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumC
     {
       return -1;
     }
-    memcpy_0(m_dwValues, kSrcValue->m_dwValues, sizeof(m_dwValues));
+    std::memcpy(m_dwValues, kSrcValue->m_dwValues, sizeof(m_dwValues));
     resultFlag = 1;
   }
 
@@ -120,7 +120,7 @@ __int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumC
     {
       return -1;
     }
-    memcpy_0(m_dValues, kSrcValue->m_dValues, sizeof(m_dValues));
+    std::memcpy(m_dValues, kSrcValue->m_dValues, sizeof(m_dValues));
     return 1;
   }
 

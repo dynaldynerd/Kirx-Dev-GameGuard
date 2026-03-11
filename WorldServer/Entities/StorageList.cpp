@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "StorageList.h"
 
@@ -35,7 +35,7 @@ void _STORAGE_LIST::SetMemory(_db_con *pList, int nListName, int nListNum, int n
 
 void _STORAGE_LIST::_storage_con::Init()
 {
-  memset_0(this, 0, sizeof(_STORAGE_LIST::_storage_con));
+  std::memset(this, 0, sizeof(_STORAGE_LIST::_storage_con));
   m_dwLv = 268435455;
 }
 
@@ -139,7 +139,7 @@ int _STORAGE_LIST::TransInCon(_storage_con *pCon)
     }
   }
 
-  memcpy_0(&m_pStorageList[slotIndex], pCon, 41);
+  std::memcpy(&m_pStorageList[slotIndex], pCon, 41);
   m_pStorageList[slotIndex].m_pInList = this;
   m_pStorageList[slotIndex].m_byStorageIndex = static_cast<unsigned __int8>(slotIndex);
   m_pStorageList[slotIndex].m_bLoad = 1;
@@ -213,7 +213,7 @@ _STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromItemCode(char *pwszItemCode)
           this->m_pStorageList[j].m_wItemIndex);
       if (record)
       {
-        if (!strcmp_0(record->m_strCode, pwszItemCode))
+        if (!std::strcmp(record->m_strCode, pwszItemCode))
         {
           return &this->m_pStorageList[j];
         }

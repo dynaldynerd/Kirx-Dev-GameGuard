@@ -13,7 +13,7 @@ CUnmannedTraderItemCodeInfo::CUnmannedTraderItemCodeInfo(
   this->m_szCode[0] = '\0';
   if (szCode)
   {
-    strcpy_0(this->m_szCode, szCode);
+    std::strcpy(this->m_szCode, szCode);
     this->m_szCode[63] = '\0';
   }
 }
@@ -36,7 +36,7 @@ const CUnmannedTraderItemCodeInfo *CUnmannedTraderItemCodeInfo::operator=(const 
   this->m_dwStartInx = lhs.m_dwStartInx;
   this->m_dwEndInx = lhs.m_dwEndInx;
   this->m_szCode[0] = '\0';
-  strcpy_0(this->m_szCode, lhs.m_szCode);
+  std::strcpy(this->m_szCode, lhs.m_szCode);
   this->m_szCode[63] = '\0';
   return this;
 }
@@ -48,7 +48,7 @@ bool CUnmannedTraderItemCodeInfo::operator==(const char *szCode)
     return false;
   }
 
-  const size_t len = strlen_0(this->m_szCode);
+  const size_t len = std::strlen(this->m_szCode);
   if (strncmp(this->m_szCode, szCode, len))
   {
     return false;

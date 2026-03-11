@@ -691,6 +691,7 @@
     <ClInclude Include="Entities\ICsSendInterface.h" />
     <ClInclude Include="Entities\ICsSendInterfaceLocalStructs.h" />
     <ClInclude Include="Entities\IdaCompat.h" />
+    <ClInclude Include="Entities\IdaFloatConstants.h" />
     <ClInclude Include="Entities\INationGameGuardSystem.h" />
     <ClInclude Include="Entities\Init_action_point_zocl.h" />
     <ClInclude Include="Entities\insert_new_quest_inform_zocl.h" />

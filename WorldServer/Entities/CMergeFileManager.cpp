@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMergeFileManager.h"
 #include "CMergeFile.h"
@@ -9,7 +9,7 @@
 
 CMergeFileManager::CMergeFileManager()
 {
-  memset_0(mPath, 0, sizeof(mPath));
+  std::memset(mPath, 0, sizeof(mPath));
   mPathNameLeng = 0;
   mMergeFileNum = 0;
   mMergeFile = nullptr;

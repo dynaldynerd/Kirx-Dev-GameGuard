@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CTotalGuildRankManager.h"
 #include "WorldServerUtil.h"
@@ -70,7 +70,7 @@ __int64 CTotalGuildRankManager::Load(unsigned __int8 byDayAfter, _total_guild_ra
     return 1;
   }
 
-  memset_0(pkInfo, 0, sizeof(_total_guild_rank_info));
+  std::memset(pkInfo, 0, sizeof(_total_guild_rank_info));
   const unsigned __int8 result = g_Main.m_pWorldDB->Select_TotalGuildRank(dateStr, pkInfo);
   if (result == 2)
   {

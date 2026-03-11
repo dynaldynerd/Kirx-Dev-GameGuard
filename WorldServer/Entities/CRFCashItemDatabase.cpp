@@ -386,21 +386,21 @@ void CRFCashItemDatabase::dhRExtractSubString(char *szSub, char *szFull, int n)
   if (szFull)
   {
     int count = 0;
-    const int len = static_cast<int>(strlen_0(szFull));
+    const int len = static_cast<int>(std::strlen(szFull));
     void *src = &szFull[len];
     for (int j = 0; j < n; ++j)
     {
       src = static_cast<char *>(src) - 1;
       if (src == szFull)
       {
-        const size_t fullLen = strlen_0(szFull);
-        memcpy_0(szSub, szFull, fullLen);
+        const size_t fullLen = std::strlen(szFull);
+        std::memcpy(szSub, szFull, fullLen);
       }
       ++count;
     }
     if (src != szFull)
     {
-      memcpy_0(szSub, src, count);
+      std::memcpy(szSub, src, count);
     }
   }
 }

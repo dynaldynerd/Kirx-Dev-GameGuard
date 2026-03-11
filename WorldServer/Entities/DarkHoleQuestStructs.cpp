@@ -35,7 +35,7 @@ _dh_reward_sub_setup::~_dh_reward_sub_setup()
 __dp_mission_potal::__dp_mission_potal()
 {
 
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __dp_mission_potal::~__dp_mission_potal() = default;
@@ -43,8 +43,8 @@ __dp_mission_potal::~__dp_mission_potal() = default;
 void __dp_mission_potal::set(char *szCode)
 {
 
-  m_nCodeLen[m_nNums] = static_cast<int>(strlen_0(szCode));
-  strcpy_0(m_strCodes[static_cast<__int64>(m_nNums)], szCode);
+  m_nCodeLen[m_nNums] = static_cast<int>(std::strlen(szCode));
+  std::strcpy(m_strCodes[static_cast<__int64>(m_nNums)], szCode);
   ++m_nNums;
 }
 
@@ -100,7 +100,7 @@ _dh_mission_setup *_dh_quest_setup::SearchMissionFromTitle(char *pszMissionTitle
 
   for (int j = 0; j < nEmbMissionSetupNum; ++j)
   {
-    if (!strcmp_0(EmbMissionSetup[j]->szMissionTitle, pszMissionTitle))
+    if (!std::strcmp(EmbMissionSetup[j]->szMissionTitle, pszMissionTitle))
       return EmbMissionSetup[j];
   }
   return nullptr;
@@ -194,25 +194,25 @@ _dh_mission_setup::~_dh_mission_setup()
 _react_obj::_react_obj()
 {
 
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 void _react_obj::copy(_react_obj *pObj)
 {
 
-  memcpy_0(this, pObj, sizeof(*this));
+  std::memcpy(this, pObj, sizeof(*this));
 }
 
 _react_area::_react_area()
 {
 
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 void _react_area::copy(_react_area *pObj)
 {
 
-  memcpy_0(this, pObj, sizeof(*this));
+  std::memcpy(this, pObj, sizeof(*this));
 }
 
 __respawn_monster::__respawn_monster()
@@ -367,13 +367,13 @@ void _dh_mission_mgr::Init()
   {
     Count[j].Init();
   }
-  memset_0(bOpenPortal, 0, sizeof(bOpenPortal));
+  std::memset(bOpenPortal, 0, sizeof(bOpenPortal));
   dwMissionStartTime = timeGetTime();
   for (int j = 0; j < 100; ++j)
   {
     IfCont[j].Init();
   }
-  memset_0(bInnerCheck, 0, sizeof(bInnerCheck));
+  std::memset(bInnerCheck, 0, sizeof(bInnerCheck));
   nRespawnActNum = 0;
   nAddLimMSecTime = 0;
 }
@@ -427,7 +427,7 @@ void _dh_mission_mgr::OpenPortal(int nIndex)
 {
   if (nIndex == -1)
   {
-    memset_0(this->bOpenPortal, 1, sizeof(this->bOpenPortal));
+    std::memset(this->bOpenPortal, 1, sizeof(this->bOpenPortal));
   }
   else
   {

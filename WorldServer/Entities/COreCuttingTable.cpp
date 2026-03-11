@@ -83,7 +83,7 @@ bool COreCuttingTable::Indexing(CRecordData *oreTable, CRecordData *resTable, ch
     {
       _OreCutting_fld *cuttingRecord =
         reinterpret_cast<_OreCutting_fld *>(m_tblOreCutting.GetRecord(cuttingIndex));
-      if (strcmp_0(cuttingRecord->m_strCode, oreRecord->m_strCode) != 0)
+      if (std::strcmp(cuttingRecord->m_strCode, oreRecord->m_strCode) != 0)
       {
         continue;
       }

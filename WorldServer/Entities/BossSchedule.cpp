@@ -20,14 +20,14 @@ ScheduleMSG::ScheduleMSG()
 
 void ScheduleMSG::Init()
 {
-  memset_0(this, 0, sizeof(ScheduleMSG));
+  std::memset(this, 0, sizeof(ScheduleMSG));
   m_byKey = 3;
 }
 
 BossSchedule::BossSchedule()
 {
   m_LastRespawnSystemTime = ATL::CTime();
-  memset_0(this, 0, sizeof(BossSchedule));
+  std::memset(this, 0, sizeof(BossSchedule));
 }
 
 BossSchedule::~BossSchedule()
@@ -233,7 +233,7 @@ bool BossSchedule_Map::LoadAll()
   }
 
   m_ScheduleList = static_cast<BossSchedule **>(operator new[](saturated_mul(static_cast<size_t>(m_nCount), sizeof(BossSchedule *))));
-  memset_0(m_ScheduleList, 0, sizeof(BossSchedule *) * m_nCount);
+  std::memset(m_ScheduleList, 0, sizeof(BossSchedule *) * m_nCount);
 
   for (unsigned int dwIndex = 0; dwIndex < static_cast<unsigned int>(m_nCount); ++dwIndex)
   {
@@ -250,7 +250,7 @@ bool BossSchedule_Map::LoadAll()
 
 BossSchedule_TBL::BossSchedule_TBL()
 {
-  memset_0(this, 0, sizeof(BossSchedule_TBL));
+  std::memset(this, 0, sizeof(BossSchedule_TBL));
 }
 
 BossSchedule_TBL::~BossSchedule_TBL()

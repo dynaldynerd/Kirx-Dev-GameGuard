@@ -3,7 +3,7 @@
 
 _guild_manage_request_clzo::_guild_manage_request_clzo()
 {
-  memset_0(this, 0, size());
+  std::memset(this, 0, size());
 }
 
 __int64 _guild_manage_request_clzo::size()

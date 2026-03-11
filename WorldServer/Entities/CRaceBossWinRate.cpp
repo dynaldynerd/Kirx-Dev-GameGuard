@@ -16,9 +16,9 @@ CRaceBossWinRate *CRaceBossWinRate::m_Inst;
 CRaceBossWinRate::CRaceBossWinRate()
 {
   m_byTotalBattleCnt = 0;
-  memset_0(m_byWinCnt, 0, sizeof(m_byWinCnt));
-  memset_0(m_dwAccBattleCnt, 0, sizeof(m_dwAccBattleCnt));
-  memset_0(m_dwAccWinCnt, 0, sizeof(m_dwAccWinCnt));
+  std::memset(m_byWinCnt, 0, sizeof(m_byWinCnt));
+  std::memset(m_dwAccBattleCnt, 0, sizeof(m_dwAccBattleCnt));
+  std::memset(m_dwAccWinCnt, 0, sizeof(m_dwAccWinCnt));
 }
 
 CRaceBossWinRate::~CRaceBossWinRate()
@@ -88,7 +88,7 @@ char CRaceBossWinRate::LoadINI()
 char CRaceBossWinRate::SaveINI()
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 255u);
+  std::memset(buffer, 0, 255u);
 
   sprintf(buffer, "%d", m_byTotalBattleCnt);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "TotalBattleCnt", buffer, "..\\SystemSave\\ServerState.ini"))

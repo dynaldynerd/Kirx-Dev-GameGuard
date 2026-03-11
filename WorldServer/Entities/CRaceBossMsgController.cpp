@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRaceBossMsgController.h"
 
@@ -75,8 +75,8 @@ void RACE_BOSS_MSG::CMsg::Clear()
 {
   m_uiState = 0;
   m_dwSerial = static_cast<unsigned int>(-1);
-  memset_0(m_wszName, 0, sizeof(m_wszName));
-  memset_0(m_wszMsg, 0, sizeof(m_wszMsg));
+  std::memset(m_wszName, 0, sizeof(m_wszName));
+  std::memset(m_wszMsg, 0, sizeof(m_wszMsg));
   m_dwSendTime = 0;
   m_dwWebSendDBID = 0;
 }
@@ -363,7 +363,7 @@ void RACE_BOSS_MSG::CMsgList::Refresh()
 RACE_BOSS_MSG::CMsgListManager::CMsgListManager()
   : m_bEmpty(true)
 {
-  memset_0(m_pkMsgList, 0, sizeof(m_pkMsgList));
+  std::memset(m_pkMsgList, 0, sizeof(m_pkMsgList));
   if (Init())
   {
     m_bEmpty = false;
@@ -411,7 +411,7 @@ int RACE_BOSS_MSG::CMsgListManager::Send(
   {
     return 1;
   }
-  if (ucRace >= 3u || pwszName == nullptr || pwszMsg == nullptr || !strlen_0(pwszMsg))
+  if (ucRace >= 3u || pwszName == nullptr || pwszMsg == nullptr || !std::strlen(pwszMsg))
   {
     return 1;
   }
@@ -583,8 +583,8 @@ bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
   char sectionName[288];
   char translated[1296];
 
-  memset_0(sectionName, 0, 255);
-  memset_0(stringBuffer, 0, 255);
+  std::memset(sectionName, 0, 255);
+  std::memset(stringBuffer, 0, 255);
   sprintf(sectionName, "%s_Message%d", raceName[ucRace], m_dwID);
   sprintf(stringBuffer, "%d", m_uiState);
   if (!WritePrivateProfileStringA(sectionName, "State", stringBuffer, "..\\SystemSave\\ServerState.ini"))
@@ -644,9 +644,9 @@ bool RACE_BOSS_MSG::CMsgList::SaveIndexList(unsigned int iType, CNetIndexList *k
   char keyName[288];
   char stringBuffer[280];
 
-  memset_0(sectionName, 0, 255);
-  memset_0(keyName, 0, 255);
-  memset_0(stringBuffer, 0, 255);
+  std::memset(sectionName, 0, 255);
+  std::memset(keyName, 0, 255);
+  std::memset(stringBuffer, 0, 255);
   sprintf(sectionName, "%s_%s_IndexList", raceName[m_ucRace], typeName[iType]);
 
   const int listSize = static_cast<int>(kInxList->size());

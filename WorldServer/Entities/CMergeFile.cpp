@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMergeFile.h"
 #include "WorldServerUtil.h"
@@ -41,7 +41,7 @@ static unsigned int GetOneNameFromPath(char *outName, char *path, unsigned int *
 
 CMergeFile::CMergeFile()
 {
-  memset_0(mFileName, 0, sizeof(mFileName));
+  std::memset(mFileName, 0, sizeof(mFileName));
   mMergeFNF = nullptr;
   mOffset = nullptr;
   mIndex = nullptr;
@@ -124,7 +124,7 @@ unsigned int CMergeFile::GetFileOffset(unsigned int parentIndex, char *filePath)
       if (mergeFileEntries[mergeEntryIndex].name_cnt == nameLength)
       {
         if (compareDwordCount == 0
-            || memcmp_0(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
+            || std::memcmp(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
         {
           if (mOffset[mergeEntryIndex] != static_cast<unsigned int>(-1))
             return mOffset[mergeEntryIndex];
@@ -160,7 +160,7 @@ unsigned int CMergeFile::GetFileSize(unsigned int parentIndex, char *filePath)
       if (mergeFileEntries[mergeEntryIndex].name_cnt == nameLength)
       {
         if (compareDwordCount == 0
-            || memcmp_0(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
+            || std::memcmp(mergeFileEntries[mergeEntryIndex].___u0.name_cmp, pathName, sizeof(unsigned int) * compareDwordCount) == 0)
         {
           if (mOffset[mergeEntryIndex] != static_cast<unsigned int>(-1))
             return mergeFileEntries[mergeEntryIndex].file_length;

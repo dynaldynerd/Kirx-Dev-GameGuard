@@ -83,7 +83,7 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
     for (int entryIndex = 0; entryIndex < lootRecord->m_nLootListCount; ++entryIndex)
     {
       char *itemCode = lootRecord->m_itmLootCodeKey[entryIndex];
-      if (!strcmp_0(itemCode, "0"))
+      if (!std::strcmp(itemCode, "0"))
       {
         break;
       }
@@ -97,7 +97,7 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
     }
 
     m_ppLinkCode[lootIndex] = new _linker_code[lootRecord->m_nLootListCount];
-    memset_0(m_ppLinkCode[lootIndex], 0, sizeof(_linker_code) * lootRecord->m_nLootListCount);
+    std::memset(m_ppLinkCode[lootIndex], 0, sizeof(_linker_code) * lootRecord->m_nLootListCount);
 
     for (int entryIndex = 0; entryIndex < lootRecord->m_nLootListCount; ++entryIndex)
     {

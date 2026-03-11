@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderDivisionInfo.h"
 #include "CUnmannedTraderClassInfo.h"
@@ -12,7 +12,7 @@ CUnmannedTraderDivisionInfo::CUnmannedTraderDivisionInfo(unsigned int dwID, char
   : m_dwID(dwID), m_szName{}, m_vecClass(), m_vecSortType()
 {
   const char *source = szName ? szName : "NONE";
-  strcpy_0(this->m_szName, source);
+  std::strcpy(this->m_szName, source);
 }
 
 CUnmannedTraderDivisionInfo::~CUnmannedTraderDivisionInfo()
@@ -24,7 +24,7 @@ const CUnmannedTraderDivisionInfo *CUnmannedTraderDivisionInfo::Copy(
   const CUnmannedTraderDivisionInfo *lhs)
 {
   m_dwID = lhs->m_dwID;
-  strcpy_0(m_szName, lhs->m_szName);
+  std::strcpy(m_szName, lhs->m_szName);
   m_vecClass.clear();
   if (!lhs->m_vecClass.empty())
   {

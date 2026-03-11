@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CDarkHoleDungeonQuestSetup.h"
 #include "DarkHoleQuestCommands.h"
@@ -28,19 +28,19 @@ __error_info::__error_info()
 void __error_info::init()
 {
 
-  memset_0(this, 0, sizeof(__error_info));
+  std::memset(this, 0, sizeof(__error_info));
 }
 
 void __error_info::SetFileName(const char *pszFileName)
 {
 
-  strcpy_0(szFileName, pszFileName);
+  std::strcpy(szFileName, pszFileName);
 }
 
 void __error_info::SetQuestTitle(const char *pszTitle)
 {
 
-  strcpy_0(szQuestTitle, pszTitle);
+  std::strcpy(szQuestTitle, pszTitle);
 }
 
 CDarkHoleDungeonQuestSetup::CDarkHoleDungeonQuestSetup()
@@ -75,11 +75,11 @@ bool CDarkHoleDungeonQuestSetup::SetupQuest(char *pszQuestFileName)
   if ((_S1_1 & 1) == 0)
   {
     _S1_1 |= 1u;
-    nEOFLen = static_cast<unsigned int>(strlen_0(szEOF));
+    nEOFLen = static_cast<unsigned int>(std::strlen(szEOF));
   }
 
   bool foundEOF = false;
-  strcpy_0(m_szLoadFileName, pszQuestFileName);
+  std::strcpy(m_szLoadFileName, pszQuestFileName);
   m_szLoadErrMsg[0] = '\0';
   m_ErrorInfo.init();
   m_ErrorInfo.SetFileName(pszQuestFileName);
@@ -90,25 +90,25 @@ bool CDarkHoleDungeonQuestSetup::SetupQuest(char *pszQuestFileName)
     char poutszWord[1304]{};
     while (fstr.word(poutszWord))
     {
-      if (!strcmp_0(poutszWord, kDHQuestSectionStart))
+      if (!std::strcmp(poutszWord, kDHQuestSectionStart))
       {
         if (!_Analysis_Quest_Setting(&fstr))
           break;
         m_nCurCondiKind = 0;
       }
-      else if (!strcmp_0(poutszWord, kDHMissionSectionStart))
+      else if (!std::strcmp(poutszWord, kDHMissionSectionStart))
       {
         if (!_Analysis_Mission_Setting(&fstr))
           break;
         m_nCurCondiKind = 1;
       }
-      else if (!strcmp_0(poutszWord, kDHJobSectionStart))
+      else if (!std::strcmp(poutszWord, kDHJobSectionStart))
       {
         if (!_Analysis_Job_Setting(&fstr))
           break;
         m_nCurCondiKind = 2;
       }
-      else if (!strcmp_0(poutszWord, kDHConditionStart))
+      else if (!std::strcmp(poutszWord, kDHConditionStart))
       {
         if (m_nCurCondiKind)
         {
@@ -127,7 +127,7 @@ bool CDarkHoleDungeonQuestSetup::SetupQuest(char *pszQuestFileName)
           break;
         }
       }
-      else if (!strncmp_0(poutszWord, szEOF, nEOFLen))
+      else if (!std::strncmp(poutszWord, szEOF, nEOFLen))
       {
         foundEOF = true;
         break;
@@ -172,9 +172,9 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 32)
+    if (std::strlen(poutszWord) <= 32)
     {
-      strcpy_0(m_pCurLoadQuest->szQuestTitle, poutszWord);
+      std::strcpy(m_pCurLoadQuest->szQuestTitle, poutszWord);
       m_ErrorInfo.SetQuestTitle(poutszWord);
       return true;
     }
@@ -197,7 +197,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Quest_Condition(strFILE *fstr)
     char source[132]{};
     const bool ok = fn(fstr, this, source);
     if (!ok)
-      strcpy_0(m_szLoadErrMsg, source);
+      std::strcpy(m_szLoadErrMsg, source);
     return ok;
   }
   sprintf(m_szLoadErrMsg, "[QUEST] no definded key >> %s", poutszWord);
@@ -223,9 +223,9 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 32)
+    if (std::strlen(poutszWord) <= 32)
     {
-      strcpy_0(m_pCurLoadMission->szMissionTitle, poutszWord);
+      std::strcpy(m_pCurLoadMission->szMissionTitle, poutszWord);
       return true;
     }
     sprintf(m_szLoadErrMsg, "mission title (%s) size over .. must be set up less than %d", poutszWord, 32);
@@ -247,7 +247,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Mission_Condition(strFILE *fstr)
     char source[132]{};
     const bool ok = fn(fstr, this, source);
     if (!ok)
-      strcpy_0(m_szLoadErrMsg, source);
+      std::strcpy(m_szLoadErrMsg, source);
     return ok;
   }
   sprintf(m_szLoadErrMsg, "[MISSION] no definded key >> %s", poutszWord);
@@ -273,9 +273,9 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Setting(strFILE *fstr)
   char poutszWord[144]{};
   if (fstr->word(poutszWord))
   {
-    if (strlen_0(poutszWord) <= 32)
+    if (std::strlen(poutszWord) <= 32)
     {
-      strcpy_0(m_pCurLoadJob->szJobTitle, poutszWord);
+      std::strcpy(m_pCurLoadJob->szJobTitle, poutszWord);
       return true;
     }
     sprintf(m_szLoadErrMsg, "job title (%s) size over .. must be set up less than %d", poutszWord, 32);
@@ -297,7 +297,7 @@ bool CDarkHoleDungeonQuestSetup::_Analysis_Job_Condition(strFILE *fstr)
     char source[132]{};
     const bool ok = fn(fstr, this, source);
     if (!ok)
-      strcpy_0(m_szLoadErrMsg, source);
+      std::strcpy(m_szLoadErrMsg, source);
     return ok;
   }
   sprintf(m_szLoadErrMsg, "[JOB] no definded key >> %s", poutszWord);
@@ -311,7 +311,7 @@ bool CDarkHoleDungeonQuestSetup::_LastCheckScipt(char *pszQuestFileName)
   for (int j = 0; j < quest->nEmbMissionSetupNum; ++j)
   {
     _dh_mission_setup *mission = quest->EmbMissionSetup[j];
-    if (!strcmp_0(mission->szMissionTitle, quest->szStartMissionBuffer))
+    if (!std::strcmp(mission->szMissionTitle, quest->szStartMissionBuffer))
     {
       quest->pStartMissionSetup = mission;
       break;

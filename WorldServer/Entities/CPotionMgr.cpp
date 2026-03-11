@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -37,7 +37,7 @@ CPotionMgr::PotionInnerData::~PotionInnerData()
 
 void CPotionMgr::PotionInnerData::Init()
 {
-  memset_0(this, 0, sizeof(PotionInnerData));
+  std::memset(this, 0, sizeof(PotionInnerData));
   for (int index = 0; index <= 28; ++index)
   {
     m_bPotionDelayIndexList[index] = true;
@@ -1120,19 +1120,19 @@ void CPotionMgr::Complete_RenameChar_DB_Update(unsigned __int8 byRet, char *p)
         player->SetPotionActDelay(record->m_nDelayType, now / 1000, actDelay);
       }
 
-      strcpy_0(player->m_Param.m_dbChar.m_wszCharID, query->wszCharName);
-      strcpy_0(player->m_pUserDB->m_wszAvatorName, query->wszCharName);
+      std::strcpy(player->m_Param.m_dbChar.m_wszCharID, query->wszCharName);
+      std::strcpy(player->m_pUserDB->m_wszAvatorName, query->wszCharName);
       CPlayer::CashChangeStateFlag changeFlag(1);
       player->UpdateVisualVer(changeFlag);
 
       unsigned int objSerial = player->m_dwObjSerial;
       char nameBuffer[38]{};
-      strcpy_0(nameBuffer, player->m_pUserDB->m_wszAvatorName);
+      std::strcpy(nameBuffer, player->m_pUserDB->m_wszAvatorName);
       unsigned __int8 type[2]{3, 61};
       _other_shape_cash_rename_zocl report{};
       report.wIndex = 0;
       report.dwSerial = objSerial;
-      memcpy_0(report.wszName, nameBuffer, sizeof(report.wszName));
+      std::memcpy(report.wszName, nameBuffer, sizeof(report.wszName));
       player->CircleReport(
         type,
         reinterpret_cast<char *>(&report),
@@ -1193,7 +1193,7 @@ bool __fastcall DE_Potion_CharReName(
   _qry_case_character_rename query{};
   query.dwCharSerial = player->m_pUserDB->m_dwSerial;
   query.dwAlreadySerial = static_cast<unsigned int>(-1);
-  memcpy_0(&query.ItemInfo, &player->m_ReNamePotionUseInfo.ItemInfo, sizeof(query.ItemInfo));
+  std::memcpy(&query.ItemInfo, &player->m_ReNamePotionUseInfo.ItemInfo, sizeof(query.ItemInfo));
   strcpy_s(query.wszCharName, sizeof(query.wszCharName), player->m_ReNamePotionUseInfo.wszChangeName);
   strcpy_s(query.wszOldName, sizeof(query.wszOldName), player->m_Param.GetCharNameW());
   g_Main.PushDQSData(-1, nullptr, 146, reinterpret_cast<char *>(&query), sizeof(query));

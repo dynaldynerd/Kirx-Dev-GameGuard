@@ -51,8 +51,8 @@ void CandidateMgr::_candidate_info::_Init()
   dPvpPoint = 0.0;
   dwGuildSerial = static_cast<unsigned int>(-1);
   dwAvatorSerial = static_cast<unsigned int>(-1);
-  memset_0(wszGuildName, 0, sizeof(wszGuildName));
-  memset_0(wszName, 0, sizeof(wszName));
+  std::memset(wszGuildName, 0, sizeof(wszGuildName));
+  std::memset(wszName, 0, sizeof(wszName));
   dwScore = 0;
   dwWinCnt = 0;
   eClassType = normal_user;
@@ -116,9 +116,9 @@ char CandidateMgr::LoadDatabase()
     }
   }
 
-  memcpy_0(m_kCandidate_old[0], m_kCandidate[0], sizeof(_candidate_info) * m_nMaxNum);
-  memcpy_0(m_kCandidate_old[1], m_kCandidate[1], sizeof(_candidate_info) * m_nMaxNum);
-  memcpy_0(m_kCandidate_old[2], m_kCandidate[2], sizeof(_candidate_info) * m_nMaxNum);
+  std::memcpy(m_kCandidate_old[0], m_kCandidate[0], sizeof(_candidate_info) * m_nMaxNum);
+  std::memcpy(m_kCandidate_old[1], m_kCandidate[1], sizeof(_candidate_info) * m_nMaxNum);
+  std::memcpy(m_kCandidate_old[2], m_kCandidate[2], sizeof(_candidate_info) * m_nMaxNum);
 
   for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
   {
@@ -276,7 +276,7 @@ bool CandidateMgr::AppointPatriarchGroup(CPlayer *pOne, _candidate_info::ClassTy
   else
   {
     candidate->dwGuildSerial = static_cast<unsigned int>(-1);
-    memset_0(candidate->wszGuildName, 0, sizeof(candidate->wszGuildName));
+    std::memset(candidate->wszGuildName, 0, sizeof(candidate->wszGuildName));
   }
 
   const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
@@ -327,7 +327,7 @@ bool CandidateMgr::Regist(CPlayer *pOne)
   else
   {
     empty->dwGuildSerial = static_cast<unsigned int>(-1);
-    memset_0(empty->wszGuildName, 0, sizeof(empty->wszGuildName));
+    std::memset(empty->wszGuildName, 0, sizeof(empty->wszGuildName));
   }
 
   m_pkCandidateLink_1st[empty->byRace][m_nCandidateCnt_1st[empty->byRace]++] = empty;
@@ -464,7 +464,7 @@ void CandidateMgr::AddScore(unsigned __int8 byRace, char *wszName, unsigned __in
   for (int index = 0; index < m_nCandidateCnt_2st[byRace]; ++index)
   {
     _candidate_info *candidate = m_pkCandidateLink_2st[static_cast<unsigned __int64>(byRace)][index];
-    if (candidate != nullptr && !strcmp_0(candidate->wszName, wszName))
+    if (candidate != nullptr && !std::strcmp(candidate->wszName, wszName))
     {
       candidate->dwScore += byScore;
       return;
@@ -786,7 +786,7 @@ void CandidateMgr::ApplyPatriarchGroup()
       const _candidate_info *leader = GetLeader(static_cast<unsigned __int8>(race), index);
       if (leader != nullptr)
       {
-        memcpy_0(&m_kPatriarchGroup[race][index], leader, sizeof(m_kPatriarchGroup[race][index]));
+        std::memcpy(&m_kPatriarchGroup[race][index], leader, sizeof(m_kPatriarchGroup[race][index]));
       }
     }
   }
@@ -796,8 +796,8 @@ __int64 CandidateMgr::Update_RegistCandidate_2st()
 {
   char source[240];
   char buffer[10244];
-  memset_0(source, 0, 200);
-  memset_0(buffer, 0, 10240);
+  std::memset(source, 0, 200);
+  std::memset(buffer, 0, 10240);
 
   PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
   const unsigned int electSerial = processor->GetElectSerial();
@@ -827,7 +827,7 @@ __int64 CandidateMgr::Update_RegistCandidate_2st()
     return 0;
   }
 
-  const size_t length = strlen_0(buffer);
+  const size_t length = std::strlen(buffer);
   if (length >= 4)
   {
     buffer[length - 4] = ')';
@@ -864,7 +864,7 @@ __int64 CandidateMgr::Update_Score()
 
         if (g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true))
         {
-          memcpy_0(candidateOld, candidate, sizeof(_candidate_info));
+          std::memcpy(candidateOld, candidate, sizeof(_candidate_info));
         }
         else
         {
@@ -935,7 +935,7 @@ __int64 CandidateMgr::Update_Refund()
 
         if (g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true))
         {
-          memcpy_0(candidateOld, candidate, sizeof(_candidate_info));
+          std::memcpy(candidateOld, candidate, sizeof(_candidate_info));
         }
       }
     }
@@ -1139,7 +1139,7 @@ void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_inse
       _update_candidate_wincount_packing info;
       info.byRace = candidate->byRace;
       info.dwWinCnt = candidate->dwWinCnt;
-      strcpy_0(info.wszdName, candidate->wszName);
+      std::strcpy(info.wszdName, candidate->wszName);
       processor->Doit(_eReqUpdateWinCount, nullptr, reinterpret_cast<char *>(&info));
     }
   }

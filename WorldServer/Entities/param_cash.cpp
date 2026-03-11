@@ -40,7 +40,7 @@ __int64 _param_cash_total_selling::size()
 
 _param_cash_update::__item::__item()
 {
-  memset_0(this, 0, sizeof(_param_cash_update::__item));
+  std::memset(this, 0, sizeof(_param_cash_update::__item));
 }
 
 _param_cash_update::_param_cash_update(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock)
@@ -84,7 +84,7 @@ _param_cashitem_dblog::_param_cashitem_dblog(unsigned int dwAv)
   : _param_cash(0xFFFFFFFFu, dwAv, 0xFFFFu)
 {
   nBuyNum = 0;
-  memset_0(data, 0, sizeof(data));
+  std::memset(data, 0, sizeof(data));
 }
 
 _param_cashitem_dblog::~_param_cashitem_dblog()

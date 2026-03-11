@@ -474,7 +474,7 @@ void CAniCamera::ReleaseAniCamera()
         _ANI_OBJECT *obj = AniCamera[cameraIndex].obj;
         if (obj[nodeIndex].Pos_cnt + obj[nodeIndex].Rot_cnt)
         {
-          Dfree(reinterpret_cast<_DWORD *>(&obj[nodeIndex].Pos->frame));
+          Dfree(reinterpret_cast<unsigned int *>(&obj[nodeIndex].Pos->frame));
         }
       }
 
@@ -489,7 +489,7 @@ void CAniCamera::ReleaseAniCamera()
       {
         if (mDummy[dummyIndex].Pos_cnt + mDummy[dummyIndex].Rot_cnt)
         {
-          Dfree(reinterpret_cast<_DWORD *>(&mDummy[dummyIndex].Pos->frame));
+          Dfree(reinterpret_cast<unsigned int *>(&mDummy[dummyIndex].Pos->frame));
         }
       }
     }

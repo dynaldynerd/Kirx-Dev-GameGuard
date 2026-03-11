@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CExchangeEvent.h"
 
@@ -20,13 +20,13 @@ CExchangeEvent::CExchangeEvent()
     m_bModifyDelete(false),
     m_dwPlayerArrayNo(0)
 {
-  memset_0(m_EventItemCode, 0, sizeof(m_EventItemCode));
+  std::memset(m_EventItemCode, 0, sizeof(m_EventItemCode));
   for (int j = 0; j < 4; ++j)
   {
     m_EventItemInfo[j].byTableCode = static_cast<unsigned __int8>(-1);
     m_EventItemInfo[j].dwIndex = static_cast<unsigned int>(-1);
   }
-  memset_0(m_ModifyItemCode, 0, sizeof(m_ModifyItemCode));
+  std::memset(m_ModifyItemCode, 0, sizeof(m_ModifyItemCode));
 }
 
 CExchangeEvent::~CExchangeEvent() = default;
@@ -59,7 +59,7 @@ bool CExchangeEvent::Initialzie()
   ReadBuddhaEventInfo();
   m_bEnable = m_bModifyEnable;
   m_bDelete = m_bModifyDelete;
-  memcpy_0(m_EventItemCode, m_ModifyItemCode, sizeof(m_EventItemCode));
+  std::memcpy(m_EventItemCode, m_ModifyItemCode, sizeof(m_EventItemCode));
 
   if (m_bEnable || m_bDelete)
   {
@@ -239,7 +239,7 @@ void CExchangeEvent::GiveEventItem(CPlayer *pOne)
       if (lootItem)
       {
         _STORAGE_LIST::_db_con itemCopy{};
-        memcpy_0(&itemCopy, lootItem, sizeof(itemCopy));
+        std::memcpy(&itemCopy, lootItem, sizeof(itemCopy));
         itemCopy.m_wSerial = pOne->m_Param.GetNewItemSerial();
         if (pOne->Emb_AddStorage(
               0,
@@ -303,15 +303,15 @@ void CExchangeEvent::ReadBuddhaEventInfo()
     64,
     ".\\Initialize\\WorldSystem.ini");
 
-  m_bModifyEnable = strcmp_0(enableStr, "TRUE") == 0;
-  m_bModifyDelete = strcmp_0(deleteStr, "TRUE") == 0;
+  m_bModifyEnable = std::strcmp(enableStr, "TRUE") == 0;
+  m_bModifyDelete = std::strcmp(deleteStr, "TRUE") == 0;
 }
 
 void CExchangeEvent::ChangeData()
 {
   m_bEnable = m_bModifyEnable;
   m_bDelete = m_bModifyDelete;
-  memcpy_0(m_EventItemCode, m_ModifyItemCode, sizeof(m_EventItemCode));
+  std::memcpy(m_EventItemCode, m_ModifyItemCode, sizeof(m_EventItemCode));
 
   for (int index = 0; index < 4; ++index)
   {
@@ -353,10 +353,10 @@ bool CExchangeEvent::CheckBuddhaEventData(bool *pbDelete)
 
   ReadBuddhaEventInfo();
 
-  const bool item0Changed = strcmp_0(m_EventItemCode[0], m_ModifyItemCode[0]) != 0;
-  const bool item1Changed = strcmp_0(m_EventItemCode[1], m_ModifyItemCode[1]) != 0;
-  const bool item2Changed = strcmp_0(m_EventItemCode[2], m_ModifyItemCode[2]) != 0;
-  const bool item3Changed = strcmp_0(m_EventItemCode[3], m_ModifyItemCode[3]) != 0;
+  const bool item0Changed = std::strcmp(m_EventItemCode[0], m_ModifyItemCode[0]) != 0;
+  const bool item1Changed = std::strcmp(m_EventItemCode[1], m_ModifyItemCode[1]) != 0;
+  const bool item2Changed = std::strcmp(m_EventItemCode[2], m_ModifyItemCode[2]) != 0;
+  const bool item3Changed = std::strcmp(m_EventItemCode[3], m_ModifyItemCode[3]) != 0;
 
   if (m_bEnable == m_bModifyEnable
       && m_bDelete == m_bModifyDelete

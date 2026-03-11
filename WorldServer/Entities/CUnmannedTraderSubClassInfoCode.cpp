@@ -9,7 +9,7 @@
 CUnmannedTraderSubClassInfoCode::CUnmannedTraderSubClassInfoCode(unsigned int dwID)
   : CUnmannedTraderSubClassInfo(dwID), m_vecCodeList()
 {
-  strcpy_0(this->m_szName, "code");
+  std::strcpy(this->m_szName, "code");
 }
 
 CUnmannedTraderSubClassInfoCode::~CUnmannedTraderSubClassInfoCode()

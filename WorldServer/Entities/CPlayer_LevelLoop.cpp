@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -274,7 +274,7 @@ void CPlayer::SendMsg_NotifyGetExpInfo(long double dOldExp, long double dAlterEx
   if (!g_Main.IsReleaseServiceMode())
   {
     _trans_gm_msg_inform_zocl msg{};
-    memset_0(&msg, 0, sizeof(msg));
+    std::memset(&msg, 0, sizeof(msg));
     msg.wMsgSize = _snprintf(
       msg.wszChatData,
       255,
@@ -708,7 +708,7 @@ void CPlayer::SendMsg_AlterSPInform()
 void CPlayer::SendMsg_AlterTol()
 {
   _alter_tol_inform_zocl tol{};
-  memcpy_0(tol.zTol, this->m_zLastTol, sizeof(tol.zTol));
+  std::memcpy(tol.zTol, this->m_zLastTol, sizeof(tol.zTol));
   unsigned __int8 type[2] = {11, 20};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&tol), sizeof(tol));
 }
@@ -775,7 +775,7 @@ void CPlayer::AutoRecover()
       return;
     }
 
-    memcpy_0(m_fLastRecvPos, m_fCurPos, sizeof(m_fLastRecvPos));
+    std::memcpy(m_fLastRecvPos, m_fCurPos, sizeof(m_fLastRecvPos));
     m_byLastRecvMapIndex = static_cast<unsigned __int8>(m_pCurMap->m_pMapSet->m_dwIndex);
   }
 
@@ -1005,8 +1005,8 @@ unsigned int CPlayer::SumMinuteBetween(_SYSTEMTIME *tmLast, _SYSTEMTIME *tmLocal
   }
 
   _SYSTEMTIME yearMarks[126]{};
-  memcpy_0(&yearMarks[0], tmLast, sizeof(_SYSTEMTIME));
-  memcpy_0(&yearMarks[yearDiff], tmLocal, sizeof(_SYSTEMTIME));
+  std::memcpy(&yearMarks[0], tmLast, sizeof(_SYSTEMTIME));
+  std::memcpy(&yearMarks[yearDiff], tmLocal, sizeof(_SYSTEMTIME));
 
   if (betweenYearCount)
   {
@@ -1019,7 +1019,7 @@ unsigned int CPlayer::SumMinuteBetween(_SYSTEMTIME *tmLast, _SYSTEMTIME *tmLocal
     for (int j = 0; j < betweenYearCount; ++j)
     {
       yearEnd.wYear = static_cast<unsigned __int16>(tmLast->wYear + j + 1);
-      memcpy_0(&yearMarks[j + 1], &yearEnd, sizeof(_SYSTEMTIME));
+      std::memcpy(&yearMarks[j + 1], &yearEnd, sizeof(_SYSTEMTIME));
     }
   }
 
@@ -1186,9 +1186,9 @@ void CPlayer::CheckNameChange()
               if (m_Param.GetCharSerial() == buddy->dwSerial)
               {
                 char *newName = m_Param.GetCharNameW();
-                if (strcmp_0(buddy->wszName, newName))
+                if (std::strcmp(buddy->wszName, newName))
                 {
-                  strcpy_0(buddy->wszName, newName);
+                  std::strcpy(buddy->wszName, newName);
                   target->SendMsg_BuddyNameReNewal(buddy->dwSerial, buddy->wszName);
                   break;
                 }
@@ -1337,9 +1337,9 @@ void CPlayer::Loop()
     currentTol[1] = static_cast<unsigned __int16>(GetWaterTol());
     currentTol[2] = static_cast<unsigned __int16>(GetSoilTol());
     currentTol[3] = static_cast<unsigned __int16>(GetWindTol());
-    if (memcmp_0(m_zLastTol, currentTol, sizeof(currentTol)))
+    if (std::memcmp(m_zLastTol, currentTol, sizeof(currentTol)))
     {
-      memcpy_0(m_zLastTol, currentTol, sizeof(currentTol));
+      std::memcpy(m_zLastTol, currentTol, sizeof(currentTol));
       SendMsg_AlterTol();
     }
 

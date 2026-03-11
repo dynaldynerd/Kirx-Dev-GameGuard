@@ -99,7 +99,7 @@ _monster_sp_group *CMonsterSPGroupTable::GetRecord(char *szCode)
 {
     for (unsigned int j = 0; j < m_dwRecordNum; ++j)
     {
-        if (!strcmp_0(m_pRecordData[j].m_strCode, szCode))
+        if (!std::strcmp(m_pRecordData[j].m_strCode, szCode))
             return &m_pRecordData[j];
     }
     return nullptr;

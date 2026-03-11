@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CPlayerDB.h"
@@ -361,7 +361,7 @@ void CPlayerDB::SubTrunkGold(int dwSub)
 
 void CPlayerDB::SetCurPos(float *fPos)
 {
-  memcpy_0(this->m_dbChar.m_fStartPos, fPos, sizeof(this->m_dbChar.m_fStartPos));
+  std::memcpy(this->m_dbChar.m_fStartPos, fPos, sizeof(this->m_dbChar.m_fStartPos));
 }
 
 unsigned __int8 CPlayerDB::GetBagNum()
@@ -404,7 +404,7 @@ __int64 CPlayerDB::GetInvenItemCountFromCode(char *pszItemCode)
 
     _base_fld *record = g_Main.m_tblItemData[this->m_dbInven.m_pStorageList[index].m_byTableCode].GetRecord(
       this->m_dbInven.m_pStorageList[index].m_wItemIndex);
-    if (record && !strcmp_0(record->m_strCode, pszItemCode))
+    if (record && !std::strcmp(record->m_strCode, pszItemCode))
     {
       totalCount += static_cast<unsigned int>(this->m_dbInven.m_pStorageList[index].m_dwDur);
     }
@@ -427,7 +427,7 @@ char CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
 
       _base_fld *record = g_Main.m_tblItemData[this->m_dbInven.m_pStorageList[index].m_byTableCode].GetRecord(
         this->m_dbInven.m_pStorageList[index].m_wItemIndex);
-      if (record && !strcmp_0(record->m_strCode, pszItemCode))
+      if (record && !std::strcmp(record->m_strCode, pszItemCode))
       {
         item = &this->m_dbInven.m_pStorageList[index];
         break;
@@ -539,7 +539,7 @@ char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
       return 0;
     }
 
-    if (strcmp_0(record->m_strCode, levelCode))
+    if (std::strcmp(record->m_strCode, levelCode))
     {
       return 0;
     }
@@ -574,7 +574,7 @@ char CPlayerDB::GetResBufferNum()
 
 void CPlayerDB::InitAlterMastery()
 {
-  memset_0(m_dwAlterMastery, 0, sizeof(m_dwAlterMastery));
+  std::memset(m_dwAlterMastery, 0, sizeof(m_dwAlterMastery));
 }
 
 void CPlayerDB::InitClass()
@@ -608,7 +608,7 @@ bool CPlayerDB::IsActableClassSkill(char *pszSkillCode, int *pnClassGrade)
     currentClass = m_pClassData;
   }
 
-  const int skillLen = static_cast<int>(strlen_0(pszSkillCode));
+  const int skillLen = static_cast<int>(std::strlen(pszSkillCode));
   _class_fld *found = nullptr;
 
   for (int j = 0; j < 4; ++j)
@@ -621,10 +621,10 @@ bool CPlayerDB::IsActableClassSkill(char *pszSkillCode, int *pnClassGrade)
 
     bool matched = false;
     for (int k = 0; k < 10
-         && strncmp_0(reinterpret_cast<const char *>(classInfo) + (static_cast<__int64>(k) << 6) + 796, "-1", 2u);
+         && std::strncmp(reinterpret_cast<const char *>(classInfo) + (static_cast<__int64>(k) << 6) + 796, "-1", 2u);
          ++k)
     {
-      if (!strncmp_0(
+      if (!std::strncmp(
             reinterpret_cast<const char *>(classInfo) + (static_cast<__int64>(k) << 6) + 796,
             pszSkillCode,
             skillLen))
@@ -662,7 +662,7 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
   }
 
   const int maxResKind = GetMaxResKind();
-  memset_0(m_wCuttingResBuffer, 0, 2LL * maxResKind);
+  std::memset(m_wCuttingResBuffer, 0, 2LL * maxResKind);
   m_pThis = pThis;
   m_wSerialCount = 0;
   InitResBuffer();
@@ -708,9 +708,9 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
 
 char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
 {
-  strcpy_0(this->m_dbChar.m_wszCharID, pData->dbAvator.m_wszAvatorName);
+  std::strcpy(this->m_dbChar.m_wszCharID, pData->dbAvator.m_wszAvatorName);
   W2M(this->m_dbChar.m_wszCharID, this->m_aszName, 17);
-  this->m_byNameLen = static_cast<unsigned __int8>(strlen_0(this->m_dbChar.m_wszCharID));
+  this->m_byNameLen = static_cast<unsigned __int8>(std::strlen(this->m_dbChar.m_wszCharID));
   this->m_dbChar.m_dwSerial = pData->dbAvator.m_dwRecordNum;
   this->m_dbChar.m_byRaceSexCode = pData->dbAvator.m_byRaceSexCode;
   this->m_dbChar.m_dwHP = pData->dbAvator.m_dwHP;
@@ -740,7 +740,7 @@ char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
   this->m_dbChar.m_byUseBagNum = pData->dbAvator.m_byBagNum;
   this->m_dbChar.m_byLevel = pData->dbAvator.m_byLevel;
   this->m_dbChar.m_sStartMapCode = pData->dbAvator.m_byMapCode;
-  memcpy_0(this->m_dbChar.m_fStartPos, pData->dbAvator.m_fStartPos, sizeof(this->m_dbChar.m_fStartPos));
+  std::memcpy(this->m_dbChar.m_fStartPos, pData->dbAvator.m_fStartPos, sizeof(this->m_dbChar.m_fStartPos));
   this->m_dbChar.m_byMaxLevel = pData->dbAvator.m_byMaxLevel;
   this->m_dbInven.SetUseListNum(20 * pData->dbAvator.m_byBagNum);
 
@@ -1040,9 +1040,9 @@ char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
     }
   }
 
-  memcpy_0(&this->m_QuestDB, &pData->dbQuest, sizeof(this->m_QuestDB));
-  memcpy_0(&this->m_UnitDB, &pData->dbUnit, sizeof(this->m_UnitDB));
-  memcpy_0(&this->m_ItemCombineDB, &pData->dbItemCombineEx, sizeof(this->m_ItemCombineDB));
+  std::memcpy(&this->m_QuestDB, &pData->dbQuest, sizeof(this->m_QuestDB));
+  std::memcpy(&this->m_UnitDB, &pData->dbUnit, sizeof(this->m_UnitDB));
+  std::memcpy(&this->m_ItemCombineDB, &pData->dbItemCombineEx, sizeof(this->m_ItemCombineDB));
 
   for (int index = 0; index < 4; ++index)
   {
@@ -1098,11 +1098,11 @@ char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
     }
   }
 
-  strcpy_0(this->m_wszTrunkPasswd, pData->dbTrunk.wszPasswd);
+  std::strcpy(this->m_wszTrunkPasswd, pData->dbTrunk.wszPasswd);
   this->m_dTrunkDalant = pData->dbTrunk.dDalant;
   this->m_dTrunkGold = pData->dbTrunk.dGold;
   this->m_byTrunkHintIndex = pData->dbTrunk.byHintIndex;
-  strcpy_0(this->m_wszTrunkHintAnswer, pData->dbTrunk.wszHintAnswer);
+  std::strcpy(this->m_wszTrunkHintAnswer, pData->dbTrunk.wszHintAnswer);
   this->m_byTrunkSlotNum = pData->dbTrunk.bySlotNum;
 
   for (int index = 0; index < this->m_byTrunkSlotNum; ++index)

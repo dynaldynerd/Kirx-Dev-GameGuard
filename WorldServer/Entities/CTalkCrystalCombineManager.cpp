@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CTalkCrystalCombineManager.h"
 
@@ -39,7 +39,7 @@ void _talk_crystal_matrial_combine_node::Init()
   m_byTableCode = static_cast<unsigned __int8>(-1);
   m_wItemIndex = static_cast<unsigned __int16>(-1);
   m_nRequiredSlotCount = 0;
-  memset_0(&m_MakeItem, 0, sizeof(m_MakeItem));
+  std::memset(&m_MakeItem, 0, sizeof(m_MakeItem));
   for (int j = 0; j < 24; ++j)
   {
     m_matrialList[j].Init();
@@ -65,7 +65,7 @@ char _talk_crystal_matrial_combine_node::Set(
     return 0;
   }
 
-  memcpy_0(&m_MakeItem, src, sizeof(m_MakeItem));
+  std::memcpy(&m_MakeItem, src, sizeof(m_MakeItem));
   return 1;
 }
 

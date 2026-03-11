@@ -1880,6 +1880,9 @@
     <ClInclude Include="Entities\IdaCompat.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\IdaFloatConstants.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\INationGameGuardSystem.h">
       <Filter>Header Files\Nation</Filter>
     </ClInclude>

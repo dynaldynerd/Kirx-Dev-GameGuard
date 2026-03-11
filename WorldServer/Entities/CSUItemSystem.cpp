@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -159,27 +159,27 @@ int CSUItemSystem::GetSetItemTableInfo(int dwSetItemEff, char *pStrCode, int nBu
   const char *code10 = record->m_strset_ring2;
   const char *code11 = record->m_strset_cloak;
 
-  if (!strcmp_0(code0, "-1"))
+  if (!std::strcmp(code0, "-1"))
   {
-    if (!strcmp_0(code1, "-1"))
+    if (!std::strcmp(code1, "-1"))
     {
-      if (!strcmp_0(code2, "-1"))
+      if (!std::strcmp(code2, "-1"))
       {
-        if (!strcmp_0(code3, "-1"))
+        if (!std::strcmp(code3, "-1"))
         {
-          if (!strcmp_0(code4, "-1"))
+          if (!std::strcmp(code4, "-1"))
           {
-            if (!strcmp_0(code5, "-1"))
+            if (!std::strcmp(code5, "-1"))
             {
-              if (!strcmp_0(code6, "-1"))
+              if (!std::strcmp(code6, "-1"))
               {
-                if (!strcmp_0(code7, "-1") && !strcmp_0(code8, "-1"))
+                if (!std::strcmp(code7, "-1") && !std::strcmp(code8, "-1"))
                 {
-                  if (!strcmp_0(code9, "-1"))
+                  if (!std::strcmp(code9, "-1"))
                   {
-                    if (!strcmp_0(code10, "-1"))
+                    if (!std::strcmp(code10, "-1"))
                     {
-                      if (!strcmp_0(code11, "-1"))
+                      if (!std::strcmp(code11, "-1"))
                       {
                         return -1;
                       }

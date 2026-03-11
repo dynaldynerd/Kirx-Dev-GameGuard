@@ -128,7 +128,7 @@ bool CNationSettingDataRU::ReadSystemPass()
     return false;
   }
 
-  if (strlen_0(keeperCallCode) != 15
+  if (std::strlen(keeperCallCode) != 15
       || keeperCallCode[3] != 'u'
       || keeperCallCode[5] != '7'
       || keeperCallCode[8] != '1'

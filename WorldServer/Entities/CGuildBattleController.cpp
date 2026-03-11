@@ -932,8 +932,8 @@ char CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
   msg.byRet = field->CheatTakeStone(iPortalInx, pkPlayer);
   if (!msg.byRet)
   {
-    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
-    strcpy_0(msg.wszGuildName, "Cheat");
+    std::strcpy(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    std::strcpy(msg.wszGuildName, "Cheat");
   }
 
   unsigned __int8 type[2]{};
@@ -967,8 +967,8 @@ char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
   msg.byRet = field->CheatGetStone(pkPlayer);
   if (!msg.byRet)
   {
-    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
-    strcpy_0(msg.wszGuildName, "Cheat");
+    std::strcpy(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    std::strcpy(msg.wszGuildName, "Cheat");
   }
 
   unsigned __int8 type[2]{};

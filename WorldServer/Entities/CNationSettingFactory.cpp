@@ -628,7 +628,7 @@ bool CNationSettingFactory::RegistCheat(
 
     CHEAT_COMMAND record{};
     record.pwszCommand = szCheat;
-    record.uiCmdLen = static_cast<unsigned int>(strlen_0(szCheat));
+    record.uiCmdLen = static_cast<unsigned int>(std::strlen(szCheat));
     record.fn = pCheatCommandFn;
     record.nUseDegree = iUseDegree;
     record.nMgrDegree = iMgrDegree;
@@ -649,7 +649,7 @@ bool CNationSettingFactory::RegistCheat(
 bool CNationSettingFactory::IsExistCheat(const char *szCheat, CNationSettingData *pkData)
 {
   size_t maxCount = 0;
-  const size_t cheatLen = strlen_0(szCheat);
+  const size_t cheatLen = std::strlen(szCheat);
 
   for (const auto &entry : pkData->m_vecCheatData)
   {

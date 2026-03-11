@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "CBsp.h"
 #include "WorldServerUtil.h"
 #include "R3EngineGlobals.h"
@@ -57,7 +57,7 @@ namespace
 
     inline float VecLen(const float *v)
     {
-        return sqrtf_0((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
+        return std::sqrt((v[0] * v[0]) + (v[1] * v[1]) + (v[2] * v[2]));
     }
 
     inline void VecNormalize(float *v)
@@ -110,7 +110,7 @@ namespace
     float GetSoundPan(_SOUND_ENTITIES_LIST *soundEntity, float *const pos)
     {
         D3DXMATRIX view = *reinterpret_cast<D3DXMATRIX *>(&stru_184A79A6C);
-        const float len = sqrtf_0((view._31 * view._31) + (view._32 * view._32) + (view._33 * view._33));
+        const float len = std::sqrt((view._31 * view._31) + (view._32 * view._32) + (view._33 * view._33));
         const float nx = view._33 / len;
         const float ny = view._32 / len;
         const float nz = view._31 / len;
@@ -122,7 +122,7 @@ namespace
         const float dx = camX - pos[0];
         const float dy = camY - pos[1];
         const float dz = camZ - pos[2];
-        const float dist = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+        const float dist = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
         return -(((dy / dist) * ny) + ((dx / dist) * nx) + ((dz / dist) * nz));
     }
 
@@ -134,7 +134,7 @@ namespace
         const float dx = pos[0] - cameraPos[0];
         const float dy = pos[1] - cameraPos[1];
         const float dz = pos[2] - cameraPos[2];
-        const float dist = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+        const float dist = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
 
         float value = dist;
         if (dist <= soundEntity->Scale)
@@ -362,7 +362,7 @@ void CBsp::LoopInitRenderedMatGroup()
 {
   if (mMatGroupCache)
   {
-    memset_0(mMatGroupCache, 0, mMatGroupCacheSize);
+    std::memset(mMatGroupCache, 0, mMatGroupCacheSize);
   }
 }
 
@@ -423,7 +423,7 @@ void CBsp::ReadyBspRender(float *const camera)
   mAlpha.LoopInitAlphaStack();
   if (mEntityCache)
   {
-    memset_0(mEntityCache, 0, mEntityCacheSize);
+    std::memset(mEntityCache, 0, mEntityCacheSize);
   }
   PrepareAnimation();
   WalkNode(1);
@@ -587,7 +587,7 @@ void CBsp::FrameMoveMapEntities()
         const float dx = camX - mMapEntitiesList[listIndex].Pos[0];
         const float dy = camY - mMapEntitiesList[listIndex].Pos[1];
         const float dz = camZ - mMapEntitiesList[listIndex].Pos[2];
-        const float distance = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+        const float distance = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
 
         const float fadeEnd = mEntityList[entityId].FadeEnd;
         if (distance > fadeEnd)
@@ -782,7 +782,7 @@ float CBsp::GetMatGroupPoint(unsigned __int16 groupId, float *const outPos)
   outPos[0] = *(float *)((char *)matGroup->Origin + offset);
   outPos[1] = *(float *)((char *)&matGroup->Origin[1] + offset);
   outPos[2] = *(float *)((char *)&matGroup->Origin[2] + offset);
-  return sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+  return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
 }
 
 void CBsp::GetHeight(float *const camera)
@@ -1835,7 +1835,7 @@ int CBsp::GetPathFind(float *const a2, float *const a3, float (*const a4)[3], un
   float tempAt[3] = {0.0f, 0.0f, 0.0f};
   float tempVec[3] = {target[0] - a2[0], target[1] - a2[1], target[2] - a2[2]};
 
-  const float dist = sqrtf_0((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
+  const float dist = std::sqrt((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
   if (dist > 200.0f)
   {
     tooLong = true;
@@ -1858,7 +1858,7 @@ int CBsp::GetPathFind(float *const a2, float *const a3, float (*const a4)[3], un
     tempAt[2] = a2[2] + tempVec[2];
   }
 
-  memset_0(mPathFinder.mPathNode, 0, sizeof(_PATH_NODE) * 10);
+  std::memset(mPathFinder.mPathNode, 0, sizeof(_PATH_NODE) * 10);
   mFindPathCnt = 0;
   mPathFinder.mStackPoint = 0;
   mPathFinder.mStart[0] = a2[0];
@@ -2497,9 +2497,9 @@ __int64 CBsp::GetColorFromPoint(int a2, float *const a3)
     VecNormalize(temp);
 
     dist0 = VecDot(a, temp);
-    dist0 = sqrtf_0(1.0f - (dist0 * dist0));
+    dist0 = std::sqrt(1.0f - (dist0 * dist0));
     dist1 = VecDot(b, temp);
-    dist1 = sqrtf_0(1.0f - (dist1 * dist1));
+    dist1 = std::sqrt(1.0f - (dist1 * dist1));
     dist0 *= leng0;
     dist1 *= leng1;
 
@@ -2619,9 +2619,9 @@ void CBsp::GetLightMapUVFromPoint(float *const a2, int a3, float *const a4)
     VecNormalize(temp);
 
     dist0 = VecDot(a, temp);
-    dist0 = sqrtf_0(1.0f - (dist0 * dist0));
+    dist0 = std::sqrt(1.0f - (dist0 * dist0));
     dist1 = VecDot(b, temp);
-    dist1 = sqrtf_0(1.0f - (dist1 * dist1));
+    dist1 = std::sqrt(1.0f - (dist1 * dist1));
     dist0 *= leng0;
     dist1 *= leng1;
 
@@ -3084,7 +3084,7 @@ void CBsp::LoadExtBsp(char *a2)
     offset += mExtBSPHeader.LeafSoundEntityList.size;
 
     mMapEntitiesList = reinterpret_cast<_MAP_ENTITIES_LIST *>(mExtBspStaticAlloc + offset);
-    memset_0(mMapEntitiesList, 0, 58 * mMapEntitiesListNum);
+    std::memset(mMapEntitiesList, 0, 58 * mMapEntitiesListNum);
     offset += 58 * mMapEntitiesListNum;
 
     mSoundEntityList = reinterpret_cast<_SOUND_ENTITY_LIST *>(mExtBspStaticAlloc + offset);
@@ -3099,7 +3099,7 @@ void CBsp::LoadExtBsp(char *a2)
 
     mSoundEntityCacheSize = (mSoundEntitiesListNum >> 3) + 1;
     mSoundEntityCache = static_cast<unsigned char *>(Dmalloc(mSoundEntityCacheSize));
-    memset_0(mSoundEntityCache, 0, mSoundEntityCacheSize);
+    std::memset(mSoundEntityCache, 0, mSoundEntityCacheSize);
     mTotalAllocSize += mSoundEntityCacheSize;
 
     mIsLoadEBP = 1;
@@ -3249,7 +3249,7 @@ int CBsp::GetPathCrossPoint(float *const a2, float *const a3, float (*a4)[3], in
             const float dx = crossPoint[1] - a2[1];
             const float dy = crossPoint[0] - a2[0];
             const float dz = crossPoint[2] - a2[2];
-            const float distance = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+            const float distance = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
 
             if (nearestDistance <= distance)
             {
@@ -3440,7 +3440,7 @@ void CBsp::SetCFNormal()
         GetNormal(mCFNormal[lineIndex], startVertex, upperEndVertex, endVertex);
     }
 
-    memset_0(mCFVNormal, 0, 12LL * mCFVertexNum);
+    std::memset(mCFVNormal, 0, 12LL * mCFVertexNum);
     for (unsigned int lineIndex = 1; lineIndex < mCFLineNum; ++lineIndex)
     {
         const _TOOL_COL_LINE &line = mCFLine[lineIndex];
@@ -3457,7 +3457,7 @@ void CBsp::SetCFNormal()
         const float nx = mCFVNormal[vertexIndex][0];
         const float ny = mCFVNormal[vertexIndex][1];
         const float nz = mCFVNormal[vertexIndex][2];
-        const float length = sqrtf_0((nx * nx) + (ny * ny) + (nz * nz));
+        const float length = std::sqrt((nx * nx) + (ny * ny) + (nz * nz));
         mCFVNormal[vertexIndex][0] = nx / length;
         mCFVNormal[vertexIndex][1] = ny / length;
         mCFVNormal[vertexIndex][2] = nz / length;
@@ -3600,7 +3600,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
     int v_normal_size = 12 * (mBSPHeader.FVertex.size / 12 + mBSPHeader.BVertex.size / 3 + mBSPHeader.WVertex.size / 6);
     float *v_normal = static_cast<float *>(Dmalloc(v_normal_size));
-    memset_0(v_normal, 0, v_normal_size);
+    std::memset(v_normal, 0, v_normal_size);
 
     unsigned int *v_color = reinterpret_cast<unsigned int *>(ptr);
     fread(v_color, mBSPHeader.VertexColor.size, 1, Stream);
@@ -4013,7 +4013,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
                         float nx = v_normal[3 * c_v_id];
                         float ny = v_normal[3 * c_v_id + 1];
                         float nz = v_normal[3 * c_v_id + 2];
-                        float len = sqrtf_0((nx * nx) + (ny * ny) + (nz * nz));
+                        float len = std::sqrt((nx * nx) + (ny * ny) + (nz * nz));
                         v_normal[3 * c_v_id] = nx / len;
                         v_normal[3 * c_v_id + 1] = ny / len;
                         v_normal[3 * c_v_id + 2] = nz / len;
@@ -4081,7 +4081,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
                                                      - (tex2temp[8] - tex2temp[2]) * (tex2temp[3] - tex2temp[0]);
                         const float normalZNumerator = (tex2temp[7] - tex2temp[1]) * (tex2temp[3] - tex2temp[0])
                                                      - (tex2temp[6] - tex2temp[0]) * (tex2temp[4] - tex2temp[1]);
-                        const float normalLength = sqrtf_0(
+                        const float normalLength = std::sqrt(
                             (normalYNumerator * normalYNumerator) + (normalXNumerator * normalXNumerator)
                             + (normalZNumerator * normalZNumerator));
                         const float normalZ = normalZNumerator / normalLength;
@@ -4094,7 +4094,7 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
                         float tangentZ;
                         if (absNormalZ <= 0.98)
                         {
-                            const float tangentLength = sqrtf_0(((0.0f - normalY) * (0.0f - normalY)) + (normalX * normalX));
+                            const float tangentLength = std::sqrt(((0.0f - normalY) * (0.0f - normalY)) + (normalX * normalX));
                             tangentX = (0.0f - normalY) / tangentLength;
                             tangentY = normalX / tangentLength;
                             tangentZ = 0.0f / tangentLength;
@@ -4156,8 +4156,8 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
 
     mVertexNum = total_vertex_num;
     mFaceNum = static_v_index_cnt / 3;
-    memcpy_0(mLgtUV, lgtuv, mBSPHeader.LgtUV.size);
-    memcpy_0(mVertexColor, v_color, mBSPHeader.VertexColor.size);
+    std::memcpy(mLgtUV, lgtuv, mBSPHeader.LgtUV.size);
+    std::memcpy(mVertexColor, v_color, mBSPHeader.VertexColor.size);
     Dfree(v_normal);
     Dfree(read_alloc_buf);
 }
@@ -4213,7 +4213,7 @@ void CBsp::MakeEdgeNormal()
                 mCNEdgeNormal[4 * i + j][3] = 0.0f;
                 continue;
             }
-            float len = sqrtf_0((edge_n[0] * edge_n[0]) + (edge_n[1] * edge_n[1]) + (edge_n[2] * edge_n[2]));
+            float len = std::sqrt((edge_n[0] * edge_n[0]) + (edge_n[1] * edge_n[1]) + (edge_n[2] * edge_n[2]));
             edge_n[0] /= len;
             edge_n[1] /= len;
             edge_n[2] /= len;
@@ -4231,9 +4231,9 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
         return;
 
     mEntity = reinterpret_cast<CEntity *>(Dmalloc(244 * mEntityListNum));
-    memset_0(mEntity, 0, 244LL * mEntityListNum);
+    std::memset(mEntity, 0, 244LL * mEntityListNum);
     mParticle = reinterpret_cast<CParticle *>(Dmalloc(1168 * mEntityListNum));
-    memset_0(mParticle, 0, 1168LL * mEntityListNum);
+    std::memset(mParticle, 0, 1168LL * mEntityListNum);
     mTotalAllocSize += 1412 * mEntityListNum;
 
     SetMergeFileManager(&mMapEntityMFM);
@@ -4340,7 +4340,7 @@ void CBsp::LoadEntities(_READ_MAP_ENTITIES_LIST *a2)
                     CParticle *p = reinterpret_cast<CParticle *>(operator new(1168));
                     CParticle *inst = p ? new (p) CParticle() : nullptr;
                     mMapEntitiesList[listIdx].Particle = inst;
-                    memcpy_0(inst, &mParticle[mMapEntitiesList[listIdx].ID], sizeof(CParticle));
+                    std::memcpy(inst, &mParticle[mMapEntitiesList[listIdx].ID], sizeof(CParticle));
                     inst->InitParticle();
                 }
             }
@@ -4373,7 +4373,7 @@ void CBsp::LoadSoundEntities(_READ_SOUND_ENTITY_LIST *a2, _READ_SOUND_ENTITIES_L
     __int64 idx = 0;
     do
     {
-        memcpy_0(mSoundEntityList[idx].Name, a2[idx].name, sizeof(a2[idx].name));
+        std::memcpy(mSoundEntityList[idx].Name, a2[idx].name, sizeof(a2[idx].name));
 
         char path[256] = {};
         __int64 p = 0;
@@ -5100,8 +5100,8 @@ void CBsp::RenderIndepentMatGroup(unsigned __int16 a2)
     {
         float src[3]{stState.mInvMatView[3][0], stState.mInvMatView[3][1], stState.mInvMatView[3][2]};
         float tempVec[3]{src[0] - mMatGroup[index].Origin[0], src[1] - mMatGroup[index].Origin[1], src[2] - mMatGroup[index].Origin[2]};
-        float scale = sqrtf_0((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
-        scale = (sqrtf_0(scale) - stState.mNear) * 0.13f;
+        float scale = std::sqrt((tempVec[0] * tempVec[0]) + (tempVec[1] * tempVec[1]) + (tempVec[2] * tempVec[2]));
+        scale = (std::sqrt(scale) - stState.mNear) * 0.13f;
 
         D3DXMATRIX calMat{};
         D3DXMATRIX billboard = *reinterpret_cast<D3DXMATRIX *>(&stState.mInvMatView[0][0]);
@@ -5735,7 +5735,7 @@ __int64 CBsp::GetPointFromScreenRay(float a2, float a3, float *const a4, float *
             if (inside == face.VNum)
             {
                 float diff[3]{cross[0] - src[0], cross[1] - src[1], cross[2] - src[2]};
-                const float dist = sqrtf_0((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
+                const float dist = std::sqrt((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
                 if (bestDist > dist)
                 {
                     found = true;
@@ -5815,7 +5815,7 @@ __int64 CBsp::GetPointFromScreenRayFar(float a2, float a3, float *const a4, floa
             if (inside == face.VNum)
             {
                 float diff[3]{cross[0] - src[0], cross[1] - src[1], cross[2] - src[2]};
-                const float dist = sqrtf_0((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
+                const float dist = std::sqrt((diff[0] * diff[0]) + (diff[1] * diff[1]) + (diff[2] * diff[2]));
                 if (bestDist < dist)
                 {
                     found = true;

@@ -12,6 +12,6 @@ struct  _qry_case_insert_orelog
 
   _qry_case_insert_orelog()
   {
-    memset_0(this, 0, sizeof(*this));
+    std::memset(this, 0, sizeof(*this));
   }
 };

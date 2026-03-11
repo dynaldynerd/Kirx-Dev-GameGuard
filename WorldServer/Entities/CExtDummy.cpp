@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 #include "CExtDummy.h"
@@ -84,7 +84,7 @@ bool CExtDummy::LoadExtDummy(const char *szFileName)
 
       if (token[0] == '*')
       {
-        memset_0(&mDummy[mNum], 0, sizeof(mDummy[mNum]));
+        std::memset(&mDummy[mNum], 0, sizeof(mDummy[mNum]));
         strncpy(mDummy[mNum].mName, token, 31);
         MatrixIdentity(mDummy[mNum].mMat);
 
@@ -167,7 +167,7 @@ bool CExtDummy::LoadExtDummy(const char *szFileName)
             ReAlloc(mDummy, sizeof(_EXT_DUMMY) * mMaxNum, sizeof(_EXT_DUMMY) * (mMaxNum + 32)));
           const unsigned int oldMax = mMaxNum;
           mDummy = newDummy;
-          memset_0(&newDummy[oldMax], 0, sizeof(_EXT_DUMMY) * 32);
+          std::memset(&newDummy[oldMax], 0, sizeof(_EXT_DUMMY) * 32);
           mMaxNum += 32;
         }
       }

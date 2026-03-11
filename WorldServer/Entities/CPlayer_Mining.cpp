@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -358,7 +358,7 @@ void CPlayer::pc_MineComplete()
               m_szItemHistoryFileName);
           }
 
-          memcpy_0(&minedItem, &newItem, sizeof(minedItem));
+          std::memcpy(&minedItem, &newItem, sizeof(minedItem));
           minedItem.m_dwDur = 1;
           oreSerial = newItem.m_wSerial;
           oreDur = 1;
@@ -368,8 +368,8 @@ void CPlayer::pc_MineComplete()
           _STORAGE_LIST::_db_con *inventoryItem = &m_Param.m_dbInven.m_pStorageList[targetSlot];
           oreDur = static_cast<unsigned __int8>(Emb_AlterDurPoint(0, inventoryItem->m_byStorageIndex, 1, false, false));
           oreSerial = inventoryItem->m_wSerial;
-          memset_0(&minedItem, 0, sizeof(minedItem));
-          memcpy_0(&minedItem, inventoryItem, sizeof(minedItem));
+          std::memset(&minedItem, 0, sizeof(minedItem));
+          std::memcpy(&minedItem, inventoryItem, sizeof(minedItem));
         }
 
         const unsigned __int16 batteryLeftDur = static_cast<unsigned __int16>(

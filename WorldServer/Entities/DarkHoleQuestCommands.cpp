@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "DarkHoleQuestCommands.h"
 
@@ -138,7 +138,7 @@ bool (__fastcall *SearchQuestCommandFn(char *pszCommand))(strFILE *, CDarkHoleDu
     QUEST_COMMAND *entry = &quest_command[index++];
     if (!entry->pszCommand)
       break;
-    if (!strcmp_0(entry->pszCommand, pszCommand))
+    if (!std::strcmp(entry->pszCommand, pszCommand))
       return entry->fn;
   }
   return nullptr;
@@ -153,7 +153,7 @@ bool (__fastcall *SearchMissionCommandFn(char *pszCommand))(strFILE *, CDarkHole
     MISSION_COMMAND *entry = &mission_command[index++];
     if (!entry->pszCommand)
       break;
-    if (!strcmp_0(entry->pszCommand, pszCommand))
+    if (!std::strcmp(entry->pszCommand, pszCommand))
       return entry->fn;
   }
   return nullptr;
@@ -168,7 +168,7 @@ bool (__fastcall *SearchJobCommandFn(char *pszCommand))(strFILE *, CDarkHoleDung
     JOB_COMMAND *entry = &job_command[index++];
     if (!entry->pszCommand)
       break;
-    if (!strcmp_0(entry->pszCommand, pszCommand))
+    if (!std::strcmp(entry->pszCommand, pszCommand))
       return entry->fn;
   }
   return nullptr;
@@ -200,7 +200,7 @@ bool __fastcall GetReactObject(
 
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (!strcmp_0(poutszWord, kDHReactObjectMonsterToken))
+  if (!std::strcmp(poutszWord, kDHReactObjectMonsterToken))
   {
     if ((dwDesiredApply & 2) == 0)
       return _false(fstr, pSetup);
@@ -212,7 +212,7 @@ bool __fastcall GetReactObject(
       return _false(fstr, pSetup);
     poutReactObject->obj.monster.pMonsterFld = record;
   }
-  else if (!strcmp_0(poutszWord, kDHReactObjectGroupToken))
+  else if (!std::strcmp(poutszWord, kDHReactObjectGroupToken))
   {
     if ((dwDesiredApply & 1) == 0)
       return _false(fstr, pSetup);
@@ -223,7 +223,7 @@ bool __fastcall GetReactObject(
     for (int j = 0; j < pSetup->m_pCurLoadQuest->nMonsterGroupNum; ++j)
     {
       __monster_group *candidate = pSetup->m_pCurLoadQuest->pMonsterGroup[j];
-      if (!strcmp_0(candidate->pszGroupName, groupName))
+      if (!std::strcmp(candidate->pszGroupName, groupName))
       {
         group = candidate;
         break;
@@ -235,11 +235,11 @@ bool __fastcall GetReactObject(
   }
   else
   {
-    if (strcmp_0(poutszWord, kDHReactObjectItemToken))
+    if (std::strcmp(poutszWord, kDHReactObjectItemToken))
     {
       if (pszoutEventCode)
       {
-        strcpy_0(pszoutEventCode, poutszWord);
+        std::strcpy(pszoutEventCode, poutszWord);
         return false;
       }
       return _false(fstr, pSetup);
@@ -283,7 +283,7 @@ char poutszWord[160]{};
   char targetName[136]{};
   if (!fstr->word(poutszWord) || !fstr->word(targetName))
     return _false(fstr, pSetup);
-  if (!strcmp_0(targetName, kDHReactAreaNoValue))
+  if (!std::strcmp(targetName, kDHReactAreaNoValue))
   {
     if ((dwDesiredApply & 4) != 0)
     {
@@ -292,15 +292,15 @@ char poutszWord[160]{};
     }
     return _false(fstr, pSetup);
   }
-  if (strcmp_0(poutszWord, kDHReactAreaDummyToken))
+  if (std::strcmp(poutszWord, kDHReactAreaDummyToken))
   {
-    if (!strcmp_0(poutszWord, kDHReactAreaBlockToken) && (dwDesiredApply & 2) != 0)
+    if (!std::strcmp(poutszWord, kDHReactAreaBlockToken) && (dwDesiredApply & 2) != 0)
     {
       __dummy_block *block = nullptr;
       for (int j = 0; j < pSetup->m_pCurLoadQuest->nDummyBlockNum; ++j)
       {
         __dummy_block *candidate = pSetup->m_pCurLoadQuest->pDummyBlock[j];
-        if (!strcmp_0(candidate->pszBlockName, targetName))
+        if (!std::strcmp(candidate->pszBlockName, targetName))
         {
           block = candidate;
           break;
@@ -369,9 +369,9 @@ bool __fastcall qc_StartMission(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 32)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 32)
     return _false(fstr, pSetup);
-  strcpy_0(pSetup->m_pCurLoadQuest->szStartMissionBuffer, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadQuest->szStartMissionBuffer, poutszWord);
   return true;
 }
 
@@ -406,7 +406,7 @@ bool __fastcall qc_DummyBlock(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
   for (int j = 0; j < pSetup->m_pCurLoadQuest->nDummyBlockNum; ++j)
   {
     __dummy_block *candidate = pSetup->m_pCurLoadQuest->pDummyBlock[j];
-    if (!strcmp_0(candidate->pszBlockName, poutszWord))
+    if (!std::strcmp(candidate->pszBlockName, poutszWord))
     {
       block = candidate;
       break;
@@ -422,9 +422,9 @@ bool __fastcall qc_DummyBlock(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
     }
     pSetup->m_pCurLoadQuest->pDummyBlock[pSetup->m_pCurLoadQuest->nDummyBlockNum] = block;
     block = pSetup->m_pCurLoadQuest->pDummyBlock[pSetup->m_pCurLoadQuest->nDummyBlockNum];
-    size_t nameLen = strlen_0(poutszWord);
+    size_t nameLen = std::strlen(poutszWord);
     block->pszBlockName = (char *)operator new[](nameLen + 1);
-    strcpy_0(block->pszBlockName, poutszWord);
+    std::strcpy(block->pszBlockName, poutszWord);
     ++pSetup->m_pCurLoadQuest->nDummyBlockNum;
   }
   _dummy_position *dummy = pSetup->m_pCurLoadQuest->pUseMap->GetDummyPostion(pszDummyCode);
@@ -445,7 +445,7 @@ bool __fastcall qc_monsterGroup(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
   for (int j = 0; j < pSetup->m_pCurLoadQuest->nMonsterGroupNum; ++j)
   {
     __monster_group *candidate = pSetup->m_pCurLoadQuest->pMonsterGroup[j];
-    if (!strcmp_0(candidate->pszGroupName, poutszWord))
+    if (!std::strcmp(candidate->pszGroupName, poutszWord))
     {
       group = candidate;
       break;
@@ -461,9 +461,9 @@ bool __fastcall qc_monsterGroup(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetu
     }
     pSetup->m_pCurLoadQuest->pMonsterGroup[pSetup->m_pCurLoadQuest->nMonsterGroupNum] = group;
     group = pSetup->m_pCurLoadQuest->pMonsterGroup[pSetup->m_pCurLoadQuest->nMonsterGroupNum];
-    size_t nameLen = strlen_0(poutszWord);
+    size_t nameLen = std::strlen(poutszWord);
     group->pszGroupName = (char *)operator new[](nameLen + 1);
-    strcpy_0(group->pszGroupName, poutszWord);
+    std::strcpy(group->pszGroupName, poutszWord);
     ++pSetup->m_pCurLoadQuest->nMonsterGroupNum;
   }
   _base_fld *record = g_Main.m_tblMonster.GetRecord(szRecordCode);
@@ -479,7 +479,7 @@ bool __fastcall qc_RewardItem(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  const bool isOne = strcmp_0(poutszWord, kDHRewardScopeOne) == 0;
+  const bool isOne = std::strcmp(poutszWord, kDHRewardScopeOne) == 0;
   char psItemCode[136]{};
   if (!fstr->word(psItemCode))
     return _false(fstr, pSetup);
@@ -547,7 +547,7 @@ bool __fastcall qc_RewardExp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  const bool isOne = strcmp_0(poutszWord, kDHRewardScopeOne) == 0;
+  const bool isOne = std::strcmp(poutszWord, kDHRewardScopeOne) == 0;
   long double pdoutVal[2]{};
   if (!fstr->word(pdoutVal))
     return _false(fstr, pSetup);
@@ -564,7 +564,7 @@ bool __fastcall qc_RewardPvp(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  const bool isOne = strcmp_0(poutszWord, kDHRewardScopeOne) == 0;
+  const bool isOne = std::strcmp(poutszWord, kDHRewardScopeOne) == 0;
   int pnoutVal[5]{};
   if (!fstr->word(pnoutVal))
     return _false(fstr, pSetup);
@@ -581,7 +581,7 @@ bool __fastcall qc_Dalant(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, cha
   char poutszWord[132]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  const bool isOne = strcmp_0(poutszWord, kDHRewardScopeOne) == 0;
+  const bool isOne = std::strcmp(poutszWord, kDHRewardScopeOne) == 0;
   int pnoutVal[5]{};
   if (!fstr->word(pnoutVal))
     return _false(fstr, pSetup);
@@ -596,9 +596,9 @@ bool __fastcall qc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 16)
     return _false(fstr, pSetup);
-  strcpy_0(pSetup->m_pCurLoadQuest->szDescirptCode, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadQuest->szDescirptCode, poutszWord);
   return true;
 }
 
@@ -648,13 +648,13 @@ bool __fastcall mc_JobOrder(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (!strcmp_0(poutszWord, kDHJobOrderAnd))
+  if (!std::strcmp(poutszWord, kDHJobOrderAnd))
   {
     pSetup->m_pCurLoadMission->byJobOrder = 0;
   }
   else
   {
-    if (strcmp_0(poutszWord, kDHJobOrderOr))
+    if (std::strcmp(poutszWord, kDHJobOrderOr))
       return _false(fstr, pSetup);
     pSetup->m_pCurLoadMission->byJobOrder = 1;
   }
@@ -677,17 +677,17 @@ bool __fastcall mc_ResultType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup,
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (!strcmp_0(poutszWord, kDHMissionResultComplete))
+  if (!std::strcmp(poutszWord, kDHMissionResultComplete))
   {
     pSetup->m_pCurLoadMission->byResultType = 0;
   }
-  else if (!strcmp_0(poutszWord, kDHMissionResultPortal))
+  else if (!std::strcmp(poutszWord, kDHMissionResultPortal))
   {
     pSetup->m_pCurLoadMission->byResultType = 1;
   }
   else
   {
-    if (strcmp_0(poutszWord, kDHMissionResultNext))
+    if (std::strcmp(poutszWord, kDHMissionResultNext))
       return _false(fstr, pSetup);
     pSetup->m_pCurLoadMission->byResultType = 2;
   }
@@ -698,10 +698,10 @@ bool __fastcall mc_ResultContents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 32)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 32)
     return _false(fstr, pSetup);
   pSetup->m_pCurLoadMission->pszNextMissionTitle = (char *)operator new[](33);
-  strcpy_0(pSetup->m_pCurLoadMission->pszNextMissionTitle, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadMission->pszNextMissionTitle, poutszWord);
   return true;
 }
 
@@ -709,9 +709,9 @@ bool __fastcall mc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 16)
     return _false(fstr, pSetup);
-  strcpy_0(pSetup->m_pCurLoadMission->szDescirptCode, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadMission->szDescirptCode, poutszWord);
   return true;
 }
 
@@ -719,9 +719,9 @@ bool __fastcall mc_CompleteMsg(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 16)
     return _false(fstr, pSetup);
-  strcpy_0(pSetup->m_pCurLoadMission->szCompleteMsg, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadMission->szCompleteMsg, poutszWord);
   return true;
 }
 
@@ -800,7 +800,7 @@ bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
   char poutszWord[148]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (strcmp_0(poutszWord, kDHRespawnTermToken))
+  if (std::strcmp(poutszWord, kDHRespawnTermToken))
     return _false(fstr, pSetup);
   int pnoutVal[11]{};
   if (!fstr->word(pnoutVal))
@@ -808,7 +808,7 @@ bool __fastcall mc_RespawnMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSe
   char Str1[148]{};
   if (!fstr->word(Str1))
     return _false(fstr, pSetup);
-  if (strcmp_0(Str1, kDHRespawnLimToken))
+  if (std::strcmp(Str1, kDHRespawnLimToken))
     return _false(fstr, pSetup);
   int limVal[4]{};
   if (!fstr->word(limVal))
@@ -849,7 +849,7 @@ bool __fastcall mc_RespawnMonsterOption(strFILE *fstr, CDarkHoleDungeonQuestSetu
   {
     respawn->pszDefineCode = (char *)operator new[](33);
   }
-  strcpy_0(respawn->pszDefineCode, Source);
+  std::strcpy(respawn->pszDefineCode, Source);
   respawn->bCallEvent = true;
   return true;
 }
@@ -872,7 +872,7 @@ bool __fastcall mc_ChangeMonster(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSet
   _monster_fld *recordB = (_monster_fld *)g_Main.m_tblMonster.GetRecord(szRecordCode);
   if (!recordB)
     return _false(fstr, pSetup);
-  int len = static_cast<int>(strlen_0(Str));
+  int len = static_cast<int>(std::strlen(Str));
   if (Str[len] == '%')
     Str[len] = '\0';
   const int prob = atoi(Str);
@@ -896,7 +896,7 @@ bool __fastcall mc_If(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *p
   char poutszWord[160]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (strcmp_0(poutszWord, kDHIfChangeMonster))
+  if (std::strcmp(poutszWord, kDHIfChangeMonster))
     return _false(fstr, pSetup);
   char Str1[132]{};
   if (!fstr->word(Str1))
@@ -905,25 +905,25 @@ bool __fastcall mc_If(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char *p
   if (index == -1)
     return _false(fstr, pSetup);
   __change_monster *change = pSetup->m_pCurLoadMission->pChangeMonster[index];
-  if (strcmp_0(Str1, kDHIfDescription))
+  if (std::strcmp(Str1, kDHIfDescription))
   {
     char Source[144]{};
-    if (!strcmp_0(Str1, kDHIfCompleteMsg)
+    if (!std::strcmp(Str1, kDHIfCompleteMsg)
       && fstr->word(Source)
-      && strlen_0(Source) <= 16
+      && std::strlen(Source) <= 16
       && !change->pszifCompleteMsg)
     {
       change->pszifCompleteMsg = (char *)operator new[](17uLL);
-      strcpy_0(change->pszifCompleteMsg, Source);
+      std::strcpy(change->pszifCompleteMsg, Source);
       return true;
     }
     return _false(fstr, pSetup);
   }
   char Str[160]{};
-  if (!fstr->word(Str) || strlen_0(Str) > 16 || change->pszIfMissionDescirptCode)
+  if (!fstr->word(Str) || std::strlen(Str) > 16 || change->pszIfMissionDescirptCode)
     return _false(fstr, pSetup);
   change->pszIfMissionDescirptCode = (char *)operator new[](17uLL);
-  strcpy_0(change->pszIfMissionDescirptCode, Str);
+  std::strcpy(change->pszIfMissionDescirptCode, Str);
   return true;
 }
 
@@ -943,7 +943,7 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
   }
   else
   {
-    if (strcmp_0(Str1, kDHInnerMsgToken) && strcmp_0(Str1, kDHInnerRespawnToken))
+    if (std::strcmp(Str1, kDHInnerMsgToken) && std::strcmp(Str1, kDHInnerRespawnToken))
       return _false(fstr, pSetup);
     hasMsgOrRespawn = true;
   }
@@ -952,20 +952,20 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
   char respawnCode[72]{};
   if (hasMsgOrRespawn)
   {
-    if (!strcmp_0(Str1, kDHInnerMsgToken))
+    if (!std::strcmp(Str1, kDHInnerMsgToken))
     {
       char poutszWord[160]{};
       if (!fstr->word(poutszWord))
         return _false(fstr, pSetup);
-      memcpy_0(msgCode, poutszWord, 16);
+      std::memcpy(msgCode, poutszWord, 16);
       msgCode[16] = '\0';
     }
     else
     {
       char Src[152]{};
-      if (strcmp_0(Str1, kDHInnerRespawnToken) || !fstr->word(Src))
+      if (std::strcmp(Str1, kDHInnerRespawnToken) || !fstr->word(Src))
         return _false(fstr, pSetup);
-      memcpy_0(respawnCode, Src, 32);
+      std::memcpy(respawnCode, Src, 32);
       respawnCode[32] = '\0';
     }
   }
@@ -986,12 +986,12 @@ bool __fastcall mc_Inner(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char
   if (msgCode[0])
   {
     pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg = (char *)operator new[](17);
-    strcpy_0(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg, msgCode);
+    std::strcpy(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszMsg, msgCode);
   }
   if (respawnCode[0])
   {
     pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode = (char *)operator new[](33);
-    strcpy_0(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode, respawnCode);
+    std::strcpy(pSetup->m_pCurLoadMission->pInnerCheck[nInnerCheckNum]->pszRespawnCode, respawnCode);
   }
   ++pSetup->m_pCurLoadMission->nInnerCheckNum;
   return true;
@@ -1008,7 +1008,7 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
     return _false(fstr, pSetup);
   unsigned __int8 actTableCode = static_cast<unsigned __int8>(-1);
   _base_fld *record = nullptr;
-  if (strcmp_0(poutszWord, kDHRespondHuntToken))
+  if (std::strcmp(poutszWord, kDHRespondHuntToken))
     return _false(fstr, pSetup);
   record = g_Main.m_tblMonster.GetRecord(szRecordCode);
   if (!record)
@@ -1023,17 +1023,17 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   }
   else
   {
-    if (strcmp_0(Str1, kDHInnerMsgToken))
+    if (std::strcmp(Str1, kDHInnerMsgToken))
       return _false(fstr, pSetup);
     hasMsgOnly = true;
   }
   char msgCode[56]{};
-  if (hasMsgOnly && !strcmp_0(Str1, kDHInnerMsgToken))
+  if (hasMsgOnly && !std::strcmp(Str1, kDHInnerMsgToken))
   {
     char Src[152]{};
     if (fstr->word(Src))
     {
-      memcpy_0(msgCode, Src, 16);
+      std::memcpy(msgCode, Src, 16);
       msgCode[16] = '\0';
     }
     else
@@ -1059,7 +1059,7 @@ bool __fastcall mc_respond(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   if (msgCode[0])
   {
     pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg = (char *)operator new[](16);
-    strcpy_0(pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg, msgCode);
+    std::strcpy(pSetup->m_pCurLoadMission->pRespondCheck[nRespondCheckNum]->pszMsg, msgCode);
   }
   ++pSetup->m_pCurLoadMission->nRespondCheckNum;
   return true;
@@ -1089,10 +1089,10 @@ bool __fastcall mc_AddTime(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, ch
   pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum] = addTime;
   pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->EventObj.copy(&poutReactObject);
   pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->dwAddSec = pnoutVal[0];
-  if (strcmp_0(Str1, kDHReactAreaNoValue))
+  if (std::strcmp(Str1, kDHReactAreaNoValue))
   {
     pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg = (char *)operator new[](16);
-    strcpy_0(pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg, Str1);
+    std::strcpy(pSetup->m_pCurLoadMission->pAddSecCheck[nAddSecCheckNum]->pszMsg, Str1);
   }
   ++pSetup->m_pCurLoadMission->nAddSecCheckNum;
   return true;
@@ -1104,13 +1104,13 @@ bool __fastcall jc_Type(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, char 
   char poutszWord[144]{};
   if (!fstr->word(poutszWord))
     return _false(fstr, pSetup);
-  if (!strcmp_0(poutszWord, kDHJobTypeTake))
+  if (!std::strcmp(poutszWord, kDHJobTypeTake))
   {
     pSetup->m_pCurLoadJob->eventType = dh_event_take;
   }
   else
   {
-    if (strcmp_0(poutszWord, kDHJobTypeHunt))
+    if (std::strcmp(poutszWord, kDHJobTypeHunt))
       return _false(fstr, pSetup);
     pSetup->m_pCurLoadJob->eventType = dh_event_hunt;
   }
@@ -1128,7 +1128,7 @@ bool __fastcall jc_Contents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
   {
     if (eventType != dh_event_hunt)
       return true;
-    if (!strcmp_0(poutszWord, kDHJobContentsAny))
+    if (!std::strcmp(poutszWord, kDHJobContentsAny))
     {
       pSetup->m_pCurLoadJob->JobSetup.pEventFld = nullptr;
       return true;
@@ -1141,7 +1141,7 @@ bool __fastcall jc_Contents(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, c
     }
     return _false(fstr, pSetup);
   }
-  if (!strcmp_0(poutszWord, kDHJobContentsAny))
+  if (!std::strcmp(poutszWord, kDHJobContentsAny))
   {
     pSetup->m_pCurLoadJob->JobSetup.pEventFld = nullptr;
     pSetup->m_pCurLoadJob->JobSetup.byTable = static_cast<unsigned __int8>(-1);
@@ -1182,7 +1182,7 @@ bool __fastcall jc_ReactType(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup, 
 {
 
   char poutszWord[132]{};
-  if (!fstr->word(poutszWord) || strcmp_0(poutszWord, kDHJobReactPortal))
+  if (!fstr->word(poutszWord) || std::strcmp(poutszWord, kDHJobReactPortal))
     return _false(fstr, pSetup);
   const int nReactNum = pSetup->m_pCurLoadJob->nReactNum;
   _react_sub_setup *react = (_react_sub_setup *)operator new(16);
@@ -1231,9 +1231,9 @@ bool __fastcall jc_Description(strFILE *fstr, CDarkHoleDungeonQuestSetup *pSetup
 {
 
   char poutszWord[144]{};
-  if (!fstr->word(poutszWord) || strlen_0(poutszWord) > 16)
+  if (!fstr->word(poutszWord) || std::strlen(poutszWord) > 16)
     return _false(fstr, pSetup);
-  strcpy_0(pSetup->m_pCurLoadJob->szDescirptCode, poutszWord);
+  std::strcpy(pSetup->m_pCurLoadJob->szDescirptCode, poutszWord);
   return true;
 }
 

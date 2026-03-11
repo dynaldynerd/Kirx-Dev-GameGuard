@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPcBangFavor.h"
 
@@ -31,7 +31,7 @@ CPcBangFavor *CPcBangFavor::Instance()
 bool CPcBangFavor::Initialzie()
 {
   char returnedString[40]{};
-  memset_0(returnedString, 0, 10);
+  std::memset(returnedString, 0, 10);
   GetPrivateProfileStringA(
     "PcBang Favor",
     "USE",
@@ -39,7 +39,7 @@ bool CPcBangFavor::Initialzie()
     returnedString,
     10,
     ".\\Initialize\\WorldSystem.ini");
-  m_bEnable = strcmp_0(returnedString, "FALSE") != 0;
+  m_bEnable = std::strcmp(returnedString, "FALSE") != 0;
   return true;
 }
 
@@ -76,7 +76,7 @@ int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
     return -1;
   }
 
-  strcpy_0(classCode, record->m_strCode);
+  std::strcpy(classCode, record->m_strCode);
   if (static_cast<unsigned int>(pOne->m_Param.GetRaceCode()) == 2
       && classCode[1] == 'R'
       && classCode[3] == '1')

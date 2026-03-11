@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CRusiaBillingMgr.h"
 
@@ -171,7 +171,7 @@ bool CRusiaBillingMgr::LoadINIFile()
   memset(fileName, 0, 260);
   sprintf(fileName, "%s\\Initialize\\Database.ini", buffer);
 
-  memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase));
+  std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase));
   if (!GetPrivateProfileStringA(
         "Billing",
         "IP",
@@ -183,7 +183,7 @@ bool CRusiaBillingMgr::LoadINIFile()
     return false;
   }
 
-  memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort));
+  std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPort));
   if (!GetPrivateProfileStringA(
         "Billing",
         "Port",
@@ -195,7 +195,7 @@ bool CRusiaBillingMgr::LoadINIFile()
     return false;
   }
 
-  memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN));
+  std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDSN));
   if (!GetPrivateProfileStringA(
         "Billing",
         "DB",
@@ -207,7 +207,7 @@ bool CRusiaBillingMgr::LoadINIFile()
     return false;
   }
 
-  memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount));
+  std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszAccount));
   if (!GetPrivateProfileStringA(
         "Billing",
         "ID",
@@ -219,7 +219,7 @@ bool CRusiaBillingMgr::LoadINIFile()
     return false;
   }
 
-  memset_0(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword));
+  std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszPassword));
   return GetPrivateProfileStringA(
            "Billing",
            "PWD",
@@ -237,7 +237,7 @@ void CRusiaBillingMgr::ArrangeString(char *szDest, char *szSorc, char cToken)
     char *src = szSorc;
     for (int j = 0;; ++j)
     {
-      const int len = static_cast<int>(strlen_0(szSorc));
+      const int len = static_cast<int>(std::strlen(szSorc));
       if (j >= len)
       {
         break;
@@ -275,7 +275,7 @@ char *CRusiaBillingMgr::dhExtractSubString(char *szSub, char *szFull, char cToke
   }
   if (pos != szFull)
   {
-    memcpy_0(szSub, szFull, static_cast<size_t>(pos - szFull));
+    std::memcpy(szSub, szFull, static_cast<size_t>(pos - szFull));
   }
   ++pos;
   return pos;
@@ -286,21 +286,21 @@ void CRusiaBillingMgr::dhRExtractSubString(char *szSub, char *szFull, char cToke
   if (szFull && cToken)
   {
     int count = 0;
-    const int len = static_cast<int>(strlen_0(szFull));
+    const int len = static_cast<int>(std::strlen(szFull));
     char *pos = &szFull[len];
     while (*pos != cToken)
     {
       if (--pos == szFull)
       {
-        const size_t fullLen = strlen_0(szFull);
-        memcpy_0(szSub, szFull, fullLen);
+        const size_t fullLen = std::strlen(szFull);
+        std::memcpy(szSub, szFull, fullLen);
       }
       ++count;
     }
     if (pos != szFull)
     {
       ++pos;
-      memcpy_0(szSub, pos, count - 1);
+      std::memcpy(szSub, pos, count - 1);
     }
   }
 }

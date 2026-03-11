@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -419,7 +419,7 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
   {
     for (unsigned int index = 0; index < m_pUserDB->m_AvatorData.dbQuest.dwListCnt; ++index)
     {
-      if (!strcmp_0(m_pUserDB->m_AvatorData.dbQuest.m_StartHistory[index].szQuestCode, questRecord->m_strCode))
+      if (!std::strcmp(m_pUserDB->m_AvatorData.dbQuest.m_StartHistory[index].szQuestCode, questRecord->m_strCode))
       {
         if (questRecord->m_bQuestRepeat)
         {
@@ -445,7 +445,7 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
     }
 
     _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY history{};
-    strcpy_0(history.szQuestCode, questRecord->m_strCode);
+    std::strcpy(history.szQuestCode, questRecord->m_strCode);
     history.byLevel = static_cast<unsigned __int8>(m_Param.GetLevel());
     __time64_t now = 0;
     _time64(&now);

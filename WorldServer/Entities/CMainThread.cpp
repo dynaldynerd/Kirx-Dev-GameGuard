@@ -188,11 +188,11 @@ void _WAIT_ENTER_ACCOUNT::SetData(
 {
   m_bLoad = true;
   m_dwAccountSerial = dwAccountSerial;
-  strcpy_0(m_szAccountID, pszAccountID);
+  std::strcpy(m_szAccountID, pszAccountID);
   m_byUserDgr = byUserDgr;
   m_bySubDgr = bySubDgr;
-  memcpy_0(&m_gidGlobal, pgidGlobal, sizeof(m_gidGlobal));
-  memcpy_0(m_dwKey, pdwKey, sizeof(m_dwKey));
+  std::memcpy(&m_gidGlobal, pgidGlobal, sizeof(m_gidGlobal));
+  std::memcpy(m_dwKey, pdwKey, sizeof(m_dwKey));
   m_dwLoadTime = timeGetTime();
   m_bChatLock = bChatLock;
 }
@@ -201,8 +201,8 @@ void _WAIT_ENTER_ACCOUNT::SetBillingInfo(__int16 iType, char *szCMS, int lRemain
 {
   m_BillingInfo.iType = iType;
   m_BillingInfo.lRemainTime = lRemainTime;
-  memcpy_0(m_BillingInfo.szCMS, szCMS, sizeof(m_BillingInfo.szCMS));
-  memcpy_0(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
+  std::memcpy(m_BillingInfo.szCMS, szCMS, sizeof(m_BillingInfo.szCMS));
+  std::memcpy(&m_BillingInfo.stEndDate, pstEndDate, sizeof(m_BillingInfo.stEndDate));
 }
 
 void _WAIT_ENTER_ACCOUNT::SetPcBangFlag(bool bIsPcBang)
@@ -272,7 +272,7 @@ _server_rate_realtime_load::_server_rate_realtime_load()
 
 void _server_rate_realtime_load::Init(unsigned int dwReadTerm)
 {
-  memset_0(this, 0, sizeof(_server_rate_realtime_load));
+  std::memset(this, 0, sizeof(_server_rate_realtime_load));
   m_tmDataFileCheckTime.BeginTimer(dwReadTerm);
 }
 
@@ -361,11 +361,11 @@ void CMainThread::AccountServerLogin()
 {
   _open_world_request_wrac request;
 
-  strcpy_0(request.szWorldName, m_szWorldName);
+  std::strcpy(request.szWorldName, m_szWorldName);
 
   char returnedString[128]{};
   GetPrivateProfileStringA("System", "GateIP", "X", returnedString, sizeof(returnedString), "..\\WorldInfo\\WorldInfo.ini");
-  if (!strcmp_0(returnedString, "X"))
+  if (!std::strcmp(returnedString, "X"))
   {
     request.dwWorldServerIP = GetIPAddress();
   }
@@ -589,7 +589,7 @@ CPlayer *CMainThread::GetChar(char *pszCharName)
     if (g_Player[index].m_bLive)
     {
       const char *charName = g_Player[index].m_Param.GetCharNameA();
-      if (!strcmp_0(charName, pszCharName))
+      if (!std::strcmp(charName, pszCharName))
       {
         return &g_Player[index];
       }
@@ -604,7 +604,7 @@ CGameObject *CMainThread::GetObjectExpand(_object_id *pObjID, char *szCharName, 
   int scanIndex = 0;
   unsigned __int16 matchIndex = 0;
 
-  if (szCharName && strlen_0(szCharName))
+  if (szCharName && std::strlen(szCharName))
   {
     if (pObjID->m_byKind == 0 && pObjID->m_byID == 0)
     {
@@ -617,7 +617,7 @@ CGameObject *CMainThread::GetObjectExpand(_object_id *pObjID, char *szCharName, 
       {
         if (g_Monster[scanIndex].m_bLive
             && g_Monster[scanIndex].m_pMonRec
-            && !strcmp_0(g_Monster[scanIndex].m_pMonRec->m_strCode, szCharName))
+            && !std::strcmp(g_Monster[scanIndex].m_pMonRec->m_strCode, szCharName))
         {
           if (wSearchIndex == matchIndex)
           {
@@ -635,7 +635,7 @@ CGameObject *CMainThread::GetObjectExpand(_object_id *pObjID, char *szCharName, 
       {
         if (g_NPC[scanIndex].m_bLive
             && g_NPC[scanIndex].m_pRecordSet
-            && !strcmp_0(g_NPC[scanIndex].m_pRecordSet->m_strCode, szCharName))
+            && !std::strcmp(g_NPC[scanIndex].m_pRecordSet->m_strCode, szCharName))
         {
           if (wSearchIndex == matchIndex)
           {
@@ -742,7 +742,7 @@ CPlayer *CMainThread::GetCharW(char *wpszCharName)
     if (g_Player[index].m_bLive)
     {
       const char *charName = g_Player[index].m_Param.GetCharNameW();
-      if (!strcmp_0(charName, wpszCharName))
+      if (!std::strcmp(charName, wpszCharName))
       {
         return &g_Player[index];
       }
@@ -847,12 +847,12 @@ _DB_QRY_SYN_DATA *CMainThread::PushDQSData(
   data->m_dwAccountSerial = dwAccountSerial;
   if (pidWorld)
   {
-    memcpy_0(&data->m_idWorld, pidWorld, sizeof(data->m_idWorld));
+    std::memcpy(&data->m_idWorld, pidWorld, sizeof(data->m_idWorld));
   }
   data->m_byQryCase = byQryCase;
   if (pQryData)
   {
-    memcpy_0(data->m_sData, pQryData, nSize);
+    std::memcpy(data->m_sData, pQryData, nSize);
   }
 
   if (m_listDQSData.PushNode_Back(outIndex[0]))
@@ -991,7 +991,7 @@ void GuildCreateEventInfo::ReadEventInfo()
     localDateEnd - 1,
     "..\\WorldInfo\\WorldInfo.ini");
 
-  m_ModifyInfo.bEnable = strcmp_0(returnedString, "TRUE") == 0;
+  m_ModifyInfo.bEnable = std::strcmp(returnedString, "TRUE") == 0;
 }
 
 char GuildCreateEventInfo::CheckEventDate()
@@ -1087,7 +1087,7 @@ void TimeLimitMgr::Delete_All()
 {
   for (int index = 0; index < MAX_PLAYER; ++index)
   {
-    memset_0(&m_lstTLStaus[index], 0, sizeof(m_lstTLStaus[index]));
+    std::memset(&m_lstTLStaus[index], 0, sizeof(m_lstTLStaus[index]));
   }
   TimeLimitMgr::m_dwCnt = 0;
 }
@@ -1361,7 +1361,7 @@ void TimeLimitMgr::Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wInde
   {
     if (dwAccountSerial == m_lstTLStaus[wIndex].m_dwAccountSerial)
     {
-      memset_0(&m_lstTLStaus[wIndex], 0, sizeof(m_lstTLStaus[wIndex]));
+      std::memset(&m_lstTLStaus[wIndex], 0, sizeof(m_lstTLStaus[wIndex]));
       --m_dwCnt;
     }
   }
@@ -1401,7 +1401,7 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
   sprintf_s(buffer, 15, "%d", dwLastConnTime);
-  const int len = static_cast<int>(strlen_0(buffer));
+  const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};
   tmLast.tm_isdst = -1;
@@ -1409,7 +1409,7 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   char temp[32]{};
   char yearString[16]{};
 
-  memcpy_0(temp, buffer, static_cast<size_t>(len - 8));
+  std::memcpy(temp, buffer, static_cast<size_t>(len - 8));
   if (len == 9)
   {
     sprintf(yearString, "200%s", temp);
@@ -1421,23 +1421,23 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 8], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 8], 2);
   tmLast.tm_mon = atoi(temp) - 1;
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 6], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 6], 2);
   tmLast.tm_mday = atoi(temp);
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 4], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 4], 2);
   tmLast.tm_hour = atoi(temp);
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 2], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 2], 2);
   tmLast.tm_min = atoi(temp);
 
-  memset_0(temp, 0, 3);
+  std::memset(temp, 0, 3);
   return SumMinuteBetweenSec(&tmLast);
 }
 
@@ -1445,7 +1445,7 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
   sprintf_s(buffer, 15, "%d", dwLastConnTime);
-  const int len = static_cast<int>(strlen_0(buffer));
+  const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};
   tmLast.tm_isdst = -1;
@@ -1453,7 +1453,7 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
   char temp[32]{};
   char yearString[16]{};
 
-  memcpy_0(temp, buffer, static_cast<size_t>(len - 8));
+  std::memcpy(temp, buffer, static_cast<size_t>(len - 8));
   if (len == 9)
   {
     sprintf(yearString, "200%s", temp);
@@ -1465,23 +1465,23 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 8], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 8], 2);
   tmLast.tm_mon = atoi(temp) - 1;
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 6], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 6], 2);
   tmLast.tm_mday = atoi(temp);
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 4], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 4], 2);
   tmLast.tm_hour = atoi(temp);
 
-  memset_0(temp, 0, 3);
-  memcpy_0(temp, &buffer[len - 2], 2);
+  std::memset(temp, 0, 3);
+  std::memcpy(temp, &buffer[len - 2], 2);
   tmLast.tm_min = atoi(temp);
 
-  memset_0(temp, 0, 3);
+  std::memset(temp, 0, 3);
   const unsigned int minutes = static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
   if (minutes)
   {
@@ -3722,7 +3722,7 @@ void CMainThread::MakeSystemTower()
       char mapCode[152]{};
       sprintf_s(keyName, sizeof(keyName), "Map%d", iniIndex);
       GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", mapCode, 128, ".\\Script\\SystemGuardTower.ini");
-      if (!strcmp_0(mapCode, "NULL"))
+      if (!std::strcmp(mapCode, "NULL"))
       {
         continue;
       }
@@ -3740,7 +3740,7 @@ void CMainThread::MakeSystemTower()
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_x", iniIndex);
       GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
-      if (!strcmp_0(valueBuffer, "NULL"))
+      if (!std::strcmp(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
         sprintf_s(mapKey, sizeof(mapKey), "Map%d", iniIndex);
@@ -3752,7 +3752,7 @@ void CMainThread::MakeSystemTower()
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_y", iniIndex);
       GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
-      if (!strcmp_0(valueBuffer, "NULL"))
+      if (!std::strcmp(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
         sprintf_s(mapKey, sizeof(mapKey), "Map%d", iniIndex);
@@ -3764,7 +3764,7 @@ void CMainThread::MakeSystemTower()
 
       sprintf_s(keyName, sizeof(keyName), "Pos%d_z", iniIndex);
       GetPrivateProfileStringA(raceNames[raceIndex], keyName, "NULL", valueBuffer, 128, ".\\Script\\SystemGuardTower.ini");
-      if (!strcmp_0(valueBuffer, "NULL"))
+      if (!std::strcmp(valueBuffer, "NULL"))
       {
         char mapKey[160]{};
         sprintf_s(mapKey, sizeof(mapKey), "Map%d", iniIndex);
@@ -3798,7 +3798,7 @@ void CMainThread::MakeSystemTower()
         recordCode,
         128,
         ".\\Script\\SystemGuardTower.ini");
-      if (!strcmp_0(recordCode, "NULL"))
+      if (!std::strcmp(recordCode, "NULL"))
       {
         char mapKey[160]{};
         sprintf_s(mapKey, sizeof(mapKey), "Map%d", iniIndex);
@@ -4323,15 +4323,15 @@ void CMainThread::CheckForceClose()
   const unsigned __int16 randomValue = static_cast<unsigned __int16>(rand() % 3);
   if (randomValue == 0)
   {
-    memset_0(this, 0, sizeof(CMainThread));
+    std::memset(this, 0, sizeof(CMainThread));
   }
   else if (randomValue == 1)
   {
-    memset_0(g_Monster, 0, 8);
+    std::memset(g_Monster, 0, 8);
   }
   else if (randomValue == 2)
   {
-    memset_0(&g_Network, 0, sizeof(g_Network));
+    std::memset(&g_Network, 0, sizeof(g_Network));
   }
 }
 
@@ -4784,7 +4784,7 @@ void CMainThread::pc_TransIPKeyInform(
 
   _trans_account_report_wrac report{};
   report.byRetCode = retCode;
-  memcpy_0(&report, pgidGlobal, 8);
+  std::memcpy(&report, pgidGlobal, 8);
   unsigned __int8 pbyType[2]{1, 9};
   const unsigned __int16 len = report.size();
   g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&report), len);
@@ -4823,25 +4823,25 @@ void CMainThread::pc_UILockUpdateResult(const _uilock_update_result_acwr *reques
 void CMainThread::pc_AllUserMsgInform(char *pwszMsg)
 {
   char destination[288]{};
-  strcpy_0(destination, "$????");
+  std::strcpy(destination, "$????");
   if (*pwszMsg == '%')
   {
     ProcessCheatCommand(nullptr, pwszMsg + 1);
     return;
   }
 
-  const size_t prefixLen = strlen_0(destination);
+  const size_t prefixLen = std::strlen(destination);
   if (!strncmp(destination, pwszMsg, prefixLen))
   {
     char gmMsg[1328]{};
-    strcpy_0(gmMsg, &pwszMsg[prefixLen]);
+    std::strcpy(gmMsg, &pwszMsg[prefixLen]);
     pc_AllUserGMNoticeInform(gmMsg);
     return;
   }
 
   _trans_gm_msg_inform_zocl msg{};
-  msg.wMsgSize = strlen_0(pwszMsg);
-  memcpy_0(msg.wszChatData, pwszMsg, msg.wMsgSize);
+  msg.wMsgSize = std::strlen(pwszMsg);
+  std::memcpy(msg.wszChatData, pwszMsg, msg.wMsgSize);
   msg.wszChatData[msg.wMsgSize] = 0;
 
   unsigned __int8 pbyType[2]{2, 13};
@@ -4858,8 +4858,8 @@ void CMainThread::pc_AllUserMsgInform(char *pwszMsg)
 void CMainThread::pc_AllUserGMNoticeInform(char *pwszMsg)
 {
   _trans_gm_msg_inform_zocl msg{};
-  msg.wMsgSize = strlen_0(pwszMsg);
-  memcpy_0(msg.wszChatData, pwszMsg, msg.wMsgSize);
+  msg.wMsgSize = std::strlen(pwszMsg);
+  std::memcpy(msg.wszChatData, pwszMsg, msg.wMsgSize);
   msg.wszChatData[msg.wMsgSize] = 0;
 
   unsigned __int8 pbyType[2]{2, 14};
@@ -4877,7 +4877,7 @@ void CMainThread::pc_SetMainGreetingMsg(char *pwszGMName, char *pwszMsg)
 {
   if (*pwszMsg)
   {
-    if (strlen_0(pwszMsg) <= 255)
+    if (std::strlen(pwszMsg) <= 255)
     {
       strcpy_s(m_wszGMName, 17, pwszGMName);
       strcpy_s(m_wszMainGreetingMsg, 256, pwszMsg);
@@ -4895,7 +4895,7 @@ void CMainThread::pc_SetRaceGreetingMsg(int racenum, char *pwszBossName, char *p
 {
   if (*pwszMsg)
   {
-    if (strlen_0(pwszMsg) <= 255)
+    if (std::strlen(pwszMsg) <= 255)
     {
       strcpy_s(m_wszBossName[racenum], 17, pwszBossName);
       strcpy_s(m_wszRaceGreetingMsg[racenum], 256, pwszMsg);
@@ -4947,7 +4947,7 @@ void CMainThread::pc_CashDBInfoRecvResult(
   _strdate(dateBuf);
   _strtime(timeBuf);
   WriteServerStartHistory("Cash DB Init Begin >> name: %s, ip: %s", szDBName, szIP);
-  if (!strcmp_0(szIP, "None") || !strcmp_0(szDBName, "None"))
+  if (!std::strcmp(szIP, "None") || !std::strcmp(szDBName, "None"))
   {
     MyMessageBox(
       "CMainThread::pc_CashDBInfoRecvResult",
@@ -5018,7 +5018,7 @@ void CMainThread::ManageClientLimitRunRequest(const _manage_client_limit_run_req
   {
     _manage_client_limit_run_result_wrac result{};
     result.byRet = 24;
-    memcpy_0(&result.idLocal, request, sizeof(result.idLocal));
+    std::memcpy(&result.idLocal, request, sizeof(result.idLocal));
     result.byLoginServerIndex = request->byCode;
     unsigned __int8 pbyType[2]{1, 26};
     g_Network.m_pProcess[1]->LoadSendMsg(
@@ -5203,7 +5203,7 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     trustedConnectionValue,
     sizeof(trustedConnectionValue));
   const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
-  strcpy_0(m_szWorldDBName, pszDBName);
+  std::strcpy(m_szWorldDBName, pszDBName);
   g_pFrame->SendMessage(12, 0, 0);
 
   if (!m_pWorldDB)
@@ -5273,7 +5273,7 @@ void CMainThread::SerivceSelfStart()
     char returnedString[148]{};
     GetPrivateProfileStringA("System", "GateIP", "X", returnedString, 128, "..\\WorldInfo\\WorldInfo.ini");
     _start_world_request_wrac request{};
-    if (!strcmp_0(returnedString, "X"))
+    if (!std::strcmp(returnedString, "X"))
     {
       request.dwGateIP = GetIPAddress();
     }

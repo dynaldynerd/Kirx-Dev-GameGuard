@@ -90,7 +90,7 @@ bool CEventLootTable::ReadRecord()
         continue;
       }
       new (record) _event_drop();
-      strcpy_0(record->strCode, token0);
+      std::strcpy(record->strCode, token0);
       record->wMagnifications = static_cast<unsigned __int16>(std::atoi(token1));
       record->wRange = static_cast<unsigned __int16>(std::atoi(token2));
       record->wDropCntOnce = static_cast<unsigned __int16>(std::atoi(token3));
@@ -108,7 +108,7 @@ CEventLootTable::_event_drop *CEventLootTable::GetRecord(const char *szRecordCod
 {
   for (_event_drop *node = m_pEventDropList; node; node = node->pNext)
   {
-    if (!strcmp_0(node->strCode, szRecordCode))
+    if (!std::strcmp(node->strCode, szRecordCode))
     {
       return node;
     }

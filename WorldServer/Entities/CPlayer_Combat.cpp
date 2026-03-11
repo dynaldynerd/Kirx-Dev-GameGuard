@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -323,7 +323,7 @@ void CPlayer::SendMsg_ThrowSkillResult(unsigned __int8 byErrCode, _CHRID *pidDst
 {
   _throw_skill_result_one_zocl toSelf{};
   toSelf.byErrCode = byErrCode;
-  memcpy_0(&toSelf.idDster, pidDst, sizeof(toSelf.idDster));
+  std::memcpy(&toSelf.idDster, pidDst, sizeof(toSelf.idDster));
   FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
 
   unsigned __int8 selfType[2] = {17, 100};
@@ -344,9 +344,9 @@ void CPlayer::SendMsg_ThrowSkillResult(unsigned __int8 byErrCode, _CHRID *pidDst
   toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
   toOther.idPerformer.dwSerial = this->m_dwObjSerial;
   toOther.bySkillIndex = bySkillIndex;
-  memcpy_0(&toOther.idDster, pidDst, sizeof(toOther.idDster));
+  std::memcpy(&toOther.idDster, pidDst, sizeof(toOther.idDster));
   toOther.byEffectedNum = toSelf.byEffectedNum;
-  memcpy_0(toOther.list, toSelf.list, 8LL * toSelf.byEffectedNum);
+  std::memcpy(toOther.list, toSelf.list, 8LL * toSelf.byEffectedNum);
 
   unsigned __int8 otherType[2] = {17, 101};
   this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
@@ -356,7 +356,7 @@ void CPlayer::SendMsg_ThrowUnitResult(unsigned __int8 byErrCode, _CHRID *pidDst,
 {
   _throw_unit_result_one_zocl toSelf{};
   toSelf.byErrCode = byErrCode;
-  memcpy_0(&toSelf.idDster, pidDst, sizeof(toSelf.idDster));
+  std::memcpy(&toSelf.idDster, pidDst, sizeof(toSelf.idDster));
   FillThrowEffectList(toSelf.list, &toSelf.byEffectedNum);
 
   unsigned __int8 selfType[2] = {17, 103};
@@ -377,9 +377,9 @@ void CPlayer::SendMsg_ThrowUnitResult(unsigned __int8 byErrCode, _CHRID *pidDst,
   toOther.idPerformer.wIndex = this->m_ObjID.m_wIndex;
   toOther.idPerformer.dwSerial = this->m_dwObjSerial;
   toOther.wBulletIndex = wBulletIndex;
-  memcpy_0(&toOther.idDster, pidDst, sizeof(toOther.idDster));
+  std::memcpy(&toOther.idDster, pidDst, sizeof(toOther.idDster));
   toOther.byEffectedNum = toSelf.byEffectedNum;
-  memcpy_0(toOther.list, toSelf.list, 8LL * toSelf.byEffectedNum);
+  std::memcpy(toOther.list, toSelf.list, 8LL * toSelf.byEffectedNum);
 
   unsigned __int8 otherType[2] = {17, 104};
   this->CircleReport(otherType, reinterpret_cast<char *>(&toOther), sizeof(toOther), false);
@@ -2428,7 +2428,7 @@ void CPlayer::SendTargetMonsterSFContInfo()
     reinterpret_cast<char *>(&currentInfo),
     length);
 
-  memcpy_0(
+  std::memcpy(
     &this->m_TargetObject.m_PrevTargetMonsterContInfo,
     &currentInfo,
     sizeof(this->m_TargetObject.m_PrevTargetMonsterContInfo));
@@ -2477,7 +2477,7 @@ void CPlayer::SendTargetPlayerDamageContInfo()
     reinterpret_cast<char *>(&currentInfo),
     length);
 
-  memcpy_0(
+  std::memcpy(
     &this->m_TargetObject.m_PrevTargetPlayerDamageContInfo,
     &currentInfo,
     sizeof(this->m_TargetObject.m_PrevTargetPlayerDamageContInfo));

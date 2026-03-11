@@ -5,7 +5,7 @@
 CUnmannedTraderSubClassInfoDefault::CUnmannedTraderSubClassInfoDefault(unsigned int dwID)
   : CUnmannedTraderSubClassInfo(0u)
 {
-  strcpy_0(this->m_szName, "default");
+  std::strcpy(this->m_szName, "default");
 }
 
 CUnmannedTraderSubClassInfo *CUnmannedTraderSubClassInfoDefault::Create(unsigned int dwID)

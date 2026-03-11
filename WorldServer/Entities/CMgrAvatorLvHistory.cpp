@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMgrAvatorLvHistory.h"
 
@@ -134,7 +134,7 @@ unsigned int CMgrAvatorLvHistory::GetTotalWaitSize()
 
 void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
 {
-  const int logLen = static_cast<int>(strlen_0(pszLog));
+  const int logLen = static_cast<int>(std::strlen(pszLog));
   unsigned int outIndex = 0;
 
   if (logLen >= 200)
@@ -144,9 +144,9 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
       if (logLen < 0x7D0 && m_listLogDataEmpty_2K.PopNode_Front(&outIndex))
       {
         __LOG_DATA_2K &entry = m_LogData_2K[outIndex];
-        strcpy_0(entry.szFileName, pszFileName);
+        std::strcpy(entry.szFileName, pszFileName);
         entry.nLen = logLen;
-        memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
+        std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(logLen));
         entry.sData[logLen] = '\0';
         m_listLogData_2K.PushNode_Back(outIndex);
         return;
@@ -155,9 +155,9 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
     else if (m_listLogDataEmpty_1K.PopNode_Front(&outIndex))
     {
       __LOG_DATA_1K &entry = m_LogData_1K[outIndex];
-      strcpy_0(entry.szFileName, pszFileName);
+      std::strcpy(entry.szFileName, pszFileName);
       entry.nLen = logLen;
-      memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
+      std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(logLen));
       entry.sData[logLen] = '\0';
       m_listLogData_1K.PushNode_Back(outIndex);
       return;
@@ -166,9 +166,9 @@ void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
   else if (m_listLogDataEmpty_200.PopNode_Front(&outIndex))
   {
     __LOG_DATA_200 &entry = m_LogData_200[outIndex];
-    strcpy_0(entry.szFileName, pszFileName);
+    std::strcpy(entry.szFileName, pszFileName);
     entry.nLen = logLen;
-    memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(logLen));
+    std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(logLen));
     entry.sData[logLen] = '\0';
     m_listLogData_200.PushNode_Back(outIndex);
     return;
@@ -261,7 +261,7 @@ void CMgrAvatorLvHistory::start_mastery(
     pnMaxPoint[2],
     m_szCurDate,
     m_szCurTime);
-  strcat_0(sData_0, sBuf_0);
+  std::strcat(sData_0, sBuf_0);
 
   for (int index = 0; index < 2; ++index)
   {
@@ -270,7 +270,7 @@ void CMgrAvatorLvHistory::start_mastery(
       const int mastery = pData->GetMasteryPerMast(0, index);
       const int cum = pData->GetCumPerMast(0, index);
       sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", index, cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
 
@@ -279,7 +279,7 @@ void CMgrAvatorLvHistory::start_mastery(
     const int mastery = pData->GetMasteryPerMast(1u, 0);
     const int cum = pData->GetCumPerMast(1u, 0);
     sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
-    strcat_0(sData_0, sBuf_0);
+    std::strcat(sData_0, sBuf_0);
   }
 
   if (pData->GetCumPerMast(2u, 0) > 0)
@@ -287,7 +287,7 @@ void CMgrAvatorLvHistory::start_mastery(
     const int mastery = pData->GetMasteryPerMast(2u, 0);
     const int cum = pData->GetCumPerMast(2u, 0);
     sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
-    strcat_0(sData_0, sBuf_0);
+    std::strcat(sData_0, sBuf_0);
   }
 
   for (int index = 0; index < 48; ++index)
@@ -296,7 +296,7 @@ void CMgrAvatorLvHistory::start_mastery(
     {
       const int skillLv = pData->GetSkillLv(static_cast<unsigned __int8>(index));
       sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", index, pData->m_BaseCum.m_dwSkillCum[index], skillLv);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
 
@@ -307,7 +307,7 @@ void CMgrAvatorLvHistory::start_mastery(
       const int mastery = pData->GetMasteryPerMast(4u, index);
       const int cum = pData->GetCumPerMast(4u, index);
       sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", index, cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
 
@@ -318,7 +318,7 @@ void CMgrAvatorLvHistory::start_mastery(
       const int mastery = pData->GetMasteryPerMast(5u, index);
       const int cum = pData->GetCumPerMast(5u, index);
       sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", index, cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
 
@@ -327,11 +327,11 @@ void CMgrAvatorLvHistory::start_mastery(
     const int mastery = pData->GetMasteryPerMast(6u, 0);
     const int cum = pData->GetCumPerMast(6u, 0);
     sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
-    strcat_0(sData_0, sBuf_0);
+    std::strcat(sData_0, sBuf_0);
   }
 
   sprintf(sBuf_0, "\r\n");
-  strcat_0(sData_0, sBuf_0);
+  std::strcat(sData_0, sBuf_0);
   WriteFile(pszFileName, sData_0);
 }
 
@@ -588,7 +588,7 @@ void CMgrAvatorLvHistory::update_mastery(
       m_szCurTime);
   }
 
-  strcat_0(sData_0, sBuf_0);
+  std::strcat(sData_0, sBuf_0);
   if (byLogType == 1)
   {
     for (int j = 0; j < 2; ++j)
@@ -598,7 +598,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(0, j);
         const int cum = pData->GetCumPerMast(0, j);
         sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", j, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     if (pData->GetCumPerMast(1u, 0) > 0)
@@ -606,14 +606,14 @@ void CMgrAvatorLvHistory::update_mastery(
       const int mastery = pData->GetMasteryPerMast(1u, 0);
       const int cum = pData->GetCumPerMast(1u, 0);
       sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
     if (pData->GetCumPerMast(2u, 0) > 0)
     {
       const int mastery = pData->GetMasteryPerMast(2u, 0);
       const int cum = pData->GetCumPerMast(2u, 0);
       sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
     for (int j = 0; j < 48; ++j)
     {
@@ -621,7 +621,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int skillLv = pData->GetSkillLv(j);
         sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", j, pData->m_BaseCum.m_dwSkillCum[j], skillLv);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     for (int j = 0; j < 24; ++j)
@@ -631,7 +631,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(4u, j);
         const int cum = pData->GetCumPerMast(4u, j);
         sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", j, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     for (int j = 0; j < 3; ++j)
@@ -641,7 +641,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(5u, j);
         const int cum = pData->GetCumPerMast(5u, j);
         sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", j, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     if (pData->GetCumPerMast(6u, 0) > 0)
@@ -649,7 +649,7 @@ void CMgrAvatorLvHistory::update_mastery(
       const int mastery = pData->GetMasteryPerMast(6u, 0);
       const int cum = pData->GetCumPerMast(6u, 0);
       sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
   else
@@ -661,7 +661,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(0, k);
         const int cum = pData->GetCumPerMast(0, k);
         sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", k, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     if (pdwAlter[2])
@@ -669,14 +669,14 @@ void CMgrAvatorLvHistory::update_mastery(
       const int mastery = pData->GetMasteryPerMast(1u, 0);
       const int cum = pData->GetCumPerMast(1u, 0);
       sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
     if (pdwAlter[3])
     {
       const int mastery = pData->GetMasteryPerMast(2u, 0);
       const int cum = pData->GetCumPerMast(2u, 0);
       sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
     for (int k = 0; k < 48; ++k)
     {
@@ -684,7 +684,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int skillLv = pData->GetSkillLv(k);
         sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", k, pData->m_BaseCum.m_dwSkillCum[k], skillLv);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     for (int k = 0; k < 24; ++k)
@@ -694,7 +694,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(4u, k);
         const int cum = pData->GetCumPerMast(4u, k);
         sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", k, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     for (int k = 0; k < 3; ++k)
@@ -704,7 +704,7 @@ void CMgrAvatorLvHistory::update_mastery(
         const int mastery = pData->GetMasteryPerMast(5u, k);
         const int cum = pData->GetCumPerMast(5u, k);
         sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", k, cum, mastery);
-        strcat_0(sData_0, sBuf_0);
+        std::strcat(sData_0, sBuf_0);
       }
     }
     if (pdwAlter[79])
@@ -712,12 +712,12 @@ void CMgrAvatorLvHistory::update_mastery(
       const int mastery = pData->GetMasteryPerMast(6u, 0);
       const int cum = pData->GetCumPerMast(6u, 0);
       sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
-      strcat_0(sData_0, sBuf_0);
+      std::strcat(sData_0, sBuf_0);
     }
   }
 
   sprintf(sBuf_0, "\r\n");
-  strcat_0(sData_0, sBuf_0);
+  std::strcat(sData_0, sBuf_0);
   WriteFile(pszFileName, sData_0);
 }
 

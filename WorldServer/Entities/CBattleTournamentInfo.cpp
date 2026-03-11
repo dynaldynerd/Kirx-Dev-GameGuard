@@ -14,7 +14,7 @@ CBattleTournamentInfo::~CBattleTournamentInfo()
 
 void CBattleTournamentInfo::Init()
 {
-  memset_0(this, 0, sizeof(CBattleTournamentInfo));
+  std::memset(this, 0, sizeof(CBattleTournamentInfo));
   for (int j = 0; j < 48; ++j)
   {
     m_WinnerInfo[j].dwSerial = static_cast<unsigned int>(-1);
@@ -50,7 +50,7 @@ unsigned __int8 CBattleTournamentInfo::GetWinnerGrade(unsigned int dwSerial, cha
 
   for (int j = 0; j < m_nCurNum; ++j)
   {
-    if (m_WinnerInfo[j].dwSerial == dwSerial && strcmp_0(m_WinnerInfo[j].wszCharName, pwszCharName) == 0)
+    if (m_WinnerInfo[j].dwSerial == dwSerial && std::strcmp(m_WinnerInfo[j].wszCharName, pwszCharName) == 0)
     {
       return m_WinnerInfo[j].byGrade;
     }

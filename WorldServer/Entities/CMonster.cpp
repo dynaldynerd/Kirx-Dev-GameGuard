@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMonster.h"
 #include "ObjectCreateSetData.h"
@@ -132,9 +132,9 @@ char CMonster::Create(_monster_create_setdata *pData)
   }
 
   m_pMonRec = reinterpret_cast<_monster_fld *>(pData->m_pRecordSet);
-  memcpy_0(m_fCreatePos, pData->m_fStartPos, sizeof(m_fCreatePos));
-  memcpy_0(m_fTarPos, pData->m_fStartPos, sizeof(m_fTarPos));
-  memcpy_0(m_fLookAtPos, pData->m_fStartPos, sizeof(m_fLookAtPos));
+  std::memcpy(m_fCreatePos, pData->m_fStartPos, sizeof(m_fCreatePos));
+  std::memcpy(m_fTarPos, pData->m_fStartPos, sizeof(m_fTarPos));
+  std::memcpy(m_fLookAtPos, pData->m_fStartPos, sizeof(m_fLookAtPos));
 
   m_bRotateMonster = false;
   m_EmotionPresentationCheck.ReSet();
@@ -178,16 +178,16 @@ char CMonster::Create(_monster_create_setdata *pData)
       src[0] = m_fCurPos[0] + dir[0];
       src[1] = m_fCurPos[1] + dir[1];
       src[2] = m_fCurPos[2] + dir[2];
-      memcpy_0(m_fStartLookAtPos, src, sizeof(m_fStartLookAtPos));
+      std::memcpy(m_fStartLookAtPos, src, sizeof(m_fStartLookAtPos));
       UpdateLookAtPos(src);
     }
     m_pDumPosition->SetActiveMonNum(1);
   }
   else if (m_bRotateMonster)
   {
-    memcpy_0(m_fStartLookAtPos, m_fCreatePos, sizeof(m_fStartLookAtPos));
+    std::memcpy(m_fStartLookAtPos, m_fCreatePos, sizeof(m_fStartLookAtPos));
     m_fLookAtPos[2] = m_fLookAtPos[2] - 10.0f;
-    memcpy_0(m_fStartLookAtPos, m_fLookAtPos, sizeof(m_fStartLookAtPos));
+    std::memcpy(m_fStartLookAtPos, m_fLookAtPos, sizeof(m_fStartLookAtPos));
     UpdateLookAtPos(m_fLookAtPos);
   }
 
@@ -1172,7 +1172,7 @@ char CMonster::CheckRespawnProcess()
       if (GetSqrt(m_fCurPos, m_fCreatePos) >= 100.0f || std::fabs(m_fCurPos[1] - m_fCreatePos[1]) >= 50.0f)
       {
         _monster_create_setdata data;
-        memcpy_0(data.m_fStartPos, m_fCreatePos, sizeof(data.m_fStartPos));
+        std::memcpy(data.m_fStartPos, m_fCreatePos, sizeof(data.m_fStartPos));
         data.m_nLayerIndex = m_wMapLayerIndex;
         data.m_pMap = m_pCurMap;
         data.m_pRecordSet = m_pRecordSet;
@@ -1202,7 +1202,7 @@ void CMonster::CheckMonsterRotate()
       && (m_fStartLookAtPos[0] != m_fLookAtPos[0] || m_fStartLookAtPos[2] != m_fLookAtPos[2]))
   {
     UpdateLookAtPos(m_fStartLookAtPos);
-    memcpy_0(m_fLookAtPos, m_fStartLookAtPos, sizeof(m_fLookAtPos));
+    std::memcpy(m_fLookAtPos, m_fStartLookAtPos, sizeof(m_fLookAtPos));
     SendMsg_Change_MonsterRotate();
   }
 }
@@ -1838,7 +1838,7 @@ void CMonster::make_gen_attack_param(CCharacter *pDst, _attack_param *pAP)
 
   if (pDst)
   {
-    memcpy_0(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
+    std::memcpy(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
   }
 }
 
@@ -1894,11 +1894,11 @@ char CMonster::make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, 
 
   if (pDst)
   {
-    memcpy_0(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
+    std::memcpy(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
   }
   else
   {
-    memcpy_0(pAP->fArea, m_fCurPos, sizeof(pAP->fArea));
+    std::memcpy(pAP->fArea, m_fCurPos, sizeof(pAP->fArea));
   }
   pAP->nMaxAttackPnt = 0;
   return 1;
@@ -1929,11 +1929,11 @@ void CMonster::make_force_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, 
     pAP->nMastery = 1;
     if (pDst)
     {
-      memcpy_0(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
+      std::memcpy(pAP->fArea, pDst->m_fCurPos, sizeof(pAP->fArea));
     }
     else
     {
-      memcpy_0(pAP->fArea, m_fCurPos, sizeof(pAP->fArea));
+      std::memcpy(pAP->fArea, m_fCurPos, sizeof(pAP->fArea));
     }
     pAP->nMaxAttackPnt = 0;
   }
@@ -2431,7 +2431,7 @@ char CMonster::AddEventItem(_event_loot_item *pItem)
   {
     return 0;
   }
-  memcpy_0(&m_eventItem[m_nEventItemNum], pItem, sizeof(m_eventItem[m_nEventItemNum]));
+  std::memcpy(&m_eventItem[m_nEventItemNum], pItem, sizeof(m_eventItem[m_nEventItemNum]));
   ++m_nEventItemNum;
   return 1;
 }
@@ -2934,7 +2934,7 @@ void CMonster::_BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pA
             CPlayer *member = &g_Player[members[k]->m_wZoneIndex];
             char source[56] = {};
             std::sprintf(source, " %d ", member->m_dwObjSerial);
-            strcat_0(destination, source);
+            std::strcat(destination, source);
           }
           CMonster::s_logTrace_Boss_Looting.Write( "\t %s", destination);
         }
@@ -3280,7 +3280,7 @@ CMonster *CreateRepMonster(
     return nullptr;
   }
 
-  memcpy_0(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, fPos, sizeof(data.m_fStartPos));
   data.pActiveRec = nullptr;
   data.pDumPosition = nullptr;
   data.pParent = pParent;
@@ -3329,7 +3329,7 @@ CMonster *CreateRespawnMonster(
 
   if (pActiveRec && pActiveRec->m_pBlk && pActiveRec->m_pBlk->m_bRotate && pDumPosition)
   {
-    memcpy_0(data.m_fStartPos, pDumPosition->m_fCenterPos, sizeof(data.m_fStartPos));
+    std::memcpy(data.m_fStartPos, pDumPosition->m_fCenterPos, sizeof(data.m_fStartPos));
   }
   else if (!pMap->GetRandPosInDummy(pDumPosition, data.m_fStartPos, false))
   {

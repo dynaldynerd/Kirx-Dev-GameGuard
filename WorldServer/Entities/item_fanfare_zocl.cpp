@@ -9,5 +9,5 @@ _item_fanfare_zocl::_item_fanfare_zocl()
 
 void _item_fanfare_zocl::Init()
 {
-  memset_0(this, 0, sizeof(_item_fanfare_zocl));
+  std::memset(this, 0, sizeof(_item_fanfare_zocl));
 }

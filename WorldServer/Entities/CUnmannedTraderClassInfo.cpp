@@ -5,8 +5,8 @@
 CUnmannedTraderClassInfo::CUnmannedTraderClassInfo(unsigned int dwID)
   : m_dwID(dwID), m_dwVer(0), m_szTypeName{}, m_szClassName{}
 {
-  strcpy_0(this->m_szTypeName, "NONE");
-  strcpy_0(this->m_szClassName, "NONE");
+  std::strcpy(this->m_szTypeName, "NONE");
+  std::strcpy(this->m_szClassName, "NONE");
 }
 
 CUnmannedTraderClassInfo::~CUnmannedTraderClassInfo()

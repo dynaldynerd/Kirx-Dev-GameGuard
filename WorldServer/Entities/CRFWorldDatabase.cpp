@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "GlobalObjects.h"
 
@@ -1028,11 +1028,11 @@ bool CRFWorldDatabase::create_sumtotal_dungeon(int nRecodeNum, char **ppKey)
 
   for (int index = 0; index < nRecodeNum; ++index)
   {
-    const int queryLength = strlen_0(buffer);
+    const int queryLength = std::strlen(buffer);
     sprintf(&buffer[queryLength], ",[Sum_%s] [int] DEFAULT (1) NOT NULL", ppKey[index]);
   }
 
-  const int queryLength = strlen_0(buffer);
+  const int queryLength = std::strlen(buffer);
   sprintf(
     &buffer[queryLength],
     ") ON [PRIMARY] ALTER TABLE [dbo].[tbl_sumtotal_dungeon_%d] WITH NOCHECK ADD  CONSTRAINT [PK_tbl_sumtotal_dungeon_%d]"
@@ -1107,7 +1107,7 @@ unsigned __int8 CRFWorldDatabase::select_automine(_DB_LOAD_AUTOMINE_MACHINE *pda
           if (targetValue != -1 && byNum)
           {
             pdata->slot[pdata->bySlotCnt].nLumpIndex = j / 40;
-            memcpy_0(&pdata->slot[pdata->bySlotCnt].item, &targetValue, sizeof(pdata->slot[pdata->bySlotCnt].item));
+            std::memcpy(&pdata->slot[pdata->bySlotCnt].item, &targetValue, sizeof(pdata->slot[pdata->bySlotCnt].item));
             pdata->slot[pdata->bySlotCnt++].nOverlapNum = byNum;
           }
         }
@@ -2002,7 +2002,7 @@ unsigned __int8 CRFWorldDatabase::Select_TotalGuildRank(char *szDate, _total_gui
         if (!pkInfo->list[static_cast<unsigned __int64>(pkInfo->wCount)].dwMasterSerial)
         {
           const char *noneString = CNationSettingManager::Instance()->GetNoneString();
-          strcpy_0(
+          std::strcpy(
             pkInfo->list[static_cast<unsigned __int64>(pkInfo->wCount)].wszMasterName,
             noneString);
         }
@@ -2179,7 +2179,7 @@ unsigned __int8 CRFWorldDatabase::Select_PvpPointGuildRank(char *szDate, _pvppoi
 bool CRFWorldDatabase::Update_PvpPointGuildRankRecord(char *szDate, unsigned int dwSerial, unsigned __int16 wRank)
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   sprintf(buffer, "update [dbo].[tbl_PvpPointGuildRank%s] set rank=%u where serial=%u", szDate, wRank, dwSerial);
   return ExecUpdateQuery(buffer, true);
 }
@@ -2191,7 +2191,7 @@ bool CRFWorldDatabase::Update_PvpPointGuildRankSumLv(
   unsigned __int8 byLimitGrade)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     "update [dbo].[tbl_PvpPointGuildRank%s] set sumlv = nsl.newsumlv from ( select top %u serial, ( select sum(lv) from t"
@@ -2350,7 +2350,7 @@ unsigned __int8 CRFWorldDatabase::Select_WeeklyGuildRankOwnerGuild(
 bool CRFWorldDatabase::Create_PvpPointGuildRankTable(char *szDate)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     "create table [dbo].[tbl_PvpPointGuildRank%s] ( [serial] [int] not null, [rank] [int] not null, [id] [varchar](17) no"
@@ -2366,7 +2366,7 @@ bool CRFWorldDatabase::Create_PvpPointGuildRankTable(char *szDate)
 bool CRFWorldDatabase::Insert_PvpPointGuildRankData(char *szDate)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(
     buffer,
     "insert into [dbo].[tbl_PvpPointGuildRank%s] select g.serial, 0 as rank, g.id, g.race, g.grade, s.killpvppoint, s.gui"
@@ -2379,7 +2379,7 @@ bool CRFWorldDatabase::Insert_PvpPointGuildRankData(char *szDate)
 bool CRFWorldDatabase::Update_ClearWeeklyPvpPointSum()
 {
   char buffer[272]{};
-  memset_0(buffer, 0, 256);
+  std::memset(buffer, 0, 256);
   sprintf(buffer, "update [dbo].[tbl_WeeklyGuildPVPPointSum] set killpvppoint = 0, guildbattlepvppoint = 0");
   return ExecUpdateQuery(buffer, false);
 }
@@ -2387,7 +2387,7 @@ bool CRFWorldDatabase::Update_ClearWeeklyPvpPointSum()
 bool CRFWorldDatabase::Update_IncreaseWeeklyGuildGuildBattlePvpPointSum(unsigned int dwSerial, long double dPvpPoint)
 {
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   sprintf(buffer, "{ CALL pUpdate_WeeklyGuildGuildBattlePVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
   return ExecUpdateQuery(buffer, true);
 }
@@ -3785,7 +3785,7 @@ char CRFWorldDatabase::Select_CharacterBaseInfoByName(char *pwszCharacterName, _
     return result;
   }
 
-  strcpy_0(pCharacterData->wszName, pwszCharacterName);
+  std::strcpy(pCharacterData->wszName, pwszCharacterName);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwSerial, 0, &indicator);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_TINYINT, &pCharacterData->byRace, 0, &indicator);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_CHAR, pCharacterData->szClassCode, 5, &indicator);
@@ -3882,7 +3882,7 @@ char CRFWorldDatabase::Select_CharactersInfo(unsigned int dwAccountSerial, _worl
     ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_CHAR, targetValue, 17, &indicator);
     if (pCharacterData->CharacterInfo[row].byDck == 1)
     {
-      strcpy_0(pCharacterData->CharacterInfo[row].wszAvatorName, targetValue);
+      std::strcpy(pCharacterData->CharacterInfo[row].wszAvatorName, targetValue);
     }
     ++row;
   }

@@ -49,7 +49,7 @@ char CParkingUnit::Create(_parkingunit_create_setdata *pParam)
   m_pOwner = pParam->pOwner;
   m_dwOwnerSerial = pParam->pOwner->m_dwObjSerial;
   m_byFrame = pParam->byFrame;
-  memcpy_0(m_byPartCode, pParam->byPartCode, sizeof(m_byPartCode));
+  std::memcpy(m_byPartCode, pParam->byPartCode, sizeof(m_byPartCode));
   m_byCreateType = pParam->byCreateType;
   m_byTransDistCode = pParam->byTransDistCode;
   m_dwParkingStartTime = timeGetTime();
@@ -108,7 +108,7 @@ void CParkingUnit::SendMsg_Create()
   payload.dwObjSerial = m_dwObjSerial;
   payload.byCreateType = static_cast<char>(m_byCreateType);
   payload.byFrame = static_cast<char>(m_byFrame);
-  memcpy_0(payload.byPart, m_byPartCode, sizeof(m_byPartCode));
+  std::memcpy(payload.byPart, m_byPartCode, sizeof(m_byPartCode));
   payload.dwOwerSerial = m_dwOwnerSerial;
   FloatToShort(m_fCurPos, payload.zPos, 3);
   payload.byTransDistCode = static_cast<char>(m_byTransDistCode);
@@ -150,7 +150,7 @@ void CParkingUnit::SendMsg_FixPosition(int n)
   msg.wObjIndex = m_ObjID.m_wIndex;
   msg.dwObjSerial = m_dwObjSerial;
   msg.byFrame = static_cast<char>(m_byFrame);
-  memcpy_0(msg.byPart, m_byPartCode, sizeof(m_byPartCode));
+  std::memcpy(msg.byPart, m_byPartCode, sizeof(m_byPartCode));
   FloatToShort(m_fCurPos, msg.zPos, 3);
   msg.dwMasterSerial = m_pOwner->m_dwObjSerial;
 

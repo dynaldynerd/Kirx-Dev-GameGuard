@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "RFEvent_ClassRefine.h"
 
@@ -38,14 +38,14 @@ bool RFEvent_ClassRefine::Initialzie()
   }
 
   ReadClassRefineEventInfo();
-  memcpy_0(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
+  std::memcpy(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
 
   _pkParticipant = reinterpret_cast<_event_participant_classrefine *>(operator new[](50640));
   if (_pkParticipant == nullptr)
   {
     return false;
   }
-  memset_0(_pkParticipant, 0, 50640);
+  std::memset(_pkParticipant, 0, 50640);
   m_bUserDataReset = false;
 
   m_tmDataFileCheckTime.BeginTimer(10000);
@@ -73,7 +73,7 @@ void RFEvent_ClassRefine::Loop()
 {
   if (m_tmDataFileCheckTime.CountingTimer() && CheckRefineEventData())
   {
-    memcpy_0(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
+    std::memcpy(&_kEvent, &_kModifyEvent, sizeof(_kEvent));
     if (m_bUserDataReset)
     {
       ResetRefineData();
@@ -188,7 +188,7 @@ bool RFEvent_ClassRefine::SetEvent(const char *p, int size, bool bInit)
     return false;
   }
 
-  memcpy_0(&_kEvent, p, size);
+  std::memcpy(&_kEvent, p, size);
   if (bInit)
   {
     g_Main.PushDQSData(-1, nullptr, 83, nullptr, 0);
@@ -280,5 +280,5 @@ void RFEvent_ClassRefine::ReadClassRefineEventInfo()
     0,
     ".\\Initialize\\WorldSystem.ini");
 
-  _kModifyEvent.bEnable = strcmp_0(returnedString, "TRUE") == 0;
+  _kModifyEvent.bEnable = std::strcmp(returnedString, "TRUE") == 0;
 }

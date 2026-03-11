@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -214,7 +214,7 @@ void UsStateTBL::Alloc(unsigned __int8 byHFSMSize, unsigned __int8 byStateSize, 
       table[k].Init();
     }
     m_ppTBL[j] = table;
-    memset_0(m_ppTBL[j], 0, 16LL * m_byMessageSize);
+    std::memset(m_ppTBL[j], 0, 16LL * m_byMessageSize);
   }
   m_bAlloc = 1;
 

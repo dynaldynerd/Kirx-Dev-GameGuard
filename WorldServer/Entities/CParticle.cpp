@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CParticle.h"
 
@@ -129,7 +129,7 @@ void GetEntityAnimationPos(float *const a1, CParticle *a2)
 
 CParticle::CParticle()
 {
-  memset_0(this, 0, sizeof(CParticle));
+  std::memset(this, 0, sizeof(CParticle));
 }
 
 CParticle::~CParticle()
@@ -148,8 +148,8 @@ void CParticle::SetCreatePos(float *const a2)
 
 void CParticle::CopyParticleToSaveParticle(_SAVE_PARTICLE *sParticle)
 {
-  memset_0(sParticle, 0, sizeof(_SAVE_PARTICLE));
-  strcpy_0(sParticle->mEntityName, mEntityName);
+  std::memset(sParticle, 0, sizeof(_SAVE_PARTICLE));
+  std::strcpy(sParticle->mEntityName, mEntityName);
   sParticle->mNum = mNum;
   sParticle->mAlphaType = mAlphaType;
   sParticle->mFlag = mFlag;
@@ -158,19 +158,19 @@ void CParticle::CopyParticleToSaveParticle(_SAVE_PARTICLE *sParticle)
   sParticle->mGravity[1] = mGravity[1];
   sParticle->mGravity[2] = mGravity[2];
   sParticle->mTimeSpeed = mTimeSpeed;
-  memcpy_0(sParticle->mATrack, mATrack, 96);
+  std::memcpy(sParticle->mATrack, mATrack, 96);
 }
 
 void CParticle::CopySaveParticleToParticle(_SAVE_PARTICLE *sParticle)
 {
-  memset_0(this, 0, sizeof(CParticle));
-  strcpy_0(mEntityName, sParticle->mEntityName);
+  std::memset(this, 0, sizeof(CParticle));
+  std::strcpy(mEntityName, sParticle->mEntityName);
   mFlag = sParticle->mFlag;
   mNum = static_cast<int>(sParticle->mNum);
   mAlphaType = sParticle->mAlphaType;
   mLiveTime = sParticle->mLiveTime;
   mTimeSpeed = sParticle->mTimeSpeed;
-  memcpy_0(mATrack, sParticle->mATrack, 96);
+  std::memcpy(mATrack, sParticle->mATrack, 96);
 }
 
 void CParticle::SetPreCalcParticle(unsigned int type)
@@ -183,7 +183,7 @@ void CParticle::SetPreCalcParticle(unsigned int type)
   mFlag = stPreParticleList[type].mFlag;
   mLiveTime = stPreParticleList[type].mLiveTime;
   mTimeSpeed = stPreParticleList[type].mTimeSpeed;
-  memcpy_0(mATrack, stPreParticleList[type].mATrack, 96);
+  std::memcpy(mATrack, stPreParticleList[type].mATrack, 96);
 }
 
 __int64 CParticle::GetParticleState()
@@ -205,7 +205,7 @@ void CParticle::ReInitParticle(int a2)
   }
 
   mTotalTime = 0.0f;
-  mElement = reinterpret_cast<_PARTICLE_ELEMENT *>(ReAlloc(reinterpret_cast<_DWORD *>(mElement), 104 * previousNum, 104 * a2));
+  mElement = reinterpret_cast<_PARTICLE_ELEMENT *>(ReAlloc(reinterpret_cast<unsigned int *>(mElement), 104 * previousNum, 104 * a2));
   for (int index = previousNum; index < a2; ++index)
   {
     InitElement(index, 0.0f);
@@ -246,7 +246,7 @@ void CParticle::GetBBox(float *const getMin, float *const getMax)
   getMax[2] = -65000.0f;
 
   _PARTICLE_ELEMENT elementBackup{};
-  memcpy_0(&elementBackup, mElement, sizeof(_PARTICLE_ELEMENT));
+  std::memcpy(&elementBackup, mElement, sizeof(_PARTICLE_ELEMENT));
 
   _ENTITY_M_GROUP *matGroup = &mEntity->mMatGroup[0];
   float bbMax = -65000.0f;
@@ -262,9 +262,9 @@ void CParticle::GetBBox(float *const getMin, float *const getMax)
   }
 
   float startPosBackup[3][3]{};
-  memcpy_0(startPosBackup[0], mStartPos[0], sizeof(float) * 3);
-  memcpy_0(startPosBackup[1], mStartPos[1], sizeof(float) * 3);
-  memcpy_0(startPosBackup[2], mCreatePos, sizeof(float) * 3);
+  std::memcpy(startPosBackup[0], mStartPos[0], sizeof(float) * 3);
+  std::memcpy(startPosBackup[1], mStartPos[1], sizeof(float) * 3);
+  std::memcpy(startPosBackup[2], mCreatePos, sizeof(float) * 3);
 
   mCreatePos[0] = 0.0f;
   mCreatePos[1] = 0.0f;
@@ -304,9 +304,9 @@ void CParticle::GetBBox(float *const getMin, float *const getMax)
   getMax[1] += bbMax;
   getMax[2] += bbMax;
 
-  memcpy_0(mStartPos[0], startPosBackup[0], sizeof(float) * 3);
-  memcpy_0(mStartPos[1], startPosBackup[1], sizeof(float) * 3);
-  memcpy_0(mCreatePos, startPosBackup[2], sizeof(float) * 3);
+  std::memcpy(mStartPos[0], startPosBackup[0], sizeof(float) * 3);
+  std::memcpy(mStartPos[1], startPosBackup[1], sizeof(float) * 3);
+  std::memcpy(mCreatePos, startPosBackup[2], sizeof(float) * 3);
 
   getMin[0] += mStartPos[0][0];
   getMin[1] += mStartPos[0][1];
@@ -315,7 +315,7 @@ void CParticle::GetBBox(float *const getMin, float *const getMax)
   getMax[1] += mStartPos[1][1];
   getMax[2] += mStartPos[1][2];
 
-  memcpy_0(mElement, &elementBackup, sizeof(_PARTICLE_ELEMENT));
+  std::memcpy(mElement, &elementBackup, sizeof(_PARTICLE_ELEMENT));
 }
 
 void CParticle::GetFlickerARGB(int i, unsigned int *dwArgb)
@@ -459,7 +459,7 @@ __int64 CParticle::SpecialLoop()
       const float dx = mSpecialARGV[0][0] - mSpecialARGV[1][0];
       const float dy = mSpecialARGV[0][1] - mSpecialARGV[1][1];
       const float dz = mSpecialARGV[0][2] - mSpecialARGV[1][2];
-      mStartPos[1][1] = sqrtf_0(dx * dx + dy * dy + dz * dz) + mStartPos[0][1];
+      mStartPos[1][1] = std::sqrt(dx * dx + dy * dy + dz * dz) + mStartPos[0][1];
       return -1;
     }
     default:
@@ -484,7 +484,7 @@ __int64 CParticle::SpecialLoop()
   const float dx = mSpecialARGV[0][0] - mSpecialARGV[1][0];
   const float dy = mSpecialARGV[0][1] - mSpecialARGV[1][1];
   const float dz = mSpecialARGV[0][2] - mSpecialARGV[1][2];
-  const float distanceScale = sqrtf_0(dx * dx + dy * dy + dz * dz) / 10.0f;
+  const float distanceScale = std::sqrt(dx * dx + dy * dy + dz * dz) / 10.0f;
 
   mGravity[0] = oldGravityX * distanceScale;
   mGravity[1] = oldGravityY * distanceScale;
@@ -602,7 +602,7 @@ __int64 CParticle::SpecialLoop2()
         const float dz = nearest.mPos[2] - element.mPos[2];
         if (dx != 0.0f || dy != 0.0f || dz != 0.0f)
         {
-          const float length = sqrtf_0(dx * dx + dy * dy + dz * dz);
+          const float length = std::sqrt(dx * dx + dy * dy + dz * dz);
           const float base = mNextCreatorTime + mOnePerTimeEpsilonTemp;
           const float offset =
             ((-0.0f - (base * length)) / (((1.0f - mStartTimeRange) * mOnePerTime) - base));
@@ -666,7 +666,7 @@ __int64 CParticle::LoadParticleSPT(char *a2, int a3)
   }
 
   int hasTrackContext = -1;
-  memset_0(this, 0, sizeof(CParticle));
+  std::memset(this, 0, sizeof(CParticle));
   this->mStartScale[0] = 1.0f;
   this->mStartScale[1] = 1.0f;
   this->mStartARGB[0][0] = 255.0f;
@@ -1024,7 +1024,7 @@ void CParticle::InitElement(int a2, float a3)
       transformedStartPos[1] = sub_140517000(this->mStartPos[0][1], this->mStartPos[1][1]);
       localStartPos[2] = sub_140517000(this->mStartPos[0][2], this->mStartPos[1][2]);
       localStartPos[0] = sub_140517000(-0.0f - transformedStartPos[0], transformedStartPos[0]);
-      localStartPos[1] = sqrtf_0((float)(1.0f - (float)((float)(localStartPos[0] * localStartPos[0]) / (float)(transformedStartPos[0] * transformedStartPos[0])))
+      localStartPos[1] = std::sqrt((float)(1.0f - (float)((float)(localStartPos[0] * localStartPos[0]) / (float)(transformedStartPos[0] * transformedStartPos[0])))
                                * (float)(transformedStartPos[1] * transformedStartPos[1]));
       const int randomValue = rand();
       if (((randomValue >> 31) ^ (randomValue & 1)) == randomValue >> 31)
@@ -1043,7 +1043,7 @@ void CParticle::InitElement(int a2, float a3)
     transformedStartPos[2] = sub_140517000(this->mStartPos[0][2], this->mStartPos[1][2]);
     localStartPos[1] = sub_140517000(this->mStartPos[0][1], this->mStartPos[1][1]);
     localStartPos[0] = sub_140517000(-0.0f - transformedStartPos[0], transformedStartPos[0]);
-    localStartPos[2] = sqrtf_0((float)(1.0f - (float)((float)(localStartPos[0] * localStartPos[0]) / (float)(transformedStartPos[0] * transformedStartPos[0])))
+    localStartPos[2] = std::sqrt((float)(1.0f - (float)((float)(localStartPos[0] * localStartPos[0]) / (float)(transformedStartPos[0] * transformedStartPos[0])))
                              * (float)(transformedStartPos[2] * transformedStartPos[2]));
     const int randomValue = rand();
     if (((randomValue >> 31) ^ (randomValue & 1)) == randomValue >> 31)
@@ -1416,12 +1416,12 @@ void CParticle::CheckCollision(int a2, float a3)
         else
         {
           sub_140518700(collisionNormal, reflectionAxis, mirrorVector);
-          const float reflectionLength = sqrtf_0((float)((float)(reflectionAxis[1] * reflectionAxis[1]) + (float)(reflectionAxis[0] * reflectionAxis[0]))
+          const float reflectionLength = std::sqrt((float)((float)(reflectionAxis[1] * reflectionAxis[1]) + (float)(reflectionAxis[0] * reflectionAxis[0]))
                                                + (float)(reflectionAxis[2] * reflectionAxis[2]));
           reflectionAxis[0] /= reflectionLength;
           reflectionAxis[1] /= reflectionLength;
           reflectionAxis[2] /= reflectionLength;
-          const float mirrorLength = sqrtf_0((float)((float)(mirrorVector[1] * mirrorVector[1]) + (float)(mirrorVector[0] * mirrorVector[0]))
+          const float mirrorLength = std::sqrt((float)((float)(mirrorVector[1] * mirrorVector[1]) + (float)(mirrorVector[0] * mirrorVector[0]))
                                            + (float)(mirrorVector[2] * mirrorVector[2]));
           mirrorNormal[0] = mirrorVector[0] / mirrorLength;
           mirrorNormal[1] = mirrorVector[1] / mirrorLength;

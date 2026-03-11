@@ -797,7 +797,7 @@ struct  _qry_case_select_patriarch_comm
 
 inline _qry_case_insert_patriarch_comm::_qry_case_insert_patriarch_comm()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _qry_case_insert_patriarch_comm::size()
@@ -1011,7 +1011,7 @@ inline _qry_case_post_storage_list_get::__list::__list()
 
 inline _qry_case_post_storage_list_get::_qry_case_post_storage_list_get()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _qry_case_post_storage_list_get::size()
@@ -1021,17 +1021,17 @@ inline __int64 _qry_case_post_storage_list_get::size()
 
 inline _worlddb_npc_quest_complete_history::_worlddb_npc_quest_complete_history()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline _worlddb_start_npc_quest_complete_history::__list::__list()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline _worlddb_potion_delay_info::_worlddb_potion_delay_info()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline _qry_case_post_return_list_get::__list::__list()
@@ -1041,7 +1041,7 @@ inline _qry_case_post_return_list_get::__list::__list()
 
 inline _qry_case_post_return_list_get::_qry_case_post_return_list_get()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
   dwMax = 10;
 }
 
@@ -1052,7 +1052,7 @@ inline __int64 _qry_case_post_return_list_get::size()
 
 inline _qry_case_post_content_get::_qry_case_post_content_get()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _qry_case_post_content_get::size()
@@ -1062,7 +1062,7 @@ inline __int64 _qry_case_post_content_get::size()
 
 inline _qry_case_update_data_for_post_send::_qry_case_update_data_for_post_send()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _qry_case_update_data_for_post_send::size()
@@ -1072,7 +1072,7 @@ inline __int64 _qry_case_update_data_for_post_send::size()
 
 inline _qry_case_update_data_for_trade::_qry_case_update_data_for_trade()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline __int64 _qry_case_update_data_for_trade::size()
@@ -1082,7 +1082,7 @@ inline __int64 _qry_case_update_data_for_trade::size()
 
 inline _rege_char_data::_rege_char_data()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 #pragma pack(pop)

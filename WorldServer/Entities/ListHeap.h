@@ -64,7 +64,7 @@ public:
     }
 
     _pBuf = buffer;
-    memset_0(_pBuf, 0, allocSize);
+    std::memset(_pBuf, 0, allocSize);
     _listData.SetList(static_cast<unsigned int>(nMaxBuf));
     _listEmpty.SetList(static_cast<unsigned int>(nMaxBuf));
     for (unsigned int j = 0; j < nMaxBuf; ++j)
@@ -92,7 +92,7 @@ public:
       return false;
     }
 
-    memcpy_0(&_pBuf[outIndex], &data, sizeof(T));
+    std::memcpy(&_pBuf[outIndex], &data, sizeof(T));
 
     CNetIndexList::_index_node *pos = _listData.m_Head.m_pNext;
     T *first = &_pBuf[pos->m_dwIndex];

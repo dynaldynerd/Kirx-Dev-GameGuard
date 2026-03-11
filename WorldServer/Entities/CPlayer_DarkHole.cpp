@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -252,7 +252,7 @@ int CPlayer::GetRewardItems_DarkDungeon(
       if (candidate
           && IsItemEquipCivil(candidate->m_byTableCode, candidate->m_wItemIndex, raceSexCode))
       {
-        memcpy_0(&pItems[rewardCount], candidate, sizeof(_STORAGE_LIST::_db_con));
+        std::memcpy(&pItems[rewardCount], candidate, sizeof(_STORAGE_LIST::_db_con));
         ++rewardCount;
       }
     }
@@ -281,7 +281,7 @@ void CPlayer::Reward_DarkDungeon(
   {
     _STORAGE_LIST::_db_con rewardItem{};
     const int pick = rand() % rewardCandidateCount;
-    memcpy_0(&rewardItem, &rewardCandidates[pick], sizeof(rewardItem));
+    std::memcpy(&rewardItem, &rewardCandidates[pick], sizeof(rewardItem));
 
     if (m_Param.m_dbInven.GetIndexEmptyCon() == 255)
     {

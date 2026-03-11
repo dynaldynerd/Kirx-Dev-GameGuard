@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CheatCommands.h"
 #include "CHEAT_COMMAND.h"
@@ -173,7 +173,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
 {
   char buffer[1284]{};
-  memset_0(buffer, 0, 1280);
+  std::memset(buffer, 0, 1280);
 
   if (pOne)
   {
@@ -185,7 +185,7 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
     sprintf(buffer, "[ GM tool ] >> ");
   }
 
-  const int offset = static_cast<int>(strlen_0(buffer));
+  const int offset = static_cast<int>(std::strlen(buffer));
   W2M(pwszCommand, &buffer[offset], 1280 - offset);
   s_logCheat.Write(buffer);
 }
@@ -199,7 +199,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
     {
       break;
     }
-    byCommandSizeList[j] = static_cast<unsigned __int8>(strlen_0(command->pwszCommand));
+    byCommandSizeList[j] = static_cast<unsigned __int8>(std::strlen(command->pwszCommand));
   }
 
   const unsigned int korLocalTime = GetKorLocalTime();
@@ -489,7 +489,7 @@ bool __fastcall ct_change_mastery(CPlayer *pOne)
   {
     for ( j = 0; j < 4; ++j )
     {
-      if ( !strcmp_0(EqSukList[j].pwszEpSuk, s_pwszDstCheat[0]) )
+      if ( !std::strcmp(EqSukList[j].pwszEpSuk, s_pwszDstCheat[0]) )
       {
         const int masteryLevel = atoi(s_pwszDstCheat[1]);
         return pOne->dev_up_mastery(EqSukList[j].nCode, EqSukList[j].nIndex, masteryLevel);
@@ -595,7 +595,7 @@ bool __fastcall ct_jump_to_pos(CPlayer *pOne)
   else
   {
     W2M(s_pwszDstCheat[1], pszMapCode, 32);
-    if ( !strcmp_0(s_pwszDstCheat[0], "#") )
+    if ( !std::strcmp(s_pwszDstCheat[0], "#") )
     {
       dstZ = (float)atoi(s_pwszDstCheat[4]);
       dstY = (float)atoi(s_pwszDstCheat[3]);
@@ -767,7 +767,7 @@ bool __fastcall ct_kick_player(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0(s_pwszDstCheat[0], "#") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "#") )
     return pOne->mgr_kick(0LL);
   return pOne->mgr_kick(s_pwszDstCheat[0]);
 }
@@ -1081,7 +1081,7 @@ bool __fastcall ct_destroy_system_tower(CPlayer *pOne)
 bool __fastcall ct_circle_user_num(CPlayer *pOne)
 {
   int UseSectorRange; // eax
-  _DWORD raceCounts[7]; // [rsp+48h] [rbp-140h] BYREF
+  unsigned int raceCounts[7]; // [rsp+48h] [rbp-140h] BYREF
   int totalCount; // [rsp+64h] [rbp-124h]
   _pnt_rect pRect; // [rsp+78h] [rbp-110h] BYREF
   _sec_info *SecInfo; // [rsp+98h] [rbp-F0h]
@@ -1277,35 +1277,35 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   if ( s_nWordCount < 2 )
     return 0;
   equipPartCode = static_cast<unsigned __int8>(-1);
-  if ( !strcmp_0("upper", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("upper", s_pwszDstCheat[0]) )
   {
     equipPartCode = 0;
   }
-  else if ( !strcmp_0("", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("", s_pwszDstCheat[0]) )
   {
     equipPartCode = 1;
   }
-  else if ( !strcmp_0("Ã¥Â°Â©", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("Ã¥Â°Â©", s_pwszDstCheat[0]) )
   {
     equipPartCode = 2;
   }
-  else if ( !strcmp_0("shoe", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("shoe", s_pwszDstCheat[0]) )
   {
     equipPartCode = 3;
   }
-  else if ( !strcmp_0("helmet", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("helmet", s_pwszDstCheat[0]) )
   {
     equipPartCode = 4;
   }
-  else if ( !strcmp_0("shield", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("shield", s_pwszDstCheat[0]) )
   {
     equipPartCode = 5;
   }
-  else if ( !strcmp_0("cloak", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("cloak", s_pwszDstCheat[0]) )
   {
     equipPartCode = 7;
   }
-  else if ( !strcmp_0("all", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("all", s_pwszDstCheat[0]) )
   {
     equipPartCode = 37;
   }
@@ -1326,35 +1326,35 @@ bool __fastcall ct_defense_item_grace_Jp(CPlayer *pOne)
   if ( s_nWordCount < 2 )
     return 0;
   equipPartCode = static_cast<unsigned __int8>(-1);
-  if ( !strcmp_0("upper", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("upper", s_pwszDstCheat[0]) )
   {
     equipPartCode = 0;
   }
-  else if ( !strcmp_0("lower", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("lower", s_pwszDstCheat[0]) )
   {
     equipPartCode = 1;
   }
-  else if ( !strcmp_0("gauntlet", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("gauntlet", s_pwszDstCheat[0]) )
   {
     equipPartCode = 2;
   }
-  else if ( !strcmp_0("shoe", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("shoe", s_pwszDstCheat[0]) )
   {
     equipPartCode = 3;
   }
-  else if ( !strcmp_0("helmet", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("helmet", s_pwszDstCheat[0]) )
   {
     equipPartCode = 4;
   }
-  else if ( !strcmp_0("shield", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("shield", s_pwszDstCheat[0]) )
   {
     equipPartCode = 5;
   }
-  else if ( !strcmp_0("cloak", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("cloak", s_pwszDstCheat[0]) )
   {
     equipPartCode = 7;
   }
-  else if ( !strcmp_0("all", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("all", s_pwszDstCheat[0]) )
   {
     equipPartCode = 37;
   }
@@ -1374,17 +1374,17 @@ bool __fastcall ct_animus_attack_grade(CPlayer *pOne)
   if ( s_nWordCount < 1 )
     return 0;
   nPoint = 0;
-  if ( !strcmp_0("max", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("max", s_pwszDstCheat[0]) )
   {
     nPoint = 1;
   }
-  else if ( !strcmp_0("min", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("min", s_pwszDstCheat[0]) )
   {
     nPoint = -1;
   }
   else
   {
-    if ( strcmp_0("normal", s_pwszDstCheat[0]) )
+    if ( std::strcmp("normal", s_pwszDstCheat[0]) )
       return 0;
     nPoint = 0;
   }
@@ -1435,63 +1435,63 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   nNum = atoi(s_pwszDstCheat[1]);
   W2M(s_pwszDstCheat[0], szTran, 32);
   W2M(s_pwszDstCheat[2], Str1, 32);
-  if ( !strcmp_0(Str1, byte_1407AE660) )
+  if ( !std::strcmp(Str1, byte_1407AE660) )
   {
-    strcpy_0(Destination, "irtal01");
+    std::strcpy(Destination, "irtal01");
   }
-  else if ( !strcmp_0(Str1, aA_44) )
+  else if ( !std::strcmp(Str1, aA_44) )
   {
-    strcpy_0(Destination, "irtal02");
+    std::strcpy(Destination, "irtal02");
   }
-  else if ( !strcmp_0(Str1, byte_1407AE680) )
+  else if ( !std::strcmp(Str1, byte_1407AE680) )
   {
-    strcpy_0(Destination, "irtal03");
+    std::strcpy(Destination, "irtal03");
   }
-  else if ( !strcmp_0(Str1, aE_2) )
+  else if ( !std::strcmp(Str1, aE_2) )
   {
-    strcpy_0(Destination, "irtal04");
+    std::strcpy(Destination, "irtal04");
   }
-  else if ( !strcmp_0(Str1, aAo_7) )
+  else if ( !std::strcmp(Str1, aAo_7) )
   {
-    strcpy_0(Destination, "irtal05");
+    std::strcpy(Destination, "irtal05");
   }
-  else if ( !strcmp_0(Str1, "") )
+  else if ( !std::strcmp(Str1, "") )
   {
-    strcpy_0(Destination, "irtal06");
+    std::strcpy(Destination, "irtal06");
   }
-  else if ( !strcmp_0(Str1, "") )
+  else if ( !std::strcmp(Str1, "") )
   {
-    strcpy_0(Destination, "irtal07");
+    std::strcpy(Destination, "irtal07");
   }
-  else if ( !strcmp_0(Str1, aA_45) )
+  else if ( !std::strcmp(Str1, aA_45) )
   {
-    strcpy_0(Destination, "irtal08");
+    std::strcpy(Destination, "irtal08");
   }
-  else if ( !strcmp_0(Str1, byte_1407AE6E0) )
+  else if ( !std::strcmp(Str1, byte_1407AE6E0) )
   {
-    strcpy_0(Destination, "irtal09");
+    std::strcpy(Destination, "irtal09");
   }
-  else if ( !strcmp_0(Str1, byte_1407AE6F0) )
+  else if ( !std::strcmp(Str1, byte_1407AE6F0) )
   {
-    strcpy_0(Destination, "irtal10");
+    std::strcpy(Destination, "irtal10");
   }
-  else if ( !strcmp_0(Str1, byte_1407AE700) )
+  else if ( !std::strcmp(Str1, byte_1407AE700) )
   {
-    strcpy_0(Destination, "irtal11");
+    std::strcpy(Destination, "irtal11");
   }
-  else if ( !strcmp_0(Str1, "") )
+  else if ( !std::strcmp(Str1, "") )
   {
-    strcpy_0(Destination, "irtal12");
+    std::strcpy(Destination, "irtal12");
   }
-  else if ( !strcmp_0(Str1, "ÃšÂº") )
+  else if ( !std::strcmp(Str1, "ÃšÂº") )
   {
-    strcpy_0(Destination, "irtal13");
+    std::strcpy(Destination, "irtal13");
   }
   else
   {
-    if ( strcmp_0(Str1, "ÃˆÂ°") )
+    if ( std::strcmp(Str1, "ÃˆÂ°") )
       return 0;
-    strcpy_0(Destination, "irtal14");
+    std::strcpy(Destination, "irtal14");
   }
   return pOne->dev_loot_item(szTran, nNum, Destination, nUpNum);
 }
@@ -1504,7 +1504,7 @@ bool __fastcall ct_resurrect_player(CPlayer *pOne)
     return 0;
   if ( s_nWordCount >= 1 )
   {
-    if ( strcmp_0(aA_46, s_pwszDstCheat[0]) )
+    if ( std::strcmp(aA_46, s_pwszDstCheat[0]) )
       return pOne->mgr_resurrect_player(s_pwszDstCheat[0]);
     PvpPointLimiter = pOne->GetPvpPointLimiter(&result);
     PvpPointLimiter->CheatUpdate(pOne->m_Param.m_dbChar.m_dPvPPoint);
@@ -2219,7 +2219,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0("start", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("start", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 2 )
     {
@@ -2229,17 +2229,17 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     }
     return 0;
   }
-  if ( !strcmp_0("end", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("end", s_pwszDstCheat[0]) )
     return g_HolySys.ct_StopBattle();
-  if ( strcmp_0("Ã…Â°", s_pwszDstCheat[0]) )
+  if ( std::strcmp("Ã…Â°", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
+    if ( s_nWordCount >= 1 && !std::strcmp("state", s_pwszDstCheat[0]) )
       return g_HolySys.ct_State(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
     return 0;
-  if ( !strcmp_0("neutral", s_pwszDstCheat[1]) )
+  if ( !std::strcmp("neutral", s_pwszDstCheat[1]) )
   {
     if ( s_nWordCount >= 3 )
     {
@@ -2251,9 +2251,9 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
     }
     return 0;
   }
-  if ( strcmp_0("invincible", s_pwszDstCheat[1]) )
+  if ( std::strcmp("invincible", s_pwszDstCheat[1]) )
   {
-    if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
+    if ( !std::strcmp("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       chaosRace = atoi(s_pwszDstCheat[2]);
       return g_HolySys.ct_KeeperStart(6, chaosRace, 0);
@@ -2282,7 +2282,7 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0("start", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("start", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 2 )
     {
@@ -2292,17 +2292,17 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     }
     return 0;
   }
-  if ( !strcmp_0("end", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("end", s_pwszDstCheat[0]) )
     return g_HolySys.ct_StopBattle();
-  if ( strcmp_0("keeper", s_pwszDstCheat[0]) )
+  if ( std::strcmp("keeper", s_pwszDstCheat[0]) )
   {
-    if ( s_nWordCount >= 1 && !strcmp_0("state", s_pwszDstCheat[0]) )
+    if ( s_nWordCount >= 1 && !std::strcmp("state", s_pwszDstCheat[0]) )
       return g_HolySys.ct_State(pOne);
     return 0;
   }
   if ( s_nWordCount < 2 )
     return 0;
-  if ( !strcmp_0("neutral", s_pwszDstCheat[1]) )
+  if ( !std::strcmp("neutral", s_pwszDstCheat[1]) )
   {
     if ( s_nWordCount >= 3 )
     {
@@ -2314,9 +2314,9 @@ bool __fastcall ct_HolySystem_Jp(CPlayer *pOne)
     }
     return 0;
   }
-  if ( strcmp_0("invincible", s_pwszDstCheat[1]) )
+  if ( std::strcmp("invincible", s_pwszDstCheat[1]) )
   {
-    if ( !strcmp_0("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
+    if ( !std::strcmp("chaos", s_pwszDstCheat[1]) && s_nWordCount >= 3 )
     {
       chaosRace = atoi(s_pwszDstCheat[2]);
       return g_HolySys.ct_KeeperStart(6, chaosRace, 0);
@@ -2552,33 +2552,33 @@ bool __fastcall ct_chatsave(CPlayer *pOne)
   if ( s_nWordCount >= 1 )
   {
     const int raceOrBossCode = atoi(s_pwszDstCheat[1]);
-    if ( !strcmp_0("char", s_pwszDstCheat[0]) )
+    if ( !std::strcmp("char", s_pwszDstCheat[0]) )
     {
       if ( s_nWordCount >= 3 )
       {
-        if ( !strcmp_0(byte_1407AEA8C, s_pwszDstCheat[1]) )
+        if ( !std::strcmp(byte_1407AEA8C, s_pwszDstCheat[1]) )
           return chatStealSystem->SetTargetInfoFromCharacter(2u, s_pwszDstCheat[2]);
-        if ( !strcmp_0(aA_49, s_pwszDstCheat[1]) )
+        if ( !std::strcmp(aA_49, s_pwszDstCheat[1]) )
           return chatStealSystem->SetTargetInfoFromCharacter(4u, s_pwszDstCheat[2]);
-        if ( !strcmp_0(byte_1407AEA9C, s_pwszDstCheat[1]) )
+        if ( !std::strcmp(byte_1407AEA9C, s_pwszDstCheat[1]) )
           return chatStealSystem->SetTargetInfoFromCharacter(3u, s_pwszDstCheat[2]);
-        if ( !strcmp_0(aAi_8, s_pwszDstCheat[1]) )
+        if ( !std::strcmp(aAi_8, s_pwszDstCheat[1]) )
           return chatStealSystem->SetTargetInfoFromCharacter(1u, s_pwszDstCheat[2]);
-        if ( !strcmp_0(aAua_0, s_pwszDstCheat[1]) )
+        if ( !std::strcmp(aAua_0, s_pwszDstCheat[1]) )
           return chatStealSystem->SetTargetInfoFromCharacter(5u, s_pwszDstCheat[2]);
       }
     }
-    else if ( !strcmp_0("race", s_pwszDstCheat[0]) )
+    else if ( !std::strcmp("race", s_pwszDstCheat[0]) )
     {
       if ( s_nWordCount >= 2 )
         return chatStealSystem->SetTargetInfoFromRace(7u, static_cast<unsigned __int8>(raceOrBossCode));
     }
-    else if ( !strcmp_0("boss", s_pwszDstCheat[0]) )
+    else if ( !std::strcmp("boss", s_pwszDstCheat[0]) )
     {
       if ( s_nWordCount >= 2 )
         return chatStealSystem->SetTargetInfoFromBoss(6u, static_cast<unsigned __int8>(raceOrBossCode));
     }
-    else if ( !strcmp_0("off", s_pwszDstCheat[0]) )
+    else if ( !std::strcmp("off", s_pwszDstCheat[0]) )
     {
       return chatStealSystem->SetGm(nullptr);
     }
@@ -2735,17 +2735,17 @@ bool __fastcall ct_trap_attack_grade(CPlayer *pOne)
   if ( s_nWordCount < 1 )
     return 0;
   nPoint = 0;
-  if ( !strcmp_0("max", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("max", s_pwszDstCheat[0]) )
   {
     nPoint = 1;
   }
-  else if ( !strcmp_0("min", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("min", s_pwszDstCheat[0]) )
   {
     nPoint = -1;
   }
   else
   {
-    if ( strcmp_0("normal", s_pwszDstCheat[0]) )
+    if ( std::strcmp("normal", s_pwszDstCheat[0]) )
       return 0;
     nPoint = 0;
   }
@@ -2759,29 +2759,29 @@ bool __fastcall ct_set_damage_part(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0("body", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("body", s_pwszDstCheat[0]) )
   {
     pOne->m_byDamagePart = 0;
   }
-  else if ( !strcmp_0("leg", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("leg", s_pwszDstCheat[0]) )
   {
     pOne->m_byDamagePart = 1;
   }
-  else if ( !strcmp_0("hand", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("hand", s_pwszDstCheat[0]) )
   {
     pOne->m_byDamagePart = 2;
   }
-  else if ( !strcmp_0("foot", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("foot", s_pwszDstCheat[0]) )
   {
     pOne->m_byDamagePart = 3;
   }
-  else if ( !strcmp_0("head", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("head", s_pwszDstCheat[0]) )
   {
     pOne->m_byDamagePart = 4;
   }
   else
   {
-    if ( strcmp_0("random", s_pwszDstCheat[0]) )
+    if ( std::strcmp("random", s_pwszDstCheat[0]) )
       return 0;
     pOne->m_byDamagePart = -1;
   }
@@ -2853,7 +2853,7 @@ bool __fastcall ct_buf_potion_use(CPlayer *pOne)
     return 0;
   if ( s_nWordCount > 3 )
     return 0;
-  if ( !strcmp_0("end", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("end", s_pwszDstCheat[0]) )
     pOne->Cheet_BufEffectEnd();
   return 1;
 }
@@ -2881,7 +2881,7 @@ bool __fastcall ct_lua_command(CPlayer *pOne)
   if ( s_nWordCount >= 3 )
     W2M(s_pwszDstCheat[2], commandArg, 32);
 
-  if ( !strcmp_0("attach", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("attach", s_pwszDstCheat[0]) )
   {
     script = scriptMgr->NewScript();
     if ( !script )
@@ -2894,7 +2894,7 @@ bool __fastcall ct_lua_command(CPlayer *pOne)
     return scriptMgr->AttachLuaScript(script, &attachCommand);
   }
 
-  if ( !strcmp_0("dettach", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("dettach", s_pwszDstCheat[0]) )
   {
     script = scriptMgr->SearchScript(scriptName);
     if ( !script )
@@ -2902,7 +2902,7 @@ bool __fastcall ct_lua_command(CPlayer *pOne)
     return scriptMgr->DetackLuaScript(script);
   }
 
-  if ( !strcmp_0("cmdfile", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("cmdfile", s_pwszDstCheat[0]) )
   {
     script = scriptMgr->SearchScript(scriptName);
     if ( !script )
@@ -2914,7 +2914,7 @@ bool __fastcall ct_lua_command(CPlayer *pOne)
     return script->RunCommand(&attachCommand);
   }
 
-  if ( strcmp_0("cmdstr", s_pwszDstCheat[0]) )
+  if ( std::strcmp("cmdstr", s_pwszDstCheat[0]) )
     return 0;
 
   script = scriptMgr->SearchScript(scriptName);
@@ -2941,7 +2941,7 @@ bool __fastcall ct_userchatban(CPlayer *pOne)
     return 0;
   if ( s_nWordCount == 3 )
   {
-    if ( strlen_0(s_pwszDstCheat[2]) && strlen_0(s_pwszDstCheat[2]) <= 127 )
+    if ( std::strlen(s_pwszDstCheat[2]) && std::strlen(s_pwszDstCheat[2]) <= 127 )
     {
       iPeriod = 0;
       iPeriod = atoi(s_pwszDstCheat[1]);
@@ -3187,14 +3187,14 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
     {
       CPlayer *targetPlayer = &g_Player[playerIndex];
       const char *targetName = targetPlayer->m_Param.GetCharNameW();
-      if ( !strcmp_0(targetName, s_pwszDstCheat[0]) )
+      if ( !std::strcmp(targetName, s_pwszDstCheat[0]) )
       {
         dwAccumPlayTime = targetPlayer->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime;
         wScanerCnt = targetPlayer->m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt;
         VoteEnable = targetPlayer->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable;
         m_bOverlapVote = targetPlayer->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote;
         dwLastResetDate = pOne->m_pUserDB->m_AvatorData.dbSupplement.dwLastResetDate;
-        strcpy_0(Destination, s_pwszDstCheat[0]);
+        std::strcpy(Destination, s_pwszDstCheat[0]);
         sprintf_s(
           Buffer,
           512,
@@ -3222,7 +3222,7 @@ bool __fastcall ct_elect_info_player(CPlayer *pOne)
     m_bOverlapVote = pOne->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote;
     dwLastResetDate = pOne->m_pUserDB->m_AvatorData.dbSupplement.dwLastResetDate;
     const char *charName = pOne->m_Param.GetCharNameW();
-    strcpy_0(Destination, charName);
+    std::strcpy(Destination, charName);
     sprintf_s(
       Buffer,
       512,
@@ -3275,7 +3275,7 @@ bool __fastcall ct_period_time_set(CPlayer *pOne)
   char Buffer[132]; // [rsp+50h] [rbp-A8h] BYREF
 
   memset(Buffer, 0, 125);
-  if ( !strcmp_0(s_pwszDstCheat[0], "?") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "?") )
   {
     sprintf_s(Buffer, 125, aCheatHelpSynta_0);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3316,7 +3316,7 @@ bool __fastcall ct_tl_info_set(CPlayer *pOne)
   if ( !pOne || !pOne->m_bOper )
     return 0;
   memset(Buffer, 0, 125);
-  if ( !strcmp_0(s_pwszDstCheat[0], "?") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "?") )
   {
     sprintf_s(Buffer, 125, aCheatHelpSynta_1);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3358,13 +3358,13 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
     {
       CPlayer *targetPlayer = &g_Player[playerIndex];
       const char *targetName = targetPlayer->m_Param.GetCharNameW();
-      if ( !strcmp_0(targetName, s_pwszDstCheat[0]) )
+      if ( !std::strcmp(targetName, s_pwszDstCheat[0]) )
       {
         dwFatigue = targetPlayer->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwFatigue;
         dwLastLogoutTime = targetPlayer->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime;
         byTLStatus = targetPlayer->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
         const char *charName = targetPlayer->m_Param.GetCharNameW();
-        strcpy_0(Destination, charName);
+        std::strcpy(Destination, charName);
         sprintf_s(
           Buffer,
           512,
@@ -3388,7 +3388,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
     dwLastLogoutTime = pOne->m_pUserDB->m_AvatorData.dbTimeLimitInfo.dwLastLogoutTime;
     byTLStatus = pOne->m_pUserDB->m_AvatorData.dbTimeLimitInfo.byTLStatus;
     const char *charName = pOne->m_Param.GetCharNameW();
-    strcpy_0(Destination, charName);
+    std::strcpy(Destination, charName);
     sprintf_s(
       Buffer,
       512,
@@ -3412,7 +3412,7 @@ bool __fastcall ct_tl_system_setting(CPlayer *pOne)
   memset(statusMessage, 0, 50);
   if ( s_nWordCount <= 0 )
     return 0;
-  if ( !strcmp_0(s_pwszDstCheat[0], "?") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "?") )
   {
     sprintf_s(Buffer, 125, "Cheat Help : Syntax = tlsysset 0 ~ 2,   0 = TL Disable, 1 = TL Enable, 2 = Suspend");
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3454,7 +3454,7 @@ bool __fastcall ct_action_point_set(CPlayer *pOne)
   if ( !pOne || !pOne->m_bOper )
     return 0;
   memset(Buffer, 0, 125);
-  if ( !strcmp_0(s_pwszDstCheat[0], "?") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "?") )
   {
     sprintf_s(Buffer, 125, aCheatHelpSynta_2);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3549,7 +3549,7 @@ bool __fastcall ct_Gold_Age_Set_Event_Status(CPlayer *pOne)
   if ( !goldenBox )
     return 0;
   memset(Buffer, 0, 256);
-  if ( !strcmp_0(s_pwszDstCheat[0], "?") )
+  if ( !std::strcmp(s_pwszDstCheat[0], "?") )
   {
     sprintf_s(Buffer, 256, aCheatHelpSynta_3);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3596,7 +3596,7 @@ bool __fastcall ct_Gold_Age_Get_Box_Cnt(CPlayer *pOne)
       LoopCount = goldenBox->GetLoopCount();
       if ( j >= LoopCount )
         break;
-      memset_0(Buffer, 0, 256);
+      std::memset(Buffer, 0, 256);
       bFilter = goldenBox->Get_Box_Count(static_cast<unsigned __int8>(j));
       sprintf_s(Buffer, 256, aCoacCodeDBoxAc, (unsigned int)j, bFilter);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
@@ -3954,13 +3954,13 @@ bool __fastcall ct_pcroom_premium(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  if ( !strcmp_0("y", s_pwszDstCheat[0]) )
+  if ( !std::strcmp("y", s_pwszDstCheat[0]) )
   {
     pOne->m_pUserDB->m_BillingInfo.bPCCheat = 1;
     pOne->m_pUserDB->m_BillingInfo.bIsPcBang = 1;
     pOne->m_pUserDB->m_BillingInfo.iType = 7;
   }
-  else if ( !strcmp_0("n", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("n", s_pwszDstCheat[0]) )
   {
     pOne->m_pUserDB->m_BillingInfo.bPCCheat = 0;
     pOne->m_pUserDB->m_BillingInfo.bIsPcBang = 0;
@@ -4073,12 +4073,12 @@ bool __fastcall ct_goto_npc(CPlayer *pOne)
     return 0;
   if ( s_nWordCount != 1 )
     return 0;
-  strcpy_0(Destination, s_pwszDstCheat[0]);
+  std::strcpy(Destination, s_pwszDstCheat[0]);
   pNpc = 0LL;
   for ( int npcIndex = 0; npcIndex < CMerchant::s_nLiveNum; ++npcIndex )
   {
     char *npcCode = g_NPC[npcIndex].m_pItemStore->GetNpcCode();
-    if ( npcCode && !strcmp_0(npcCode, Destination) )
+    if ( npcCode && !std::strcmp(npcCode, Destination) )
     {
       pNpc = &g_NPC[npcIndex];
       return pNpc && pOne->dev_goto_npc(pNpc);
@@ -4095,7 +4095,7 @@ bool __fastcall ct_request_npc_quest(CPlayer *pOne)
     return 0;
   if ( s_nWordCount != 1 )
     return 0;
-  strcpy_0(Destination, s_pwszDstCheat[0]);
+  std::strcpy(Destination, s_pwszDstCheat[0]);
   return pOne->Emb_CreateQuestEvent(quest_happen_type_npc, Destination);
 }
 

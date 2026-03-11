@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "TRC_AutoTrade.h"
 #include "atrade_taxrate_result_zocl.h"
@@ -22,7 +22,7 @@ _suggested_matter_change_taxrate::_suggested_matter_change_taxrate()
 
 void _suggested_matter_change_taxrate::init()
 {
-  memset_0(this, 0, sizeof(_suggested_matter_change_taxrate));
+  std::memset(this, 0, sizeof(_suggested_matter_change_taxrate));
   this->dwNext = 5;
 }
 
@@ -159,7 +159,7 @@ void TRC_AutoTrade::set_suggested(
   this->m_suggested.init();
   this->m_suggested.byMatterType = byMatterType;
   this->m_suggested.dwMatterDst = dwMatterDst;
-  strcpy_0(this->m_suggested.wszMatterDst, wszMatterDst);
+  std::strcpy(this->m_suggested.wszMatterDst, wszMatterDst);
 
   if (dwNext < 5 || dwNext > 20)
   {
@@ -262,9 +262,9 @@ void TRC_AutoTrade::PushDQSData()
   query.byRace = this->m_byRace;
   query.byMatterType = this->m_suggested.byMatterType;
   query.dwMatterDst = this->m_suggested.dwMatterDst;
-  strcpy_0(query.wszMatterDst, this->m_suggested.wszMatterDst);
+  std::strcpy(query.wszMatterDst, this->m_suggested.wszMatterDst);
   query.dwGSerial = static_cast<unsigned int>(-1);
-  strcpy_0(query.szGuildName, "*");
+  std::strcpy(query.szGuildName, "*");
 
   if (this->m_suggested.dwNext < 5 || this->m_suggested.dwNext > 20)
   {
@@ -308,7 +308,7 @@ _atrade_taxrate_result_zocl result{};
   {
     result.dwEmblemBack = m_pOwnerGuild->m_dwEmblemBack;
     result.dwEmblemMark = m_pOwnerGuild->m_dwEmblemMark;
-    memcpy_0(result.wszGuildName, m_pOwnerGuild->m_wszName, sizeof(result.wszGuildName));
+    std::memcpy(result.wszGuildName, m_pOwnerGuild->m_wszName, sizeof(result.wszGuildName));
   }
   else
   {
@@ -469,7 +469,7 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
     static_cast<float>(byCurrTax[0]) / 100.0f);
 
   m_suggested.dwNext = byNextTax[0];
-  strcpy_0(m_suggested.wszMatterDst, pwszName);
+  std::strcpy(m_suggested.wszMatterDst, pwszName);
   g_Main.m_kEtcNotifyInfo.UpdateTaxRate(byRace, byCurrTax[0]);
   m_bInit = true;
   return 1;

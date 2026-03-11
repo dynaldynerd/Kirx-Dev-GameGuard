@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CBilling.h"
 
@@ -35,7 +35,7 @@ void CBilling::SendMsg_StartBilling()
   }
 
   _billing_start_request_zobi request{};
-  memcpy_0(request.szWorldName, g_Main.m_szWorldName, sizeof(request.szWorldName));
+  std::memcpy(request.szWorldName, g_Main.m_szWorldName, sizeof(request.szWorldName));
 
   unsigned __int8 pbyType[2]{29, 1};
   g_Network.m_pProcess[3]->LoadSendMsg(
@@ -93,12 +93,12 @@ void CBilling::Alive(CUserDB *pUserDB)
       && (pUserDB->m_BillingInfo.iType == 6 || pUserDB->m_BillingInfo.iType == 7))
   {
     _billing_alive_request_zobi request{};
-    memcpy_0(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
+    std::memcpy(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
     in_addr addr{};
     addr.S_un.S_addr = pUserDB->m_dwIP;
     char *ip = inet_ntoa(addr);
-    memcpy_0(request.szIP, ip, sizeof(request.szIP));
-    memcpy_0(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
+    std::memcpy(request.szIP, ip, sizeof(request.szIP));
+    std::memcpy(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
     request.iType = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 5};
@@ -117,12 +117,12 @@ void CBilling::Logout(CUserDB *pUserDB)
       && (pUserDB->m_BillingInfo.iType == 6 || pUserDB->m_BillingInfo.iType == 7))
   {
     _billing_logout_request_zobi request{};
-    memcpy_0(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
+    std::memcpy(request.szID, pUserDB->m_szAccountID, sizeof(request.szID));
     in_addr addr{};
     addr.S_un.S_addr = pUserDB->m_dwIP;
     char *ip = inet_ntoa(addr);
-    memcpy_0(request.szIP, ip, sizeof(request.szIP));
-    memcpy_0(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
+    std::memcpy(request.szIP, ip, sizeof(request.szIP));
+    std::memcpy(request.szCMS, pUserDB->m_BillingInfo.szCMS, sizeof(request.szCMS));
     request.iType = pUserDB->m_BillingInfo.iType;
 
     unsigned __int8 pbyType[2]{29, 6};
@@ -173,17 +173,17 @@ bool CBilling::SendMsg_Login(
   }
 
   _billing_login_request_zobi request{};
-  memcpy_0(request.szID, szID, sizeof(request.szID));
-  memcpy_0(request.szIP, szIP, sizeof(request.szIP));
+  std::memcpy(request.szID, szID, sizeof(request.szID));
+  std::memcpy(request.szIP, szIP, sizeof(request.szIP));
   if (szCMS)
   {
-    memcpy_0(request.szCMS, szCMS, sizeof(request.szCMS));
+    std::memcpy(request.szCMS, szCMS, sizeof(request.szCMS));
   }
   request.iType = iType;
   request.lRemainTime = lRemainTime;
   if (pstEndDate)
   {
-    memcpy_0(&request.stEndDate, pstEndDate, sizeof(request.stEndDate));
+    std::memcpy(&request.stEndDate, pstEndDate, sizeof(request.stEndDate));
   }
 
   unsigned __int8 pbyType[2]{29, 4};
@@ -227,12 +227,12 @@ void CBilling::Remaintime_PCBang(
   int lRemaintime,
   _SYSTEMTIME *pstEndDate)
 {
-  if (m_bOper && szCMSCode && strlen_0(szCMSCode))
+  if (m_bOper && szCMSCode && std::strlen(szCMSCode))
   {
     for (int j = 0; j < MAX_PLAYER; ++j)
     {
       CPlayer *player = &g_Player[j];
-      if (player && player->m_bLive && !strcmp_0(player->m_pUserDB->m_BillingInfo.szCMS, szCMSCode))
+      if (player && player->m_bLive && !std::strcmp(player->m_pUserDB->m_BillingInfo.szCMS, szCMSCode))
       {
         player->m_pUserDB->SetBillingData(player->m_pUserDB->m_BillingInfo.szCMS, iType, lRemaintime, pstEndDate);
         player->m_pUserDB->SendMsg_BillingInfo();
@@ -277,12 +277,12 @@ void CBilling::Expire_Personal(char *szID)
 
 void CBilling::Expire_PCBang(char *szCMS)
 {
-  if (m_bOper && szCMS && strlen_0(szCMS))
+  if (m_bOper && szCMS && std::strlen(szCMS))
   {
     for (int j = 0; j < MAX_PLAYER; ++j)
     {
       CPlayer *player = &g_Player[j];
-      if (player && player->m_bLive && !strcmp_0(player->m_pUserDB->m_BillingInfo.szCMS, szCMS))
+      if (player && player->m_bLive && !std::strcmp(player->m_pUserDB->m_BillingInfo.szCMS, szCMS))
       {
         player->m_pUserDB->ForceCloseCommand(1u, -1, false, "Billing expire");
         player->m_pUserDB->m_BillingInfo.iType = 1;

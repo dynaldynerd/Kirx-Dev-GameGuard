@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderUserInfo.h"
 #include "CNetworkEX.h"
@@ -750,7 +750,7 @@ void CUnmannedTraderUserInfo::Search(
   queryData.byPage = pRequest->byPage;
   if (queryText)
   {
-    strcpy_0(queryData.szSortQuery, queryText);
+    std::strcpy(queryData.szSortQuery, queryText);
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(4));

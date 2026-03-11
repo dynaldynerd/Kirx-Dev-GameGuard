@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WheatyExceptionReport.h"
 
@@ -59,12 +59,12 @@ void WheatyExceptionReport::SetRunDialog(int bRun)
 
 void WheatyExceptionReport::SetLogName(const char *pszLogName)
 {
-  strcpy_0(m_szLogName, pszLogName);
+  std::strcpy(m_szLogName, pszLogName);
 }
 
 void WheatyExceptionReport::SetDescription(const char *pszDescription)
 {
-  strcpy_0(m_szDescription, pszDescription);
+  std::strcpy(m_szDescription, pszDescription);
 }
 
 void WheatyExceptionReport::SetFtpConnection(
@@ -74,13 +74,13 @@ void WheatyExceptionReport::SetFtpConnection(
   const char *pszFtpPwd,
   const char *pszFtpDirectory)
 {
-  strcpy_0(m_szFtpIp, pszFtpIp);
+  std::strcpy(m_szFtpIp, pszFtpIp);
   m_nFtpPort = nFtpPort;
-  strcpy_0(m_szFtpId, pszFtpId);
-  strcpy_0(m_szFtpPwd, pszFtpPwd);
+  std::strcpy(m_szFtpId, pszFtpId);
+  std::strcpy(m_szFtpPwd, pszFtpPwd);
   if (pszFtpDirectory)
   {
-    strcpy_0(m_szFtpDirectory, pszFtpDirectory);
+    std::strcpy(m_szFtpDirectory, pszFtpDirectory);
   }
 }
 
@@ -395,7 +395,7 @@ void WheatyExceptionReport::GenerateExceptionReport(EXCEPTION_POINTERS *pExcepti
   unsigned int offset = 0;
 
   WheatyExceptionReport::printf("==================================================================================\r\n");
-  if (strlen_0(m_szDescription))
+  if (std::strlen(m_szDescription))
   {
     WheatyExceptionReport::printf("%s\r\n\r\n", m_szDescription);
   }
@@ -608,42 +608,42 @@ const char *WheatyExceptionReport::GetOsName(
     {
       if (dwMinorVersion == 10)
       {
-        strcpy_0(namebuf, "98");
+        std::strcpy(namebuf, "98");
       }
       else if (dwMinorVersion == 90)
       {
-        strcpy_0(namebuf, "ME");
+        std::strcpy(namebuf, "ME");
       }
     }
     else
     {
-      strcpy_0(namebuf, "95");
+      std::strcpy(namebuf, "95");
     }
   }
   else if (dwMajorVersion == 3)
   {
-    strcpy_0(namebuf, "Windows NT 3.51");
+    std::strcpy(namebuf, "Windows NT 3.51");
   }
   else if (dwPlatformId == 2)
   {
     if (dwMajorVersion == 4)
     {
-      strcpy_0(namebuf, "NT 4.0");
+      std::strcpy(namebuf, "NT 4.0");
     }
     else if (dwMinorVersion)
     {
       if (dwMinorVersion == 1)
       {
-        strcpy_0(namebuf, "XP");
+        std::strcpy(namebuf, "XP");
       }
       else if (dwMinorVersion == 3)
       {
-        strcpy_0(namebuf, "Server 2003 family");
+        std::strcpy(namebuf, "Server 2003 family");
       }
     }
     else
     {
-      strcpy_0(namebuf, "2000");
+      std::strcpy(namebuf, "2000");
     }
   }
   return namebuf;
@@ -659,7 +659,7 @@ const char *WheatyExceptionReport::GetOsVersion()
 #pragma warning(pop)
   if (gotVersion)
   {
-    if (strlen_0(versionInfo.szCSDVersion) > 200)
+    if (std::strlen(versionInfo.szCSDVersion) > 200)
     {
       versionInfo.szCSDVersion[100] = 0;
     }
@@ -677,7 +677,7 @@ const char *WheatyExceptionReport::GetOsVersion()
   }
   else
   {
-    strcpy_0(verbuf, "WINDOWS UNKNOWN");
+    std::strcpy(verbuf, "WINDOWS UNKNOWN");
   }
   return verbuf;
 }

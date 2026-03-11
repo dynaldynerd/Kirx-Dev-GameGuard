@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -366,7 +366,7 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
         *pDataUpdated = 1;
     }
   }
-  memset_0(embellishCountByTableCode, 0, 37);
+  std::memset(embellishCountByTableCode, 0, 37);
   for ( j = 0; j < 7; ++j )
   {
     embellishKey = &pData->dbEquip.m_EmbellishList[j].Key;

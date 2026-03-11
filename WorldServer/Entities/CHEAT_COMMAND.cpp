@@ -131,7 +131,7 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
     sprintf(buffer, "[ GM tool ] >> ");
   }
 
-  const int offset = static_cast<int>(strlen_0(buffer));
+  const int offset = static_cast<int>(std::strlen(buffer));
   W2M(pwszCommand, &buffer[offset], 1280 - offset);
   s_logCheat.Write(buffer);
 }
@@ -145,7 +145,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
     {
       break;
     }
-    byCommandSizeList[j] = static_cast<unsigned __int8>(strlen_0(entry->pwszCommand));
+    byCommandSizeList[j] = static_cast<unsigned __int8>(std::strlen(entry->pwszCommand));
   }
 
   const unsigned int korLocalTime = GetKorLocalTime();

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 
@@ -124,7 +124,7 @@ char CMainThread::LoadLimitInfo()
     return 0;
   }
 
-  if (!memcmp_0(data, hash, 32))
+  if (!std::memcmp(data, hash, 32))
   {
     unsigned int dwTerm = 1000 * (rand() % 21 + 10);
     this->m_tmCheckForceClose.BeginTimer(dwTerm);

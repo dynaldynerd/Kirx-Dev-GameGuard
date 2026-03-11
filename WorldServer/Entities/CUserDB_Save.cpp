@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "WorldServerUtil.h"
 
@@ -33,8 +33,8 @@ char CUserDB::UpdateContUserSave(bool bDirect)
   }
 
   pQryData.dwAvatorSerial = this->m_dwSerial;
-  memcpy_0(&pQryData.NewData, &this->m_AvatorData, sizeof(pQryData.NewData));
-  memcpy_0(&pQryData.OldData, &this->m_AvatorData_bk, sizeof(pQryData.OldData));
+  std::memcpy(&pQryData.NewData, &this->m_AvatorData, sizeof(pQryData.NewData));
+  std::memcpy(&pQryData.OldData, &this->m_AvatorData_bk, sizeof(pQryData.OldData));
   pQryData.bUpdateRefineCnt = 0;
 
   unsigned int wIndex = this->m_idWorld.wIndex;
@@ -78,7 +78,7 @@ char CUserDB::Setting_Class(char *pszClassCode)
     return 0;
   }
 
-  strcpy_0(this->m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
+  std::strcpy(this->m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
   this->m_bDataUpdate = 1;
   return 1;
 }

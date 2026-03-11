@@ -234,7 +234,7 @@ bool CGuildRoomSystem::Init()
 char CGuildRoomSystem::Load_db()
 {
   _guildroom_info info{};
-  memset_0(&info, 0, sizeof(info));
+  std::memset(&info, 0, sizeof(info));
 
   if (!g_Main.m_pWorldDB->Select_GuildRoomInfo(&info))
   {
@@ -439,7 +439,7 @@ unsigned __int8 CGuildRoomSystem::RentRoom(
       if (bRestore)
       {
         tagTIMESTAMP_STRUCT restoreTs{};
-        memcpy_0(&restoreTs, ts, sizeof(*ts));
+        std::memcpy(&restoreTs, ts, sizeof(*ts));
         if (!room.SetRoom_Restore(iGuildInx, dwGuildSerial, &restoreTs))
         {
           return 3;

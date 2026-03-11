@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CHonorGuild.h"
 
@@ -190,7 +190,7 @@ char CHonorGuild::LoadDB()
 
       if (dwSerial[0] == -1)
       {
-        memset_0(m_pNextHonorGuild[j], 0, sizeof(_guild_honor_list_result_zocl));
+        std::memset(m_pNextHonorGuild[j], 0, sizeof(_guild_honor_list_result_zocl));
         m_bNext[j] = true;
       }
     }
@@ -311,19 +311,19 @@ unsigned __int8 CHonorGuild::SetNextHonorGuild(unsigned __int8 byRace, _guild_ho
       return 3;
     }
 
-    strcpy_0(nextList.GuildList[index].wszGuildName, pRecv->GuildList[index].wszGuildName);
+    std::strcpy(nextList.GuildList[index].wszGuildName, pRecv->GuildList[index].wszGuildName);
     nextList.GuildList[index].byTaxRate = pRecv->GuildList[index].byTaxRate;
     nextList.GuildList[index].dwGuildSerial = guild->m_dwSerial;
     nextList.GuildList[index].dwEmblemBack = guild->m_dwEmblemBack;
     nextList.GuildList[index].dwEmblemMark = guild->m_dwEmblemMark;
     if (guild->m_MasterData.pMember)
     {
-      strcpy_0(nextList.GuildList[index].wszMasterName, guild->m_MasterData.pMember->wszName);
+      std::strcpy(nextList.GuildList[index].wszMasterName, guild->m_MasterData.pMember->wszName);
     }
     else
     {
       const char *noneString = CTSingleton<CNationSettingManager>::Instance()->GetNoneString();
-      strcpy_0(nextList.GuildList[index].wszMasterName, noneString);
+      std::strcpy(nextList.GuildList[index].wszMasterName, noneString);
     }
     ++nextList.byListNum;
     totalTaxRate += pRecv->GuildList[index].byTaxRate;
@@ -334,7 +334,7 @@ unsigned __int8 CHonorGuild::SetNextHonorGuild(unsigned __int8 byRace, _guild_ho
     return 2;
   }
 
-  memcpy_0(m_pNextHonorGuild[byRace], &nextList, sizeof(_guild_honor_list_result_zocl));
+  std::memcpy(m_pNextHonorGuild[byRace], &nextList, sizeof(_guild_honor_list_result_zocl));
   m_bNext[byRace] = true;
   _qry_case_update_honor_guild query{};
   query.byRace = byRace;

@@ -34,28 +34,28 @@ float ReadLoopSeconds()
 {
   float value = 0.0f;
   static_assert(sizeof(value) == sizeof(dword_184A77EF0), "Loop seconds storage size mismatch");
-  memcpy_0(&value, &dword_184A77EF0, sizeof(value));
+  std::memcpy(&value, &dword_184A77EF0, sizeof(value));
   return value;
 }
 
 void WriteLoopSeconds(float value)
 {
   static_assert(sizeof(value) == sizeof(dword_184A77EF0), "Loop seconds storage size mismatch");
-  memcpy_0(&dword_184A77EF0, &value, sizeof(value));
+  std::memcpy(&dword_184A77EF0, &value, sizeof(value));
 }
 
 float ReadAccumulatedSeconds()
 {
   float value = 0.0f;
   static_assert(sizeof(value) == sizeof(dword_184A77EE8), "Accumulated seconds storage size mismatch");
-  memcpy_0(&value, &dword_184A77EE8, sizeof(value));
+  std::memcpy(&value, &dword_184A77EE8, sizeof(value));
   return value;
 }
 
 void WriteAccumulatedSeconds(float value)
 {
   static_assert(sizeof(value) == sizeof(dword_184A77EE8), "Accumulated seconds storage size mismatch");
-  memcpy_0(&dword_184A77EE8, &value, sizeof(value));
+  std::memcpy(&dword_184A77EE8, &value, sizeof(value));
 }
 
 LARGE_INTEGER QueryHighResCounter()

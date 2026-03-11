@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -119,11 +119,11 @@ void SyncTrunkMetaToUserDB(CPlayer *player)
 
   player->m_pUserDB->m_AvatorData.dbTrunk.bySlotNum = player->m_Param.m_byTrunkSlotNum;
   player->m_pUserDB->m_AvatorData.dbTrunk.byExtSlotNum = player->m_Param.m_byExtTrunkSlotNum;
-  strcpy_0(player->m_pUserDB->m_AvatorData.dbTrunk.wszPasswd, player->m_Param.m_wszTrunkPasswd);
+  std::strcpy(player->m_pUserDB->m_AvatorData.dbTrunk.wszPasswd, player->m_Param.m_wszTrunkPasswd);
   player->m_pUserDB->m_AvatorData.dbTrunk.dDalant = player->m_Param.m_dTrunkDalant;
   player->m_pUserDB->m_AvatorData.dbTrunk.dGold = player->m_Param.m_dTrunkGold;
   player->m_pUserDB->m_AvatorData.dbTrunk.byHintIndex = player->m_Param.m_byTrunkHintIndex;
-  strcpy_0(player->m_pUserDB->m_AvatorData.dbTrunk.wszHintAnswer, player->m_Param.m_wszTrunkHintAnswer);
+  std::strcpy(player->m_pUserDB->m_AvatorData.dbTrunk.wszHintAnswer, player->m_Param.m_wszTrunkHintAnswer);
   player->m_pUserDB->m_bDataUpdate = true;
 }
 
@@ -227,7 +227,7 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
   {
     byRetCode = 13;
   }
-  else if (strlen_0(pwszPassword) < 2 || strlen_0(pwszPassword) > 12)
+  else if (std::strlen(pwszPassword) < 2 || std::strlen(pwszPassword) > 12)
   {
     byRetCode = 3;
   }
@@ -239,7 +239,7 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
   {
     byRetCode = 6;
   }
-  else if (this->m_pUserDB && !strcmp_0(pwszPassword, this->m_pUserDB->m_szUILock_PW))
+  else if (this->m_pUserDB && !std::strcmp(pwszPassword, this->m_pUserDB->m_szUILock_PW))
   {
     byRetCode = 24;
   }
@@ -258,9 +258,9 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
   {
     this->SubDalant(dwSub);
     this->m_Param.m_byTrunkSlotNum = 20;
-    strcpy_0(this->m_Param.m_wszTrunkPasswd, pwszPassword);
+    std::strcpy(this->m_Param.m_wszTrunkPasswd, pwszPassword);
     this->m_Param.m_byTrunkHintIndex = byHintIndex;
-    strcpy_0(this->m_Param.m_wszTrunkHintAnswer, pwszHintAnswer);
+    std::strcpy(this->m_Param.m_wszTrunkHintAnswer, pwszHintAnswer);
     this->m_Param.m_dTrunkDalant = 0.0;
     this->m_Param.m_dTrunkGold = 0.0;
     this->m_Param.m_bTrunkOpen = true;
@@ -300,7 +300,7 @@ void CPlayer::pc_TrunkDownloadRequest(char *pwszPassword)
   {
     byRetCode = 2;
   }
-  else if (strcmp_0(pwszPassword, this->m_Param.GetTrunkPasswdW()))
+  else if (std::strcmp(pwszPassword, this->m_Param.GetTrunkPasswdW()))
   {
     byRetCode = 1;
   }
@@ -334,17 +334,17 @@ void CPlayer::pc_TrunkChangePasswdRequest(
     byRetCode = 2;
   }
   else if (
-    strlen_0(pwszPrevPassword) < 2
-    || strlen_0(pwszPrevPassword) > 12
-    || strcmp_0(pwszPrevPassword, this->m_Param.GetTrunkPasswdW()))
+    std::strlen(pwszPrevPassword) < 2
+    || std::strlen(pwszPrevPassword) > 12
+    || std::strcmp(pwszPrevPassword, this->m_Param.GetTrunkPasswdW()))
   {
     byRetCode = 1;
   }
-  else if (strlen_0(pwszChngPassword) < 2 || strlen_0(pwszChngPassword) > 12)
+  else if (std::strlen(pwszChngPassword) < 2 || std::strlen(pwszChngPassword) > 12)
   {
     byRetCode = 3;
   }
-  else if (this->m_pUserDB && !strcmp_0(pwszChngPassword, this->m_pUserDB->m_szUILock_PW))
+  else if (this->m_pUserDB && !std::strcmp(pwszChngPassword, this->m_pUserDB->m_szUILock_PW))
   {
     byRetCode = 24;
   }
@@ -361,9 +361,9 @@ void CPlayer::pc_TrunkChangePasswdRequest(
 
   if (!byRetCode)
   {
-    strcpy_0(this->m_Param.m_wszTrunkPasswd, pwszChngPassword);
+    std::strcpy(this->m_Param.m_wszTrunkPasswd, pwszChngPassword);
     this->m_Param.m_byTrunkHintIndex = byHintIndex;
-    strcpy_0(this->m_Param.m_wszTrunkHintAnswer, pwszHintAnswer);
+    std::strcpy(this->m_Param.m_wszTrunkHintAnswer, pwszHintAnswer);
     if (this->m_pUserDB)
     {
       this->m_pUserDB->Update_TrunkPassword(this->m_Param.GetTrunkPasswdW());
@@ -788,7 +788,7 @@ void CPlayer::pc_TrunkIoMoveRequest(
   if (!byRetCode)
   {
     _STORAGE_LIST::_db_con copyItem{};
-    memcpy_0(&copyItem, pFixingItem, sizeof(copyItem));
+    std::memcpy(&copyItem, pFixingItem, sizeof(copyItem));
 
     if (!this->Emb_DelStorage(
           byStartStorageIndex,
@@ -1015,8 +1015,8 @@ void CPlayer::pc_TrunkIoSwapRequest(
 
     _STORAGE_LIST::_db_con startCopy{};
     _STORAGE_LIST::_db_con targetCopy{};
-    memcpy_0(&startCopy, pStartItem, sizeof(startCopy));
-    memcpy_0(&targetCopy, pTargetItem, sizeof(targetCopy));
+    std::memcpy(&startCopy, pStartItem, sizeof(startCopy));
+    std::memcpy(&targetCopy, pTargetItem, sizeof(targetCopy));
 
     if (!this->Emb_DelStorage(
           byStartStorageIndex,
@@ -1198,7 +1198,7 @@ void CPlayer::pc_TrunkIoMergeRequest(
   if (!byRetCode)
   {
     _STORAGE_LIST::_db_con ioItem{};
-    memcpy_0(&ioItem, pStartItem, sizeof(ioItem));
+    std::memcpy(&ioItem, pStartItem, sizeof(ioItem));
     ioItem.m_dwDur -= wMoveAmount;
 
     this->Emb_AlterDurPoint(byStartStorageIndex, pStartItem->m_byStorageIndex, -wMoveAmount, false, false);
@@ -1330,14 +1330,14 @@ void CPlayer::pc_TrunkHintAnswerRequest(char *pwszAnswer)
   {
     byRetCode = 2;
   }
-  else if (strcmp_0(this->m_Param.m_wszTrunkHintAnswer, pwszAnswer))
+  else if (std::strcmp(this->m_Param.m_wszTrunkHintAnswer, pwszAnswer))
   {
     byRetCode = 15;
   }
 
   if (!byRetCode)
   {
-    strcpy_0(wszPassword, this->m_Param.m_wszTrunkPasswd);
+    std::strcpy(wszPassword, this->m_Param.m_wszTrunkPasswd);
   }
 
   this->SendMsg_TrunkHintAnswerResult(static_cast<char>(byRetCode), wszPassword);
@@ -1555,7 +1555,7 @@ void CPlayer::SendMsg_TrunkHintAnswerResult(char byRetCode, char *pwszPassword)
   msg.byRetCode = static_cast<unsigned __int8>(byRetCode);
   if (!byRetCode)
   {
-    strcpy_0(msg.wszPassword, pwszPassword);
+    std::strcpy(msg.wszPassword, pwszPassword);
   }
 
   unsigned __int8 pbyType[2] = {34, 23};

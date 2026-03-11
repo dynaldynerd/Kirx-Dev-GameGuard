@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "LendItemSheet.h"
 
@@ -9,7 +9,7 @@
 
 LendItemSheet::Cell::Cell()
 {
-  memset_0(this, 0, sizeof(LendItemSheet::Cell));
+  std::memset(this, 0, sizeof(LendItemSheet::Cell));
 }
 
 LendItemSheet::Cell::Cell(unsigned __int8 byStCode, _STORAGE_LIST::_db_con *pItem)
@@ -105,7 +105,7 @@ __int64 LendItemSheet::CheckTime()
             if (src->m_byCsMethod)
             {
               _STORAGE_LIST::_db_con copyItem{};
-              memcpy_0(&copyItem, src, sizeof(copyItem));
+              std::memcpy(&copyItem, src, sizeof(copyItem));
               _pkOwner->SendMsg_LendItemTimeExpired(cell->_nStorageCode, cell->_pkItem->m_wSerial);
               if (!_pkOwner->Emb_DelStorage(
                     cell->_nStorageCode,

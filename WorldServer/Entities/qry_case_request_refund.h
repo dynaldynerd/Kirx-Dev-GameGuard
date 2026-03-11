@@ -20,7 +20,7 @@ struct  _qry_case_request_refund
 
 inline _qry_case_request_refund::_qry_case_request_refund()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 inline _qry_case_request_refund::_qry_case_request_refund(

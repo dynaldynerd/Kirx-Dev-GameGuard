@@ -102,10 +102,10 @@ CProcessThread::_SYN_DATA *CProcessThread::PushData(_SYN_HEADER *pHeader, char *
   }
 
   _SYN_DATA *synData = &m_pSynData[outIndex[0]];
-  memcpy_0(synData, pHeader, 12u);
+  std::memcpy(synData, pHeader, 12u);
   if (pQryData)
   {
-    memcpy_0(synData->m_psData, pQryData, static_cast<int>(nQrySize));
+    std::memcpy(synData->m_psData, pQryData, static_cast<int>(nQrySize));
   }
 
   if (!m_listData.PushNode_Back(outIndex[0]))
@@ -163,7 +163,7 @@ void CProcessThread::RunOnThread()
 char CProcessThread::StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum)
 {
   m_dwSynDataNum = dwSynDataNum;
-  memcpy_0(&m_Config, pConfig, sizeof(m_Config));
+  std::memcpy(&m_Config, pConfig, sizeof(m_Config));
   m_logSystem.SetWriteLogFile(pConfig->szLogFileName, 1, false, true, true);
 
   m_pSynData = new _SYN_DATA[dwSynDataNum];

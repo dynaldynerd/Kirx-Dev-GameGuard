@@ -165,7 +165,7 @@ void ICsSendInterface::SendMsg_ConditionalEventInform(
   msg.wCsDiscount = wCsDiscount;
   if (pEMsg)
   {
-    strcpy_0(msg.szMsgCode, pEMsg);
+    std::strcpy(msg.szMsgCode, pEMsg);
   }
   else
   {
@@ -188,13 +188,13 @@ void ICsSendInterface::SendMsg_LimitedsaleEventInform(
 {
   _limitedsale_event_inform_zocl msg{};
   const int msgSize = static_cast<int>(msg.size());
-  memset_0(&msg, 0, msgSize);
+  std::memset(&msg, 0, msgSize);
   msg.byTableCode = byTableCode;
   msg.dwIndex = dwIndex;
   msg.wNum = wNum;
 
   unsigned __int8 pbyType[2]{};
-  memcpy_0(pbyType, "9\n", 2);
+  std::memcpy(pbyType, "9\n", 2);
   const unsigned __int16 nLen = static_cast<unsigned __int16>(msg.size());
   g_Network.m_pProcess[0]->LoadSendMsg(wSock, pbyType, reinterpret_cast<char *>(&msg), nLen);
 }

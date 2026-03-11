@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMgrGuildHistory.h"
 
@@ -119,14 +119,14 @@ unsigned int CMgrGuildHistory::GetTotalWaitSize()
 
 void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
 {
-  const unsigned int logSize = static_cast<unsigned int>(strlen_0(pszLog));
+  const unsigned int logSize = static_cast<unsigned int>(std::strlen(pszLog));
   unsigned int outIndex[4]{};
   if (logSize < 0x12C && m_listLogDataEmpty.PopNode_Front(outIndex))
   {
     __LOG_DATA &entry = m_LogData[outIndex[0]];
     strcpy_s(entry.szFileName, 128, pszFileName);
     entry.nLen = static_cast<int>(logSize);
-    memcpy_0(entry.sData, pszLog, logSize);
+    std::memcpy(entry.sData, pszLog, logSize);
     entry.sData[logSize] = 0;
     m_listLogData.PushNode_Back(outIndex[0]);
   }

@@ -14,7 +14,7 @@
 
 _pvp_order_view_inform_zocl::_pvp_order_view_inform_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 int _pvp_order_view_inform_zocl::size() const

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMonsterHelper.h"
 
@@ -531,8 +531,8 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
         }
 
         const double angle = 6.283185307 * angleValue / 65535.0;
-        (*NewTar)[0] = mon->m_fCurPos[0] - static_cast<float>(sin_0(angle) * moveDistance);
-        (*NewTar)[2] = mon->m_fCurPos[2] - static_cast<float>(cos_0(angle) * moveDistance);
+        (*NewTar)[0] = mon->m_fCurPos[0] - static_cast<float>(std::sin(angle) * moveDistance);
+        (*NewTar)[2] = mon->m_fCurPos[2] - static_cast<float>(std::cos(angle) * moveDistance);
         (*NewTar)[1] = mon->m_fCurPos[1];
 
         if (parent)

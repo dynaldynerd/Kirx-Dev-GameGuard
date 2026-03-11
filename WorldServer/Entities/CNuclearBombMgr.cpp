@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CNuclearBombMgr.h"
 
@@ -124,7 +124,7 @@ bool CNuclearBombMgr::LoadIni()
     64,
     ".\\Initialize\\NuclearBomb.ini");
 
-  if (!strncmp_0(m_szStickCode, "-1", 2))
+  if (!std::strncmp(m_szStickCode, "-1", 2))
   {
     MyMessageBox("CNuclearBombMgr::LoadIni()", "NeedItem Code Error(%s) : no defined", m_szStickCode);
     return false;
@@ -159,7 +159,7 @@ bool CNuclearBombMgr::LoadIni()
 
 void CNuclearBombMgr::CheckNuclearState(CPlayer *pOne)
 {
-  if (strcmp_0(pOne->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
+  if (std::strcmp(pOne->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
   {
     return;
   }
@@ -251,7 +251,7 @@ bool CNuclearBombMgr::CreateMissile(
     return false;
   }
 
-  memcpy_0(createData.m_fStartPos, fPos, sizeof(createData.m_fStartPos));
+  std::memcpy(createData.m_fStartPos, fPos, sizeof(createData.m_fStartPos));
   createData.m_fStartPos[1] = pMaster->m_fCurPos[1];
   createData.m_dwWarnTime = warnTime;
   createData.m_dwAttInformTime = informTime;
@@ -276,7 +276,7 @@ char CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
     return 1;
   }
 
-  if (strcmp_0(player->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
+  if (std::strcmp(player->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
   {
     SendMsg_Result(n, 9u);
     return 1;
@@ -289,7 +289,7 @@ char CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
     record = g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex);
   }
 
-  if (!equip || !equip->m_bLoad || !record || strcmp_0(record->m_strCode, m_szStickCode) != 0)
+  if (!equip || !equip->m_bLoad || !record || std::strcmp(record->m_strCode, m_szStickCode) != 0)
   {
     SendMsg_Result(n, 7u);
     return 1;
@@ -332,7 +332,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
   }
 
   CMapData *map = g_MapOper.GetMap(master->m_pCurMap->m_pMapSet->m_strCode);
-  if (!map || strcmp_0(map->m_pMapSet->m_strCode, "resources") != 0)
+  if (!map || std::strcmp(map->m_pMapSet->m_strCode, "resources") != 0)
   {
     SendMsg_Result(n, 9u);
     return 1;
@@ -354,7 +354,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
     {
       continue;
     }
-    if (strcmp_0(player->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
+    if (std::strcmp(player->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
     {
       continue;
     }

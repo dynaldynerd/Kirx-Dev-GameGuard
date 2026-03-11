@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMoveMapLimitInfoPortal.h"
 
@@ -64,7 +64,7 @@ bool CMoveMapLimitInfoPortal::LoadINI()
   const unsigned int inx = GetInx();
   std::sprintf(buffer, "Map%u", inx);
   GetPrivateProfileStringA("MoveMapLimitInfo", buffer, "NULL", returned, 1024, "./Initialize/MoveMapLimit.ini");
-  if (!strcmp_0(returned, "NULL"))
+  if (!std::strcmp(returned, "NULL"))
   {
     g_Main.m_logLoadingError.Write(
       "CMoveMapLimitInfoPortal::LoadINI() : Inx(%u) Type(%d) %s NULL!",
@@ -254,7 +254,7 @@ unsigned __int8 CMoveMapLimitInfoPortal::ProcUseMoveScroll(
 {
   for (char *dummyCode : m_vecAllowDummyCode)
   {
-    if (!strcmp_0(dummyCode, pRequest))
+    if (!std::strcmp(dummyCode, pRequest))
     {
       return 0;
     }

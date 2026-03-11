@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMainThread.h"
 #include "CRFWorldDatabase.h"
@@ -93,7 +93,7 @@ bool CRFWorldDatabase::Check_GuildMemberCount( unsigned int dwGuildSerial)
 bool CRFWorldDatabase::CreateCharacterSelectLogTable(const char *szTableName)
 {
   char Buffer[3088]; // [rsp+80h] [rbp-C28h] BYREF
-  memset_0(Buffer, 0, 3072);
+  std::memset(Buffer, 0, 3072);
   sprintf(
     Buffer,
     "CREATE TABLE [dbo].[%s] ([ID] [int] IDENTITY (1, 1) NOT NULL ,[AccountSerial] [int] NOT NULL ,[Account] [varchar] (1"
@@ -471,7 +471,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
   int Hour; // [rsp+1A8h] [rbp-20h]
   int Day; // [rsp+1ACh] [rbp-1Ch]
   int Month; // [rsp+1B0h] [rbp-18h]
-  memset_0(Buffer, 0, 256);
+  std::memset(Buffer, 0, 256);
   result = ATL::CTime::GetCurrentTime();
   Second = result.GetSecond();
   Minute = result.GetMinute();
@@ -498,7 +498,7 @@ bool CRFWorldDatabase::Insert_GuidRoom(
 bool CRFWorldDatabase::Insert_Guild( char *pwszGuildName, unsigned __int8 byRace)
 {
   char Buffer[528]; // [rsp+30h] [rbp-228h] BYREF
-  memset_0(Buffer, 0, 512);
+  std::memset(Buffer, 0, 512);
   sprintf(Buffer, "{ CALL pInsert_Guild('%s', %d) }", pwszGuildName, byRace);
   return this->ExecUpdateQuery( Buffer, 1);
 }
@@ -568,7 +568,7 @@ bool CRFWorldDatabase::Insert_MacroData( unsigned int dwSerial)
   memset(Buffer, 0, 1024);
   for ( j = 0; j < 3; ++j )
   {
-    memset_0(Buffer, 0, 1024);
+    std::memset(Buffer, 0, 1024);
     sprintf(
       Buffer,
       "Insert into tbl_Macro values(%d, %d,%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, '', '', '', '', '', 0, 0, 0)",
@@ -620,7 +620,7 @@ bool CRFWorldDatabase::Insert_UserNum_Log( int nAvgUserNum, int nMaxUserNum)
 bool CRFWorldDatabase::Insert_WeeklyGuildPvpPointSum( unsigned int dwSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-  memset_0(Buffer, 0, 256);
+  std::memset(Buffer, 0, 256);
   sprintf(Buffer, "{ CALL pInsert_WeeklyGuildPVPPointSum(%u) }", dwSerial);
   return this->ExecUpdateQuery( Buffer, 1);
 }
@@ -671,7 +671,7 @@ bool CRFWorldDatabase::InsertCharacterSelectLog(
         unsigned __int8 bySec)
 {
   char Buffer[1040]; // [rsp+80h] [rbp-438h] BYREF
-  memset_0(Buffer, 0, 1024);
+  std::memset(Buffer, 0, 1024);
   sprintf(
     Buffer,
     "insert into tbl_characterselect_log_%04d%02d ( AccountSerial, Account, CharacSerial, CharacName, LogDate ) values ( "
@@ -994,7 +994,7 @@ bool CRFWorldDatabase::Update_GuildMemberCount(
 bool CRFWorldDatabase::Update_GuildRoom( unsigned int dwGuildSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
-  memset_0(Buffer, 0, 256);
+  std::memset(Buffer, 0, 256);
   sprintf(
     Buffer,
     "update tbl_GuildRoom set dck = 1, logdate = getdate() where dck = 0 and guildserial = %d",
@@ -1050,18 +1050,18 @@ bool CRFWorldDatabase::Update_MacroData(
     const unsigned int fpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[1];
     const unsigned int hpPotionValue = beltIndex >= 1 ? 0 : pMacro->mcr_Potion[beltIndex].PotionValue[0];
 
-    memset_0(queryBuffer, 0, 2048);
+    std::memset(queryBuffer, 0, 2048);
     sprintf(queryBuffer, " Update tbl_Macro Set hp=%d, fp=%d, sp=%d,", hpPotionCode, fpPotionCode, spPotionCode);
-    memset_0(queryFragment, 0, 512);
+    std::memset(queryFragment, 0, 512);
     sprintf(queryFragment, " action0=%d, action1=%d, action2=%d, action3=%d,", action0, action1, action2, action3);
-    strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 512);
+    std::strcat(queryBuffer, queryFragment);
+    std::memset(queryFragment, 0, 512);
     sprintf(queryFragment, " action4=%d, action5=%d, action6=%d, action7=%d,", action4, action5, action6, action7);
-    strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 512);
+    std::strcat(queryBuffer, queryFragment);
+    std::memset(queryFragment, 0, 512);
     sprintf(queryFragment, " action8=%d, action9=%d,", action8, action9);
-    strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 512);
+    std::strcat(queryBuffer, queryFragment);
+    std::memset(queryFragment, 0, 512);
     sprintf(
       queryFragment,
       " chat0='%s', chat1='%s', chat2='%s', chat3='%s', chat4='%s',",
@@ -1070,13 +1070,13 @@ bool CRFWorldDatabase::Update_MacroData(
       chat2,
       chat3,
       chat4);
-    strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 512);
+    std::strcat(queryBuffer, queryFragment);
+    std::memset(queryFragment, 0, 512);
     sprintf(queryFragment, " hpvalue=%d, fpvalue=%d, spvalue=%d", hpPotionValue, fpPotionValue, spPotionValue);
-    strcat_0(queryBuffer, queryFragment);
-    memset_0(queryFragment, 0, 512);
+    std::strcat(queryBuffer, queryFragment);
+    std::memset(queryFragment, 0, 512);
     sprintf(queryFragment, " where serial=%d and belt=%d", dwSerial, beltIndex);
-    strcat_0(queryBuffer, queryFragment);
+    std::strcat(queryBuffer, queryFragment);
     if ( this->m_bSaveDBLog )
       this->Log( queryBuffer);
     if ( !this->m_hStmtSelect && !this->ReConnectDataBase() )
@@ -1454,8 +1454,8 @@ char CRFWorldDatabase::Select_GuildMoneyIOData(
       pGuildIOData->IOData[index].dLeftGold = leftGold[0];
       for (int j = 0; j < 4; ++j)
       {
-        memset_0(oneToken, 0, 3uLL);
-        memcpy_0(oneToken, &rawDate[2 * j], 2uLL);
+        std::memset(oneToken, 0, 3uLL);
+        std::memcpy(oneToken, &rawDate[2 * j], 2uLL);
         pGuildIOData->IOData[index].byDate[j] = static_cast<unsigned __int8>(atoi(oneToken));
       }
       ++index;
@@ -3598,7 +3598,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
     dwGuildSerial);
   memset(queryBuffer, 0, 1024);
   memberIndex = 0;
-  memset_0(gradeBySerial, 0, 600);
+  std::memset(gradeBySerial, 0, 600);
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : Start Get Grade from #tbl_RankInGuildCom",
     dwGuildSerial);

@@ -15,7 +15,7 @@ struct _limit_amount_info
 
   _limit_amount_info()
   {
-    memset_0(this, 0, sizeof(_limit_amount_info));
+    std::memset(this, 0, sizeof(_limit_amount_info));
   }
 };
 

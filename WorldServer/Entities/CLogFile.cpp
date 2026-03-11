@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CLogFile.h"
 
@@ -104,7 +104,7 @@ void CLogFile::Write(const char *format, ...)
     if (file != INVALID_HANDLE_VALUE)
     {
       SetFilePointer(file, 0, nullptr, FILE_END);
-      const DWORD length = static_cast<DWORD>(strlen_0(line));
+      const DWORD length = static_cast<DWORD>(std::strlen(line));
       DWORD written = 0;
       WriteFile(file, line, length, &written, nullptr);
       CloseHandle(file);
@@ -228,7 +228,7 @@ void CLogFile::WriteFromArg(const char *format, va_list arg)
   {
     SetFilePointer(hFile, 0, nullptr, FILE_END);
     DWORD written = 0;
-    const DWORD len = static_cast<DWORD>(strlen_0(line.data()));
+    const DWORD len = static_cast<DWORD>(std::strlen(line.data()));
     WriteFile(hFile, line.data(), len, &written, nullptr);
     CloseHandle(hFile);
   }
@@ -409,7 +409,7 @@ void CLogFile::WriteString(const char *fmt)
   {
     SetFilePointer(hFile, 0, nullptr, FILE_END);
     DWORD written = 0;
-    const DWORD len = strlen_0(line);
+    const DWORD len = std::strlen(line);
     WriteFile(hFile, line, len, &written, nullptr);
     CloseHandle(hFile);
   }

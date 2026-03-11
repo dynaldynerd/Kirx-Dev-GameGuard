@@ -33,7 +33,7 @@ char CGravityStoneRegener::Create(CMapData *pkMap)
   _object_create_setdata data;
   data.m_nLayerIndex = 0;
   data.m_pMap = pkMap;
-  memcpy_0(data.m_fStartPos, m_pkRegenPos->m_fCenterPos, sizeof(data.m_fStartPos));
+  std::memcpy(data.m_fStartPos, m_pkRegenPos->m_fCenterPos, sizeof(data.m_fStartPos));
   data.m_pRecordSet = nullptr;
   if (!CGameObject::Create(&data))
   {

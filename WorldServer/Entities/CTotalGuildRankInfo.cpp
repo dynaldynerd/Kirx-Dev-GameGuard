@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CTotalGuildRankInfo.h"
 
@@ -104,9 +104,9 @@ char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
     m_ppkInfo[k]->m_dwInx = k;
     m_ppkInfo[k]->m_wRank = pkInfo->list[k].wRank;
     m_ppkInfo[k]->m_dwSerial = pkInfo->list[k].dwSerial;
-    strcpy_0(m_ppkInfo[k]->m_wszGuildName, pkInfo->list[k].wszGuildName);
+    std::strcpy(m_ppkInfo[k]->m_wszGuildName, pkInfo->list[k].wszGuildName);
     m_ppkInfo[k]->m_byGrade = pkInfo->list[k].byGrade;
-    strcpy_0(m_ppkInfo[k]->m_wszMasterName, pkInfo->list[k].wszMasterName);
+    std::strcpy(m_ppkInfo[k]->m_wszMasterName, pkInfo->list[k].wszMasterName);
   }
 
   for (int m = 0; m < 3; ++m)
@@ -117,9 +117,9 @@ char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
     for (int n = 0; n < m_pkSendList[m].byCnt; ++n)
     {
       m_pkSendList[m].list[n].byRank = m_ppkRaceStartPos[m][n]->m_wRank;
-      strcpy_0(m_pkSendList[m].list[n].wszGuildName, m_ppkRaceStartPos[m][n]->m_wszGuildName);
+      std::strcpy(m_pkSendList[m].list[n].wszGuildName, m_ppkRaceStartPos[m][n]->m_wszGuildName);
       m_pkSendList[m].list[n].byGrade = m_ppkRaceStartPos[m][n]->m_byGrade;
-      strcpy_0(m_pkSendList[m].list[n].wszMasterName, m_ppkRaceStartPos[m][n]->m_wszMasterName);
+      std::strcpy(m_pkSendList[m].list[n].wszMasterName, m_ppkRaceStartPos[m][n]->m_wszMasterName);
     }
   }
 
@@ -179,12 +179,12 @@ void CTotalGuildRankInfo::Send(
       if (found < 0)
       {
         m_pkSendList[byTabRace].list[10].byRank = 0;
-        memset_0(
+        std::memset(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           0,
           sizeof(m_pkSendList[byTabRace].list[10].wszGuildName));
         m_pkSendList[byTabRace].list[10].byGrade = 0;
-        memset_0(
+        std::memset(
           m_pkSendList[byTabRace].list[10].wszMasterName,
           0,
           sizeof(m_pkSendList[byTabRace].list[10].wszMasterName));
@@ -193,11 +193,11 @@ void CTotalGuildRankInfo::Send(
       else
       {
         m_pkSendList[byTabRace].list[10].byRank = m_ppkRaceStartPos[bySelfRace][found]->m_wRank;
-        strcpy_0(
+        std::strcpy(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszGuildName);
         m_pkSendList[byTabRace].list[10].byGrade = m_ppkRaceStartPos[bySelfRace][found]->m_byGrade;
-        strcpy_0(
+        std::strcpy(
           m_pkSendList[byTabRace].list[10].wszMasterName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszMasterName);
         m_pkSendList[byTabRace].byExistSelfRankInfo = 1;

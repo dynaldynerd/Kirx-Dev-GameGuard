@@ -128,7 +128,7 @@ void CRadarItemMgr::SetUseRadar(
   m_bUse = true;
   m_bPlayerEnd = false;
   m_bMonEnd = false;
-  memcpy_0(m_strRadarCode, strRadarCode, sizeof(m_strRadarCode));
+  std::memcpy(m_strRadarCode, strRadarCode, sizeof(m_strRadarCode));
   m_dwStartTime = timeGetTime();
   m_dwDurTime = 1000 * dwDurTime;
   m_dwDelayTime = 1000 * dwDelayTime;

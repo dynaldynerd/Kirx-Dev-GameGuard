@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CWeeklyGuildRankManager.h"
 
@@ -172,7 +172,7 @@ __int64 CWeeklyGuildRankManager::UpdateTodayTable(char *szDate, _pvppoint_guild_
     created = 1;
   }
 
-  memset_0(pkInfo, 0, sizeof(_pvppoint_guild_rank_info));
+  std::memset(pkInfo, 0, sizeof(_pvppoint_guild_rank_info));
   const unsigned __int8 result = g_Main.m_pWorldDB->Select_PvpPointGuildRank(szDate, pkInfo);
   if (result == 2)
   {
@@ -261,7 +261,7 @@ char CWeeklyGuildRankManager::UpdateOwnerGuild(char *szDate)
 
 char CWeeklyGuildRankManager::SelectOwnerGuild(char *szDate, _weeklyguildrank_owner_info *pkInfo)
 {
-  memset_0(pkInfo, 0, sizeof(_weeklyguildrank_owner_info));
+  std::memset(pkInfo, 0, sizeof(_weeklyguildrank_owner_info));
   char ok = 1;
   for (unsigned __int8 race = 0; race < 3; ++race)
   {
@@ -601,7 +601,7 @@ bool CWeeklyGuildRankManager::LoadPrevTable(char *szDate, _pvppoint_guild_rank_i
     return false;
   }
 
-  memset_0(kInfo, 0, sizeof(_pvppoint_guild_rank_info));
+  std::memset(kInfo, 0, sizeof(_pvppoint_guild_rank_info));
   return g_Main.m_pWorldDB->Select_PvpPointGuildRank(szDate, kInfo) == 0;
 }
 

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CMgrAccountLobbyHistory.h"
 
@@ -474,7 +474,7 @@ void CMgrAccountLobbyHistory::player_money_fix(
 void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
 {
   unsigned int outIndex[4]{};
-  const int size = static_cast<int>(strlen_0(pszLog));
+  const int size = static_cast<int>(std::strlen(pszLog));
   if (size >= 200)
   {
     if (size >= 1000)
@@ -482,9 +482,9 @@ void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
       if (size < 0x2710 && m_listLogDataEmpty_10K.PopNode_Front(outIndex))
       {
         __LOG_DATA_10K &entry = m_LogData_10K[outIndex[0]];
-        strcpy_0(entry.szFileName, pszFileName);
+        std::strcpy(entry.szFileName, pszFileName);
         entry.nLen = size;
-        memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+        std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(size));
         entry.sData[size] = 0;
         m_listLogData_10K.PushNode_Back(outIndex[0]);
         return;
@@ -493,9 +493,9 @@ void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
     else if (m_listLogDataEmpty_1K.PopNode_Front(outIndex))
     {
       __LOG_DATA_1K &entry = m_LogData_1K[outIndex[0]];
-      strcpy_0(entry.szFileName, pszFileName);
+      std::strcpy(entry.szFileName, pszFileName);
       entry.nLen = size;
-      memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+      std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(size));
       entry.sData[size] = 0;
       m_listLogData_1K.PushNode_Back(outIndex[0]);
       return;
@@ -504,9 +504,9 @@ void CMgrAccountLobbyHistory::WriteFile(char *pszFileName, char *pszLog)
   else if (m_listLogDataEmpty_200.PopNode_Front(outIndex))
   {
     __LOG_DATA_200 &entry = m_LogData_200[outIndex[0]];
-    strcpy_0(entry.szFileName, pszFileName);
+    std::strcpy(entry.szFileName, pszFileName);
     entry.nLen = size;
-    memcpy_0(entry.sData, pszLog, static_cast<unsigned int>(size));
+    std::memcpy(entry.sData, pszLog, static_cast<unsigned int>(size));
     entry.sData[size] = 0;
     m_listLogData_200.PushNode_Back(outIndex[0]);
     return;

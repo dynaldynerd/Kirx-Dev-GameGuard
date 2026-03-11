@@ -38,7 +38,7 @@ int GetMaterialNameNum(struct _R3MATERIAL *mat)
 
   strcpy(buffer, "00000");
   memset(&buffer[6], '0', 3);
-  memset_0(&buffer[9], 0, sizeof(buffer) - 9);
+  std::memset(&buffer[9], 0, sizeof(buffer) - 9);
 
   int index = static_cast<int>(strlen(mat->m_name)) - 1;
   if (index >= 0)
@@ -86,7 +86,7 @@ void CSkyBox::LoadSkyBox(char *szFileName)
       while (materialIndex < this->mMatNum);
     }
     for (unsigned int groupIndex = 0; groupIndex < this->mMatGroupNum; ++groupIndex)
-      memset_0(this->mMatGroupSort, 0, 2LL * this->mMatGroupNum);
+      std::memset(this->mMatGroupSort, 0, 2LL * this->mMatGroupNum);
 
     __int64 sortIndex = 0;
     unsigned int materialNameIndex = 0;

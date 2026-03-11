@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "TimeLimitJade.h"
 
@@ -12,7 +12,7 @@
 
 TimeLimitJade::WaitCell::WaitCell()
 {
-  memset_0(this, 0, sizeof(TimeLimitJade::WaitCell));
+  std::memset(this, 0, sizeof(TimeLimitJade::WaitCell));
 }
 
 TimeLimitJade::WaitCell::WaitCell(_STORAGE_LIST::_db_con *pItem)
@@ -39,7 +39,7 @@ bool TimeLimitJade::WaitCell::operator>(const WaitCell *rhs) const
 
 TimeLimitJade::UseCell::UseCell()
 {
-  memset_0(this, 0, sizeof(TimeLimitJade::UseCell));
+  std::memset(this, 0, sizeof(TimeLimitJade::UseCell));
 }
 
 TimeLimitJade::UseCell::UseCell(_STORAGE_LIST::_db_con *pItem)

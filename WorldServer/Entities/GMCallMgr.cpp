@@ -20,10 +20,10 @@ void GMRequestData::Set(unsigned int dwSerial, const char *pwszName, unsigned in
 {
   m_dwPlayerSerial = dwSerial;
   m_dwCallTimer = dwTime;
-  memset_0(m_wszUserName, 0, sizeof(m_wszUserName));
+  std::memset(m_wszUserName, 0, sizeof(m_wszUserName));
   if (pwszName)
   {
-    memcpy_0(m_wszUserName, pwszName, sizeof(m_wszUserName));
+    std::memcpy(m_wszUserName, pwszName, sizeof(m_wszUserName));
     m_wszUserName[16] = 0;
   }
 }

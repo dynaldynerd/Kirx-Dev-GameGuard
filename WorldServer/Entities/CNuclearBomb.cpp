@@ -21,12 +21,12 @@ unsigned int CNuclearBomb::s_dwSerialCnt;
 
 _be_damaged_player::_be_damaged_player()
 {
-  memset_0(this, 0, sizeof(_be_damaged_player));
+  std::memset(this, 0, sizeof(_be_damaged_player));
 }
 
 _be_damaged_char::_be_damaged_char()
 {
-  memset_0(this, 0, sizeof(_be_damaged_char));
+  std::memset(this, 0, sizeof(_be_damaged_char));
 }
 
 CNuclearBomb::CNuclearBomb()
@@ -73,7 +73,7 @@ void CNuclearBomb::Loop()
       case 2:
         if (currentTime >= m_dwDurTime + m_dwStartTime - m_dwAttStartTime)
         {
-          if (strcmp_0(m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+          if (std::strcmp(m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
           {
             SendMsg_DropMissile();
           }
@@ -133,7 +133,7 @@ bool CNuclearBomb::Create(_nuclear_create_setdata *pData)
     m_dwObjSerial = static_cast<unsigned int>(GetNewSerial());
     m_bUse = true;
     m_bIsLive = true;
-    memcpy_0(m_fDropPos, pData->m_fStartPos, sizeof(m_fDropPos));
+    std::memcpy(m_fDropPos, pData->m_fStartPos, sizeof(m_fDropPos));
     m_byBombState = 0;
     m_nDamagedObjNum = 0;
     m_nEffObjNum = 0;
@@ -155,9 +155,9 @@ bool CNuclearBomb::Destroy()
   {
     m_fDropPos[index] = 0.0f;
   }
-  memset_0(m_DamList, 0, sizeof(m_DamList));
+  std::memset(m_DamList, 0, sizeof(m_DamList));
   m_nDamagedObjNum = 0;
-  memset_0(m_EffList, 0, sizeof(m_EffList));
+  std::memset(m_EffList, 0, sizeof(m_EffList));
   m_nEffObjNum = 0;
   m_bUse = false;
   m_bIsLive = false;
@@ -346,7 +346,7 @@ void CNuclearBomb::WarningToAll(unsigned __int8 byRaceCode)
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *player = &g_Player[clientIndex];
-    if (player->m_bOper && strcmp_0(player->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+    if (player->m_bOper && std::strcmp(player->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
       if (static_cast<int>(byRaceCode) != player->m_Param.GetRaceCode())
       {
@@ -373,7 +373,7 @@ void CNuclearBomb::SendMsg_InformDropPos()
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
     if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse &&
-        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+        std::strcmp(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
       payload.byRaceCode = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
       payload.byUseClass = static_cast<char>(GetMasterClass());
@@ -396,7 +396,7 @@ void CNuclearBomb::SendMsg_AddEffect()
   for (int index = 0; index < m_nEffObjNum; ++index)
   {
     if (m_EffList[index].m_pChar &&
-        strcmp_0(m_EffList[index].m_pChar->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+        std::strcmp(m_EffList[index].m_pChar->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
       _nuclear_bomb_explosion_result_zocl payload{};
       payload.byRaceCode = static_cast<char>(m_pMaster->m_Param.GetRaceCode());
@@ -428,7 +428,7 @@ void CNuclearBomb::SendMsg_InformAttack()
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
     if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse && targetPlayer->m_bLive &&
-        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
+        std::strcmp(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0)
     {
       _nuclear_explosion_success_zocl payload{};
       payload.byRaceCode = static_cast<char>(raceCode);
@@ -451,7 +451,7 @@ void CNuclearBomb::SendMsg_MasterDie()
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
     if (targetPlayer->m_bOper && !targetPlayer->m_bCorpse && targetPlayer->m_bLive &&
-        strcmp_0(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0 &&
+        std::strcmp(targetPlayer->m_pCurMap->m_pMapSet->m_strCode, "resources") == 0 &&
         m_byBombState != 0 && m_byBombState < 5u)
     {
       _nuclear_bomb_destruction_zocl payload{};

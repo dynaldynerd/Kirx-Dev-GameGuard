@@ -12,7 +12,7 @@ CLootingMgr::_list::_list()
 
 void CLootingMgr::_list::Init()
 {
-  memset_0(this, 0, sizeof(CLootingMgr::_list));
+  std::memset(this, 0, sizeof(CLootingMgr::_list));
 }
 
 double CLootingMgr::_list::GetScore(bool bBonus)

@@ -11,7 +11,7 @@
 CUnmannedTraderSubClassInfoForceLiverGrade::CUnmannedTraderSubClassInfoForceLiverGrade(unsigned int dwID)
   : CUnmannedTraderSubClassInfo(dwID), m_byGrade(static_cast<unsigned char>(-1))
 {
-  strcpy_0(this->m_szName, "forcelivergrade");
+  std::strcpy(this->m_szName, "forcelivergrade");
 }
 
 CUnmannedTraderSubClassInfoForceLiverGrade::~CUnmannedTraderSubClassInfoForceLiverGrade()

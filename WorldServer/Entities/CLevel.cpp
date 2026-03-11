@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "CLevel.h"
 #include "CBsp.h"
 #include "CSkyBox.h"
@@ -224,7 +224,7 @@ void CLevel::LoadLevel(const char *szFileName)
   R3EnvironmentShakeOff();
   mIsLoadedBsp = 1;
   ClearDynamicLight();
-  memset_0(&gAsci, 0, 256);
+  std::memset(&gAsci, 0, 256);
   mBsp->mIsLoaded = 1;
 }
 
@@ -266,8 +266,8 @@ void CLevel::SetCameraPos(float *const a2)
 void CLevel::SetViewMatrix(D3DXMATRIX *a2)
 {
   float quakeOffset[3]{};
-  memcpy_0(&mMatView, a2, sizeof(mMatView));
-  memcpy_0(&stru_184A79A6C, &mMatView, sizeof(stru_184A79A6C));
+  std::memcpy(&mMatView, a2, sizeof(mMatView));
+  std::memcpy(&stru_184A79A6C, &mMatView, sizeof(stru_184A79A6C));
   R3GetQuakeVector(quakeOffset);
 
   const float offsetX = quakeOffset[0];
@@ -286,7 +286,7 @@ void CLevel::FrameMove()
   RTMovieFrameMove();
 
   D3DXMATRIX world{};
-  memset_0(&world, 0, sizeof(world));
+  std::memset(&world, 0, sizeof(world));
   world.m[0][0] = FLOAT_1_0;
   world.m[1][1] = FLOAT_1_0;
   world.m[2][2] = FLOAT_1_0;
@@ -380,7 +380,7 @@ void CLevel::GetFrustumNormalPlane(float (*const a2)[4])
 void CLevel::DrawBBox(float *const a2, float *const a3, int a4)
 {
   D3DXMATRIX world{};
-  memset_0(&world, 0, sizeof(world));
+  std::memset(&world, 0, sizeof(world));
   world.m[0][0] = FLOAT_1_0;
   world.m[1][1] = FLOAT_1_0;
   world.m[2][2] = FLOAT_1_0;
@@ -457,7 +457,7 @@ void CLevel::DrawBBox(__int16 *const a2, __int16 *const a3, int a4)
 void CLevel::DrawTestBox(float *const a2, float *const a3, unsigned int a4)
 {
   D3DXMATRIX world{};
-  memset_0(&world, 0, sizeof(world));
+  std::memset(&world, 0, sizeof(world));
   world.m[0][0] = FLOAT_1_0;
   world.m[1][1] = FLOAT_1_0;
   world.m[2][2] = FLOAT_1_0;
@@ -916,7 +916,7 @@ __int64 CLevel::GetNextYposForServerFar(float *const a2, float *const a3, float 
       const float dx = dst[0] - src[0];
       const float dy = dst[1] - src[1];
       const float dz = dst[2] - src[2];
-      const float len = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+      const float len = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
       const float scale = FLOAT_25_0 / len;
       dst[0] = src[0] + (dx * scale);
       dst[1] = src[1] + (dy * scale);
@@ -998,7 +998,7 @@ __int64 CLevel::GetNextYposFarProgress(float *const a2, float *const a3, float *
       const float dx = dst[0] - src[0];
       const float dy = dst[1] - src[1];
       const float dz = dst[2] - src[2];
-      const float len = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz));
+      const float len = std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
       const float scale = FLOAT_25_0 / len;
       dst[0] = src[0] + (dx * scale);
       dst[1] = src[1] + (dy * scale);

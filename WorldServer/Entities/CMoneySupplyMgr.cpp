@@ -13,7 +13,7 @@ CMoneySupplyMgr *CMoneySupplyMgr::pInstance;
 
 void _MONEY_SUPPLY_DATA::init()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 CMoneySupplyMgr::CMoneySupplyMgr() = default;
@@ -42,7 +42,7 @@ void CMoneySupplyMgr::Initialize()
 void CMoneySupplyMgr::SendMsg_MoneySupplyDataToWeb(_MONEY_SUPPLY_DATA *pMSData)
 {
   _money_supply_gatering_inform_zowb packet{};
-  memcpy_0(&packet, pMSData, sizeof(packet));
+  std::memcpy(&packet, pMSData, sizeof(packet));
 
   unsigned __int8 type[2]{51, 20};
   if (g_Main.m_bConnectedWebAgentServer)
@@ -66,7 +66,7 @@ void CMoneySupplyMgr::LoopMoneySupply()
   if (loopTime >= m_dwLastSendTime + 60000)
   {
     m_MS_Senddata.init();
-    memcpy_0(&m_MS_Senddata, &m_MS_data, sizeof(_MONEY_SUPPLY_DATA));
+    std::memcpy(&m_MS_Senddata, &m_MS_data, sizeof(_MONEY_SUPPLY_DATA));
     m_MS_data.init();
     SendMsg_MoneySupplyDataToWeb(&m_MS_Senddata);
     m_dwLastSendTime = loopTime;
@@ -109,243 +109,243 @@ void CMoneySupplyMgr::UpdateBuyData(unsigned __int8 byRace, int nLv, char *szCla
     ++m_MS_data.ms_data[index].nRace[2];
   }
 
-  if (!strcmp_0(szClass, "BWB0"))
+  if (!std::strcmp(szClass, "BWB0"))
     {
       ++m_MS_data.ms_data[index].nClass[0];
     }
-    else if (!strcmp_0(szClass, "BWF1"))
+    else if (!std::strcmp(szClass, "BWF1"))
     {
       ++m_MS_data.ms_data[index].nClass[1];
     }
-    else if (!strcmp_0(szClass, "BWF2"))
+    else if (!std::strcmp(szClass, "BWF2"))
     {
       ++m_MS_data.ms_data[index].nClass[2];
     }
-    else if (!strcmp_0(szClass, "BWS1"))
+    else if (!std::strcmp(szClass, "BWS1"))
     {
       ++m_MS_data.ms_data[index].nClass[3];
     }
-    else if (!strcmp_0(szClass, "BWS2"))
+    else if (!std::strcmp(szClass, "BWS2"))
     {
       ++m_MS_data.ms_data[index].nClass[4];
     }
-    else if (!strcmp_0(szClass, "BWS3"))
+    else if (!std::strcmp(szClass, "BWS3"))
     {
       ++m_MS_data.ms_data[index].nClass[5];
     }
-    else if (!strcmp_0(szClass, "BRB0"))
+    else if (!std::strcmp(szClass, "BRB0"))
     {
       ++m_MS_data.ms_data[index].nClass[6];
     }
-    else if (!strcmp_0(szClass, "BRF1"))
+    else if (!std::strcmp(szClass, "BRF1"))
     {
       ++m_MS_data.ms_data[index].nClass[7];
     }
-    else if (!strcmp_0(szClass, "BRF2"))
+    else if (!std::strcmp(szClass, "BRF2"))
     {
       ++m_MS_data.ms_data[index].nClass[8];
     }
-    else if (!strcmp_0(szClass, "BRS1"))
+    else if (!std::strcmp(szClass, "BRS1"))
     {
       ++m_MS_data.ms_data[index].nClass[9];
     }
-    else if (!strcmp_0(szClass, "BRS2"))
+    else if (!std::strcmp(szClass, "BRS2"))
     {
       ++m_MS_data.ms_data[index].nClass[10];
     }
-    else if (!strcmp_0(szClass, "BRS3"))
+    else if (!std::strcmp(szClass, "BRS3"))
     {
       ++m_MS_data.ms_data[index].nClass[11];
     }
-    else if (!strcmp_0(szClass, "BFB0"))
+    else if (!std::strcmp(szClass, "BFB0"))
     {
       ++m_MS_data.ms_data[index].nClass[12];
     }
-    else if (!strcmp_0(szClass, "BFF1"))
+    else if (!std::strcmp(szClass, "BFF1"))
     {
       ++m_MS_data.ms_data[index].nClass[13];
     }
-    else if (!strcmp_0(szClass, "BFF2"))
+    else if (!std::strcmp(szClass, "BFF2"))
     {
       ++m_MS_data.ms_data[index].nClass[14];
     }
-    else if (!strcmp_0(szClass, "BFS1"))
+    else if (!std::strcmp(szClass, "BFS1"))
     {
       ++m_MS_data.ms_data[index].nClass[15];
     }
-    else if (!strcmp_0(szClass, "BFS2"))
+    else if (!std::strcmp(szClass, "BFS2"))
     {
       ++m_MS_data.ms_data[index].nClass[16];
     }
-    else if (!strcmp_0(szClass, "BFS3"))
+    else if (!std::strcmp(szClass, "BFS3"))
     {
       ++m_MS_data.ms_data[index].nClass[17];
     }
-    else if (!strcmp_0(szClass, "BSB0"))
+    else if (!std::strcmp(szClass, "BSB0"))
     {
       ++m_MS_data.ms_data[index].nClass[18];
     }
-    else if (!strcmp_0(szClass, "BSF1"))
+    else if (!std::strcmp(szClass, "BSF1"))
     {
       ++m_MS_data.ms_data[index].nClass[19];
     }
-    else if (!strcmp_0(szClass, "BSF2"))
+    else if (!std::strcmp(szClass, "BSF2"))
     {
       ++m_MS_data.ms_data[index].nClass[20];
     }
-    else if (!strcmp_0(szClass, "BSS1"))
+    else if (!std::strcmp(szClass, "BSS1"))
     {
       ++m_MS_data.ms_data[index].nClass[21];
     }
-    else if (!strcmp_0(szClass, "BSS2"))
+    else if (!std::strcmp(szClass, "BSS2"))
     {
       ++m_MS_data.ms_data[index].nClass[22];
     }
-    else if (!strcmp_0(szClass, "CWB0"))
+    else if (!std::strcmp(szClass, "CWB0"))
     {
       ++m_MS_data.ms_data[index].nClass[23];
     }
-    else if (!strcmp_0(szClass, "CWF1"))
+    else if (!std::strcmp(szClass, "CWF1"))
     {
       ++m_MS_data.ms_data[index].nClass[24];
     }
-    else if (!strcmp_0(szClass, "CWF2"))
+    else if (!std::strcmp(szClass, "CWF2"))
     {
       ++m_MS_data.ms_data[index].nClass[25];
     }
-    else if (!strcmp_0(szClass, "CWS1"))
+    else if (!std::strcmp(szClass, "CWS1"))
     {
       ++m_MS_data.ms_data[index].nClass[26];
     }
-    else if (!strcmp_0(szClass, "CWS2"))
+    else if (!std::strcmp(szClass, "CWS2"))
     {
       ++m_MS_data.ms_data[index].nClass[27];
     }
-    else if (!strcmp_0(szClass, "CWS3"))
+    else if (!std::strcmp(szClass, "CWS3"))
     {
       ++m_MS_data.ms_data[index].nClass[28];
     }
-    else if (!strcmp_0(szClass, "CRB0"))
+    else if (!std::strcmp(szClass, "CRB0"))
     {
       ++m_MS_data.ms_data[index].nClass[29];
     }
-    else if (!strcmp_0(szClass, "CRF1"))
+    else if (!std::strcmp(szClass, "CRF1"))
     {
       ++m_MS_data.ms_data[index].nClass[30];
     }
-    else if (!strcmp_0(szClass, "CRF2"))
+    else if (!std::strcmp(szClass, "CRF2"))
     {
       ++m_MS_data.ms_data[index].nClass[31];
     }
-    else if (!strcmp_0(szClass, "CRS1"))
+    else if (!std::strcmp(szClass, "CRS1"))
     {
       ++m_MS_data.ms_data[index].nClass[32];
     }
-    else if (!strcmp_0(szClass, "CRS2"))
+    else if (!std::strcmp(szClass, "CRS2"))
     {
       ++m_MS_data.ms_data[index].nClass[33];
     }
-    else if (!strcmp_0(szClass, "CRS3"))
+    else if (!std::strcmp(szClass, "CRS3"))
     {
       ++m_MS_data.ms_data[index].nClass[34];
     }
-    else if (!strcmp_0(szClass, "CFB0"))
+    else if (!std::strcmp(szClass, "CFB0"))
     {
       ++m_MS_data.ms_data[index].nClass[35];
     }
-    else if (!strcmp_0(szClass, "CFF1"))
+    else if (!std::strcmp(szClass, "CFF1"))
     {
       ++m_MS_data.ms_data[index].nClass[36];
     }
-    else if (!strcmp_0(szClass, "CFF2"))
+    else if (!std::strcmp(szClass, "CFF2"))
     {
       ++m_MS_data.ms_data[index].nClass[37];
     }
-    else if (!strcmp_0(szClass, "CFS1"))
+    else if (!std::strcmp(szClass, "CFS1"))
     {
       ++m_MS_data.ms_data[index].nClass[38];
     }
-    else if (!strcmp_0(szClass, "CFS2"))
+    else if (!std::strcmp(szClass, "CFS2"))
     {
       ++m_MS_data.ms_data[index].nClass[39];
     }
-    else if (!strcmp_0(szClass, "CFS3"))
+    else if (!std::strcmp(szClass, "CFS3"))
     {
       ++m_MS_data.ms_data[index].nClass[40];
     }
-    else if (!strcmp_0(szClass, "CSB0"))
+    else if (!std::strcmp(szClass, "CSB0"))
     {
       ++m_MS_data.ms_data[index].nClass[41];
     }
-    else if (!strcmp_0(szClass, "CSF1"))
+    else if (!std::strcmp(szClass, "CSF1"))
     {
       ++m_MS_data.ms_data[index].nClass[42];
     }
-    else if (!strcmp_0(szClass, "CSS1"))
+    else if (!std::strcmp(szClass, "CSS1"))
     {
       ++m_MS_data.ms_data[index].nClass[43];
     }
-    else if (!strcmp_0(szClass, "AWB0"))
+    else if (!std::strcmp(szClass, "AWB0"))
     {
       ++m_MS_data.ms_data[index].nClass[44];
     }
-    else if (!strcmp_0(szClass, "AWF1"))
+    else if (!std::strcmp(szClass, "AWF1"))
     {
       ++m_MS_data.ms_data[index].nClass[45];
     }
-    else if (!strcmp_0(szClass, "AWF2"))
+    else if (!std::strcmp(szClass, "AWF2"))
     {
       ++m_MS_data.ms_data[index].nClass[46];
     }
-    else if (!strcmp_0(szClass, "AWS1"))
+    else if (!std::strcmp(szClass, "AWS1"))
     {
       ++m_MS_data.ms_data[index].nClass[47];
     }
-    else if (!strcmp_0(szClass, "AWS2"))
+    else if (!std::strcmp(szClass, "AWS2"))
     {
       ++m_MS_data.ms_data[index].nClass[48];
     }
-    else if (!strcmp_0(szClass, "AWS3"))
+    else if (!std::strcmp(szClass, "AWS3"))
     {
       ++m_MS_data.ms_data[index].nClass[49];
     }
-    else if (!strcmp_0(szClass, "ARB0"))
+    else if (!std::strcmp(szClass, "ARB0"))
     {
       ++m_MS_data.ms_data[index].nClass[50];
     }
-    else if (!strcmp_0(szClass, "ARF1"))
+    else if (!std::strcmp(szClass, "ARF1"))
     {
       ++m_MS_data.ms_data[index].nClass[51];
     }
-    else if (!strcmp_0(szClass, "ARF2"))
+    else if (!std::strcmp(szClass, "ARF2"))
     {
       ++m_MS_data.ms_data[index].nClass[52];
     }
-    else if (!strcmp_0(szClass, "ARS1"))
+    else if (!std::strcmp(szClass, "ARS1"))
     {
       ++m_MS_data.ms_data[index].nClass[53];
     }
-    else if (!strcmp_0(szClass, "ARS2"))
+    else if (!std::strcmp(szClass, "ARS2"))
     {
       ++m_MS_data.ms_data[index].nClass[54];
     }
-    else if (!strcmp_0(szClass, "ARS3"))
+    else if (!std::strcmp(szClass, "ARS3"))
     {
       ++m_MS_data.ms_data[index].nClass[55];
     }
-    else if (!strcmp_0(szClass, "ASB0"))
+    else if (!std::strcmp(szClass, "ASB0"))
     {
       ++m_MS_data.ms_data[index].nClass[56];
     }
-    else if (!strcmp_0(szClass, "ASF1"))
+    else if (!std::strcmp(szClass, "ASF1"))
     {
       ++m_MS_data.ms_data[index].nClass[57];
     }
-    else if (!strcmp_0(szClass, "ASS1"))
+    else if (!std::strcmp(szClass, "ASS1"))
     {
       ++m_MS_data.ms_data[index].nClass[58];
     }
-    else if (!strcmp_0(szClass, "ASS2"))
+    else if (!std::strcmp(szClass, "ASS2"))
     {
       ++m_MS_data.ms_data[index].nClass[59];
     }
@@ -386,243 +386,243 @@ void CMoneySupplyMgr::UpdateSellData(unsigned __int8 byRace, int nLv, char *szCl
     ++m_MS_data.ms_data[0].nRace[2];
   }
 
-  if (!strcmp_0(szClass, "BWB0"))
+  if (!std::strcmp(szClass, "BWB0"))
     {
       ++m_MS_data.ms_data[0].nClass[0];
     }
-    else if (!strcmp_0(szClass, "BWF1"))
+    else if (!std::strcmp(szClass, "BWF1"))
     {
       ++m_MS_data.ms_data[0].nClass[1];
     }
-    else if (!strcmp_0(szClass, "BWF2"))
+    else if (!std::strcmp(szClass, "BWF2"))
     {
       ++m_MS_data.ms_data[0].nClass[2];
     }
-    else if (!strcmp_0(szClass, "BWS1"))
+    else if (!std::strcmp(szClass, "BWS1"))
     {
       ++m_MS_data.ms_data[0].nClass[3];
     }
-    else if (!strcmp_0(szClass, "BWS2"))
+    else if (!std::strcmp(szClass, "BWS2"))
     {
       ++m_MS_data.ms_data[0].nClass[4];
     }
-    else if (!strcmp_0(szClass, "BWS3"))
+    else if (!std::strcmp(szClass, "BWS3"))
     {
       ++m_MS_data.ms_data[0].nClass[5];
     }
-    else if (!strcmp_0(szClass, "BRB0"))
+    else if (!std::strcmp(szClass, "BRB0"))
     {
       ++m_MS_data.ms_data[0].nClass[6];
     }
-    else if (!strcmp_0(szClass, "BRF1"))
+    else if (!std::strcmp(szClass, "BRF1"))
     {
       ++m_MS_data.ms_data[0].nClass[7];
     }
-    else if (!strcmp_0(szClass, "BRF2"))
+    else if (!std::strcmp(szClass, "BRF2"))
     {
       ++m_MS_data.ms_data[0].nClass[8];
     }
-    else if (!strcmp_0(szClass, "BRS1"))
+    else if (!std::strcmp(szClass, "BRS1"))
     {
       ++m_MS_data.ms_data[0].nClass[9];
     }
-    else if (!strcmp_0(szClass, "BRS2"))
+    else if (!std::strcmp(szClass, "BRS2"))
     {
       ++m_MS_data.ms_data[0].nClass[10];
     }
-    else if (!strcmp_0(szClass, "BRS3"))
+    else if (!std::strcmp(szClass, "BRS3"))
     {
       ++m_MS_data.ms_data[0].nClass[11];
     }
-    else if (!strcmp_0(szClass, "BFB0"))
+    else if (!std::strcmp(szClass, "BFB0"))
     {
       ++m_MS_data.ms_data[0].nClass[12];
     }
-    else if (!strcmp_0(szClass, "BFF1"))
+    else if (!std::strcmp(szClass, "BFF1"))
     {
       ++m_MS_data.ms_data[0].nClass[13];
     }
-    else if (!strcmp_0(szClass, "BFF2"))
+    else if (!std::strcmp(szClass, "BFF2"))
     {
       ++m_MS_data.ms_data[0].nClass[14];
     }
-    else if (!strcmp_0(szClass, "BFS1"))
+    else if (!std::strcmp(szClass, "BFS1"))
     {
       ++m_MS_data.ms_data[0].nClass[15];
     }
-    else if (!strcmp_0(szClass, "BFS2"))
+    else if (!std::strcmp(szClass, "BFS2"))
     {
       ++m_MS_data.ms_data[0].nClass[16];
     }
-    else if (!strcmp_0(szClass, "BFS3"))
+    else if (!std::strcmp(szClass, "BFS3"))
     {
       ++m_MS_data.ms_data[0].nClass[17];
     }
-    else if (!strcmp_0(szClass, "BSB0"))
+    else if (!std::strcmp(szClass, "BSB0"))
     {
       ++m_MS_data.ms_data[0].nClass[18];
     }
-    else if (!strcmp_0(szClass, "BSF1"))
+    else if (!std::strcmp(szClass, "BSF1"))
     {
       ++m_MS_data.ms_data[0].nClass[19];
     }
-    else if (!strcmp_0(szClass, "BSF2"))
+    else if (!std::strcmp(szClass, "BSF2"))
     {
       ++m_MS_data.ms_data[0].nClass[20];
     }
-    else if (!strcmp_0(szClass, "BSS1"))
+    else if (!std::strcmp(szClass, "BSS1"))
     {
       ++m_MS_data.ms_data[0].nClass[21];
     }
-    else if (!strcmp_0(szClass, "BSS2"))
+    else if (!std::strcmp(szClass, "BSS2"))
     {
       ++m_MS_data.ms_data[0].nClass[22];
     }
-    else if (!strcmp_0(szClass, "CWB0"))
+    else if (!std::strcmp(szClass, "CWB0"))
     {
       ++m_MS_data.ms_data[0].nClass[23];
     }
-    else if (!strcmp_0(szClass, "CWF1"))
+    else if (!std::strcmp(szClass, "CWF1"))
     {
       ++m_MS_data.ms_data[0].nClass[24];
     }
-    else if (!strcmp_0(szClass, "CWF2"))
+    else if (!std::strcmp(szClass, "CWF2"))
     {
       ++m_MS_data.ms_data[0].nClass[25];
     }
-    else if (!strcmp_0(szClass, "CWS1"))
+    else if (!std::strcmp(szClass, "CWS1"))
     {
       ++m_MS_data.ms_data[0].nClass[26];
     }
-    else if (!strcmp_0(szClass, "CWS2"))
+    else if (!std::strcmp(szClass, "CWS2"))
     {
       ++m_MS_data.ms_data[0].nClass[27];
     }
-    else if (!strcmp_0(szClass, "CWS3"))
+    else if (!std::strcmp(szClass, "CWS3"))
     {
       ++m_MS_data.ms_data[0].nClass[28];
     }
-    else if (!strcmp_0(szClass, "CRB0"))
+    else if (!std::strcmp(szClass, "CRB0"))
     {
       ++m_MS_data.ms_data[0].nClass[29];
     }
-    else if (!strcmp_0(szClass, "CRF1"))
+    else if (!std::strcmp(szClass, "CRF1"))
     {
       ++m_MS_data.ms_data[0].nClass[30];
     }
-    else if (!strcmp_0(szClass, "CRF2"))
+    else if (!std::strcmp(szClass, "CRF2"))
     {
       ++m_MS_data.ms_data[0].nClass[31];
     }
-    else if (!strcmp_0(szClass, "CRS1"))
+    else if (!std::strcmp(szClass, "CRS1"))
     {
       ++m_MS_data.ms_data[0].nClass[32];
     }
-    else if (!strcmp_0(szClass, "CRS2"))
+    else if (!std::strcmp(szClass, "CRS2"))
     {
       ++m_MS_data.ms_data[0].nClass[33];
     }
-    else if (!strcmp_0(szClass, "CRS3"))
+    else if (!std::strcmp(szClass, "CRS3"))
     {
       ++m_MS_data.ms_data[0].nClass[34];
     }
-    else if (!strcmp_0(szClass, "CFB0"))
+    else if (!std::strcmp(szClass, "CFB0"))
     {
       ++m_MS_data.ms_data[0].nClass[35];
     }
-    else if (!strcmp_0(szClass, "CFF1"))
+    else if (!std::strcmp(szClass, "CFF1"))
     {
       ++m_MS_data.ms_data[0].nClass[36];
     }
-    else if (!strcmp_0(szClass, "CFF2"))
+    else if (!std::strcmp(szClass, "CFF2"))
     {
       ++m_MS_data.ms_data[0].nClass[37];
     }
-    else if (!strcmp_0(szClass, "CFS1"))
+    else if (!std::strcmp(szClass, "CFS1"))
     {
       ++m_MS_data.ms_data[0].nClass[38];
     }
-    else if (!strcmp_0(szClass, "CFS2"))
+    else if (!std::strcmp(szClass, "CFS2"))
     {
       ++m_MS_data.ms_data[0].nClass[39];
     }
-    else if (!strcmp_0(szClass, "CFS3"))
+    else if (!std::strcmp(szClass, "CFS3"))
     {
       ++m_MS_data.ms_data[0].nClass[40];
     }
-    else if (!strcmp_0(szClass, "CSB0"))
+    else if (!std::strcmp(szClass, "CSB0"))
     {
       ++m_MS_data.ms_data[0].nClass[41];
     }
-    else if (!strcmp_0(szClass, "CSF1"))
+    else if (!std::strcmp(szClass, "CSF1"))
     {
       ++m_MS_data.ms_data[0].nClass[42];
     }
-    else if (!strcmp_0(szClass, "CSS1"))
+    else if (!std::strcmp(szClass, "CSS1"))
     {
       ++m_MS_data.ms_data[0].nClass[43];
     }
-    else if (!strcmp_0(szClass, "AWB0"))
+    else if (!std::strcmp(szClass, "AWB0"))
     {
       ++m_MS_data.ms_data[0].nClass[44];
     }
-    else if (!strcmp_0(szClass, "AWF1"))
+    else if (!std::strcmp(szClass, "AWF1"))
     {
       ++m_MS_data.ms_data[0].nClass[45];
     }
-    else if (!strcmp_0(szClass, "AWF2"))
+    else if (!std::strcmp(szClass, "AWF2"))
     {
       ++m_MS_data.ms_data[0].nClass[46];
     }
-    else if (!strcmp_0(szClass, "AWS1"))
+    else if (!std::strcmp(szClass, "AWS1"))
     {
       ++m_MS_data.ms_data[0].nClass[47];
     }
-    else if (!strcmp_0(szClass, "AWS2"))
+    else if (!std::strcmp(szClass, "AWS2"))
     {
       ++m_MS_data.ms_data[0].nClass[48];
     }
-    else if (!strcmp_0(szClass, "AWS3"))
+    else if (!std::strcmp(szClass, "AWS3"))
     {
       ++m_MS_data.ms_data[0].nClass[49];
     }
-    else if (!strcmp_0(szClass, "ARB0"))
+    else if (!std::strcmp(szClass, "ARB0"))
     {
       ++m_MS_data.ms_data[0].nClass[50];
     }
-    else if (!strcmp_0(szClass, "ARF1"))
+    else if (!std::strcmp(szClass, "ARF1"))
     {
       ++m_MS_data.ms_data[0].nClass[51];
     }
-    else if (!strcmp_0(szClass, "ARF2"))
+    else if (!std::strcmp(szClass, "ARF2"))
     {
       ++m_MS_data.ms_data[0].nClass[52];
     }
-    else if (!strcmp_0(szClass, "ARS1"))
+    else if (!std::strcmp(szClass, "ARS1"))
     {
       ++m_MS_data.ms_data[0].nClass[53];
     }
-    else if (!strcmp_0(szClass, "ARS2"))
+    else if (!std::strcmp(szClass, "ARS2"))
     {
       ++m_MS_data.ms_data[0].nClass[54];
     }
-    else if (!strcmp_0(szClass, "ARS3"))
+    else if (!std::strcmp(szClass, "ARS3"))
     {
       ++m_MS_data.ms_data[0].nClass[55];
     }
-    else if (!strcmp_0(szClass, "ASB0"))
+    else if (!std::strcmp(szClass, "ASB0"))
     {
       ++m_MS_data.ms_data[0].nClass[56];
     }
-    else if (!strcmp_0(szClass, "ASF1"))
+    else if (!std::strcmp(szClass, "ASF1"))
     {
       ++m_MS_data.ms_data[0].nClass[57];
     }
-    else if (!strcmp_0(szClass, "ASS1"))
+    else if (!std::strcmp(szClass, "ASS1"))
     {
       ++m_MS_data.ms_data[0].nClass[58];
     }
-    else if (!strcmp_0(szClass, "ASS2"))
+    else if (!std::strcmp(szClass, "ASS2"))
     {
       ++m_MS_data.ms_data[0].nClass[59];
     }
@@ -662,231 +662,231 @@ void CMoneySupplyMgr::UpdateQuestRewardMoneyData(unsigned __int8 byRace, int nLv
     ++m_MS_data.ms_data[1].nRace[2];
   }
 
-  if (!strcmp_0(szClass, "BWB0"))
+  if (!std::strcmp(szClass, "BWB0"))
   {
     ++m_MS_data.ms_data[1].nClass[0];
   }
-  else if (!strcmp_0(szClass, "BWF2"))
+  else if (!std::strcmp(szClass, "BWF2"))
   {
     ++m_MS_data.ms_data[1].nClass[4];
   }
-  else if (!strcmp_0(szClass, "BWS3"))
+  else if (!std::strcmp(szClass, "BWS3"))
   {
     ++m_MS_data.ms_data[1].nClass[5];
   }
-  else if (!strcmp_0(szClass, "BRB0"))
+  else if (!std::strcmp(szClass, "BRB0"))
   {
     ++m_MS_data.ms_data[1].nClass[6];
   }
-  else if (!strcmp_0(szClass, "BRF1"))
+  else if (!std::strcmp(szClass, "BRF1"))
   {
     ++m_MS_data.ms_data[1].nClass[7];
   }
-  else if (!strcmp_0(szClass, "BRF2"))
+  else if (!std::strcmp(szClass, "BRF2"))
   {
     ++m_MS_data.ms_data[1].nClass[8];
   }
-  else if (!strcmp_0(szClass, "BRS1"))
+  else if (!std::strcmp(szClass, "BRS1"))
   {
     ++m_MS_data.ms_data[1].nClass[9];
   }
-  else if (!strcmp_0(szClass, "BRS2"))
+  else if (!std::strcmp(szClass, "BRS2"))
   {
     ++m_MS_data.ms_data[1].nClass[10];
   }
-  else if (!strcmp_0(szClass, "BRS3"))
+  else if (!std::strcmp(szClass, "BRS3"))
   {
     ++m_MS_data.ms_data[1].nClass[11];
   }
-  else if (!strcmp_0(szClass, "BFB0"))
+  else if (!std::strcmp(szClass, "BFB0"))
   {
     ++m_MS_data.ms_data[1].nClass[12];
   }
-  else if (!strcmp_0(szClass, "BFF1"))
+  else if (!std::strcmp(szClass, "BFF1"))
   {
     ++m_MS_data.ms_data[1].nClass[13];
   }
-  else if (!strcmp_0(szClass, "BFF2"))
+  else if (!std::strcmp(szClass, "BFF2"))
   {
     ++m_MS_data.ms_data[1].nClass[14];
   }
-  else if (!strcmp_0(szClass, "BFS1"))
+  else if (!std::strcmp(szClass, "BFS1"))
   {
     ++m_MS_data.ms_data[1].nClass[15];
   }
-  else if (!strcmp_0(szClass, "BFS2"))
+  else if (!std::strcmp(szClass, "BFS2"))
   {
     ++m_MS_data.ms_data[1].nClass[16];
   }
-  else if (!strcmp_0(szClass, "BFS3"))
+  else if (!std::strcmp(szClass, "BFS3"))
   {
     ++m_MS_data.ms_data[1].nClass[17];
   }
-  else if (!strcmp_0(szClass, "BSB0"))
+  else if (!std::strcmp(szClass, "BSB0"))
   {
     ++m_MS_data.ms_data[1].nClass[18];
   }
-  else if (!strcmp_0(szClass, "BSF1"))
+  else if (!std::strcmp(szClass, "BSF1"))
   {
     ++m_MS_data.ms_data[1].nClass[19];
   }
-  else if (!strcmp_0(szClass, "BSF2"))
+  else if (!std::strcmp(szClass, "BSF2"))
   {
     ++m_MS_data.ms_data[1].nClass[20];
   }
-  else if (!strcmp_0(szClass, "BSS1"))
+  else if (!std::strcmp(szClass, "BSS1"))
   {
     ++m_MS_data.ms_data[1].nClass[21];
   }
-  else if (!strcmp_0(szClass, "BSS2"))
+  else if (!std::strcmp(szClass, "BSS2"))
   {
     ++m_MS_data.ms_data[1].nClass[22];
   }
-  else if (!strcmp_0(szClass, "CWB0"))
+  else if (!std::strcmp(szClass, "CWB0"))
   {
     ++m_MS_data.ms_data[1].nClass[23];
   }
-  else if (!strcmp_0(szClass, "CWF1"))
+  else if (!std::strcmp(szClass, "CWF1"))
   {
     ++m_MS_data.ms_data[1].nClass[24];
   }
-  else if (!strcmp_0(szClass, "CWF2"))
+  else if (!std::strcmp(szClass, "CWF2"))
   {
     ++m_MS_data.ms_data[1].nClass[25];
   }
-  else if (!strcmp_0(szClass, "CWS1"))
+  else if (!std::strcmp(szClass, "CWS1"))
   {
     ++m_MS_data.ms_data[1].nClass[26];
   }
-  else if (!strcmp_0(szClass, "CWS2"))
+  else if (!std::strcmp(szClass, "CWS2"))
   {
     ++m_MS_data.ms_data[1].nClass[27];
   }
-  else if (!strcmp_0(szClass, "CWS3"))
+  else if (!std::strcmp(szClass, "CWS3"))
   {
     ++m_MS_data.ms_data[1].nClass[28];
   }
-  else if (!strcmp_0(szClass, "CRB0"))
+  else if (!std::strcmp(szClass, "CRB0"))
   {
     ++m_MS_data.ms_data[1].nClass[29];
   }
-  else if (!strcmp_0(szClass, "CRF1"))
+  else if (!std::strcmp(szClass, "CRF1"))
   {
     ++m_MS_data.ms_data[1].nClass[30];
   }
-  else if (!strcmp_0(szClass, "CRF2"))
+  else if (!std::strcmp(szClass, "CRF2"))
   {
     ++m_MS_data.ms_data[1].nClass[31];
   }
-  else if (!strcmp_0(szClass, "CRS1"))
+  else if (!std::strcmp(szClass, "CRS1"))
   {
     ++m_MS_data.ms_data[1].nClass[32];
   }
-  else if (!strcmp_0(szClass, "CRS2"))
+  else if (!std::strcmp(szClass, "CRS2"))
   {
     ++m_MS_data.ms_data[1].nClass[33];
   }
-  else if (!strcmp_0(szClass, "CRS3"))
+  else if (!std::strcmp(szClass, "CRS3"))
   {
     ++m_MS_data.ms_data[1].nClass[34];
   }
-  else if (!strcmp_0(szClass, "CFB0"))
+  else if (!std::strcmp(szClass, "CFB0"))
   {
     ++m_MS_data.ms_data[1].nClass[35];
   }
-  else if (!strcmp_0(szClass, "CFF1"))
+  else if (!std::strcmp(szClass, "CFF1"))
   {
     ++m_MS_data.ms_data[1].nClass[36];
   }
-  else if (!strcmp_0(szClass, "CFF2"))
+  else if (!std::strcmp(szClass, "CFF2"))
   {
     ++m_MS_data.ms_data[1].nClass[37];
   }
-  else if (!strcmp_0(szClass, "CFS1"))
+  else if (!std::strcmp(szClass, "CFS1"))
   {
     ++m_MS_data.ms_data[1].nClass[38];
   }
-  else if (!strcmp_0(szClass, "CFS2"))
+  else if (!std::strcmp(szClass, "CFS2"))
   {
     ++m_MS_data.ms_data[1].nClass[39];
   }
-  else if (!strcmp_0(szClass, "CFS3"))
+  else if (!std::strcmp(szClass, "CFS3"))
   {
     ++m_MS_data.ms_data[1].nClass[40];
   }
-  else if (!strcmp_0(szClass, "CSB0"))
+  else if (!std::strcmp(szClass, "CSB0"))
   {
     ++m_MS_data.ms_data[1].nClass[41];
   }
-  else if (!strcmp_0(szClass, "CSF1"))
+  else if (!std::strcmp(szClass, "CSF1"))
   {
     ++m_MS_data.ms_data[1].nClass[42];
   }
-  else if (!strcmp_0(szClass, "CSS1"))
+  else if (!std::strcmp(szClass, "CSS1"))
   {
     ++m_MS_data.ms_data[1].nClass[43];
   }
-  else if (!strcmp_0(szClass, "AWB0"))
+  else if (!std::strcmp(szClass, "AWB0"))
   {
     ++m_MS_data.ms_data[1].nClass[44];
   }
-  else if (!strcmp_0(szClass, "AWF1"))
+  else if (!std::strcmp(szClass, "AWF1"))
   {
     ++m_MS_data.ms_data[1].nClass[45];
   }
-  else if (!strcmp_0(szClass, "AWF2"))
+  else if (!std::strcmp(szClass, "AWF2"))
   {
     ++m_MS_data.ms_data[1].nClass[46];
   }
-  else if (!strcmp_0(szClass, "AWS1"))
+  else if (!std::strcmp(szClass, "AWS1"))
   {
     ++m_MS_data.ms_data[1].nClass[47];
   }
-  else if (!strcmp_0(szClass, "AWS2"))
+  else if (!std::strcmp(szClass, "AWS2"))
   {
     ++m_MS_data.ms_data[1].nClass[48];
   }
-  else if (!strcmp_0(szClass, "AWS3"))
+  else if (!std::strcmp(szClass, "AWS3"))
   {
     ++m_MS_data.ms_data[1].nClass[49];
   }
-  else if (!strcmp_0(szClass, "ARB0"))
+  else if (!std::strcmp(szClass, "ARB0"))
   {
     ++m_MS_data.ms_data[1].nClass[50];
   }
-  else if (!strcmp_0(szClass, "ARF1"))
+  else if (!std::strcmp(szClass, "ARF1"))
   {
     ++m_MS_data.ms_data[1].nClass[51];
   }
-  else if (!strcmp_0(szClass, "ARF2"))
+  else if (!std::strcmp(szClass, "ARF2"))
   {
     ++m_MS_data.ms_data[1].nClass[52];
   }
-  else if (!strcmp_0(szClass, "ARS1"))
+  else if (!std::strcmp(szClass, "ARS1"))
   {
     ++m_MS_data.ms_data[1].nClass[53];
   }
-  else if (!strcmp_0(szClass, "ARS2"))
+  else if (!std::strcmp(szClass, "ARS2"))
   {
     ++m_MS_data.ms_data[1].nClass[54];
   }
-  else if (!strcmp_0(szClass, "ARS3"))
+  else if (!std::strcmp(szClass, "ARS3"))
   {
     ++m_MS_data.ms_data[1].nClass[55];
   }
-  else if (!strcmp_0(szClass, "ASB0"))
+  else if (!std::strcmp(szClass, "ASB0"))
   {
     ++m_MS_data.ms_data[1].nClass[56];
   }
-  else if (!strcmp_0(szClass, "ASF1"))
+  else if (!std::strcmp(szClass, "ASF1"))
   {
     ++m_MS_data.ms_data[1].nClass[57];
   }
-  else if (!strcmp_0(szClass, "ASS1"))
+  else if (!std::strcmp(szClass, "ASS1"))
   {
     ++m_MS_data.ms_data[1].nClass[58];
   }
-  else if (!strcmp_0(szClass, "ASS2"))
+  else if (!std::strcmp(szClass, "ASS2"))
   {
     ++m_MS_data.ms_data[1].nClass[59];
   }
@@ -926,231 +926,231 @@ void CMoneySupplyMgr::UpdateGateRewardMoneyData(unsigned __int8 byRace, int nLv,
     ++m_MS_data.ms_data[2].nRace[2];
   }
 
-  if (!strcmp_0(szClass, "BWB0"))
+  if (!std::strcmp(szClass, "BWB0"))
   {
     ++m_MS_data.ms_data[2].nClass[0];
   }
-  else if (!strcmp_0(szClass, "BWF2"))
+  else if (!std::strcmp(szClass, "BWF2"))
   {
     ++m_MS_data.ms_data[2].nClass[4];
   }
-  else if (!strcmp_0(szClass, "BWS3"))
+  else if (!std::strcmp(szClass, "BWS3"))
   {
     ++m_MS_data.ms_data[2].nClass[5];
   }
-  else if (!strcmp_0(szClass, "BRB0"))
+  else if (!std::strcmp(szClass, "BRB0"))
   {
     ++m_MS_data.ms_data[2].nClass[6];
   }
-  else if (!strcmp_0(szClass, "BRF1"))
+  else if (!std::strcmp(szClass, "BRF1"))
   {
     ++m_MS_data.ms_data[2].nClass[7];
   }
-  else if (!strcmp_0(szClass, "BRF2"))
+  else if (!std::strcmp(szClass, "BRF2"))
   {
     ++m_MS_data.ms_data[2].nClass[8];
   }
-  else if (!strcmp_0(szClass, "BRS1"))
+  else if (!std::strcmp(szClass, "BRS1"))
   {
     ++m_MS_data.ms_data[2].nClass[9];
   }
-  else if (!strcmp_0(szClass, "BRS2"))
+  else if (!std::strcmp(szClass, "BRS2"))
   {
     ++m_MS_data.ms_data[2].nClass[10];
   }
-  else if (!strcmp_0(szClass, "BRS3"))
+  else if (!std::strcmp(szClass, "BRS3"))
   {
     ++m_MS_data.ms_data[2].nClass[11];
   }
-  else if (!strcmp_0(szClass, "BFB0"))
+  else if (!std::strcmp(szClass, "BFB0"))
   {
     ++m_MS_data.ms_data[2].nClass[12];
   }
-  else if (!strcmp_0(szClass, "BFF1"))
+  else if (!std::strcmp(szClass, "BFF1"))
   {
     ++m_MS_data.ms_data[2].nClass[13];
   }
-  else if (!strcmp_0(szClass, "BFF2"))
+  else if (!std::strcmp(szClass, "BFF2"))
   {
     ++m_MS_data.ms_data[2].nClass[14];
   }
-  else if (!strcmp_0(szClass, "BFS1"))
+  else if (!std::strcmp(szClass, "BFS1"))
   {
     ++m_MS_data.ms_data[2].nClass[15];
   }
-  else if (!strcmp_0(szClass, "BFS2"))
+  else if (!std::strcmp(szClass, "BFS2"))
   {
     ++m_MS_data.ms_data[2].nClass[16];
   }
-  else if (!strcmp_0(szClass, "BFS3"))
+  else if (!std::strcmp(szClass, "BFS3"))
   {
     ++m_MS_data.ms_data[2].nClass[17];
   }
-  else if (!strcmp_0(szClass, "BSB0"))
+  else if (!std::strcmp(szClass, "BSB0"))
   {
     ++m_MS_data.ms_data[2].nClass[18];
   }
-  else if (!strcmp_0(szClass, "BSF1"))
+  else if (!std::strcmp(szClass, "BSF1"))
   {
     ++m_MS_data.ms_data[2].nClass[19];
   }
-  else if (!strcmp_0(szClass, "BSF2"))
+  else if (!std::strcmp(szClass, "BSF2"))
   {
     ++m_MS_data.ms_data[2].nClass[20];
   }
-  else if (!strcmp_0(szClass, "BSS1"))
+  else if (!std::strcmp(szClass, "BSS1"))
   {
     ++m_MS_data.ms_data[2].nClass[21];
   }
-  else if (!strcmp_0(szClass, "BSS2"))
+  else if (!std::strcmp(szClass, "BSS2"))
   {
     ++m_MS_data.ms_data[2].nClass[22];
   }
-  else if (!strcmp_0(szClass, "CWB0"))
+  else if (!std::strcmp(szClass, "CWB0"))
   {
     ++m_MS_data.ms_data[2].nClass[23];
   }
-  else if (!strcmp_0(szClass, "CWF1"))
+  else if (!std::strcmp(szClass, "CWF1"))
   {
     ++m_MS_data.ms_data[2].nClass[24];
   }
-  else if (!strcmp_0(szClass, "CWF2"))
+  else if (!std::strcmp(szClass, "CWF2"))
   {
     ++m_MS_data.ms_data[2].nClass[25];
   }
-  else if (!strcmp_0(szClass, "CWS1"))
+  else if (!std::strcmp(szClass, "CWS1"))
   {
     ++m_MS_data.ms_data[2].nClass[26];
   }
-  else if (!strcmp_0(szClass, "CWS2"))
+  else if (!std::strcmp(szClass, "CWS2"))
   {
     ++m_MS_data.ms_data[2].nClass[27];
   }
-  else if (!strcmp_0(szClass, "CWS3"))
+  else if (!std::strcmp(szClass, "CWS3"))
   {
     ++m_MS_data.ms_data[2].nClass[28];
   }
-  else if (!strcmp_0(szClass, "CRB0"))
+  else if (!std::strcmp(szClass, "CRB0"))
   {
     ++m_MS_data.ms_data[2].nClass[29];
   }
-  else if (!strcmp_0(szClass, "CRF1"))
+  else if (!std::strcmp(szClass, "CRF1"))
   {
     ++m_MS_data.ms_data[2].nClass[30];
   }
-  else if (!strcmp_0(szClass, "CRF2"))
+  else if (!std::strcmp(szClass, "CRF2"))
   {
     ++m_MS_data.ms_data[2].nClass[31];
   }
-  else if (!strcmp_0(szClass, "CRS1"))
+  else if (!std::strcmp(szClass, "CRS1"))
   {
     ++m_MS_data.ms_data[2].nClass[32];
   }
-  else if (!strcmp_0(szClass, "CRS2"))
+  else if (!std::strcmp(szClass, "CRS2"))
   {
     ++m_MS_data.ms_data[2].nClass[33];
   }
-  else if (!strcmp_0(szClass, "CRS3"))
+  else if (!std::strcmp(szClass, "CRS3"))
   {
     ++m_MS_data.ms_data[2].nClass[34];
   }
-  else if (!strcmp_0(szClass, "CFB0"))
+  else if (!std::strcmp(szClass, "CFB0"))
   {
     ++m_MS_data.ms_data[2].nClass[35];
   }
-  else if (!strcmp_0(szClass, "CFF1"))
+  else if (!std::strcmp(szClass, "CFF1"))
   {
     ++m_MS_data.ms_data[2].nClass[36];
   }
-  else if (!strcmp_0(szClass, "CFF2"))
+  else if (!std::strcmp(szClass, "CFF2"))
   {
     ++m_MS_data.ms_data[2].nClass[37];
   }
-  else if (!strcmp_0(szClass, "CFS1"))
+  else if (!std::strcmp(szClass, "CFS1"))
   {
     ++m_MS_data.ms_data[2].nClass[38];
   }
-  else if (!strcmp_0(szClass, "CFS2"))
+  else if (!std::strcmp(szClass, "CFS2"))
   {
     ++m_MS_data.ms_data[2].nClass[39];
   }
-  else if (!strcmp_0(szClass, "CFS3"))
+  else if (!std::strcmp(szClass, "CFS3"))
   {
     ++m_MS_data.ms_data[2].nClass[40];
   }
-  else if (!strcmp_0(szClass, "CSB0"))
+  else if (!std::strcmp(szClass, "CSB0"))
   {
     ++m_MS_data.ms_data[2].nClass[41];
   }
-  else if (!strcmp_0(szClass, "CSF1"))
+  else if (!std::strcmp(szClass, "CSF1"))
   {
     ++m_MS_data.ms_data[2].nClass[42];
   }
-  else if (!strcmp_0(szClass, "CSS1"))
+  else if (!std::strcmp(szClass, "CSS1"))
   {
     ++m_MS_data.ms_data[2].nClass[43];
   }
-  else if (!strcmp_0(szClass, "AWB0"))
+  else if (!std::strcmp(szClass, "AWB0"))
   {
     ++m_MS_data.ms_data[2].nClass[44];
   }
-  else if (!strcmp_0(szClass, "AWF1"))
+  else if (!std::strcmp(szClass, "AWF1"))
   {
     ++m_MS_data.ms_data[2].nClass[45];
   }
-  else if (!strcmp_0(szClass, "AWF2"))
+  else if (!std::strcmp(szClass, "AWF2"))
   {
     ++m_MS_data.ms_data[2].nClass[46];
   }
-  else if (!strcmp_0(szClass, "AWS1"))
+  else if (!std::strcmp(szClass, "AWS1"))
   {
     ++m_MS_data.ms_data[2].nClass[47];
   }
-  else if (!strcmp_0(szClass, "AWS2"))
+  else if (!std::strcmp(szClass, "AWS2"))
   {
     ++m_MS_data.ms_data[2].nClass[48];
   }
-  else if (!strcmp_0(szClass, "AWS3"))
+  else if (!std::strcmp(szClass, "AWS3"))
   {
     ++m_MS_data.ms_data[2].nClass[49];
   }
-  else if (!strcmp_0(szClass, "ARB0"))
+  else if (!std::strcmp(szClass, "ARB0"))
   {
     ++m_MS_data.ms_data[2].nClass[50];
   }
-  else if (!strcmp_0(szClass, "ARF1"))
+  else if (!std::strcmp(szClass, "ARF1"))
   {
     ++m_MS_data.ms_data[2].nClass[51];
   }
-  else if (!strcmp_0(szClass, "ARF2"))
+  else if (!std::strcmp(szClass, "ARF2"))
   {
     ++m_MS_data.ms_data[2].nClass[52];
   }
-  else if (!strcmp_0(szClass, "ARS1"))
+  else if (!std::strcmp(szClass, "ARS1"))
   {
     ++m_MS_data.ms_data[2].nClass[53];
   }
-  else if (!strcmp_0(szClass, "ARS2"))
+  else if (!std::strcmp(szClass, "ARS2"))
   {
     ++m_MS_data.ms_data[2].nClass[54];
   }
-  else if (!strcmp_0(szClass, "ARS3"))
+  else if (!std::strcmp(szClass, "ARS3"))
   {
     ++m_MS_data.ms_data[2].nClass[55];
   }
-  else if (!strcmp_0(szClass, "ASB0"))
+  else if (!std::strcmp(szClass, "ASB0"))
   {
     ++m_MS_data.ms_data[2].nClass[56];
   }
-  else if (!strcmp_0(szClass, "ASF1"))
+  else if (!std::strcmp(szClass, "ASF1"))
   {
     ++m_MS_data.ms_data[2].nClass[57];
   }
-  else if (!strcmp_0(szClass, "ASS1"))
+  else if (!std::strcmp(szClass, "ASS1"))
   {
     ++m_MS_data.ms_data[2].nClass[58];
   }
-  else if (!strcmp_0(szClass, "ASS2"))
+  else if (!std::strcmp(szClass, "ASS2"))
   {
     ++m_MS_data.ms_data[2].nClass[59];
   }

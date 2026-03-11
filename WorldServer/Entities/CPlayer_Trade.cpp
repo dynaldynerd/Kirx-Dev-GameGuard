@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -314,7 +314,7 @@ void CPlayer::SendMsg_DTradeStartInform(CPlayer *pAsker, CPlayer *pAnswer, unsig
   payload.byAnswerEmptyNum = static_cast<char>(pAnswer->m_pmTrd.byEmptyInvenNum);
   if (pdwKey)
   {
-    memcpy_0(payload.dwKey, pdwKey, sizeof(payload.dwKey));
+    std::memcpy(payload.dwKey, pdwKey, sizeof(payload.dwKey));
   }
 
   unsigned __int8 type[2] = {18, 6};
@@ -445,9 +445,9 @@ void CPlayer::SendMsg_DTradeUnitInfoInform(char byTradeSlotIndex, _UNIT_DB_BASE:
   payload.byTradeSlotIndex = byTradeSlotIndex;
   payload.byFrame = static_cast<char>(pUnitData->byFrame);
   payload.dwGauge = pUnitData->dwGauge;
-  memcpy_0(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
-  memcpy_0(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
-  memcpy_0(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
+  std::memcpy(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
+  std::memcpy(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
+  std::memcpy(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
   payload.nDebtFee = pUnitData->nPullingFee;
 
   unsigned __int8 type[2] = {18, 27};
@@ -465,9 +465,9 @@ void CPlayer::SendMsg_DTradeUnitAddInform(unsigned __int16 wUnitKeySerial, _UNIT
   payload.bySlotIndex = static_cast<char>(pUnitData->bySlotIndex);
   payload.byFrame = static_cast<char>(pUnitData->byFrame);
   payload.dwGauge = pUnitData->dwGauge;
-  memcpy_0(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
-  memcpy_0(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
-  memcpy_0(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
+  std::memcpy(payload.byPart, pUnitData->byPart, sizeof(payload.byPart));
+  std::memcpy(payload.dwBullet, pUnitData->dwBullet, sizeof(payload.dwBullet));
+  std::memcpy(payload.dwSpare, pUnitData->dwSpare, sizeof(payload.dwSpare));
   payload.nPullingFee = pUnitData->nPullingFee;
 
   unsigned __int8 type[2] = {18, 28};
@@ -714,7 +714,7 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     {
       trade.DItemNode[slotIndex].bLoad = false;
     }
-    memcpy_0(trade.dwKey, key, sizeof(trade.dwKey));
+    std::memcpy(trade.dwKey, key, sizeof(trade.dwKey));
   };
 
   setTradeStart(
@@ -738,7 +738,7 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
   startToThis.idAnswer.wIndex = this->m_ObjID.m_wIndex;
   startToThis.idAnswer.dwSerial = this->m_dwObjSerial;
   startToThis.byAnswerEmptyNum = this->m_pmTrd.byEmptyInvenNum;
-  memcpy_0(startToThis.dwKey, codeA, sizeof(startToThis.dwKey));
+  std::memcpy(startToThis.dwKey, codeA, sizeof(startToThis.dwKey));
 
   _d_trade_start_inform_zocl startToAsker{};
   startToAsker.idAsker.wIndex = asker->m_ObjID.m_wIndex;
@@ -747,7 +747,7 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
   startToAsker.idAnswer.wIndex = this->m_ObjID.m_wIndex;
   startToAsker.idAnswer.dwSerial = this->m_dwObjSerial;
   startToAsker.byAnswerEmptyNum = this->m_pmTrd.byEmptyInvenNum;
-  memcpy_0(startToAsker.dwKey, codeB, sizeof(startToAsker.dwKey));
+  std::memcpy(startToAsker.dwKey, codeB, sizeof(startToAsker.dwKey));
 
   unsigned __int8 startType[2] = {18, 6};
   g_Network.m_pProcess[0]->LoadSendMsg(

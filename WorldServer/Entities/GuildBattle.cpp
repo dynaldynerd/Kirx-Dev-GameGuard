@@ -1,4 +1,4 @@
-﻿
+
 #include "pch.h"
 
 #include "GuildBattle.h"
@@ -910,7 +910,7 @@ namespace GUILD_BATTLE
     {
       szParseBuff[j] = &parseStorage[256 * j];
     }
-    memset_0(parseStorage, 0, sizeof(parseStorage));
+    std::memset(parseStorage, 0, sizeof(parseStorage));
 
     const char *szKeyName[3] = {"Bellato", "Cora", "Accratia"};
     for (int k = 0; k < 3; ++k)
@@ -941,7 +941,7 @@ namespace GUILD_BATTLE
       szStrBuff,
       2047,
       "./Initialize/NormalGuildBattle.ini");
-    if (!strcmp_0("X", szStrBuff))
+    if (!std::strcmp("X", szStrBuff))
     {
       CGuildBattleLogger::Instance()->Log(
         "CNormalGuildBattleFieldList::InitUseField( %u, %s, szUseMapInxStr, szBuff ) : GetPrivateProfileInt( UseMap, %s, X, szStr, 2047, %s ) = X",
@@ -1525,7 +1525,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     float newPos[3]{};
     if (!m_pkMap->GetRandPosInDummy(pPos, newPos, true))
     {
-      memcpy_0(newPos, pPos->m_fCenterPos, 12);
+      std::memcpy(newPos, pPos->m_fCenterPos, 12);
     }
     pkPlayer->OutOfMap(m_pkMap, 0, byMapOutType, newPos);
     pkPlayer->SendMsg_GotoRecallResult(0, m_pkMap->m_pMapSet->m_dwIndex, newPos, byMapOutType);
@@ -1670,7 +1670,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     createData.m_nLayerIndex = 0;
     createData.m_pMap = m_pkMap;
     createData.m_pRecordSet = nullptr;
-    memcpy_0(createData.m_fStartPos, startPos, sizeof(createData.m_fStartPos));
+    std::memcpy(createData.m_fStartPos, startPos, sizeof(createData.m_fStartPos));
 
     m_pkBall->Destroy();
     if (m_pkBall->Regen(&createData))
@@ -1914,8 +1914,8 @@ sprintf(buffer, "Map%d", uiMapInx);
       m_pOldBindDummyData = m_pkMember->pPlayer->GetBindDummy();
       const char *bindMapCode = m_pkMember->pPlayer->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode;
       const char *bindDummy = m_pkMember->pPlayer->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy;
-      strcpy_0(m_szOldBindMapCode, bindMapCode);
-      strcpy_0(m_szOldBindDummy, bindDummy);
+      std::strcpy(m_szOldBindMapCode, bindMapCode);
+      std::strcpy(m_szOldBindDummy, bindDummy);
     }
   }
 
@@ -2163,7 +2163,7 @@ sprintf(buffer, "Map%d", uiMapInx);
     if (m_pkGuild && wszDestGuildName)
     {
       _ask_join_guild_battle_request_zocl destination{};
-      strcpy_0(destination.wszDestGuildName, wszDestGuildName);
+      std::strcpy(destination.wszDestGuildName, wszDestGuildName);
       unsigned __int8 pbyType[2] = {27, 55};
       g_Network.m_pProcess[0]->LoadSendMsg(n, pbyType, reinterpret_cast<char *>(&destination), sizeof(destination));
       CGuildBattleLogger::Instance()->Log("CNormalGuildBattleGuild::AskJoin( n(%d), %s )", n, wszDestGuildName);
@@ -2357,8 +2357,8 @@ sprintf(buffer, "Map%d", uiMapInx);
 
     _guild_battle_get_gravity_stone_result_zocl msg{};
     msg.byRet = 0;
-    strcpy_0(msg.wszGuildName, pkTakeGuild->GetGuildName());
-    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    std::strcpy(msg.wszGuildName, pkTakeGuild->GetGuildName());
+    std::strcpy(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
     msg.iTakePortalInx = iTakePortalInx;
     msg.byColor = pkTakeGuild->GetColorInx();
 
@@ -3018,8 +3018,8 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
     const char *redGuildName = m_pkRed ? m_pkRed->GetGuildName() : nullptr;
     const char *blueGuildName = m_pkBlue ? m_pkBlue->GetGuildName() : nullptr;
-    strcpy_0(msg.wszGuildNameRed, redGuildName ? redGuildName : "None");
-    strcpy_0(msg.wszGuildNameBlue, blueGuildName ? blueGuildName : "None");
+    std::strcpy(msg.wszGuildNameRed, redGuildName ? redGuildName : "None");
+    std::strcpy(msg.wszGuildNameBlue, blueGuildName ? blueGuildName : "None");
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -3052,8 +3052,8 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
     _guild_battle_notify_battle_result_zocl msg{};
     msg.byResult = byResult;
-    strcpy_0(msg.wszGuildNameRed, m_pkRed ? m_pkRed->GetGuildName() : "None");
-    strcpy_0(msg.wszGuildNameBlue, m_pkBlue ? m_pkBlue->GetGuildName() : "None");
+    std::strcpy(msg.wszGuildNameRed, m_pkRed ? m_pkRed->GetGuildName() : "None");
+    std::strcpy(msg.wszGuildNameBlue, m_pkBlue ? m_pkBlue->GetGuildName() : "None");
 
     unsigned __int8 type[2]{};
     type[0] = 27;
@@ -3158,9 +3158,9 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
     _guild_battle_goal_result_zocl msg{};
     msg.byRet = 0;
-    strcpy_0(msg.wszGuildName, wszGuildName);
+    std::strcpy(msg.wszGuildName, wszGuildName);
     msg.dwObjSerial = pkPlayer->m_dwObjSerial;
-    strcpy_0(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
+    std::strcpy(msg.wszCharName, pkPlayer->m_Param.GetCharNameW());
 
     if (m_pkRed)
     {
@@ -3817,7 +3817,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
       return false;
     }
 
-    memset_0(m_ppkNormalBattle, 0, sizeof(CNormalGuildBattle *) * m_uiMaxBattleCnt);
+    std::memset(m_ppkNormalBattle, 0, sizeof(CNormalGuildBattle *) * m_uiMaxBattleCnt);
     for (unsigned int dwID = 0; dwID < m_uiMaxBattleCnt; ++dwID)
     {
       m_ppkNormalBattle[dwID] = new (std::nothrow) CNormalGuildBattle(dwID);
@@ -3980,7 +3980,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   char CNormalGuildBattleManager::LoadDBGuildBattleInfo(unsigned int dwStartID, _worlddb_guild_battle_info *kInfo)
   {
-    memset_0(kInfo, 0, sizeof(_worlddb_guild_battle_info));
+    std::memset(kInfo, 0, sizeof(_worlddb_guild_battle_info));
     if (g_Main.m_pWorldDB->LoadGuildBattleInfo(dwStartID, 23 * m_uiMapCnt, kInfo))
     {
       return 1;
@@ -4718,7 +4718,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return false;
     }
 
-    memset_0(m_ppkSchedule, 0, sizeof(CGuildBattleSchedule *) * m_dwMaxScheduleCnt);
+    std::memset(m_ppkSchedule, 0, sizeof(CGuildBattleSchedule *) * m_dwMaxScheduleCnt);
     for (unsigned int dwScheduleID = 0; dwScheduleID < m_dwMaxScheduleCnt; ++dwScheduleID)
     {
       m_ppkSchedule[dwScheduleID] = new (std::nothrow) CGuildBattleSchedule(dwScheduleID);
@@ -4817,8 +4817,8 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   {
     m_bDone = false;
     m_uiCurScheduleInx = 0;
-    memset_0(m_bUseField, 0, sizeof(m_bUseField));
-    memset_0(m_pkSchedule, 0, sizeof(m_pkSchedule));
+    std::memset(m_bUseField, 0, sizeof(m_bUseField));
+    std::memset(m_pkSchedule, 0, sizeof(m_pkSchedule));
   }
 
   char CGuildBattleReservedSchedule::Clear(unsigned int dwID)
@@ -5229,7 +5229,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       }
     }
 
-    memset_0(ms_pkDBScheduleInfo, 0, sizeof(_worlddb_guild_battle_schedule_list) * m_uiMapCnt);
+    std::memset(ms_pkDBScheduleInfo, 0, sizeof(_worlddb_guild_battle_schedule_list) * m_uiMapCnt);
     for (unsigned int j = 0; j < m_uiMapCnt; ++j)
     {
       _worlddb_guild_battle_schedule_list *pkInfo = &ms_pkDBScheduleInfo[j];
@@ -5802,7 +5802,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     char returned[2048]{};
     sprintf(buffer, "item%d", usInx);
     GetPrivateProfileStringA("RewardItem", buffer, "X", returned, 2048, "./Initialize/NormalGuildBattle.ini");
-    if (!strcmp_0(returned, "X"))
+    if (!std::strcmp(returned, "X"))
     {
       return false;
     }
@@ -5985,7 +5985,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return false;
     }
 
-    memset_0(m_ppkList, 0, sizeof(_guild_battle_rank_list_result_zocl *) * 3);
+    std::memset(m_ppkList, 0, sizeof(_guild_battle_rank_list_result_zocl *) * 3);
     for (int j = 0; j < 3; ++j)
     {
       m_ppkList[j] = new (std::nothrow) _guild_battle_rank_list_result_zocl[30];
@@ -5996,10 +5996,10 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
           30);
         return false;
       }
-      memset_0(m_ppkList[j], 0, sizeof(_guild_battle_rank_list_result_zocl) * 30);
+      std::memset(m_ppkList[j], 0, sizeof(_guild_battle_rank_list_result_zocl) * 30);
     }
 
-    memset_0(m_dwGuildSerial, 0, sizeof(m_dwGuildSerial));
+    std::memset(m_dwGuildSerial, 0, sizeof(m_dwGuildSerial));
     return true;
   }
 
@@ -6061,7 +6061,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       entry = &m_ppkList[byRace][pageInx].list[listInx];
       entry->nRank = pkInfo.list[j].nRank;
       entry->byGrade = pkInfo.list[j].byGrade;
-      strcpy_0(entry->wszName, pkInfo.list[j].wszName);
+      std::strcpy(entry->wszName, pkInfo.list[j].wszName);
       entry->dwWin = pkInfo.list[j].dwWin;
       entry->dwLose = pkInfo.list[j].dwLose;
       entry->dwDraw = pkInfo.list[j].dwDraw;
@@ -6244,7 +6244,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return false;
     }
 
-    memset_0(pOutData, 0, sizeof(_worlddb_guild_battle_rank_list));
+    std::memset(pOutData, 0, sizeof(_worlddb_guild_battle_rank_list));
     return g_Main.m_pWorldDB->SelectGuildBattleRankList(byRace, pOutData);
   }
 
@@ -6276,7 +6276,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       auto *entry = &m_ppkList[byRace][listInx].list[pageInx];
       entry->nRank = src.nRank;
       entry->byGrade = src.byGrade;
-      strcpy_0(entry->wszName, src.wszName);
+      std::strcpy(entry->wszName, src.wszName);
       entry->dwWin = src.dwWin;
       entry->dwLose = src.dwLose;
       entry->dwDraw = src.dwDraw;
@@ -6309,7 +6309,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return;
     }
 
-    memset_0(m_dwGuildSerial[byRace], 0, sizeof(m_dwGuildSerial[byRace]));
+    std::memset(m_dwGuildSerial[byRace], 0, sizeof(m_dwGuildSerial[byRace]));
     if (!m_ppkList || !m_ppkList[byRace])
     {
       return;
@@ -6329,8 +6329,8 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   CReservedGuildSchedulePage::CReservedGuildSchedulePage()
     : m_pkList(nullptr), m_ucPageInx(static_cast<unsigned __int8>(-1)), m_dwVer(static_cast<unsigned int>(-1))
   {
-    memset_0(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
-    memset_0(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
+    std::memset(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
+    std::memset(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
   }
 
   CReservedGuildSchedulePage::~CReservedGuildSchedulePage()
@@ -6370,9 +6370,9 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     }
 
     m_dwVer = 0;
-    memset_0(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
-    memset_0(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
-    memset_0(m_pkList, 0, sizeof(_guild_battle_reserved_schedule_result_zocl));
+    std::memset(m_dw1PGuildSerial, 0, sizeof(m_dw1PGuildSerial));
+    std::memset(m_dw2PGuildSerial, 0, sizeof(m_dw2PGuildSerial));
+    std::memset(m_pkList, 0, sizeof(_guild_battle_reserved_schedule_result_zocl));
     m_pkList->byToDay = static_cast<unsigned __int8>(today);
     m_pkList->byTomorrow = static_cast<unsigned __int8>(tomorrow);
     m_pkList->byPage = m_ucPageInx;
@@ -6529,10 +6529,10 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         _guild_battle_reserved_schedule_result_zocl::__list &dest = m_kList[page].m_pkList->List[slot];
         const _worlddb_guild_battle_reserved_schedule_info::__list &src = kInfo->list[listIndex];
         m_kList[page].m_dw1PGuildSerial[slot] = src.dw1PGuildSerial;
-        strcpy_0(dest.wsz1PName, src.wsz1PName);
+        std::strcpy(dest.wsz1PName, src.wsz1PName);
         dest.by1PRace = src.by1PRace;
         m_kList[page].m_dw2PGuildSerial[slot] = src.dw2PGuildSerial;
-        strcpy_0(dest.wsz2PName, src.wsz2PName);
+        std::strcpy(dest.wsz2PName, src.wsz2PName);
         dest.by2PRace = src.by2PRace;
         dest.byStartHour = src.byStartHour;
         dest.byStartMin = src.byStartMin;
@@ -6564,10 +6564,10 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       _guild_battle_reserved_schedule_result_zocl::__list &dest = m_kList[page].m_pkList->List[tailSlot];
       const _worlddb_guild_battle_reserved_schedule_info::__list &src = kInfo->list[listIndex];
       m_kList[page].m_dw1PGuildSerial[tailSlot] = src.dw1PGuildSerial;
-      strcpy_0(dest.wsz1PName, src.wsz1PName);
+      std::strcpy(dest.wsz1PName, src.wsz1PName);
       dest.by1PRace = src.by1PRace;
       m_kList[page].m_dw2PGuildSerial[tailSlot] = src.dw2PGuildSerial;
-      strcpy_0(dest.wsz2PName, src.wsz2PName);
+      std::strcpy(dest.wsz2PName, src.wsz2PName);
       dest.by2PRace = src.by2PRace;
       dest.byStartHour = src.byStartHour;
       dest.byStartMin = src.byStartMin;
@@ -7028,7 +7028,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       return false;
     }
 
-    memset_0(byOutData, 0, sizeof(_worlddb_guild_battle_reserved_schedule_info));
+    std::memset(byOutData, 0, sizeof(_worlddb_guild_battle_reserved_schedule_info));
     return g_Main.m_pWorldDB->SelectGuildBattleRerservedList(dwSLID, dwSLID, byOutData);
   }
 
@@ -7158,7 +7158,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         m_uiMapCnt);
       return false;
     }
-    memset_0(m_pkInfo, 0, sizeof(_guild_battle_current_battle_info_result_zocl) * m_uiMapCnt);
+    std::memset(m_pkInfo, 0, sizeof(_guild_battle_current_battle_info_result_zocl) * m_uiMapCnt);
 
     m_pbUpdate = new (std::nothrow) bool[m_uiMapCnt];
     if (!m_pbUpdate)
@@ -7166,7 +7166,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
       CGuildBattleLogger::Instance()->Log("CCurrentGuildBattleInfoManager::Init()new bool[%u] NULL!", m_uiMapCnt);
       return false;
     }
-    memset_0(m_pbUpdate, 0, sizeof(bool) * m_uiMapCnt);
+    std::memset(m_pbUpdate, 0, sizeof(bool) * m_uiMapCnt);
 
     m_bInit = true;
     return true;
@@ -7330,7 +7330,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         3);
       return false;
     }
-    memset_0(m_pdwVer, 0, sizeof(unsigned int) * 3);
+    std::memset(m_pdwVer, 0, sizeof(unsigned int) * 3);
 
     m_pMaxPage = new (std::nothrow) unsigned __int8[3];
     if (!m_pMaxPage)
@@ -7340,7 +7340,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         3);
       return false;
     }
-    memset_0(m_pMaxPage, 0, sizeof(unsigned __int8) * 3);
+    std::memset(m_pMaxPage, 0, sizeof(unsigned __int8) * 3);
 
     m_ppkList = new (std::nothrow) _possible_battle_guild_list_result_zocl *[3];
     if (!m_ppkList)
@@ -7362,7 +7362,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
           75);
         return false;
       }
-      memset_0(m_ppkList[j], 0, sizeof(_possible_battle_guild_list_result_zocl) * 75);
+      std::memset(m_ppkList[j], 0, sizeof(_possible_battle_guild_list_result_zocl) * 75);
     }
 
     m_bInit = true;
@@ -7452,7 +7452,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     const int end = start + 4;
 
     m_ppkList[byRace][ucPage].byCount = 0;
-    memset_0(m_ppkList[byRace][ucPage].DestGuild, 0, sizeof(m_ppkList[byRace][ucPage].DestGuild));
+    std::memset(m_ppkList[byRace][ucPage].DestGuild, 0, sizeof(m_ppkList[byRace][ucPage].DestGuild));
     m_ppkList[byRace][ucPage].byPage = ucPage;
     m_ppkList[byRace][ucPage].dwBattleCost = 5000;
 
@@ -7479,7 +7479,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
         break;
       }
 
-      strcpy_0(destGuild[*count].wszName, g_Guild[*wLastGuildInx].m_wszName);
+      std::strcpy(destGuild[*count].wszName, g_Guild[*wLastGuildInx].m_wszName);
       destGuild[*count].byGrade = g_Guild[*wLastGuildInx].m_byGrade;
       destGuild[*count].byRace = g_Guild[*wLastGuildInx].m_byRace;
       destGuild[*count].dwGuildSerial = g_Guild[*wLastGuildInx].m_dwSerial;

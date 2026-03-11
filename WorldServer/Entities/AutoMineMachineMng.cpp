@@ -136,7 +136,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
   }
 
   char buffer[1040]{};
-  memset_0(buffer, 0, 1024);
+  std::memset(buffer, 0, 1024);
   const unsigned int now = GetKorLocalTime();
   sprintf(
     buffer,
@@ -213,7 +213,7 @@ void AutoMineMachine::_Mining()
   if (m_Battery.m_nCurGage >= 30 && m_Inven.find_empty(&m_OreKind[m_bySelectedOre], 1, nP, nS))
   {
     _INVENKEY item{};
-    memcpy_0(&item, &m_OreKind[m_bySelectedOre], sizeof(item));
+    std::memcpy(&item, &m_OreKind[m_bySelectedOre], sizeof(item));
     item.bySlotIndex = static_cast<unsigned __int8>(nS[0]);
     if (m_Inven.push(nP[0], nS[0], &item, 1))
     {
@@ -247,7 +247,7 @@ void AutoMineMachine::_Mining()
             _INVENKEY *pItem = slot ? slot->get_pitem() : nullptr;
             if (pItem)
             {
-              memcpy_0(&state.item, pItem, sizeof(state.item));
+              std::memcpy(&state.item, pItem, sizeof(state.item));
             }
 
             unsigned __int8 type[2] = {14, 25};
@@ -413,7 +413,7 @@ void AutoMineMachine::GetMachineInfo(_DB_LOAD_AUTOMINE_MACHINE *pInfo)
         if (item)
         {
           pInfo->slot[pInfo->bySlotCnt].nLumpIndex = nP;
-          memcpy_0(&pInfo->slot[pInfo->bySlotCnt].item, item, sizeof(pInfo->slot[pInfo->bySlotCnt].item));
+          std::memcpy(&pInfo->slot[pInfo->bySlotCnt].item, item, sizeof(pInfo->slot[pInfo->bySlotCnt].item));
           pInfo->slot[pInfo->bySlotCnt++].nOverlapNum = slot->get_overlapnum();
         }
       }
@@ -757,7 +757,7 @@ void AutoMineMachine::SendMsg_MachineInfo(unsigned int n)
         if (item)
         {
           info.INFO.slot[info.INFO.bySlotCnt].nLumpIndex = nP;
-          memcpy_0(&info.INFO.slot[info.INFO.bySlotCnt].item, item, sizeof(info.INFO.slot[info.INFO.bySlotCnt].item));
+          std::memcpy(&info.INFO.slot[info.INFO.bySlotCnt].item, item, sizeof(info.INFO.slot[info.INFO.bySlotCnt].item));
           info.INFO.slot[info.INFO.bySlotCnt++].nOverlapNum = slot->get_overlapnum();
         }
       }
@@ -1002,7 +1002,7 @@ bool AutoMineMachineMng::Initialzie()
         return false;
       }
 
-      memset_0(&pdata, 0, sizeof(pdata));
+      std::memset(&pdata, 0, sizeof(pdata));
       pdata.byRace = static_cast<unsigned __int8>(j);
       pdata.byCollisionType = static_cast<unsigned __int8>(k);
       if (g_Main.m_pWorldDB->select_automine(&pdata) == 1)

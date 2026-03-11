@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CCharacter.h"
 
@@ -243,7 +243,7 @@ void CCharacter::Init(_object_id *pID)
 
 void CCharacter::Stop()
 {
-  memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+  std::memcpy(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
   if (m_bMove)
   {
     m_bMove = false;
@@ -262,14 +262,14 @@ bool CCharacter::Create(_character_create_setdata *pData)
     return false;
   }
 
-  memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+  std::memcpy(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
   m_dwNextGenAttackTime = GetLoopTime();
   m_nContEffectSec = -1;
   m_tmrSFCont.BeginTimer(1000);
   m_wEffectTempValue = 0;
   m_dwEffSerialCounter = 1;
-  memset_0(m_SFCont, 0, sizeof(m_SFCont));
-  memset_0(m_SFContAura, 0, sizeof(m_SFContAura));
+  std::memset(m_SFCont, 0, sizeof(m_SFCont));
+  std::memset(m_SFContAura, 0, sizeof(m_SFContAura));
   m_bLastContEffectUpdate = false;
   m_wLastContEffect = static_cast<unsigned __int16>(-1);
   return true;
@@ -278,8 +278,8 @@ bool CCharacter::Create(_character_create_setdata *pData)
 bool CCharacter::Destroy()
 {
   m_EP.InitEffParam();
-  memset_0(m_SFCont, 0, sizeof(m_SFCont));
-  memset_0(m_SFContAura, 0, sizeof(m_SFContAura));
+  std::memset(m_SFCont, 0, sizeof(m_SFCont));
+  std::memset(m_SFContAura, 0, sizeof(m_SFContAura));
   m_bLastContEffectUpdate = false;
   m_wLastContEffect = static_cast<unsigned __int16>(-1);
   return CGameObject::Destroy() != 0;
@@ -295,12 +295,12 @@ bool CCharacter::SetTarPos(float *fTarPos, bool bColl)
   float crossPos[3]{};
   if (!bColl || m_pCurMap->m_Level.mBsp->CanYouGoThere(m_fCurPos, fTarPos, reinterpret_cast<float(*)[3]>(crossPos)))
   {
-    memcpy_0(m_fTarPos, fTarPos, sizeof(m_fTarPos));
+    std::memcpy(m_fTarPos, fTarPos, sizeof(m_fTarPos));
   }
   else
   {
     crossPos[1] = m_fCurPos[1];
-    memcpy_0(m_fTarPos, crossPos, sizeof(m_fTarPos));
+    std::memcpy(m_fTarPos, crossPos, sizeof(m_fTarPos));
   }
 
   Go();
@@ -320,7 +320,7 @@ void CCharacter::ResetSlot()
 {
   if (m_AroundNum)
   {
-    memset_0(m_AroundSlot, 0, sizeof(m_AroundSlot));
+    std::memset(m_AroundSlot, 0, sizeof(m_AroundSlot));
     m_AroundNum = 0;
   }
 }
@@ -633,24 +633,24 @@ void CCharacter::Move(float fSpeed)
 {
   if (m_bMove)
   {
-    memcpy_0(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
+    std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
     const int yAngle = static_cast<int>(GetYAngle(m_fCurPos, m_fTarPos));
     const int distance = static_cast<int>(GetSqrt(m_fCurPos, m_fTarPos));
     const float moveLen = (R3GetLoopTime() * 15.0f) * fSpeed;
     float src[3]{};
-    memcpy_0(src, m_fCurPos, sizeof(src));
+    std::memcpy(src, m_fCurPos, sizeof(src));
     if (moveLen < static_cast<float>(distance))
     {
       const double angle = 6.283185307 * static_cast<double>(yAngle) / 65535.0;
-      m_fCurPos[0] = m_fCurPos[0] - static_cast<float>(sin_0(angle) * moveLen);
-      m_fCurPos[2] = m_fCurPos[2] - static_cast<float>(cos_0(angle) * moveLen);
+      m_fCurPos[0] = m_fCurPos[0] - static_cast<float>(std::sin(angle) * moveLen);
+      m_fCurPos[2] = m_fCurPos[2] - static_cast<float>(std::cos(angle) * moveLen);
       m_fCurPos[1] = src[1];
       if (!m_pCurMap->m_Level.GetNextYposForServerFar(src, m_fCurPos, &m_fCurPos[1]))
       {
         if (!m_pCurMap->m_Level.GetNextYposFarProgress(src, m_fCurPos, &m_fCurPos[1]))
         {
-          memcpy_0(m_fCurPos, src, sizeof(m_fCurPos));
-          memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+          std::memcpy(m_fCurPos, src, sizeof(m_fCurPos));
+          std::memcpy(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
           Stop();
           SendMsg_BreakStop();
         }
@@ -662,12 +662,12 @@ void CCharacter::Move(float fSpeed)
       if (m_pCurMap->m_Level.GetNextYposForServer(m_fTarPos, &m_fTarPos[1])
           || m_pCurMap->m_Level.GetNextYposForServerFar(m_fCurPos, m_fTarPos, &m_fTarPos[1]))
       {
-        memcpy_0(m_fCurPos, m_fTarPos, sizeof(m_fCurPos));
+        std::memcpy(m_fCurPos, m_fTarPos, sizeof(m_fCurPos));
       }
       else
       {
-        memcpy_0(m_fCurPos, src, sizeof(m_fCurPos));
-        memcpy_0(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
+        std::memcpy(m_fCurPos, src, sizeof(m_fCurPos));
+        std::memcpy(m_fTarPos, m_fCurPos, sizeof(m_fTarPos));
       }
       Stop();
     }
@@ -739,7 +739,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
     if (!m_AroundSlot[nextIndex])
     {
       float checkPos[3]{};
-      memcpy_0(checkPos, target, sizeof(checkPos));
+      std::memcpy(checkPos, target, sizeof(checkPos));
       const float angle = static_cast<float>(2.0 * pi * static_cast<float>(nextIndex + 1) / 5.0);
       checkPos[0] = checkPos[0] + static_cast<float>(std::cos(angle) * dist);
       checkPos[2] = checkPos[2] + static_cast<float>(std::sin(angle) * dist);
@@ -753,7 +753,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
     if (!m_AroundSlot[prevIndex])
     {
       float checkPos[3]{};
-      memcpy_0(checkPos, target, sizeof(checkPos));
+      std::memcpy(checkPos, target, sizeof(checkPos));
       const float angle = static_cast<float>(2.0 * pi * static_cast<float>(prevIndex + 1) / 5.0);
       checkPos[0] = checkPos[0] + static_cast<float>(std::cos(angle) * dist);
       checkPos[2] = checkPos[2] + static_cast<float>(std::sin(angle) * dist);

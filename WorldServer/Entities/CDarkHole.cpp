@@ -59,7 +59,7 @@ char CDarkHole::Create(_darkhole_create_setdata *pParam)
 
   m_dwOpenerSerial = pParam->pOpener->m_dwObjSerial;
   const char *openerName = pParam->pOpener->m_Param.GetCharNameW();
-  strcpy_0(m_wszOpenerName, openerName);
+  std::strcpy(m_wszOpenerName, openerName);
   W2M(m_wszOpenerName, m_aszOpenerName, 17u);
 
   const DWORD now = timeGetTime();
@@ -157,7 +157,7 @@ void CDarkHole::SendMsg_Create()
   packet.dwSerial = m_dwObjSerial;
   FloatToShort(m_fCurPos, packet.zPos, 3);
   packet.bHurry = static_cast<unsigned __int8>(m_bHurry);
-  strcpy_0(packet.wszOpenerName, m_wszOpenerName);
+  std::strcpy(packet.wszOpenerName, m_wszOpenerName);
   packet.dwOpenerSerial = m_dwOpenerSerial;
 
   unsigned __int8 packetType[2] = {35, 101};
@@ -227,7 +227,7 @@ void CDarkHole::SendMsg_FixPosition(int n)
   packet.dwSerial = m_dwObjSerial;
   FloatToShort(m_fCurPos, packet.zPos, 3);
   packet.bHurry = static_cast<unsigned __int8>(m_bHurry);
-  strcpy_0(packet.wszOpenerName, m_wszOpenerName);
+  std::strcpy(packet.wszOpenerName, m_wszOpenerName);
   packet.dwOpenerSerial = m_dwOpenerSerial;
 
   unsigned __int8 packetType[2] = {35, 104};

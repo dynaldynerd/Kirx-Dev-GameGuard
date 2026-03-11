@@ -10,7 +10,7 @@ _message::_message()
 
 _message::~_message()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 void _message::SetMsg(unsigned int message, unsigned int key1, unsigned int key2, unsigned int key3)

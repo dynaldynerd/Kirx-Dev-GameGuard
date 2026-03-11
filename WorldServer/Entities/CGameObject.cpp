@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CGameObject.h"
 
@@ -761,7 +761,7 @@ char CGameObject::SetCurPos(float *pPos)
 {
   if (!m_pCurMap->IsMapIn(pPos))
     return 0;
-  memcpy_0(m_fCurPos, pPos, sizeof(m_fCurPos));
+  std::memcpy(m_fCurPos, pPos, sizeof(m_fCurPos));
   return 1;
 }
 
@@ -832,8 +832,8 @@ void CGameObject::_ResetCirclePlayer()
   }
 
   bool previousList[2532]{};
-  memcpy_0(previousList, m_bPlayerCircleList, sizeof(previousList));
-  memset_0(m_bPlayerCircleList, 0, sizeof(previousList));
+  std::memcpy(previousList, m_bPlayerCircleList, sizeof(previousList));
+  std::memset(m_bPlayerCircleList, 0, sizeof(previousList));
 
   _pnt_rect rect{};
   const unsigned int curSec = GetCurSecNum();
@@ -1059,8 +1059,8 @@ char CGameObject::Create(_object_create_setdata *pData)
 
   this->m_pCurMap = pData->m_pMap;
   this->m_wMapLayerIndex = pData->m_nLayerIndex;
-  memcpy_0(this->m_fCurPos, pData->m_fStartPos, sizeof(this->m_fCurPos));
-  memcpy_0(this->m_fOldPos, pData->m_fStartPos, sizeof(this->m_fOldPos));
+  std::memcpy(this->m_fCurPos, pData->m_fStartPos, sizeof(this->m_fCurPos));
+  std::memcpy(this->m_fOldPos, pData->m_fStartPos, sizeof(this->m_fOldPos));
   this->m_bMaxVision = 0;
   this->m_bObserver = 0;
   this->m_nCirclePlayerNum = 0;

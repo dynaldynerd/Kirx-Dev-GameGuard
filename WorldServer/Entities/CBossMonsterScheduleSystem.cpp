@@ -91,7 +91,7 @@ BossSchedule_TBL *CBossMonsterScheduleSystem::MakeTBL(CMapOperation *pMapOper)
   tbl->m_nCount = pMapOper->m_nMapNum;
   const size_t mapCount = static_cast<size_t>(tbl->m_nCount);
   tbl->m_MapScheduleList = static_cast<BossSchedule_Map **>(operator new[](saturated_mul(mapCount, sizeof(BossSchedule_Map *))));
-  memset_0(tbl->m_MapScheduleList, 0, sizeof(BossSchedule_Map *) * mapCount);
+  std::memset(tbl->m_MapScheduleList, 0, sizeof(BossSchedule_Map *) * mapCount);
 
   for (int nIndex = 0; nIndex < tbl->m_nCount; ++nIndex)
   {
@@ -172,7 +172,7 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
 
   mapSchedule->m_ScheduleList =
     static_cast<BossSchedule **>(operator new[](saturated_mul(static_cast<size_t>(mapSchedule->m_nCount), sizeof(BossSchedule *))));
-  memset_0(mapSchedule->m_ScheduleList, 0, sizeof(BossSchedule *) * mapSchedule->m_nCount);
+  std::memset(mapSchedule->m_ScheduleList, 0, sizeof(BossSchedule *) * mapSchedule->m_nCount);
 
   int scheduleIndex = 0;
   for (int nBlockIndex = 0; nBlockIndex < pMap->m_nMonBlockNum; ++nBlockIndex)

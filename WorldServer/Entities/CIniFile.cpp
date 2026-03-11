@@ -51,7 +51,7 @@ bool CIniFile::Load()
   Clear();
   size_t bufferSize = 128;
   auto *buffer = static_cast<char *>(operator new[](bufferSize + 1));
-  memset_0(buffer, 0, bufferSize + 1);
+  std::memset(buffer, 0, bufferSize + 1);
   DWORD sectionNamesSize = GetPrivateProfileSectionNamesA(buffer, static_cast<DWORD>(bufferSize), m_strPath);
   if (!sectionNamesSize)
   {
@@ -67,7 +67,7 @@ bool CIniFile::Load()
   }
 
   char *str = buffer;
-  for (size_t len = strlen_0(buffer); len; len = strlen_0(str))
+  for (size_t len = std::strlen(buffer); len; len = std::strlen(str))
   {
     INI_Section *section = LoadSection(str);
     if (section)
@@ -105,7 +105,7 @@ bool CIniFile::WriteString(const char *strSection, const char *strKey, const cha
   INI_Key *key = section->GetKey(strKey);
   if (key)
   {
-    if (strcmp_0(key->m_strValue, strValue))
+    if (std::strcmp(key->m_strValue, strValue))
     {
       sprintf_s(key->m_strValue, "%s", strValue);
       SaveKey(key);
@@ -147,7 +147,7 @@ INI_Section *CIniFile::LoadSection(const char *strSection)
   }
 
   char *str = lpReturnedString;
-  size_t len = strlen_0(lpReturnedString);
+  size_t len = std::strlen(lpReturnedString);
   if (!len)
   {
     operator delete[](lpReturnedString);
@@ -177,7 +177,7 @@ INI_Section *CIniFile::LoadSection(const char *strSection)
       key->m_pParentSection = section;
     }
     str += len + 1;
-    len = strlen_0(str);
+    len = std::strlen(str);
   }
   operator delete[](lpReturnedString);
   return section;
@@ -187,7 +187,7 @@ INI_Key *CIniFile::LoadKey(const char *strSection, const char *strKey)
 {
   char returnedString[88]{};
   GetPrivateProfileStringA(strSection, strKey, kIniInvalid, returnedString, 65u, m_strPath);
-  if (!strcmp_0(returnedString, kIniInvalid))
+  if (!std::strcmp(returnedString, kIniInvalid))
   {
     return nullptr;
   }
@@ -235,7 +235,7 @@ INI_Section *CIniFile::GetSection(const char *strSection)
 {
   for (INI_Section *section : m_SectionList)
   {
-    if (!strcmp_0(section->m_strSection, strSection))
+    if (!std::strcmp(section->m_strSection, strSection))
     {
       return section;
     }
@@ -396,7 +396,7 @@ INI_Key *INI_Section::GetKey(const char *strKey)
 {
   for (INI_Key *key : m_KeyList)
   {
-    if (!strcmp_0(key->m_strKey, strKey))
+    if (!std::strcmp(key->m_strKey, strKey))
     {
       return key;
     }

@@ -7,7 +7,7 @@
 
 CPathFinder::CPathFinder()
 {
-  memset_0(this, 0, sizeof(CPathFinder));
+  std::memset(this, 0, sizeof(CPathFinder));
 }
 
 __int64 CPathFinder::AddPath(float *const a2, int a3)
@@ -40,7 +40,7 @@ __int64 CPathFinder::AddPath(float *const a2, int a3)
   }
 
   node.PathCnt = pathCount + 1;
-  node.TotalLeng = sqrtf_0((dx * dx) + (dy * dy) + (dz * dz)) + node.TotalLeng;
+  node.TotalLeng = std::sqrt((dx * dx) + (dy * dy) + (dz * dz)) + node.TotalLeng;
   return 1LL;
 }
 
@@ -53,7 +53,7 @@ void CPathFinder::PushPathStack(int a2)
 {
   static char s_pathfinder_stack_overflow[] = "pathfinder stack overflow";
 
-  memcpy_0(
+  std::memcpy(
     &mStackPathNode[mStackPoint],
     &mPathNode[a2],
     sizeof(mStackPathNode[mStackPoint]));
@@ -69,7 +69,7 @@ void CPathFinder::PopPathStack(int a2)
   {
     Error(aPathfinderStac, byte_140883769);
   }
-  memcpy_0(&mPathNode[a2], &mStackPathNode[mStackPoint], sizeof(mPathNode[a2]));
+  std::memcpy(&mPathNode[a2], &mStackPathNode[mStackPoint], sizeof(mPathNode[a2]));
 }
 
 __int64 CPathFinder::GetPathCnt(int a2)

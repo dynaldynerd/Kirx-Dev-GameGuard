@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CLuaScriptMgr.h"
 
@@ -116,7 +116,7 @@ bool CLuaScriptMgr::InitSDM()
   sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptError%u.log", errorTime);
   m_LogScriptError.SetWriteLogFile(dest, 1, 1, 1, 1);
 
-  memset_0(dest, 0, sizeof(dest));
+  std::memset(dest, 0, sizeof(dest));
   const unsigned int stateTime = GetKorLocalTime();
   sprintf_s(dest, "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptState%u.log", stateTime);
   m_LogScriptState.SetWriteLogFile(dest, 1, 1, 1, 1);
@@ -226,7 +226,7 @@ CLuaScript *CLuaScriptMgr::SearchScript(const char *name)
     if (state && state->m_bExist && state->m_bAttached)
     {
       CLuaScript *script = m_ChildScriptArEx.GetAtPtr(index);
-      if (script && strcmp_0(script->m_strName, name) == 0)
+      if (script && std::strcmp(script->m_strName, name) == 0)
       {
         return script;
       }
@@ -327,7 +327,7 @@ bool CLuaScriptMgr::AttachLuaScript(CLuaScript *pScript, CLuaCommand *pAttachCom
   }
 
   const char *name = pScript->GetName();
-  if (SearchScript(name) || strcmp_0("MasterState", pScript->GetName()) == 0)
+  if (SearchScript(name) || std::strcmp("MasterState", pScript->GetName()) == 0)
   {
     RemoveScript(pScript);
     return false;

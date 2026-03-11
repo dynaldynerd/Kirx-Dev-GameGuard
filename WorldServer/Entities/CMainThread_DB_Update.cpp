@@ -262,7 +262,7 @@ char CMainThread::db_Update_Avator(
     m_logSystemError.Write( "db_Update_Avator() : _db_Update_inven_AMP(sr:%d) Failed call", dwSerial);
   }
 
-  memset_0(szError, 0, 2048);
+  std::memset(szError, 0, 2048);
 
   if (!_db_Update_PvpPointLimit(dwSerial, pNewData, pOldData, pszPvpPointLimitQuery, szError))
   {
@@ -499,7 +499,7 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
                 changed = true;
               }
               sprintf_s(source, 128, "where serial=%d", postEntry->dwPSSerial);
-              buffer[strlen_0(buffer) - 1] = 32;
+              buffer[std::strlen(buffer) - 1] = 32;
               strcat_s(buffer, 2048, source);
             }
             else
@@ -568,23 +568,23 @@ char CMainThread::_db_Update_Base(
   if (pOldData->dbAvator.m_byLevel != pNewData->dbAvator.m_byLevel)
   {
     sprintf(source, "Lv=%d,", pNewData->dbAvator.m_byLevel);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
-  if (strcmp_0(pOldData->dbAvator.m_szClassCode, pNewData->dbAvator.m_szClassCode))
+  if (std::strcmp(pOldData->dbAvator.m_szClassCode, pNewData->dbAvator.m_szClassCode))
   {
     pNewData->dbAvator.m_szClassCode[4] = 0;
     sprintf(source, "class='%s',", pNewData->dbAvator.m_szClassCode);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwDalant != pNewData->dbAvator.m_dwDalant)
   {
     sprintf(source, "Dalant=%d,", pNewData->dbAvator.m_dwDalant);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwGold != pNewData->dbAvator.m_dwGold)
   {
     sprintf(source, "Gold=%d,", pNewData->dbAvator.m_dwGold);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
 
   for (int index = 0; index < 8; ++index)
@@ -599,12 +599,12 @@ char CMainThread::_db_Update_Base(
         {
           int dbKey = pNewData->dbAvator.m_EquipKey[index].CovDBKey();
           sprintf(source, "EK%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbAvator.m_dwFixEquipLv[index] != pOldData->dbAvator.m_dwFixEquipLv[index])
         {
           sprintf(source, "EU%d=%d,", index, pNewData->dbAvator.m_dwFixEquipLv[index]);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbAvator.m_byCsMethod[index])
         {
@@ -623,13 +623,13 @@ char CMainThread::_db_Update_Base(
           if (newET != oldET)
           {
             sprintf(source, "ET%d=%d,", index, newET);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
         }
         if (pNewData->dbAvator.m_lnUID[index] != pOldData->dbAvator.m_lnUID[index])
         {
           sprintf(source, "ES%d=%I64d,", index, pNewData->dbAvator.m_lnUID[index]);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else
@@ -655,23 +655,23 @@ char CMainThread::_db_Update_Base(
           newET,
           index,
           pNewData->dbAvator.m_lnUID[index]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbAvator.m_EquipKey[index].IsFilled())
     {
       int dbKey = pNewData->dbAvator.m_EquipKey[index].CovDBKey();
       sprintf(source, "EK%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
   sprintf(source, "Slot=%d,", pNewData->dbAvator.m_bySlotIndex);
-  strcat_0(buffer, source);
+  std::strcat(buffer, source);
 
   unsigned int localTime = GetKorLocalTime();
   sprintf(source, "LastConnTime=%u WHERE Serial=%d", localTime, dwSerial);
-  strcat_0(buffer, source);
+  std::strcat(buffer, source);
 
   return 1;
 }
@@ -688,80 +688,80 @@ char CMainThread::_db_Update_General(
   char source[216]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_general SET ");
-  const size_t initialLength = strlen_0(buffer);
+  const size_t initialLength = std::strlen(buffer);
 
   if (pOldData->dbAvator.m_dExp != pNewData->dbAvator.m_dExp)
   {
     sprintf(source, "Exp=%f,", static_cast<double>(pNewData->dbAvator.m_dExp));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dLossExp != pNewData->dbAvator.m_dLossExp)
   {
     sprintf(source, "LossExp=%f,", static_cast<double>(pNewData->dbAvator.m_dLossExp));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   for (int index = 0; index < 3; ++index)
   {
     if (pOldData->dbAvator.m_zClassHistory[index] != pNewData->dbAvator.m_zClassHistory[index])
     {
       sprintf(source, "Class%d=%d,", index, pNewData->dbAvator.m_zClassHistory[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   if (pOldData->dbAvator.m_dwClassInitCnt != pNewData->dbAvator.m_dwClassInitCnt)
   {
     sprintf(source, "ClassInitCnt=%d,", pNewData->dbAvator.m_dwClassInitCnt);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_byLastClassGrade != pNewData->dbAvator.m_byLastClassGrade)
   {
     sprintf(source, "LastClassGrade=%d,", pNewData->dbAvator.m_byLastClassGrade);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwHP != pNewData->dbAvator.m_dwHP)
   {
     sprintf(source, "HP=%d,", pNewData->dbAvator.m_dwHP);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwFP != pNewData->dbAvator.m_dwFP)
   {
     sprintf(source, "FP=%d,", pNewData->dbAvator.m_dwFP);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwSP != pNewData->dbAvator.m_dwSP)
   {
     sprintf(source, "SP=%d,", pNewData->dbAvator.m_dwSP);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwDP != pNewData->dbAvator.m_dwDP)
   {
     sprintf(source, "DP=%d,", pNewData->dbAvator.m_dwDP);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_byMapCode != pNewData->dbAvator.m_byMapCode)
   {
     sprintf(source, "Map=%d,", pNewData->dbAvator.m_byMapCode);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_fStartPos[0] != pNewData->dbAvator.m_fStartPos[0])
   {
     sprintf(source, "X=%f,", pNewData->dbAvator.m_fStartPos[0]);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_fStartPos[1] != pNewData->dbAvator.m_fStartPos[1])
   {
     sprintf(source, "Y=%f,", pNewData->dbAvator.m_fStartPos[1]);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_fStartPos[2] != pNewData->dbAvator.m_fStartPos[2])
   {
     sprintf(source, "Z=%f,", pNewData->dbAvator.m_fStartPos[2]);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_byBagNum != pNewData->dbAvator.m_byBagNum)
   {
     sprintf(source, "BagNum=%d,", pNewData->dbAvator.m_byBagNum);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
 
   for (int index = 0; index < 6; ++index)
@@ -776,7 +776,7 @@ char CMainThread::_db_Update_General(
         {
           int dbKey = pNewData->dbEquip.m_EmbellishList[index].Key.CovDBKey();
           sprintf(source, "EK%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbEquip.m_EmbellishList[index].wAmount
             != pOldData->dbEquip.m_EmbellishList[index].wAmount)
@@ -793,7 +793,7 @@ char CMainThread::_db_Update_General(
               index,
               static_cast<__int16>(pNewData->dbEquip.m_EmbellishList[index].wAmount));
           }
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbEquip.m_EmbellishList[index].byCsMethod)
         {
@@ -812,14 +812,14 @@ char CMainThread::_db_Update_General(
           if (newET != oldET)
           {
             sprintf(source, "ET%d=%d,", index, newET);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
         }
         if (pNewData->dbEquip.m_EmbellishList[index].lnUID
             != pOldData->dbEquip.m_EmbellishList[index].lnUID)
         {
           sprintf(source, "ES%d=%I64d,", index, pNewData->dbEquip.m_EmbellishList[index].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else
@@ -864,14 +864,14 @@ char CMainThread::_db_Update_General(
             index,
             pNewData->dbEquip.m_EmbellishList[index].lnUID);
         }
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbEquip.m_EmbellishList[index].Key.IsFilled())
     {
       int dbKey = pNewData->dbEquip.m_EmbellishList[index].Key.CovDBKey();
       sprintf(source, "EK%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
@@ -887,12 +887,12 @@ char CMainThread::_db_Update_General(
         {
           int dbKey = pNewData->dbForce.m_List[index].Key.CovDBKey();
           sprintf(source, "F%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbForce.m_List[index].lnUID != pOldData->dbForce.m_List[index].lnUID)
         {
           sprintf(source, "FS%d=%I64d,", index, pNewData->dbForce.m_List[index].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else
@@ -905,14 +905,14 @@ char CMainThread::_db_Update_General(
           dbKey,
           index,
           pNewData->dbForce.m_List[index].lnUID);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbForce.m_List[index].Key.IsFilled())
     {
       int dbKey = pNewData->dbForce.m_List[index].Key.CovDBKey();
       sprintf(source, "F%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
@@ -936,17 +936,17 @@ char CMainThread::_db_Update_General(
               dbKey,
               index,
               pNewData->dbAnimus.m_List[index].lnUID);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
           if (pNewData->dbAnimus.m_List[index].dwExp != pOldData->dbAnimus.m_List[index].dwExp)
           {
             sprintf(source, "AD%d=%I64d,", index, pNewData->dbAnimus.m_List[index].dwExp);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
           if (pNewData->dbAnimus.m_List[index].dwParam != pOldData->dbAnimus.m_List[index].dwParam)
           {
             sprintf(source, "AP%d=%d,", index, pNewData->dbAnimus.m_List[index].dwParam);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
         }
         else
@@ -963,14 +963,14 @@ char CMainThread::_db_Update_General(
             pNewData->dbAnimus.m_List[index].dwParam,
             index,
             pNewData->dbAnimus.m_List[index].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else if (pOldData->dbAnimus.m_List[index].Key.IsFilled())
       {
         unsigned __int8 dbKey = pNewData->dbAnimus.m_List[index].Key.CovDBKey();
         sprintf(source, "AK%d=%d,", index, dbKey);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
   }
@@ -980,7 +980,7 @@ char CMainThread::_db_Update_General(
     if (pOldData->dbStat.m_dwDamWpCnt[index] != pNewData->dbStat.m_dwDamWpCnt[index])
     {
       sprintf(source, "WM%d=%d,", index, pNewData->dbStat.m_dwDamWpCnt[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 24; ++index)
@@ -988,7 +988,7 @@ char CMainThread::_db_Update_General(
     if (pOldData->dbStat.m_dwForceCum[index] != pNewData->dbStat.m_dwForceCum[index])
     {
       sprintf(source, "FM%d=%d,", index, pNewData->dbStat.m_dwForceCum[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 48; ++index)
@@ -996,7 +996,7 @@ char CMainThread::_db_Update_General(
     if (pOldData->dbStat.m_dwSkillCum[index] != pNewData->dbStat.m_dwSkillCum[index])
     {
       sprintf(source, "SM%d=%d,", index, pNewData->dbStat.m_dwSkillCum[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 3; ++index)
@@ -1004,84 +1004,84 @@ char CMainThread::_db_Update_General(
     if (pOldData->dbStat.m_dwMakeCum[index] != pNewData->dbStat.m_dwMakeCum[index])
     {
       sprintf(source, "MI%d=%d,", index, pNewData->dbStat.m_dwMakeCum[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   if (pOldData->dbStat.m_dwSpecialCum != pNewData->dbStat.m_dwSpecialCum)
   {
     sprintf(source, "SR=%d,", pNewData->dbStat.m_dwSpecialCum);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbStat.m_dwDefenceCnt != pNewData->dbStat.m_dwDefenceCnt)
   {
     sprintf(source, "DM=%d,", pNewData->dbStat.m_dwDefenceCnt);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbStat.m_dwShieldCnt != pNewData->dbStat.m_dwShieldCnt)
   {
     sprintf(source, "PM=%d,", pNewData->dbStat.m_dwShieldCnt);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dPvPPoint != pNewData->dbAvator.m_dPvPPoint)
   {
     sprintf(source, "PvpPoint=%f,", static_cast<double>(pNewData->dbAvator.m_dPvPPoint));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dPvPCashBag != pNewData->dbAvator.m_dPvPCashBag)
   {
     sprintf(source, "PvpCashBag=%f,", static_cast<double>(pNewData->dbAvator.m_dPvPCashBag));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
-  if (strcmp_0(pOldData->dbAvator.m_szBindMapCode, pNewData->dbAvator.m_szBindMapCode))
+  if (std::strcmp(pOldData->dbAvator.m_szBindMapCode, pNewData->dbAvator.m_szBindMapCode))
   {
     pNewData->dbAvator.m_szBindMapCode[11] = 0;
     sprintf(source, "BindMapCode='%s',", pNewData->dbAvator.m_szBindMapCode);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
-  if (strcmp_0(pOldData->dbAvator.m_szBindDummy, pNewData->dbAvator.m_szBindDummy))
+  if (std::strcmp(pOldData->dbAvator.m_szBindDummy, pNewData->dbAvator.m_szBindDummy))
   {
     pNewData->dbAvator.m_szBindDummy[11] = 0;
     sprintf(source, "BindDummy='%s',", pNewData->dbAvator.m_szBindDummy);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwRadarDelayTime != pNewData->dbAvator.m_dwRadarDelayTime)
   {
     sprintf_s(source, 200, "RDDelay=%d,", pNewData->dbAvator.m_dwRadarDelayTime);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwTakeLastMentalTicket != pNewData->dbAvator.m_dwTakeLastMentalTicket)
   {
     sprintf_s(source, 200, "TakeLastMentalTicket=%d,", pNewData->dbAvator.m_dwTakeLastMentalTicket);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_dwTakeLastCriTicket != pNewData->dbAvator.m_dwTakeLastCriTicket)
   {
     sprintf_s(source, 200, "TakeLastCriTicket=%d,", pNewData->dbAvator.m_dwTakeLastCriTicket);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pOldData->dbAvator.m_byMaxLevel != pNewData->dbAvator.m_byMaxLevel)
   {
     sprintf(source, "MaxLevel=%d,", pNewData->dbAvator.m_byMaxLevel);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pNewData->dbCutting.m_bOldDataLoad)
   {
-    strcat_0(buffer, "LeftResList='*',");
+    std::strcat(buffer, "LeftResList='*',");
   }
   sprintf(source, "TotalPlayMin=%d,", pNewData->dbAvator.m_dwTotalPlayMin);
-  strcat_0(buffer, source);
+  std::strcat(buffer, source);
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial = %d", dwSerial);
-    size_t len = strlen_0(buffer);
+    size_t len = std::strlen(buffer);
     buffer[len - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1095,7 +1095,7 @@ char CMainThread::_db_Update_Supplement(
 {
   char buffer[132]{};
   sprintf_s(pSzQuery, nBufferSize, "UPDATE tbl_supplement Set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   if (pOldData->dbSupplement.dPvpPointLeak != pNewData->dbSupplement.dPvpPointLeak)
   {
@@ -1274,15 +1274,15 @@ char CMainThread::_db_Update_Supplement(
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   return 1;
@@ -1297,7 +1297,7 @@ char CMainThread::_db_Update_Unit(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_unit SET ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int unitIndex = 0; unitIndex < 4; ++unitIndex)
   {
@@ -1306,7 +1306,7 @@ char CMainThread::_db_Update_Unit(
       if (pOldData->dbUnit.m_List[unitIndex].byFrame != 255)
       {
         sprintf(source, "F_%d=%d,", unitIndex, 255);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else
@@ -1314,52 +1314,52 @@ char CMainThread::_db_Update_Unit(
       if (pNewData->dbUnit.m_List[unitIndex].byFrame != pOldData->dbUnit.m_List[unitIndex].byFrame)
       {
         sprintf(source, "F_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byFrame);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].dwGauge != pOldData->dbUnit.m_List[unitIndex].dwGauge)
       {
         sprintf(source, "Gg_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].dwGauge);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[0] != pOldData->dbUnit.m_List[unitIndex].byPart[0])
       {
         sprintf(source, "H_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[0]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[1] != pOldData->dbUnit.m_List[unitIndex].byPart[1])
       {
         sprintf(source, "U_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[1]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[2] != pOldData->dbUnit.m_List[unitIndex].byPart[2])
       {
         sprintf(source, "L_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[2]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[3] != pOldData->dbUnit.m_List[unitIndex].byPart[3])
       {
         sprintf(source, "A_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[3]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[4] != pOldData->dbUnit.m_List[unitIndex].byPart[4])
       {
         sprintf(source, "S_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[4]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].byPart[5] != pOldData->dbUnit.m_List[unitIndex].byPart[5])
       {
         sprintf(source, "B_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].byPart[5]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].dwBullet[0] != pOldData->dbUnit.m_List[unitIndex].dwBullet[0])
       {
         sprintf(source, "AB_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].dwBullet[0]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].dwBullet[1] != pOldData->dbUnit.m_List[unitIndex].dwBullet[1])
       {
         sprintf(source, "SB_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].dwBullet[1]);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       for (int spareIndex = 0; spareIndex < 8; ++spareIndex)
       {
@@ -1372,33 +1372,33 @@ char CMainThread::_db_Update_Unit(
             spareIndex,
             unitIndex,
             pNewData->dbUnit.m_List[unitIndex].dwSpare[spareIndex]);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       if (pNewData->dbUnit.m_List[unitIndex].nPullingFee != pOldData->dbUnit.m_List[unitIndex].nPullingFee)
       {
         sprintf(source, "PF_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].nPullingFee);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
       if (pNewData->dbUnit.m_List[unitIndex].dwCutTime != pOldData->dbUnit.m_List[unitIndex].dwCutTime)
       {
         sprintf(source, "Cut_%d=%d,", unitIndex, pNewData->dbUnit.m_List[unitIndex].dwCutTime);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1412,7 +1412,7 @@ char CMainThread::_db_Update_UI(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_userinterface SET ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int index = 0; index < 50; ++index)
   {
@@ -1425,7 +1425,7 @@ char CMainThread::_db_Update_UI(
       const __int16 dbKey =
         static_cast<__int16>(pNewData->dbLink.m_LinkList[index].Key.CovDBKey());
       sprintf(source, "LB%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 8; ++index)
@@ -1433,7 +1433,7 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbSfcont.m_List[0][index].dwKey != pNewData->dbSfcont.m_List[0][index].dwKey)
     {
       sprintf(source, "DCF%d=%d,", index, pNewData->dbSfcont.m_List[0][index].dwKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 8; ++index)
@@ -1441,7 +1441,7 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbSfcont.m_List[1][index].dwKey != pNewData->dbSfcont.m_List[1][index].dwKey)
     {
       sprintf(source, "HCF%d=%d,", index, pNewData->dbSfcont.m_List[1][index].dwKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 2; ++index)
@@ -1449,7 +1449,7 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbLink.m_dwSkill[index] != pNewData->dbLink.m_dwSkill[index])
     {
       sprintf(source, "SkillWin%d=%d,", index, pNewData->dbLink.m_dwSkill[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 2; ++index)
@@ -1457,7 +1457,7 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbLink.m_dwForce[index] != pNewData->dbLink.m_dwForce[index])
     {
       sprintf(source, "ForceWin%d=%d,", index, pNewData->dbLink.m_dwForce[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 2; ++index)
@@ -1465,7 +1465,7 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbLink.m_dwCharacter[index] != pNewData->dbLink.m_dwCharacter[index])
     {
       sprintf(source, "CharWin%d=%d,", index, pNewData->dbLink.m_dwCharacter[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   for (int index = 0; index < 2; ++index)
@@ -1473,39 +1473,39 @@ char CMainThread::_db_Update_UI(
     if (pOldData->dbLink.m_dwAnimus[index] != pNewData->dbLink.m_dwAnimus[index])
     {
       sprintf(source, "AnimusWin%d=%d,", index, pNewData->dbLink.m_dwAnimus[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   if (pOldData->dbLink.m_dwInven != pNewData->dbLink.m_dwInven)
   {
     sprintf(source, "InvenWin=%d,", pNewData->dbLink.m_dwInven);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   for (int index = 0; index < 5; ++index)
   {
     if (pOldData->dbLink.m_dwInvenBag[index] != pNewData->dbLink.m_dwInvenBag[index])
     {
       sprintf(source, "InvenBag%d=%d,", index, pNewData->dbLink.m_dwInvenBag[index]);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
   if (pOldData->dbLink.m_byLinkBoardLock != pNewData->dbLink.m_byLinkBoardLock)
   {
     sprintf(source, "LBLock=%d,", pNewData->dbLink.m_byLinkBoardLock);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1519,53 +1519,53 @@ char CMainThread::_db_Update_Quest(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_quest SET ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int index = 0; index < 30; ++index)
   {
     if (pNewData->dbQuest.m_List[index].byQuestType != pOldData->dbQuest.m_List[index].byQuestType)
     {
       sprintf(source, "Type%d=%d,", index, pNewData->dbQuest.m_List[index].byQuestType);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
     if (pNewData->dbQuest.m_List[index].wIndex != pOldData->dbQuest.m_List[index].wIndex)
     {
       sprintf(source, "QuestIndex%d=%d,", index, static_cast<__int16>(pNewData->dbQuest.m_List[index].wIndex));
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
     if (pNewData->dbQuest.m_List[index].dwPassSec != pOldData->dbQuest.m_List[index].dwPassSec)
     {
       sprintf(source, "PassSec%d=%d,", index, pNewData->dbQuest.m_List[index].dwPassSec);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
     if (pNewData->dbQuest.m_List[index].wNum[0] != pOldData->dbQuest.m_List[index].wNum[0])
     {
       sprintf(source, "FirstAct%d=%d,", index, static_cast<__int16>(pNewData->dbQuest.m_List[index].wNum[0]));
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
     if (pNewData->dbQuest.m_List[index].wNum[1] != pOldData->dbQuest.m_List[index].wNum[1])
     {
       sprintf(source, "SecondAct%d=%d,", index, static_cast<__int16>(pNewData->dbQuest.m_List[index].wNum[1]));
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
     if (pNewData->dbQuest.m_List[index].wNum[2] != pOldData->dbQuest.m_List[index].wNum[2])
     {
       sprintf(source, "ThirdAct%d=%d,", index, static_cast<__int16>(pNewData->dbQuest.m_List[index].wNum[2]));
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1578,13 +1578,13 @@ char CMainThread::_db_Update_NpcQuest_History(
 {
   char buffer[1288]{};
   char *destination = pSzQuery;
-  strcpy_0(pSzQuery, "UPDATE tbl_npc_quest_history SET ");
-  size_t initialLength = strlen_0(destination);
+  std::strcpy(pSzQuery, "UPDATE tbl_npc_quest_history SET ");
+  size_t initialLength = std::strlen(destination);
 
   for (int index = 0; index < 70; ++index)
   {
     if (pNewData->dbQuest.m_History[index].byLevel != pOldData->dbQuest.m_History[index].byLevel
-        || strncmp_0(
+        || std::strncmp(
           pNewData->dbQuest.m_History[index].szQuestCode,
           pOldData->dbQuest.m_History[index].szQuestCode,
           7))
@@ -1599,21 +1599,21 @@ char CMainThread::_db_Update_NpcQuest_History(
         level,
         index + 1,
         pNewData->dbQuest.m_History[index].dwEventEndTime);
-      strcat_0(destination, buffer);
+      std::strcat(destination, buffer);
     }
   }
 
-  size_t queryLength = strlen_0(destination);
+  size_t queryLength = std::strlen(destination);
   if (queryLength <= initialLength)
   {
-    memset_0(destination, 0, initialLength);
+    std::memset(destination, 0, initialLength);
   }
   else
   {
     sprintf(buffer, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(destination);
+    size_t length = std::strlen(destination);
     destination[length - 1] = 32;
-    strcat_0(destination, buffer);
+    std::strcat(destination, buffer);
   }
   return 1;
 }
@@ -1633,8 +1633,8 @@ char CMainThread::_db_Update_Start_NpcQuest_History(
     unsigned int count = 0;
     while (count < addCount)
     {
-      memcpy_0(rawTime, &pNewData->dbQuest.m_StartHistory[listIndex].tmStartTime, sizeof(rawTime));
-      memcpy_0(timeParts, rawTime, sizeof(rawTime));
+      std::memcpy(rawTime, &pNewData->dbQuest.m_StartHistory[listIndex].tmStartTime, sizeof(rawTime));
+      std::memcpy(timeParts, rawTime, sizeof(rawTime));
       sprintf_s(
         timeBuffer,
         25,
@@ -1654,8 +1654,8 @@ char CMainThread::_db_Update_Start_NpcQuest_History(
       {
         return 0;
       }
-      memset_0(timeBuffer, 0, 25);
-      memset_0(timeParts, 0, sizeof(timeParts));
+      std::memset(timeBuffer, 0, 25);
+      std::memset(timeParts, 0, sizeof(timeParts));
       ++count;
       ++listIndex;
     }
@@ -1672,28 +1672,28 @@ char CMainThread::_db_Update_Buddy(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_Buddy SET ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int index = 0; index < 50; ++index)
   {
     if (pNewData->dbBuddy.m_List[index].dwSerial != pOldData->dbBuddy.m_List[index].dwSerial)
     {
       sprintf(source, "Serial%d=%d,", index, pNewData->dbBuddy.m_List[index].dwSerial);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1708,7 +1708,7 @@ char CMainThread::_db_Update_ItemCombineEx(
   {
     char buffer[132]{};
     sprintf(pSzQuery, "UPDATE tbl_itemcombine_ex_result SET ");
-    unsigned int initialLength = static_cast<unsigned int>(strlen_0(pSzQuery));
+    unsigned int initialLength = static_cast<unsigned int>(std::strlen(pSzQuery));
     if (pNewData->dbItemCombineEx.m_dwCheckKey != pOldData->dbItemCombineEx.m_dwCheckKey)
     {
       sprintf(
@@ -1720,7 +1720,7 @@ char CMainThread::_db_Update_ItemCombineEx(
         pNewData->dbItemCombineEx.m_byDlgType,
         pNewData->dbItemCombineEx.m_bySelectItemCount,
         pNewData->dbItemCombineEx.m_byItemListNum);
-      strcat_0(pSzQuery, buffer);
+      std::strcat(pSzQuery, buffer);
       int listCount = pNewData->dbItemCombineEx.m_byItemListNum;
       for (int index = 0; index < listCount; ++index)
       {
@@ -1734,24 +1734,24 @@ char CMainThread::_db_Update_ItemCombineEx(
           pNewData->dbItemCombineEx.m_List[index].dwDur,
           index,
           pNewData->dbItemCombineEx.m_List[index].dwUpt);
-        strcat_0(pSzQuery, buffer);
+        std::strcat(pSzQuery, buffer);
       }
       sprintf(buffer, "resulteffecttype=%d,", pNewData->dbItemCombineEx.m_dwResultEffectType);
-      strcat_0(pSzQuery, buffer);
+      std::strcat(pSzQuery, buffer);
       sprintf(buffer, "resulteffectmsgcode=%d,", pNewData->dbItemCombineEx.m_dwResultEffectMsgCode);
-      strcat_0(pSzQuery, buffer);
+      std::strcat(pSzQuery, buffer);
     }
 
-    size_t queryLength = strlen_0(pSzQuery);
+    size_t queryLength = std::strlen(pSzQuery);
     if (queryLength <= initialLength)
     {
-      memset_0(pSzQuery, 0, initialLength);
+      std::memset(pSzQuery, 0, initialLength);
     }
     else
     {
       sprintf(buffer, "WHERE Serial=%d", dwSerial);
-      pSzQuery[strlen_0(pSzQuery) - 1] = 32;
-      strcat_0(pSzQuery, buffer);
+      pSzQuery[std::strlen(pSzQuery) - 1] = 32;
+      std::strcat(pSzQuery, buffer);
     }
   }
   else if (pNewData->dbItemCombineEx.m_bIsResult != pOldData->dbItemCombineEx.m_bIsResult)
@@ -1771,39 +1771,39 @@ char CMainThread::_db_Update_Trunk(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_AccountTrunk SET ");
-  unsigned int initialLength = static_cast<unsigned int>(strlen_0(buffer));
+  unsigned int initialLength = static_cast<unsigned int>(std::strlen(buffer));
   unsigned __int8 slotCount = pNewData->dbTrunk.bySlotNum;
   unsigned __int8 raceIndex = pNewData->dbAvator.m_byRaceSexCode / 2;
 
-  if (strcmp_0(pNewData->dbTrunk.wszPasswd, pOldData->dbTrunk.wszPasswd))
+  if (std::strcmp(pNewData->dbTrunk.wszPasswd, pOldData->dbTrunk.wszPasswd))
   {
     sprintf(source, "TrunkPass=cast('%s' as binary),", pNewData->dbTrunk.wszPasswd);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pNewData->dbTrunk.dDalant != pOldData->dbTrunk.dDalant)
   {
     sprintf(source, "Dalant%d=%f,", raceIndex, static_cast<double>(pNewData->dbTrunk.dDalant));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pNewData->dbTrunk.dGold != pOldData->dbTrunk.dGold)
   {
     sprintf(source, "Gold%d=%f,", raceIndex, static_cast<double>(pNewData->dbTrunk.dGold));
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pNewData->dbTrunk.byHintIndex != pOldData->dbTrunk.byHintIndex)
   {
     sprintf(source, "HintIndex=%d,", pNewData->dbTrunk.byHintIndex);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
-  if (strcmp_0(pNewData->dbTrunk.wszHintAnswer, pOldData->dbTrunk.wszHintAnswer))
+  if (std::strcmp(pNewData->dbTrunk.wszHintAnswer, pOldData->dbTrunk.wszHintAnswer))
   {
     sprintf(source, "HintAnswer='%s',", pNewData->dbTrunk.wszHintAnswer);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   if (pNewData->dbTrunk.bySlotNum != pOldData->dbTrunk.bySlotNum)
   {
     sprintf(source, "EstSlot=%d,", pNewData->dbTrunk.bySlotNum);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
 
   for (int index = 0; index < slotCount; ++index)
@@ -1818,27 +1818,27 @@ char CMainThread::_db_Update_Trunk(
         {
           int dbKey = pNewData->dbTrunk.m_List[index].Key.CovDBKey();
           sprintf(source, "K%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_List[index].dwDur != pOldData->dbTrunk.m_List[index].dwDur)
         {
           sprintf(source, "D%d=%I64d,", index, pNewData->dbTrunk.m_List[index].dwDur);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_List[index].dwUpt != pOldData->dbTrunk.m_List[index].dwUpt)
         {
           sprintf(source, "U%d=%d,", index, pNewData->dbTrunk.m_List[index].dwUpt);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_List[index].byRace != pOldData->dbTrunk.m_List[index].byRace)
         {
           sprintf(source, "R%d=%d,", index, pNewData->dbTrunk.m_List[index].byRace);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_List[index].lnUID != pOldData->dbTrunk.m_List[index].lnUID)
         {
           sprintf(source, "S%d=%I64d,", index, pNewData->dbTrunk.m_List[index].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_List[index].byCsMethod)
         {
@@ -1857,7 +1857,7 @@ char CMainThread::_db_Update_Trunk(
           if (newET != oldET)
           {
             sprintf(source, "T%d=%d,", index, newET);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
         }
       }
@@ -1888,28 +1888,28 @@ char CMainThread::_db_Update_Trunk(
           pNewData->dbTrunk.m_List[index].lnUID,
           index,
           newET);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbTrunk.m_List[index].Key.IsFilled())
     {
       int dbKey = pNewData->dbTrunk.m_List[index].Key.CovDBKey();
       sprintf(source, "K%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE AccountSerial=%d", dwAccountSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -1923,13 +1923,13 @@ char CMainThread::_db_Update_Trunk_Extend(
   char source[136]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_AccountTrunk_Extend SET ");
-  unsigned int initialLength = static_cast<unsigned int>(strlen_0(buffer));
+  unsigned int initialLength = static_cast<unsigned int>(std::strlen(buffer));
   unsigned __int8 slotCount = pNewData->dbTrunk.byExtSlotNum;
 
   if (pNewData->dbTrunk.byExtSlotNum != pOldData->dbTrunk.byExtSlotNum)
   {
     sprintf(source, "EstSlot=%d,", pNewData->dbTrunk.byExtSlotNum);
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
 
   for (int index = 0; index < slotCount; ++index)
@@ -1944,27 +1944,27 @@ char CMainThread::_db_Update_Trunk_Extend(
         {
           int dbKey = pNewData->dbTrunk.m_ExtList[index].Key.CovDBKey();
           sprintf(source, "K%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_ExtList[index].dwDur != pOldData->dbTrunk.m_ExtList[index].dwDur)
         {
           sprintf(source, "D%d=%I64d,", index, pNewData->dbTrunk.m_ExtList[index].dwDur);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_ExtList[index].dwUpt != pOldData->dbTrunk.m_ExtList[index].dwUpt)
         {
           sprintf(source, "U%d=%d,", index, pNewData->dbTrunk.m_ExtList[index].dwUpt);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_ExtList[index].byRace != pOldData->dbTrunk.m_ExtList[index].byRace)
         {
           sprintf(source, "R%d=%d,", index, pNewData->dbTrunk.m_ExtList[index].byRace);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_ExtList[index].lnUID != pOldData->dbTrunk.m_ExtList[index].lnUID)
         {
           sprintf(source, "S%d=%I64d,", index, pNewData->dbTrunk.m_ExtList[index].lnUID);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (pNewData->dbTrunk.m_ExtList[index].byCsMethod)
         {
@@ -1983,7 +1983,7 @@ char CMainThread::_db_Update_Trunk_Extend(
           if (newET != oldET)
           {
             sprintf(source, "T%d=%d,", index, newET);
-            strcat_0(buffer, source);
+            std::strcat(buffer, source);
           }
         }
       }
@@ -2014,28 +2014,28 @@ char CMainThread::_db_Update_Trunk_Extend(
           pNewData->dbTrunk.m_ExtList[index].lnUID,
           index,
           newET);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (pOldData->dbTrunk.m_ExtList[index].Key.IsFilled())
     {
       int dbKey = pNewData->dbTrunk.m_ExtList[index].Key.CovDBKey();
       sprintf(source, "K%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE AccountSerial=%d", dwAccountSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -2049,7 +2049,7 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
 {
   char buffer[132]{};
   sprintf_s(pSzQuery, nBufferSize, "UPDATE tbl_TimeLimitInfo Set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   if (pOldData->dbTimeLimitInfo.dwFatigue != pNewData->dbTimeLimitInfo.dwFatigue)
   {
@@ -2065,15 +2065,15 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
   sprintf_s(buffer, 128, "LastLogoutTime=%u,", localTime);
   strcat_s(pSzQuery, nBufferSize, buffer);
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf_s(buffer, 128, "WHERE AccountSerial = %d", dwAccSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   return 1;
@@ -2088,7 +2088,7 @@ char CMainThread::_db_update_inven_AMP(
   char source[10248]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "update [dbo].[tbl_aminepersonal_inven] set ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int index = 0; index < 40; ++index)
   {
@@ -2105,12 +2105,12 @@ char CMainThread::_db_update_inven_AMP(
         {
           int dbKey = static_cast<int>(newItem.Key.CovDBKey());
           sprintf(source, "K%d=%d,", index, dbKey);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
         if (newItem.dwDur != oldItem.dwDur)
         {
           sprintf(source, "N%d=%d,", index, newItem.dwDur);
-          strcat_0(buffer, source);
+          std::strcat(buffer, source);
         }
       }
       else
@@ -2123,28 +2123,28 @@ char CMainThread::_db_update_inven_AMP(
           dbKey,
           index,
           newItem.dwDur);
-        strcat_0(buffer, source);
+        std::strcat(buffer, source);
       }
     }
     else if (oldItem.Key.IsFilled())
     {
       int dbKey = static_cast<int>(newItem.Key.CovDBKey());
       sprintf(source, "K%d=%d,", index, dbKey);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE avatorserial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -2158,7 +2158,7 @@ char CMainThread::_db_Update_PvpPointLimit(
 {
   char buffer[132]{};
   sprintf(pSzQuery, "update [dbo].[tbl_pvppointlimitinfo] set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   if (pNewData->dbPvpPointLimit.tUpdatedate != pOldData->dbPvpPointLimit.tUpdatedate)
   {
@@ -2180,44 +2180,44 @@ char CMainThread::_db_Update_PvpPointLimit(
       localTime->tm_hour,
       localTime->tm_min,
       localTime->tm_sec);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpPointLimit.bUseUp != pOldData->dbPvpPointLimit.bUseUp)
   {
     sprintf(buffer, "[useup]=%u,", pNewData->dbPvpPointLimit.bUseUp);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpPointLimit.byLimitRate != pOldData->dbPvpPointLimit.byLimitRate)
   {
     sprintf(buffer, "[limitrate]=%u,", pNewData->dbPvpPointLimit.byLimitRate);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpPointLimit.dOriginalPoint != pOldData->dbPvpPointLimit.dOriginalPoint)
   {
     sprintf(buffer, "[originalpoint]=%.10f,", static_cast<double>(pNewData->dbPvpPointLimit.dOriginalPoint));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpPointLimit.dLimitPoint != pOldData->dbPvpPointLimit.dLimitPoint)
   {
     sprintf(buffer, "[limitpoint]=%.10f,", static_cast<double>(pNewData->dbPvpPointLimit.dLimitPoint));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpPointLimit.dUsePoint != pOldData->dbPvpPointLimit.dUsePoint)
   {
     sprintf(buffer, "[usepoint]=%.10f ", static_cast<double>(pNewData->dbPvpPointLimit.dUsePoint));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf(buffer, "where serial=%d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
-    strcat_0(pSzQuery, buffer);
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
+    std::strcat(pSzQuery, buffer);
   }
   return 1;
 }
@@ -2231,28 +2231,28 @@ char CMainThread::_db_Update_CryMsg(
   char source[520]{};
   char *buffer = pSzQuery;
   sprintf(pSzQuery, "UPDATE tbl_CryMsg SET ");
-  size_t initialLength = strlen_0(buffer);
+  size_t initialLength = std::strlen(buffer);
 
   for (int index = 0; index < 10; ++index)
   {
-    if (strcmp_0(pNewData->dbBossCry.m_List[index].wszCryMsg, pOldData->dbBossCry.m_List[index].wszCryMsg))
+    if (std::strcmp(pNewData->dbBossCry.m_List[index].wszCryMsg, pOldData->dbBossCry.m_List[index].wszCryMsg))
     {
       sprintf(source, "CryMsg%d='%s',", index + 1, pNewData->dbBossCry.m_List[index].wszCryMsg);
-      strcat_0(buffer, source);
+      std::strcat(buffer, source);
     }
   }
 
-  size_t queryLength = strlen_0(buffer);
+  size_t queryLength = std::strlen(buffer);
   if (queryLength <= initialLength)
   {
-    memset_0(buffer, 0, initialLength);
+    std::memset(buffer, 0, initialLength);
   }
   else
   {
     sprintf(source, "WHERE Serial=%d", dwSerial);
-    size_t length = strlen_0(buffer);
+    size_t length = std::strlen(buffer);
     buffer[length - 1] = 32;
-    strcat_0(buffer, source);
+    std::strcat(buffer, source);
   }
   return 1;
 }
@@ -2266,7 +2266,7 @@ char CMainThread::_db_Update_PvpOrderView(
 {
   char buffer[132]{};
   sprintf(pSzQuery, "update [dbo].[tbl_pvporderview] set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   if (pNewData->dbPvpOrderView.tUpdatedate != pOldData->dbPvpOrderView.tUpdatedate)
   {
@@ -2288,72 +2288,72 @@ char CMainThread::_db_Update_PvpOrderView(
       localTime->tm_hour,
       localTime->tm_min,
       localTime->tm_sec);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.nDeath != pOldData->dbPvpOrderView.nDeath)
   {
     sprintf(buffer, "[Death]= %d,", pNewData->dbPvpOrderView.nDeath);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.nKill != pOldData->dbPvpOrderView.nKill)
   {
     sprintf(buffer, "[Kill]= %d,", pNewData->dbPvpOrderView.nKill);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.dTodayStacked != pOldData->dbPvpOrderView.dTodayStacked)
   {
     sprintf(buffer, "[TodayStacked]= %.10f,", static_cast<double>(pNewData->dbPvpOrderView.dTodayStacked));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.dPvpPoint != pOldData->dbPvpOrderView.dPvpPoint)
   {
     sprintf(buffer, "[PvpPoint]= %.10f,", static_cast<double>(pNewData->dbPvpOrderView.dPvpPoint));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.dPvpTempCash != pOldData->dbPvpOrderView.dPvpTempCash)
   {
     sprintf(buffer, "[PvpTempCash]= %.10f,", static_cast<double>(pNewData->dbPvpOrderView.dPvpTempCash));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.dPvpCash != pOldData->dbPvpOrderView.dPvpCash)
   {
     sprintf(buffer, "[PvpCash]= %.10f,", static_cast<double>(pNewData->dbPvpOrderView.dPvpCash));
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   for (int index = 0; index < 10; ++index)
   {
     if (pNewData->dbPvpOrderView.dwKillerSerial[index] != pOldData->dbPvpOrderView.dwKillerSerial[index])
     {
       sprintf(buffer, "[KillerSerial%d] = %d,", index, pNewData->dbPvpOrderView.dwKillerSerial[index]);
-      strcat_0(pSzQuery, buffer);
+      std::strcat(pSzQuery, buffer);
     }
   }
   if (pNewData->dbPvpOrderView.byContHaveCash != pOldData->dbPvpOrderView.byContHaveCash)
   {
     sprintf(buffer, "[ContHaveCash] = %d,", pNewData->dbPvpOrderView.byContHaveCash);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.byContLoseCash != pOldData->dbPvpOrderView.byContLoseCash)
   {
     sprintf(buffer, "[ContLoseCash] = %d,", pNewData->dbPvpOrderView.byContLoseCash);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPvpOrderView.bRaceWarRecvr != pOldData->dbPvpOrderView.bRaceWarRecvr)
   {
     sprintf(buffer, "[RaceWarRecvr] = %d ", pNewData->dbPvpOrderView.bRaceWarRecvr);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf(buffer, "where serial=%d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
-    strcat_0(pSzQuery, buffer);
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
+    std::strcat(pSzQuery, buffer);
   }
   return 1;
 }
@@ -2369,44 +2369,44 @@ char CMainThread::_db_Update_PrimiumPlayTime(
 
   char buffer[132]{};
   sprintf(pSzQuery, "update [dbo].[tbl_PrimiumPlayTime] set ");
-  unsigned int initialLength = static_cast<unsigned int>(strlen_0(pSzQuery));
+  unsigned int initialLength = static_cast<unsigned int>(std::strlen(pSzQuery));
 
   if (pNewData->dbPlayTimeInPcbang.dwLastConnTime != pOldData->dbPlayTimeInPcbang.dwLastConnTime)
   {
     sprintf(buffer, "[LastConnTime]= %d,", pNewData->dbPlayTimeInPcbang.dwLastConnTime);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.dwContPlayTime != pOldData->dbPlayTimeInPcbang.dwContPlayTime)
   {
     sprintf(buffer, "[ContPlayTime]= %d,", pNewData->dbPlayTimeInPcbang.dwContPlayTime);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.bForcedClose != pOldData->dbPlayTimeInPcbang.bForcedClose)
   {
     sprintf(buffer, "[ForcedClose]= %d,", pNewData->dbPlayTimeInPcbang.bForcedClose);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.byReceiveCoupon != pOldData->dbPlayTimeInPcbang.byReceiveCoupon)
   {
     sprintf(buffer, "[ReceiveCoupon]= %d,", pNewData->dbPlayTimeInPcbang.byReceiveCoupon);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.byEnsureTime != pOldData->dbPlayTimeInPcbang.byEnsureTime)
   {
     sprintf(buffer, "[EnsureTime]= %d ", pNewData->dbPlayTimeInPcbang.byEnsureTime);
-    strcat_0(pSzQuery, buffer);
+    std::strcat(pSzQuery, buffer);
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= initialLength)
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf(buffer, "where AccountSerial=%d", dwAccSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
-    strcat_0(pSzQuery, buffer);
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
+    std::strcat(pSzQuery, buffer);
   }
   return 1;
 }
@@ -2422,7 +2422,7 @@ char CMainThread::_db_Update_PotionDelay(
 
   char buffer[132]{};
   sprintf_s(pSzQuery, nBufferSize, "UPDATE tbl_potion_delay Set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
   DWORD now = timeGetTime();
 
   for (int index = 0; index < 38; ++index)
@@ -2445,15 +2445,15 @@ char CMainThread::_db_Update_PotionDelay(
     }
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   return 1;
@@ -2468,7 +2468,7 @@ char CMainThread::_db_Update_OreCutting(
 {
   char buffer[132]{};
   sprintf_s(pSzQuery, nBufferSize, "UPDATE tbl_OreCutting Set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   for (int index = 0; index < 20; ++index)
   {
@@ -2490,15 +2490,15 @@ char CMainThread::_db_Update_OreCutting(
     }
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   return 1;
@@ -2513,7 +2513,7 @@ char CMainThread::_db_Update_PcBangFavor(
 {
   char buffer[132]{};
   sprintf_s(pSzQuery, nBufferSize, "UPDATE tbl_pcbangitem Set ");
-  int initialLength = static_cast<int>(strlen_0(pSzQuery));
+  int initialLength = static_cast<int>(std::strlen(pSzQuery));
 
   for (int index = 0; index < 50; ++index)
   {
@@ -2524,15 +2524,15 @@ char CMainThread::_db_Update_PcBangFavor(
     }
   }
 
-  size_t queryLength = strlen_0(pSzQuery);
+  size_t queryLength = std::strlen(pSzQuery);
   if (queryLength <= static_cast<size_t>(initialLength))
   {
-    memset_0(pSzQuery, 0, initialLength);
+    std::memset(pSzQuery, 0, initialLength);
   }
   else
   {
     sprintf_s(buffer, 128, "WHERE Serial = %d", dwSerial);
-    pSzQuery[strlen_0(pSzQuery) - 1] = 32;
+    pSzQuery[std::strlen(pSzQuery) - 1] = 32;
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   return 1;

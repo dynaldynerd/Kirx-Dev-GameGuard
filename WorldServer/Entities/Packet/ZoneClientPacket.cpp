@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "ZoneClientPacket.h"
 
 _alter_cont_effect_time_zocl::_alter_cont_effect_time_zocl() : byEffectNum(0)
@@ -52,12 +52,12 @@ _darkhole_mission_info_inform_zocl::_darkhole_mission_info_inform_zocl()
 
 void _gm_msg_gmcall_list_response_zocl::Init(_gm_msg_gmcall_list_response_zocl *msg)
 {
-  memset_0(msg, 0, sizeof(_gm_msg_gmcall_list_response_zocl));
+  std::memset(msg, 0, sizeof(_gm_msg_gmcall_list_response_zocl));
 }
 
 _limit_item_num_info_zocl::_limit_item_num_info_zocl()
 {
-  memset_0(this, 0, sizeof(_limit_item_num_info_zocl));
+  std::memset(this, 0, sizeof(_limit_item_num_info_zocl));
 }
 
 unsigned __int16 _limit_item_num_info_zocl::size()
@@ -91,12 +91,12 @@ _nuclear_result_code_zocl::_nuclear_result_code_zocl()
 
 _personal_automine_install_zocl::_personal_automine_install_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _pvp_cash_recover_itemlist_result_zocl::_pvp_cash_recover_itemlist_result_zocl()
 {
-  memset_0(this, 0, sizeof(_pvp_cash_recover_itemlist_result_zocl));
+  std::memset(this, 0, sizeof(_pvp_cash_recover_itemlist_result_zocl));
 }
 
 unsigned __int16 _pvp_cash_recover_itemlist_result_zocl::size()
@@ -129,7 +129,7 @@ unsigned __int16 _store_list_result_zocl::size()
 
 _talik_crystal_exchange_zocl::_talik_crystal_exchange_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __int64 _talik_crystal_exchange_zocl::size()
@@ -293,7 +293,7 @@ unsigned __int16 _darkhole_clear_out_result_zocl::size() const
 
 _darkhole_create_zocl::_darkhole_create_zocl()
 {
-  memset_0(this, 0, sizeof(_darkhole_create_zocl));
+  std::memset(this, 0, sizeof(_darkhole_create_zocl));
 }
 
 unsigned __int16 _darkhole_create_zocl::size() const
@@ -313,7 +313,7 @@ unsigned __int16 _darkhole_enter_result_zocl::size() const
 
 _darkhole_fixpositon_zocl::_darkhole_fixpositon_zocl()
 {
-  memset_0(this, 0, sizeof(_darkhole_fixpositon_zocl));
+  std::memset(this, 0, sizeof(_darkhole_fixpositon_zocl));
 }
 
 unsigned __int16 _darkhole_fixpositon_zocl::size() const
@@ -397,7 +397,7 @@ unsigned __int16 _darkhole_quest_info_inform_zocl::size() const
 
 _darkhole_state_change_zocl::_darkhole_state_change_zocl()
 {
-  memset_0(this, 0, sizeof(_darkhole_state_change_zocl));
+  std::memset(this, 0, sizeof(_darkhole_state_change_zocl));
 }
 
 unsigned __int16 _darkhole_state_change_zocl::size() const
@@ -455,7 +455,7 @@ __int64 _personal_amine_errmsg_zocl::size() const
 
 _personal_amine_fixpos_zocl::_personal_amine_fixpos_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_amine_fixpos_zocl));
+  std::memset(this, 0, sizeof(_personal_amine_fixpos_zocl));
 }
 
 unsigned __int16 _personal_amine_fixpos_zocl::size() const
@@ -465,7 +465,7 @@ unsigned __int16 _personal_amine_fixpos_zocl::size() const
 
 _personal_amine_infoui_open_zocl::_personal_amine_infoui_open_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_amine_infoui_open_zocl));
+  std::memset(this, 0, sizeof(_personal_amine_infoui_open_zocl));
 }
 
 __int64 _personal_amine_infoui_open_zocl::size() const
@@ -485,7 +485,7 @@ __int64 _personal_amine_make_storage_zocl::size() const
 
 _personal_automine_alter_dur_zocl::_personal_automine_alter_dur_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_alter_dur_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_alter_dur_zocl));
 }
 
 unsigned __int16 _personal_automine_alter_dur_zocl::size() const
@@ -495,7 +495,7 @@ unsigned __int16 _personal_automine_alter_dur_zocl::size() const
 
 _personal_automine_attacked_zocl::_personal_automine_attacked_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_attacked_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_attacked_zocl));
 }
 
 unsigned __int16 _personal_automine_attacked_zocl::size() const
@@ -505,7 +505,7 @@ unsigned __int16 _personal_automine_attacked_zocl::size() const
 
 _personal_automine_battery_extract_zocl::_personal_automine_battery_extract_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_battery_extract_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_battery_extract_zocl));
 }
 
 __int64 _personal_automine_battery_extract_zocl::size() const
@@ -515,7 +515,7 @@ __int64 _personal_automine_battery_extract_zocl::size() const
 
 _personal_automine_battery_insert_zocl::_personal_automine_battery_insert_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_battery_insert_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_battery_insert_zocl));
 }
 
 __int64 _personal_automine_battery_insert_zocl::size() const
@@ -525,7 +525,7 @@ __int64 _personal_automine_battery_insert_zocl::size() const
 
 _personal_automine_delbattery_zocl::_personal_automine_delbattery_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_delbattery_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_delbattery_zocl));
 }
 
 unsigned __int16 _personal_automine_delbattery_zocl::size() const
@@ -535,7 +535,7 @@ unsigned __int16 _personal_automine_delbattery_zocl::size() const
 
 _personal_automine_popore_zocl::_personal_automine_popore_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_popore_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_popore_zocl));
 }
 
 __int64 _personal_automine_popore_zocl::size() const
@@ -545,7 +545,7 @@ __int64 _personal_automine_popore_zocl::size() const
 
 _personal_automine_selore_zocl::_personal_automine_selore_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_selore_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_selore_zocl));
 }
 
 __int64 _personal_automine_selore_zocl::size() const
@@ -555,7 +555,7 @@ __int64 _personal_automine_selore_zocl::size() const
 
 _personal_automine_stop_zocl::_personal_automine_stop_zocl()
 {
-  memset_0(this, 0, sizeof(_personal_automine_stop_zocl));
+  std::memset(this, 0, sizeof(_personal_automine_stop_zocl));
 }
 
 __int64 _personal_automine_stop_zocl::size() const
@@ -565,7 +565,7 @@ __int64 _personal_automine_stop_zocl::size() const
 
 _post_content_result_zocl::_post_content_result_zocl()
 {
-  memset_0(this, 0, sizeof(_post_content_result_zocl));
+  std::memset(this, 0, sizeof(_post_content_result_zocl));
 }
 
 unsigned __int16 _post_content_result_zocl::size() const
@@ -594,7 +594,7 @@ unsigned __int16 _post_return_zocl::size() const
 
 _pt_automine_getoutore_zocl::_pt_automine_getoutore_zocl()
 {
-  memset_0(this, 0, sizeof(_pt_automine_getoutore_zocl));
+  std::memset(this, 0, sizeof(_pt_automine_getoutore_zocl));
 }
 
 __int64 _pt_automine_getoutore_zocl::size() const
@@ -619,7 +619,7 @@ __int64 _pt_automine_state_zocl::size() const
 
 _pt_inform_appoint_zocl::_pt_inform_appoint_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __int64 _pt_inform_appoint_zocl::size() const
@@ -634,7 +634,7 @@ unsigned __int16 _pt_inform_commission_income_zocl::size() const
 
 _pt_inform_tax_rate_zocl::_pt_inform_tax_rate_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __int64 _pt_inform_tax_rate_zocl::size() const
@@ -644,7 +644,7 @@ __int64 _pt_inform_tax_rate_zocl::size() const
 
 _pt_result_appoint_zocl::_pt_result_appoint_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __int64 _pt_result_appoint_zocl::size() const
@@ -654,7 +654,7 @@ __int64 _pt_result_appoint_zocl::size() const
 
 _pt_result_change_tax_rate_zocl::_pt_result_change_tax_rate_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 __int64 _pt_result_change_tax_rate_zocl::size() const
@@ -676,17 +676,17 @@ _sf_delay_download_result_zocl::_sf_delay_download_result_zocl() = default;
 
 _trans_ship_renew_ticket_result_zocl::_trans_ship_renew_ticket_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_change_passwd_result_zocl::_trunk_change_passwd_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_download_result_zocl::_trunk_download_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
   byListNum = 0;
   byExtListNum = 0;
 }
@@ -706,42 +706,42 @@ unsigned __int16 _trunk_download_result_zocl::size()
 
 _trunk_est_result_zocl::_trunk_est_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_extend_result_zocl::_trunk_extend_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_hint_answer_result_zocl::_trunk_hint_answer_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_io_money_result_zocl::_trunk_io_money_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_io_result_zocl::_trunk_io_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_potionsocket_division_result_zocl::_trunk_potionsocket_division_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_pw_hint_index_result_zocl::_trunk_pw_hint_index_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _trunk_res_division_result_zocl::_trunk_res_division_result_zocl()
 {
-  memset_0(this, 0, sizeof(*this));
+  std::memset(this, 0, sizeof(*this));
 }
 
 _unmannedtrader_buy_item_result_zocl::_unmannedtrader_buy_item_result_zocl()
