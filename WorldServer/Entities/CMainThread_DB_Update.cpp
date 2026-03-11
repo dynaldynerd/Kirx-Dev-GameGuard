@@ -1416,11 +1416,14 @@ char CMainThread::_db_Update_UI(
 
   for (int index = 0; index < 50; ++index)
   {
-    int oldKey = pOldData->dbLink.m_LinkList[index].Key.CovDBKey();
-    int newKey = pNewData->dbLink.m_LinkList[index].Key.CovDBKey();
+    const __int16 oldKey =
+      static_cast<__int16>(pOldData->dbLink.m_LinkList[index].Key.CovDBKey());
+    const __int16 newKey =
+      static_cast<__int16>(pNewData->dbLink.m_LinkList[index].Key.CovDBKey());
     if (oldKey != newKey)
     {
-      int dbKey = pNewData->dbLink.m_LinkList[index].Key.CovDBKey();
+      const __int16 dbKey =
+        static_cast<__int16>(pNewData->dbLink.m_LinkList[index].Key.CovDBKey());
       sprintf(source, "LB%d=%d,", index, dbKey);
       strcat_0(buffer, source);
     }
