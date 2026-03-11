@@ -24,10 +24,4 @@ This repository contains the Account, Login, and World server projects plus shar
 
 ### WorldServer
 - C++ MFC application (toolset v143), intended to build x64.
-- IDA parity is the active focus; source-of-truth is `WorldServerIdaPro/` for structs and functions.
-
-## Build
-WorldServer (x64 Debug):
-```
-& "C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\WorldServer\WorldServer.vcxproj /m /p:Configuration=Debug /p:Platform=x64
-```
+- current development focus
