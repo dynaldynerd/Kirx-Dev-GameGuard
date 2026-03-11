@@ -128,7 +128,8 @@ void CMoveMapLimitInfoPortal::SubProcNotifyForceMoveHQ()
   _notice_move_limit_map_msg_zocl msg{};
   msg.byType = 0;
 
-  for (unsigned int index = m_uiProcNotifyInx; index < MAX_PLAYER; ++index)
+  unsigned int index = m_uiProcNotifyInx;
+  for (; index < MAX_PLAYER; ++index)
   {
     if (g_Player[index].m_bLive && m_iMapInx == g_Player[index].m_pCurMap->m_nMapCode)
     {
@@ -145,7 +146,7 @@ void CMoveMapLimitInfoPortal::SubProcNotifyForceMoveHQ()
     }
   }
 
-  if (m_uiProcNotifyInx >= MAX_PLAYER)
+  if (index >= MAX_PLAYER || m_uiProcNotifyInx >= MAX_PLAYER)
   {
     m_uiProcNotifyInx = 0;
     m_pkNotifyForceMoveHQTimer->BeginTimer(10000);
@@ -166,7 +167,8 @@ void CMoveMapLimitInfoPortal::SubProcForceMoveHQ()
   _notice_move_limit_map_msg_zocl msg{};
   msg.byType = 1;
 
-  for (unsigned int index = m_uiProcNotifyInx; index < MAX_PLAYER; ++index)
+  unsigned int index = m_uiProcNotifyInx;
+  for (; index < MAX_PLAYER; ++index)
   {
     if (g_Player[index].m_bLive && m_iMapInx == g_Player[index].m_pCurMap->m_nMapCode)
     {
@@ -192,7 +194,7 @@ void CMoveMapLimitInfoPortal::SubProcForceMoveHQ()
     }
   }
 
-  if (m_uiProcNotifyInx >= MAX_PLAYER)
+  if (index >= MAX_PLAYER || m_uiProcNotifyInx >= MAX_PLAYER)
   {
     m_uiProcNotifyInx = 0;
     m_pkNotifyForceMoveHQTimer->StopTimer();
