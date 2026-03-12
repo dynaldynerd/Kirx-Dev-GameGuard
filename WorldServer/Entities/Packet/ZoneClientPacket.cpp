@@ -797,7 +797,7 @@ __int64 _unmannedtrader_Regist_item_inform_zocl::size()
   {
     byNum = 0;
   }
-  return 181 - 18LL * (10 - byNum);
+  return 191 - 19LL * (10 - byNum);
 }
 
 __int64 _unmannedtrader_regist_item_success_result_zocl::size() const

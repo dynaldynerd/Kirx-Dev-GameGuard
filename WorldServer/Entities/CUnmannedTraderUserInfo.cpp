@@ -2874,6 +2874,7 @@ void CUnmannedTraderUserInfo::NotifyRegistItem()
     CUnmannedTraderRegistItemInfo &item = this->m_vecRegistItemInfo[j];
     if (item.IsRegist())
     {
+      info.List[info.byNum].bWaitingRegister = 0;
       info.List[info.byNum].wItemSerial = item.GetItemSerial();
       info.List[info.byNum].dwRegistSerial = item.GetRegistSerial();
       info.List[info.byNum].dwPrice = item.GetPrice();

@@ -705,11 +705,10 @@ bool CNetworkEX::DataAnalysis(
 
 bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, char *pMsg)
 {
-  // Packet log disabled.
-  // if (g_Network.m_pProcess[0] && g_Network.m_pProcess[0]->m_Type.m_bRecvLogFile)
-  // {
-  //   AppendPacketSnifferLogRecv(n, pMsgHeader, pMsg);
-  // }
+  if (g_Network.m_pProcess[0] && g_Network.m_pProcess[0]->m_Type.m_bRecvLogFile)
+  {
+    AppendPacketSnifferLogRecv(n, pMsgHeader, pMsg);
+  }
 
   bool result = false;
   const int type0 = pMsgHeader->m_byType[0];
