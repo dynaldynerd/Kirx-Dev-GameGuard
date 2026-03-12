@@ -2563,12 +2563,6 @@ bool CNetworkEX::MoveTypeChangeRequeset(unsigned int n, char *pBuf)
   const char *charName = player->m_Param.GetCharNameA();
   if (moveType == 0 || moveType == 1 || moveType == 2)
   {
-    g_Main.m_logMove.Write(
-      "booster_trace: MoveTypeChangeRequest name:%s req:%u cur:%u cont7:%d",
-      charName,
-      static_cast<unsigned int>(moveType),
-      static_cast<unsigned int>(player->m_byMoveType),
-      player->EquipItemSFAgent.IsUseBooster() ? 1 : 0);
     player->pc_MoveModeChangeRequest(moveType);
     return true;
   }

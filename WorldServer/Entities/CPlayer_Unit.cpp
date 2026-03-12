@@ -491,21 +491,7 @@ float CPlayer::GetAddSpeed()
 void CPlayer::BreakCloakBooster()
 {
   _sf_continous *cont = EquipItemSFAgent.GetEquipSFCont(7);
-  const char *charName = m_Param.GetCharNameA();
-  g_Main.m_logMove.Write(
-    "booster_trace: BreakCloakBooster name:%s moveType:%u cont7:%p exist:%d",
-    charName,
-    static_cast<unsigned int>(m_byMoveType),
-    cont,
-    cont ? (cont->m_bExist ? 1 : 0) : 0);
   EquipItemSFAgent.ReleaseSFCont(7);
-  cont = EquipItemSFAgent.GetEquipSFCont(7);
-  g_Main.m_logMove.Write(
-    "booster_trace: BreakCloakBooster done name:%s moveType:%u cont7:%p exist:%d",
-    charName,
-    static_cast<unsigned int>(m_byMoveType),
-    cont,
-    cont ? (cont->m_bExist ? 1 : 0) : 0);
 }
 
 bool CPlayer::IsUseCloakBooster()

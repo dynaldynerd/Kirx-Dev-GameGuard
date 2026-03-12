@@ -133,16 +133,6 @@ void CEquipItemSFAgent::ReleaseSFCont(int nEquipTblIndex)
   }
 
   _sf_continous *equipCont = GetEquipSFCont(static_cast<unsigned int>(nEquipTblIndex));
-  if (nEquipTblIndex == 7)
-  {
-    const char *charName = m_pMaster->m_Param.GetCharNameA();
-    g_Main.m_logMove.Write(
-      "booster_trace: ReleaseSFCont name:%s slot:%d cont:%p moveType:%u",
-      charName,
-      nEquipTblIndex,
-      equipCont,
-      static_cast<unsigned int>(m_pMaster->m_byMoveType));
-  }
   if (!equipCont)
   {
     return;
@@ -155,32 +145,10 @@ void CEquipItemSFAgent::ReleaseSFCont(int nEquipTblIndex)
       _sf_continous *cont = &m_pMaster->m_SFCont[j][k];
       if (cont->m_bExist && equipCont == cont)
       {
-        if (nEquipTblIndex == 7)
-        {
-          const char *charName = m_pMaster->m_Param.GetCharNameA();
-          g_Main.m_logMove.Write(
-            "booster_trace: ReleaseSFCont remove name:%s slot:%d contCode:%d list:%d effect:%u idx:%u",
-            charName,
-            nEquipTblIndex,
-            j,
-            k,
-            static_cast<unsigned int>(cont->m_byEffectCode),
-            static_cast<unsigned int>(cont->m_wEffectIndex));
-        }
         m_pMaster->RemoveSFContEffect(static_cast<unsigned __int8>(j), static_cast<unsigned __int16>(k), false, false);
         return;
       }
     }
-  }
-
-  if (nEquipTblIndex == 7)
-  {
-    const char *charName = m_pMaster->m_Param.GetCharNameA();
-    g_Main.m_logMove.Write(
-      "booster_trace: ReleaseSFCont notfound name:%s slot:%d cont:%p",
-      charName,
-      nEquipTblIndex,
-      equipCont);
   }
 }
 
@@ -261,23 +229,6 @@ void CEquipItemSFAgent::SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pS
     this->m_pMaster->m_byMoveType = 2;
     this->m_pMaster->SenseState();
     this->m_pMaster->UpdateVisualVer(CPlayer::CashChangeStateFlag(0));
-    if (nEquipTblIndex == 7)
-    {
-      const char *charName = m_pMaster->m_Param.GetCharNameA();
-      const float effPlus = m_pMaster->m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
-      const float addSpeed = m_pMaster->GetAddSpeed();
-      const float boosterAdd = GetBoosterAddSpeed();
-      g_Main.m_logMove.Write(
-        "booster_trace: SetSFCont set name:%s slot:%u prev:%p new:%p moveType:%u effPlus:%.3f addSpeed:%.3f boosterAdd:%.3f",
-        charName,
-        nEquipTblIndex,
-        previous,
-        pSF,
-        static_cast<unsigned int>(m_pMaster->m_byMoveType),
-        effPlus,
-        addSpeed,
-        boosterAdd);
-    }
     return;
   }
 
@@ -289,22 +240,6 @@ void CEquipItemSFAgent::SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pS
   if (previous)
   {
     this->m_pMaster->SendMsg_Circle_DelEffect(previous->m_byEffectCode, previous->m_wEffectIndex, previous->m_byLv, 0);
-  }
-  if (nEquipTblIndex == 7)
-  {
-    const char *charName = m_pMaster->m_Param.GetCharNameA();
-    const float effPlus = m_pMaster->m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
-    const float addSpeed = m_pMaster->GetAddSpeed();
-    const float boosterAdd = GetBoosterAddSpeed();
-    g_Main.m_logMove.Write(
-      "booster_trace: SetSFCont clear name:%s slot:%u prev:%p moveType:%u effPlus:%.3f addSpeed:%.3f boosterAdd:%.3f",
-      charName,
-      nEquipTblIndex,
-      previous,
-      static_cast<unsigned int>(m_pMaster->m_byMoveType),
-      effPlus,
-      addSpeed,
-      boosterAdd);
   }
 }
 

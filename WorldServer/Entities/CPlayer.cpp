@@ -3073,28 +3073,12 @@ bool CPlayer::IsOutExtraStopPos(float *pfStopPos)
 
 void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 {
-  const unsigned __int8 prevMoveType = m_byMoveType;
-  const bool prevBooster = EquipItemSFAgent.IsUseBooster();
-  const char *charName = m_Param.GetCharNameA();
-  g_Main.m_logMove.Write(
-    "booster_trace: pc_MoveModeChangeRequest name:%s req:%u prev:%u cont7:%d",
-    charName,
-    static_cast<unsigned int>(byMoveType),
-    static_cast<unsigned int>(prevMoveType),
-    prevBooster ? 1 : 0);
-
   if (byMoveType != 2)
   {
     BreakCloakBooster();
   }
   m_byMoveType = byMoveType;
   SenseState();
-
-  g_Main.m_logMove.Write(
-    "booster_trace: pc_MoveModeChangeRequest done name:%s now:%u cont7:%d",
-    charName,
-    static_cast<unsigned int>(m_byMoveType),
-    EquipItemSFAgent.IsUseBooster() ? 1 : 0);
 }
 
 void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
@@ -3198,16 +3182,6 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   }
 
   m_byMoveType = byMoveType;
-  if ((prevMoveType == 2 || m_byMoveType == 2) && prevMoveType != m_byMoveType)
-  {
-    const char *charName = m_Param.GetCharNameA();
-    g_Main.m_logMove.Write(
-      "booster_trace: pc_MoveNext moveType change name:%s prev:%u now:%u cont7:%d",
-      charName,
-      static_cast<unsigned int>(prevMoveType),
-      static_cast<unsigned int>(m_byMoveType),
-      EquipItemSFAgent.IsUseBooster() ? 1 : 0);
-  }
   m_byMoveDirect = byDirect;
   std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
   std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
@@ -8271,14 +8245,6 @@ void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip
       if (!m_bInGuildBattle || !m_bTakeGravityStone)
       {
         m_EP.SetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED, fVal, bEquip);
-        const char *charName = m_Param.GetCharNameA();
-        g_Main.m_logMove.Write(
-          "booster_trace: apply_normal_item_std_effect name:%s equip:%d eff:%d val:%.3f after:%.3f",
-          charName,
-          bEquip ? 1 : 0,
-          nEffCode,
-          fVal,
-          m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED));
       }
       break;
     case 13:
