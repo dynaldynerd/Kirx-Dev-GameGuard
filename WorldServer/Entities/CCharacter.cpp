@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "CCharacter.h"
 
@@ -460,6 +460,7 @@ void CCharacter::RemoveSFContEffect(
 
   if (effectParamList)
   {
+    const unsigned int lvIndex = static_cast<unsigned int>(cont->m_byLv) - 1;
     for (int j = 0; j < 5; ++j)
     {
       _cont_param_list *paramEntry = &effectParamList[j];
@@ -470,12 +471,12 @@ void CCharacter::RemoveSFContEffect(
       const int paramIndex = paramEntry->m_nContParamIndex;
       if (effectType == 0)
       {
-        const float value = paramEntry->m_fContValue[cont->m_byLv];
+        const float value = paramEntry->m_fContValue[lvIndex];
         m_EP.SetEff_Rate(static_cast<unsigned int>(paramIndex), value, false);
       }
       else if (effectType == 1)
       {
-        const float value = paramEntry->m_fContValue[cont->m_byLv];
+        const float value = paramEntry->m_fContValue[lvIndex];
         m_EP.SetEff_Plus(static_cast<unsigned int>(paramIndex), value, false);
       }
       else if (effectType == 2)

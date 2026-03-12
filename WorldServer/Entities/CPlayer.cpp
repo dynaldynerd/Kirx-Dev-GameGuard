@@ -3073,17 +3073,34 @@ bool CPlayer::IsOutExtraStopPos(float *pfStopPos)
 
 void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 {
+  const unsigned __int8 prevMoveType = m_byMoveType;
+  const bool prevBooster = EquipItemSFAgent.IsUseBooster();
+  const char *charName = m_Param.GetCharNameA();
+  g_Main.m_logMove.Write(
+    "booster_trace: pc_MoveModeChangeRequest name:%s req:%u prev:%u cont7:%d",
+    charName,
+    static_cast<unsigned int>(byMoveType),
+    static_cast<unsigned int>(prevMoveType),
+    prevBooster ? 1 : 0);
+
   if (byMoveType != 2)
   {
     BreakCloakBooster();
   }
   m_byMoveType = byMoveType;
   SenseState();
+
+  g_Main.m_logMove.Write(
+    "booster_trace: pc_MoveModeChangeRequest done name:%s now:%u cont7:%d",
+    charName,
+    static_cast<unsigned int>(m_byMoveType),
+    EquipItemSFAgent.IsUseBooster() ? 1 : 0);
 }
 
 void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
 {
   unsigned __int8 errorCode = 0;
+  const unsigned __int8 prevMoveType = m_byMoveType;
   if (m_pmTrd.bDTradeMode)
   {
     errorCode = 7;
@@ -3181,6 +3198,16 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   }
 
   m_byMoveType = byMoveType;
+  if ((prevMoveType == 2 || m_byMoveType == 2) && prevMoveType != m_byMoveType)
+  {
+    const char *charName = m_Param.GetCharNameA();
+    g_Main.m_logMove.Write(
+      "booster_trace: pc_MoveNext moveType change name:%s prev:%u now:%u cont7:%d",
+      charName,
+      static_cast<unsigned int>(prevMoveType),
+      static_cast<unsigned int>(m_byMoveType),
+      EquipItemSFAgent.IsUseBooster() ? 1 : 0);
+  }
   m_byMoveDirect = byDirect;
   std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
   std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
@@ -6448,16 +6475,17 @@ bool CPlayer::SF_ContDamageTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
@@ -6500,16 +6528,17 @@ bool CPlayer::SF_ContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
@@ -6661,16 +6690,17 @@ bool CPlayer::SF_SkillContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectVal
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     int remainingDuration = static_cast<int>(contEffect->m_wDurSec) - static_cast<int>(currentTime - contEffect->m_dwStartSec);
@@ -8241,6 +8271,14 @@ void CPlayer::apply_normal_item_std_effect(int nEffCode, float fVal, bool bEquip
       if (!m_bInGuildBattle || !m_bTakeGravityStone)
       {
         m_EP.SetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED, fVal, bEquip);
+        const char *charName = m_Param.GetCharNameA();
+        g_Main.m_logMove.Write(
+          "booster_trace: apply_normal_item_std_effect name:%s equip:%d eff:%d val:%.3f after:%.3f",
+          charName,
+          bEquip ? 1 : 0,
+          nEffCode,
+          fVal,
+          m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED));
       }
       break;
     case 13:
