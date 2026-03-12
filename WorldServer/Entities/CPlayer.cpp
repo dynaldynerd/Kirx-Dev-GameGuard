@@ -24162,7 +24162,7 @@ void CPlayer::pc_CombineItem(
 {
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *materialItems[100]{};
-  int requiredMaterial[19]{};
+  _ItemCombine_fld::_material requiredMaterial[5]{};
   _STORAGE_LIST::_db_con historyMaterials[100]{};
   unsigned __int8 materialCounts[117]{};
   unsigned __int8 defSocketNum = 0;
@@ -24226,8 +24226,7 @@ void CPlayer::pc_CombineItem(
       }
     }
 
-    std::memset(requiredMaterial, 0, sizeof(requiredMaterial));
-    std::memcpy(requiredMaterial, manualRecord->m_Material, 60);
+    std::memcpy(requiredMaterial, manualRecord->m_Material, sizeof(requiredMaterial));
     for (int j = 0; j < byMaterialNum; ++j)
     {
       materialItems[j] = m_Param.m_dbInven.GetPtrFromSerial(pipMaterials[j].wItemSerial);
@@ -24269,12 +24268,9 @@ void CPlayer::pc_CombineItem(
         g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
       for (int m = 0; m < 5; ++m)
       {
-        if (!std::strncmp(
-              materialRecord->m_strCode,
-              reinterpret_cast<const char *>(&requiredMaterial[3 * m]),
-              7u))
+        if (!std::strncmp(materialRecord->m_strCode, requiredMaterial[m].m_itmPdMat, 7u))
         {
-          requiredMaterial[3 * m + 2] -= pipMaterials[j].byNum;
+          requiredMaterial[m].m_nDur -= pipMaterials[j].byNum;
           matched = true;
           break;
         }
@@ -24292,7 +24288,7 @@ void CPlayer::pc_CombineItem(
 
     for (int j = 0; j < 5; ++j)
     {
-      if (requiredMaterial[j].m_nPdMatNum > 0)
+      if (requiredMaterial[j].m_nDur > 0)
       {
         errCode = 6;
         break;
