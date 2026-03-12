@@ -6,7 +6,6 @@
 #include "ITEM_EFFECT.h"
 
 #pragma pack(push, 1)
-
 struct  _DfnEquipItem_fld : _base_fld
 {
   int m_bExist;

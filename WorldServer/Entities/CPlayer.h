@@ -4,8 +4,6 @@
 #include "CHRID.h"
 #include "InvenKey.h"
 
-#pragma pack(push, 1)
-
 #include "CCharacter.h"
 #include "DELAY_PROCESS.h"
 #include "StorageList.h"
@@ -2769,7 +2767,3 @@ bool __fastcall DE_RecoverAllReturnStateAnimusHPFull(
   CCharacter *pTargetChar,
   float fEffectValue,
   unsigned __int8 *byRet);
-
-#pragma pack(pop)
-
-

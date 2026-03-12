@@ -4,9 +4,9 @@
 #include "InvenKey.h"
 #include "StoragePos.h"
 
-#pragma pack(push, 8)
-
 struct _AVATOR_DATA;
+
+#pragma pack(push, 8)
 
 struct _worlddb_character_base_info
 {
@@ -333,6 +333,7 @@ struct _personal_amine_inven
 };
 
 /* 1174 */
+#pragma pack(pop)
 #pragma pack(push, 1)
 struct   _NOT_ARRANGED_AVATOR_DB
 {
@@ -349,6 +350,8 @@ struct   _NOT_ARRANGED_AVATOR_DB
   void Init();
 };
 #pragma pack(pop)
+
+#pragma pack(push, 8)
 
 struct  _worlddb_arrange_char_info
 {
