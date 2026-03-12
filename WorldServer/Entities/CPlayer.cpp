@@ -23246,7 +23246,7 @@ void CPlayer::pc_MakeItem(
   unsigned __int8 masteryType = 0;
   int masteryValue = 0;
   _STORAGE_LIST::_db_con *materialItems[100]{};
-  int requiredMaterial[19]{};
+  _ItemMakeData_fld::_material_list requiredMaterial[5]{};
   _STORAGE_LIST::_db_con historyMaterials[100]{};
   unsigned __int8 materialCounts[116]{};
 
@@ -23411,7 +23411,7 @@ void CPlayer::pc_MakeItem(
       break;
     }
 
-    std::memcpy(requiredMaterial, manualRecord->m_listMaterial, 60);
+    std::memcpy(requiredMaterial, manualRecord->m_listMaterial, sizeof(requiredMaterial));
     if (!m_bCheat_makeitem_no_use_matrial)
     {
       for (int j = 0; j < byMaterialNum; ++j)
@@ -23454,9 +23454,9 @@ void CPlayer::pc_MakeItem(
           g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
         for (int n = 0; n < 5; ++n)
         {
-          if (!std::strncmp(materialRecord->m_strCode, reinterpret_cast<const char *>(&requiredMaterial[3 * n]), 7u))
+          if (!std::strncmp(materialRecord->m_strCode, requiredMaterial[n].m_itmPdMat, 7u))
           {
-            requiredMaterial[3 * n + 2] -= pipMaterials[j].byNum;
+            requiredMaterial[n].m_nPdMatNum -= pipMaterials[j].byNum;
             matched = true;
             break;
           }
@@ -23473,7 +23473,7 @@ void CPlayer::pc_MakeItem(
       }
       for (int j = 0; j < 5; ++j)
       {
-        if (static_cast<int>(requiredMaterial[3 * j + 2]) > 0)
+        if (requiredMaterial[j].m_nPdMatNum > 0)
         {
           errCode = 6;
           break;
@@ -24167,8 +24167,8 @@ void CPlayer::pc_CombineItem(
   unsigned __int8 materialCounts[117]{};
   unsigned __int8 defSocketNum = 0;
   unsigned __int8 socketCount = 0;
-  _ItemCombineData_fld *manualRecord =
-    reinterpret_cast<_ItemCombineData_fld *>(g_Main.m_tblItemCombineData.GetRecord(wManualIndex));
+  _ItemCombine_fld *manualRecord =
+    reinterpret_cast<_ItemCombine_fld *>(g_Main.m_tblItemCombineData.GetRecord(wManualIndex));
   unsigned __int8 itemTableCode = static_cast<unsigned __int8>(-1);
   _base_fld *combineRecord = nullptr;
   _STORAGE_LIST::_db_con *overlapItem = nullptr;
@@ -24182,7 +24182,7 @@ void CPlayer::pc_CombineItem(
     }
 
     const int raceSexCode = m_Param.GetRaceSexCode();
-    if (manualRecord->m_strCivil[raceSexCode + 4] != '1')
+    if (manualRecord->m_strCivil[raceSexCode] != '1')
     {
       errCode = 11;
       break;
@@ -24292,7 +24292,7 @@ void CPlayer::pc_CombineItem(
 
     for (int j = 0; j < 5; ++j)
     {
-      if (static_cast<int>(requiredMaterial[3 * j + 2]) > 0)
+      if (requiredMaterial[j].m_nPdMatNum > 0)
       {
         errCode = 6;
         break;
@@ -24303,16 +24303,16 @@ void CPlayer::pc_CombineItem(
       break;
     }
 
-    if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
+    if (manualRecord->m_dwTradeMoney != 0xFFFFFFFFu && manualRecord->m_TradeValue == 6)
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
       if (goldenBox->Get_Event_Status() == 2)
       {
         unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-        if (actPoint >= manualRecord->m_dwNeedActPoint)
+        if (actPoint >= manualRecord->m_dwTradeMoney)
         {
           unsigned int curActPoint = m_pUserDB->GetActPoint(2u);
-          m_pUserDB->SetActPoint(2u, curActPoint - manualRecord->m_dwNeedActPoint);
+          m_pUserDB->SetActPoint(2u, curActPoint - manualRecord->m_dwTradeMoney);
           unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
           SendMsg_Alter_Action_Point(2u, leftActPoint);
         }
@@ -24387,7 +24387,7 @@ void CPlayer::pc_CombineItem(
     if (Emb_AddStorage(0, &newItem, 0, 1))
     {
       SendMsg_FanfareItem(1u, &newItem, nullptr);
-      if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
+      if (manualRecord->m_dwTradeMoney != 0xFFFFFFFFu && manualRecord->m_TradeValue == 6)
       {
         CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
         if (goldenBox->Get_Event_Status() == 2)
@@ -24422,15 +24422,15 @@ void CPlayer::pc_CombineItem(
         &newItem,
         "CPlayer::pc_CombineItem - Emb_AddStorage() Fail",
         m_szItemHistoryFileName);
-      if (manualRecord->m_nEventType == 6)
+      if (manualRecord->m_TradeValue == 6)
       {
         CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
         if (goldenBox->Get_Event_Status() == 2)
         {
           unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-          m_pUserDB->SetActPoint(2u, manualRecord->m_dwNeedActPoint + actPoint);
+          m_pUserDB->SetActPoint(2u, manualRecord->m_dwTradeMoney + actPoint);
           unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
-          SendMsg_Alter_Action_Point(2u, manualRecord->m_dwNeedActPoint + leftActPoint);
+          SendMsg_Alter_Action_Point(2u, manualRecord->m_dwTradeMoney + leftActPoint);
         }
       }
       return;
