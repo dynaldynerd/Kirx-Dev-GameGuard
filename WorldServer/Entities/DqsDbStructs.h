@@ -6,8 +6,6 @@
 
 struct _AVATOR_DATA;
 
-#pragma pack(push, 8)
-
 struct _worlddb_character_base_info
 {
   char wszName[17];
@@ -332,8 +330,6 @@ struct _personal_amine_inven
   __list list[40];
 };
 
-/* 1174 */
-#pragma pack(pop)
 #pragma pack(push, 1)
 struct   _NOT_ARRANGED_AVATOR_DB
 {
@@ -350,8 +346,6 @@ struct   _NOT_ARRANGED_AVATOR_DB
   void Init();
 };
 #pragma pack(pop)
-
-#pragma pack(push, 8)
 
 struct  _worlddb_arrange_char_info
 {
@@ -1087,6 +1081,4 @@ inline _rege_char_data::_rege_char_data()
 {
   std::memset(this, 0, sizeof(*this));
 }
-
-#pragma pack(pop)
 
