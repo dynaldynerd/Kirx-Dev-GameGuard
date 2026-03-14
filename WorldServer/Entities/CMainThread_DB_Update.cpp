@@ -2,6 +2,7 @@
 
 #include "CMainThread.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -696,6 +697,22 @@ char CMainThread::_db_Update_General(
   char *buffer = pSzQuery;
   sprintf_s(pSzQuery, kDbQuerySize, "UPDATE tbl_general SET ");
   const size_t initialLength = std::strlen(buffer);
+
+  // Coordinate dupe fix (non-IDA): sanitize each saved X/Y/Z component so a bad
+  // value cannot poison tbl_general and roll back the whole character save.
+  for (int index = 0; index < 3; ++index)
+  {
+    float &oldPos = pOldData->dbAvator.m_fStartPos[index];
+    float &newPos = pNewData->dbAvator.m_fStartPos[index];
+    if (!std::isfinite(oldPos))
+    {
+      oldPos = 0.0f;
+    }
+    if (!std::isfinite(newPos))
+    {
+      newPos = 1.0f;
+    }
+  }
 
   if (pOldData->dbAvator.m_dExp != pNewData->dbAvator.m_dExp)
   {
