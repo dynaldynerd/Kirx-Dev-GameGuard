@@ -109,6 +109,38 @@ namespace GUILD_BATTLE
   CGuildBattleReservedScheduleListManager *CGuildBattleReservedScheduleListManager::ms_Instance;
   CCurrentGuildBattleInfoManager *CCurrentGuildBattleInfoManager::ms_Instance;
 
+  namespace
+  {
+    // GVG Reward fix: intentionally validate battle-member identity by stored serial
+    // before using the cached guild-member pointer. This is a deliberate non-IDA fix.
+    _guild_member_info *ResolveGuildBattleMemberInfo(CNormalGuildBattleGuildMember *member)
+    {
+      if (!member || member->m_dwSerial == 0 || !member->m_pkMember)
+      {
+        return nullptr;
+      }
+
+      _guild_member_info *guildMember = member->m_pkMember;
+      if (!guildMember->IsFill() || guildMember->dwSerial != member->m_dwSerial)
+      {
+        return nullptr;
+      }
+
+      return guildMember;
+    }
+
+    CPlayer *ResolveGuildBattlePlayer(CNormalGuildBattleGuildMember *member)
+    {
+      _guild_member_info *guildMember = ResolveGuildBattleMemberInfo(member);
+      if (!guildMember || !guildMember->pPlayer)
+      {
+        return nullptr;
+      }
+
+      return guildMember->pPlayer;
+    }
+  } // namespace
+
   CGuildBattle::CGuildBattle()
   {
   }
@@ -1865,12 +1897,13 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   bool CNormalGuildBattleGuildMember::IsExist()
   {
-    return m_pkMember && m_pkMember->IsFill() && m_pkMember->pPlayer;
+    return ResolveGuildBattlePlayer(this) != nullptr;
   }
 
   bool CNormalGuildBattleGuildMember::IsEnableStart()
   {
-    return !m_pkMember->pPlayer->IsMapLoading() && !m_pkMember->pPlayer->IsRidingShip();
+    CPlayer *player = ResolveGuildBattlePlayer(this);
+    return player && !player->IsMapLoading() && !player->IsRidingShip();
   }
 
   unsigned int CNormalGuildBattleGuildMember::GetSerial()
@@ -1880,24 +1913,17 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   unsigned __int16 CNormalGuildBattleGuildMember::GetIndex()
   {
-    if (IsEmpty())
+    CPlayer *player = ResolveGuildBattlePlayer(this);
+    if (!player)
     {
       return static_cast<unsigned __int16>(-1);
     }
-    return m_pkMember->pPlayer->m_ObjID.m_wIndex;
+    return player->m_ObjID.m_wIndex;
   }
 
   CPlayer *CNormalGuildBattleGuildMember::GetPlayer()
   {
-    if (IsEmpty())
-    {
-      return nullptr;
-    }
-    if (m_pkMember->pPlayer)
-    {
-      return m_pkMember->pPlayer;
-    }
-    return nullptr;
+    return ResolveGuildBattlePlayer(this);
   }
 
   void CNormalGuildBattleGuildMember::AddKillCnt()
@@ -1907,13 +1933,14 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleGuildMember::StockOldInfo()
   {
-    if (m_pkMember && m_pkMember->pPlayer)
+    CPlayer *player = ResolveGuildBattlePlayer(this);
+    if (player)
     {
-      m_dPvpPoint = m_pkMember->pPlayer->m_Param.GetPvPPoint();
-      m_pOldBindMapData = m_pkMember->pPlayer->GetBindMapData();
-      m_pOldBindDummyData = m_pkMember->pPlayer->GetBindDummy();
-      const char *bindMapCode = m_pkMember->pPlayer->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode;
-      const char *bindDummy = m_pkMember->pPlayer->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy;
+      m_dPvpPoint = player->m_Param.GetPvPPoint();
+      m_pOldBindMapData = player->GetBindMapData();
+      m_pOldBindDummyData = player->GetBindDummy();
+      const char *bindMapCode = player->m_pUserDB->m_AvatorData.dbAvator.m_szBindMapCode;
+      const char *bindDummy = player->m_pUserDB->m_AvatorData.dbAvator.m_szBindDummy;
       std::strcpy(m_szOldBindMapCode, bindMapCode);
       std::strcpy(m_szOldBindDummy, bindDummy);
     }
@@ -1926,7 +1953,10 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleGuildMember::SetBattleState(bool bFlag, unsigned __int8 byColorInx)
   {
-    m_pkMember->pPlayer->pc_SetInGuildBattle(bFlag, byColorInx);
+    if (CPlayer *player = ResolveGuildBattlePlayer(this))
+    {
+      player->pc_SetInGuildBattle(bFlag, byColorInx);
+    }
   }
 
   void CNormalGuildBattleGuildMember::Send(unsigned __int8 *byType, char *pSend, unsigned __int16 uiSize)
@@ -1940,31 +1970,42 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleGuildMember::CleanUpBattle()
   {
-    if (IsExist())
+    if (ResolveGuildBattlePlayer(this))
     {
       SetBattleState(false, 255);
+    }
+    if (!IsEmpty())
+    {
       Clear();
     }
   }
 
   void CNormalGuildBattleGuildMember::ReturnBindPos()
   {
-    CPlayer *player = m_pkMember->pPlayer;
-    player->SetBindMapData(m_pOldBindMapData);
-    player->SetBindDummy(m_pOldBindDummyData);
-    player->m_pUserDB->Update_Bind(m_szOldBindMapCode, m_szOldBindDummy, true);
+    if (CPlayer *player = ResolveGuildBattlePlayer(this))
+    {
+      player->SetBindMapData(m_pOldBindMapData);
+      player->SetBindDummy(m_pOldBindDummyData);
+      player->m_pUserDB->Update_Bind(m_szOldBindMapCode, m_szOldBindDummy, true);
+    }
   }
 
   void CNormalGuildBattleGuildMember::ReturnStartPos()
   {
-    m_pkMember->pPlayer->pc_Stop();
-    m_pkMember->pPlayer->RemoveAllContinousEffectGroup(0);
+    if (CPlayer *player = ResolveGuildBattlePlayer(this))
+    {
+      player->pc_Stop();
+      player->RemoveAllContinousEffectGroup(0);
+    }
   }
 
   void CNormalGuildBattleGuildMember::NetClose()
   {
     ReturnBindPos();
-    m_dPvpPoint = m_pkMember->pPlayer->m_Param.GetPvPPoint();
+    if (CPlayer *player = ResolveGuildBattlePlayer(this))
+    {
+      m_dPvpPoint = player->m_Param.GetPvPPoint();
+    }
   }
 
   void CNormalGuildBattleGuildMember::PushDQSPvpPoint(int dwPvpPoint)
