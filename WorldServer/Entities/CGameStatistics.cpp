@@ -61,8 +61,7 @@ void CGameStatistics::WriteDayData(char *pszWorldName)
   GetLocalTime(&systemTime);
 
   char filePath[128]{};
-  sprintf_s(
-    filePath,
+  sprintf_s(filePath, sizeof(filePath),
     "..\\ZoneServerLog\\Statistics\\Day\\%s_StatisticsDay%d_%d_Time%d_%d_%d.txt",
     pszWorldName,
     systemTime.wMonth,

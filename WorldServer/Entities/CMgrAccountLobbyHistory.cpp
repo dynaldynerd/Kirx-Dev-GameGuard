@@ -15,6 +15,7 @@ namespace
 {
   char sLData[20000];
   char sLBuf[10240];
+  static constexpr size_t kLobbyHistoryFileNameSize = 64;
 }
 
 CMgrAccountLobbyHistory::CMgrAccountLobbyHistory()
@@ -31,7 +32,7 @@ CMgrAccountLobbyHistory::CMgrAccountLobbyHistory()
     128,
     "..\\WorldInfo\\WorldInfo.ini");
   CreateDirectoryA(returnedString, nullptr);
-  sprintf_s(m_szStdPath, "%s\\Lobby", returnedString);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\Lobby", returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   _strdate(m_szCurDate);
@@ -74,13 +75,13 @@ void CMgrAccountLobbyHistory::GetNewFileName(unsigned int dwAccountSerial, char 
 {
   const unsigned int localDate = GetLocalDate();
   char buffer[132]{};
-  sprintf(buffer, "%s\\%d", m_szStdPath, localDate);
+  sprintf_s(buffer, sizeof(buffer), "%s\\%d", m_szStdPath, localDate);
   CreateDirectoryA(buffer, nullptr);
   m_dwLastLocalDate = localDate;
 
   const unsigned int hour = GetCurrentHour();
   char pathName[148]{};
-  sprintf(pathName, "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, hour);
+  sprintf_s(pathName, sizeof(pathName), "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, hour);
   CreateDirectoryA(pathName, nullptr);
   m_dwLastLocalHour = hour;
 
@@ -89,37 +90,38 @@ void CMgrAccountLobbyHistory::GetNewFileName(unsigned int dwAccountSerial, char 
   char secText[16]{};
   if (hour <= 9)
   {
-    sprintf(hourText, "0%d", hour);
+    sprintf_s(hourText, sizeof(hourText), "0%d", hour);
   }
   else
   {
-    sprintf(hourText, "%d", hour);
+    sprintf_s(hourText, sizeof(hourText), "%d", hour);
   }
 
   const unsigned int minute = GetCurrentMin();
   if (minute <= 9)
   {
-    sprintf(minText, "0%d", minute);
+    sprintf_s(minText, sizeof(minText), "0%d", minute);
   }
   else
   {
-    sprintf(minText, "%d", minute);
+    sprintf_s(minText, sizeof(minText), "%d", minute);
   }
 
   const unsigned int second = GetCurrentSec();
   if (second <= 9)
   {
-    sprintf(secText, "0%d", second);
+    sprintf_s(secText, sizeof(secText), "0%d", second);
   }
   else
   {
-    sprintf(secText, "%d", second);
+    sprintf_s(secText, sizeof(secText), "%d", second);
   }
 
   char timeText[32]{};
-  sprintf(timeText, "%s%s%s", hourText, minText, secText);
-  sprintf(
+  sprintf_s(timeText, sizeof(timeText), "%s%s%s", hourText, minText, secText);
+  sprintf_s(
     pszFileName,
+    kLobbyHistoryFileNameSize,
     "%s\\%d\\%d\\%d_%s.his",
     m_szStdPath,
     m_dwLastLocalDate,
@@ -151,6 +153,7 @@ void CMgrAccountLobbyHistory::enter_lobby(
   const char *ipText = inet_ntoa(addr);
   sprintf_s(
     sLBuf,
+    sizeof(sLBuf),
     "ID: %s [%s %s]\r\nWORLD: %s\r\nSR: %d\r\nDGR: %d\r\nIP: %s\r\n\r\n",
     pAccountID,
     m_szCurDate,
@@ -171,15 +174,16 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
   const char *result = ok ? "SUCCESS" : "ERROR";
   sprintf_s(
     sLBuf,
+    sizeof(sLBuf),
     "Lobby Logout RegedDB Result: %d (%s)\r\n",
     pRegeData->byDBRet,
     result);
   strcat_s(sLData, sLBuf);
-  sprintf_s(sLBuf, "AccountSerial: %d\r\n", pRegeData->dwAccountSerial);
+  sprintf_s(sLBuf, sizeof(sLBuf), "AccountSerial: %d\r\n", pRegeData->dwAccountSerial);
   strcat_s(sLData, sLBuf);
   if (ok)
   {
-    sprintf_s(sLBuf, "CharNum: %d\r\n", pRegeData->nRegeNum);
+    sprintf_s(sLBuf, sizeof(sLBuf), "CharNum: %d\r\n", pRegeData->nRegeNum);
     strcat_s(sLData, sLBuf);
     for (int j = 0; j < 3; ++j)
     {
@@ -187,6 +191,7 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
       {
         sprintf_s(
           sLBuf,
+          sizeof(sLBuf),
           "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
           j,
           pRegeData->RegeList[j].szCharName,
@@ -201,6 +206,7 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
 
   sprintf_s(
     sLBuf,
+    sizeof(sLBuf),
     "Lobby Logout RegedDB Complete [%s %s]\r\n",
     m_szCurDate,
     m_szCurTime);
@@ -212,7 +218,7 @@ void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData
 void CMgrAccountLobbyHistory::reged_char_request(char *pszFileName)
 {
   sLData[0] = '\0';
-  sprintf_s(sLBuf, "Regist Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Regist Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   WriteFile(pszFileName, sLData);
 }
@@ -220,7 +226,7 @@ void CMgrAccountLobbyHistory::reged_char_request(char *pszFileName)
 void CMgrAccountLobbyHistory::add_char_request(char *pszFileName)
 {
   sLData[0] = '\0';
-  sprintf_s(sLBuf, "Add Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Add Character Request [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   WriteFile(pszFileName, sLData);
 }
@@ -262,7 +268,7 @@ void CMgrAccountLobbyHistory::sel_char_request(
 void CMgrAccountLobbyHistory::tutorial_process_report_recv(char *pszFileName)
 {
   sLData[0] = '\0';
-  sprintf_s(sLBuf, "Tutorial Process Report Received [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Tutorial Process Report Received [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   strcat_s(sLData, "\r\n\t============\r\n\r\n");
   WriteFile(pszFileName, sLData);
@@ -310,11 +316,11 @@ void CMgrAccountLobbyHistory::reged_char_complete(
   sLData[0] = 0;
   const bool ok = byRetCode == 0;
   const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(sLBuf, "Reged Result: %d (%s)\r\n", byRetCode, result);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Reged Result: %d (%s)\r\n", byRetCode, result);
   strcat_s(sLData, sLBuf);
   if (ok)
   {
-    sprintf_s(sLBuf, "CharNum: %d\r\n", nCharNum);
+    sprintf_s(sLBuf, sizeof(sLBuf), "CharNum: %d\r\n", nCharNum);
     strcat_s(sLData, sLBuf);
     for (int j = 0; j < 3; ++j)
     {
@@ -351,7 +357,7 @@ void CMgrAccountLobbyHistory::add_char_complete(
   sLData[0] = 0;
   const bool ok = byRetCode == 0;
   const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(sLBuf, "Add Result: %d (%s)\r\n", byRetCode, result);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Add Result: %d (%s)\r\n", byRetCode, result);
   strcat_s(sLData, sLBuf);
   if (ok)
   {
@@ -366,7 +372,7 @@ void CMgrAccountLobbyHistory::add_char_complete(
       pInsertData->m_dwGold);
     strcat_s(sLData, sLBuf);
   }
-  sprintf_s(sLBuf, "Add Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Add Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   strcat_s(sLData, "\r\n\t============\r\n\r\n");
   WriteFile(pszFileName, sLData);
@@ -377,9 +383,9 @@ void CMgrAccountLobbyHistory::del_char_complete(unsigned __int8 byRetCode, char 
   sLData[0] = 0;
   const bool ok = byRetCode == 0;
   const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(sLBuf, "Del Result: %d (%s)\r\n", byRetCode, result);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Del Result: %d (%s)\r\n", byRetCode, result);
   strcat_s(sLData, sLBuf);
-  sprintf_s(sLBuf, "Del Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Del Character Complete [%s %s]\r\n", m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
   strcat_s(sLData, "\r\n\t============\r\n\r\n");
   WriteFile(pszFileName, sLData);
@@ -395,7 +401,7 @@ void CMgrAccountLobbyHistory::sel_char_complete(
   sLData[0] = 0;
   const bool ok = byRetCode == 0;
   const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(sLBuf, "Select Result: %d (%s)\r\n", byRetCode, result);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Select Result: %d (%s)\r\n", byRetCode, result);
   strcat_s(sLData, sLBuf);
   if (ok)
   {
@@ -420,7 +426,7 @@ void CMgrAccountLobbyHistory::player_create(bool bFirstStart, _AVATOR_DATA *pAva
 {
   sLData[0] = 0;
   const char *createState = bFirstStart ? "First Connect Character" : "Old Character";
-  sprintf_s(sLBuf, "Player Create: %s [%s %s]\r\n", createState, m_szCurDate, m_szCurTime);
+  sprintf_s(sLBuf, sizeof(sLBuf), "Player Create: %s [%s %s]\r\n", createState, m_szCurDate, m_szCurTime);
   strcat_s(sLData, sLBuf);
 
   if (bFirstStart && (pAvator->dbAvator.m_dwDalant || pAvator->dbAvator.m_dwGold))
@@ -559,3 +565,4 @@ void CMgrAccountLobbyHistory::IOThread(char *pv)
   }
   _endthreadex(0);
 }
+

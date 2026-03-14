@@ -134,7 +134,7 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
   char returned[288]{};
   char keyName[288]{};
   char buffer[272]{};
-  sprintf(buffer, "Map%u", uiMapInx);
+  sprintf_s(buffer, sizeof(buffer), "Map%u", uiMapInx);
 
   m_pkRegenPos = new (std::nothrow) _dummy_position();
   if (!m_pkRegenPos)
@@ -146,7 +146,7 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
     return false;
   }
 
-  sprintf(keyName, "BallRegenDummyName%d", m_ObjID.m_wIndex);
+  sprintf_s(keyName, sizeof(keyName), "BallRegenDummyName%d", m_ObjID.m_wIndex);
   GetPrivateProfileStringA(
     buffer,
     keyName,
@@ -240,3 +240,4 @@ void CGravityStoneRegener::SendMsgAlterState()
   unsigned __int8 type[2] = {4, static_cast<unsigned __int8>(-83)};
   CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
+

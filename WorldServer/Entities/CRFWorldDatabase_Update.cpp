@@ -461,7 +461,7 @@ bool CRFWorldDatabase::Update_IncreaseWeeklyGuildKillPvpPointSum(unsigned int dw
 {
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
-  sprintf(buffer, "{ CALL pUpdate_WeeklyGuildKillPVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
+  sprintf_s(buffer, "{ CALL pUpdate_WeeklyGuildKillPVPPoint(%u, %f) }", dwSerial, static_cast<double>(dPvpPoint));
   return ExecUpdateQuery( buffer, true);
 }
 
@@ -487,7 +487,7 @@ bool CRFWorldDatabase::Update_CristalBattleCharInfo(
 
   char buffer[280]{};
   std::memset(buffer, 0, 256);
-  sprintf(
+  sprintf_s(
     buffer,
     "Update tbl_general set Pvp_0=%d, Pk_0=%d, Pvp_1=%d, Pk_1=%d, Pvp_2=%d, Pk_2=%d, CharacterGrade=%d, Die_0=%d, Die_1=%"
     "d, Die_2=%d where serial=%d",
@@ -508,7 +508,7 @@ bool CRFWorldDatabase::Update_CristalBattleCharInfo(
 bool CRFWorldDatabase::update_cristalbattle_date(unsigned int dwCharSerial, unsigned __int8 bHSKTime)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pUpdate_CristalBattleDate( %d, %d ) }", dwCharSerial, bHSKTime);
+  sprintf_s(buffer, "{ CALL pUpdate_CristalBattleDate( %d, %d ) }", dwCharSerial, bHSKTime);
   return ExecUpdateQuery( buffer, true);
 }
 
@@ -860,7 +860,7 @@ bool CRFWorldDatabase::Update_Start_NpcQuest_History(
 bool CRFWorldDatabase::Update_Level(unsigned int dwSerial, unsigned __int8 byLv)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pUpdate_Level( %d, %d ) }", dwSerial, byLv);
+  sprintf_s(buffer, "{ CALL pUpdate_Level( %d, %d ) }", dwSerial, byLv);
   return ExecUpdateQuery(buffer, true);
 }
 
@@ -871,7 +871,7 @@ bool CRFWorldDatabase::Update_OutputGuildMoney(
 {
   char buffer[272]{};
   memset(buffer, 0, 256);
-  sprintf(
+  sprintf_s(
     buffer,
     "update tbl_guild set dalant = dalant - %u, gold = gold - %u where Serial = %u",
     dwDalant,
@@ -879,3 +879,4 @@ bool CRFWorldDatabase::Update_OutputGuildMoney(
     dwGuildSerial);
   return ExecUpdateQuery(buffer, true);
 }
+

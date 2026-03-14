@@ -130,13 +130,17 @@ bool CRFNewDatabase::ConfigUserODBC(
   unsigned __int16 offset = 0;
   char buffer[272]{};
 
-  offset = static_cast<unsigned __int16>(sprintf(buffer, "DSN=%s%c", szDSN, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DESCRIPTION=%s%c", szDatabase, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "SERVER=%s,%u%c", szServer, wPort, 0));
-  offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "DATABASE=%s%c", szDatabase, 0));
+  offset = static_cast<unsigned __int16>(sprintf_s(buffer, "DSN=%s%c", szDSN, 0));
+  offset = static_cast<unsigned __int16>(
+    offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DESCRIPTION=%s%c", szDatabase, 0));
+  offset = static_cast<unsigned __int16>(
+    offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=%s,%u%c", szServer, wPort, 0));
+  offset = static_cast<unsigned __int16>(
+    offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DATABASE=%s%c", szDatabase, 0));
   if (bTrustedConnection)
   {
-    offset = static_cast<unsigned __int16>(offset + sprintf(&buffer[offset], "Trusted_Connection=Yes%c", 0));
+    offset = static_cast<unsigned __int16>(
+      offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "Trusted_Connection=Yes%c", 0));
   }
 
   wchar_t bufferW[272]{};
@@ -723,7 +727,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   char buffer[544]{};
   const unsigned int date = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBProcess_%s_%u_U.log", m_szLogUpperPath, szOdbcName, date);
+  sprintf_s(buffer, "%sDBLog\\DBProcess_%s_%u_U.log", m_szLogUpperPath, szOdbcName, date);
   if (!m_ProcessLogW.m_bInit)
   {
     m_ProcessLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -731,7 +735,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateA = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBProcess_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateA);
+  sprintf_s(buffer, "%sDBLog\\DBProcess_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateA);
   if (!m_ProcessLogA.m_bInit)
   {
     m_ProcessLogA.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -739,7 +743,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorW = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBError_%s_%u_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
+  sprintf_s(buffer, "%sDBLog\\DBError_%s_%u_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
   if (!m_ErrorLogW.m_bInit)
   {
     m_ErrorLogW.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -747,7 +751,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
 
   std::memset(buffer, 0, sizeof(buffer));
   const unsigned int dateErrorA = GetKorLocalTime();
-  sprintf(buffer, "%sDBLog\\DBError_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
+  sprintf_s(buffer, "%sDBLog\\DBError_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
   if (!m_ErrorLogA.m_bInit)
   {
     m_ErrorLogA.SetWriteLogFile(buffer, 1, 1, 1, 1);
@@ -1098,4 +1102,5 @@ bool CRFNewDatabase::TableExist(const char *szTableName)
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
   return false;
 }
+
 

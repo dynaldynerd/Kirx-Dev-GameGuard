@@ -18,6 +18,7 @@ namespace
   constexpr char kHistoryPathDefault[] = "C:\\History";
   constexpr char kHistoryIniFile[] = "..\\WorldInfo\\WorldInfo.ini";
   constexpr char kHistoryLvSubdirFmt[] = "%s\\Lv";
+  static constexpr size_t kHistoryFileNameSize = 64;
 }
 
 CMgrAvatorLvHistory::CMgrAvatorLvHistory()
@@ -35,7 +36,7 @@ CMgrAvatorLvHistory::CMgrAvatorLvHistory()
     kHistoryIniFile);
   CreateDirectoryA(returnedString, nullptr);
 
-  sprintf(m_szStdPath, kHistoryLvSubdirFmt, returnedString);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), kHistoryLvSubdirFmt, returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   _strdate(m_szCurDate);
@@ -182,52 +183,53 @@ void CMgrAvatorLvHistory::GetNewFileName(unsigned int dwAvatorSerial, char *pszF
   const unsigned int localDate = GetLocalDate();
 
   char dateDir[132]{};
-  sprintf(dateDir, "%s\\%d", m_szStdPath, localDate);
+  sprintf_s(dateDir, sizeof(dateDir), "%s\\%d", m_szStdPath, localDate);
   CreateDirectoryA(dateDir, nullptr);
   m_dwLastLocalDate = localDate;
 
   const unsigned int currentHour = GetCurrentHour();
   char hourDir[148]{};
-  sprintf(hourDir, "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, currentHour);
+  sprintf_s(hourDir, sizeof(hourDir), "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, currentHour);
   CreateDirectoryA(hourDir, nullptr);
   m_dwLastLocalHour = currentHour;
 
   char hourText[32]{};
   if (currentHour <= 9)
   {
-    sprintf(hourText, "0%d", currentHour);
+    sprintf_s(hourText, sizeof(hourText), "0%d", currentHour);
   }
   else
   {
-    sprintf(hourText, "%d", currentHour);
+    sprintf_s(hourText, sizeof(hourText), "%d", currentHour);
   }
 
   const unsigned int currentMinute = GetCurrentMin();
   char minuteText[32]{};
   if (currentMinute <= 9)
   {
-    sprintf(minuteText, "0%d", currentMinute);
+    sprintf_s(minuteText, sizeof(minuteText), "0%d", currentMinute);
   }
   else
   {
-    sprintf(minuteText, "%d", currentMinute);
+    sprintf_s(minuteText, sizeof(minuteText), "%d", currentMinute);
   }
 
   const unsigned int currentSecond = GetCurrentSec();
   char secondText[16]{};
   if (currentSecond <= 9)
   {
-    sprintf(secondText, "0%d", currentSecond);
+    sprintf_s(secondText, sizeof(secondText), "0%d", currentSecond);
   }
   else
   {
-    sprintf(secondText, "%d", currentSecond);
+    sprintf_s(secondText, sizeof(secondText), "%d", currentSecond);
   }
 
   char hmsText[32]{};
-  sprintf(hmsText, "%s%s%s", hourText, minuteText, secondText);
-  sprintf(
+  sprintf_s(hmsText, sizeof(hmsText), "%s%s%s", hourText, minuteText, secondText);
+  sprintf_s(
     pszFileName,
+    kHistoryFileNameSize,
     "%s\\%d\\%d\\%d_%s.lhi",
     m_szStdPath,
     m_dwLastLocalDate,
@@ -248,7 +250,7 @@ void CMgrAvatorLvHistory::start_mastery(
   char *pszFileName)
 {
   sData_0[0] = 0;
-  sprintf(
+  sprintf_s(
     sBuf_0,
     "%s lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
     pszAvatorName,
@@ -269,7 +271,7 @@ void CMgrAvatorLvHistory::start_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(0, index);
       const int cum = pData->GetCumPerMast(0, index);
-      sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", index, cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tW%d: %d (%d)\r\n", index, cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
   }
@@ -278,7 +280,7 @@ void CMgrAvatorLvHistory::start_mastery(
   {
     const int mastery = pData->GetMasteryPerMast(1u, 0);
     const int cum = pData->GetCumPerMast(1u, 0);
-    sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
+    sprintf_s(sBuf_0, sizeof(sBuf_0), "\tD: %d (%d)\r\n", cum, mastery);
     std::strcat(sData_0, sBuf_0);
   }
 
@@ -286,7 +288,7 @@ void CMgrAvatorLvHistory::start_mastery(
   {
     const int mastery = pData->GetMasteryPerMast(2u, 0);
     const int cum = pData->GetCumPerMast(2u, 0);
-    sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
+    sprintf_s(sBuf_0, sizeof(sBuf_0), "\tP: %d (%d)\r\n", cum, mastery);
     std::strcat(sData_0, sBuf_0);
   }
 
@@ -295,7 +297,13 @@ void CMgrAvatorLvHistory::start_mastery(
     if (pData->m_BaseCum.m_dwSkillCum[index])
     {
       const int skillLv = pData->GetSkillLv(static_cast<unsigned __int8>(index));
-      sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", index, pData->m_BaseCum.m_dwSkillCum[index], skillLv);
+      sprintf_s(
+        sBuf_0,
+        sizeof(sBuf_0),
+        "\tS%d: %d (%d)\r\n",
+        index,
+        pData->m_BaseCum.m_dwSkillCum[index],
+        skillLv);
       std::strcat(sData_0, sBuf_0);
     }
   }
@@ -306,7 +314,7 @@ void CMgrAvatorLvHistory::start_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(4u, index);
       const int cum = pData->GetCumPerMast(4u, index);
-      sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", index, cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tF%d: %d (%d)\r\n", index, cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
   }
@@ -317,7 +325,7 @@ void CMgrAvatorLvHistory::start_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(5u, index);
       const int cum = pData->GetCumPerMast(5u, index);
-      sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", index, cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tM%d: %d (%d)\r\n", index, cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
   }
@@ -326,11 +334,11 @@ void CMgrAvatorLvHistory::start_mastery(
   {
     const int mastery = pData->GetMasteryPerMast(6u, 0);
     const int cum = pData->GetCumPerMast(6u, 0);
-    sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
+    sprintf_s(sBuf_0, sizeof(sBuf_0), "\tR: %d (%d)\r\n", cum, mastery);
     std::strcat(sData_0, sBuf_0);
   }
 
-  sprintf(sBuf_0, "\r\n");
+  sprintf_s(sBuf_0, sizeof(sBuf_0), "\r\n");
   std::strcat(sData_0, sBuf_0);
   WriteFile(pszFileName, sData_0);
 }
@@ -338,14 +346,20 @@ void CMgrAvatorLvHistory::start_mastery(
 void CMgrAvatorLvHistory::close(int n, char *pCloseCode, char *pszFileName)
 {
   (void)n;
-  sprintf(sData_0, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, m_szCurDate, m_szCurTime);
+  sprintf_s(
+    sData_0,
+    sizeof(sData_0),
+    "\r\nCLOSE %s [%s %s]\r\n\r\n",
+    pCloseCode,
+    m_szCurDate,
+    m_szCurTime);
   WriteFile(pszFileName, sData_0);
 }
 
 void CMgrAvatorLvHistory::die(int n, char *pszDstName, char *pszDeathName, char *pszFileName)
 {
   (void)n;
-  sprintf(
+  sprintf_s(
     sData_0,
     "DIE %s, <CORPSE: %s> [%s %s]\r\n\r\n",
     pszDstName,
@@ -365,7 +379,7 @@ void CMgrAvatorLvHistory::down_exp(
   char *pszFileName)
 {
   (void)n;
-  sprintf(
+  sprintf_s(
     sData_0,
     "EXP DOWN %.0f(%d) -> %.0f(%d) : %s [%s %s]\r\n\r\n",
     static_cast<double>(dOldExp),
@@ -384,7 +398,7 @@ void CMgrAvatorLvHistory::char_copy(
   unsigned int dwDstSerial,
   char *pszFileName)
 {
-  sprintf(sData_0, "Char Copy: dst(%s:%d)\r\n", pszDstName, dwDstSerial);
+  sprintf_s(sData_0, sizeof(sData_0), "Char Copy: dst(%s:%d)\r\n", pszDstName, dwDstSerial);
   WriteFile(pszFileName, sData_0);
 }
 
@@ -426,7 +440,7 @@ void CMgrAvatorLvHistory::adjust_pvpcash(
 {
   if (bAdjust)
   {
-    sprintf(
+    sprintf_s(
       sData_0,
       "PVP Cash Adjust After  : PvpCash ( %.0f ), PvpTempCash ( %.0f )\r\n\r\n",
       static_cast<double>(dPvpCash),
@@ -434,7 +448,7 @@ void CMgrAvatorLvHistory::adjust_pvpcash(
   }
   else
   {
-    sprintf(
+    sprintf_s(
       sData_0,
       "PVP Cash Adjust Before : PvpCash ( %.0f ), PvpTempCash ( %.0f )\r\n\r\n",
       static_cast<double>(dPvpCash),
@@ -454,7 +468,7 @@ void CMgrAvatorLvHistory::recovery_exp(
   char *pCause,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData_0,
     "EXP RECOV %.0f(%d) -> %.0f(%d) : %s (%.0f * %d / 100)[%s %s]\r\n\r\n",
     static_cast<double>(dOldExp),
@@ -489,7 +503,7 @@ void CMgrAvatorLvHistory::update_mastery(
     switch (byLogType)
     {
       case 1:
-        sprintf(
+        sprintf_s(
           sBuf_0,
           "CLOSE lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
           dwLv,
@@ -505,7 +519,7 @@ void CMgrAvatorLvHistory::update_mastery(
       case 2:
         if (pszTitle)
         {
-          sprintf(
+          sprintf_s(
             sBuf_0,
             "QUEST (%s) lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
             pszTitle,
@@ -521,7 +535,7 @@ void CMgrAvatorLvHistory::update_mastery(
         }
         else
         {
-          sprintf(
+          sprintf_s(
             sBuf_0,
             "QUEST lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
             dwLv,
@@ -538,7 +552,7 @@ void CMgrAvatorLvHistory::update_mastery(
       case 3:
         if (pszTitle)
         {
-          sprintf(
+          sprintf_s(
             sBuf_0,
             "CLASS (%s) lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
             pszTitle,
@@ -554,7 +568,7 @@ void CMgrAvatorLvHistory::update_mastery(
         }
         else
         {
-          sprintf(
+          sprintf_s(
             sBuf_0,
             "CLASS lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
             dwLv,
@@ -574,7 +588,7 @@ void CMgrAvatorLvHistory::update_mastery(
   }
   else
   {
-    sprintf(
+    sprintf_s(
       sBuf_0,
       "UPDATE lv:%d xp:%.0f(%d) grade:%d max:%d/%d/%d [%s %s]\r\n",
       dwLv,
@@ -597,7 +611,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(0, j);
         const int cum = pData->GetCumPerMast(0, j);
-        sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", j, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tW%d: %d (%d)\r\n", j, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -605,14 +619,14 @@ void CMgrAvatorLvHistory::update_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(1u, 0);
       const int cum = pData->GetCumPerMast(1u, 0);
-      sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tD: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
     if (pData->GetCumPerMast(2u, 0) > 0)
     {
       const int mastery = pData->GetMasteryPerMast(2u, 0);
       const int cum = pData->GetCumPerMast(2u, 0);
-      sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tP: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
     for (int j = 0; j < 48; ++j)
@@ -620,7 +634,13 @@ void CMgrAvatorLvHistory::update_mastery(
       if (pData->m_BaseCum.m_dwSkillCum[j])
       {
         const int skillLv = pData->GetSkillLv(j);
-        sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", j, pData->m_BaseCum.m_dwSkillCum[j], skillLv);
+        sprintf_s(
+          sBuf_0,
+          sizeof(sBuf_0),
+          "\tS%d: %d (%d)\r\n",
+          j,
+          pData->m_BaseCum.m_dwSkillCum[j],
+          skillLv);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -630,7 +650,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(4u, j);
         const int cum = pData->GetCumPerMast(4u, j);
-        sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", j, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tF%d: %d (%d)\r\n", j, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -640,7 +660,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(5u, j);
         const int cum = pData->GetCumPerMast(5u, j);
-        sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", j, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tM%d: %d (%d)\r\n", j, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -648,7 +668,7 @@ void CMgrAvatorLvHistory::update_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(6u, 0);
       const int cum = pData->GetCumPerMast(6u, 0);
-      sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tR: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
   }
@@ -660,7 +680,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(0, k);
         const int cum = pData->GetCumPerMast(0, k);
-        sprintf(sBuf_0, "\tW%d: %d (%d)\r\n", k, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tW%d: %d (%d)\r\n", k, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -668,14 +688,14 @@ void CMgrAvatorLvHistory::update_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(1u, 0);
       const int cum = pData->GetCumPerMast(1u, 0);
-      sprintf(sBuf_0, "\tD: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tD: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
     if (pdwAlter[3])
     {
       const int mastery = pData->GetMasteryPerMast(2u, 0);
       const int cum = pData->GetCumPerMast(2u, 0);
-      sprintf(sBuf_0, "\tP: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tP: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
     for (int k = 0; k < 48; ++k)
@@ -683,7 +703,13 @@ void CMgrAvatorLvHistory::update_mastery(
       if (pdwAlter[k + 4])
       {
         const int skillLv = pData->GetSkillLv(k);
-        sprintf(sBuf_0, "\tS%d: %d (%d)\r\n", k, pData->m_BaseCum.m_dwSkillCum[k], skillLv);
+        sprintf_s(
+          sBuf_0,
+          sizeof(sBuf_0),
+          "\tS%d: %d (%d)\r\n",
+          k,
+          pData->m_BaseCum.m_dwSkillCum[k],
+          skillLv);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -693,7 +719,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(4u, k);
         const int cum = pData->GetCumPerMast(4u, k);
-        sprintf(sBuf_0, "\tF%d: %d (%d)\r\n", k, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tF%d: %d (%d)\r\n", k, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -703,7 +729,7 @@ void CMgrAvatorLvHistory::update_mastery(
       {
         const int mastery = pData->GetMasteryPerMast(5u, k);
         const int cum = pData->GetCumPerMast(5u, k);
-        sprintf(sBuf_0, "\tM%d: %d (%d)\r\n", k, cum, mastery);
+        sprintf_s(sBuf_0, sizeof(sBuf_0), "\tM%d: %d (%d)\r\n", k, cum, mastery);
         std::strcat(sData_0, sBuf_0);
       }
     }
@@ -711,12 +737,12 @@ void CMgrAvatorLvHistory::update_mastery(
     {
       const int mastery = pData->GetMasteryPerMast(6u, 0);
       const int cum = pData->GetCumPerMast(6u, 0);
-      sprintf(sBuf_0, "\tR: %d (%d)\r\n", cum, mastery);
+      sprintf_s(sBuf_0, sizeof(sBuf_0), "\tR: %d (%d)\r\n", cum, mastery);
       std::strcat(sData_0, sBuf_0);
     }
   }
 
-  sprintf(sBuf_0, "\r\n");
+  sprintf_s(sBuf_0, sizeof(sBuf_0), "\r\n");
   std::strcat(sData_0, sBuf_0);
   WriteFile(pszFileName, sData_0);
 }
@@ -727,7 +753,7 @@ void CMgrAvatorLvHistory::down_animus_exp(
   __int64 i64Alter,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData_0,
     "ANIMUS EXP DOWN %I64u -> %I64u : Alter(%I64d) [%s %s]\r\n\r\n",
     dw64OldExp,
@@ -740,7 +766,7 @@ void CMgrAvatorLvHistory::down_animus_exp(
 
 void CMgrAvatorLvHistory::upgrade_lv(int /*n*/, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData_0,
     "LV UP %d grade:%d max:%d/%d/%d [%s %s]\r\n\r\n",
     dwLv,
@@ -755,7 +781,7 @@ void CMgrAvatorLvHistory::upgrade_lv(int /*n*/, unsigned int dwLv, int nGrade, i
 
 void CMgrAvatorLvHistory::downgrade_lv(int /*n*/, unsigned int dwLv, int nGrade, int *pnMaxPoint, char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData_0,
     "LV DOWN %d grade:%d max:%d/%d/%d [%s %s]\r\n\r\n",
     dwLv,
@@ -767,3 +793,4 @@ void CMgrAvatorLvHistory::downgrade_lv(int /*n*/, unsigned int dwLv, int nGrade,
     m_szCurTime);
   WriteFile(pszFileName, sData_0);
 }
+

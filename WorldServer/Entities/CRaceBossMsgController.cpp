@@ -585,13 +585,13 @@ bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
 
   std::memset(sectionName, 0, 255);
   std::memset(stringBuffer, 0, 255);
-  sprintf(sectionName, "%s_Message%d", raceName[ucRace], m_dwID);
-  sprintf(stringBuffer, "%d", m_uiState);
+  sprintf_s(sectionName, "%s_Message%d", raceName[ucRace], m_dwID);
+  sprintf_s(stringBuffer, "%d", m_uiState);
   if (!WritePrivateProfileStringA(sectionName, "State", stringBuffer, "..\\SystemSave\\ServerState.ini"))
   {
     return false;
   }
-  sprintf(stringBuffer, "%d", m_dwSerial);
+  sprintf_s(stringBuffer, "%d", m_dwSerial);
   if (!WritePrivateProfileStringA(sectionName, "Serial", stringBuffer, "..\\SystemSave\\ServerState.ini"))
   {
     return false;
@@ -606,7 +606,7 @@ bool RACE_BOSS_MSG::CMsg::Save(unsigned __int8 ucRace)
   {
     return false;
   }
-  sprintf(stringBuffer, "%d", m_dwSendTime);
+  sprintf_s(stringBuffer, "%d", m_dwSendTime);
   return WritePrivateProfileStringA(sectionName, "SendTime", stringBuffer, "..\\SystemSave\\ServerState.ini");
 }
 
@@ -647,10 +647,10 @@ bool RACE_BOSS_MSG::CMsgList::SaveIndexList(unsigned int iType, CNetIndexList *k
   std::memset(sectionName, 0, 255);
   std::memset(keyName, 0, 255);
   std::memset(stringBuffer, 0, 255);
-  sprintf(sectionName, "%s_%s_IndexList", raceName[m_ucRace], typeName[iType]);
+  sprintf_s(sectionName, "%s_%s_IndexList", raceName[m_ucRace], typeName[iType]);
 
   const int listSize = static_cast<int>(kInxList->size());
-  sprintf(stringBuffer, "%d", listSize);
+  sprintf_s(stringBuffer, "%d", listSize);
   if (!WritePrivateProfileStringA(sectionName, "Count", stringBuffer, "..\\SystemSave\\ServerState.ini"))
   {
     return false;
@@ -664,8 +664,8 @@ bool RACE_BOSS_MSG::CMsgList::SaveIndexList(unsigned int iType, CNetIndexList *k
          node != &kInxList->m_Tail;
          node = node->m_pNext)
     {
-      sprintf(keyName, "%02d_Th", written);
-      sprintf(stringBuffer, "%d", node->m_dwIndex);
+      sprintf_s(keyName, "%02d_Th", written);
+      sprintf_s(stringBuffer, "%d", node->m_dwIndex);
       if (!WritePrivateProfileStringA(sectionName, keyName, stringBuffer, "..\\SystemSave\\ServerState.ini"))
       {
         kInxList->m_csList.Unlock();
@@ -678,7 +678,7 @@ bool RACE_BOSS_MSG::CMsgList::SaveIndexList(unsigned int iType, CNetIndexList *k
 
   for (int k = written; k < 2; ++k)
   {
-    sprintf(keyName, "%02d_Th", k);
+    sprintf_s(keyName, "%02d_Th", k);
     WritePrivateProfileStringA(sectionName, keyName, "-1", "..\\SystemSave\\ServerState.ini");
   }
   return true;
@@ -1040,7 +1040,7 @@ void CRaceBossMsgController::SaveCurTime()
 {
   char buffer[272]{};
   const DWORD now = timeGetTime();
-  sprintf(buffer, "%d", now);
+  sprintf_s(buffer, "%d", now);
   if (!WritePrivateProfileStringA("RaceBossSMSCurTime", "Time", buffer, "..\\SystemSave\\ServerState.ini"))
   {
     WritePrivateProfileStringA("RaceBossSMSCurTime", "Time", buffer, "..\\SystemSave\\ServerState.ini");
@@ -1147,3 +1147,4 @@ void CRaceBossMsgController::SendCancelWeb(unsigned __int8 ucRace, RACE_BOSS_MSG
       static_cast<unsigned __int16>(sizeof(request)));
   }
 }
+

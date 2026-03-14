@@ -2094,8 +2094,7 @@ void CMainThread::Lobby_Account_Complete(_DB_QRY_SYN_DATA *pData)
     if (pData->m_byResult)
     {
       char buffer[144]{};
-      sprintf(
-        buffer,
+      sprintf_s(buffer, sizeof(buffer),
         "Lobby_Account_Complete Database Error(%d) account(%s , %d), char(%s, %d)",
         pData->m_byResult,
         user->m_szAccountID,
@@ -2149,8 +2148,7 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
     if (pData->m_byResult)
     {
       char buffer[144]{};
-      sprintf(
-        buffer,
+      sprintf_s(buffer, sizeof(buffer),
         "Cont_UserSave_Complete Database Error(%d) account(%s , %d), char(%s, %d)",
         pData->m_byResult,
         user->m_szAccountID,
@@ -2777,3 +2775,4 @@ void CMainThread::_db_complete_update_event_classrefine(unsigned __int16 wSock, 
     state->bChange = false;
   }
 }
+

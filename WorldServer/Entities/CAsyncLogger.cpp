@@ -122,7 +122,7 @@ int CAsyncLogger::Init()
   clear_file("..\\ZoneServerLog\\SystemLog\\AsyncLogger", 15u);
 
   char dest[128]{};
-  sprintf_s(dest, "%s\\Loading.log", "..\\ZoneServerLog\\SystemLog\\AsyncLogger");
+  sprintf_s(dest, sizeof(dest), "%s\\Loading.log", "..\\ZoneServerLog\\SystemLog\\AsyncLogger");
   m_logLoading.SetWriteLogFile(dest, 1, 0, 1, 1);
   m_logLoading.Write("CAsyncLogger::Init() : Loading.log Create Success!");
 

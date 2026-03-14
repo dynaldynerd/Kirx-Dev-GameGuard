@@ -71,7 +71,7 @@ bool CCircleZone::Init(
   char returned[288]{};
   char keyName[288]{};
   char buffer[272]{};
-  sprintf(buffer, "Map%d", uiMapInx);
+  sprintf_s(buffer, sizeof(buffer), "Map%d", uiMapInx);
 
   m_pkGoalPos = new (std::nothrow) _dummy_position();
   if (!m_pkGoalPos)
@@ -80,7 +80,7 @@ bool CCircleZone::Init(
     return false;
   }
 
-  sprintf(keyName, "%dPGoalPosDummyName%d", iPlayerInx, iNth);
+  sprintf_s(keyName, sizeof(keyName), "%dPGoalPosDummyName%d", iPlayerInx, iNth);
   GetPrivateProfileStringA(
     buffer,
     keyName,
@@ -181,3 +181,4 @@ void CCircleZone::SendMsgGoal()
   unsigned __int8 type[2] = {4, static_cast<unsigned __int8>(-82)};
   CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
+

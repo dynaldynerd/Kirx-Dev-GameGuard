@@ -606,25 +606,25 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
   const unsigned int startYear = GetStartYear();
 
   char chat[2000]{};
-  sprintf(chat, "HolySchedule %u/%u/%u %u:%u (%u)", startYear, startMonth, startDay, startHour, startMin, numOfTime);
+  sprintf_s(chat, sizeof(chat), "HolySchedule %u/%u/%u %u:%u (%u)", startYear, startMonth, startDay, startHour, startMin, numOfTime);
   pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
 
   const int sceneCode = GetSceneCode();
   switch (sceneCode)
   {
     case 0:
-      sprintf(chat, "Scene 0");
+      sprintf_s(chat, sizeof(chat), "Scene 0");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       break;
     case 1:
-      sprintf(chat, "Scene 1");
+      sprintf_s(chat, sizeof(chat), "Scene 1");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage1 = true;
       showStage2 = true;
       showStage6 = true;
       break;
     case 2:
-      sprintf(chat, "Scene 2");
+      sprintf_s(chat, sizeof(chat), "Scene 2");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage1 = true;
       showStage3 = true;
@@ -633,26 +633,26 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
       showStage6 = true;
       break;
     case 3:
-      sprintf(chat, "Scene 3");
+      sprintf_s(chat, sizeof(chat), "Scene 3");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage4 = true;
       showStage5 = true;
       showStage6 = true;
       break;
     case 4:
-      sprintf(chat, "Scene 4");
+      sprintf_s(chat, sizeof(chat), "Scene 4");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage5 = true;
       showStage6 = true;
       break;
     case 5:
-      sprintf(chat, "Scene 5");
+      sprintf_s(chat, sizeof(chat), "Scene 5");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage5 = true;
       showStage6 = true;
       break;
     case 6:
-      sprintf(chat, "Scene 6");
+      sprintf_s(chat, sizeof(chat), "Scene 6");
       pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
       showStage6 = true;
       break;
@@ -663,37 +663,37 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
   if (showStage1)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[0]));
-    sprintf(chat, "    1. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    1. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage2)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[1]));
-    sprintf(chat, "    2. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    2. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage3)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[2]));
-    sprintf(chat, "    3. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    3. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage4)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[3]));
-    sprintf(chat, "    4. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    4. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage5)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[5]));
-    sprintf(chat, "    5. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    5. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
   if (showStage6)
   {
     remainMinute = static_cast<unsigned int>(g_24Time.Get24TimeFromTickTime(m_dwCheckTime[6]));
-    sprintf(chat, "    6. %u:%u", remainMinute / 60, remainMinute % 60);
+    sprintf_s(chat, sizeof(chat), "    6. %u:%u", remainMinute / 60, remainMinute % 60);
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
 
@@ -895,7 +895,7 @@ void CHolyStoneSystem::CreateHolyStone()
   }
 
   char iniKey[132];
-  sprintf_s(iniKey, "CrystalHPMultiple_%d", m_SaveData.m_byNumOfTime);
+  sprintf_s(iniKey, sizeof(iniKey), "CrystalHPMultiple_%d", m_SaveData.m_byNumOfTime);
 
   char result[132]{};
   GetPrivateProfileStringA("Rule", iniKey, "0", result, 128, "..\\WorldInfo\\WorldInfo.ini");
@@ -2224,8 +2224,7 @@ void CHolyStoneSystem::On_HS_SCENE_BATTLE_TIME()
   const unsigned __int16 startYear = GetStartYear();
 
   char logPath[128];
-  sprintf_s(
-    logPath,
+  sprintf_s(logPath, sizeof(logPath),
     "..\\ZoneServerLog\\ServiceLog\\%s_HolyInfo_%d_%d_%d_%d_%d.txt",
     g_Main.m_szWorldName,
     startYear,
@@ -2443,3 +2442,4 @@ bool CHolyStoneSystem::IsMentalPass()
 {
   return m_pMentalPass;
 }
+

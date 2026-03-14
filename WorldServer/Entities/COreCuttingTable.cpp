@@ -3,6 +3,11 @@
 #include "COreCuttingTable.h"
 #include "OreCutting_fld.h"
 
+namespace
+{
+  static constexpr size_t kErrCodeSize = 152;
+}
+
 COreCuttingTable::COreCuttingTable()
   : m_tblOreCutting(), m_nOreNum(0), pOreList(nullptr)
 {
@@ -35,7 +40,7 @@ bool COreCuttingTable::ReadRecord(const char *fileName, CRecordData *oreTable, C
   {
     if (errCode)
     {
-      std::sprintf(errCode, "COreCuttingTable.. ore rec num <= 0");
+      sprintf_s(errCode, kErrCodeSize, "COreCuttingTable.. ore rec num <= 0");
     }
     return false;
   }
@@ -93,7 +98,11 @@ bool COreCuttingTable::Indexing(CRecordData *oreTable, CRecordData *resTable, ch
       {
         if (errCode)
         {
-          std::sprintf(errCode, "COreCuttingTable.. %s no search index", cuttingRecord->m_strResource_Item);
+          sprintf_s(
+            errCode,
+            kErrCodeSize,
+            "COreCuttingTable.. %s no search index",
+            cuttingRecord->m_strResource_Item);
         }
         return false;
       }
@@ -112,3 +121,4 @@ bool COreCuttingTable::Indexing(CRecordData *oreTable, CRecordData *resTable, ch
 
   return true;
 }
+

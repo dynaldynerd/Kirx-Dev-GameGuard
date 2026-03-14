@@ -31,7 +31,7 @@ bool CItemUpgradeTable::ReadRecord(const char *fileName, CRecordData *resTable, 
   {
     if (errCode)
     {
-      std::sprintf(errCode, "CItemUpgradeTable.. record Num <= 0");
+      sprintf_s(errCode, sizeof(errCode), "CItemUpgradeTable.. record Num <= 0");
     }
     return false;
   }
@@ -76,7 +76,7 @@ bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)
     {
       if (errCode)
       {
-        std::sprintf(errCode, "CItemUpgradeTable.. %d rec %s data no search index", index, upgradeRecord->m_strCode);
+        sprintf_s(errCode, sizeof(errCode), "CItemUpgradeTable.. %d rec %s data no search index", index, upgradeRecord->m_strCode);
       }
       return false;
     }
@@ -86,3 +86,4 @@ bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)
 
   return true;
 }
+

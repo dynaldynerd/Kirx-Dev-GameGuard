@@ -15,6 +15,43 @@ char verbuf[256]{};
 char namebuf[256]{};
 int nCount = 0;
 const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+
+size_t RemainingSize(const char *base, const char *current, size_t total)
+{
+  if (!base || !current || total == 0)
+  {
+    return 0;
+  }
+  const ptrdiff_t used = current - base;
+  if (used < 0)
+  {
+    return 0;
+  }
+  const size_t usedSize = static_cast<size_t>(used);
+  if (usedSize >= total)
+  {
+    return 0;
+  }
+  return total - usedSize;
+}
+
+int AppendFormat(char *&cursor, const char *base, size_t total, const char *format, ...)
+{
+  const size_t remaining = RemainingSize(base, cursor, total);
+  if (remaining == 0)
+  {
+    return 0;
+  }
+  va_list args;
+  va_start(args, format);
+  const int written = vsprintf_s(cursor, remaining, format, args);
+  va_end(args);
+  if (written > 0)
+  {
+    cursor += written;
+  }
+  return written;
+}
 } // namespace
 
 int WheatyExceptionReport::m_bRunDialog = 1;
@@ -125,6 +162,8 @@ BasicType WheatyExceptionReport::GetBasicType(ULONG typeIndex, DWORD64 modBase)
 
 char *WheatyExceptionReport::FormatOutputValue(
   char *pszCurrBuffer,
+  const char *pszBaseBuffer,
+  size_t cbBuffer,
   BasicType basicType,
   unsigned __int64 length,
   const void *pAddress)
@@ -132,15 +171,15 @@ char *WheatyExceptionReport::FormatOutputValue(
   switch (length)
   {
     case 1:
-      pszCurrBuffer += sprintf(pszCurrBuffer, " = %X", *reinterpret_cast<const unsigned __int8 *>(pAddress));
+      AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %X", *reinterpret_cast<const unsigned __int8 *>(pAddress));
       break;
     case 2:
-      pszCurrBuffer += sprintf(pszCurrBuffer, " = %X", *reinterpret_cast<const unsigned __int16 *>(pAddress));
+      AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %X", *reinterpret_cast<const unsigned __int16 *>(pAddress));
       break;
     case 4:
       if (basicType == btFloat)
       {
-        pszCurrBuffer += sprintf(pszCurrBuffer, " = %f", *reinterpret_cast<const float *>(pAddress));
+        AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %f", *reinterpret_cast<const float *>(pAddress));
       }
       else if (basicType == btChar)
       {
@@ -148,26 +187,31 @@ char *WheatyExceptionReport::FormatOutputValue(
         const char *textPointer = reinterpret_cast<const char *>(static_cast<uintptr_t>(pointerValue));
         if (IsBadStringPtrA(textPointer, 32))
         {
-          pszCurrBuffer += sprintf(pszCurrBuffer, " = %X", pointerValue);
+          AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %X", pointerValue);
         }
         else
         {
-          pszCurrBuffer += sprintf(pszCurrBuffer, " = \"%.31s\"", textPointer);
+          AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = \"%.31s\"", textPointer);
         }
       }
       else
       {
-        pszCurrBuffer += sprintf(pszCurrBuffer, " = %X", *reinterpret_cast<const unsigned int *>(pAddress));
+        AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %X", *reinterpret_cast<const unsigned int *>(pAddress));
       }
       break;
     case 8:
       if (basicType == btFloat)
       {
-        pszCurrBuffer += sprintf(pszCurrBuffer, " = %lf", *reinterpret_cast<const double *>(pAddress));
+        AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " = %lf", *reinterpret_cast<const double *>(pAddress));
       }
       else
       {
-        pszCurrBuffer += sprintf(pszCurrBuffer, " = %I64X", *reinterpret_cast<const unsigned __int64 *>(pAddress));
+        AppendFormat(
+          pszCurrBuffer,
+          pszBaseBuffer,
+          cbBuffer,
+          " = %I64X",
+          *reinterpret_cast<const unsigned __int64 *>(pAddress));
       }
       break;
     default:
@@ -183,15 +227,14 @@ char WheatyExceptionReport::FormatSymbolValue(
   char *pszBuffer,
   unsigned int cbBuffer)
 {
-  (void)cbBuffer;
   char *buffer = pszBuffer;
   if ((pSym->Flags & 0x40) != 0)
   {
-    buffer += sprintf(buffer, "Parameter ");
+    AppendFormat(buffer, pszBuffer, cbBuffer, "Parameter ");
   }
   else if ((pSym->Flags & 0x80) != 0)
   {
-    buffer += sprintf(buffer, "Local ");
+    AppendFormat(buffer, pszBuffer, cbBuffer, "Local ");
   }
 
   if (pSym->Tag == 5)
@@ -199,7 +242,7 @@ char WheatyExceptionReport::FormatSymbolValue(
     return 0;
   }
 
-  buffer += sprintf(buffer, "'%s'", pSym->Name);
+  AppendFormat(buffer, pszBuffer, cbBuffer, "'%s'", pSym->Name);
   void *address = nullptr;
   if ((pSym->Flags & 0x10) != 0)
   {
@@ -215,11 +258,19 @@ char WheatyExceptionReport::FormatSymbolValue(
   }
 
   bool handled = false;
-  buffer = DumpTypeIndex(buffer, pSym->ModBase, pSym->TypeIndex, 0, reinterpret_cast<unsigned __int64>(address), &handled);
+  buffer = DumpTypeIndex(
+    buffer,
+    pszBuffer,
+    cbBuffer,
+    pSym->ModBase,
+    pSym->TypeIndex,
+    0,
+    reinterpret_cast<unsigned __int64>(address),
+    &handled);
   if (!handled)
   {
     const BasicType basicType = GetBasicType(pSym->TypeIndex, pSym->ModBase);
-    buffer = FormatOutputValue(buffer, basicType, pSym->Size, address);
+    buffer = FormatOutputValue(buffer, pszBuffer, cbBuffer, basicType, pSym->Size, address);
   }
 
   return 1;
@@ -241,6 +292,8 @@ BOOL CALLBACK WheatyExceptionReport::EnumerateSymbolsCallback(
 
 char *WheatyExceptionReport::DumpTypeIndex(
   char *pszCurrBuffer,
+  const char *pszBaseBuffer,
+  size_t cbBuffer,
   DWORD64 modBase,
   ULONG dwTypeIndex,
   unsigned int nestingLevel,
@@ -262,7 +315,7 @@ char *WheatyExceptionReport::DumpTypeIndex(
   PWSTR symbolName = nullptr;
   if (SymGetTypeInfo(m_hProcess, modBase, dwTypeIndex, TI_GET_SYMNAME, &symbolName))
   {
-    pszCurrBuffer += sprintf(pszCurrBuffer, " %ls", symbolName);
+    AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, " %ls", symbolName);
     LocalFree(symbolName);
   }
 
@@ -281,16 +334,25 @@ char *WheatyExceptionReport::DumpTypeIndex(
     return pszCurrBuffer;
   }
 
-  char *buffer = &pszCurrBuffer[sprintf(pszCurrBuffer, "\r\n")];
+  AppendFormat(pszCurrBuffer, pszBaseBuffer, cbBuffer, "\r\n");
+  char *buffer = pszCurrBuffer;
   for (ULONG childIndex = 0; childIndex < childCount; ++childIndex)
   {
     for (ULONG tabIndex = 0; tabIndex <= nestingLevel + 1; ++tabIndex)
     {
-      buffer += sprintf(buffer, "\t");
+      AppendFormat(buffer, pszBaseBuffer, cbBuffer, "\t");
     }
 
     bool childHandled = false;
-    buffer = DumpTypeIndex(buffer, modBase, findChildren.ChildId[childIndex], nestingLevel + 1, offset, &childHandled);
+    buffer = DumpTypeIndex(
+      buffer,
+      pszBaseBuffer,
+      cbBuffer,
+      modBase,
+      findChildren.ChildId[childIndex],
+      nestingLevel + 1,
+      offset,
+      &childHandled);
     if (!childHandled)
     {
       ULONG childOffset = 0;
@@ -302,8 +364,8 @@ char *WheatyExceptionReport::DumpTypeIndex(
 
       const void *address = reinterpret_cast<void *>(offset + childOffset);
       const BasicType basicType = GetBasicType(findChildren.ChildId[childIndex], modBase);
-      buffer = FormatOutputValue(buffer, basicType, length, address);
-      buffer += sprintf(buffer, "\r\n");
+      buffer = FormatOutputValue(buffer, pszBaseBuffer, cbBuffer, basicType, length, address);
+      AppendFormat(buffer, pszBaseBuffer, cbBuffer, "\r\n");
     }
   }
 
@@ -665,7 +727,7 @@ const char *WheatyExceptionReport::GetOsVersion()
     }
 
     const char *osName = GetOsName(versionInfo.dwPlatformId, versionInfo.dwMajorVersion, versionInfo.dwMinorVersion);
-    sprintf(
+    sprintf_s(
       verbuf,
       "Windows %d.%d(%s), build%d PlatformId %d \"%s\"",
       versionInfo.dwMajorVersion,
@@ -740,7 +802,7 @@ long __stdcall WheatyExceptionReport::WheatyUnhandledExceptionFilter(EXCEPTION_P
   unsigned int offset = 0;
   GetModuleFileNameA(nullptr, filename, 260);
   _splitpath(filename, drive, dir, fileName, nullptr);
-  sprintf(pdbPath, "%s%s%s.pdb", drive, dir, fileName);
+  sprintf_s(pdbPath, "%s%s%s.pdb", drive, dir, fileName);
   HANDLE pdbFile = CreateFileA(pdbPath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
   if (pdbFile != INVALID_HANDLE_VALUE)
   {
@@ -750,7 +812,7 @@ long __stdcall WheatyExceptionReport::WheatyUnhandledExceptionFilter(EXCEPTION_P
 
   GetLogicalAddress(pExceptionInfo->ExceptionRecord->ExceptionAddress, szModule, 260, &section, &offset);
 
-  sprintf(
+  sprintf_s(
     m_szLogFileName,
     "%s%s..\\%d_Exception_%s_%d_%d_%d_%d_%d.txt",
     drive,
@@ -774,3 +836,4 @@ long __stdcall WheatyExceptionReport::WheatyUnhandledExceptionFilter(EXCEPTION_P
 
   return EXCEPTION_EXECUTE_HANDLER;
 }
+

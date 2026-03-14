@@ -15,7 +15,7 @@ bool CRFDBItemLog::CreateTblLtd(int nKorTime)
 {
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
-  sprintf(
+  sprintf_s(
     buffer,
     "CREATE TABLE [dbo].[tbl_ltd_%d] ( [Serial] [int] IDENTITY (1, 1) NOT NULL , [LogSerial] [datetime] NOT NULL, [MainTy"
     "pe] [tinyint] NOT NULL, [SubType] [tinyint] NOT NULL, [AccountSerial] [int] NOT NULL, [CharSerial] [int] NOT NULL, )"
@@ -39,7 +39,7 @@ bool CRFDBItemLog::CreateTblLtd_Expend(int nKorTime)
 {
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
-  sprintf(
+  sprintf_s(
     buffer,
     " CREATE TABLE [dbo].[tbl_ltd_expend_%d] ( [LogSerial] [datetime] NOT NULL, [SubType] [tinyint] NOT NULL, [Expend] [n"
     "varchar] (128) NOT NULL ) ON [PRIMARY] CREATE INDEX [IX_tbl_ltd_expend_LogSerial] ON [dbo].[tbl_ltd_expend_%d]([LogS"
@@ -54,7 +54,7 @@ bool CRFDBItemLog::CreateTblLtd_ItemInfo(int nKorTime)
 {
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
-  sprintf(
+  sprintf_s(
     buffer,
     " CREATE TABLE [dbo].[tbl_ltd_iteminfo_%d] ( [LogSerial] [datetime] NOT NULL, [SubType] [tinyint] NOT NULL, [ItemC] ["
     "varchar] (10) NOT NULL, [ItemU] [varchar] (10) NOT NULL, [ItemD] [int] NOT NULL, [ItemO] [tinyint] NULL, [Name] [var"
@@ -70,7 +70,7 @@ bool CRFDBItemLog::insert_ltd(_LTD *pl)
 {
   char buffer[528]{};
   std::memset(buffer, 0, 512);
-  sprintf(
+  sprintf_s(
     buffer,
     "insert into [dbo].[tbl_ltd_%d](LogSerial, MainType, SubType, AccountSerial, CharSerial) values ('%04d-%02d-%02d %02d"
     ":%02d:%02d.%03d',%d,%d,%d,%d)",
@@ -93,7 +93,7 @@ bool CRFDBItemLog::insert_iteminfo(_LTD_ITEMINFO *pi, unsigned __int8 byIndex)
 {
   char buffer[264]{};
   std::memset(buffer, 0, 256);
-  sprintf(
+  sprintf_s(
     buffer,
     "insert into tbl_ltd_iteminfo_%d (LogSerial, SubType, ItemC, ItemU, ItemD, ItemO, Name) values ('%04d-%02d-%02d %02d:"
     "%02d:%02d.%03d', %d, '%s', '%s', %d, %d, '%s')",
@@ -118,7 +118,7 @@ bool CRFDBItemLog::insert_expend(_LTD_EXPEND *pe)
 {
   char buffer[528]{};
   std::memset(buffer, 0, 512);
-  sprintf(
+  sprintf_s(
     buffer,
     "insert into tbl_ltd_expend_%d(LogSerial, SubType, Expend)values ('%04d-%02d-%02d %02d:%02d:%02d.%03d', %d, '%s')",
     this->m_dwKorTime,
@@ -138,3 +138,4 @@ void CRFDBItemLog::SetKorTime(unsigned int dwKorTime)
 {
   this->m_dwKorTime = dwKorTime;
 }
+

@@ -128,14 +128,14 @@ bool CMapData::OpenMap(char *pszMapCode, _map_fld *pMapSet, bool bUse)
   this->m_nMapIndex = pMapSet->m_dwIndex;
 
   char Buffer[256];
-  sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+  sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
   if (!this->m_Dummy.LoadExtDummy(Buffer))
   {
       MyMessageBox("CMapData Error", "read dummy-list fail(%s)", pszMapCode);
       return false;
   }
 
-  sprintf_s(Buffer, ".\\map\\%s\\%sEXT.spt", pszMapCode, pszMapCode);
+  sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%sEXT.spt", pszMapCode, pszMapCode);
   this->m_pExtDummy_Town = nullptr;
   if (CalcFileSize(Buffer) > 0)
   {
@@ -196,7 +196,7 @@ bool CMapData::_LoadBspSec(char *pszMapCode)
   }
 
   char Buffer[256];
-  sprintf_s(Buffer, ".\\Map\\%s\\%s.bsp", pszMapCode, pszMapCode);
+  sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s.bsp", pszMapCode, pszMapCode);
   this->m_Level.LoadLevel(Buffer);
   
   strcpy_s(this->m_BspInfo.m_szBspName, pszMapCode);
@@ -298,7 +298,7 @@ bool CMapData::CheckCenterPosDummy(_dummy_position *pPos)
 bool CMapData::LoadDummy(char *pszDummyCode, _dummy_position *pPos)
 {
   char buffer[144]{};
-  sprintf(buffer, ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
+  sprintf_s(buffer, sizeof(buffer), ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
   if (CDummyPosTable::FindDummy(buffer, pszDummyCode, pPos))
   {
     return ConvertLocal(pPos) && CheckCenterPosDummy(pPos);
@@ -310,7 +310,7 @@ bool CMapData::LoadDummy(char *pszDummyCode, _dummy_position *pPos)
 bool CMapData::LoadHolySystemDummy(char *pszDummyCode, _dummy_position *pPos)
 {
   char buffer[144]{};
-  sprintf_s(buffer, ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
+  sprintf_s(buffer, sizeof(buffer), ".\\map\\%s\\%s.spt", m_pMapSet->m_strCode, m_pMapSet->m_strCode);
 
   if (CDummyPosTable::FindDummy(buffer, pszDummyCode, pPos))
   {
@@ -562,7 +562,7 @@ bool CMapData::_LoadMonBlk(char *pszMapCode, _map_fld *pMapFld)
 {
     char pszErrMsg[160];
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     
     if (!this->m_tbMonDumPos.LoadDummyPosition(Buffer, "*dm"))
     {
@@ -578,7 +578,7 @@ bool CMapData::_LoadMonBlk(char *pszMapCode, _map_fld *pMapFld)
         return true;
     }
 
-    sprintf_s(Buffer, ".\\Map\\%s\\%s-[BLOCK].dat", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s-[BLOCK].dat", pszMapCode, pszMapCode);
     if (!this->m_tbMonBlk.ReadRecord(Buffer, 1444, pszErrMsg))
     {
         this->m_nMonBlockNum = 0;
@@ -682,9 +682,9 @@ bool CMapData::_LoadMonBlk(char *pszMapCode, _map_fld *pMapFld)
             if (!pBlkRec) return false;
 
             if (pMapFld->m_nMapType == 1)
-                sprintf_s(Buffer, ".\\Map\\%s\\%s_%d.dat", pszMapCode, pBlkRec->m_strCode, k);
+                sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s_%d.dat", pszMapCode, pBlkRec->m_strCode, k);
             else
-                sprintf_s(Buffer, ".\\Map\\%s\\%s.dat", pszMapCode, pBlkRec->m_strCode);
+                sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s.dat", pszMapCode, pBlkRec->m_strCode);
 
             if (!this->m_mb[k].m_ptbMonBlock[n].ReadRecord(Buffer, 92, pszErrMsg))
             {
@@ -744,7 +744,7 @@ bool CMapData::_LoadPortal(char *pszMapCode)
 {
     char pszErrMsg[160];
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbPortalDumPos.LoadDummyPosition(Buffer, "*dp"))
     {
         MyMessageBox("CMapData Error", "m_tbPortalDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -752,7 +752,7 @@ bool CMapData::_LoadPortal(char *pszMapCode)
     }
     if (!this->ConvertLocalToWorldDummy(&this->m_tbPortalDumPos, false)) return false;
 
-    sprintf_s(Buffer, ".\\map\\%s\\%s-[Portal].dat", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s-[Portal].dat", pszMapCode, pszMapCode);
     if (!this->m_tbPortal.ReadRecord(Buffer, 376, pszErrMsg))
     {
         MyMessageBox("CMapData Error", pszErrMsg);
@@ -798,7 +798,7 @@ bool CMapData::_LoadPortal(char *pszMapCode)
 bool CMapData::_LoadStoreDummy(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbStoreDumPos.LoadDummyPosition(Buffer, "*sd"))
     {
         MyMessageBox("CMapData Error", "m_tbStoreDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -863,7 +863,7 @@ bool CMapData::_LoadStoreDummy(char *pszMapCode)
 bool CMapData::_LoadStart(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbStartDumPos.LoadDummyPosition(Buffer, "*ds"))
     {
         MyMessageBox("CMapData Error", "m_tbStartDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -925,7 +925,7 @@ bool CMapData::_LoadStart(char *pszMapCode)
 bool CMapData::_LoadResource(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbResDumPosHigh.LoadDummyPosition(Buffer, "*0dr"))
     {
         MyMessageBox("CMapData Error", "m_tbResDumPosHigh.LoadDummyPosition(%s) == false", Buffer);
@@ -980,7 +980,7 @@ bool CMapData::_LoadResource(char *pszMapCode)
 bool CMapData::_LoadBind(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbBindDumPos.LoadDummyPosition(Buffer, "*bd"))
     {
         MyMessageBox("CMapData Error", "m_tbBindDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -1005,7 +1005,7 @@ bool CMapData::_LoadBind(char *pszMapCode)
 bool CMapData::_LoadQuest(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbQuestDumPos.LoadDummyPosition(Buffer, "*dq"))
     {
         MyMessageBox("CMapData Error", "m_tbQuestDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -1030,7 +1030,7 @@ bool CMapData::_LoadQuest(char *pszMapCode)
 bool CMapData::_LoadSafe(char *pszMapCode)
 {
     char Buffer[256];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", pszMapCode, pszMapCode);
     if (!this->m_tbSafeDumPos.LoadDummyPosition(Buffer, "*sa"))
     {
         MyMessageBox("CMapData Error", "m_tbSafeDumPos.LoadDummyPosition(%s) == false", Buffer);
@@ -1356,3 +1356,4 @@ void CMapData::OnLoop()
     }
   }
 }
+

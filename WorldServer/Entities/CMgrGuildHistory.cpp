@@ -12,6 +12,7 @@
 namespace
 {
   char s_guildHistoryLogData[10000]{};
+  static constexpr size_t kGuildHistoryFileNameSize = 128;
   const char kGuildHistoryMoneyFmt[] =
     "GUILD MONEY : Name(%s) Serial(%u) D:%d G:%d TotalD:%.0f TotalG:%.0f [%s]\r\n";
   const char kGuildHistoryLoadFmt[] =
@@ -46,11 +47,11 @@ CMgrGuildHistory::CMgrGuildHistory()
     128,
     "..\\WorldInfo\\WorldInfo.ini");
   CreateDirectoryA(returnedString, nullptr);
-  sprintf(m_szStdPath, "%s\\Guild", returnedString);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\Guild", returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   const unsigned int korLocalTime = GetKorLocalTime();
-  sprintf(m_szStdPath, "%s\\%u", m_szStdPath, korLocalTime);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\%u", m_szStdPath, korLocalTime);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   char dateBuffer[160]{};
@@ -138,7 +139,7 @@ void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)
 
 void CMgrGuildHistory::GetNewFileName(unsigned int dwGuildSerial, char *pszFileName)
 {
-  sprintf(pszFileName, "%s\\%u.ghi", m_szStdPath, dwGuildSerial);
+  sprintf_s(pszFileName, kGuildHistoryFileNameSize, "%s\\%u.ghi", m_szStdPath, dwGuildSerial);
 }
 
 void CMgrGuildHistory::load_guild(CGuild *pGuild, char *pszFileName)
@@ -286,7 +287,7 @@ void CMgrGuildHistory::push_money(
   const char *pszFileName)
 {
   s_guildHistoryLogData[0] = 0;
-  sprintf(
+  sprintf_s(
     s_guildHistoryLogData,
     kGuildHistoryMoneyFmt,
     pszIOerName,
@@ -310,7 +311,7 @@ void CMgrGuildHistory::pop_money(
   char *pszFileName)
 {
   s_guildHistoryLogData[0] = 0;
-  sprintf(
+  sprintf_s(
     s_guildHistoryLogData,
     ": ( %s , %d ) pop( D:%d , G:%d ) $D:%.0f $G:%.0f [%s]\r\n",
     pszIOerName,
@@ -495,3 +496,4 @@ void CMgrGuildHistory::change_atrade_taxrate(
   s_guildHistoryLogData[9999] = 0;
   WriteFile(pszFileName, s_guildHistoryLogData);
 }
+

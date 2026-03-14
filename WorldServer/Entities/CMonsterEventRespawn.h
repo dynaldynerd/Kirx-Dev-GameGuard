@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#include <cstddef>
+
 struct _base_fld;
 struct _monster_fld;
 class CMapData;
@@ -71,8 +73,8 @@ public:
 
   bool SetEventRespawn();
   void CheckRespawnEvent();
-  bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode);
-  bool StopRespawnEvent(char *pszEventCode, char *pwszErrCode);
+  bool StartRespawnEvent(char *pszEventCode, char *pwszErrCode, size_t errBufferSize);
+  bool StopRespawnEvent(char *pszEventCode, char *pwszErrCode, size_t errBufferSize);
 
   virtual ~CMonsterEventRespawn();
 

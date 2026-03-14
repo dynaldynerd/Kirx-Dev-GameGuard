@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderUserInfoTable.h"
 #include "CNetProcess.h"
@@ -711,7 +711,8 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyFindBuyer(
     int offset = 0;
     for (unsigned __int8 j = 0; j < pkQuery->byNum; ++j)
     {
-      offset += sprintf(&buffer[offset], "%u ", pkQuery->List[j].dwRegistSerial);
+      const size_t remaining = sizeof(buffer) - static_cast<size_t>(offset);
+      offset += sprintf_s(&buffer[offset], remaining, "%u ", pkQuery->List[j].dwRegistSerial);
     }
     ++m_uiBuyRollBackCallCountSum;
     Log(
@@ -729,7 +730,8 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyFindBuyer(
   int offset = 0;
   for (unsigned __int8 j = 0; j < pkQuery->byNum; ++j)
   {
-    offset += sprintf(&buffer[offset], "%u ", pkQuery->List[j].dwRegistSerial);
+    const size_t remaining = sizeof(buffer) - static_cast<size_t>(offset);
+    offset += sprintf_s(&buffer[offset], remaining, "%u ", pkQuery->List[j].dwRegistSerial);
   }
   Log(
     "SubCompleteBuyFindBuyer:: Count(%u) PushUpdateBuyRollBack Call! dwOwner(%u) Not Connected!\r\n"
@@ -958,3 +960,4 @@ void CUnmannedTraderUserInfoTable::PushUpdateBuyRollBack(_qry_case_unmandtrader_
 
   g_Main.PushDQSData(-1, nullptr, 66, reinterpret_cast<char *>(&qry), sizeof(qry));
 }
+

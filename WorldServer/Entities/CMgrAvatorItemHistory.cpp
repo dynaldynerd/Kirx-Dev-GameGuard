@@ -24,6 +24,7 @@ namespace
   char sData[20000]{};
   char sBuf[10240]{};
   char s_personal_amine_log[20000]{};
+  static constexpr size_t kHistoryFileNameSize = 64;
   const char *pRace_0[3] = {
     "Bellato",
     "Cora",
@@ -73,7 +74,7 @@ void CMgrAvatorItemHistory::lenditem_del_from_inven(
   {
     const unsigned int korTime = GetKorLocalTime();
     const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
-    sprintf(
+    sprintf_s(
       sData,
       "[DEL_LENDITEM] : %s(%s) [UID:%I64u][T:%u/%d]\r\n",
       record->m_strCode,
@@ -85,7 +86,14 @@ void CMgrAvatorItemHistory::lenditem_del_from_inven(
   else
   {
     const unsigned int korTime = GetKorLocalTime();
-    sprintf(sData, "[DEL_LENDITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n", byTblCode, wItemIndex, lnUID, korTime);
+    sprintf_s(
+      sData,
+      sizeof(sData),
+      "[DEL_LENDITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n",
+      byTblCode,
+      wItemIndex,
+      lnUID,
+      korTime);
   }
 
   WriteFile(pFN, sData);
@@ -102,7 +110,7 @@ void CMgrAvatorItemHistory::time_jade_effect_log(
     sprintf_s(
       sData,
       20000,
-      "Item Effect Add :%s_[%I64u] [Count :%d] [%s %s]\r\n",
+      "Item Effect Add :%s_[%I64u] [Count :%I64u] [%s %s]\r\n",
       pszItemName,
       pItem->m_lnUID,
       pItem->m_dwDur,
@@ -114,7 +122,7 @@ void CMgrAvatorItemHistory::time_jade_effect_log(
     sprintf_s(
       sData,
       20000,
-      "Item Effect Del :%s_[%I64u] [Count :%d] [%s %s]\r\n",
+      "Item Effect Del :%s_[%I64u] [Count :%I64u] [%s %s]\r\n",
       pszItemName,
       pItem->m_lnUID,
       pItem->m_dwDur,
@@ -142,7 +150,7 @@ void CMgrAvatorItemHistory::InitClass(
   int *piAlterMaxPoint,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "INIT CLASS: G:%d Cnt:%d Gd:%d %s -> %s H:%d F:%d S:%d -> H:%d F:%d S:%d\r\n",
     iCostGold,
@@ -168,7 +176,7 @@ void CMgrAvatorItemHistory::ClassUP(
   int *piAlterMaxPoint,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "CLASS UP: CGd:%d LGd:%d %s -> %s H:%d F:%d S:%d -> H:%d F:%d S:%d\r\n",
     byCurClassGrade,
@@ -267,7 +275,7 @@ if (pkInfo && byMaxCnt)
         localTime = localtime_5(startTimePtr);
         if (localTime)
         {
-          std::sprintf(
+          sprintf_s(
             buffer,
             "%04d-%02d-%02d %02d:%02d:%02d",
             localTime->tm_year + 1900,
@@ -280,7 +288,7 @@ if (pkInfo && byMaxCnt)
         else
         {
           const int startTime = info->GetStartTime();
-          std::sprintf(buffer, "invalid(%u)", startTime);
+          sprintf_s(buffer, sizeof(buffer), "invalid(%u)", startTime);
         }
 
         const int sellTurn = info->GetSellTurm();
@@ -294,9 +302,10 @@ if (pkInfo && byMaxCnt)
         const int storageIndex = info->GetStorageIndex();
         const unsigned int registSerial = info->GetRegistSerial();
 
-        std::sprintf(
+        sprintf_s(
           sBuf,
-          "%u : reg(%u) storageinx(%u) %s_%u_@%s[%u] price(%u) regtime(%s) sellturm(%u) \r\n",
+          sizeof(sBuf),
+          "%u : reg(%u) storageinx(%u) %s_%I64u_@%s[%u] price(%u) regtime(%s) sellturm(%u) \r\n",
           index,
           registSerial,
           storageIndex,
@@ -332,52 +341,53 @@ void CMgrAvatorItemHistory::GetNewFileName(unsigned int dwAvatorSerial, char *ps
 {
   const unsigned int localDate = GetLocalDate();
   char buffer[132]{};
-  sprintf(buffer, "%s\\%d", this->m_szStdPath, localDate);
+  sprintf_s(buffer, sizeof(buffer), "%s\\%d", this->m_szStdPath, localDate);
   CreateDirectoryA(buffer, nullptr);
   this->m_dwLastLocalDate = localDate;
 
   const unsigned int currentHour = GetCurrentHour();
   char pathName[148]{};
-  sprintf(pathName, "%s\\%d\\%d", this->m_szStdPath, this->m_dwLastLocalDate, currentHour);
+  sprintf_s(pathName, sizeof(pathName), "%s\\%d\\%d", this->m_szStdPath, this->m_dwLastLocalDate, currentHour);
   CreateDirectoryA(pathName, nullptr);
   this->m_dwLastLocalHour = currentHour;
 
   char hourStr[32]{};
   if (currentHour <= 9)
   {
-    sprintf(hourStr, "0%d", currentHour);
+    sprintf_s(hourStr, sizeof(hourStr), "0%d", currentHour);
   }
   else
   {
-    sprintf(hourStr, "%d", currentHour);
+    sprintf_s(hourStr, sizeof(hourStr), "%d", currentHour);
   }
 
   const unsigned int currentMin = GetCurrentMin();
   char minStr[32]{};
   if (currentMin <= 9)
   {
-    sprintf(minStr, "0%d", currentMin);
+    sprintf_s(minStr, sizeof(minStr), "0%d", currentMin);
   }
   else
   {
-    sprintf(minStr, "%d", currentMin);
+    sprintf_s(minStr, sizeof(minStr), "%d", currentMin);
   }
 
   const unsigned int currentSec = GetCurrentSec();
   char secStr[16]{};
   if (currentSec <= 9)
   {
-    sprintf(secStr, "0%d", currentSec);
+    sprintf_s(secStr, sizeof(secStr), "0%d", currentSec);
   }
   else
   {
-    sprintf(secStr, "%d", currentSec);
+    sprintf_s(secStr, sizeof(secStr), "%d", currentSec);
   }
 
   char timeStr[32]{};
-  sprintf(timeStr, "%s%s%s", hourStr, minStr, secStr);
-  sprintf(
+  sprintf_s(timeStr, sizeof(timeStr), "%s%s%s", hourStr, minStr, secStr);
+  sprintf_s(
     pszFileName,
+    kHistoryFileNameSize,
     "%s\\%d\\%d\\%d_%s.his",
     this->m_szStdPath,
     this->m_dwLastLocalDate,
@@ -421,7 +431,7 @@ void CMgrAvatorItemHistory::have_item(
     const unsigned __int8 sexCode = pLoadData->dbAvator.m_byRaceSexCode & 1;
     const unsigned __int8 raceSexCode = pLoadData->dbAvator.m_byRaceSexCode;
 
-    sprintf(
+    sprintf_s(
       sBuf,
       "NAME: %s [%s %s]\r\n"
       "WORLD: %s\r\n"
@@ -476,7 +486,7 @@ void CMgrAvatorItemHistory::have_item(
   else
   {
     std::strcat(sData, "\r\n\t============\r\n\r\n");
-    sprintf(
+    sprintf_s(
       sBuf,
       "LV: %d\r\n"
       "XP: %.0f (%d)\r\n"
@@ -497,7 +507,7 @@ void CMgrAvatorItemHistory::have_item(
     std::strcat(sData, sBuf);
   }
 
-  sprintf(sBuf, "EQUIP\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "EQUIP\r\n");
   std::strcat(sData, sBuf);
   for (int tableCode = 0; tableCode < 8; ++tableCode)
   {
@@ -506,7 +516,7 @@ void CMgrAvatorItemHistory::have_item(
     {
       _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(equipKey->zItemIndex);
       const char *upgInfo = DisplayItemUpgInfo(tableCode, pLoadData->dbAvator.m_dwFixEquipLv[tableCode]);
-      sprintf(
+      sprintf_s(
         sBuf,
         "\t%s_@%s[%I64u]\r\n",
         record->m_strCode,
@@ -516,7 +526,7 @@ void CMgrAvatorItemHistory::have_item(
     }
   }
 
-  sprintf(sBuf, "EMBELL\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "EMBELL\r\n");
   std::strcat(sData, sBuf);
   for (int tableCode = 0; tableCode < 7; ++tableCode)
   {
@@ -525,12 +535,12 @@ void CMgrAvatorItemHistory::have_item(
     {
       _base_fld *record =
         g_Main.m_tblItemData[embellish->Key.byTableCode].GetRecord(embellish->Key.wItemIndex);
-      sprintf(sBuf, "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
+      sprintf_s(sBuf, sizeof(sBuf), "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
       std::strcat(sData, sBuf);
     }
   }
 
-  sprintf(sBuf, "INVEN\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "INVEN\r\n");
   std::strcat(sData, sBuf);
   for (int slot = 0; slot < 20 * pLoadData->dbAvator.m_byBagNum; ++slot)
   {
@@ -544,7 +554,7 @@ void CMgrAvatorItemHistory::have_item(
       {
         if (pBackupData->dbInven.m_List[slot].Key.IsFilled())
         {
-          sprintf(
+          sprintf_s(
             sBuf,
             "\t%s_%u_@%s[%I64u]\r\n",
             record->m_strCode,
@@ -554,7 +564,7 @@ void CMgrAvatorItemHistory::have_item(
         }
         else
         {
-          sprintf(
+          sprintf_s(
             sBuf,
             "\t%s_%u_@%s[%I64u] \t#push\r\n",
             record->m_strCode,
@@ -565,7 +575,7 @@ void CMgrAvatorItemHistory::have_item(
       }
       else
       {
-        sprintf(
+        sprintf_s(
           sBuf,
           "\t%s_%u_@%s[%I64u]\r\n",
           record->m_strCode,
@@ -577,7 +587,7 @@ void CMgrAvatorItemHistory::have_item(
     }
   }
 
-  sprintf(sBuf, "FORCE\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "FORCE\r\n");
   std::strcat(sData, sBuf);
   for (int slot = 0; slot < 88; ++slot)
   {
@@ -587,12 +597,12 @@ void CMgrAvatorItemHistory::have_item(
       const unsigned __int8 index = forceEntry->Key.GetIndex();
       _base_fld *record = g_Main.m_tblItemData[15].GetRecord(index);
       const unsigned int stat = forceEntry->Key.GetStat();
-      sprintf(sBuf, "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
+      sprintf_s(sBuf, sizeof(sBuf), "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
       std::strcat(sData, sBuf);
     }
   }
 
-  sprintf(sBuf, "RES\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "RES\r\n");
   std::strcat(sData, sBuf);
   for (int slot = 0; slot < 20; ++slot)
   {
@@ -602,7 +612,7 @@ void CMgrAvatorItemHistory::have_item(
       _base_fld *record = g_Main.m_tblItemData[18].GetRecord(listEntry->Key.wItemIndex);
       if (record)
       {
-        sprintf(sBuf, "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
+        sprintf_s(sBuf, sizeof(sBuf), "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
         std::strcat(sData, sBuf);
       }
       else
@@ -621,7 +631,7 @@ void CMgrAvatorItemHistory::have_item(
   {
     if (raceCode == 1)
     {
-      sprintf(sBuf, "ANIMUS\r\n");
+      sprintf_s(sBuf, sizeof(sBuf), "ANIMUS\r\n");
       std::strcat(sData, sBuf);
       for (int slot = 0; slot < 4; ++slot)
       {
@@ -629,7 +639,7 @@ void CMgrAvatorItemHistory::have_item(
         if (listEntry->Key.IsFilled())
         {
           _base_fld *record = g_Main.m_tblItemData[24].GetRecord(listEntry->Key.byItemIndex);
-          sprintf(
+          sprintf_s(
             sBuf,
             "\t%s_%I64u[%I64u]\r\n",
             record->m_strCode,
@@ -642,14 +652,14 @@ void CMgrAvatorItemHistory::have_item(
   }
   else
   {
-    sprintf(sBuf, "UNIT\r\n");
+    sprintf_s(sBuf, sizeof(sBuf), "UNIT\r\n");
     std::strcat(sData, sBuf);
     for (int slot = 0; slot < 4; ++slot)
     {
       _UNIT_DB_BASE::_LIST *unit = &pLoadData->dbUnit.m_List[slot];
       if (unit->byFrame != 255)
       {
-        sprintf(
+        sprintf_s(
           sBuf,
           "\t%d>fr:%d %d/%d/%d/%d/%d/%d\r\n",
           slot,
@@ -669,7 +679,7 @@ void CMgrAvatorItemHistory::have_item(
   {
     const long double dalantDiff = pLoadData->dbTrunk.dDalant - pBackupData->dbTrunk.dDalant;
     const long double goldDiff = pLoadData->dbTrunk.dGold - pBackupData->dbTrunk.dGold;
-    sprintf(
+    sprintf_s(
       sBuf,
       "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f) ( ^D:%.0f, ^G:%.0f push )\r\n",
       pLoadData->dbTrunk.bySlotNum,
@@ -680,7 +690,7 @@ void CMgrAvatorItemHistory::have_item(
   }
   else
   {
-    sprintf(
+    sprintf_s(
       sBuf,
       "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f)\r\n",
       pLoadData->dbTrunk.bySlotNum,
@@ -702,7 +712,7 @@ void CMgrAvatorItemHistory::have_item(
       {
         if (pBackupData->dbTrunk.m_List[slot].Key.IsFilled())
         {
-          sprintf(
+          sprintf_s(
             sBuf,
             "\t%s_%u_@%s[%I64u] %s\r\n",
             record->m_strCode,
@@ -713,7 +723,7 @@ void CMgrAvatorItemHistory::have_item(
         }
         else
         {
-          sprintf(
+          sprintf_s(
             sBuf,
             "\t%s_%u_@%s[%I64u] %s\t#push\r\n",
             record->m_strCode,
@@ -725,7 +735,7 @@ void CMgrAvatorItemHistory::have_item(
       }
       else
       {
-        sprintf(
+        sprintf_s(
           sBuf,
           "\t%s_%u_@%s[%I64u] %s\r\n",
           record->m_strCode,
@@ -767,7 +777,7 @@ sData[0] = 0;
   std::strcat(sData, "\r\n\t============\r\n\r\n");
   have_auto_item(n, pkInfo, byMaxCnt);
 
-  std::sprintf(
+  sprintf_s(
     sBuf,
     "LV: %d\r\nXP: %.0f (%d)\r\n$D: %u\r\n$G: %u\r\nPvP: %.0f\r\nCB: %.0f\r\nTIME: %d\r\n\r\n",
     pLoadData->dbAvator.m_byLevel,
@@ -780,7 +790,7 @@ sData[0] = 0;
     pLoadData->dbAvator.m_dwTotalPlayMin);
   std::strcat(sData, sBuf);
 
-  std::sprintf(sBuf, "EQUIP\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "EQUIP\r\n");
   std::strcat(sData, sBuf);
   for (int tableCode = 0; tableCode < 8; ++tableCode)
   {
@@ -789,7 +799,7 @@ sData[0] = 0;
     {
       _base_fld *record = g_Main.m_tblItemData[tableCode].GetRecord(equipKey->zItemIndex);
       const char *upgInfo = DisplayItemUpgInfo(tableCode, pLoadData->dbAvator.m_dwFixEquipLv[tableCode]);
-      std::sprintf(
+      sprintf_s(
         sBuf,
         "\t%s_@%s[%I64u]\r\n",
         record->m_strCode,
@@ -799,7 +809,7 @@ sData[0] = 0;
     }
   }
 
-  std::sprintf(sBuf, "EMBELL\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "EMBELL\r\n");
   std::strcat(sData, sBuf);
   for (int tableCode = 0; tableCode < 7; ++tableCode)
   {
@@ -808,12 +818,12 @@ sData[0] = 0;
     {
       _base_fld *record =
         g_Main.m_tblItemData[embellish->Key.byTableCode].GetRecord(embellish->Key.wItemIndex);
-      std::sprintf(sBuf, "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
+      sprintf_s(sBuf, sizeof(sBuf), "\t%s[%I64u]\r\n", record->m_strCode, embellish->lnUID);
       std::strcat(sData, sBuf);
     }
   }
 
-  std::sprintf(sBuf, "INVEN\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "INVEN\r\n");
   std::strcat(sData, sBuf);
   for (int slot = 0; slot < 20 * pLoadData->dbAvator.m_byBagNum; ++slot)
   {
@@ -825,9 +835,10 @@ sData[0] = 0;
       if (record)
       {
         const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
-        std::sprintf(
+        sprintf_s(
           sBuf,
-          "\t%s_%u_@%s[%I64u]\r\n",
+          sizeof(sBuf),
+          "\t%s_%I64u_@%s[%I64u]\r\n",
           record->m_strCode,
           listEntry->dwDur,
           upgInfo,
@@ -837,7 +848,7 @@ sData[0] = 0;
     }
   }
 
-  std::sprintf(sBuf, "FORCE\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "FORCE\r\n");
   std::strcat(sData, sBuf);
   for (int index = 0; index < 88; ++index)
   {
@@ -847,12 +858,12 @@ sData[0] = 0;
       const unsigned __int8 forceIndex = forceEntry->Key.GetIndex();
       _base_fld *record = g_Main.m_tblItemData[15].GetRecord(forceIndex);
       const unsigned int stat = forceEntry->Key.GetStat();
-      std::sprintf(sBuf, "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
+      sprintf_s(sBuf, sizeof(sBuf), "\t%s_%u[%I64u]\r\n", record->m_strCode, stat, forceEntry->lnUID);
       std::strcat(sData, sBuf);
     }
   }
 
-  std::sprintf(sBuf, "RES\r\n");
+  sprintf_s(sBuf, sizeof(sBuf), "RES\r\n");
   std::strcat(sData, sBuf);
   for (int index = 0; index < 20; ++index)
   {
@@ -862,7 +873,7 @@ sData[0] = 0;
       _base_fld *record = g_Main.m_tblItemData[18].GetRecord(listEntry->Key.wItemIndex);
       if (record)
       {
-        std::sprintf(sBuf, "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
+        sprintf_s(sBuf, sizeof(sBuf), "\t%s_%u\r\n", record->m_strCode, listEntry->dwDur);
         std::strcat(sData, sBuf);
       }
       else
@@ -881,7 +892,7 @@ sData[0] = 0;
   {
     if (raceCode == 1)
     {
-      std::sprintf(sBuf, "ANIMUS\r\n");
+      sprintf_s(sBuf, sizeof(sBuf), "ANIMUS\r\n");
       std::strcat(sData, sBuf);
       for (int index = 0; index < 4; ++index)
       {
@@ -889,9 +900,10 @@ sData[0] = 0;
         if (listEntry->Key.IsFilled())
         {
           _base_fld *record = g_Main.m_tblItemData[24].GetRecord(listEntry->Key.byItemIndex);
-          std::sprintf(
+          sprintf_s(
             sBuf,
-            "\t%s_%u[%I64u]\r\n",
+            sizeof(sBuf),
+            "\t%s_%I64u[%I64u]\r\n",
             record->m_strCode,
             listEntry->dwExp,
             listEntry->lnUID);
@@ -902,14 +914,14 @@ sData[0] = 0;
   }
   else
   {
-    std::sprintf(sBuf, "UNIT\r\n");
+    sprintf_s(sBuf, sizeof(sBuf), "UNIT\r\n");
     std::strcat(sData, sBuf);
     for (int index = 0; index < 4; ++index)
     {
       unsigned __int8 *unitData = &pLoadData->dbUnit.m_List[index].bySlotIndex;
       if (pLoadData->dbUnit.m_List[index].byFrame != 255)
       {
-        std::sprintf(
+        sprintf_s(
           sBuf,
           "\t%d>fr:%d %d/%d/%d/%d/%d/%d\r\n",
           index,
@@ -925,7 +937,7 @@ sData[0] = 0;
     }
   }
 
-  std::sprintf(
+  sprintf_s(
     sBuf,
     "TRUNK (slot:%d, ^D:%.0f, ^G:%.0f)\r\n",
     pLoadData->dbTrunk.bySlotNum,
@@ -941,9 +953,10 @@ sData[0] = 0;
         g_Main.m_tblItemData[listEntry->Key.byTableCode].GetRecord(listEntry->Key.wItemIndex);
       const unsigned __int8 raceIndex = listEntry->byRace;
       const char *upgInfo = DisplayItemUpgInfo(listEntry->Key.byTableCode, listEntry->dwUpt);
-      std::sprintf(
+      sprintf_s(
         sBuf,
-        "\t%s_%u_@%s[%I64u] %s\r\n",
+        sizeof(sBuf),
+        "\t%s_%I64u_@%s[%I64u] %s\r\n",
         record->m_strCode,
         listEntry->dwDur,
         upgInfo,
@@ -978,19 +991,19 @@ void CMgrAvatorItemHistory::take_ground_item(
       switch (byItemBoxCode)
       {
         case 2:
-          sprintf(destination, "cheat");
+          sprintf_s(destination, sizeof(destination), "cheat");
           break;
         case 3:
-          sprintf(destination, "reward");
+          sprintf_s(destination, sizeof(destination), "reward");
           break;
         case 4:
-          sprintf(destination, "crystal");
+          sprintf_s(destination, sizeof(destination), "crystal");
           break;
         case 6:
-          sprintf(destination, "holykeeper");
+          sprintf_s(destination, sizeof(destination), "holykeeper");
           break;
         default:
-          sprintf(destination, "loot");
+          sprintf_s(destination, sizeof(destination), "loot");
           break;
       }
     }
@@ -1005,9 +1018,10 @@ void CMgrAvatorItemHistory::take_ground_item(
     const int posZ = static_cast<int>(pfPos[2]);
     const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
 
-    sprintf(
+    sprintf_s(
       sData,
-      "PICK UP: %s_%u_@%s[%I64u] mob(%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+      sizeof(sData),
+      "PICK UP: %s_%I64u_@%s[%I64u] mob(%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
       record->m_strCode,
       pItem->m_dwDur,
       upgradeInfo,
@@ -1027,9 +1041,10 @@ void CMgrAvatorItemHistory::take_ground_item(
     const int posZ = static_cast<int>(pfPos[2]);
     const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
 
-    sprintf(
+    sprintf_s(
       sData,
-      "PICK UP: %s_%u_@%s[%I64u] twr(%s:%d id:%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+      sizeof(sData),
+      "PICK UP: %s_%I64u_@%s[%I64u] twr(%s:%d id:%s) \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
       record->m_strCode,
       pItem->m_dwDur,
       upgradeInfo,
@@ -1058,9 +1073,10 @@ void CMgrAvatorItemHistory::trans_ground_item(
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "TRANS: %s_%u_@%s[%I64u] taker(%s:%d id:%s) [%s %s]\r\n",
+    sizeof(sData),
+    "TRANS: %s_%I64u_@%s[%I64u] taker(%s:%d id:%s) [%s %s]\r\n",
     record->m_strCode,
     pItem->m_dwDur,
     upgradeInfo,
@@ -1129,7 +1145,7 @@ void CMgrAvatorItemHistory::post_getpresent(
     sprintf_s(buffer, 64, "NoItem");
   }
 
-  sprintf(
+  sprintf_s(
     sData,
     "[PostSystem : Get Item & Gold In Inven] - PostSerial[%u] - Item[%s] - Gold[%u] - Sender[%s] - [%s %s]\r\n",
     dwPostSerial,
@@ -1164,7 +1180,7 @@ void CMgrAvatorItemHistory::post_senditem(
     sprintf_s(buffer, 64, "NoItem");
   }
 
-  sprintf(
+  sprintf_s(
     sData,
     "[PostSystem : Send Item & Gold] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
     buffer,
@@ -1199,7 +1215,7 @@ void CMgrAvatorItemHistory::post_return(
     sprintf_s(buffer, 64, "NoItem");
   }
 
-  sprintf(
+  sprintf_s(
     sData,
     "[PostSystem : Get Return Item & Gold In Inven] - PostSerial[%u] - Item[%s] - Gold[%u] - Receiver[%s] - [%s %s]\r\n",
     dwPostSerial,
@@ -1416,7 +1432,7 @@ void CMgrAvatorItemHistory::patriarch_push_money(
   char *pszFileName)
 {
   std::memset(sData, 0, sizeof(sData));
-  sprintf(
+  sprintf_s(
     sData,
     "[PATRIARCH PUSH TAX MONEY]: PATRIARCH(%s) pay(D:%u) $D:%u [%s %s]\r\n",
     pwszPatriarchName,
@@ -1430,14 +1446,26 @@ void CMgrAvatorItemHistory::patriarch_push_money(
 void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%u\n", dwSerial, dwDalant, korTime);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "[RACE BOSS]giveback: Avator Serial:%d\t$D:%u\tTime:%u\n",
+    dwSerial,
+    dwDalant,
+    korTime);
   WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorItemHistory::raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName)
 {
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%u\n", dwSerial, ncost, korTime);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "[RACE BOSS]candidate >> Avator Serial:%d\t$D:%d \t^Time:%u\n",
+    dwSerial,
+    ncost,
+    korTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1448,7 +1476,7 @@ void CMgrAvatorItemHistory::guild_est_money_rollback(
   unsigned int dwLeftDalant,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD EST PAY ROLLBACK: guild(%s) pay(D:%u) $D:%u [%s %s]\r\n",
     pszGuildName,
@@ -1468,7 +1496,7 @@ void CMgrAvatorItemHistory::guild_pop_money(
   unsigned int dwLeftGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD MONEY POP: guild(%s) rev(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
     pszGuildName,
@@ -1490,7 +1518,7 @@ void CMgrAvatorItemHistory::guild_pop_money_rollback(
   unsigned int dwLeftGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD MONEY POP CANCEL: guild(%s) pay(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
     pszGuildName,
@@ -1505,7 +1533,13 @@ void CMgrAvatorItemHistory::guild_pop_money_rollback(
 
 void CMgrAvatorItemHistory::close(int n, char *pCloseCode, char *pszFileName)
 {
-std::sprintf(sData, "\r\nCLOSE %s [%s %s]\r\n\r\n", pCloseCode, this->m_szCurDate, this->m_szCurTime);
+sprintf_s(
+  sData,
+  sizeof(sData),
+  "\r\nCLOSE %s [%s %s]\r\n\r\n",
+  pCloseCode,
+  this->m_szCurDate,
+  this->m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1516,7 +1550,7 @@ void CMgrAvatorItemHistory::read_cashamount(
   char *pFileName)
 {
   sData[0] = 0;
-  sprintf(sData, "[READ_CASH] : AC:%u AV:%u Cash:%u\r\n", dwAC, dwAV, nCash);
+  sprintf_s(sData, sizeof(sData), "[READ_CASH] : AC:%u AV:%u Cash:%u\r\n", dwAC, dwAV, nCash);
   WriteFile(pFileName, sData);
 }
 
@@ -1561,7 +1595,7 @@ sData[0] = 0;
     (void)GetItemTableCode(record->m_strCode);
     const unsigned int korTime = GetKorLocalTime();
     const char *itemKorName = GetItemKorName(byTbl, wIndex);
-    sprintf(
+    sprintf_s(
       sData,
       "[BUY_CASHITEM] : %s(%s) [UID: %I64u] [Price:%d Discount:%d Num:%d Event: %d] [Remain:%d][T:%u/%d]\r\n",
       record->m_strCode,
@@ -1578,7 +1612,7 @@ sData[0] = 0;
   else
   {
     const unsigned int korTime = GetKorLocalTime();
-    sprintf(sData, "[BUY_CASHITEM] - [Report Server Developer][T:%u]\r\n", korTime);
+    sprintf_s(sData, sizeof(sData), "[BUY_CASHITEM] - [Report Server Developer][T:%u]\r\n", korTime);
   }
   WriteFile(pFileName, sData);
 }
@@ -1588,9 +1622,10 @@ void CMgrAvatorItemHistory::cash_item_use(int n, _STORAGE_LIST::_db_con *pUseIte
 sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[pUseItem->m_byTableCode].GetRecord(pUseItem->m_wItemIndex);
   const char *upgInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
-  sprintf(
+  sprintf_s(
     sBuf,
-    "USE CASH ITEM: %s_%u_@%s[%I64u]  [%s %s]\r\n",
+    sizeof(sBuf),
+    "USE CASH ITEM: %s_%I64u_@%s[%I64u]  [%s %s]\r\n",
     record->m_strCode,
     pUseItem->m_dwDur,
     upgInfo,
@@ -1617,7 +1652,7 @@ void CMgrAvatorItemHistory::cashitem_del_from_inven(
     (void)GetItemTableCode(record->m_strCode);
     const unsigned int korTime = GetKorLocalTime();
     const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
-    sprintf(
+    sprintf_s(
       sData,
       "[DEL_CASHITEM] : %s(%s) [UID:%I64u][T:%u/%d]\r\n",
       record->m_strCode,
@@ -1629,7 +1664,14 @@ void CMgrAvatorItemHistory::cashitem_del_from_inven(
   else
   {
     const unsigned int korTime = GetKorLocalTime();
-    sprintf(sData, "[DEL_CASHITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n", byTblCode, wItemIndex, lnUID, korTime);
+    sprintf_s(
+      sData,
+      sizeof(sData),
+      "[DEL_CASHITEM] : Tbl:%d Idx:%d [UID:%I64u][%u]\r\n",
+      byTblCode,
+      wItemIndex,
+      lnUID,
+      korTime);
   }
   WriteFile(pFN, sData);
 }
@@ -1643,14 +1685,28 @@ void CMgrAvatorItemHistory::rollback_cashitem(
 {
   sData[0] = 0;
   const unsigned int korTime = GetKorLocalTime();
-  sprintf(sData, "[CS_ROLLBACK_%s] UID:%I64u ICODE:%s Cash:%d[T:%u]\r\n", szRet, lnUID, strItemCode, nCash, korTime);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "[CS_ROLLBACK_%s] UID:%I64u ICODE:%s Cash:%d[T:%u]\r\n",
+    szRet,
+    lnUID,
+    strItemCode,
+    nCash,
+    korTime);
   WriteFile(pFileName, sData);
 }
 
 void CMgrAvatorItemHistory::used_cash(int nCurCash, int nUseCash, char *pFileName)
 {
   sData[0] = 0;
-  sprintf(sData, "[CASH_AMOUNT] : [cash:%d] - [used:%d] = [remain:%d]\r\n", nCurCash, nUseCash, nCurCash - nUseCash);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "[CASH_AMOUNT] : [cash:%d] - [used:%d] = [remain:%d]\r\n",
+    nCurCash,
+    nUseCash,
+    nCurCash - nUseCash);
   WriteFile(pFileName, sData);
 }
 
@@ -1668,7 +1724,7 @@ CMgrAvatorItemHistory::CMgrAvatorItemHistory()
     static_cast<DWORD>(sizeof(returned)),
     "..\\WorldInfo\\WorldInfo.ini");
   CreateDirectoryA(returned, nullptr);
-  sprintf_s(m_szStdPath, "%s\\Item", returned);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\Item", returned);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   _strdate(m_szCurDate);
@@ -1790,7 +1846,14 @@ void CMgrAvatorItemHistory::WriteFile(const char *pszFileName, const char *pszLo
 
 void CMgrAvatorItemHistory::char_copy(int n, char *pszDstName, unsigned int dwDstSerial, char *pszFileName)
 {
-sprintf(sData, "CHAR COPY: dst(%s:%d) [%s %s]\r\n", pszDstName, dwDstSerial, m_szCurDate, m_szCurTime);
+sprintf_s(
+  sData,
+  sizeof(sData),
+  "CHAR COPY: dst(%s:%d) [%s %s]\r\n",
+  pszDstName,
+  dwDstSerial,
+  m_szCurDate,
+  m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -1800,7 +1863,7 @@ void CMgrAvatorItemHistory::cheat_alter_money(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-sprintf(
+sprintf_s(
     sData,
     "CHEAT(MONEY): $D:%u $G:%u [%s %s]\r\n",
     dwNewDalant,
@@ -1817,7 +1880,7 @@ void CMgrAvatorItemHistory::cheat_add_item(
   char *pszFileName)
 {
 sData[0] = 0;
-  sprintf(sBuf, "CHEAT(ITEM+): num:%d [%s %s]\r\n", byAddNum, m_szCurDate, m_szCurTime);
+  sprintf_s(sBuf, sizeof(sBuf), "CHEAT(ITEM+): num:%d [%s %s]\r\n", byAddNum, m_szCurDate, m_szCurTime);
   std::strcat(sData, sBuf);
   for (int index = 0; index < byAddNum; ++index)
   {
@@ -1825,9 +1888,10 @@ sData[0] = 0;
     {
       _base_fld *record = g_Main.m_tblItemData[pItem[index].m_byTableCode].GetRecord(pItem[index].m_wItemIndex);
       const char *upgInfo = DisplayItemUpgInfo(pItem[index].m_byTableCode, pItem[index].m_dwLv);
-      sprintf(
+      sprintf_s(
         sBuf,
-        "\t+ %s_%u_@%s[%I64u]\r\n",
+        sizeof(sBuf),
+        "\t+ %s_%I64u_@%s[%I64u]\r\n",
         record->m_strCode,
         pItem[index].m_dwDur,
         upgInfo,
@@ -1845,7 +1909,7 @@ void CMgrAvatorItemHistory::cheat_del_item(
   char *pszFileName)
 {
 sData[0] = 0;
-  sprintf(sBuf, "CHEAT(ITEM-): num:%d [%s %s]\r\n", byDelNum, m_szCurDate, m_szCurTime);
+  sprintf_s(sBuf, sizeof(sBuf), "CHEAT(ITEM-): num:%d [%s %s]\r\n", byDelNum, m_szCurDate, m_szCurTime);
   std::strcat(sData, sBuf);
   for (int index = 0; index < byDelNum; ++index)
   {
@@ -1853,9 +1917,10 @@ sData[0] = 0;
     {
       _base_fld *record = g_Main.m_tblItemData[pItem[index].m_byTableCode].GetRecord(pItem[index].m_wItemIndex);
       const char *upgInfo = DisplayItemUpgInfo(pItem[index].m_byTableCode, pItem[index].m_dwLv);
-      sprintf(
+      sprintf_s(
         sBuf,
-        "\t- %s_%u_@%s[%I64u]\r\n",
+        sizeof(sBuf),
+        "\t- %s_%I64u_@%s[%I64u]\r\n",
         record->m_strCode,
         pItem[index].m_dwDur,
         upgInfo,
@@ -1869,9 +1934,10 @@ sData[0] = 0;
 void CMgrAvatorItemHistory::delete_npc_quest_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
 {
 _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
-  sprintf(
+  sprintf_s(
     sData,
-    "DELETE NPC QUEST ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    sizeof(sData),
+    "DELETE NPC QUEST ITEM : %s_%I64u_[%I64u] [%s %s]\r\n",
     record->m_strCode,
     pItem->m_dwDur,
     pItem->m_lnUID,
@@ -1900,9 +1966,10 @@ WriteFile(pszFileName, logBuffer);
 void CMgrAvatorItemHistory::back_trap_item(int n, _STORAGE_LIST::_db_con *pItem, char *pszFileName)
 {
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
-  sprintf(
+  sprintf_s(
     sData,
-    "BACK TRAP ITEM : %s_%u_[%I64u] [%s %s]\r\n",
+    sizeof(sData),
+    "BACK TRAP ITEM : %s_%I64u_[%I64u] [%s %s]\r\n",
     record->m_strCode,
     pItem->m_dwDur,
     pItem->m_lnUID,
@@ -1920,7 +1987,7 @@ void CMgrAvatorItemHistory::pay_money(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "PAY: %s pay(D:%u G:%u) $D:%u $G:%u\r\n",
     pszClause,
@@ -1951,7 +2018,7 @@ void CMgrAvatorItemHistory::tuning_unit(
 #pragma pack(pop)
   _unit_tuning_log_view *unitData = reinterpret_cast<_unit_tuning_log_view *>(pData);
 
-  sprintf(
+  sprintf_s(
     sData,
     "UNIT TUNING: %d>fr:%d %d/%d/%d/%d/%d/%d pay(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
     bySlotIndex,
@@ -1980,7 +2047,7 @@ void CMgrAvatorItemHistory::reward_add_money(
   unsigned int dwSumGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "REWARD: %s /MONEY rev(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
     pszClause,
@@ -2006,9 +2073,10 @@ void CMgrAvatorItemHistory::reward_add_item(
   const int tableCode = pItem->m_byTableCode;
   const char *upgradeInfo = DisplayItemUpgInfo(tableCode, pItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "REWARD: %s /ITEM %s_%u_@%s[%I64u] [%s %s]\r\n",
+    sizeof(sData),
+    "REWARD: %s /ITEM %s_%I64u_@%s[%I64u] [%s %s]\r\n",
     pszClause,
     record->m_strCode,
     pItem->m_dwDur,
@@ -2031,9 +2099,10 @@ void CMgrAvatorItemHistory::throw_ground_item(
   const int posX = static_cast<int>(pfPos[0]);
   const int posY = static_cast<int>(pfPos[1]);
   const int posZ = static_cast<int>(pfPos[2]);
-  sprintf(
+  sprintf_s(
     sData,
-    "DUMP: %s_%u_@%s[%I64u] \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
+    sizeof(sData),
+    "DUMP: %s_%I64u_@%s[%I64u] \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
     record->m_strCode,
     pItem->m_dwDur,
     upgradeInfo,
@@ -2055,7 +2124,7 @@ void CMgrAvatorItemHistory::exchange_money(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "EXCHANGE: D:%u->$D:%u / G:%u->$G:%u [%s %s]\r\n",
     dwCurDalant,
@@ -2078,7 +2147,7 @@ void CMgrAvatorItemHistory::buy_item(
   char *pszFileName)
 {
   sData[0] = '\0';
-  sprintf(
+  sprintf_s(
     sBuf,
     "BUY: num:%d pay(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
     byOfferNum,
@@ -2096,7 +2165,14 @@ void CMgrAvatorItemHistory::buy_item(
     _base_fld *record =
       g_Main.m_tblItemData[pOffer[j].Item.m_byTableCode].GetRecord(pOffer[j].Item.m_wItemIndex);
     const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
-    sprintf(sBuf, "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "\t+ %s_%I64u_@%s[%I64u]\r\n",
+      record->m_strCode,
+      pItem->m_dwDur,
+      upgradeInfo,
+      pItem->m_lnUID);
     std::strcat(sData, sBuf);
   }
 WriteFile(pszFileName, sData);
@@ -2113,7 +2189,7 @@ void CMgrAvatorItemHistory::sell_item(
   char *pszFileName)
 {
   sData[0] = '\0';
-  sprintf(
+  sprintf_s(
     sBuf,
     "SELL: num:%u rev(D:%u G:%u) $D:%u $G:%u [%s %s]\r\n",
     byOfferNum,
@@ -2131,12 +2207,25 @@ void CMgrAvatorItemHistory::sell_item(
     _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
     if (IsOverLapItem(pItem->m_byTableCode))
     {
-      sprintf(sBuf, "\t- %s_%u[%I64u]\r\n", record->m_strCode, pOffer[j].byAmount, pItem->m_lnUID);
+      sprintf_s(
+        sBuf,
+        sizeof(sBuf),
+        "\t- %s_%u[%I64u]\r\n",
+        record->m_strCode,
+        pOffer[j].byAmount,
+        pItem->m_lnUID);
     }
     else
     {
       const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
-      sprintf(sBuf, "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+      sprintf_s(
+        sBuf,
+        sizeof(sBuf),
+        "\t- %s_%I64u_@%s[%I64u]\r\n",
+        record->m_strCode,
+        pItem->m_dwDur,
+        upgradeInfo,
+        pItem->m_lnUID);
     }
     std::strcat(sData, sBuf);
   }
@@ -2172,7 +2261,7 @@ void CMgrAvatorItemHistory::make_item(
   sData[0] = 0;
   if (byRetCode)
   {
-    std::sprintf(sBuf, "MAKE(FAIL): [%s %s]\r\n", m_szCurDate, m_szCurTime);
+    sprintf_s(sBuf, sizeof(sBuf), "MAKE(FAIL): [%s %s]\r\n", m_szCurDate, m_szCurTime);
     std::strcat(sData, sBuf);
   }
   else
@@ -2181,9 +2270,9 @@ void CMgrAvatorItemHistory::make_item(
     if (bInsert)
     {
       const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
-      std::sprintf(
+      sprintf_s(
         sBuf,
-        "MAKE(SUCC): %s_%u_@%s[%I64u] [%s %s]\r\n",
+        "MAKE(SUCC): %s_%I64u_@%s[%I64u] [%s %s]\r\n",
         record->m_strCode,
         pMakeItem->m_dwDur,
         upgradeInfo,
@@ -2194,9 +2283,9 @@ void CMgrAvatorItemHistory::make_item(
     else
     {
       const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
-      std::sprintf(
+      sprintf_s(
         sBuf,
-        "MAKE(QUEST): %s_%u_@%s[%I64u] [%s %s]\r\n",
+        "MAKE(QUEST): %s_%I64u_@%s[%I64u] [%s %s]\r\n",
         record->m_strCode,
         pMakeItem->m_dwDur,
         upgradeInfo,
@@ -2211,7 +2300,7 @@ void CMgrAvatorItemHistory::make_item(
   {
     _base_fld *record =
       g_Main.m_tblItemData[pMaterial[j].m_byTableCode].GetRecord(pMaterial[j].m_wItemIndex);
-    std::sprintf(sBuf, "\t- %s_%d[%I64]\r\n", record->m_strCode, pbyMtrNum[j], pMaterial[j].m_lnUID);
+    sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%u[%I64u]\r\n", record->m_strCode, pbyMtrNum[j], pMaterial[j].m_lnUID);
     std::strcat(sData, sBuf);
   }
 WriteFile(pszFileName, sData);
@@ -2226,15 +2315,20 @@ void CMgrAvatorItemHistory::cheat_make_item_no_material(
   sData[0] = 0;
   if (byRetCode)
   {
-    std::sprintf(sBuf, "MAKE(FAIL): [%s %s] ( CHEAT_MATERIAL ) \r\n", m_szCurDate, m_szCurTime);
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "MAKE(FAIL): [%s %s] ( CHEAT_MATERIAL ) \r\n",
+      m_szCurDate,
+      m_szCurTime);
   }
   else
   {
     _base_fld *record = g_Main.m_tblItemData[pMakeItem->m_byTableCode].GetRecord(pMakeItem->m_wItemIndex);
     const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
-    std::sprintf(
+    sprintf_s(
       sBuf,
-      "MAKE(SUCC): %s_%u_@%s[%I64u] [%s %s] ( CHEAT_MATERIAL ) \r\n",
+      "MAKE(SUCC): %s_%I64u_@%s[%I64u] [%s %s] ( CHEAT_MATERIAL ) \r\n",
       record->m_strCode,
       pMakeItem->m_dwDur,
       upgradeInfo,
@@ -2267,9 +2361,9 @@ void CMgrAvatorItemHistory::grade_up_item(
     switch (byErrCode)
     {
       case 100:
-        std::sprintf(
+        sprintf_s(
           sBuf,
-          "UPGRADE(FAIL): %s_%u_@%s[%I64u] [%s %s]\r\n",
+          "UPGRADE(FAIL): %s_%I64u_@%s[%I64u] [%s %s]\r\n",
           record->m_strCode,
           pItem->m_dwDur,
           beforeUpgrade,
@@ -2281,9 +2375,9 @@ void CMgrAvatorItemHistory::grade_up_item(
       case 101:
       {
         const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
-        std::sprintf(
+        sprintf_s(
           sBuf,
-          "UPGRADE(ZERO): %s_%u_@%s[%I64u]->%s [%s %s]\r\n",
+          "UPGRADE(ZERO): %s_%I64u_@%s[%I64u]->%s [%s %s]\r\n",
           record->m_strCode,
           pItem->m_dwDur,
           beforeUpgrade,
@@ -2295,9 +2389,9 @@ void CMgrAvatorItemHistory::grade_up_item(
         break;
       }
       case 102:
-        std::sprintf(
+        sprintf_s(
           sBuf,
-          "UPGRADE(LOST): %s_%u_@%s[%I64u] [%s %s]\r\n",
+          "UPGRADE(LOST): %s_%I64u_@%s[%I64u] [%s %s]\r\n",
           record->m_strCode,
           pItem->m_dwDur,
           beforeUpgrade,
@@ -2313,9 +2407,9 @@ void CMgrAvatorItemHistory::grade_up_item(
   else
   {
     const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
-    std::sprintf(
+    sprintf_s(
       sBuf,
-      "UPGRADE(SUCC): %s_%u_@%s[%I64u]->%s [%s %s]\r\n",
+      "UPGRADE(SUCC): %s_%I64u_@%s[%I64u]->%s [%s %s]\r\n",
       record->m_strCode,
       pItem->m_dwDur,
       beforeUpgrade,
@@ -2328,13 +2422,13 @@ void CMgrAvatorItemHistory::grade_up_item(
 
   _base_fld *talikRecord =
     g_Main.m_tblItemData[pTalik->m_byTableCode].GetRecord(pTalik->m_wItemIndex);
-  std::sprintf(sBuf, "\t- T %s \r\n", talikRecord->m_strCode);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- T %s \r\n", talikRecord->m_strCode);
   std::strcat(sData, sBuf);
   for (int j = 0; j < byJewelNum; ++j)
   {
     _base_fld *jewelRecord =
       g_Main.m_tblItemData[pJewel[j].m_byTableCode].GetRecord(pJewel[j].m_wItemIndex);
-    std::sprintf(sBuf, "\t- R %s\r\n", jewelRecord->m_strCode);
+    sprintf_s(sBuf, sizeof(sBuf), "\t- R %s\r\n", jewelRecord->m_strCode);
     std::strcat(sData, sBuf);
   }
 WriteFile(pszFileName, sData);
@@ -2354,9 +2448,9 @@ void CMgrAvatorItemHistory::grade_down_item(
 
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *afterUpgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, dwAfterLv);
-  std::sprintf(
+  sprintf_s(
     sBuf,
-    "DOWNGRADE: %s_%u_@%s[%I64u] -> %s [%s %s]\r\n",
+    "DOWNGRADE: %s_%I64u_@%s[%I64u] -> %s [%s %s]\r\n",
     record->m_strCode,
     pItem->m_dwDur,
     beforeUpgrade,
@@ -2368,7 +2462,7 @@ void CMgrAvatorItemHistory::grade_down_item(
 
   _base_fld *talikRecord =
     g_Main.m_tblItemData[pTalik->m_byTableCode].GetRecord(pTalik->m_wItemIndex);
-  std::sprintf(sBuf, "\t- T %s\r\n", talikRecord->m_strCode);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- T %s\r\n", talikRecord->m_strCode);
   std::strcat(sData, sBuf);
 WriteFile(pszFileName, sData);
 }
@@ -2386,9 +2480,9 @@ void CMgrAvatorItemHistory::combine_item(
   sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[pMakeItem->m_byTableCode].GetRecord(pMakeItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pMakeItem->m_byTableCode, pMakeItem->m_dwLv);
-  std::sprintf(
+  sprintf_s(
     sBuf,
-    "COMBINE: %s_%u_@%s[%I64u] pay(D:%u) $D:%u [%s %s]\r\n",
+    "COMBINE: %s_%I64u_@%s[%I64u] pay(D:%u) $D:%u [%s %s]\r\n",
     record->m_strCode,
     pMakeItem->m_dwDur,
     upgradeInfo,
@@ -2402,7 +2496,7 @@ void CMgrAvatorItemHistory::combine_item(
   {
     _base_fld *materialRecord =
       g_Main.m_tblItemData[pMaterial[j].m_byTableCode].GetRecord(pMaterial[j].m_wItemIndex);
-    std::sprintf(sBuf, "\t- %s_%d\r\n", materialRecord->m_strCode, pbyMtrNum[j]);
+    sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%d\r\n", materialRecord->m_strCode, pbyMtrNum[j]);
     std::strcat(sData, sBuf);
   }
 WriteFile(pszFileName, sData);
@@ -2417,9 +2511,9 @@ void CMgrAvatorItemHistory::exchange_item(
   sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[pOutItem->m_byTableCode].GetRecord(pOutItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pOutItem->m_byTableCode, pOutItem->m_dwLv);
-  std::sprintf(
+  sprintf_s(
     sBuf,
-    "EXCHANGE: %s_%u_@%s[%I64u] [%s %s]\r\n",
+    "EXCHANGE: %s_%I64u_@%s[%I64u] [%s %s]\r\n",
     record->m_strCode,
     pOutItem->m_dwDur,
     upgradeInfo,
@@ -2429,7 +2523,7 @@ void CMgrAvatorItemHistory::exchange_item(
   std::strcat(sData, sBuf);
   _base_fld *useRecord = g_Main.m_tblItemData[pUseItem->m_byTableCode].GetRecord(pUseItem->m_wItemIndex);
   const char *useUpgradeInfo = DisplayItemUpgInfo(pUseItem->m_byTableCode, pUseItem->m_dwLv);
-  std::sprintf(sBuf, "\t- %s_%u_%s\r\n", useRecord->m_strCode, pUseItem->m_dwDur, useUpgradeInfo);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%I64u_%s\r\n", useRecord->m_strCode, pUseItem->m_dwDur, useUpgradeInfo);
   std::strcat(sData, sBuf);
 WriteFile(pszFileName, sData);
 }
@@ -2442,7 +2536,14 @@ void CMgrAvatorItemHistory::cut_clear_item(
   char *pszFileName)
 {
 sData[0] = '\0';
-  std::sprintf(sBuf, "CUT SELL: rev(G:%u) $G:%u [%s %s]\r\n", dwAddGold, dwNewGold, m_szCurDate, m_szCurTime);
+  sprintf_s(
+    sBuf,
+    sizeof(sBuf),
+    "CUT SELL: rev(G:%u) $G:%u [%s %s]\r\n",
+    dwAddGold,
+    dwNewGold,
+    m_szCurDate,
+    m_szCurTime);
   std::strcat(sData, sBuf);
 
   for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
@@ -2453,7 +2554,7 @@ sData[0] = '\0';
     }
 
     _base_fld *record = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
-    std::sprintf(sBuf, "\t- %s_%d\r\n", record->m_strCode, pwCuttingResBuffer[resourceIndex]);
+    sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%d\r\n", record->m_strCode, pwCuttingResBuffer[resourceIndex]);
     std::strcat(sData, sBuf);
   }
 
@@ -2557,9 +2658,9 @@ void CMgrAvatorItemHistory::reg_auto_trade(
   _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "REG_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
+    "REG_AUTO_TRADE: reg(%u) %s_%I64u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
     dwRegistSerial,
     record->m_strCode,
     pRegItem->m_dwDur,
@@ -2583,9 +2684,9 @@ void CMgrAvatorItemHistory::self_cancel_auto_trade(
   _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "CANCEL_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+    "CANCEL_AUTO_TRADE: reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
     dwRegistSerial,
     record->m_strCode,
     pRegItem->m_dwDur,
@@ -2606,9 +2707,9 @@ void CMgrAvatorItemHistory::time_out_cancel_auto_trade(
   _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "TIMEOUT_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+    "TIMEOUT_AUTO_TRADE: reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
     dwRegistSerial,
     record->m_strCode,
     pRegItem->m_dwDur,
@@ -2632,9 +2733,9 @@ void CMgrAvatorItemHistory::price_auto_trade(
   _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "REPRICE_AUTO_TRADE: reg(%u) %s_%u_@%s[%I64u] tax(%u) pr(D:%u -> %u) [%s %s]\r\n",
+    "REPRICE_AUTO_TRADE: reg(%u) %s_%I64u_@%s[%I64u] tax(%u) pr(D:%u -> %u) [%s %s]\r\n",
     dwRegistSerial,
     record->m_strCode,
     pRegItem->m_dwDur,
@@ -2661,9 +2762,9 @@ void CMgrAvatorItemHistory::re_reg_auto_trade(
   _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
 
-  sprintf(
+  sprintf_s(
     sData,
-    "RE_REG_AUTO_TRADE: re_reg(%u) %s_%u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
+    "RE_REG_AUTO_TRADE: re_reg(%u) %s_%I64u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
     dwRegistSerial,
     record->m_strCode,
     pRegItem->m_dwDur,
@@ -2709,7 +2810,7 @@ void CMgrAvatorItemHistory::auto_trade_sell(
 
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
-  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%I64u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
   strcat_s(sData, sizeof(sData), sBuf);
 
   WriteFile(pszFileName, sData);
@@ -2744,7 +2845,7 @@ void CMgrAvatorItemHistory::auto_trade_buy(
 
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
-  sprintf_s(sBuf, sizeof(sBuf), "\t+ %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+  sprintf_s(sBuf, sizeof(sBuf), "\t+ %s_%I64u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
   strcat_s(sData, sizeof(sData), sBuf);
 
   WriteFile(pszFileName, sData);
@@ -2752,7 +2853,7 @@ void CMgrAvatorItemHistory::auto_trade_buy(
 
 void CMgrAvatorItemHistory::item_serial_full(int n, char *pszFileName)
 {
-  sprintf(sData, "\r\nITEM SERIAL FULL [%s %s]\r\n", m_szCurDate, m_szCurTime);
+  sprintf_s(sData, sizeof(sData), "\r\nITEM SERIAL FULL [%s %s]\r\n", m_szCurDate, m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -2784,7 +2885,7 @@ void CMgrAvatorItemHistory::combine_ex_reward_item(
 
   const unsigned __int16 excelIndex = GetExcelIndexFromCombineExCheckKey(pCombineDB->m_dwCheckKey);
   const int listCount = pCombineDB->m_byItemListNum >= 24 ? 24 : pCombineDB->m_byItemListNum;
-  sprintf(
+  sprintf_s(
     sData,
     "\r\nCOMBINE_EX[REWARD]\r\n\tCombine%d@%d, type:%d, num:%d, (D:%u) [%s %s]\r\n",
     excelIndex + 1,
@@ -2807,13 +2908,20 @@ void CMgrAvatorItemHistory::combine_ex_reward_item(
     if (pbyRewardTypeList[itemIndex] == 2)
     {
       const char *upgInfo = DisplayItemUpgInfo(list->Key.byTableCode, list->dwUpt);
-      sprintf(sBuf, "\t%s_%u_@%s World \r\n", record->m_strCode, list->dwDur, upgInfo);
+      sprintf_s(sBuf, sizeof(sBuf), "\t%s_%u_@%s World \r\n", record->m_strCode, list->dwDur, upgInfo);
       std::strcat(sData, sBuf);
     }
     else if (pbyRewardTypeList[itemIndex] == 1)
     {
       const char *upgInfo = DisplayItemUpgInfo(list->Key.byTableCode, list->dwUpt);
-      sprintf(sBuf, "\t%s_%u_@%s[%I64u] Inven \r\n", record->m_strCode, list->dwDur, upgInfo, lnUIDs[itemIndex]);
+      sprintf_s(
+        sBuf,
+        sizeof(sBuf),
+        "\t%s_%I64u_@%s[%I64u] Inven \r\n",
+        record->m_strCode,
+        list->dwDur,
+        upgInfo,
+        lnUIDs[itemIndex]);
       std::strcat(sData, sBuf);
     }
   }
@@ -2840,7 +2948,7 @@ void CMgrAvatorItemHistory::combine_ex_using_material(
   const unsigned __int16 excelIndex = GetExcelIndexFromCombineExCheckKey(dwCheckKey);
   if (bSucc)
   {
-    sprintf(
+    sprintf_s(
       sData,
       "\r\nCOMBINE_EX[CONSUME]\r\n\tCombine%d@%d,  num:%d, (D:%d) [%s %s] : Succ \r\n",
       excelIndex + 1,
@@ -2852,7 +2960,7 @@ void CMgrAvatorItemHistory::combine_ex_using_material(
   }
   else
   {
-    sprintf(
+    sprintf_s(
       sData,
       "\r\nCOMBINE_EX[CONSUME]\r\n\tCombine%d@%d,  num:%d, (D:%d) [%s %s] : Fail( %u ) \r\n",
       excelIndex + 1,
@@ -2880,9 +2988,10 @@ void CMgrAvatorItemHistory::combine_ex_using_material(
 
     if (pbyMtrNum[itemIndex])
     {
-      sprintf(
+      sprintf_s(
         sBuf,
-        "\t - %s_%u [%u] [%I64u] Delete \r\n",
+        sizeof(sBuf),
+        "\t - %s_%I64u [%u] [%I64u] Delete \r\n",
         record->m_strCode,
         material->m_dwDur,
         pbyMtrNum[itemIndex],
@@ -2890,9 +2999,10 @@ void CMgrAvatorItemHistory::combine_ex_using_material(
     }
     else
     {
-      sprintf(
+      sprintf_s(
         sBuf,
-        "\t - %s_%u [%u] [%I64u]\r\n",
+        sizeof(sBuf),
+        "\t - %s_%I64u [%u] [%I64u]\r\n",
         record->m_strCode,
         material->m_dwDur,
         pbyMtrNum[itemIndex],
@@ -2915,7 +3025,7 @@ void CMgrAvatorItemHistory::cut_item(
 {
   sData[0] = 0;
   _base_fld *record = g_Main.m_tblItemData[pOreItem->m_byTableCode].GetRecord(pOreItem->m_wItemIndex);
-  sprintf(
+  sprintf_s(
     sBuf,
     "CUT: %s * %d pay(D:%u) $D:%u [%s %s]\r\n",
     record->m_strCode,
@@ -2934,7 +3044,7 @@ void CMgrAvatorItemHistory::cut_item(
     }
 
     _base_fld *resourceRecord = g_Main.m_tblItemData[18].GetRecord(resourceIndex);
-    sprintf(sBuf, "\t+ %s_%d\r\n", resourceRecord->m_strCode, pwCuttingResBuffer[resourceIndex]);
+    sprintf_s(sBuf, sizeof(sBuf), "\t+ %s_%d\r\n", resourceRecord->m_strCode, pwCuttingResBuffer[resourceIndex]);
     std::strcat(sData, sBuf);
   }
 
@@ -2951,7 +3061,7 @@ void CMgrAvatorItemHistory::buy_unit(
   char *pszFileName)
 {
   _UNIT_DB_BASE::_LIST *unitData = static_cast<_UNIT_DB_BASE::_LIST *>(pData);
-  sprintf(
+  sprintf_s(
     sData,
     "UNIT BUY: %d>fr:%d %d/%d/%d/%d/%d/%d pay(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
     bySlotIndex,
@@ -2977,7 +3087,14 @@ void CMgrAvatorItemHistory::destroy_unit(
   unsigned __int8 byFrameCode,
   char *pszFileName)
 {
-  sprintf(sData, "UNIT DESTROY: %d>fr:%d [%s %s]\r\n", bySlotIndex, byFrameCode, m_szCurDate, m_szCurTime);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "UNIT DESTROY: %d>fr:%d [%s %s]\r\n",
+    bySlotIndex,
+    byFrameCode,
+    m_szCurDate,
+    m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -2988,7 +3105,7 @@ void CMgrAvatorItemHistory::exchange_pvp_gold(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "CB EXCHANGE: rev(G:%d) $D:%d $G:%d [%s %s]\r\n",
     dwPoint,
@@ -3006,7 +3123,7 @@ void CMgrAvatorItemHistory::guild_est_money(
   unsigned int dwLeftDalant,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD EST PAY: guild(%s) pay(D:%u) $D:%u [%s %s]\r\n",
     pszGuildName,
@@ -3026,7 +3143,7 @@ void CMgrAvatorItemHistory::guild_push_money(
   unsigned int dwLeftGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD MONEY PUSH: guild(%s) pay(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
     pszGuildName,
@@ -3048,7 +3165,7 @@ void CMgrAvatorItemHistory::guild_push_money_rollback(
   unsigned int dwLeftGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "GUILD MONEY PUSH CANCEL: guild(%s) rev(D:%u G%u) $D:%u $G:%u [%s %s]\r\n",
     pszGuildName,
@@ -3088,7 +3205,7 @@ void CMgrAvatorItemHistory::login_cancel_auto_trade(
     sprintf_s(
       sBuf,
       sizeof(sBuf),
-      "TIMEOUT_AUTO_TRADE: login canceldate(%04d-%02d-%02d %02d:%02d:%02d) reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+      "TIMEOUT_AUTO_TRADE: login canceldate(%04d-%02d-%02d %02d:%02d:%02d) reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
       localTime->tm_year + 1900,
       localTime->tm_mon + 1,
       localTime->tm_mday,
@@ -3109,7 +3226,7 @@ void CMgrAvatorItemHistory::login_cancel_auto_trade(
     sprintf_s(
       sBuf,
       sizeof(sBuf),
-      "TIMEOUT_AUTO_TRADE: login canceldate(invalid(%u)) reg(%u) %s_%u_@%s[%I64u] [%s %s]\r\n",
+      "TIMEOUT_AUTO_TRADE: login canceldate(invalid(%u)) reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
       static_cast<unsigned int>(tResultTime),
       dwRegistSerial,
       record->m_strCode,
@@ -3145,7 +3262,7 @@ void CMgrAvatorItemHistory::personal_amine_install(
     sprintf_s(
       buffer,
       sizeof(sData) - static_cast<size_t>(buffer - sData),
-      "[%02d]%s >> num: %d\r\n",
+      "[%02d]%s >> num: %I64u\r\n",
       pCon->m_List[itemIndex].m_byStorageIndex,
       oreName,
       pCon->m_List[itemIndex].m_dwDur);
@@ -3162,7 +3279,7 @@ void CMgrAvatorItemHistory::raceboss_vote(
   char *pszFileName)
 {
   const unsigned int korLocalTime = GetKorLocalTime();
-  sprintf(
+  sprintf_s(
     sData,
     "[RACE BOSS]vote: Serial:%d\tTarget:%s(%d)\tTime:%d\n",
     dwSerial,
@@ -3183,7 +3300,7 @@ void CMgrAvatorItemHistory::sell_unit(
   unsigned int dwNewGold,
   char *pszFileName)
 {
-  sprintf(
+  sprintf_s(
     sData,
     "UNIT SELL: %d>fr:%d gauge:%.0f%% rev(D:%u) pay(D:%u) $D:%u $G:%u [%s %s]\r\n",
     bySlotIndex,
@@ -3218,7 +3335,7 @@ void CMgrAvatorItemHistory::trade(
   char *pszFileName)
 {
   sData[0] = 0;
-  sprintf(
+  sprintf_s(
     sBuf,
     "TRADE: dst(%s:%d id:%s) pay(D:%u G:%u) rev(D:%u G:%u) $D:%u $G:%u \t{POS:%s (%d, %d, %d)} [%s %s]\r\n",
     pszDstName,
@@ -3242,9 +3359,10 @@ void CMgrAvatorItemHistory::trade(
   {
     _base_fld *record = g_Main.m_tblItemData[pOutItem[itemIndex].m_byTableCode].GetRecord(pOutItem[itemIndex].m_wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(pOutItem[itemIndex].m_byTableCode, pOutItem[itemIndex].m_dwLv);
-    sprintf(
+    sprintf_s(
       sBuf,
-      "\t- %s_%u_@%s[%I64u]\r\n",
+      sizeof(sBuf),
+      "\t- %s_%I64u_@%s[%I64u]\r\n",
       record->m_strCode,
       pOutItem[itemIndex].m_dwDur,
       upgInfo,
@@ -3256,9 +3374,10 @@ void CMgrAvatorItemHistory::trade(
   {
     _base_fld *record = g_Main.m_tblItemData[pInItem[itemIndex].m_byTableCode].GetRecord(pInItem[itemIndex].m_wItemIndex);
     const char *upgInfo = DisplayItemUpgInfo(pInItem[itemIndex].m_byTableCode, pInItem[itemIndex].m_dwLv);
-    sprintf(
+    sprintf_s(
       sBuf,
-      "\t+ %s_%u_@%s[%I64u]\r\n",
+      sizeof(sBuf),
+      "\t+ %s_%I64u_@%s[%I64u]\r\n",
       record->m_strCode,
       pInItem[itemIndex].m_dwDur,
       upgInfo,
@@ -3280,9 +3399,9 @@ void CMgrAvatorItemHistory::trunk_io_item(
   const char *ioType[2] = { "OUT", "IN" };
   _base_fld *record = g_Main.m_tblItemData[pIOItem->m_byTableCode].GetRecord(pIOItem->m_wItemIndex);
   const char *upgInfo = DisplayItemUpgInfo(pIOItem->m_byTableCode, pIOItem->m_dwLv);
-  sprintf(
+  sprintf_s(
     sData,
-    "TRUNK ITEM %s: %s_%u_@%s[%I64u] pay(%d) $D:%d [%s %s]\r\n",
+    "TRUNK ITEM %s: %s_%I64u_@%s[%I64u] pay(%d) $D:%d [%s %s]\r\n",
     ioType[bInput ? 1 : 0],
     record->m_strCode,
     pIOItem->m_dwDur,
@@ -3308,7 +3427,7 @@ void CMgrAvatorItemHistory::trunk_io_money(
   char *pszFileName)
 {
   const char *ioType[2] = { "OUT", "IN" };
-  sprintf(
+  sprintf_s(
     sData,
     "TRUNK MONEY %s: io(D:%u, G:%u) pay(%u) $D:%u $G:%u \t^D%u ^G:%u [%s %s]\r\n",
     ioType[bInput ? 1 : 0],
@@ -3336,9 +3455,9 @@ void CMgrAvatorItemHistory::trunk_swap_item(
   _base_fld *outRecord = g_Main.m_tblItemData[pOutputItem->m_byTableCode].GetRecord(pOutputItem->m_wItemIndex);
   const char *inUpgInfo = DisplayItemUpgInfo(pInputItem->m_byTableCode, pInputItem->m_dwLv);
   const char *outUpgInfo = DisplayItemUpgInfo(pOutputItem->m_byTableCode, pOutputItem->m_dwLv);
-  sprintf(
+  sprintf_s(
     sData,
-    "TRUNK ITEM SWAP: IN> %s_%u_@%s[%I64u] OUT> %s_%d_@%s[%I64u], pay(%u) $D:%u [%s %s]\r\n",
+    "TRUNK ITEM SWAP: IN> %s_%I64u_@%s[%I64u] OUT> %s_%I64u_@%s[%I64u], pay(%u) $D:%u [%s %s]\r\n",
     inRecord->m_strCode,
     pInputItem->m_dwDur,
     inUpgInfo,
@@ -3412,7 +3531,8 @@ void CMgrAvatorItemHistory::auto_trade_login_sell(
 
   _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
   const char *upgInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
-  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgInfo, pItem->m_lnUID);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%I64u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgInfo, pItem->m_lnUID);
   strcat_s(sData, sizeof(sData), sBuf);
 }
+
 

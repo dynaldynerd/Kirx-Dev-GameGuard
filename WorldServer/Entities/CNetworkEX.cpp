@@ -411,7 +411,7 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
     _socket *socket = GetSocket(0, dwIndex);
     const char *ip = socket ? inet_ntoa(socket->m_Addr.sin_addr) : "0.0.0.0";
     char logBuffer[136]{};
-    sprintf(logBuffer, "CLOSE>> ExpulsionSocket[Buffer: Send Buffer Full] ID: %s, IP: %s", accountId, ip);
+    sprintf_s(logBuffer, "CLOSE>> ExpulsionSocket[Buffer: Send Buffer Full] ID: %s, IP: %s", accountId, ip);
     Close(0, dwIndex, false, logBuffer);
     return true;
   }
@@ -429,7 +429,7 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
     _socket *socket = GetSocket(0, dwIndex);
     const char *ip = socket ? inet_ntoa(socket->m_Addr.sin_addr) : "0.0.0.0";
     char logBuffer[136]{};
-    sprintf(logBuffer, "CLOSE>> ExpulsionSocket[SpeedHack: No Respon] ID: %s, IP: %s", accountId, ip);
+    sprintf_s(logBuffer, "CLOSE>> ExpulsionSocket[SpeedHack: No Respon] ID: %s, IP: %s", accountId, ip);
     Close(0, dwIndex, false, logBuffer);
     return true;
   }
@@ -454,7 +454,7 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
 
       const char *ip = inet_ntoa(socket->m_Addr.sin_addr);
       char logBuffer[136]{};
-      sprintf(
+      sprintf_s(
         logBuffer,
         "CLOSE>> ExpulsionSocket[Certify None: %d,%d, size:%d] IP: %s",
         raw[2],
@@ -474,7 +474,7 @@ bool CNetworkEX::ExpulsionSocket(unsigned int dwProID, unsigned int dwIndex, uns
 
       const char *ip = inet_ntoa(socket->m_Addr.sin_addr);
       char logBuffer[136]{};
-      sprintf(logBuffer, "CLOSE>> ExpulsionSocket[Certify Delay] IP: %s", ip);
+      sprintf_s(logBuffer, "CLOSE>> ExpulsionSocket[Certify Delay] IP: %s", ip);
       Close(0, dwIndex, false, logBuffer);
       return true;
     }
@@ -599,7 +599,7 @@ void CNetworkEX::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, u
       if (user->m_bActive)
       {
         char buffer[136]{};
-        sprintf(buffer, "Close Acceptclient : %s", user->m_szAccountID);
+        sprintf_s(buffer, "Close Acceptclient : %s", user->m_szAccountID);
         Close(0, dwIndex, false, buffer);
       }
       else
@@ -4005,7 +4005,7 @@ if (!g_Player[n].m_bLive)
   if (!g_UserDB[n].Lobby_Char_Request())
   {
     char buffer[144]{};
-    sprintf(buffer, "CLOSE>> MoveLobbyRequest ID:%s", g_UserDB[n].m_szAccountID);
+    sprintf_s(buffer, "CLOSE>> MoveLobbyRequest ID:%s", g_UserDB[n].m_szAccountID);
     Close(0, n, false, buffer);
   }
   return true;
@@ -4020,7 +4020,7 @@ if (!g_UserDB[n].m_bActive)
   if (!g_UserDB[n].Reged_Char_Request())
   {
     char buffer[144]{};
-    sprintf(buffer, "CLOSE>> RegedCharRequest ID:%s", g_UserDB[n].m_szAccountID);
+    sprintf_s(buffer, "CLOSE>> RegedCharRequest ID:%s", g_UserDB[n].m_szAccountID);
     Close(0, n, false, buffer);
   }
   return true;
@@ -4059,7 +4059,7 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
                 request->dwMakeCharKey))
           {
             char buffer[144]{};
-            sprintf(buffer, "CLOSE>> AddCharRequest ID:%s", g_UserDB[n].m_szAccountID);
+            sprintf_s(buffer, "CLOSE>> AddCharRequest ID:%s", g_UserDB[n].m_szAccountID);
             Close(0, n, false, buffer);
           }
           return true;
@@ -4090,7 +4090,7 @@ bool CNetworkEX::DelCharRequest(unsigned int n, char *pBuf)
     if (!g_UserDB[n].Delete_Char_Request(slotIndex))
     {
       char buffer[144]{};
-      sprintf(buffer, "CLOSE>> DelCharRequest ID:%s", g_UserDB[n].m_szAccountID);
+      sprintf_s(buffer, "CLOSE>> DelCharRequest ID:%s", g_UserDB[n].m_szAccountID);
       Close(0, n, false, buffer);
     }
     return true;
@@ -4117,7 +4117,7 @@ bool CNetworkEX::SelCharRequest(unsigned int n, char *pBuf)
       if (!g_UserDB[n].Select_Char_Request(slotIndex))
       {
         char buffer[144]{};
-        sprintf(buffer, "CLOSE>> SelCharRequest ID:%s", g_UserDB[n].m_szAccountID);
+        sprintf_s(buffer, "CLOSE>> SelCharRequest ID:%s", g_UserDB[n].m_szAccountID);
         Close(0, n, false, buffer);
       }
       return true;
@@ -5228,7 +5228,7 @@ bool CNetworkEX::CheckIsBlockIPResult(unsigned int n, const _check_is_block_ip_r
       g_Network.m_pProcess[0]->LoadSendMsg(user->m_idWorld.wIndex, type, reinterpret_cast<char *>(&notify), len);
 
       char buffer[144]{};
-      sprintf(
+      sprintf_s(
         buffer,
         "CLOSE>> ForceCloseCommand Account: %s(%u) Type: %d, IP: %u.%u.%u.%u",
         user->m_szAccountID,
@@ -9489,4 +9489,5 @@ char CNetworkEX::UserBlockResult(unsigned int n, const _user_block_result_acwr *
     request->bLogin);
   return 1;
 }
+
 

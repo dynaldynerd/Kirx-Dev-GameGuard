@@ -476,7 +476,7 @@ void CLevel::ScreenShot()
   char buffer[256]{};
   for (int index = 0; index < 9999; ++index)
   {
-    sprintf(buffer, "%s%s%04d.jpg", stState.ScreenShotsPath, mMapName, index);
+    sprintf_s(buffer, sizeof(buffer), "%s%s%04d.jpg", stState.ScreenShotsPath, mMapName, index);
     if (!IsExistFile(buffer))
     {
       FramebufferToJPG(buffer);
@@ -1072,3 +1072,4 @@ __int64 CLevel::GetNextYposFarProgress(float *const a2, float *const a3, float *
     dst[2] = finalPos[2];
   }
 }
+

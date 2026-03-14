@@ -1511,8 +1511,7 @@ char *CAnimus::GetObjName()
   const int posX = static_cast<int>(m_fCurPos[0]);
   const int posY = static_cast<int>(m_fCurPos[1]);
   const int posZ = static_cast<int>(m_fCurPos[2]);
-  sprintf(
-    s_animusObjectName,
+  sprintf_s(s_animusObjectName, sizeof(s_animusObjectName),
     "[ANIMUS][%d] >> %s (pos: %s {%d, %d, %d}) (master: %s)",
     raceCode,
     m_pRecord->m_strCode,
@@ -1706,3 +1705,4 @@ bool CAnimus::RobbedHP(CCharacter *pDst, int nDecHP)
   SendMsg_RobedHP(pDst, static_cast<unsigned __int16>(nDecHP));
   return true;
 }
+

@@ -16,6 +16,11 @@
 
 CMonsterEventSet *g_MonsterEventSet = nullptr;
 
+namespace
+{
+  static constexpr size_t kEventSetErrBufferSize = 516;
+}
+
 _event_set::_monster_set::_state::_state()
 {
   init();
@@ -71,15 +76,22 @@ bool CMonsterEventSet::IsINIFileChanged(const char *pszFileName, _FILETIME ftCur
   return ftCurr.dwLowDateTime != ftWrite.dwLowDateTime || ftCurr.dwHighDateTime != ftWrite.dwHighDateTime;
 }
 
-bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPlayer *pOne)
+bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, size_t errBufferSize, CPlayer *pOne)
 {
   char loadMessage[516]{};
   std::strcpy(loadMessage, "without reload ini file");
 
   if (!m_bLoadEventLooting)
   {
-    sprintf(pwszErrCode, "Event Set Looting File Not Loaded : %s", ".\\Initialize\\EventSetLooting.ini");
-    g_Main.m_logEvent.Write("%s", pwszErrCode);
+    if (pwszErrCode && errBufferSize > 0)
+    {
+      sprintf_s(
+        pwszErrCode,
+        errBufferSize,
+        "Event Set Looting File Not Loaded : %s",
+        ".\\Initialize\\EventSetLooting.ini");
+      g_Main.m_logEvent.Write("%s", pwszErrCode);
+    }
     return false;
   }
 
@@ -88,12 +100,15 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
     std::memset(m_EventSet, 0, sizeof(m_EventSet));
     if (!LoadEventSet(loadMessage))
     {
-      sprintf(pwszErrCode, "Reload INI file fail!!! : %s", loadMessage);
+      if (pwszErrCode && errBufferSize > 0)
+      {
+        sprintf_s(pwszErrCode, errBufferSize, "Reload INI file fail!!! : %s", loadMessage);
+      }
       g_Main.m_logEvent.Write("Reload INI file fail!!! : %s >> %s", ".\\Initialize\\EventSet.ini", loadMessage);
       return false;
     }
 
-    sprintf(loadMessage, "with reload ini file : %s", ".\\Initialize\\EventSet.ini");
+    sprintf_s(loadMessage, sizeof(loadMessage), "with reload ini file : %s", ".\\Initialize\\EventSet.ini");
     g_Main.m_logEvent.Write("Reload INI file for Monster Event Set >> %s", ".\\Initialize\\EventSet.ini");
   }
 
@@ -108,9 +123,9 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
 
     if (eventSet->m_bOper)
     {
-      if (pwszErrCode)
+      if (pwszErrCode && errBufferSize > 0)
       {
-        sprintf(pwszErrCode, "now actived");
+        sprintf_s(pwszErrCode, errBufferSize, "now actived");
       }
       return false;
     }
@@ -188,19 +203,22 @@ bool CMonsterEventSet::StartEventSet(char *pszEventCode, char *pwszErrCode, CPla
 
   if (matchedEventCount)
   {
-    std::strcpy(pwszErrCode, loadMessage);
+    if (pwszErrCode && errBufferSize > 0)
+    {
+      strcpy_s(pwszErrCode, errBufferSize, loadMessage);
+    }
     g_Main.m_logEvent.Write("Start Event Set (by cheat) >> %s", pszEventCode);
     return true;
   }
 
-  if (pwszErrCode)
+  if (pwszErrCode && errBufferSize > 0)
   {
-    sprintf(pwszErrCode, "can't find event set id");
+    sprintf_s(pwszErrCode, errBufferSize, "can't find event set id");
   }
   return false;
 }
 
-bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
+bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode, size_t errBufferSize)
 {
   int matchedEventCount = 0;
 
@@ -214,9 +232,9 @@ bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
 
     if (!eventSet->m_bOper)
     {
-      if (pwszErrCode)
+      if (pwszErrCode && errBufferSize > 0)
       {
-        sprintf(pwszErrCode, "now stoped");
+        sprintf_s(pwszErrCode, errBufferSize, "now stoped");
       }
       return false;
     }
@@ -251,9 +269,9 @@ bool CMonsterEventSet::StopEventSet(char *pszEventCode, char *pwszErrCode)
     return true;
   }
 
-  if (pwszErrCode)
+  if (pwszErrCode && errBufferSize > 0)
   {
-    sprintf(pwszErrCode, "can't find event set id");
+    sprintf_s(pwszErrCode, errBufferSize, "can't find event set id");
   }
   return false;
 }
@@ -398,7 +416,11 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
   _FILETIME writeTime{};
   if (!GetLastWriteFileTime(".\\Initialize\\EventSet.ini", &writeTime))
   {
-    sprintf(errBuffer, "Event Set Load Error >> can't find .ini file : %s", ".\\Initialize\\EventSet.ini");
+    sprintf_s(
+      errBuffer,
+      kEventSetErrBufferSize,
+      "Event Set Load Error >> can't find .ini file : %s",
+      ".\\Initialize\\EventSet.ini");
     g_Main.m_logLoadingError.Write(errBuffer);
     return false;
   }
@@ -441,7 +463,11 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
 
     if (parsedCount != 10)
     {
-      sprintf(errBuffer, "Event Set Load Error >> event parameter count error : %d", parsedCount);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error >> event parameter count error : %d",
+        parsedCount);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -450,7 +476,11 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     _event_set *eventSet = GetEmptyEventSet();
     if (!eventSet)
     {
-      sprintf(errBuffer, "Event Set Load Error >> over max event set error : %d", 10);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error >> over max event set error : %d",
+        10);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -478,7 +508,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
       CMapData *map = g_MapOper.GetMap(token1);
       if (!map)
       {
-        sprintf(errBuffer, "Event Set Load Error : %s >> map code error : %s", token0, token1);
+        sprintf_s(
+          errBuffer,
+          kEventSetErrBufferSize,
+          "Event Set Load Error : %s >> map code error : %s",
+          token0,
+          token1);
         g_Main.m_logLoadingError.Write(errBuffer);
         fclose(stream);
         return false;
@@ -490,8 +525,9 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
       monsterSet->fPos[2] = static_cast<float>(atoi(token4));
       if (!map->IsMapIn(monsterSet->fPos))
       {
-        sprintf(
+        sprintf_s(
           errBuffer,
+          kEventSetErrBufferSize,
           "Event Set Load Error : %s >> xyz range error : %d %d %d",
           token0,
           static_cast<int>(monsterSet->fPos[0]),
@@ -507,7 +543,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     _base_fld *record = g_Main.m_tblMonster.GetRecord(token5);
     if (!record)
     {
-      sprintf(errBuffer, "Event Set Load Error : %s >> mon code error : %s", token0, token5);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error : %s >> mon code error : %s",
+        token0,
+        token5);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -517,7 +558,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     monsterSet->wNum = static_cast<unsigned __int16>(atoi(token6));
     if (!monsterSet->wNum || monsterSet->wNum > 100)
     {
-      sprintf(errBuffer, "Event Set Load Error : %s >> mon num error : %d", token0, monsterSet->wNum);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error : %s >> mon num error : %d",
+        token0,
+        monsterSet->wNum);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -526,7 +572,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     monsterSet->dwRegenTerm = 1000 * static_cast<unsigned int>(atol(token7));
     if (!monsterSet->dwRegenTerm)
     {
-      sprintf(errBuffer, "Event Set Load Error : %s >> mon regen term error : %d", token0, monsterSet->dwRegenTerm);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error : %s >> mon regen term error : %d",
+        token0,
+        monsterSet->dwRegenTerm);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -535,7 +586,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     monsterSet->byRegenProb = static_cast<unsigned __int8>(atoi(token8));
     if (!monsterSet->byRegenProb || monsterSet->byRegenProb > 100)
     {
-      sprintf(errBuffer, "Event Set Load Error : %s >> mon regen prob error : %d", token0, monsterSet->byRegenProb);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error : %s >> mon regen prob error : %d",
+        token0,
+        monsterSet->byRegenProb);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -544,7 +600,12 @@ bool CMonsterEventSet::LoadEventSet(char *errBuffer)
     monsterSet->dwDuring = static_cast<unsigned int>(atoi(token9));
     if (monsterSet->dwDuring > 7)
     {
-      sprintf(errBuffer, "Event Set Load Error : %s >> event during error : %d", token0, monsterSet->dwDuring);
+      sprintf_s(
+        errBuffer,
+        kEventSetErrBufferSize,
+        "Event Set Load Error : %s >> event during error : %d",
+        token0,
+        monsterSet->dwDuring);
       g_Main.m_logLoadingError.Write(errBuffer);
       fclose(stream);
       return false;
@@ -668,3 +729,4 @@ _event_set_looting *CMonsterEventSet::GetEvenSetLooting(const char *pszCode)
   }
   return nullptr;
 }
+

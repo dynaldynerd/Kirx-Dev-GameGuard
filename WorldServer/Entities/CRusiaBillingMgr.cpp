@@ -35,7 +35,7 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
   char currentDir[MAX_PATH]{};
   if (GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDir)), currentDir))
   {
-    sprintf_s(iniPath, "%s\\Initialize\\Database.ini", currentDir);
+    sprintf_s(iniPath, sizeof(iniPath), "%s\\Initialize\\Database.ini", currentDir);
   }
 
   char szDSN[64]{};
@@ -135,8 +135,35 @@ bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatab
   char buffer[272]{};
 
   const int written = bTrustedConnection
-    ? sprintf_s(buffer, sizeof(buffer), "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%cTrusted_Connection=Yes%c%c", szDSN, '\0', szDatabase, '\0', szServer, wPort, '\0', szDatabase, '\0', '\0')
-    : sprintf_s(buffer, sizeof(buffer), "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%c%c", szDSN, '\0', szDatabase, '\0', szServer, wPort, '\0', szDatabase, '\0', '\0');
+    ? sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%cTrusted_Connection=Yes%c%c",
+        szDSN,
+        '\0',
+        szDatabase,
+        '\0',
+        szServer,
+        wPort,
+        '\0',
+        szDatabase,
+        '\0',
+        '\0',
+        '\0')
+    : sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "DSN=%s%cDESCRIPTION=%s%cSERVER=%s,%u%cDATABASE=%s%c%c",
+        szDSN,
+        '\0',
+        szDatabase,
+        '\0',
+        szServer,
+        wPort,
+        '\0',
+        szDatabase,
+        '\0',
+        '\0');
   if (written <= 0)
   {
     return false;
@@ -169,7 +196,7 @@ bool CRusiaBillingMgr::LoadINIFile()
   memset(buffer, 0, 260);
   GetCurrentDirectoryA(260, buffer);
   memset(fileName, 0, 260);
-  sprintf(fileName, "%s\\Initialize\\Database.ini", buffer);
+  sprintf_s(fileName, sizeof(fileName), "%s\\Initialize\\Database.ini", buffer);
 
   std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase));
   if (!GetPrivateProfileStringA(

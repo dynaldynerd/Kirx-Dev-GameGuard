@@ -48,7 +48,7 @@ void _event_respawn::_state::init()
   std::memset(this, 0, sizeof(*this));
 }
 
-bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCode)
+bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCode, size_t errBufferSize)
 {
   _event_respawn *eventRespawn = nullptr;
   for (int j = 0; j < m_nLoadEventRespawn; ++j)
@@ -68,9 +68,9 @@ bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCo
 
   if (eventRespawn->bActive)
   {
-    if (pwszErrCode)
+    if (pwszErrCode && errBufferSize > 0)
     {
-      sprintf(pwszErrCode, "now actived");
+      sprintf_s(pwszErrCode, errBufferSize, "now actived");
     }
     return false;
   }
@@ -115,7 +115,7 @@ bool CMonsterEventRespawn::StartRespawnEvent(char *pszEventCode, char *pwszErrCo
   return true;
 }
 
-bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCode)
+bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCode, size_t errBufferSize)
 {
   _event_respawn *eventRespawn = nullptr;
   for (int j = 0; j < m_nLoadEventRespawn; ++j)
@@ -135,9 +135,9 @@ bool CMonsterEventRespawn::StopRespawnEvent(char *pszEventCode, char *pwszErrCod
 
   if (!eventRespawn->bActive)
   {
-    if (pwszErrCode)
+    if (pwszErrCode && errBufferSize > 0)
     {
-      sprintf(pwszErrCode, "now stoped");
+      sprintf_s(pwszErrCode, errBufferSize, "now stoped");
     }
     return false;
   }
@@ -239,7 +239,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
   for (int fileIndex = 0; fileIndex < fileCount; ++fileIndex)
   {
     char buffer[136]{};
-    sprintf(buffer, ".\\EventRespawn\\%s.ini", &fileBaseNames[64 * fileIndex]);
+    sprintf_s(buffer, ".\\EventRespawn\\%s.ini", &fileBaseNames[64 * fileIndex]);
 
     _event_respawn *eventRespawn = &m_EventRespawn[loadedCount];
     std::strcpy(eventRespawn->szScriptName, &fileBaseNames[64 * fileIndex]);
@@ -268,7 +268,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
     {
       char keyName[132]{};
       char returnedString[72]{};
-      sprintf(keyName, "code%d", k);
+      sprintf_s(keyName, "code%d", k);
       GetPrivateProfileStringA("MONSTER", keyName, "X", returnedString, 64, buffer);
       if (!std::strcmp(returnedString, "X"))
       {
@@ -293,7 +293,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
 
       eventRespawn->MonSet[k].pMonsterFld = record;
 
-      sprintf(keyName, "num%d", k);
+      sprintf_s(keyName, "num%d", k);
       const unsigned int num = GetPrivateProfileIntA("MONSTER", keyName, -1, buffer);
       if (num == static_cast<unsigned int>(-1))
       {
@@ -373,7 +373,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
     {
       char keyName[132]{};
       char itemCode[132]{};
-      sprintf(keyName, "item code %d", n + 1);
+      sprintf_s(keyName, "item code %d", n + 1);
       GetPrivateProfileStringA("REWARD ITEM", keyName, "X", itemCode, 128, buffer);
       if (itemCode[0] != 'X')
       {
@@ -398,7 +398,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
         }
 
         char monCode[136]{};
-        sprintf(keyName, "monster %d", n + 1);
+        sprintf_s(keyName, "monster %d", n + 1);
         GetPrivateProfileStringA("REWARD ITEM", keyName, "ALL", monCode, 128, buffer);
         _base_fld *dstMonRecord = nullptr;
         if (std::strcmp(monCode, "ALL"))
@@ -432,7 +432,7 @@ bool CMonsterEventRespawn::SetEventRespawn()
           }
         }
 
-        sprintf(keyName, "item %% %d", n + 1);
+        sprintf_s(keyName, "item %% %d", n + 1);
         const unsigned int prob = GetPrivateProfileIntA("REWARD ITEM", keyName, 0, buffer);
 
         _event_respawn::_reward_item *rewardItem = &eventRespawn->RewardItem[eventRespawn->nUseRewardItemNum];
@@ -456,3 +456,4 @@ bool CMonsterEventRespawn::SetEventRespawn()
   m_nLoadEventRespawn = loadedCount;
   return true;
 }
+

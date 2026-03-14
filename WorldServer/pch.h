@@ -26,6 +26,7 @@
 #include <ws2tcpip.h>
 
 #include <atomic>
+#include <cstdio>
 #include <string>
 #include <vector>
 

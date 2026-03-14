@@ -161,7 +161,15 @@ unsigned long long GetConnectTime_AddBySec(int iSec)
   _localtime64_s(&local, &timeValue);
 
   char buffer[44]{};
-  sprintf(buffer, "%01d%02d%02d%02d%02d", local.tm_year - 100, local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min);
+  sprintf_s(
+    buffer,
+    sizeof(buffer),
+    "%01d%02d%02d%02d%02d",
+    local.tm_year - 100,
+    local.tm_mon + 1,
+    local.tm_mday,
+    local.tm_hour,
+    local.tm_min);
   return std::strtoull(buffer, nullptr, 10);
 }
 
@@ -695,11 +703,11 @@ void MakeBinaryStr(const unsigned __int8 *pBuff, unsigned __int64 tBufSize, char
 {
   char temp[32]{};
 
-  sprintf_s(temp, "0x%0.2X", pBuff[0]);
+  sprintf_s(temp, sizeof(temp), "0x%0.2X", pBuff[0]);
   strcat_s(pOut, tOutSize, temp);
   for (unsigned __int64 i = 1; i < tBufSize; ++i)
   {
-    sprintf_s(temp, "%0.2X", pBuff[i]);
+    sprintf_s(temp, sizeof(temp), "%0.2X", pBuff[i]);
     strcat_s(pOut, tOutSize, temp);
   }
 }
@@ -831,23 +839,24 @@ void GetTodayStr(char *szToday)
 
   if (curMonth > 9)
   {
-    sprintf(month, "%d", curMonth);
+    sprintf_s(month, sizeof(month), "%d", curMonth);
   }
   else
   {
-    sprintf(month, "0%d", curMonth);
+    sprintf_s(month, sizeof(month), "0%d", curMonth);
   }
 
   if (curDay > 9)
   {
-    sprintf(day, "%d", curDay);
+    sprintf_s(day, sizeof(day), "%d", curDay);
   }
   else
   {
-    sprintf(day, "0%d", curDay);
+    sprintf_s(day, sizeof(day), "0%d", curDay);
   }
 
-  sprintf(szToday, "%d%s%s", year, month, day);
+  constexpr size_t kDateSize = 9;
+  sprintf_s(szToday, kDateSize, "%d%s%s", year, month, day);
 }
 
 unsigned int GetLocalDate()
@@ -896,26 +905,27 @@ void GetNowDateTime(char *szDateTime)
   memset(minute, 0, 4);
 
   if (curMonth > 9)
-    sprintf(month, "%d", curMonth);
+    sprintf_s(month, sizeof(month), "%d", curMonth);
   else
-    sprintf(month, "0%d", curMonth);
+    sprintf_s(month, sizeof(month), "0%d", curMonth);
 
   if (curDay > 9)
-    sprintf(day, "%d", curDay);
+    sprintf_s(day, sizeof(day), "%d", curDay);
   else
-    sprintf(day, "0%d", curDay);
+    sprintf_s(day, sizeof(day), "0%d", curDay);
 
   if (curHour > 9)
-    sprintf(hour, "%d", curHour);
+    sprintf_s(hour, sizeof(hour), "%d", curHour);
   else
-    sprintf(hour, "0%d", curHour);
+    sprintf_s(hour, sizeof(hour), "0%d", curHour);
 
   if (curMin > 9)
-    sprintf(minute, "%d", curMin);
+    sprintf_s(minute, sizeof(minute), "%d", curMin);
   else
-    sprintf(minute, "0%d", curMin);
+    sprintf_s(minute, sizeof(minute), "0%d", curMin);
 
-  sprintf(szDateTime, "%d-%s-%s %s:%s", year, month, day, hour, minute);
+  constexpr size_t kDateTimeSize = 17;
+  sprintf_s(szDateTime, kDateTimeSize, "%d-%s-%s %s:%s", year, month, day, hour, minute);
 }
 
 unsigned __int8 GetItemKindCode(int nTableCode)
@@ -947,23 +957,24 @@ void GetSubDayStr(int nSubDay, char *szOutDay)
 
   if (month > 9u)
   {
-    sprintf(monthBuf, "%d", month);
+    sprintf_s(monthBuf, sizeof(monthBuf), "%d", month);
   }
   else
   {
-    sprintf(monthBuf, "0%d", month);
+    sprintf_s(monthBuf, sizeof(monthBuf), "0%d", month);
   }
 
   if (day > 9u)
   {
-    sprintf(dayBuf, "%d", day);
+    sprintf_s(dayBuf, sizeof(dayBuf), "%d", day);
   }
   else
   {
-    sprintf(dayBuf, "0%d", day);
+    sprintf_s(dayBuf, sizeof(dayBuf), "0%d", day);
   }
 
-  sprintf(szOutDay, "%d%s%s", year, monthBuf, dayBuf);
+  constexpr size_t kDateSize = 9;
+  sprintf_s(szOutDay, kDateSize, "%d%s%s", year, monthBuf, dayBuf);
 }
 
 char *DisplayItemUpgInfo(int nTableCode, int dwLvBit)
@@ -1373,7 +1384,7 @@ unsigned __int8 GetDefItemUpgSocketNum(int nTableCode, int nItemIndex)
   if (socketNum > 7)
   {
     char buffer[144];
-    sprintf(buffer, "tbl:%d, idx:%d => slot: %d\n", nTableCode, nItemIndex, socketNum);
+    sprintf_s(buffer, sizeof(buffer), "tbl:%d, idx:%d => slot: %d\n", nTableCode, nItemIndex, socketNum);
     OutputDebugStringA(buffer);
     return 0;
   }
@@ -4217,7 +4228,7 @@ void clear_file(const char *directory, int keepCount)
   CoFileTimeNow(&currentFileTime);
 
   char searchPattern[288]{};
-  sprintf(searchPattern, "%s\\*.*", directory);
+  sprintf_s(searchPattern, sizeof(searchPattern), "%s\\*.*", directory);
 
   WIN32_FIND_DATAA findData{};
   const HANDLE findHandle = FindFirstFileA(searchPattern, &findData);
@@ -4234,7 +4245,7 @@ void clear_file(const char *directory, int keepCount)
       continue;
     }
 
-    sprintf(entryPath, "%s\\%s", directory, findData.cFileName);
+    sprintf_s(entryPath, sizeof(entryPath), "%s\\%s", directory, findData.cFileName);
     if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
     {
       clear_file(entryPath, keepCount);
@@ -5185,7 +5196,7 @@ void R3GetPreAniTextureId(char *path, char *name, int *startId, int *num)
   for (int textureIndex = 1; textureIndex < *num + 1; ++textureIndex)
   {
     strcpy_s(texturePath, path);
-    sprintf(texturePath, "%s%s%04d%s", path, prefix, textureIndex, extension);
+    sprintf_s(texturePath, sizeof(texturePath), "%s%s%04d%s", path, prefix, textureIndex, extension);
     const int textureId = R3GetPreTextureId(texturePath);
     if (textureIndex == 1)
       *startId = textureId;
@@ -6042,7 +6053,7 @@ static int sub_140501380(char *a1, const char *a2, const char *a3)
   while (true)
   {
     strcpy_s(buffer, a1);
-    sprintf(buffer, "%s%s%04d%s", a1, a2, textureCount, a3);
+    sprintf_s(buffer, sizeof(buffer), "%s%s%04d%s", a1, a2, textureCount, a3);
     FILE *fp = fopen(buffer, "rb");
     if (!fp)
       break;
@@ -7297,4 +7308,5 @@ unsigned __int16 GetExcelIndexFromCombineExCheckKey(unsigned int dwCombineExChec
 {
   return static_cast<unsigned __int16>(dwCombineExCheckKey >> 16);
 }
+
 

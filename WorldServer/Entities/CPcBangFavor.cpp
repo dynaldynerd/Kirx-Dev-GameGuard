@@ -83,13 +83,13 @@ int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
   {
     strncpy(classPrefix, record->m_strCode, 1u);
     const int level = static_cast<int>(pOne->m_Param.GetLevel());
-    sprintf(codeBuffer, "%sf%02d", classPrefix, level);
+    sprintf_s(codeBuffer, "%sf%02d", classPrefix, level);
   }
   else
   {
     strncpy(classPrefix, record->m_strCode, 2u);
     const int level = static_cast<int>(pOne->m_Param.GetLevel());
-    sprintf(codeBuffer, "%s%02d", classPrefix, level);
+    sprintf_s(codeBuffer, "%s%02d", classPrefix, level);
   }
 
   _strlwr(codeBuffer);
@@ -287,3 +287,4 @@ void CPcBangFavor::PcBangDeleteItem(CPlayer *pOne)
     pOne->m_pUserDB->m_AvatorData.dbPcBangFavorItem.Init();
   }
 }
+

@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#include <cstddef>
+
 #include <DbgHelp.h>
 #if __has_include(<cvconst.h>)
 #include <cvconst.h>
@@ -50,6 +52,8 @@ public:
   static BasicType GetBasicType(ULONG typeIndex, DWORD64 modBase);
   static char *FormatOutputValue(
     char *pszCurrBuffer,
+    const char *pszBaseBuffer,
+    size_t cbBuffer,
     BasicType basicType,
     unsigned __int64 length,
     const void *pAddress);
@@ -64,6 +68,8 @@ public:
     void *UserContext);
   static char *DumpTypeIndex(
     char *pszCurrBuffer,
+    const char *pszBaseBuffer,
+    size_t cbBuffer,
     DWORD64 modBase,
     ULONG dwTypeIndex,
     unsigned int nestingLevel,

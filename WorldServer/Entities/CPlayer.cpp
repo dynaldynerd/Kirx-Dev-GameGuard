@@ -9750,7 +9750,7 @@ void CPlayer::ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm)
   char token[28]{};
 
   memset(buffer, 0, 10);
-  sprintf(buffer, "%d", dwTemp);
+  sprintf_s(buffer, "%d", dwTemp);
   if (dwTemp && std::strlen(buffer) >= 9)
   {
     memset(token, 0, 4);
@@ -10495,14 +10495,14 @@ void CPlayer::SendMsg_MonsterAggroData(CCharacter *pCharacter)
           if (aggroCharacter->m_ObjID.m_byID == 3)
           {
             CAnimus *animus = static_cast<CAnimus *>(aggroCharacter);
-            sprintf(nodeInfo->m_Name, "[AniMaster:%s]", animus->m_aszMasterName);
+            sprintf_s(nodeInfo->m_Name, "[AniMaster:%s]", animus->m_aszMasterName);
           }
         }
         else
         {
           CPlayer *player = static_cast<CPlayer *>(aggroCharacter);
           const char *name = player->m_Param.GetCharNameA();
-          sprintf(nodeInfo->m_Name, "%s", name);
+          sprintf_s(nodeInfo->m_Name, "%s", name);
         }
       }
       nodeInfo->m_IsData = 1;
@@ -11323,7 +11323,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
             m_fCurPos,
             0);
           char clause[144]{};
-          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          sprintf_s(clause, "Class G (%s)", pClassFld->m_strCode);
           CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
@@ -11337,7 +11337,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
-            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            sprintf_s(clause, "Class (%s)", pClassFld->m_strCode);
             CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
@@ -11555,7 +11555,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
             m_fCurPos,
             0);
           char clause[144]{};
-          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          sprintf_s(clause, "Class G (%s)", pClassFld->m_strCode);
           CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
@@ -11569,7 +11569,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
-            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            sprintf_s(clause, "Class (%s)", pClassFld->m_strCode);
             CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
@@ -13458,7 +13458,7 @@ void CPlayer::pc_NewPosStart()
   {
     const char *charName = this->m_Param.GetCharNameA();
     char buffer[144]{};
-    sprintf(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
+    sprintf_s(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
     g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
   }
   else
@@ -14041,7 +14041,7 @@ char CPlayer::Create()
     const char *mapCode = this->m_pCurMap->m_pMapSet->m_strCode;
     const char *charName = this->m_Param.GetCharNameA();
     char buffer[132]{};
-    sprintf(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
+    sprintf_s(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
     g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
     return 0;
   }
@@ -14650,7 +14650,7 @@ void CPlayer::CreateComplete()
   if (this->m_pUserDB->m_byUserDgr == 2 && this->m_bSpyGM)
   {
     char buffer[136]{};
-    sprintf(buffer, "SPY GM !!");
+    sprintf_s(buffer, "SPY GM !!");
     SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, nullptr);
   }
 
@@ -15181,7 +15181,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
         0);
 
       char clause[136]{};
-      sprintf(clause, "Quest G (%s)", pQuestFld->m_strCode);
+      sprintf_s(clause, "Quest G (%s)", pQuestFld->m_strCode);
       CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
@@ -15211,7 +15211,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       SendMsg_RewardAddItem(&item, 2);
 
       char clause[160]{};
-      sprintf(clause, "Quest (%s)", pQuestFld->m_strCode);
+      sprintf_s(clause, "Quest (%s)", pQuestFld->m_strCode);
       CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
@@ -26217,6 +26217,7 @@ void CPlayer::SendMsg_GuildForceLeaveBoradori()
   pbyType[1] = 121;
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&szMsg), sizeof(szMsg));
 }
+
 
 
 

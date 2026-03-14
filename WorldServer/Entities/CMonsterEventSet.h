@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#include <cstddef>
+
 struct _base_fld;
 class CMapData;
 class CMonster;
@@ -90,8 +92,8 @@ public:
   virtual ~CMonsterEventSet();
 
   bool IsINIFileChanged(const char *pszFileName, _FILETIME ftCurr);
-  bool StartEventSet(char *pszEventCode, char *pwszErrCode, CPlayer *pOne);
-  bool StopEventSet(char *pszEventCode, char *pwszErrCode);
+  bool StartEventSet(char *pszEventCode, char *pwszErrCode, size_t errBufferSize, CPlayer *pOne);
+  bool StopEventSet(char *pszEventCode, char *pwszErrCode, size_t errBufferSize);
   void CheckEventSetRespawn();
   _event_set *GetEmptyEventSet();
   _event_set::_monster_set *GetMonsterSet(_event_set *eventSet);

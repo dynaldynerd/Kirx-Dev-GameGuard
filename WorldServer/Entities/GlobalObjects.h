@@ -54,7 +54,7 @@ extern CParkingUnit *g_ParkingUnit;
 extern CDarkHole *g_DarkHole;
 extern CGuild *g_Guild;
 extern AggroCaculateData g_AggroCaculateData;
-extern class MonsterSetInfoData g_MonsterSetInfoData;
+extern MonsterSetInfoData g_MonsterSetInfoData;
 
 extern _R3ENGINE_STATE stState;
 extern int dword_184A79820;

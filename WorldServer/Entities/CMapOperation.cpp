@@ -583,7 +583,7 @@ bool CMapOperation::LoadRegion()
   {
     CMapData *mapData = &this->m_Map[k];
     char Buffer[152];
-    sprintf_s(Buffer, ".\\map\\%s\\%s.spt", mapData->m_pMapSet->m_strCode, mapData->m_pMapSet->m_strCode);
+    sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", mapData->m_pMapSet->m_strCode, mapData->m_pMapSet->m_strCode);
 
     CDummyPosTable pPosTable;
     if (!pPosTable.LoadDummyPosition(Buffer, "*rg_"))

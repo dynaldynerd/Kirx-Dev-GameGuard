@@ -50,7 +50,7 @@ bool CLuaScript::RunCommand(CLuaCommand *pCommand)
   {
     char dest[260]{};
     const char *buffer = pCommand->GetBuffer();
-    sprintf_s(dest, ".\\LuaScript\\%s.lua", buffer);
+    sprintf_s(dest, sizeof(dest), ".\\LuaScript\\%s.lua", buffer);
     CLogFile *stateLogFile = CLuaScriptMgr::Instance()->GetStateLogFile();
     stateLogFile->Write(" %s RunCommand File %s", GetName(), dest);
     lua_tinker::dofile(GetLuaState(), dest);

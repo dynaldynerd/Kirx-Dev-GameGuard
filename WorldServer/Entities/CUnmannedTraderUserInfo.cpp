@@ -1137,7 +1137,7 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
     {
       char message[272]{};
       const CUnmannedTraderItemState::STATE state = it->GetState();
-      std::sprintf(message, "(%u)th : %u State(%d) Not Regist Item!", byNth, registIndex, static_cast<int>(state));
+      sprintf_s(message, "(%u)th : %u State(%d) Not Regist Item!", byNth, registIndex, static_cast<int>(state));
       owner->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, message, 0xFFu, 0LL);
       return false;
     }
@@ -1158,7 +1158,7 @@ bool CUnmannedTraderUserInfo::CheatCancelRegistSingle(unsigned __int8 byNth)
   }
 
   char buffer[288]{};
-  std::sprintf(buffer, "Not Exist (%u)th Index %u!", byNth, static_cast<unsigned int>(registCount));
+  sprintf_s(buffer, "Not Exist (%u)th Index %u!", byNth, static_cast<unsigned int>(registCount));
   owner->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
   return false;
 }
@@ -3060,3 +3060,4 @@ _unmannedtrader_close_item_inform_zocl inform{};
   const unsigned __int16 len = static_cast<unsigned __int16>(inform.size());
   g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&inform), len);
 }
+

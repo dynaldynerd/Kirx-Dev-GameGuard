@@ -1166,7 +1166,7 @@ namespace GUILD_BATTLE
     char returned[256]{};
     char buffer[256]{};
     char tmp[256]{};
-sprintf(buffer, "Map%d", uiMapInx);
+sprintf_s(buffer, "Map%d", uiMapInx);
     returned[0] = 0;
     GetPrivateProfileStringA(buffer, "Name", "X", returned, 255, "./Initialize/NormalGuildBattle.ini");
     if (returned[0] == 'X')
@@ -1813,11 +1813,11 @@ sprintf(buffer, "Map%d", uiMapInx);
     char buffer[144]{};
     if (szLogName)
     {
-      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%u.log", szLogName, korLocalTime);
+      sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%s%u.log", szLogName, korLocalTime);
     }
     else
     {
-      sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%u.log", korLocalTime);
+      sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\GuildBattle\\GuildBattle%u.log", korLocalTime);
     }
     m_pkLogger->SetWriteLogFile(buffer, 1, 0, 1, 1);
   }
@@ -2607,7 +2607,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     }
 
     char buffer[1032]{};
-    sprintf(buffer, "[%u]_(%02d:00)_[%s]:[%s]_", m_dwID, m_dwID % 23, leftName, rightName);
+    sprintf_s(buffer, "[%u]_(%02d:00)_[%s]:[%s]_", m_dwID, m_dwID % 23, leftName, rightName);
     m_kLogger.CreateLogFile(buffer);
     if (!bSuccess)
     {
@@ -5800,7 +5800,7 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
   {
     char buffer[1024]{};
     char returned[2048]{};
-    sprintf(buffer, "item%d", usInx);
+    sprintf_s(buffer, "item%d", usInx);
     GetPrivateProfileStringA("RewardItem", buffer, "X", returned, 2048, "./Initialize/NormalGuildBattle.ini");
     if (!std::strcmp(returned, "X"))
     {
@@ -7536,3 +7536,4 @@ if (dwGuildSerial == static_cast<unsigned int>(-1))
     return 0;
   }
 } // namespace GUILD_BATTLE
+

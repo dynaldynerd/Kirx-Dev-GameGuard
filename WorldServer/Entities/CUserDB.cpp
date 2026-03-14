@@ -72,7 +72,7 @@ CUserDB::CUserDB()
   {
     const unsigned int localTime = GetKorLocalTime();
     char buffer[80]{};
-    std::sprintf(buffer, "..\\ZoneServerLog\\Systemlog\\AvatorDBError%d.log", localTime);
+    sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\AvatorDBError%d.log", localTime);
     CUserDB::s_logAvatorDB.SetWriteLogFile(buffer, 1, false, true, true);
   }
   m_AvatorData_bk.InitData();
@@ -424,7 +424,7 @@ void CUserDB::ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushI
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), len);
 
   char buffer[144] = {};
-  sprintf(buffer, "CLOSE>> ForceCloseCommand Type: %d, ID: %s Reason : ", byKickType, m_szAccountID);
+  sprintf_s(buffer, "CLOSE>> ForceCloseCommand Type: %d, ID: %s Reason : ", byKickType, m_szAccountID);
   if (pszCause)
   {
     std::strcat(buffer, pszCause);
@@ -4080,7 +4080,7 @@ void CUserDB::Select_Char_Complete(
     if (!g_Player[m_idWorld.wIndex].Load(this, firstStart))
     {
       char buffer[152]{};
-      sprintf(buffer, "Close_Ae : %s, %s", m_szAccountID, m_aszAvatorName);
+      sprintf_s(buffer, "Close_Ae : %s, %s", m_szAccountID, m_aszAvatorName);
       g_Network.Close(0, m_idWorld.wIndex, false, buffer);
       return;
     }
@@ -4173,3 +4173,4 @@ char CUserDB::Update_TakeLastCriTicket(unsigned int dwCriTicket)
   m_bDataUpdate = 1;
   return 1;
 }
+

@@ -39,11 +39,11 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
 
   char logPath[128]{};
   unsigned int now = GetKorLocalTime();
-  sprintf_s(logPath, "..\\ZoneServerLog\\ServiceLog\\HolyStoneSystem%u.log", now);
+  sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\ServiceLog\\HolyStoneSystem%u.log", now);
   clsHolyStoneSystem->m_logQuest.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
   now = GetKorLocalTime();
-  sprintf(logPath, "..\\ZoneServerLog\\ServiceLog\\HolyStoneDestroy%u.log", now);
+  sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\ServiceLog\\HolyStoneDestroy%u.log", now);
   clsHolyStoneSystem->m_logQuestDestroy.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
   float keeperRate = static_cast<float>(GetPrivateProfileIntA(
@@ -192,7 +192,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   for (int j = 0; j < clsHolyStoneSystem->m_nHolyStoneNum; ++j)
   {
     char key[96]{};
-    sprintf(key, "StoneCreateMap%d", j);
+    sprintf_s(key, sizeof(key), "StoneCreateMap%d", j);
     GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
@@ -212,7 +212,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    sprintf(key, "StoneCreateDummy%d", j);
+    sprintf_s(key, sizeof(key), "StoneCreateDummy%d", j);
     GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
@@ -225,7 +225,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    sprintf(key, "StoneMonsterCode%d", j);
+    sprintf_s(key, sizeof(key), "StoneMonsterCode%d", j);
     GetPrivateProfileStringA("HolySystem", key, "-1", returned, 64, ".\\Initialize\\NewHolySystem.ini");
     if (strncmp(returned, "-1", 2) == 0)
     {
@@ -239,7 +239,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
       return false;
     }
 
-    sprintf(key, "StoneMasterRace%d", j);
+    sprintf_s(key, sizeof(key), "StoneMasterRace%d", j);
     stone->nRace = GetPrivateProfileIntA("HolySystem", key, -1, ".\\Initialize\\NewHolySystem.ini");
     if (stone->nRace > 2)
     {
@@ -370,7 +370,7 @@ bool CHolyStoneSystemDataMgr::LoadSceduleData(CHolyScheduleData *clsDummy)
     for (scheduleIndex = 0; scheduleIndex < clsDummy->m_nTotalSchedule && !failCode; ++scheduleIndex)
     {
       scheduleValue = static_cast<UINT>(-1);
-      sprintf(sectionName, "Schedule_%d", scheduleIndex);
+      sprintf_s(sectionName, sizeof(sectionName), "Schedule_%d", scheduleIndex);
       scheduleNode = &clsDummy->m_pSchedule[scheduleIndex];
       for (timeIndex = 0; timeIndex < 7; ++timeIndex)
       {
@@ -419,7 +419,7 @@ bool CHolyStoneSystemDataMgr::LoadStateData(CHolyStoneSaveData *clsSaveDummy)
   for (int j = 0; j < 3; ++j)
   {
     char key[44]{};
-    sprintf(key, "%d S_hp", j);
+    sprintf_s(key, sizeof(key), "%d S_hp", j);
     clsSaveDummy->m_nStoneHP_Buffer[j] = GetPrivateProfileIntA("HSK", key, -1, "..\\SystemSave\\ServerState.ini");
   }
 
@@ -499,7 +499,7 @@ bool CHolyStoneSystemDataMgr::SaveStateData(CHolyStoneSaveData *clsSaveDummy)
       const int hp = static_cast<int>(g_Stone[j].GetHP());
       _itoa(hp, buffer, 10);
       char key[56]{};
-      sprintf(key, "%d S_hp", j);
+      sprintf_s(key, sizeof(key), "%d S_hp", j);
       WritePrivateProfileStringA("HSK", key, buffer, "..\\SystemSave\\ServerState.ini");
     }
   }
@@ -530,7 +530,7 @@ bool CHolyStoneSystemDataMgr::SaveStateData(CHolyStoneSaveData *clsSaveDummy)
   WritePrivateProfileStringA("HSK", "starthour", buffer, "..\\SystemSave\\ServerState.ini");
   _itoa(clsSaveDummy->m_byStartMin, buffer, 10);
   WritePrivateProfileStringA("HSK", "startmin", buffer, "..\\SystemSave\\ServerState.ini");
-  sprintf(buffer, "%u", clsSaveDummy->m_dwDestroyerSerial);
+  sprintf_s(buffer, sizeof(buffer), "%u", clsSaveDummy->m_dwDestroyerSerial);
   WritePrivateProfileStringA("HSK", "destroyer", buffer, "..\\SystemSave\\ServerState.ini");
   _itoa(clsSaveDummy->m_eDestroyerState, buffer, 10);
   WritePrivateProfileStringA("HSK", "destroyerstate", buffer, "..\\SystemSave\\ServerState.ini");
@@ -546,3 +546,4 @@ bool CHolyStoneSystemDataMgr::SaveStateData(CHolyStoneSaveData *clsSaveDummy)
   WritePrivateProfileStringA("HSK", "oretransferamount", buffer, "..\\SystemSave\\ServerState.ini");
   return true;
 }
+

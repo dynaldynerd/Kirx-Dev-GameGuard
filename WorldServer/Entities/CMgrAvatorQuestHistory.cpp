@@ -16,6 +16,7 @@ constexpr char kHistoryPathKey[] = "HistoryPath";
 constexpr char kHistoryPathDefault[] = "c:\\History";
 constexpr char kHistoryIniFile[] = "..\\WorldInfo\\WorldInfo.ini";
 constexpr char kHistoryQuestSubdirFmt[] = "%s\\Quest";
+static constexpr size_t kHistoryFileNameSize = 64;
 }
 
 CMgrAvatorQuestHistory::CMgrAvatorQuestHistory()
@@ -33,7 +34,7 @@ CMgrAvatorQuestHistory::CMgrAvatorQuestHistory()
     kHistoryIniFile);
   CreateDirectoryA(returnedString, nullptr);
 
-  sprintf(m_szStdPath, kHistoryQuestSubdirFmt, returnedString);
+  sprintf_s(m_szStdPath, sizeof(m_szStdPath), kHistoryQuestSubdirFmt, returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
   _strtime(m_szCurTime);
@@ -113,52 +114,53 @@ void CMgrAvatorQuestHistory::GetNewFileName(unsigned int dwAvatorSerial, char *p
 {
   const unsigned int localDate = GetLocalDate();
   char buffer[132]{};
-  sprintf(buffer, "%s\\%d", m_szStdPath, localDate);
+  sprintf_s(buffer, sizeof(buffer), "%s\\%d", m_szStdPath, localDate);
   CreateDirectoryA(buffer, nullptr);
   m_dwLastLocalDate = localDate;
 
   const unsigned int currentHour = GetCurrentHour();
   char pathName[148]{};
-  sprintf(pathName, "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, currentHour);
+  sprintf_s(pathName, sizeof(pathName), "%s\\%d\\%d", m_szStdPath, m_dwLastLocalDate, currentHour);
   CreateDirectoryA(pathName, nullptr);
   m_dwLastLocalHour = currentHour;
 
   char hourStr[32]{};
   if (currentHour <= 9)
   {
-    sprintf(hourStr, "0%d", currentHour);
+    sprintf_s(hourStr, sizeof(hourStr), "0%d", currentHour);
   }
   else
   {
-    sprintf(hourStr, "%d", currentHour);
+    sprintf_s(hourStr, sizeof(hourStr), "%d", currentHour);
   }
 
   const unsigned int currentMin = GetCurrentMin();
   char minStr[32]{};
   if (currentMin <= 9)
   {
-    sprintf(minStr, "0%d", currentMin);
+    sprintf_s(minStr, sizeof(minStr), "0%d", currentMin);
   }
   else
   {
-    sprintf(minStr, "%d", currentMin);
+    sprintf_s(minStr, sizeof(minStr), "%d", currentMin);
   }
 
   const unsigned int currentSec = GetCurrentSec();
   char secStr[16]{};
   if (currentSec <= 9)
   {
-    sprintf(secStr, "0%d", currentSec);
+    sprintf_s(secStr, sizeof(secStr), "0%d", currentSec);
   }
   else
   {
-    sprintf(secStr, "%d", currentSec);
+    sprintf_s(secStr, sizeof(secStr), "%d", currentSec);
   }
 
   char timeStr[32]{};
-  sprintf(timeStr, "%s%s%s", hourStr, minStr, secStr);
-  sprintf(
+  sprintf_s(timeStr, sizeof(timeStr), "%s%s%s", hourStr, minStr, secStr);
+  sprintf_s(
     pszFileName,
+    kHistoryFileNameSize,
     "%s\\%d\\%d\\%d_%s.lhi",
     m_szStdPath,
     m_dwLastLocalDate,
@@ -171,9 +173,9 @@ void CMgrAvatorQuestHistory::init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQu
 {
   char sData[10000]{};
   char sBuf[128]{};
-  sprintf(sBuf, "%s [%s]\n", pszAvatorName, m_szCurTime);
+  sprintf_s(sBuf, sizeof(sBuf), "%s [%s]\n", pszAvatorName, m_szCurTime);
   std::strcat(sData, sBuf);
-  sprintf(sBuf, "START\n");
+  sprintf_s(sBuf, sizeof(sBuf), "START\n");
   std::strcat(sData, sBuf);
   for (int slotIndex = 0; slotIndex < 30; ++slotIndex)
   {
@@ -183,12 +185,12 @@ void CMgrAvatorQuestHistory::init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQu
       _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(quest->wIndex);
       if (record)
       {
-        sprintf(sBuf, "\t%d: %s\n", slotIndex, record->m_strCode);
+        sprintf_s(sBuf, sizeof(sBuf), "\t%d: %s\n", slotIndex, record->m_strCode);
         std::strcat(sData, sBuf);
       }
     }
   }
-  sprintf(sBuf, "\n");
+  sprintf_s(sBuf, sizeof(sBuf), "\n");
   std::strcat(sData, sBuf);
   WriteFile(pszFileName, sData);
 }
@@ -196,14 +198,14 @@ void CMgrAvatorQuestHistory::init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQu
 void CMgrAvatorQuestHistory::insert_quest(unsigned int nSlot, char *pszQuestCode, char *pszFileName)
 {
   char sData[10000]{};
-  sprintf(sData, "ADD: %d: %s [%s]\n", nSlot, pszQuestCode, m_szCurTime);
+  sprintf_s(sData, sizeof(sData), "ADD: %d: %s [%s]\n", nSlot, pszQuestCode, m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorQuestHistory::complete_quest(unsigned int nSlot, char *pszQuestCode, char *pszFileName)
 {
   char sData[10000]{};
-  sprintf(sData, "END: %d: %s [%s]\n", nSlot, pszQuestCode, m_szCurTime);
+  sprintf_s(sData, sizeof(sData), "END: %d: %s [%s]\n", nSlot, pszQuestCode, m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
@@ -214,13 +216,21 @@ void CMgrAvatorQuestHistory::fail_quest(
   char *pszFileName)
 {
   char sData[10000]{};
-  sprintf(sData, "FAIL: %d: %s (%s) [%s]\n", nSlot, pszQuestCode, pszFailCode, m_szCurTime);
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "FAIL: %d: %s (%s) [%s]\n",
+    nSlot,
+    pszQuestCode,
+    pszFailCode,
+    m_szCurTime);
   WriteFile(pszFileName, sData);
 }
 
 void CMgrAvatorQuestHistory::char_copy(char *pszDstName, unsigned int dwDstSerial, char *pszFileName)
 {
   char sData[10000]{};
-  sprintf(sData, "Char Copy: dst(%s:%d)\n", pszDstName, dwDstSerial);
+  sprintf_s(sData, sizeof(sData), "Char Copy: dst(%s:%d)\n", pszDstName, dwDstSerial);
   WriteFile(pszFileName, sData);
 }
+

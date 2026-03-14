@@ -62,7 +62,7 @@ bool CMoveMapLimitInfoPortal::LoadINI()
   char returned[1024]{};
 
   const unsigned int inx = GetInx();
-  std::sprintf(buffer, "Map%u", inx);
+  sprintf_s(buffer, "Map%u", inx);
   GetPrivateProfileStringA("MoveMapLimitInfo", buffer, "NULL", returned, 1024, "./Initialize/MoveMapLimit.ini");
   if (!std::strcmp(returned, "NULL"))
   {
@@ -378,3 +378,4 @@ m_uiProcNotifyInx = 0;
   m_eNotifyForceMoveHQState = FMHS_WAIT_NOTIFY_FORCE_MOVE;
   return 0;
 }
+

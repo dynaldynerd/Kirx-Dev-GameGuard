@@ -1139,24 +1139,24 @@ unsigned __int8 CMainThread::_db_Update_Cash_LimSale(_db_cash_limited_sale *pNew
   int baseLen = static_cast<int>(std::strlen(buffer));
   if (pNewData->byDck != pOldData->byDck)
   {
-    sprintf(source, "DCK=%d,", pNewData->byDck);
+    sprintf_s(source, sizeof(source), "DCK=%d,", pNewData->byDck);
     strcat_s(buffer, 2048, source);
   }
   if (pNewData->byLimited_sale_num != pOldData->byLimited_sale_num)
   {
-    sprintf(source, "LimSaleNum=%d,", pNewData->byLimited_sale_num);
+    sprintf_s(source, sizeof(source), "LimSaleNum=%d,", pNewData->byLimited_sale_num);
     strcat_s(buffer, 2048, source);
   }
   for (int j = 0; j < pNewData->byLimited_sale_num; ++j)
   {
     if (pNewData->List[j].nLimcode != pOldData->List[j].nLimcode)
     {
-      sprintf(source, "Code_K%d=%d,", j, pNewData->List[j].nLimcode);
+      sprintf_s(source, sizeof(source), "Code_K%d=%d,", j, pNewData->List[j].nLimcode);
       strcat_s(buffer, 2048, source);
     }
     if (pNewData->List[j].nLimcount != pOldData->List[j].nLimcount)
     {
-      sprintf(source, "Num%d=%d,", j, pNewData->List[j].nLimcount);
+      sprintf_s(source, sizeof(source), "Num%d=%d,", j, pNewData->List[j].nLimcount);
       strcat_s(buffer, 2048, source);
     }
   }
@@ -1221,12 +1221,12 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   int baseLen = static_cast<int>(std::strlen(buffer));
   if (pNewData->bydck != pOldData->bydck)
   {
-    sprintf(source, "DCK=%d,", pNewData->bydck);
+    sprintf_s(source, sizeof(source), "DCK=%d,", pNewData->bydck);
     strcat_s(buffer, 2048, source);
   }
   if (pNewData->dwStarterBoxCnt != pOldData->dwStarterBoxCnt)
   {
-    sprintf(source, "StarterBoxMax=%d,", pNewData->dwStarterBoxCnt);
+    sprintf_s(source, sizeof(source), "StarterBoxMax=%d,", pNewData->dwStarterBoxCnt);
     strcat_s(buffer, 2048, source);
   }
 
@@ -1240,29 +1240,29 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
     }
     if (pNewData->nBoxcode[j] != pOldData->nBoxcode[j])
     {
-      sprintf(source, "BoxItemK_%d=%ld,", j + 1, pNewData->nBoxcode[j]);
+      sprintf_s(source, sizeof(source), "BoxItemK_%d=%ld,", j + 1, pNewData->nBoxcode[j]);
       strcat_s(buffer, 2048, source);
     }
     if (pNewData->wBoxMax[j] != pOldData->wBoxMax[j])
     {
-      sprintf(source, "BoxItemMax_%d=%d,", j + 1, pNewData->wBoxMax[j]);
+      sprintf_s(source, sizeof(source), "BoxItemMax_%d=%d,", j + 1, pNewData->wBoxMax[j]);
       strcat_s(buffer, 2048, source);
     }
     if (pNewData->bygolden_item_num[j] != pOldData->bygolden_item_num[j])
     {
-      sprintf(source, "LimItemNum_%d=%d,", j + 1, pNewData->bygolden_item_num[j]);
+      sprintf_s(source, sizeof(source), "LimItemNum_%d=%d,", j + 1, pNewData->bygolden_item_num[j]);
       strcat_s(buffer, 2048, source);
     }
     for (int k = 0; k < pNewData->bygolden_item_num[j]; ++k)
     {
       if (pNewData->List[j][k].ncode != pOldData->List[j][k].ncode)
       {
-        sprintf(source, "K%d_%d=%d,", j + 1, k, pNewData->List[j][k].ncode);
+        sprintf_s(source, sizeof(source), "K%d_%d=%d,", j + 1, k, pNewData->List[j][k].ncode);
         strcat_s(buffer, 2048, source);
       }
       if (pNewData->List[j][k].wcount != pOldData->List[j][k].wcount)
       {
-        sprintf(source, "N%d_%d=%d,", j + 1, k, pNewData->List[j][k].wcount);
+        sprintf_s(source, sizeof(source), "N%d_%d=%d,", j + 1, k, pNewData->List[j][k].wcount);
         strcat_s(buffer, 2048, source);
       }
     }
@@ -1310,9 +1310,10 @@ char CMainThread::_db_Update_Inven(
   _AVATOR_DATA *pOldData,
   char *pSzQuery)
 {
+  static constexpr size_t kInvenQuerySize = 20000;
   char source[136]{};
   char *buffer = pSzQuery;
-  sprintf(pSzQuery, "UPDATE tbl_inven SET ");
+  sprintf_s(pSzQuery, kInvenQuerySize, "UPDATE tbl_inven SET ");
   unsigned int baseLen = static_cast<unsigned int>(std::strlen(buffer));
   unsigned __int8 maxSlots = static_cast<unsigned __int8>(20 * pNewData->dbAvator.m_byBagNum);
 
@@ -1326,17 +1327,17 @@ char CMainThread::_db_Update_Inven(
         int oldKey = pOldData->dbInven.m_List[j].Key.CovDBKey();
         if (newKey != oldKey)
         {
-          sprintf(source, "K%d=%d,", j, newKey);
+          sprintf_s(source, sizeof(source), "K%d=%d,", j, newKey);
           std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].dwDur != pOldData->dbInven.m_List[j].dwDur)
         {
-          sprintf(source, "D%d=%I64d,", j, pNewData->dbInven.m_List[j].dwDur);
+          sprintf_s(source, sizeof(source), "D%d=%I64d,", j, pNewData->dbInven.m_List[j].dwDur);
           std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].dwUpt != pOldData->dbInven.m_List[j].dwUpt)
         {
-          sprintf(source, "U%d=%d,", j, pNewData->dbInven.m_List[j].dwUpt);
+          sprintf_s(source, sizeof(source), "U%d=%d,", j, pNewData->dbInven.m_List[j].dwUpt);
           std::strcat(buffer, source);
         }
         if (pNewData->dbInven.m_List[j].byCsMethod)
@@ -1347,7 +1348,7 @@ char CMainThread::_db_Update_Inven(
           {
             newTime = pNewData->dbInven.m_List[j].dwT - g_Main.m_tmDbUpdate;
             oldTime = pOldData->dbInven.m_List[j].dwT - g_Main.m_tmDbUpdate;
-            sprintf(source, "T%d=%d,", j, newTime);
+            sprintf_s(source, sizeof(source), "T%d=%d,", j, newTime);
             std::strcat(buffer, source);
           }
           else if (pNewData->dbInven.m_List[j].byCsMethod == 2)
@@ -1356,14 +1357,14 @@ char CMainThread::_db_Update_Inven(
             oldTime = pOldData->dbInven.m_List[j].dwT;
             if (newTime != oldTime)
             {
-              sprintf(source, "T%d=%d,", j, newTime);
+              sprintf_s(source, sizeof(source), "T%d=%d,", j, newTime);
               std::strcat(buffer, source);
             }
           }
         }
         if (pNewData->dbInven.m_List[j].lnUID != pOldData->dbInven.m_List[j].lnUID)
         {
-          sprintf(source, "S%d=%I64d,", j, pNewData->dbInven.m_List[j].lnUID);
+          sprintf_s(source, sizeof(source), "S%d=%I64d,", j, pNewData->dbInven.m_List[j].lnUID);
           std::strcat(buffer, source);
         }
       }
@@ -1379,8 +1380,9 @@ char CMainThread::_db_Update_Inven(
           newTime = pNewData->dbInven.m_List[j].dwT;
         }
         int newKey = pNewData->dbInven.m_List[j].Key.CovDBKey();
-        sprintf(
+        sprintf_s(
           source,
+          sizeof(source),
           "K%d=%d,D%d=%I64d,U%d=%d,T%d=%d,S%d=%I64d,",
           j,
           newKey,
@@ -1398,7 +1400,7 @@ char CMainThread::_db_Update_Inven(
     else if (pOldData->dbInven.m_List[j].Key.IsFilled())
     {
       int newKey = pNewData->dbInven.m_List[j].Key.CovDBKey();
-      sprintf(source, "K%d=%d,", j, newKey);
+      sprintf_s(source, sizeof(source), "K%d=%d,", j, newKey);
       std::strcat(buffer, source);
     }
   }
@@ -1409,7 +1411,7 @@ char CMainThread::_db_Update_Inven(
   }
   else
   {
-    sprintf(source, "WHERE Serial=%d", dwSerial);
+    sprintf_s(source, sizeof(source), "WHERE Serial=%d", dwSerial);
     buffer[std::strlen(buffer) - 1] = ' ';
     std::strcat(buffer, source);
   }
@@ -1420,7 +1422,8 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Post_Send(_qry_case_update_data
 {
   if (m_pWorldDB->Update_Gold(pSheet->dwSerial, pSheet->dwGlod))
   {
-    char query[2048]{};
+    static char query[20000]{};
+    std::memset(query, 0, sizeof(query));
     if (_db_Update_Inven(
           pSheet->dwSerial,
           pSheet->pNewData,
@@ -1457,7 +1460,8 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Trade(_qry_case_update_data_for
       return 24;
     }
 
-    char query[2048]{};
+    static char query[20000]{};
+    std::memset(query, 0, sizeof(query));
     if (!_db_Update_Inven(tradeData.dwSerial, tradeData.pNewData, tradeData.pOldData, query))
     {
       m_logSystemError.Write( "_db_Update_Inven..failed ..", tradeData.dwSerial);
@@ -1524,3 +1528,4 @@ bool CMainThread::_db_Update_MacroData(
   }
   return m_pWorldDB->Update_MacroData(dwSerial, pMacro);
 }
+

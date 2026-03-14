@@ -73,8 +73,8 @@ _dh_quest_setup::_dh_quest_setup()
   pStartMissionSetup = nullptr;
   nDummyBlockNum = 0;
   nMonsterGroupNum = 0;
-  sprintf(szQuestTitle, "NO TITLE");
-  sprintf(szDescirptCode, "NO DATA");
+  sprintf_s(szQuestTitle, "NO TITLE");
+  sprintf_s(szDescirptCode, "NO DATA");
 }
 
 _dh_quest_setup::~_dh_quest_setup()
@@ -119,9 +119,9 @@ _dh_mission_setup::_dh_mission_setup()
   byResultType = static_cast<unsigned __int8>(-1);
   pNextMission = nullptr;
   pszNextMissionTitle = nullptr;
-  sprintf(szMissionTitle, "NO TITLE");
-  sprintf(szDescirptCode, "NO DATA");
-  sprintf(szCompleteMsg, "NO DATA");
+  sprintf_s(szMissionTitle, "NO TITLE");
+  sprintf_s(szDescirptCode, "NO DATA");
+  sprintf_s(szCompleteMsg, "NO DATA");
   nLootItemNum = 0;
   for (int j = 0; j < 32; ++j)
     pLootItem[j] = nullptr;
@@ -308,8 +308,8 @@ _dh_job_setup::_dh_job_setup()
   for (int j = 0; j < 10; ++j)
     ReactSetup[j] = nullptr;
   eventType = dh_event_take;
-  sprintf(szJobTitle, "NO TITLE");
-  sprintf(szDescirptCode, "NO DATA");
+  sprintf_s(szJobTitle, "NO TITLE");
+  sprintf_s(szDescirptCode, "NO DATA");
 }
 
 _dh_job_setup::~_dh_job_setup()
@@ -447,3 +447,4 @@ __int64 _dh_mission_mgr::GetLimMSecTime()
   }
   return static_cast<__int64>(nAddLimMSecTime) + pCurMssionPtr->dwLimTimeMSec;
 }
+

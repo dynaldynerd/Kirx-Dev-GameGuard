@@ -62,8 +62,8 @@ void CMainThread::CreateSelectCharacterLogTable(unsigned __int8 byMonth)
 
   for (unsigned __int8 j = 0; j < byMonth; ++j)
   {
-    sprintf(buffer, "%04d%02d", year, month);
-    sprintf(tableName, "tbl_characterselect_log_%s", buffer);
+    sprintf_s(buffer, sizeof(buffer), "%04d%02d", year, month);
+    sprintf_s(tableName, sizeof(tableName), "tbl_characterselect_log_%s", buffer);
     if (!this->m_pWorldDB->TableExist(tableName))
     {
       if (!this->m_pWorldDB->CreateCharacterSelectLogTable(tableName))
@@ -184,3 +184,4 @@ unsigned __int8 CMainThread::_db_Load_GoldBoxItem(qry_case_select_golden_box_ite
 
   return 0;
 }
+
