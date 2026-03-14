@@ -460,22 +460,30 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
 
     for (int j = 0; j < pLoadData->byNum; ++j)
     {
+      _qry_case_unmandtrader_buy_update_complete::__list updateEntry{};
+      unsigned __int8 completeUpdateCount = 0;
       if (SubCompleteBuyProcBuy(
             pkBuyPlayer,
             pkBuyUser,
             pLoadData->tResultTime,
             &pLoadData->List[j],
             &result.List[j],
-            &qry.List[j],
-            &qry.byNum,
+            &updateEntry,
+            &completeUpdateCount,
             &result.dwPayDalant,
             pkTaradInfo))
       {
         ++successCount;
       }
-      else if (qry.List[j].byUpdateState == 8)
+      else if (updateEntry.byUpdateState == 8)
       {
         ++updateState8Count;
+      }
+
+      if (updateEntry.byProcUpdate != 255)
+      {
+        qry.List[qry.byNum] = updateEntry;
+        ++qry.byNum;
       }
     }
 
