@@ -32,6 +32,7 @@ WorldServer/WorldServer/**
 WorldServer/x64/**
 RF Online Old Sourcecode/
 _reports/
+/ref/
 # Local analysis / report artifacts (root-level)
 _send_packet_caller_cleanup_report.txt
 _sendmsg_one_by_one_check.txt
