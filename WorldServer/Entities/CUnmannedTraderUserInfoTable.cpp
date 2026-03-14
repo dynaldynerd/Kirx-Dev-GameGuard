@@ -484,10 +484,6 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
       SubCompleteBuyIncreaseVesion(pLoadData->byDivision, pLoadData->byClass);
     }
 
-    // Keep the original sparse slot layout, but make the DQS completion pass
-    // scan the full processed request span so later valid entries are not skipped.
-    qry.byNum = pLoadData->byNum;
-
     if (qry.byNum)
     {
       g_Main.PushDQSData(-1, nullptr, 68, reinterpret_cast<char *>(&qry), sizeof(qry));
