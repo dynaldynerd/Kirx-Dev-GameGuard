@@ -2731,6 +2731,9 @@ public:
   unsigned int m_dwUMWHLastTime;
   _other_shape_all_zocl m_bufShapeAll;
   _other_shape_part_zocl m_bufSpapePart;
+
+  // New variable added for post-load overlap fix (non-IDA).
+  bool m_bPostLoading;
 };
 
 bool LoadMasteryLimFile(char *pszErrMsg);

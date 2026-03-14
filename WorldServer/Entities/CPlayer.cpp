@@ -1577,6 +1577,7 @@ void CPlayer::Init(_object_id *pID)
   m_bLoad = false;
   m_bOper = false;
   m_bPostLoad = false;
+  m_bPostLoading = false;
   m_bFullMode = false;
   m_byPosRaceTown = static_cast<unsigned __int8>(-1);
   m_bCheat_100SuccMake = false;
