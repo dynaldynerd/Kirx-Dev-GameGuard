@@ -3487,6 +3487,37 @@ const int member = static_cast<int>(GetMember(dwSerial));
     return 0;
   }
 
+  unsigned __int8 CNormalGuildBattle::LeaveGuild(unsigned int dwCharacSerial)
+  {
+    bool isFirstGuild = true;
+    if (!m_k1P.IsMember(dwCharacSerial))
+    {
+      if (!m_k2P.IsMember(dwCharacSerial))
+      {
+        return static_cast<unsigned __int8>(-111);
+      }
+      isFirstGuild = false;
+    }
+
+    if (isFirstGuild)
+    {
+      m_k1P.LeaveGuild(dwCharacSerial, false, &m_kLogger);
+    }
+    else
+    {
+      m_k2P.LeaveGuild(dwCharacSerial, false, &m_kLogger);
+    }
+
+    const char *guildName = isFirstGuild ? m_k1P.GetGuildName() : m_k2P.GetGuildName();
+    const char *side = isFirstGuild ? "Left" : "Right";
+    m_kLogger.Log(
+      "CNormalGuildBattle::LeaveGuild( %u ) : %s %s offline cleanup",
+      dwCharacSerial,
+      side,
+      guildName ? guildName : "NULL");
+    return 0;
+  }
+
   unsigned __int8 CNormalGuildBattle::DropGravityStone(unsigned int dwCharacSerial)
   {
     CPlayer *player = m_k1P.GetMemberPlayer(dwCharacSerial);
@@ -4157,6 +4188,16 @@ const int member = static_cast<int>(GetMember(dwSerial));
     if (battle)
     {
       return battle->LeaveGuild(pkPlayer);
+    }
+    return static_cast<unsigned __int8>(-114);
+  }
+
+  unsigned __int8 CNormalGuildBattleManager::LeaveGuild(unsigned int dwGuildSerial, unsigned int dwCharacSerial)
+  {
+    CNormalGuildBattle *battle = GetBattleByGuildSerial(dwGuildSerial);
+    if (battle)
+    {
+      return battle->LeaveGuild(dwCharacSerial);
     }
     return static_cast<unsigned __int8>(-114);
   }

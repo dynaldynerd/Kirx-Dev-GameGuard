@@ -503,7 +503,14 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
     }
   }
 
-  CGuildBattleController::Instance()->LeaveGuild(player);
+  if (player)
+  {
+    CGuildBattleController::Instance()->LeaveGuild(player);
+  }
+  else
+  {
+    CGuildBattleController::Instance()->LeaveGuild(guild->m_dwSerial, query->in_leaverserial);
+  }
   if (player && player->m_Param.m_byClassInGuild == 2)
   {
     CGuildMasterEffect::GetInstance()->out_player(player, guild->GetGrade());
@@ -597,6 +604,10 @@ void CPlayer::Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData)
       guild->m_nMemberNum - 1,
       guild->m_szHistoryFileName,
       query->in_bPunish);
+  }
+  else
+  {
+    CGuildBattleController::Instance()->LeaveGuild(guild->m_dwSerial, query->in_leaverserial);
   }
 
   guild->SendMsg_LeaveMember(query->in_leaverserial, 0, query->in_bPunish);
