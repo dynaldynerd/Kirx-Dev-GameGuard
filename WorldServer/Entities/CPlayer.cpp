@@ -26315,9 +26315,9 @@ void CPlayer::pc_GuildManageRequest(
   {
     result = static_cast<unsigned __int8>(-54);
   }
-
-  const unsigned int charSerial = m_Param.GetCharSerial();
-  if (guild->m_MasterData.dwSerial != charSerial)
+  // Yorozuya fix implementation (non-IDA): guard the guild pointer before checking master
+  // ownership so forced guild-manage packets cannot dereference a null guild and crash.
+  else if (guild->m_MasterData.dwSerial != m_Param.GetCharSerial())
   {
     result = static_cast<unsigned __int8>(-53);
   }
