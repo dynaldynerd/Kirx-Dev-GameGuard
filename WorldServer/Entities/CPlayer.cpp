@@ -5388,22 +5388,35 @@ float CPlayer::GetMoveSpeed()
       moveSpeed = frameRecord->m_fMoveRate_Seed;
     }
 
-    for (int j = 0; j < 6; ++j)
+    // Yorozuya move-speed fix (non-IDA): IDA parity overwrites the MAU/unit move speed with the
+    // last part record, which produces the wrong speed. Use frame seed plus equipped part speed.
+    switch (m_byMoveType)
     {
-      _UnitPart_fld *partRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
-      if (partRecord)
+      case 0:
       {
-        moveSpeed = partRecord->m_fMoveSpdRev;
+        for (int j = 0; j < 6; ++j)
+        {
+          _UnitPart_fld *partRecord =
+            reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
+          if (partRecord)
+          {
+            moveSpeed += partRecord->m_fMoveSpdRev;
+          }
+        }
+        break;
       }
-    }
-
-    if (m_byMoveType == 1)
-    {
-      _UnitPart_fld *boosterRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
-      if (boosterRecord)
+      case 1:
       {
-        return moveSpeed + boosterRecord->m_fBstSpd;
+        _UnitPart_fld *boosterRecord =
+          reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
+        if (boosterRecord)
+        {
+          moveSpeed += boosterRecord->m_fBstSpd;
+        }
+        break;
       }
+      default:
+        break;
     }
     return moveSpeed;
   }
@@ -5418,7 +5431,7 @@ float CPlayer::GetMoveSpeed()
   {
     if (m_bInGuildBattle && m_bTakeGravityStone)
     {
-      return 3.0f;
+      return 3.0f + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
     }
     return playerRecord->m_fMoveRunRate + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
   }
@@ -5434,7 +5447,7 @@ float CPlayer::GetMoveSpeed()
 
   if (m_byMoveType == 0)
   {
-    return playerRecord->m_fMoveWalkRate;
+    return playerRecord->m_fMoveWalkRate + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
   }
   return 0.0f;
 }
