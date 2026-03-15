@@ -1639,6 +1639,7 @@ void CPlayer::pc_MakeTowerRequest(
 {
   unsigned __int8 byErrCode = 0;
   unsigned int dwTowerObjSerial = static_cast<unsigned int>(-1);
+  float towerPos[3] = {m_fCurPos[0], pfPos[1], m_fCurPos[2]};
   _skill_fld *classSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
   _GuardTowerItem_fld *towerItemInfo = nullptr;
   _STORAGE_LIST::_db_con *towerItem = nullptr;
@@ -1662,6 +1663,12 @@ void CPlayer::pc_MakeTowerRequest(
   {
     byErrCode = 13;
   }
+  // Yorozuya fix implementation (non-IDA): reject tower placement while the player is still
+  // loading into a map because the request otherwise runs with invalid sector state.
+  else if (IsMapLoading())
+  {
+    byErrCode = 1;
+  }
   else if (m_pmTwr.m_nCount >= 6)
   {
     byErrCode = 11;
@@ -1679,11 +1686,13 @@ void CPlayer::pc_MakeTowerRequest(
   {
     byErrCode = 20;
   }
-  else if (GetSqrt(m_fCurPos, pfPos) > 40.0)
+  // Yorozuya fix implementation (non-IDA): guard towers are placed at the player's feet, so the
+  // server clamps x/z to the live player position instead of trusting packet coordinates.
+  else if (GetSqrt(m_fCurPos, towerPos) > 40.0)
   {
     byErrCode = 9;
   }
-  else if (IsOtherTowerNear(this, pfPos, nullptr))
+  else if (IsOtherTowerNear(this, towerPos, nullptr))
   {
     byErrCode = 15;
   }
@@ -1715,6 +1724,10 @@ void CPlayer::pc_MakeTowerRequest(
     else if (towerItem->m_bLock)
     {
       byErrCode = 17;
+    }
+    else if (!IsEffectableEquip(towerItem))
+    {
+      byErrCode = 1;
     }
     else
     {
@@ -1796,7 +1809,7 @@ void CPlayer::pc_MakeTowerRequest(
     CGuardTower *tower = CreateGuardTower(
       m_pCurMap,
       m_wMapLayerIndex,
-      pfPos,
+      towerPos,
       towerItem,
       this,
       static_cast<unsigned __int8>(m_Param.GetRaceCode()),
@@ -1895,6 +1908,7 @@ void CPlayer::pc_MakeTrapRequest(
 {
   unsigned __int8 byErrCode = 0;
   unsigned int dwTrapObjSerial = static_cast<unsigned int>(-1);
+  float trapPos[3] = {m_fCurPos[0], pfPos[1], m_fCurPos[2]};
   _skill_fld *classSkill = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[2].GetRecord(wSkillIndex));
   _TrapItem_fld *trapItemInfo = nullptr;
   _STORAGE_LIST::_db_con *trapItem = nullptr;
@@ -1920,6 +1934,12 @@ void CPlayer::pc_MakeTrapRequest(
   {
     byErrCode = 13;
   }
+  // Yorozuya fix implementation (non-IDA): reject trap placement while the player is still
+  // loading into a map because overlap checks otherwise run with invalid sector state.
+  else if (IsMapLoading())
+  {
+    byErrCode = 1;
+  }
   else if (m_pmTrp.m_nCount >= m_Param.m_nMakeTrapMaxNum)
   {
     byErrCode = 11;
@@ -1937,7 +1957,9 @@ void CPlayer::pc_MakeTrapRequest(
   {
     byErrCode = 20;
   }
-  else if (GetSqrt(m_fCurPos, pfPos) > 40.0)
+  // Yorozuya fix implementation (non-IDA): traps are placed at the player's feet, so the server
+  // clamps x/z to the live player position instead of trusting packet coordinates.
+  else if (GetSqrt(m_fCurPos, trapPos) > 40.0)
   {
     byErrCode = 9;
   }
@@ -1952,6 +1974,10 @@ void CPlayer::pc_MakeTrapRequest(
     {
       byErrCode = 3;
     }
+    else if (!IsEffectableEquip(trapItem))
+    {
+      byErrCode = 1;
+    }
     else
     {
       trapItemInfo = reinterpret_cast<_TrapItem_fld *>(g_Main.m_tblItemData[26].GetRecord(trapItem->m_wItemIndex));
@@ -1961,7 +1987,7 @@ void CPlayer::pc_MakeTrapRequest(
       }
       else
       {
-        byErrCode = static_cast<unsigned __int8>(IsOtherInvalidObjNear(this, pfPos, nullptr, trapItemInfo));
+        byErrCode = static_cast<unsigned __int8>(IsOtherInvalidObjNear(this, trapPos, nullptr, trapItemInfo));
       }
     }
   }
@@ -1993,7 +2019,7 @@ void CPlayer::pc_MakeTrapRequest(
     const int remainFp = (currentFp > needFp) ? (currentFp - needFp) : 0;
     SetFP(remainFp, true);
 
-    CTrap *trap = CreateTrap(this->m_pCurMap, this->m_wMapLayerIndex, pfPos, this, trapItem->m_wItemIndex);
+    CTrap *trap = CreateTrap(this->m_pCurMap, this->m_wMapLayerIndex, trapPos, this, trapItem->m_wItemIndex);
     if (!trap)
     {
       byErrCode = 1;
