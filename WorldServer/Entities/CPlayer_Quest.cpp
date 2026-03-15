@@ -413,6 +413,17 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
     return false;
   }
 
+  // Yorozuya quest fix (non-IDA): reject starting the same NPC quest when it
+  // is already active in the live quest list.
+  for (unsigned int index = 0; index < 10; ++index)
+  {
+    _QUEST_DB_BASE::_LIST *questSlot = &m_QuestMgr.m_pQuestData->m_List[index];
+    if (questSlot->byQuestType == quest_happen_type_npc && questSlot->wIndex == dwNPCQuestIndex)
+    {
+      return false;
+    }
+  }
+
   char skipStartHistoryInsert = 0;
   _Quest_fld *questRecord = static_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(static_cast<int>(dwNPCQuestIndex)));
   if (m_pUserDB->m_AvatorData.dbQuest.dwListCnt)
