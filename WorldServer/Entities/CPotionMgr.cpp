@@ -515,7 +515,9 @@ unsigned int CPotionMgr::PreCheckPotion(
 
       if ((matchEffLim1 || matchEffLim2 || matchEffLim3 || matchEffLim4)
           && itemRecord
-          && pfB->m_nPotionCheck < itemRecord->m_nPotionCheck)
+          // Yorozuya potion fix (non-IDA): reject conflicting ext-potion
+          // effect-limit groups whenever the live and incoming potion tiers differ.
+          && pfB->m_nPotionCheck != itemRecord->m_nPotionCheck)
       {
         return 31;
       }
