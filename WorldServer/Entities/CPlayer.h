@@ -1897,12 +1897,19 @@ public:
     unsigned __int8 bySetItemNum,
     unsigned __int8 bySetEffectNum,
     bool bSet);
+  char ProcessSetItemCheckRequest(
+    unsigned int dwSetItem,
+    unsigned __int8 bySetItemNum,
+    unsigned __int8 bySetEffectNum,
+    bool bSet,
+    bool bNotify);
   void ApplySetItemEffect(
     si_interpret *pSI,
     unsigned int dwSetItem,
     unsigned __int8 bySetItemNum,
     unsigned __int8 bySetEffectNum,
     bool bSetEffect);
+  void UpdateActiveSetItemEffects();
   void pc_NewPosStart();
   char Corpse(CCharacter *pAtter);
   void pc_Revival(bool bUseableJade);

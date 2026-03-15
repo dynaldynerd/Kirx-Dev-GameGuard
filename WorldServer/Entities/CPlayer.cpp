@@ -4296,6 +4296,11 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
     m_Param.m_dbExtTrunk.m_byItemSlotRace[storageIndex] = raceCode;
   }
 
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    UpdateActiveSetItemEffects();
+  }
+
   return pkItem;
 }
 
@@ -4451,6 +4456,11 @@ bool CPlayer::Emb_DelStorage(
     {
       SetSiege(nullptr);
     }
+  }
+
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    UpdateActiveSetItemEffects();
   }
 
   if (bDelete)
@@ -25580,24 +25590,130 @@ for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
   }
 }
 
-char CPlayer::pc_SetItemCheckRequest(
+void CPlayer::UpdateActiveSetItemEffects()
+{
+  if (!m_pUserDB)
+  {
+    return;
+  }
+
+  CSUItemSystem *suSystem = CSUItemSystem::Instance();
+  if (!suSystem || !suSystem->GetCRecordData_SetItem())
+  {
+    return;
+  }
+
+  CSetItemType *setType = suSystem->GetCSetItemType();
+  if (!setType)
+  {
+    return;
+  }
+
+  CRecordData *setRecordData = &suSystem->m_SUOrigin[0];
+  const bool notifyClient = m_bLoad && m_bOper;
+  const unsigned int recordCount = static_cast<unsigned int>(setRecordData->GetRecordNum());
+  for (unsigned int setItemIndex = 0; setItemIndex < recordCount; ++setItemIndex)
+  {
+    si_interpret *si = setType->Getsi_interpret(static_cast<int>(setItemIndex));
+    if (!si)
+    {
+      continue;
+    }
+
+    const unsigned __int8 effectTypeCount = si->GetEffectTypeCount();
+    bool hasCurrent = false;
+    unsigned __int8 currentItemNum = 0;
+    unsigned __int8 currentEffectNum = 0;
+    if (m_clsSetItem.IsSetOn(setItemIndex))
+    {
+      for (unsigned __int8 effectTypeIndex = 0; effectTypeIndex < effectTypeCount; ++effectTypeIndex)
+      {
+        const unsigned __int8 effectItemNum = si->GetCountOfItem(effectTypeIndex);
+        const unsigned __int8 effectCount = si->GetCountOfEffect(effectTypeIndex);
+        if (m_clsSetItem.IsSetOnComplete(setItemIndex, effectItemNum, effectCount))
+        {
+          hasCurrent = true;
+          currentItemNum = effectItemNum;
+          currentEffectNum = effectCount;
+          break;
+        }
+      }
+    }
+
+    bool hasDesired = false;
+    unsigned __int8 desiredItemNum = 0;
+    unsigned __int8 desiredEffectNum = 0;
+    _SetItemEff_fld *setField = reinterpret_cast<_SetItemEff_fld *>(setRecordData->GetRecord(setItemIndex));
+    if (setField && setField->m_strCivil[m_Param.GetRaceSexCode()] != '0')
+    {
+      char itemCode[68]{};
+      bool gradeOk = true;
+      const int tableCode = suSystem->GetSetItemTableInfo(static_cast<int>(setItemIndex), itemCode, 64);
+      if (tableCode > -1)
+      {
+        const unsigned __int8 grade = GetItemEquipGrade(tableCode, itemCode);
+        gradeOk = IsEquipAbleGrade(grade) != 0;
+      }
+
+      if (gradeOk)
+      {
+        const unsigned __int8 equipCount = m_clsSetItem.Check_EquipItem(&m_pUserDB->m_AvatorData, setField);
+        for (unsigned __int8 effectTypeIndex = 0; effectTypeIndex < effectTypeCount; ++effectTypeIndex)
+        {
+          const unsigned __int8 effectItemNum = si->GetCountOfItem(effectTypeIndex);
+          if (effectItemNum <= equipCount)
+          {
+            hasDesired = true;
+            desiredItemNum = effectItemNum;
+            desiredEffectNum = si->GetCountOfEffect(effectTypeIndex);
+          }
+        }
+      }
+    }
+
+    if (!hasDesired)
+    {
+      if (hasCurrent)
+      {
+        ProcessSetItemCheckRequest(setItemIndex, currentItemNum, currentEffectNum, false, notifyClient);
+      }
+      continue;
+    }
+
+    if (!hasCurrent || currentItemNum != desiredItemNum || currentEffectNum != desiredEffectNum)
+    {
+      // Yorozuya set-item fix (non-IDA): recompute the active set-item state
+      // from live equip and embellish storage after each storage change.
+      ProcessSetItemCheckRequest(setItemIndex, desiredItemNum, desiredEffectNum, true, notifyClient);
+    }
+  }
+}
+
+char CPlayer::ProcessSetItemCheckRequest(
   unsigned int dwSetItem,
   unsigned __int8 bySetItemNum,
   unsigned __int8 bySetEffectNum,
-  bool bSet)
+  bool bSet,
+  bool bNotify)
 {
   CSUItemSystem *suSystem = CSUItemSystem::Instance();
   CSetItemType *setType = suSystem->GetCSetItemType();
   if (!setType)
   {
-    SendMsg_SetItemCheckResult(7u, 0, 0);
+    if (bNotify)
+    {
+      SendMsg_SetItemCheckResult(7u, 0, 0);
+    }
     return 0;
   }
 
   si_interpret *si = setType->Getsi_interpret(dwSetItem);
   if (!si)
   {
-    SendMsg_SetItemCheckResult(2u, 0, 0);
+    if (bNotify)
+    {
+      SendMsg_SetItemCheckResult(2u, 0, 0);
+    }
     return 0;
   }
 
@@ -25653,8 +25769,20 @@ char CPlayer::pc_SetItemCheckRequest(
     }
   }
 
-  SendMsg_SetItemCheckResult(static_cast<char>(result), dwSetItem, bySetEffectNum);
+  if (bNotify)
+  {
+    SendMsg_SetItemCheckResult(static_cast<char>(result), dwSetItem, bySetEffectNum);
+  }
   return 1;
+}
+
+char CPlayer::pc_SetItemCheckRequest(
+  unsigned int dwSetItem,
+  unsigned __int8 bySetItemNum,
+  unsigned __int8 bySetEffectNum,
+  bool bSet)
+{
+  return ProcessSetItemCheckRequest(dwSetItem, bySetItemNum, bySetEffectNum, bSet, true);
 }
 
 void CPlayer::UpdateLastMetalTicket(
