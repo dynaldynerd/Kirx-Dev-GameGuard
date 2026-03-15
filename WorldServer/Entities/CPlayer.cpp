@@ -26317,7 +26317,7 @@ void CPlayer::pc_GuildManageRequest(
   }
   // Yorozuya fix implementation (non-IDA): guard the guild pointer before checking master
   // ownership so forced guild-manage packets cannot dereference a null guild and crash.
-  else if (guild->m_MasterData.dwSerial != m_Param.GetCharSerial())
+  else if (!m_byUserDgr && guild->m_MasterData.dwSerial != m_Param.GetCharSerial())
   {
     result = static_cast<unsigned __int8>(-53);
   }
