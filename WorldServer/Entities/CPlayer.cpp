@@ -3412,6 +3412,11 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 9;
   }
+  // Yorozuya fix implementation (non-IDA): the free start-point teleport path is GM-only.
+  else if (!m_byUserDgr && wItemSerial == 65535)
+  {
+    resultCode = 8;
+  }
   else if (wItemSerial == 65535)
   {
     const unsigned __int8 raceCode = m_Param.GetRaceCode();
