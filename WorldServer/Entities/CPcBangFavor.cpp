@@ -114,6 +114,21 @@ bool CPcBangFavor::PcBangGiveItem(
   {
     return false;
   }
+  // Yorozuya fix implementation (non-IDA): reject reward selection if the player already owns any
+  // pending PcBang favor items or no longer has PcBang premium status.
+  for (const unsigned __int64 uid : pOne->m_pUserDB->m_AvatorData.dbPcBangFavorItem.lnUID)
+  {
+    if (uid != static_cast<unsigned __int64>(-1))
+    {
+      pOne->SendMsg_PcRoomError(1);
+      return false;
+    }
+  }
+  if (!pOne->IsApplyPcbangPrimium())
+  {
+    pOne->SendMsg_PcRoomError(1);
+    return false;
+  }
   if (nSelectCount > 5)
   {
     return false;
