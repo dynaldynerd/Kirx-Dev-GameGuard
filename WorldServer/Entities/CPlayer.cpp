@@ -25592,6 +25592,8 @@ for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
 
 void CPlayer::UpdateActiveSetItemEffects()
 {
+  // Yorozuya fix implementation (non-IDA): reconcile active set-item effects
+  // from the current equip and embellish state after storage changes.
   if (!m_pUserDB)
   {
     return;
@@ -25682,7 +25684,7 @@ void CPlayer::UpdateActiveSetItemEffects()
 
     if (!hasCurrent || currentItemNum != desiredItemNum || currentEffectNum != desiredEffectNum)
     {
-      // Yorozuya set-item fix (non-IDA): recompute the active set-item state
+      // Yorozuya fix implementation (non-IDA): recompute the active set-item state
       // from live equip and embellish storage after each storage change.
       ProcessSetItemCheckRequest(setItemIndex, desiredItemNum, desiredEffectNum, true, notifyClient);
     }

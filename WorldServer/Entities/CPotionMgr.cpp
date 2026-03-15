@@ -515,7 +515,7 @@ unsigned int CPotionMgr::PreCheckPotion(
 
       if ((matchEffLim1 || matchEffLim2 || matchEffLim3 || matchEffLim4)
           && itemRecord
-          // Yorozuya potion fix (non-IDA): reject conflicting ext-potion
+          // Yorozuya fix implementation (non-IDA): reject conflicting ext-potion
           // effect-limit groups whenever the live and incoming potion tiers differ.
           && pfB->m_nPotionCheck != itemRecord->m_nPotionCheck)
       {
@@ -541,7 +541,7 @@ unsigned int CPotionMgr::PreCheckPotion(
   {
     CPlayer *targetPlayer = static_cast<CPlayer *>(*pTargetCharacter);
     CRaceBuffManager *raceBuffMgr = CRaceBuffManager::Instance();
-    // Yorozuya potion fix (non-IDA): keep race-debuff validation read-only so
+    // Yorozuya fix implementation (non-IDA): keep race-debuff validation read-only so
     // precheck cannot consume or alter the holy-race buff before the effect runs.
     if (targetPlayer->IsUseReleaseRaceBuffPotion())
     {
@@ -572,7 +572,7 @@ unsigned int CPotionMgr::PreCheckPotion(
   {
     CPlayer *targetPlayer = static_cast<CPlayer *>(*pTargetCharacter);
     CRaceBuffManager *raceBuffMgr = CRaceBuffManager::Instance();
-    // Yorozuya potion fix (non-IDA): keep race-debuff validation read-only so
+    // Yorozuya fix implementation (non-IDA): keep race-debuff validation read-only so
     // precheck cannot consume or alter the holy-race buff before the effect runs.
     if (targetPlayer->IsUseReleaseRaceBuffPotion())
     {
