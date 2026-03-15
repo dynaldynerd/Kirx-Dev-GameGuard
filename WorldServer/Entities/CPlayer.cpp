@@ -3380,6 +3380,12 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 12;
   }
+  // Yorozuya fix implementation (non-IDA): block forced base-portal packets while
+  // a normal player is in battle mode instead of trusting the client to hide the action.
+  else if (!m_byUserDgr && Is_Battle_Mode())
+  {
+    resultCode = 8;
+  }
   else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     resultCode = 5;
@@ -3628,6 +3634,11 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
   if (m_bInGuildBattle)
   {
     retCode = 19;
+  }
+  // Yorozuya fix implementation (non-IDA): block forced portal packets while in battle mode.
+  else if (Is_Battle_Mode())
+  {
+    retCode = 4;
   }
   else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
