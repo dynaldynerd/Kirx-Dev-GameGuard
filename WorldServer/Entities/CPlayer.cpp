@@ -22639,8 +22639,10 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
           {
             errCode = 9;
           }
+          // Yorozuya box fix (non-IDA): reject zero-count overlap drops so the
+          // throw path cannot create a ground item without consuming stack data.
           else if (IsOverLapItem(srcItem->m_byTableCode)
-                   && pItem->byNum > static_cast<unsigned __int64>(srcItem->m_dwDur))
+                   && (pItem->byNum == 0 || pItem->byNum > static_cast<unsigned __int64>(srcItem->m_dwDur)))
           {
             SendMsg_AdjustAmountInform(pItem->byStorageCode, pItem->wItemSerial, srcItem->m_dwDur);
             errCode = 3;
@@ -24517,6 +24519,14 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     {
       SendMsg_PremiumCashItemUse(65535);
       errCode = 12;
+      break;
+    }
+
+    // Yorozuya box fix (non-IDA): only consume exchange-box stacks with a
+    // sane count so invalid stack values cannot duplicate the opened result.
+    if (!useItem->m_dwDur || useItem->m_dwDur > 99)
+    {
+      errCode = 4;
       break;
     }
 
