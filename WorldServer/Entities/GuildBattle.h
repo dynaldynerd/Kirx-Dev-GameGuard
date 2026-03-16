@@ -494,6 +494,7 @@ namespace GUILD_BATTLE
     void AskJoin(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void LogIn(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 NetClose(unsigned int dwCharacSerial, CPlayer *pkPlayer);
+    unsigned __int8 LeaveGuild(unsigned int dwCharacSerial);
     unsigned __int8 LeaveGuild(CPlayer *pkPlayer);
     void NotifyBeforeStart();
     void NotifyBattleResult(char byResult);
@@ -556,6 +557,7 @@ namespace GUILD_BATTLE
     void SetNextEvent();
     void Join(unsigned int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     void JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+    unsigned __int8 LeaveGuild(unsigned int dwGuildSerial, unsigned int dwCharacSerial);
     unsigned __int8 LeaveGuild(CPlayer *pkPlayer);
     unsigned __int8 Add(
       CGuild *pSrcGuild,

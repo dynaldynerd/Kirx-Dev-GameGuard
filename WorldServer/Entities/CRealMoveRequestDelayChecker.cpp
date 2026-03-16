@@ -120,7 +120,7 @@ bool CRealMoveRequestDelayChecker::Check(CPlayer *pkUser)
         valid = false;
         m_wTotalMissCount = 0;
         char buffer[144]{};
-        std::sprintf(
+        sprintf_s(
           buffer,
           "CLOSE>> Invalid Real Move Request, id:%s, char:%s",
           pkUser->m_pUserDB->m_szAccountID,
@@ -222,4 +222,5 @@ void CRealMoveRequestDelayChecker::IncNodeIndex()
       "CRealMoveRequestDelayChecker::IncNodeIndex() : m_kNodeInxOrderList.PopNode_Front() Fail!");
   }
 }
+
 

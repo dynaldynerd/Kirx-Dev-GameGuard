@@ -123,7 +123,7 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
   }
 
   char iniPath[260]{};
-  sprintf_s(iniPath, "..\\SystemSave\\%s_Boss.ini", pMap->m_pMapSet->m_strFileName);
+  sprintf_s(iniPath, sizeof(iniPath), "..\\SystemSave\\%s_Boss.ini", pMap->m_pMapSet->m_strFileName);
 
   int scheduleCount = 0;
   for (int nBlockIndex = 0; nBlockIndex < pMap->m_nMonBlockNum; ++nBlockIndex)
@@ -162,7 +162,7 @@ BossSchedule_Map *CBossMonsterScheduleSystem::MakeMap(int nIndex, CMapData *pMap
     return nullptr;
   }
 
-  sprintf_s(mapSchedule->m_strMap, "%s", pMap->m_pMapSet->m_strFileName);
+  sprintf_s(mapSchedule->m_strMap, sizeof(mapSchedule->m_strMap), "%s", pMap->m_pMapSet->m_strFileName);
   mapSchedule->m_pSystem = this;
   mapSchedule->m_nCount = scheduleCount;
   mapSchedule->m_nIndex = nIndex;
@@ -237,7 +237,7 @@ BossSchedule *CBossMonsterScheduleSystem::MakeSchedule(
   schedule->m_LiveCount = 0;
   schedule->m_LastRespawnSystemTime = ATL::CTime(0);
   schedule->m_pParent = pMapSchedule;
-  sprintf_s(schedule->m_strSection, "BL_%d_%d", schedule->m_nBlockIndex, schedule->m_nActIndex);
+  sprintf_s(schedule->m_strSection, sizeof(schedule->m_strSection), "BL_%d_%d", schedule->m_nBlockIndex, schedule->m_nActIndex);
   pMonAct->SetBossSchedule(schedule);
   return schedule;
 }
@@ -311,7 +311,7 @@ BossSchedule *CBossMonsterScheduleSystem::LoadSchedule(BossSchedule_Map *pMapSch
           schedule->m_LiveCount = liveCount;
           schedule->m_LastRespawnSystemTime = lastRespawn;
           schedule->m_pParent = pMapSchedule;
-          sprintf_s(schedule->m_strSection, "BL_%d_%d", schedule->m_nBlockIndex, schedule->m_nActIndex);
+          sprintf_s(schedule->m_strSection, sizeof(schedule->m_strSection), "BL_%d_%d", schedule->m_nBlockIndex, schedule->m_nActIndex);
           monAct->SetBossSchedule(schedule);
           return schedule;
         }

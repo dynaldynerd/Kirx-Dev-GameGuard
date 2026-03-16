@@ -7,8 +7,10 @@
 #include <cstring>
 #include <cstdio>
 
-#pragma warning(push)
-#pragma warning(disable: 4996)
+namespace
+{
+  static constexpr size_t kErrCodeSize = 152;
+}
 
 CRecordData::CRecordData()
 {
@@ -84,7 +86,10 @@ bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode
       }
       if (errCode != nullptr)
       {
-        std::sprintf(errCode, "%s : record size(%u) != struct size(%u)",
+        sprintf_s(
+          errCode,
+          kErrCodeSize,
+          "%s : record size(%u) != struct size(%u)",
           fileName,
           static_cast<unsigned int>(m_Header.m_nRecordSize),
           static_cast<unsigned int>(structSize));
@@ -93,14 +98,20 @@ bool CRecordData::ReadRecord(const char *fileName, int structSize, char *errCode
     }
     if (errCode != nullptr)
     {
-      std::sprintf(errCode, "%s : file size(%u) != real size(%u)", fileName, m_dwTotalSize, fileSize);
+      sprintf_s(
+        errCode,
+        kErrCodeSize,
+        "%s : file size(%u) != real size(%u)",
+        fileName,
+        m_dwTotalSize,
+        fileSize);
     }
     return false;
   }
 
   if (errCode != nullptr)
   {
-    std::sprintf(errCode, "%s : Access Denied!!", fileName);
+    sprintf_s(errCode, kErrCodeSize, "%s : Access Denied!!", fileName);
   }
   return false;
 }
@@ -160,8 +171,9 @@ bool CRecordData::LoadRecordHeader(void *hFile, char *errCode)
     {
       if (errCode != nullptr)
       {
-        std::sprintf(
+        sprintf_s(
           errCode,
+          kErrCodeSize,
           "%s : header mismatch (%u,%u,%u) != (%u,%u,%u)",
           m_szFileName,
           static_cast<unsigned int>(m_Header.m_nRecordNum),
@@ -177,8 +189,9 @@ bool CRecordData::LoadRecordHeader(void *hFile, char *errCode)
     {
       if (errCode != nullptr)
       {
-        std::sprintf(
+        sprintf_s(
           errCode,
+          kErrCodeSize,
           "%s : total size mismatch(%u) != (%u)",
           m_szFileName,
           m_dwTotalSize,
@@ -213,7 +226,13 @@ bool CRecordData::LoadRecordData(void *hFile, char *errCode)
         {
           if (errCode != nullptr)
           {
-            std::sprintf(errCode, "%s : record code mismatch %s != %s", m_szFileName, dest, m_ppsRecord[j] + 4);
+            sprintf_s(
+              errCode,
+              kErrCodeSize,
+              "%s : record code mismatch %s != %s",
+              m_szFileName,
+              dest,
+              m_ppsRecord[j] + 4);
           }
           return false;
         }
@@ -393,4 +412,3 @@ CRecordData::~CRecordData()
   }
 }
 
-#pragma warning(pop)

@@ -98,7 +98,7 @@ bool CIniFile::WriteString(const char *strSection, const char *strKey, const cha
     {
       return false;
     }
-    sprintf_s(section->m_strSection, "%s", strSection);
+    sprintf_s(section->m_strSection, sizeof(section->m_strSection), "%s", strSection);
     m_SectionList.push_back(section);
   }
 
@@ -107,7 +107,7 @@ bool CIniFile::WriteString(const char *strSection, const char *strKey, const cha
   {
     if (std::strcmp(key->m_strValue, strValue))
     {
-      sprintf_s(key->m_strValue, "%s", strValue);
+      sprintf_s(key->m_strValue, sizeof(key->m_strValue), "%s", strValue);
       SaveKey(key);
     }
   }
@@ -118,8 +118,8 @@ bool CIniFile::WriteString(const char *strSection, const char *strKey, const cha
     {
       return false;
     }
-    sprintf_s(key->m_strKey, "%s", strKey);
-    sprintf_s(key->m_strValue, "%s", strValue);
+    sprintf_s(key->m_strKey, sizeof(key->m_strKey), "%s", strKey);
+    sprintf_s(key->m_strValue, sizeof(key->m_strValue), "%s", strValue);
     section->m_KeyList.push_back(key);
     key->m_pParentSection = section;
     SaveKey(key);
@@ -161,7 +161,7 @@ INI_Section *CIniFile::LoadSection(const char *strSection)
     operator delete[](lpReturnedString);
     return nullptr;
   }
-  sprintf_s(section->m_strSection, "%s", strSection);
+  sprintf_s(section->m_strSection, sizeof(section->m_strSection), "%s", strSection);
 
   while (len)
   {
@@ -197,8 +197,8 @@ INI_Key *CIniFile::LoadKey(const char *strSection, const char *strKey)
   {
     return nullptr;
   }
-  sprintf_s(key->m_strKey, "%s", strKey);
-  sprintf_s(key->m_strValue, "%s", returnedString);
+  sprintf_s(key->m_strKey, sizeof(key->m_strKey), "%s", strKey);
+  sprintf_s(key->m_strValue, sizeof(key->m_strValue), "%s", returnedString);
   return key;
 }
 

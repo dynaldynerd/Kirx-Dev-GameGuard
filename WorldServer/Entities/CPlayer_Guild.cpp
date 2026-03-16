@@ -117,6 +117,57 @@ bool IsEconomyFeeLevel(int level)
 {
   return level == 30 || level == 40 || level == 50 || level == 60;
 }
+
+bool IsNearGuildRoomNpc(CPlayer *player)
+{
+  if (!player || !player->m_pCurMap)
+  {
+    return false;
+  }
+
+  CItemStoreManager *storeManager = CItemStoreManager::Instance();
+  if (!storeManager)
+  {
+    return false;
+  }
+
+  CMapItemStoreList *storeList = storeManager->GetMapItemStoreListBySerial(player->m_pCurMap->GetMapCode());
+  if (!storeList)
+  {
+    return false;
+  }
+
+  for (int storeIndex = 0; storeIndex < storeList->m_nItemStoreNum; ++storeIndex)
+  {
+    CItemStore *store = &storeList->m_ItemStore[storeIndex];
+    if (!store->m_bLive || !store->m_pRec)
+    {
+      continue;
+    }
+
+    bool isGuildRoomNpc = false;
+    for (int classIndex = 0; classIndex < 10; ++classIndex)
+    {
+      if (store->m_pRec->m_nNpc_Class[classIndex] == 44)
+      {
+        isGuildRoomNpc = true;
+        break;
+      }
+    }
+
+    if (!isGuildRoomNpc)
+    {
+      continue;
+    }
+
+    if (GetSqrt(store->GetStorePos(), player->m_fCurPos) < 100.0f)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
 } // namespace
 
 
@@ -503,7 +554,14 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
     }
   }
 
-  CGuildBattleController::Instance()->LeaveGuild(player);
+  if (player)
+  {
+    CGuildBattleController::Instance()->LeaveGuild(player);
+  }
+  else
+  {
+    CGuildBattleController::Instance()->LeaveGuild(guild->m_dwSerial, query->in_leaverserial);
+  }
   if (player && player->m_Param.m_byClassInGuild == 2)
   {
     CGuildMasterEffect::GetInstance()->out_player(player, guild->GetGrade());
@@ -597,6 +655,10 @@ void CPlayer::Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData)
       guild->m_nMemberNum - 1,
       guild->m_szHistoryFileName,
       query->in_bPunish);
+  }
+  else
+  {
+    CGuildBattleController::Instance()->LeaveGuild(guild->m_dwSerial, query->in_leaverserial);
   }
 
   guild->SendMsg_LeaveMember(query->in_leaverserial, 0, query->in_bPunish);
@@ -1458,6 +1520,15 @@ void CPlayer::pc_GuildRoomEnterRequest(_guildroom_enter_request_clzo *pProtocol)
   if (!roomSystem->IsRoomRented(guild->m_dwSerial))
   {
     retCode = 2;
+    this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
+    return;
+  }
+
+  // Yorozuya fix implementation (non-IDA): require the player to be near the guild-room NPC
+  // before allowing the guild hall teleport instead of trusting the client-side UI restriction.
+  if (!IsNearGuildRoomNpc(this))
+  {
+    retCode = 5;
     this->SendMsg_GuildRoomEnterResult(retCode, subRetCode, mapIndex, mapLayer, startPos, restTime[0]);
     return;
   }

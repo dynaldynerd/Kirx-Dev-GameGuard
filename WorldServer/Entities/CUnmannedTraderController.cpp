@@ -239,7 +239,7 @@ bool CUnmannedTraderController::InitLogger()
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char path[128]{};
-  sprintf_s(path, "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%u.log", korLocalTime);
+  sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%u.log", korLocalTime);
   this->m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
 
   CreateDirectoryA("..\\ServiceLog\\UnmannedTrader", nullptr);
@@ -252,7 +252,7 @@ bool CUnmannedTraderController::InitLogger()
     return false;
   }
 
-  sprintf_s(path, "..\\ZoneServerLog\\ServiceLog\\UnmannedTrader\\UnmannedTraderService.log", korLocalTime);
+  sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\ServiceLog\\UnmannedTrader\\UnmannedTraderService.log");
   this->m_pkServiceLogger->SetWriteLogFile(path, 1, 0, 1, 1);
 
   CUnmannedTraderGroupItemInfoTable *groupItemInfoTable = CUnmannedTraderGroupItemInfoTable::Instance();
@@ -888,7 +888,7 @@ unsigned __int8 CUnmannedTraderController::UpdateBuy(_qry_case_unmandtrader_buy_
                 entry.dwRegistSerial,
                 10,
                 pData->dwBuyer,
-                entry.byOldState,
+                entry.dwTax,
                 &systemTime))
           {
             entry.byProcRet = 33;

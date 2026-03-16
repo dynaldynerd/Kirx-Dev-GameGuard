@@ -2,6 +2,7 @@
 
 #include "IdaCompat.h"
 
+
 struct _unmannedtrader_page_info
 {
   struct __list
@@ -22,3 +23,4 @@ struct _unmannedtrader_page_info
   unsigned int dwCnt;
   __list list[10];
 };
+

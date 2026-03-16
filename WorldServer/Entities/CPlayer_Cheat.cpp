@@ -635,7 +635,7 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
     _EditData_fld *editRecord; // [rsp+58h] [rbp-30h]
     int nodeIndex; // [rsp+60h] [rbp-28h]
   memset(Buffer, 0, 9);
-    sprintf(Buffer, "%s_%d", this->m_Param.m_pClassData->m_strCode, byLv);
+    sprintf_s(Buffer, "%s_%d", this->m_Param.m_pClassData->m_strCode, byLv);
     editRecord = static_cast<_EditData_fld *>(g_Main.m_tblEditData.GetRecord(Buffer));
     if ( !editRecord )
       return 0;
@@ -1613,7 +1613,7 @@ char CPlayer::dev_view_method(char *pwszDstName)
   const char *charNameA = target->m_Param.GetCharNameA();
 
   char buffer[152]{};
-  sprintf(buffer, "..\\ZoneServerLog\\CharLog\\%s_Method_%u_%d.log", charNameA, korTime, currentSec);
+  sprintf_s(buffer, "..\\ZoneServerLog\\CharLog\\%s_Method_%u_%d.log", charNameA, korTime, currentSec);
   log.SetWriteLogFile(buffer, 1, 0, 0, 0);
   log.Write(">> PARAM ###########");
 
@@ -1813,7 +1813,7 @@ char CPlayer::mgr_destroy_system_tower()
                   appNameByRace[0] = "BELLATO";
                   appNameByRace[1] = "CORA";
                   appNameByRace[2] = "ACCRETIA";
-                  sprintf(Buffer, "Map%d", systemTower->m_nIniIndex);
+                  sprintf_s(Buffer, "Map%d", systemTower->m_nIniIndex);
                   WritePrivateProfileStringA(
                     appNameByRace[systemTower->m_byRaceCode],
                     Buffer,
@@ -2315,7 +2315,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     nIniIndex = -1;
     for ( iniSlotIndex = 0; iniSlotIndex < 50; ++iniSlotIndex )
     {
-      sprintf(Buffer, "Map%d", iniSlotIndex);
+      sprintf_s(Buffer, "Map%d", iniSlotIndex);
       GetPrivateProfileStringA(
         appNameByRace[raceIndex],
         Buffer,
@@ -2333,22 +2333,22 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
       return 0;
     if ( !CreateSystemTower(this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, towerRecord->m_dwIndex, raceIndex, nIniIndex) )
       return 0;
-    sprintf(KeyName, "Map%d", nIniIndex);
+    sprintf_s(KeyName, "Map%d", nIniIndex);
     WritePrivateProfileStringA(
       appNameByRace[raceIndex],
       KeyName,
       this->m_pCurMap->m_pMapSet->m_strCode,
       ".\\Script\\SystemGuardTower.ini");
-    sprintf(KeyName, "Pos%d_x", nIniIndex);
+    sprintf_s(KeyName, "Pos%d_x", nIniIndex);
     _itoa((int)this->m_fCurPos[0], String, 10);
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
-    sprintf(KeyName, "Pos%d_y", nIniIndex);
+    sprintf_s(KeyName, "Pos%d_y", nIniIndex);
     _itoa((int)this->m_fCurPos[1], String, 10);
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
-    sprintf(KeyName, "Pos%d_z", nIniIndex);
+    sprintf_s(KeyName, "Pos%d_z", nIniIndex);
     _itoa((int)this->m_fCurPos[2], String, 10);
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
-    sprintf(KeyName, "Code%d", nIniIndex);
+    sprintf_s(KeyName, "Code%d", nIniIndex);
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, towerRecord->m_strCode, ".\\Script\\SystemGuardTower.ini");
     return 1;
 }
@@ -2732,3 +2732,4 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
     }
     return 1;
 }
+

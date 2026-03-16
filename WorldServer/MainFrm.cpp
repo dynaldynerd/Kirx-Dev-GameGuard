@@ -158,7 +158,7 @@ void CMainFrame::MakeModeName(CStringA &mode) const
   mode += "(T)";
 
   char nationCode[5] = {};
-  sprintf_s(nationCode, "[%s]", CNationSettingManager::Instance()->GetNationCodeStr());
+  sprintf_s(nationCode, sizeof(nationCode), "[%s]", CNationSettingManager::Instance()->GetNationCodeStr());
   mode += nationCode;
 }
 

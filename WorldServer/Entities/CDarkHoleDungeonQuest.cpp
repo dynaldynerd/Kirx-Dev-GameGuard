@@ -56,7 +56,7 @@ bool CDarkHoleDungeonQuest::LoadDarkHoleQuest()
     if (!std::strcmp(returnedString, kDarkHoleQuestNoMatch))
       MyMessageBox("Quest Dungeon Load Error", "%s item no match quest", record->m_strCode);
     char buffer[144]{};
-    sprintf(buffer, kDarkHoleQuestPathFmt, returnedString);
+    sprintf_s(buffer, kDarkHoleQuestPathFmt, returnedString);
     if (!SetupQuest(buffer))
     {
       const char *errorMsg = GetErrorMsg();
@@ -185,3 +185,4 @@ void CDarkHoleDungeonQuest::CheckQuestOnLoop()
     }
   }
 }
+

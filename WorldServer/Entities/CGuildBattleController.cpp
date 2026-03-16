@@ -369,6 +369,15 @@ void CGuildBattleController::LeaveGuild(CPlayer *pkPlayer)
   }
 }
 
+void CGuildBattleController::LeaveGuild(unsigned int dwGuildSerial, unsigned int dwCharacSerial)
+{
+  if (dwGuildSerial != static_cast<unsigned int>(-1))
+  {
+    auto *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+    manager->LeaveGuild(dwGuildSerial, dwCharacSerial);
+  }
+}
+
 unsigned __int8 CGuildBattleController::Add(
   CGuild *pSrcGuild,
   CGuild *pDestGuild,

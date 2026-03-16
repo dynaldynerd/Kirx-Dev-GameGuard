@@ -1577,6 +1577,7 @@ void CPlayer::Init(_object_id *pID)
   m_bLoad = false;
   m_bOper = false;
   m_bPostLoad = false;
+  m_bPostLoading = false;
   m_bFullMode = false;
   m_byPosRaceTown = static_cast<unsigned __int8>(-1);
   m_bCheat_100SuccMake = false;
@@ -3084,6 +3085,7 @@ void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
 {
   unsigned __int8 errorCode = 0;
+  const unsigned __int8 prevMoveType = m_byMoveType;
   if (m_pmTrd.bDTradeMode)
   {
     errorCode = 7;
@@ -3378,6 +3380,12 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   {
     resultCode = 12;
   }
+  // Yorozuya fix implementation (non-IDA): block forced base-portal packets while
+  // a normal player is in battle mode instead of trusting the client to hide the action.
+  else if (!m_byUserDgr && Is_Battle_Mode())
+  {
+    resultCode = 8;
+  }
   else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
     resultCode = 5;
@@ -3409,6 +3417,11 @@ void CPlayer::pc_GotoBasePortalRequest(unsigned __int16 wItemSerial)
   else if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE))
   {
     resultCode = 9;
+  }
+  // Yorozuya fix implementation (non-IDA): the free start-point teleport path is GM-only.
+  else if (!m_byUserDgr && wItemSerial == 65535)
+  {
+    resultCode = 8;
   }
   else if (wItemSerial == 65535)
   {
@@ -3621,6 +3634,11 @@ void CPlayer::pc_MovePortal(int nPortalIndex, unsigned __int16 *pConsumeSerial)
   if (m_bInGuildBattle)
   {
     retCode = 19;
+  }
+  // Yorozuya fix implementation (non-IDA): block forced portal packets while in battle mode.
+  else if (Is_Battle_Mode())
+  {
+    retCode = 4;
   }
   else if (GetCurSecNum() == -1 || m_bMapLoading)
   {
@@ -4294,6 +4312,11 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
     m_Param.m_dbExtTrunk.m_byItemSlotRace[storageIndex] = raceCode;
   }
 
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    UpdateActiveSetItemEffects();
+  }
+
   return pkItem;
 }
 
@@ -4449,6 +4472,11 @@ bool CPlayer::Emb_DelStorage(
     {
       SetSiege(nullptr);
     }
+  }
+
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    UpdateActiveSetItemEffects();
   }
 
   if (bDelete)
@@ -5360,22 +5388,35 @@ float CPlayer::GetMoveSpeed()
       moveSpeed = frameRecord->m_fMoveRate_Seed;
     }
 
-    for (int j = 0; j < 6; ++j)
+    // Yorozuya move-speed fix (non-IDA): IDA parity overwrites the MAU/unit move speed with the
+    // last part record, which produces the wrong speed. Use frame seed plus equipped part speed.
+    switch (m_byMoveType)
     {
-      _UnitPart_fld *partRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
-      if (partRecord)
+      case 0:
       {
-        moveSpeed = partRecord->m_fMoveSpdRev;
+        for (int j = 0; j < 6; ++j)
+        {
+          _UnitPart_fld *partRecord =
+            reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
+          if (partRecord)
+          {
+            moveSpeed += partRecord->m_fMoveSpdRev;
+          }
+        }
+        break;
       }
-    }
-
-    if (m_byMoveType == 1)
-    {
-      _UnitPart_fld *boosterRecord = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
-      if (boosterRecord)
+      case 1:
       {
-        return moveSpeed + boosterRecord->m_fBstSpd;
+        _UnitPart_fld *boosterRecord =
+          reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[5].GetRecord(m_pUsingUnit->byPart[5]));
+        if (boosterRecord)
+        {
+          moveSpeed += boosterRecord->m_fBstSpd;
+        }
+        break;
       }
+      default:
+        break;
     }
     return moveSpeed;
   }
@@ -5390,7 +5431,7 @@ float CPlayer::GetMoveSpeed()
   {
     if (m_bInGuildBattle && m_bTakeGravityStone)
     {
-      return 3.0f;
+      return 3.0f + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
     }
     return playerRecord->m_fMoveRunRate + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
   }
@@ -5406,7 +5447,7 @@ float CPlayer::GetMoveSpeed()
 
   if (m_byMoveType == 0)
   {
-    return playerRecord->m_fMoveWalkRate;
+    return playerRecord->m_fMoveWalkRate + m_EP.GetEff_Plus(EFF_PLUS_MOVE_RUN_SPEED);
   }
   return 0.0f;
 }
@@ -6448,16 +6489,17 @@ bool CPlayer::SF_ContDamageTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
@@ -6500,16 +6542,17 @@ bool CPlayer::SF_ContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectValue)
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode && contEffect->m_byEffectCode != 2)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     const unsigned int remainingTime = contEffect->m_wDurSec - (currentTime - contEffect->m_dwStartSec);
@@ -6661,16 +6704,17 @@ bool CPlayer::SF_SkillContHelpTimeInc_Once(CCharacter *pDstObj, float fEffectVal
 
     _base_fld *record = g_Main.m_tblEffectData[contEffect->m_byEffectCode].GetRecord(contEffect->m_wEffectIndex);
     int baseDuration = 0;
+    const unsigned int lvIndex = static_cast<unsigned int>(contEffect->m_byLv) - 1;
     if (contEffect->m_byEffectCode)
     {
       if (contEffect->m_byEffectCode == 1)
       {
-        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+        baseDuration = reinterpret_cast<_force_fld *>(record)->m_nContEffectSec[lvIndex];
       }
     }
     else
     {
-      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[contEffect->m_byLv];
+      baseDuration = reinterpret_cast<_skill_fld *>(record)->m_nContEffectSec[lvIndex];
     }
 
     int remainingDuration = static_cast<int>(contEffect->m_wDurSec) - static_cast<int>(currentTime - contEffect->m_dwStartSec);
@@ -9746,7 +9790,7 @@ void CPlayer::ExtractStringToTime(unsigned int dwTemp, _SYSTEMTIME *tm)
   char token[28]{};
 
   memset(buffer, 0, 10);
-  sprintf(buffer, "%d", dwTemp);
+  sprintf_s(buffer, "%d", dwTemp);
   if (dwTemp && std::strlen(buffer) >= 9)
   {
     memset(token, 0, 4);
@@ -10491,14 +10535,14 @@ void CPlayer::SendMsg_MonsterAggroData(CCharacter *pCharacter)
           if (aggroCharacter->m_ObjID.m_byID == 3)
           {
             CAnimus *animus = static_cast<CAnimus *>(aggroCharacter);
-            sprintf(nodeInfo->m_Name, "[AniMaster:%s]", animus->m_aszMasterName);
+            sprintf_s(nodeInfo->m_Name, "[AniMaster:%s]", animus->m_aszMasterName);
           }
         }
         else
         {
           CPlayer *player = static_cast<CPlayer *>(aggroCharacter);
           const char *name = player->m_Param.GetCharNameA();
-          sprintf(nodeInfo->m_Name, "%s", name);
+          sprintf_s(nodeInfo->m_Name, "%s", name);
         }
       }
       nodeInfo->m_IsData = 1;
@@ -11319,7 +11363,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
             m_fCurPos,
             0);
           char clause[144]{};
-          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          sprintf_s(clause, "Class G (%s)", pClassFld->m_strCode);
           CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
@@ -11333,7 +11377,7 @@ void CPlayer::RewardChangeClassRewardItem(_class_fld *pClassFld, unsigned __int8
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
-            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            sprintf_s(clause, "Class (%s)", pClassFld->m_strCode);
             CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
@@ -11551,7 +11595,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
             m_fCurPos,
             0);
           char clause[144]{};
-          sprintf(clause, "Class G (%s)", pClassFld->m_strCode);
+          sprintf_s(clause, "Class G (%s)", pClassFld->m_strCode);
           CPlayer::s_MgrItemHistory.reward_add_item(
             m_ObjID.m_wIndex,
             clause,
@@ -11565,7 +11609,7 @@ void CPlayer::RewardChangeClass(_class_fld *pClassFld, unsigned __int8 bySelectR
           {
             SendMsg_RewardAddItem(&rewardItem, 1u);
             char clause[160]{};
-            sprintf(clause, "Class (%s)", pClassFld->m_strCode);
+            sprintf_s(clause, "Class (%s)", pClassFld->m_strCode);
             CPlayer::s_MgrItemHistory.reward_add_item(
               m_ObjID.m_wIndex,
               clause,
@@ -13454,7 +13498,7 @@ void CPlayer::pc_NewPosStart()
   {
     const char *charName = this->m_Param.GetCharNameA();
     char buffer[144]{};
-    sprintf(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
+    sprintf_s(buffer, "Close.. %s: MapInMode(%u) Reason(%d)", charName, this->m_byMapInModeBuffer, resultCode);
     g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
   }
   else
@@ -14037,7 +14081,7 @@ char CPlayer::Create()
     const char *mapCode = this->m_pCurMap->m_pMapSet->m_strCode;
     const char *charName = this->m_Param.GetCharNameA();
     char buffer[132]{};
-    sprintf(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
+    sprintf_s(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
     g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
     return 0;
   }
@@ -14646,7 +14690,7 @@ void CPlayer::CreateComplete()
   if (this->m_pUserDB->m_byUserDgr == 2 && this->m_bSpyGM)
   {
     char buffer[136]{};
-    sprintf(buffer, "SPY GM !!");
+    sprintf_s(buffer, "SPY GM !!");
     SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, nullptr);
   }
 
@@ -15177,7 +15221,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
         0);
 
       char clause[136]{};
-      sprintf(clause, "Quest G (%s)", pQuestFld->m_strCode);
+      sprintf_s(clause, "Quest G (%s)", pQuestFld->m_strCode);
       CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
@@ -15207,7 +15251,7 @@ _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewa
       SendMsg_RewardAddItem(&item, 2);
 
       char clause[160]{};
-      sprintf(clause, "Quest (%s)", pQuestFld->m_strCode);
+      sprintf_s(clause, "Quest (%s)", pQuestFld->m_strCode);
       CPlayer::s_MgrItemHistory.reward_add_item(m_ObjID.m_wIndex,
         clause,
         &item,
@@ -22634,8 +22678,10 @@ void CPlayer::pc_ThrowStorageItem(_STORAGE_POS_INDIV *pItem)
           {
             errCode = 9;
           }
+          // Yorozuya box fix (non-IDA): reject zero-count overlap drops so the
+          // throw path cannot create a ground item without consuming stack data.
           else if (IsOverLapItem(srcItem->m_byTableCode)
-                   && pItem->byNum > static_cast<unsigned __int64>(srcItem->m_dwDur))
+                   && (pItem->byNum == 0 || pItem->byNum > static_cast<unsigned __int64>(srcItem->m_dwDur)))
           {
             SendMsg_AdjustAmountInform(pItem->byStorageCode, pItem->wItemSerial, srcItem->m_dwDur);
             errCode = 3;
@@ -23242,7 +23288,7 @@ void CPlayer::pc_MakeItem(
   unsigned __int8 masteryType = 0;
   int masteryValue = 0;
   _STORAGE_LIST::_db_con *materialItems[100]{};
-  int requiredMaterial[19]{};
+  _ItemMakeData_fld::_material_list requiredMaterial[5]{};
   _STORAGE_LIST::_db_con historyMaterials[100]{};
   unsigned __int8 materialCounts[116]{};
 
@@ -23407,7 +23453,7 @@ void CPlayer::pc_MakeItem(
       break;
     }
 
-    std::memcpy(requiredMaterial, manualRecord->m_listMaterial, 60);
+    std::memcpy(requiredMaterial, manualRecord->m_listMaterial, sizeof(requiredMaterial));
     if (!m_bCheat_makeitem_no_use_matrial)
     {
       for (int j = 0; j < byMaterialNum; ++j)
@@ -23450,9 +23496,9 @@ void CPlayer::pc_MakeItem(
           g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
         for (int n = 0; n < 5; ++n)
         {
-          if (!std::strncmp(materialRecord->m_strCode, reinterpret_cast<const char *>(&requiredMaterial[3 * n]), 7u))
+          if (!std::strncmp(materialRecord->m_strCode, requiredMaterial[n].m_itmPdMat, 7u))
           {
-            requiredMaterial[3 * n + 2] -= pipMaterials[j].byNum;
+            requiredMaterial[n].m_nPdMatNum -= pipMaterials[j].byNum;
             matched = true;
             break;
           }
@@ -23469,7 +23515,7 @@ void CPlayer::pc_MakeItem(
       }
       for (int j = 0; j < 5; ++j)
       {
-        if (static_cast<int>(requiredMaterial[3 * j + 2]) > 0)
+        if (requiredMaterial[j].m_nPdMatNum > 0)
         {
           errCode = 6;
           break;
@@ -24158,13 +24204,13 @@ void CPlayer::pc_CombineItem(
 {
   unsigned __int8 errCode = 0;
   _STORAGE_LIST::_db_con *materialItems[100]{};
-  int requiredMaterial[19]{};
+  _ItemCombine_fld::_material requiredMaterial[5]{};
   _STORAGE_LIST::_db_con historyMaterials[100]{};
   unsigned __int8 materialCounts[117]{};
   unsigned __int8 defSocketNum = 0;
   unsigned __int8 socketCount = 0;
-  _ItemCombineData_fld *manualRecord =
-    reinterpret_cast<_ItemCombineData_fld *>(g_Main.m_tblItemCombineData.GetRecord(wManualIndex));
+  _ItemCombine_fld *manualRecord =
+    reinterpret_cast<_ItemCombine_fld *>(g_Main.m_tblItemCombineData.GetRecord(wManualIndex));
   unsigned __int8 itemTableCode = static_cast<unsigned __int8>(-1);
   _base_fld *combineRecord = nullptr;
   _STORAGE_LIST::_db_con *overlapItem = nullptr;
@@ -24178,7 +24224,7 @@ void CPlayer::pc_CombineItem(
     }
 
     const int raceSexCode = m_Param.GetRaceSexCode();
-    if (manualRecord->m_strCivil[raceSexCode + 4] != '1')
+    if (manualRecord->m_strCivil[raceSexCode] != '1')
     {
       errCode = 11;
       break;
@@ -24222,8 +24268,7 @@ void CPlayer::pc_CombineItem(
       }
     }
 
-    std::memset(requiredMaterial, 0, sizeof(requiredMaterial));
-    std::memcpy(requiredMaterial, manualRecord->m_Material, 60);
+    std::memcpy(requiredMaterial, manualRecord->m_Material, sizeof(requiredMaterial));
     for (int j = 0; j < byMaterialNum; ++j)
     {
       materialItems[j] = m_Param.m_dbInven.GetPtrFromSerial(pipMaterials[j].wItemSerial);
@@ -24265,12 +24310,9 @@ void CPlayer::pc_CombineItem(
         g_Main.m_tblItemData[materialItems[j]->m_byTableCode].GetRecord(materialItems[j]->m_wItemIndex);
       for (int m = 0; m < 5; ++m)
       {
-        if (!std::strncmp(
-              materialRecord->m_strCode,
-              reinterpret_cast<const char *>(&requiredMaterial[3 * m]),
-              7u))
+        if (!std::strncmp(materialRecord->m_strCode, requiredMaterial[m].m_itmPdMat, 7u))
         {
-          requiredMaterial[3 * m + 2] -= pipMaterials[j].byNum;
+          requiredMaterial[m].m_nDur -= pipMaterials[j].byNum;
           matched = true;
           break;
         }
@@ -24288,7 +24330,7 @@ void CPlayer::pc_CombineItem(
 
     for (int j = 0; j < 5; ++j)
     {
-      if (static_cast<int>(requiredMaterial[3 * j + 2]) > 0)
+      if (requiredMaterial[j].m_nDur > 0)
       {
         errCode = 6;
         break;
@@ -24299,16 +24341,16 @@ void CPlayer::pc_CombineItem(
       break;
     }
 
-    if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
+    if (manualRecord->m_dwTradeMoney != 0xFFFFFFFFu && manualRecord->m_TradeValue == 6)
     {
       CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
       if (goldenBox->Get_Event_Status() == 2)
       {
         unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-        if (actPoint >= manualRecord->m_dwNeedActPoint)
+        if (actPoint >= manualRecord->m_dwTradeMoney)
         {
           unsigned int curActPoint = m_pUserDB->GetActPoint(2u);
-          m_pUserDB->SetActPoint(2u, curActPoint - manualRecord->m_dwNeedActPoint);
+          m_pUserDB->SetActPoint(2u, curActPoint - manualRecord->m_dwTradeMoney);
           unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
           SendMsg_Alter_Action_Point(2u, leftActPoint);
         }
@@ -24383,7 +24425,7 @@ void CPlayer::pc_CombineItem(
     if (Emb_AddStorage(0, &newItem, 0, 1))
     {
       SendMsg_FanfareItem(1u, &newItem, nullptr);
-      if (manualRecord->m_dwNeedActPoint != 0xFFFFFFFFu && manualRecord->m_nEventType == 6)
+      if (manualRecord->m_dwTradeMoney != 0xFFFFFFFFu && manualRecord->m_TradeValue == 6)
       {
         CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
         if (goldenBox->Get_Event_Status() == 2)
@@ -24418,15 +24460,15 @@ void CPlayer::pc_CombineItem(
         &newItem,
         "CPlayer::pc_CombineItem - Emb_AddStorage() Fail",
         m_szItemHistoryFileName);
-      if (manualRecord->m_nEventType == 6)
+      if (manualRecord->m_TradeValue == 6)
       {
         CGoldenBoxItemMgr *goldenBox = CGoldenBoxItemMgr::Instance();
         if (goldenBox->Get_Event_Status() == 2)
         {
           unsigned int actPoint = m_pUserDB->GetActPoint(2u);
-          m_pUserDB->SetActPoint(2u, manualRecord->m_dwNeedActPoint + actPoint);
+          m_pUserDB->SetActPoint(2u, manualRecord->m_dwTradeMoney + actPoint);
           unsigned int leftActPoint = m_pUserDB->GetActPoint(2u);
-          SendMsg_Alter_Action_Point(2u, manualRecord->m_dwNeedActPoint + leftActPoint);
+          SendMsg_Alter_Action_Point(2u, manualRecord->m_dwTradeMoney + leftActPoint);
         }
       }
       return;
@@ -24516,6 +24558,14 @@ void CPlayer::pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wI
     {
       SendMsg_PremiumCashItemUse(65535);
       errCode = 12;
+      break;
+    }
+
+    // Yorozuya box fix (non-IDA): only consume exchange-box stacks with a
+    // sane count so invalid stack values cannot duplicate the opened result.
+    if (!useItem->m_dwDur || useItem->m_dwDur > 99)
+    {
+      errCode = 4;
       break;
     }
 
@@ -25569,24 +25619,132 @@ for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
   }
 }
 
-char CPlayer::pc_SetItemCheckRequest(
+void CPlayer::UpdateActiveSetItemEffects()
+{
+  // Yorozuya fix implementation (non-IDA): reconcile active set-item effects
+  // from the current equip and embellish state after storage changes.
+  if (!m_pUserDB)
+  {
+    return;
+  }
+
+  CSUItemSystem *suSystem = CSUItemSystem::Instance();
+  if (!suSystem || !suSystem->GetCRecordData_SetItem())
+  {
+    return;
+  }
+
+  CSetItemType *setType = suSystem->GetCSetItemType();
+  if (!setType)
+  {
+    return;
+  }
+
+  CRecordData *setRecordData = &suSystem->m_SUOrigin[0];
+  const bool notifyClient = m_bLoad && m_bOper;
+  const unsigned int recordCount = static_cast<unsigned int>(setRecordData->GetRecordNum());
+  for (unsigned int setItemIndex = 0; setItemIndex < recordCount; ++setItemIndex)
+  {
+    si_interpret *si = setType->Getsi_interpret(static_cast<int>(setItemIndex));
+    if (!si)
+    {
+      continue;
+    }
+
+    const unsigned __int8 effectTypeCount = si->GetEffectTypeCount();
+    bool hasCurrent = false;
+    unsigned __int8 currentItemNum = 0;
+    unsigned __int8 currentEffectNum = 0;
+    if (m_clsSetItem.IsSetOn(setItemIndex))
+    {
+      for (unsigned __int8 effectTypeIndex = 0; effectTypeIndex < effectTypeCount; ++effectTypeIndex)
+      {
+        const unsigned __int8 effectItemNum = si->GetCountOfItem(effectTypeIndex);
+        const unsigned __int8 effectCount = si->GetCountOfEffect(effectTypeIndex);
+        if (m_clsSetItem.IsSetOnComplete(setItemIndex, effectItemNum, effectCount))
+        {
+          hasCurrent = true;
+          currentItemNum = effectItemNum;
+          currentEffectNum = effectCount;
+          break;
+        }
+      }
+    }
+
+    bool hasDesired = false;
+    unsigned __int8 desiredItemNum = 0;
+    unsigned __int8 desiredEffectNum = 0;
+    _SetItemEff_fld *setField = reinterpret_cast<_SetItemEff_fld *>(setRecordData->GetRecord(setItemIndex));
+    if (setField && setField->m_strCivil[m_Param.GetRaceSexCode()] != '0')
+    {
+      char itemCode[68]{};
+      bool gradeOk = true;
+      const int tableCode = suSystem->GetSetItemTableInfo(static_cast<int>(setItemIndex), itemCode, 64);
+      if (tableCode > -1)
+      {
+        const unsigned __int8 grade = GetItemEquipGrade(tableCode, itemCode);
+        gradeOk = IsEquipAbleGrade(grade) != 0;
+      }
+
+      if (gradeOk)
+      {
+        const unsigned __int8 equipCount = m_clsSetItem.Check_EquipItem(&m_pUserDB->m_AvatorData, setField);
+        for (unsigned __int8 effectTypeIndex = 0; effectTypeIndex < effectTypeCount; ++effectTypeIndex)
+        {
+          const unsigned __int8 effectItemNum = si->GetCountOfItem(effectTypeIndex);
+          if (effectItemNum <= equipCount)
+          {
+            hasDesired = true;
+            desiredItemNum = effectItemNum;
+            desiredEffectNum = si->GetCountOfEffect(effectTypeIndex);
+          }
+        }
+      }
+    }
+
+    if (!hasDesired)
+    {
+      if (hasCurrent)
+      {
+        ProcessSetItemCheckRequest(setItemIndex, currentItemNum, currentEffectNum, false, notifyClient);
+      }
+      continue;
+    }
+
+    if (!hasCurrent || currentItemNum != desiredItemNum || currentEffectNum != desiredEffectNum)
+    {
+      // Yorozuya fix implementation (non-IDA): recompute the active set-item state
+      // from live equip and embellish storage after each storage change.
+      ProcessSetItemCheckRequest(setItemIndex, desiredItemNum, desiredEffectNum, true, notifyClient);
+    }
+  }
+}
+
+char CPlayer::ProcessSetItemCheckRequest(
   unsigned int dwSetItem,
   unsigned __int8 bySetItemNum,
   unsigned __int8 bySetEffectNum,
-  bool bSet)
+  bool bSet,
+  bool bNotify)
 {
   CSUItemSystem *suSystem = CSUItemSystem::Instance();
   CSetItemType *setType = suSystem->GetCSetItemType();
   if (!setType)
   {
-    SendMsg_SetItemCheckResult(7u, 0, 0);
+    if (bNotify)
+    {
+      SendMsg_SetItemCheckResult(7u, 0, 0);
+    }
     return 0;
   }
 
   si_interpret *si = setType->Getsi_interpret(dwSetItem);
   if (!si)
   {
-    SendMsg_SetItemCheckResult(2u, 0, 0);
+    if (bNotify)
+    {
+      SendMsg_SetItemCheckResult(2u, 0, 0);
+    }
     return 0;
   }
 
@@ -25642,8 +25800,20 @@ char CPlayer::pc_SetItemCheckRequest(
     }
   }
 
-  SendMsg_SetItemCheckResult(static_cast<char>(result), dwSetItem, bySetEffectNum);
+  if (bNotify)
+  {
+    SendMsg_SetItemCheckResult(static_cast<char>(result), dwSetItem, bySetEffectNum);
+  }
   return 1;
+}
+
+char CPlayer::pc_SetItemCheckRequest(
+  unsigned int dwSetItem,
+  unsigned __int8 bySetItemNum,
+  unsigned __int8 bySetEffectNum,
+  bool bSet)
+{
+  return ProcessSetItemCheckRequest(dwSetItem, bySetItemNum, bySetEffectNum, bSet, true);
 }
 
 void CPlayer::UpdateLastMetalTicket(
@@ -26158,9 +26328,9 @@ void CPlayer::pc_GuildManageRequest(
   {
     result = static_cast<unsigned __int8>(-54);
   }
-
-  const unsigned int charSerial = m_Param.GetCharSerial();
-  if (guild->m_MasterData.dwSerial != charSerial)
+  // Yorozuya fix implementation (non-IDA): guard the guild pointer before checking master
+  // ownership so forced guild-manage packets cannot dereference a null guild and crash.
+  else if (!m_byUserDgr && guild->m_MasterData.dwSerial != m_Param.GetCharSerial())
   {
     result = static_cast<unsigned __int8>(-53);
   }
@@ -26217,6 +26387,7 @@ void CPlayer::SendMsg_GuildForceLeaveBoradori()
   pbyType[1] = 121;
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&szMsg), sizeof(szMsg));
 }
+
 
 
 

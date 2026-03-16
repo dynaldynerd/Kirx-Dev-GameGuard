@@ -232,7 +232,7 @@ char CHonorGuild::CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial)
 unsigned __int8 CHonorGuild::UpdateNextHonorGuild(unsigned __int8 byRace)
 {
   char buffer[264]{};
-  sprintf(buffer, "{ CALL pUpdate_HonorGuild ( %d, %d ) }", byRace, 1);
+  sprintf_s(buffer, sizeof(buffer), "{ CALL pUpdate_HonorGuild ( %d, %d ) }", byRace, 1);
   if (!g_Main.m_pWorldDB->ExecUpdateQuery(buffer, 0))
   {
     return 24;
@@ -243,8 +243,7 @@ unsigned __int8 CHonorGuild::UpdateNextHonorGuild(unsigned __int8 byRace)
   {
     for (int index = 0; index < nextList->byListNum; ++index)
     {
-      sprintf(
-        buffer,
+      sprintf_s(buffer, sizeof(buffer),
         "{ CALL pInsert_HonorGuild ( %d, %d, %d, %d ) }",
         byRace,
         nextList->GuildList[index].dwGuildSerial,
@@ -258,7 +257,7 @@ unsigned __int8 CHonorGuild::UpdateNextHonorGuild(unsigned __int8 byRace)
   }
   else
   {
-    sprintf(buffer, "{ CALL pInsert_HonorGuild ( %d, %d, %d, %d ) }", byRace, -1, 0, 1);
+    sprintf_s(buffer, sizeof(buffer), "{ CALL pInsert_HonorGuild ( %d, %d, %d, %d ) }", byRace, -1, 0, 1);
     if (!g_Main.m_pWorldDB->ExecUpdateQuery(buffer, 1))
     {
       return 24;
@@ -271,8 +270,7 @@ unsigned __int8 CHonorGuild::UpdateNextHonorGuild(unsigned __int8 byRace)
 unsigned __int8 CHonorGuild::UpdateChangeHonorGuild(unsigned __int8 byRace)
 {
   char buffer[272]{};
-  sprintf(
-    buffer,
+  sprintf_s(buffer, sizeof(buffer),
     "UPDATE tbl_honor_guild SET DCK=1, dtDisable = getdate() WHERE GuildSerial=0xFFFFFFFF AND Race=%d AND IsNext=1 "
     "AND DCK=0",
     byRace);
@@ -281,13 +279,13 @@ unsigned __int8 CHonorGuild::UpdateChangeHonorGuild(unsigned __int8 byRace)
     return 24;
   }
 
-  sprintf(buffer, "{ CALL pUpdate_HonorGuild ( %d, %d ) }", byRace, 0);
+  sprintf_s(buffer, sizeof(buffer), "{ CALL pUpdate_HonorGuild ( %d, %d ) }", byRace, 0);
   if (!g_Main.m_pWorldDB->ExecUpdateQuery(buffer, 0))
   {
     return 24;
   }
 
-  sprintf(buffer, "{ CALL pUpdate_ChangeHonorGuild ( %d )}", byRace);
+  sprintf_s(buffer, sizeof(buffer), "{ CALL pUpdate_ChangeHonorGuild ( %d )}", byRace);
   return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, 0) ? 0 : 24;
 }
 
@@ -523,3 +521,4 @@ void CHonorGuild::DQSCompleteInAtradTaxMoney(char *pdata)
       static_cast<double>(query->out_totaldalant));
   }
 }
+

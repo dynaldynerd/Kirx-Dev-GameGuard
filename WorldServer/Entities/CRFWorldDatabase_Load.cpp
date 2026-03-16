@@ -15,7 +15,7 @@
 bool CRFWorldDatabase::Insert_Buddy(unsigned int dwSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_Buddy( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pInsert_Buddy( %d ) }", dwSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -26,7 +26,7 @@ char CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *
   SQLRETURN ret = 0;
   int colIndex = 0;
 
-  sprintf(buffer, "{ CALL pSelect_Buddy20071220( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pSelect_Buddy20071220( %d ) }", dwSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -98,7 +98,7 @@ char CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *
 bool CRFWorldDatabase::Insert_BossCryRecord(unsigned int dwSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "Insert into tbl_CryMsg( Serial ) Values ( %d )", dwSerial);
+  sprintf_s(buffer, "Insert into tbl_CryMsg( Serial ) Values ( %d )", dwSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -110,20 +110,20 @@ char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_
   SQLRETURN ret = 0;
   int colIndex = 0;
 
-  sprintf(buffer, "select ");
+  sprintf_s(buffer, "select ");
   for (int j = 0; j < 10; ++j)
   {
     if (j == 9)
     {
-      sprintf(source, "CryMsg%d ", 10);
+      sprintf_s(source, "CryMsg%d ", 10);
     }
     else
     {
-      sprintf(source, "CryMsg%d, ", j + 1);
+      sprintf_s(source, "CryMsg%d, ", j + 1);
     }
     std::strcat(buffer, source);
   }
-  sprintf(source, "from tbl_CryMsg where Serial = %d", dwSerial);
+  sprintf_s(source, "from tbl_CryMsg where Serial = %d", dwSerial);
   std::strcat(buffer, source);
 
   if (m_bSaveDBLog)
@@ -198,7 +198,7 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
   int colIndex = 0;
   unsigned __int64 animusExp = 0;
 
-  sprintf(buffer, "{ CALL pSelect_CharacterGeneralInfo_20081216( %d ) }", dwCharacterSerial);
+  sprintf_s(buffer, "{ CALL pSelect_CharacterGeneralInfo_20081216( %d ) }", dwCharacterSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -339,7 +339,7 @@ char CRFWorldDatabase::Select_Inven(
   SQLRETURN ret = 0;
   int colIndex = 0;
 
-  sprintf(buffer, "{ CALL pSelect_inven_20061115_%d( %d ) }", wBagCount, dwCharacterSerial);
+  sprintf_s(buffer, "{ CALL pSelect_inven_20061115_%d( %d ) }", wBagCount, dwCharacterSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -414,7 +414,7 @@ char CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array 
   SQLRETURN ret = 0;
   int colIndex = 0;
 
-  sprintf(buffer, "{ CALL pSelect_Quest_20070611( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pSelect_Quest_20070611( %d ) }", dwSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -486,7 +486,7 @@ char CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array 
 bool CRFWorldDatabase::Insert_Quest(unsigned int dwSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_Quest( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pInsert_Quest( %d ) }", dwSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -496,7 +496,7 @@ char CRFWorldDatabase::Select_CharacterSerial(char *pwszCharacterName, unsigned 
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
 
-  sprintf(buffer, "{ CALL pSelect_CharacterSerial('%s') }", pwszCharacterName);
+  sprintf_s(buffer, "{ CALL pSelect_CharacterSerial('%s') }", pwszCharacterName);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -568,7 +568,7 @@ __int64 CRFWorldDatabase::Select_Punishment(
 
   PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
   unsigned int currentElectSerial = processor->GetCurrPatriarchElectSerial();
-  sprintf(buffer, "{ CALL pSelect_Punishment( %d, %d ) }", dwSerial, currentElectSerial);
+  sprintf_s(buffer, "{ CALL pSelect_Punishment( %d, %d ) }", dwSerial, currentElectSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -651,7 +651,7 @@ __int64 CRFWorldDatabase::Select_PatriarchVoted(
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
   unsigned int targetValue[4]{};
-sprintf(
+sprintf_s(
     buffer,
     "SELECT\tDATEDIFF(day, tmracebossvote, getdate()) as days FROM \t[dbo].[tbl_general] WHERE\tSerial = %d",
     dwSerial);
@@ -744,7 +744,7 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
 
-  sprintf(
+  sprintf_s(
     buffer,
     "select\tsum(refund) from\t[dbo].[tbl_patriarch_candidate] where\trace = %d and\taserial = %d ",
     byRaceCode,
@@ -833,7 +833,7 @@ char CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_del
   SQLRETURN ret = 0;
   int bytes = 0;
 
-  sprintf(buffer, "{ CALL pSelect_SFDelay( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pSelect_SFDelay( %d ) }", dwSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -916,7 +916,7 @@ char CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_del
 bool CRFWorldDatabase::Insert_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_SFDelay( %d, ? ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pInsert_SFDelay( %d, ? ) }", dwSerial);
   return ExecUpdateBinaryQuery(buffer, reinterpret_cast<char *>(pSFDelay), 130, false);
 }
 
@@ -1271,7 +1271,7 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
     return 2;
   }
 
-  sprintf(
+  sprintf_s(
     buffer,
     "select top %u r.[state], s.[serial], i.[inveninx], s.[price], s.[regdate], s.[sellturm], r.[buyer], r.[tax], r.[resu"
     "ltdate], b.[Name], b.[Account] from [dbo].[tbl_utsellinfo] as s join [dbo].[tbl_utresultinfo] as r on s.[type] = %u "
@@ -1430,7 +1430,7 @@ char CRFWorldDatabase::Select_AccountTrunk(
   SQLRETURN ret = 0;
   int column = 0;
 
-  sprintf(buffer, "{ CALL pSelect_AccountTrunk_20061115_%d( %d ) }", byRace, dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pSelect_AccountTrunk_20061115_%d( %d ) }", byRace, dwAccountSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1508,7 +1508,7 @@ char CRFWorldDatabase::Select_AccountTrunk(
 bool CRFWorldDatabase::Insert_AccountTrunk(unsigned int dwAccountSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_AccountTrunk( %d ) }", dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pInsert_AccountTrunk( %d ) }", dwAccountSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -1519,7 +1519,7 @@ char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _
   SQLRETURN ret = 0;
   int column = 0;
 
-  sprintf(buffer, "{ CALL pSelect_AccountTrunk_Extend(%d) }", dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pSelect_AccountTrunk_Extend(%d) }", dwAccountSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1592,7 +1592,7 @@ char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _
 bool CRFWorldDatabase::Insert_AccountTrunkExtend(unsigned int dwAccountSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_AccountTrunkExtend( %d ) }", dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pInsert_AccountTrunkExtend( %d ) }", dwAccountSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -1603,7 +1603,7 @@ char CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_user
   SQLRETURN ret = 0;
   int column = 0;
 
-  sprintf(buffer, "{ CALL pSelect_UserInterface0513( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pSelect_UserInterface0513( %d ) }", dwSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1728,7 +1728,7 @@ char CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_user
 bool CRFWorldDatabase::Insert_UserInterface(unsigned int dwSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_UserInterface( %d ) }", dwSerial);
+  sprintf_s(buffer, "{ CALL pInsert_UserInterface( %d ) }", dwSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -1739,7 +1739,7 @@ char CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit
   SQLRETURN ret = 0;
   int column = 0;
 
-  sprintf(buffer, "{ CALL pSelect_Unit( %d ) }", dwCharacterSerial);
+  sprintf_s(buffer, "{ CALL pSelect_Unit( %d ) }", dwCharacterSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1857,6 +1857,7 @@ char CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit
 bool CRFWorldDatabase::Insert_Unit(unsigned int dwCharacterSerial)
 {
   char buffer[272]{};
-  sprintf(buffer, "{ CALL pInsert_Unit( %d ) }", dwCharacterSerial);
+  sprintf_s(buffer, "{ CALL pInsert_Unit( %d ) }", dwCharacterSerial);
   return ExecUpdateQuery(buffer, 1);
 }
+

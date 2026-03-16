@@ -627,7 +627,7 @@ __int64 PatriarchElectProcessor::Insert_Elect()
 __int64 PatriarchElectProcessor::Update_Elect()
 {
   char buffer[272]{};
-  sprintf(
+  sprintf_s(
     buffer,
     "{ CALL pUpdate_Patriarch_Elect_20080611 ( %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d ) }",
     _eProcessType,
@@ -682,7 +682,7 @@ __int64 PatriarchElectProcessor::Request_Refund(char *pData)
 {
   const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
-  sprintf(
+  sprintf_s(
     buffer,
     "{ CALL pUpdate_Patriarch_PayRefund ( %d, %d ) }",
     query->byRace,
@@ -695,10 +695,10 @@ __int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
 {
   const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
-  sprintf(
+  sprintf_s(
     buffer,
     "insert [dbo].[tbl_itemcharge] (nAvatorSerial, nItemCode_K, nItemCode_D, nItemCode_U, dtGiveDate, dtTakeDate, Type) "
-    "values (%d, 0, %d, default, default, default, 1)",
+    "values (%d, 0, %I64u, default, default, default, 1)",
     query->dwAvatorSerial,
     query->dwRefund);
 
@@ -708,7 +708,7 @@ __int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
 bool PatriarchElectProcessor::CheatClearPatriarch()
 {
   char buffer[260]{};
-  sprintf(
+  sprintf_s(
     buffer,
     "Delete [dbo].[tbl_patriarch_candidate] Where\teSerial = %d And\tClassType >= %d ",
     _dwElectSerial,
@@ -1038,3 +1038,4 @@ void PatriarchElectProcessor::CompleteCheckInvalidChar(unsigned __int8 byProc)
     PatriarchElectProcessor::Instance()->Doit(_eReqQryFinalDecision, nullptr, nullptr);
   }
 }
+

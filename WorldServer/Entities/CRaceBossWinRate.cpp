@@ -90,7 +90,7 @@ char CRaceBossWinRate::SaveINI()
   char buffer[272]{};
   std::memset(buffer, 0, 255u);
 
-  sprintf(buffer, "%d", m_byTotalBattleCnt);
+  sprintf_s(buffer, "%d", m_byTotalBattleCnt);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "TotalBattleCnt", buffer, "..\\SystemSave\\ServerState.ini"))
   {
     g_Main.m_logSystemError.Write(
@@ -102,7 +102,7 @@ char CRaceBossWinRate::SaveINI()
     return 0;
   }
 
-  sprintf(buffer, "%d", m_byWinCnt[0]);
+  sprintf_s(buffer, "%d", m_byWinCnt[0]);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "B_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
   {
     g_Main.m_logSystemError.Write(
@@ -114,7 +114,7 @@ char CRaceBossWinRate::SaveINI()
     return 0;
   }
 
-  sprintf(buffer, "%d", m_byWinCnt[1]);
+  sprintf_s(buffer, "%d", m_byWinCnt[1]);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "C_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
   {
     g_Main.m_logSystemError.Write(
@@ -126,7 +126,7 @@ char CRaceBossWinRate::SaveINI()
     return 0;
   }
 
-  sprintf(buffer, "%d", m_byWinCnt[2]);
+  sprintf_s(buffer, "%d", m_byWinCnt[2]);
   if (!WritePrivateProfileStringA("RaceBossWinRate", "A_WinCnt", buffer, "..\\SystemSave\\ServerState.ini"))
   {
     g_Main.m_logSystemError.Write(
@@ -276,3 +276,4 @@ void CRaceBossWinRate::Notify()
     }
   }
 }
+

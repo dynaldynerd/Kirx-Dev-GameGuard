@@ -265,6 +265,17 @@ void CPlayer::UpdateReturnPost(unsigned int dwSerial)
 
 void CPlayer::pc_PostListRequest()
 {
+  // Post load fix (non-IDA): keep the existing 79 -> 80 flow, but do not stack it.
+  if (m_bPostLoad || m_bPostLoading)
+  {
+    return;
+  }
+
+  m_Param.m_PostStorage.Init();
+  m_Param.m_ReturnPostStorage.Init();
+  m_bPostLoad = false;
+  m_bPostLoading = true;
+
   _qry_case_post_storage_list_get qry{};
   qry.dwMasterSerial = m_pUserDB->m_dwSerial;
   const int size = static_cast<int>(qry.size());

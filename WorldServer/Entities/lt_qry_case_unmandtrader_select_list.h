@@ -21,24 +21,20 @@ struct _lt_qry_case_unmandtrader_select_list
   };
 
   unsigned __int16 wInx;
-  unsigned __int8 byPadding0[2];
   unsigned int dwOwnerSerial;
-  unsigned __int8 byType;
-  unsigned __int8 byRace;
-  unsigned __int8 byPadding1[2];
+  char byType;
+  char byRace;
   unsigned int dwListIndex;
-  unsigned __int8 byClass1;
-  unsigned __int8 byClass2;
-  unsigned __int8 byClass3;
-  unsigned __int8 bySortType;
+  char byClass1;
+  char byClass2;
+  char byClass3;
+  char bySortType;
   unsigned int dwVer;
-  unsigned __int8 byPage;
+  char byPage;
   char szSortQuery[128];
-  unsigned __int8 byProcRet;
-  unsigned __int8 byPadding2[2];
+  char byProcRet;
   unsigned int dwMaxPage;
   unsigned int dwCnt;
-  unsigned __int8 byPadding3[4];
   __list list[10];
 
   __int64 size() const

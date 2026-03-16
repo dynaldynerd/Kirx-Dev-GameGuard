@@ -298,7 +298,7 @@ void CPlayer::Reward_DarkDungeon(
         false);
 
       char historyClause[132]{};
-      sprintf(historyClause, "Quest G (%s)", pszTitle ? pszTitle : "");
+      sprintf_s(historyClause, "Quest G (%s)", pszTitle ? pszTitle : "");
       CPlayer::s_MgrItemHistory.reward_add_item(
         m_ObjID.m_wIndex,
         historyClause,
@@ -332,7 +332,7 @@ void CPlayer::Reward_DarkDungeon(
         SendMsg_RewardAddItem(&rewardItem, 2u);
 
         char historyClause[160]{};
-        sprintf(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
+        sprintf_s(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
         CPlayer::s_MgrItemHistory.reward_add_item(
           m_ObjID.m_wIndex,
           historyClause,
@@ -366,7 +366,7 @@ void CPlayer::Reward_DarkDungeon(
     const unsigned int sumDalant = m_Param.GetDalant();
 
     char historyClause[132]{};
-    sprintf(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
+    sprintf_s(historyClause, "Quest (%s)", pszTitle ? pszTitle : "");
     CPlayer::s_MgrItemHistory.reward_add_money(
       m_ObjID.m_wIndex,
       historyClause,
@@ -793,4 +793,5 @@ unsigned __int8 errCode = 0;
 
   SendMsg_ReEnterDarkHoleResult(errCode);
 }
+
 

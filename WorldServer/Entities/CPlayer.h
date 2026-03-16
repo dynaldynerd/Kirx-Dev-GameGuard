@@ -4,8 +4,6 @@
 #include "CHRID.h"
 #include "InvenKey.h"
 
-#pragma pack(push, 1)
-
 #include "CCharacter.h"
 #include "DELAY_PROCESS.h"
 #include "StorageList.h"
@@ -1899,12 +1897,19 @@ public:
     unsigned __int8 bySetItemNum,
     unsigned __int8 bySetEffectNum,
     bool bSet);
+  char ProcessSetItemCheckRequest(
+    unsigned int dwSetItem,
+    unsigned __int8 bySetItemNum,
+    unsigned __int8 bySetEffectNum,
+    bool bSet,
+    bool bNotify);
   void ApplySetItemEffect(
     si_interpret *pSI,
     unsigned int dwSetItem,
     unsigned __int8 bySetItemNum,
     unsigned __int8 bySetEffectNum,
     bool bSetEffect);
+  void UpdateActiveSetItemEffects();
   void pc_NewPosStart();
   char Corpse(CCharacter *pAtter);
   void pc_Revival(bool bUseableJade);
@@ -2733,6 +2738,9 @@ public:
   unsigned int m_dwUMWHLastTime;
   _other_shape_all_zocl m_bufShapeAll;
   _other_shape_part_zocl m_bufSpapePart;
+
+  // New variable added for post-load overlap fix (non-IDA).
+  bool m_bPostLoading;
 };
 
 bool LoadMasteryLimFile(char *pszErrMsg);
@@ -2769,7 +2777,3 @@ bool __fastcall DE_RecoverAllReturnStateAnimusHPFull(
   CCharacter *pTargetChar,
   float fEffectValue,
   unsigned __int8 *byRet);
-
-#pragma pack(pop)
-
-

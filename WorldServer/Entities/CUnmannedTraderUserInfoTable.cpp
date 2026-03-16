@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderUserInfoTable.h"
 #include "CNetProcess.h"
@@ -460,22 +460,30 @@ CUnmannedTraderUserInfo *pkBuyUser = nullptr;
 
     for (int j = 0; j < pLoadData->byNum; ++j)
     {
+      _qry_case_unmandtrader_buy_update_complete::__list updateEntry{};
+      unsigned __int8 completeUpdateCount = 0;
       if (SubCompleteBuyProcBuy(
             pkBuyPlayer,
             pkBuyUser,
             pLoadData->tResultTime,
             &pLoadData->List[j],
             &result.List[j],
-            &qry.List[j],
-            &qry.byNum,
+            &updateEntry,
+            &completeUpdateCount,
             &result.dwPayDalant,
             pkTaradInfo))
       {
         ++successCount;
       }
-      else if (qry.List[j].byUpdateState == 8)
+      else if (updateEntry.byUpdateState == 8)
       {
         ++updateState8Count;
+      }
+
+      if (updateEntry.byProcUpdate != 255)
+      {
+        qry.List[qry.byNum] = updateEntry;
+        ++qry.byNum;
       }
     }
 
@@ -711,7 +719,8 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyFindBuyer(
     int offset = 0;
     for (unsigned __int8 j = 0; j < pkQuery->byNum; ++j)
     {
-      offset += sprintf(&buffer[offset], "%u ", pkQuery->List[j].dwRegistSerial);
+      const size_t remaining = sizeof(buffer) - static_cast<size_t>(offset);
+      offset += sprintf_s(&buffer[offset], remaining, "%u ", pkQuery->List[j].dwRegistSerial);
     }
     ++m_uiBuyRollBackCallCountSum;
     Log(
@@ -729,7 +738,8 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyFindBuyer(
   int offset = 0;
   for (unsigned __int8 j = 0; j < pkQuery->byNum; ++j)
   {
-    offset += sprintf(&buffer[offset], "%u ", pkQuery->List[j].dwRegistSerial);
+    const size_t remaining = sizeof(buffer) - static_cast<size_t>(offset);
+    offset += sprintf_s(&buffer[offset], remaining, "%u ", pkQuery->List[j].dwRegistSerial);
   }
   Log(
     "SubCompleteBuyFindBuyer:: Count(%u) PushUpdateBuyRollBack Call! dwOwner(%u) Not Connected!\r\n"
@@ -958,3 +968,4 @@ void CUnmannedTraderUserInfoTable::PushUpdateBuyRollBack(_qry_case_unmandtrader_
 
   g_Main.PushDQSData(-1, nullptr, 66, reinterpret_cast<char *>(&qry), sizeof(qry));
 }
+

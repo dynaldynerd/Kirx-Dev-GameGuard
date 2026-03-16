@@ -73,6 +73,7 @@ public:
   void PushClearGuildBattleRank();
   void UpdatePossibleBattleGuildList();
   void JoinGuild(int n, unsigned int dwGuildSerial, unsigned int dwCharacSerial);
+  void LeaveGuild(unsigned int dwGuildSerial, unsigned int dwCharacSerial);
   void LeaveGuild(CPlayer *pkPlayer);
   unsigned __int8 Start(CPlayer *pkPlayer);
   void LogIn(CPlayer *pkPlayer);

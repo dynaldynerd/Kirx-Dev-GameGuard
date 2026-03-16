@@ -67,7 +67,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
   if (strchr(pwszCommand, '%'))
   {
-    sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+    sprintf_s(wszRespon, sizeof(wszRespon), "%s >> FAIL(grammar or logic)", pwszCommand);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
     return true;
   }
@@ -89,7 +89,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
           WriteCheatLog(pwszCommand, pOne);
           if (pOne)
           {
-            sprintf(wszRespon, "%s >> OK", pwszCommand);
+            sprintf_s(wszRespon, sizeof(wszRespon), "%s >> OK", pwszCommand);
             pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
           }
           return true;
@@ -97,13 +97,13 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
         if (pOne)
         {
-          sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+          sprintf_s(wszRespon, sizeof(wszRespon), "%s >> FAIL(grammar or logic)", pwszCommand);
           pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
         }
         return false;
       }
 
-      sprintf(wszRespon, "%s >> ERROR (authority)", pwszCommand);
+      sprintf_s(wszRespon, sizeof(wszRespon), "%s >> ERROR (authority)", pwszCommand);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
       return false;
     }
@@ -111,7 +111,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
   if (pOne)
   {
-    sprintf(wszRespon, "%s >> ERROR (command)", pwszCommand);
+    sprintf_s(wszRespon, sizeof(wszRespon), "%s >> ERROR (command)", pwszCommand);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
   }
   return false;
@@ -124,11 +124,11 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
   if (pOne)
   {
     const char *charName = pOne->m_Param.GetCharNameA();
-    sprintf(buffer, "[ %s ] >> ", charName);
+    sprintf_s(buffer, sizeof(buffer), "[ %s ] >> ", charName);
   }
   else
   {
-    sprintf(buffer, "[ GM tool ] >> ");
+    sprintf_s(buffer, sizeof(buffer), "[ GM tool ] >> ");
   }
 
   const int offset = static_cast<int>(std::strlen(buffer));
@@ -150,6 +150,6 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char buffer[144]{};
-  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
+  sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
 }

@@ -998,7 +998,7 @@ int CNetProcess::LoadSendMsg(
   Src[1] = *reinterpret_cast<unsigned __int16 *>(pbyType);
   Src[0] = static_cast<unsigned __int16>(nLen + 4);
 
-  if (m_nIndex == 0 && m_pNetwork && m_pNetwork->m_pProcess[0] == this)
+  if (m_Type.m_bSendLogFile && m_nIndex == 0 && m_pNetwork && m_pNetwork->m_pProcess[0] == this)
   {
     AppendPacketSnifferLogSend(
       this,

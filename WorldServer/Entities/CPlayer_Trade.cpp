@@ -1147,6 +1147,40 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   _STORAGE_LIST::_db_con tradeItems[2][15] = {};
   int tradedItemCount[2] = {0, 0};
   CPlayer *players[2] = {this, nullptr};
+  auto getEffectiveEmptyInventorySlots = [] (CPlayer *player, int *emptySlotCount)
+  {
+    *emptySlotCount = player->m_Param.m_dbInven.GetNumEmptyCon();
+
+    for (int tradeSlot = 0; tradeSlot < 15; ++tradeSlot)
+    {
+      _DTRADE_ITEM *tradeItem = &player->m_pmTrd.DItemNode[tradeSlot];
+      if (!tradeItem->bLoad || tradeItem->byStorageCode != 0)
+      {
+        continue;
+      }
+
+      _STORAGE_LIST::_db_con *sourceItem = player->m_Param.m_dbInven.GetPtrFromSerial(
+        static_cast<unsigned __int16>(tradeItem->dwSerial));
+      if (!sourceItem)
+      {
+        return false;
+      }
+
+      if (IsOverLapItem(sourceItem->m_byTableCode))
+      {
+        if (sourceItem->m_dwDur == tradeItem->byAmount)
+        {
+          ++(*emptySlotCount);
+        }
+      }
+      else
+      {
+        ++(*emptySlotCount);
+      }
+    }
+
+    return true;
+  };
 
   auto closeTrade = [&]() {
     this->m_pmTrd.Init();
@@ -1189,7 +1223,23 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   else
   {
     players[1] = tradeDst;
-    for (int side = 0; side < 2; ++side)
+
+    // Yorozuya trade fix (non-IDA): recompute effective inventory space at
+    // commit time instead of trusting the cached trade-start empty-slot count.
+    int thisEffectiveEmptyInven = 0;
+    int dstEffectiveEmptyInven = 0;
+    if (!getEffectiveEmptyInventorySlots(this, &thisEffectiveEmptyInven)
+        || !getEffectiveEmptyInventorySlots(tradeDst, &dstEffectiveEmptyInven))
+    {
+      resultCode = 4;
+    }
+    else if (this->m_pmTrd.bySellItemNum > dstEffectiveEmptyInven
+             || tradeDst->m_pmTrd.bySellItemNum > thisEffectiveEmptyInven)
+    {
+      resultCode = 100;
+    }
+
+    for (int side = 0; !resultCode && side < 2; ++side)
     {
       CPlayer *current = players[side];
       if (current->m_pmTrd.dwDTrade_Dalant > current->m_Param.GetDalant()

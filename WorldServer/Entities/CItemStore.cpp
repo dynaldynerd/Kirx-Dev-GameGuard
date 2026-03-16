@@ -363,7 +363,7 @@ unsigned __int8 CItemStore::IsSell(
   unsigned __int8 byRace,
   unsigned __int8 byPvpGrade)
 {
-if (!m_pStorageItem || !m_pLimitStorageItem)
+  if (!m_pStorageItem || !m_pLimitStorageItem)
   {
     return 100;
   }
@@ -371,6 +371,7 @@ if (!m_pStorageItem || !m_pLimitStorageItem)
   SetZeroTradeMoney();
   const unsigned int texRate = eGetTexRate(byRace) + 10000;
   (void)eGetTex(byRace);
+  constexpr unsigned __int64 kMaxTradeTotal = 0xFFFFFFFFui64;
 
   int limitCounts[16]{};
   for (int j = 0; j < byOfferNum; ++j)
@@ -381,6 +382,13 @@ if (!m_pStorageItem || !m_pLimitStorageItem)
     }
 
     _good_storage_info *good = &m_pStorageItem[pOffer[j].byGoodIndex];
+    // Yorozuya store fix (non-IDA): reject invalid non-stackable counts and
+    // prevent 32-bit trade-total wrap before touching the legacy accumulators.
+    if (pOffer[j].byGoodAmount > 1 && !IsOverLapItem(good->byItemTableCode))
+    {
+      return 100;
+    }
+
     if (good->byType == 1)
     {
       limitCounts[good->dwLimitIndex] += pOffer[j].byGoodAmount;
@@ -427,24 +435,45 @@ if (!m_pStorageItem || !m_pLimitStorageItem)
       switch (unit)
       {
         case 1:
-          m_dwLastTradeGold += static_cast<unsigned int>(totalCost);
+        {
+          const unsigned __int64 nextTradeGold = static_cast<unsigned __int64>(m_dwLastTradeGold) + totalCost;
+          if (nextTradeGold > kMaxTradeTotal)
+          {
+            return 100;
+          }
+          m_dwLastTradeGold = static_cast<unsigned int>(nextTradeGold);
           if (dwHasGold < m_dwLastTradeGold)
           {
             return 14;
           }
           break;
+        }
         case 2:
         case 3:
-          m_dwLastTradePoint += static_cast<unsigned int>(totalCost);
+        {
+          const unsigned __int64 nextTradePoint = static_cast<unsigned __int64>(m_dwLastTradePoint) + totalCost;
+          if (nextTradePoint > kMaxTradeTotal)
+          {
+            return 100;
+          }
+          m_dwLastTradePoint = static_cast<unsigned int>(nextTradePoint);
           if (static_cast<double>(static_cast<int>(m_dwLastTradePoint)) > dHasPoint || dHasPoint < 0.0)
           {
             return 21;
           }
           break;
+        }
         case 4:
         case 5:
         case 6:
-          m_dwLastTradeActPoint[*pbyActCode] += static_cast<unsigned int>(totalCost);
+        {
+          const unsigned __int64 nextTradeActPoint =
+            static_cast<unsigned __int64>(m_dwLastTradeActPoint[*pbyActCode]) + totalCost;
+          if (nextTradeActPoint > kMaxTradeTotal)
+          {
+            return 100;
+          }
+          m_dwLastTradeActPoint[*pbyActCode] = static_cast<unsigned int>(nextTradeActPoint);
           if (dwHasActPoint[*pbyActCode] < m_dwLastTradeActPoint[*pbyActCode])
           {
             switch (unit)
@@ -458,13 +487,19 @@ if (!m_pStorageItem || !m_pLimitStorageItem)
             }
           }
           break;
+        }
         default:
           break;
       }
     }
     else
     {
-      m_dwLastTradeDalant += static_cast<unsigned int>(totalCost);
+      const unsigned __int64 nextTradeDalant = static_cast<unsigned __int64>(m_dwLastTradeDalant) + totalCost;
+      if (nextTradeDalant > kMaxTradeTotal)
+      {
+        return 100;
+      }
+      m_dwLastTradeDalant = static_cast<unsigned int>(nextTradeDalant);
       if (dwHasDalant < m_dwLastTradeDalant)
       {
         return 13;

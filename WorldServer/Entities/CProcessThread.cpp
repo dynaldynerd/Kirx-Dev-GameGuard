@@ -10,8 +10,8 @@ CProcessThread::_THREAD_CONFIG::_THREAD_CONFIG()
 {
   bProgramExitWhenLackData = false;
   nSleepCount = 100;
-  sprintf(szThreadID, "NONAME");
-  sprintf(szLogFileName, "NONAME");
+  sprintf_s(szThreadID, "NONAME");
+  sprintf_s(szLogFileName, "NONAME");
 }
 
 CProcessThread::_SYN_HEADER::_SYN_HEADER()
@@ -206,3 +206,4 @@ void CProcessThread::Thread(void *pv)
 
   _endthreadex(0);
 }
+

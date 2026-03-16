@@ -15,7 +15,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoBySerial(
   int count = 0;
   char buffer[260]{};
 
-  sprintf(buffer, "{ CALL pSelect_CharacterBaseInfoBySerial_20061115( %d ) }", dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pSelect_CharacterBaseInfoBySerial_20061115( %d ) }", dwAccountSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -190,7 +190,7 @@ char CRFWorldDatabase::Select_CharacterBaseInfo(
   char buffer[260]{};
   int column = 0;
 
-  sprintf(buffer, "{ CALL pSelect_CharacterBaseInfo_20061115( %d ) }", dwCharacterSerial);
+  sprintf_s(buffer, "{ CALL pSelect_CharacterBaseInfo_20061115( %d ) }", dwCharacterSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -310,7 +310,7 @@ unsigned __int8 CRFWorldDatabase::Select_NotArrangeCharacter(
   int count = 0;
   char buffer[260]{};
 
-  sprintf(buffer, "{ CALL pSelect_NotArrangeCharacter( %d ) }", dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pSelect_NotArrangeCharacter( %d ) }", dwAccountSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -417,7 +417,7 @@ unsigned __int8 CRFWorldDatabase::Select_NotArrangeCharacter(
 char CRFWorldDatabase::Select_Equal_Name(char *pwszCharacterName)
 {
   char buffer[260]{};
-  sprintf(buffer, "{ CALL pSelect_Equal_Name('%s') }", pwszCharacterName);
+  sprintf_s(buffer, "{ CALL pSelect_Equal_Name('%s') }", pwszCharacterName);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -473,7 +473,7 @@ char CRFWorldDatabase::Select_Equal_Name(char *pwszCharacterName)
 char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterName)
 {
   char buffer[260]{};
-  sprintf(buffer, "select deletename from tbl_base where deletename = '%s' and dck = 1 and arrange = 0 ", pwszCharacterName);
+  sprintf_s(buffer, "select deletename from tbl_base where deletename = '%s' and dck = 1 and arrange = 0 ", pwszCharacterName);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -525,3 +525,4 @@ char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterNam
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
   return 0;
 }
+

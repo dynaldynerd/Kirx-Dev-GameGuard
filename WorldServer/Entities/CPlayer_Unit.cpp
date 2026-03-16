@@ -490,7 +490,8 @@ float CPlayer::GetAddSpeed()
 
 void CPlayer::BreakCloakBooster()
 {
-  this->EquipItemSFAgent.ReleaseSFCont(7);
+  _sf_continous *cont = EquipItemSFAgent.GetEquipSFCont(7);
+  EquipItemSFAgent.ReleaseSFCont(7);
 }
 
 bool CPlayer::IsUseCloakBooster()

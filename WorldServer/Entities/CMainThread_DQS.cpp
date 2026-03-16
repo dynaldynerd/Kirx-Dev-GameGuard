@@ -2094,8 +2094,7 @@ void CMainThread::Lobby_Account_Complete(_DB_QRY_SYN_DATA *pData)
     if (pData->m_byResult)
     {
       char buffer[144]{};
-      sprintf(
-        buffer,
+      sprintf_s(buffer, sizeof(buffer),
         "Lobby_Account_Complete Database Error(%d) account(%s , %d), char(%s, %d)",
         pData->m_byResult,
         user->m_szAccountID,
@@ -2149,8 +2148,7 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
     if (pData->m_byResult)
     {
       char buffer[144]{};
-      sprintf(
-        buffer,
+      sprintf_s(buffer, sizeof(buffer),
         "Cont_UserSave_Complete Database Error(%d) account(%s , %d), char(%s, %d)",
         pData->m_byResult,
         user->m_szAccountID,
@@ -2455,16 +2453,27 @@ void CMainThread::InAtradTaxMoney(_DB_QRY_SYN_DATA *pData)
 void CMainThread::Load_PostStorage_Complete(char *pData)
 {
   auto *postStorageListQuery = reinterpret_cast<_qry_case_post_storage_list_get *>(pData);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postStorageListQuery->dwMasterSerial);
   if (postStorageListQuery->byProcRet == 1)
   {
     m_logSystemError.Write(
       "Load_PostStorage_Complete() : Select_PostStorageList(Serial:%d) => failed",
       postStorageListQuery->dwMasterSerial);
+
+    if (player && player->m_bLoad)
+    {
+      player->m_bPostLoading = false;
+    }
   }
 
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postStorageListQuery->dwMasterSerial);
   if (player && player->m_bLoad && postStorageListQuery->byProcRet != 1)
   {
+    // Post load fix (non-IDA): ignore stale or duplicate case-79 completions.
+    if (player->m_bPostLoad || !player->m_bPostLoading)
+    {
+      return;
+    }
+
     CPostStorage *postStorage = &player->m_Param.m_PostStorage;
     unsigned int count = postStorageListQuery->dwCount;
 
@@ -2579,16 +2588,27 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
 void CMainThread::Load_ReturnPost_Complete(char *pData)
 {
   auto *postReturnListQuery = reinterpret_cast<_qry_case_post_return_list_get *>(pData);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postReturnListQuery->dwMasterSerial);
   if (postReturnListQuery->byProcRet == 1)
   {
     m_logSystemError.Write(
       "Load_ReturnPost_Complete() : Select_ReturnPost(Serial:%d) => failed",
       postReturnListQuery->dwMasterSerial);
+
+    if (player && player->m_bLoad)
+    {
+      player->m_bPostLoading = false;
+    }
   }
 
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postReturnListQuery->dwMasterSerial);
   if (player && player->m_bLoad && postReturnListQuery->byProcRet != 1)
   {
+    // Post load fix (non-IDA): case 80 only completes the active load chain once.
+    if (player->m_bPostLoad || !player->m_bPostLoading)
+    {
+      return;
+    }
+
     CPostReturnStorage *returnStorage = &player->m_Param.m_ReturnPostStorage;
     unsigned int count = postReturnListQuery->dwCount;
     for (unsigned int j = 0; j < count; ++j)
@@ -2616,6 +2636,7 @@ void CMainThread::Load_ReturnPost_Complete(char *pData)
       &player->m_Param.m_ReturnPostStorage,
       player->m_szItemHistoryFileName);
     player->m_bPostLoad = 1;
+    player->m_bPostLoading = false;
 
     if (count)
     {
@@ -2777,3 +2798,4 @@ void CMainThread::_db_complete_update_event_classrefine(unsigned __int16 wSock, 
     state->bChange = false;
   }
 }
+

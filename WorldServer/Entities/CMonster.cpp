@@ -307,14 +307,14 @@ void CMonster::_InitSDM()
   if (!s_logTrace_Boss_Looting.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%u.log", localTime);
+    sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterLoot%u.log", localTime);
     s_logTrace_Boss_Looting.SetWriteLogFile(buffer, 1, 0, 0, 0);
   }
 
   if (!s_logTrace_Boss_BirthAndDeath.m_bInit)
   {
     const unsigned int localTime = GetKorLocalTime();
-    sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%u.log", localTime);
+    sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\MonsterBirth%u.log", localTime);
     s_logTrace_Boss_BirthAndDeath.SetWriteLogFile(buffer, 1, 0, 1, 1);
   }
 
@@ -2887,11 +2887,11 @@ void CMonster::_BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pA
       {
         double damageValue = static_cast<double>(entry->dwDamage * entry->dwAttCount);
         char buffer[136] = {};
-        std::sprintf(buffer, "%d * %d = %.0f", entry->dwAttCount, entry->dwDamage, damageValue);
+        sprintf_s(buffer, "%d * %d = %.0f", entry->dwAttCount, entry->dwDamage, damageValue);
         if (!j && m_LootMgr.m_bFirst)
         {
           damageValue = static_cast<double>(entry->dwDamage * entry->dwAttCount) * 1.2;
-          std::sprintf(buffer, "%d * %d * 1.2 = %.0f", entry->dwAttCount, entry->dwDamage, damageValue);
+          sprintf_s(buffer, "%d * %d * 1.2 = %.0f", entry->dwAttCount, entry->dwDamage, damageValue);
         }
 
         if (entry->pAtter == &sPlayerDum)
@@ -2928,12 +2928,12 @@ void CMonster::_BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pA
         if (members)
         {
           char destination[1284] = {};
-          std::sprintf(destination, "<<PARTY>> ");
+          sprintf_s(destination, "<<PARTY>> ");
           for (int k = 0; k < 8 && members[k]; ++k)
           {
             CPlayer *member = &g_Player[members[k]->m_wZoneIndex];
             char source[56] = {};
-            std::sprintf(source, " %d ", member->m_dwObjSerial);
+            sprintf_s(source, " %d ", member->m_dwObjSerial);
             std::strcat(destination, source);
           }
           CMonster::s_logTrace_Boss_Looting.Write( "\t %s", destination);
@@ -3356,5 +3356,6 @@ CMonster *CreateRespawnMonster(
   }
   return nullptr;
 }
+
 
 

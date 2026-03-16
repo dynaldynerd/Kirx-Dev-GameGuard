@@ -28,7 +28,7 @@ void CMergeFileManager::InitMergeFile(char *directoryPath)
     ;
 
   char searchPattern[256]{};
-  sprintf_s(searchPattern, "%s\\*.*", directoryPath);
+  sprintf_s(searchPattern, sizeof(searchPattern), "%s\\*.*", directoryPath);
   WIN32_FIND_DATAA findFileData{};
   HANDLE findHandle = FindFirstFileA(searchPattern, &findFileData);
   if (findHandle != INVALID_HANDLE_VALUE)
@@ -80,7 +80,7 @@ void CMergeFileManager::InitMergeFile(char *directoryPath)
           char mergedFilePath[256]{};
           for (unsigned int fileIndex = 0; fileIndex < mMergeFileNum; ++fileIndex)
           {
-            sprintf_s(mergedFilePath, "%s%s", directoryPath, mergeFileNames[fileIndex]);
+            sprintf_s(mergedFilePath, sizeof(mergedFilePath), "%s%s", directoryPath, mergeFileNames[fileIndex]);
             _strlwr(mergedFilePath);
             mMergeFile[fileIndex].LoadMergeFileHeader(mergedFilePath);
           }

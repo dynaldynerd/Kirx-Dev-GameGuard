@@ -52,7 +52,7 @@ bool CMoveMapLimitInfoList::Init(std::vector<int> *vecRightTypeList)
   for (unsigned int index = 0; index < count; ++index)
   {
     char key[1024]{};
-    std::sprintf(key, "Type%u", index);
+    sprintf_s(key, "Type%u", index);
     const int limitType =
       GetPrivateProfileIntA("MoveMapLimitInfo", key, -1, "./Initialize/MoveMapLimit.ini");
     if (limitType == -1)
@@ -153,4 +153,5 @@ unsigned __int8 CMoveMapLimitInfoList::Request(
   }
   return 3;
 }
+
 

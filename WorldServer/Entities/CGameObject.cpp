@@ -54,6 +54,8 @@ _100_per_random_table::_100_per_random_table()
   if (!s_bRecordSet)
   {
     s_bRecordSet = true;
+    const unsigned int seed = static_cast<unsigned int>(time(nullptr));
+    srand(seed);
     for (int j = 0; j < 10; ++j)
     {
       for (int k = 0; k < 100; ++k)
@@ -61,8 +63,9 @@ _100_per_random_table::_100_per_random_table()
         s_wRecord[j][k] = static_cast<unsigned __int16>(k);
       }
     }
+    reset();
   }
-  m_wCurTable = 0;
+  m_wCurTable = static_cast<unsigned __int16>(rand() % 10);
   m_wCurPoint = 0;
 }
 
@@ -70,6 +73,7 @@ unsigned __int16 _100_per_random_table::GetRand()
 {
   if (m_wCurPoint >= 100)
   {
+    m_wCurTable = static_cast<unsigned __int16>(rand() % 10);
     m_wCurPoint = 0;
   }
   unsigned __int16 value = s_wRecord[m_wCurTable][m_wCurPoint++];
@@ -78,8 +82,17 @@ unsigned __int16 _100_per_random_table::GetRand()
 
 void _100_per_random_table::reset()
 {
-  m_wCurTable = 0;
-  m_wCurPoint = 0;
+  for (int j = 0; j < 10; ++j)
+  {
+    for (int k = 0; k < 100; ++k)
+    {
+      const unsigned __int16 a = static_cast<unsigned __int16>(rand() % 100);
+      const unsigned __int16 b = static_cast<unsigned __int16>(rand() % 100);
+      const unsigned __int16 temp = s_wRecord[j][b];
+      s_wRecord[j][b] = s_wRecord[j][a];
+      s_wRecord[j][a] = temp;
+    }
+  }
 }
 
 void CGameObject::Init(_object_id *pID)

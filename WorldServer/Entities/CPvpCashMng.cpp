@@ -108,7 +108,7 @@ bool CPvpCashMng::LoadData()
           for (int index = 0; index < levelCount; ++index)
           {
             const int level = startLv + index;
-            sprintf(buffer, "lv%d", level);
+            sprintf_s(buffer, "lv%d", level);
             m_LimitPoint[index].nLv = level;
             m_LimitPoint[index].nMaxPoint =
               GetPrivateProfileIntA("LimitPvpPoint", buffer, -1, ".\\Initialize\\PvpCashPoint.ini");
@@ -123,7 +123,7 @@ bool CPvpCashMng::LoadData()
           for (int index = 0; index < levelCount; ++index)
           {
             const int level = startLv + index;
-            sprintf(buffer, "lv%d", level);
+            sprintf_s(buffer, "lv%d", level);
             m_LimitPoint[index].nPremiumMaxPoint = GetPrivateProfileIntA(
               "PremiumLimitPvpPoint",
               buffer,
@@ -253,7 +253,7 @@ bool CPvpCashMng::Parsing(
 
   std::memset(buffer, 0, sizeof(buffer));
   std::memset(returned, 0, sizeof(returned));
-  sprintf(buffer, "%s%d", szItem, nInx);
+  sprintf_s(buffer, "%s%d", szItem, nInx);
   GetPrivateProfileStringA(szTitle, buffer, "X", returned, 2048, ".\\Initialize\\PvpCashPoint.ini");
   if (!std::strcmp(returned, "X"))
   {
@@ -314,3 +314,4 @@ bool CPvpCashMng::SetItem(char *szItemCode, int nInx)
   m_TalikList.TalikInfo[nInx].m_pFld = record;
   return true;
 }
+

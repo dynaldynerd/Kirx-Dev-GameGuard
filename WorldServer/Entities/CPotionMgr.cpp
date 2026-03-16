@@ -515,7 +515,9 @@ unsigned int CPotionMgr::PreCheckPotion(
 
       if ((matchEffLim1 || matchEffLim2 || matchEffLim3 || matchEffLim4)
           && itemRecord
-          && pfB->m_nPotionCheck < itemRecord->m_nPotionCheck)
+          // Yorozuya fix implementation (non-IDA): reject conflicting ext-potion
+          // effect-limit groups whenever the live and incoming potion tiers differ.
+          && pfB->m_nPotionCheck != itemRecord->m_nPotionCheck)
       {
         return 31;
       }
@@ -539,16 +541,28 @@ unsigned int CPotionMgr::PreCheckPotion(
   {
     CPlayer *targetPlayer = static_cast<CPlayer *>(*pTargetCharacter);
     CRaceBuffManager *raceBuffMgr = CRaceBuffManager::Instance();
-    const unsigned int level = raceBuffMgr->m_kBuffByHolyQuest.GetRaceBuffLevel(targetPlayer);
-    const int cancelResult = raceBuffMgr->m_kBuffByHolyQuest.CancelPlayerRaceBuff(
-      targetPlayer,
-      CRaceBuffInfoByHolyQuestfGroup::RESULT_FAIL,
-      level);
-    if (level > 2)
+    // Yorozuya fix implementation (non-IDA): keep race-debuff validation read-only so
+    // precheck cannot consume or alter the holy-race buff before the effect runs.
+    if (targetPlayer->IsUseReleaseRaceBuffPotion())
     {
       return 35;
     }
-    if (cancelResult == -3 || static_cast<float>(static_cast<int>(level + 1)) > pFld->m_fTempValue[0])
+
+    const int resultType = raceBuffMgr->m_kBuffByHolyQuest.m_kBuffHolyQestResultInfo.GetResultType(
+      static_cast<unsigned __int8>(targetPlayer->m_Param.GetRaceCode()),
+      targetPlayer->IsHaveMentalTicket());
+    if (resultType != CRaceBuffInfoByHolyQuestfGroup::RESULT_FAIL)
+    {
+      return 35;
+    }
+
+    const int level = raceBuffMgr->GetRaceBuffLevel(targetPlayer);
+    if (level < 0 || level > 2)
+    {
+      return 35;
+    }
+
+    if (pFld->m_fTempValue[0] < static_cast<float>(level + 1))
     {
       return 36;
     }
@@ -558,16 +572,28 @@ unsigned int CPotionMgr::PreCheckPotion(
   {
     CPlayer *targetPlayer = static_cast<CPlayer *>(*pTargetCharacter);
     CRaceBuffManager *raceBuffMgr = CRaceBuffManager::Instance();
-    const unsigned int level = raceBuffMgr->m_kBuffByHolyQuest.GetRaceBuffLevel(targetPlayer);
-    const int cancelResult = raceBuffMgr->m_kBuffByHolyQuest.CancelPlayerRaceBuff(
-      targetPlayer,
-      CRaceBuffInfoByHolyQuestfGroup::RESULT_LOSE,
-      level);
-    if (level > 2)
+    // Yorozuya fix implementation (non-IDA): keep race-debuff validation read-only so
+    // precheck cannot consume or alter the holy-race buff before the effect runs.
+    if (targetPlayer->IsUseReleaseRaceBuffPotion())
     {
       return 35;
     }
-    if (cancelResult == -3 || static_cast<float>(static_cast<int>(level + 1)) > pFld->m_fTempValue[0])
+
+    const int resultType = raceBuffMgr->m_kBuffByHolyQuest.m_kBuffHolyQestResultInfo.GetResultType(
+      static_cast<unsigned __int8>(targetPlayer->m_Param.GetRaceCode()),
+      targetPlayer->IsHaveMentalTicket());
+    if (resultType != CRaceBuffInfoByHolyQuestfGroup::RESULT_LOSE)
+    {
+      return 35;
+    }
+
+    const int level = raceBuffMgr->GetRaceBuffLevel(targetPlayer);
+    if (level < 0 || level > 2)
+    {
+      return 35;
+    }
+
+    if (pFld->m_fTempValue[0] < static_cast<float>(level + 1))
     {
       return 36;
     }

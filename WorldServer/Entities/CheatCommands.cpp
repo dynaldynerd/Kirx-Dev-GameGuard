@@ -118,7 +118,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
   if (strchr(pwszCommand, '%'))
   {
-    sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+    sprintf_s(wszRespon, sizeof(wszRespon), "%s >> FAIL(grammar or logic)", pwszCommand);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
     return true;
   }
@@ -141,7 +141,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
           WriteCheatLog(pwszCommand, pOne);
           if (pOne)
           {
-            sprintf(wszRespon, "%s >> OK", pwszCommand);
+            sprintf_s(wszRespon, sizeof(wszRespon), "%s >> OK", pwszCommand);
             pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
           }
           return true;
@@ -149,13 +149,13 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
         if (pOne)
         {
-          sprintf(wszRespon, "%s >> FAIL(grammar or logic)", pwszCommand);
+          sprintf_s(wszRespon, sizeof(wszRespon), "%s >> FAIL(grammar or logic)", pwszCommand);
           pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
         }
         return false;
       }
 
-      sprintf(wszRespon, "%s >> ERROR (authority)", pwszCommand);
+      sprintf_s(wszRespon, sizeof(wszRespon), "%s >> ERROR (authority)", pwszCommand);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
       return false;
     }
@@ -163,7 +163,7 @@ bool ProcessCheatCommand(CPlayer *pOne, char *pwszCommand)
 
   if (pOne)
   {
-    sprintf(wszRespon, "%s >> ERROR (command)", pwszCommand);
+    sprintf_s(wszRespon, sizeof(wszRespon), "%s >> ERROR (command)", pwszCommand);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, nullptr);
   }
 
@@ -178,11 +178,11 @@ void WriteCheatLog(char *pwszCommand, CPlayer *pOne)
   if (pOne)
   {
     const char *charName = pOne->m_Param.GetCharNameA();
-    sprintf(buffer, "[ %s ] >> ", charName);
+    sprintf_s(buffer, sizeof(buffer), "[ %s ] >> ", charName);
   }
   else
   {
-    sprintf(buffer, "[ GM tool ] >> ");
+    sprintf_s(buffer, sizeof(buffer), "[ GM tool ] >> ");
   }
 
   const int offset = static_cast<int>(std::strlen(buffer));
@@ -204,7 +204,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char buffer[144]{};
-  sprintf(buffer, "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
+  sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
 }
 
@@ -379,8 +379,7 @@ static bool CheatHolyState(CPlayer *player)
   }
 
   char chat[256]{};
-  sprintf(
-    chat,
+  sprintf_s(chat, sizeof(chat),
     "Holy scene=%d, schedule=%u, master=%d, destroyer=%u",
     g_HolySys.GetSceneCode(),
     static_cast<unsigned int>(g_HolySys.GetNumOfTime()),
@@ -388,8 +387,7 @@ static bool CheatHolyState(CPlayer *player)
     g_HolySys.GetDestroyerSerial());
   player->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, chat, 0xFFu, 0LL);
 
-  sprintf(
-    chat,
+  sprintf_s(chat, sizeof(chat),
     "Start %04u-%02u-%02u %02u:%02u",
     static_cast<unsigned int>(g_HolySys.GetStartYear()),
     static_cast<unsigned int>(g_HolySys.GetStartMonth()),
@@ -436,13 +434,13 @@ bool __fastcall ct_respawn_start(CPlayer *pOne)
   bool started; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 32);
-  started = g_MonsterEventRespawn.StartRespawnEvent(szTran, pwszErrCode);
+  started = g_MonsterEventRespawn.StartRespawnEvent(szTran, pwszErrCode, sizeof(pwszErrCode));
   if ( !pOne )
     return 0;
   if ( started )
-    sprintf(wszRespon, "Start %s", s_pwszDstCheat[0]);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Start %s", s_pwszDstCheat[0]);
   else
-    sprintf(wszRespon, "Start Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Start Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
   return 1;
 }
@@ -454,13 +452,13 @@ bool __fastcall ct_respawn_stop(CPlayer *pOne)
   bool stopped; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 32);
-  stopped = g_MonsterEventRespawn.StopRespawnEvent(szTran, pwszErrCode);
+  stopped = g_MonsterEventRespawn.StopRespawnEvent(szTran, pwszErrCode, sizeof(pwszErrCode));
   if ( !pOne )
     return 0;
   if ( stopped )
-    sprintf(wszRespon, "Stop %s", s_pwszDstCheat[0]);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Stop %s", s_pwszDstCheat[0]);
   else
-    sprintf(wszRespon, "Stop Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Stop Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
   return 1;
 }
@@ -528,8 +526,7 @@ bool __fastcall ct_report_position(CPlayer *pOne)
 
   if ( !pOne )
     return 0;
-  sprintf(
-    wszRespon,
+  sprintf_s(wszRespon, sizeof(wszRespon),
     "map: %s x: %d, y: %d, z: %d",
     pOne->m_pCurMap->m_pMapSet->m_strCode,
     (int)pOne->m_fCurPos[0],
@@ -827,8 +824,7 @@ bool __fastcall ct_user_num(CPlayer *pOne)
   if ( !pOne )
     return 0;
   memset(Buffer, 0, 128);
-  sprintf(
-    Buffer,
+  sprintf_s(Buffer, sizeof(Buffer),
     "ConnectUserNum : %d (Field: %d) (B:%d, C:%d, A:%d)",
     CUserDB::s_nLoginNum,
     CPlayer::s_nLiveNum,
@@ -1128,7 +1124,7 @@ bool __fastcall ct_circle_user_num(CPlayer *pOne)
       }
     }
   }
-  sprintf(Buffer, "Circle: Total( %d ), B( %d ), C( %d ), A( %d )", totalCount, raceCounts[0], raceCounts[1], raceCounts[2]);
+  sprintf_s(Buffer, sizeof(Buffer), "Circle: Total( %d ), B( %d ), C( %d ), A( %d )", totalCount, raceCounts[0], raceCounts[1], raceCounts[2]);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
 }
@@ -1546,7 +1542,7 @@ bool __fastcall ct_add_guild_schedule(CPlayer *pOne)
             dwStartTime,
             static_cast<unsigned __int8>(battleType),
             dwMapInx);
-          sprintf(Buffer, "Add GuildBattle Schedule : %u", addResult);
+          sprintf_s(Buffer, sizeof(Buffer), "Add GuildBattle Schedule : %u", addResult);
           pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
           return addResult == 0;
         }
@@ -1562,14 +1558,14 @@ bool __fastcall ct_add_guild_schedule(CPlayer *pOne)
     }
     else
     {
-      sprintf(Buffer, "Invalid Dest Guild : %s", s_pwszDstCheat[1]);
+      sprintf_s(Buffer, sizeof(Buffer), "Invalid Dest Guild : %s", s_pwszDstCheat[1]);
       pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
       return 0;
     }
   }
   else
   {
-    sprintf(Buffer, "Invalid Src Guild : %s", s_pwszDstCheat[0]);
+    sprintf_s(Buffer, sizeof(Buffer), "Invalid Src Guild : %s", s_pwszDstCheat[0]);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
     return 0;
   }
@@ -1589,17 +1585,17 @@ bool __fastcall ct_set_guildbattle_color(CPlayer *pOne)
   {
     pOne->m_bInGuildBattle = 0;
     pOne->m_byGuildBattleColorInx = -1;
-    sprintf(Buffer, "Clear GuildBattle Color!");
+    sprintf_s(Buffer, sizeof(Buffer), "Clear GuildBattle Color!");
   }
   else if ( colorIndex > 1 )
   {
-    sprintf(Buffer, "Invalid Color Inx! ( 0 or 1 or -1 )");
+    sprintf_s(Buffer, sizeof(Buffer), "Invalid Color Inx! ( 0 or 1 or -1 )");
   }
   else
   {
     pOne->m_bInGuildBattle = 1;
     pOne->m_byGuildBattleColorInx = colorIndex;
-    sprintf(Buffer, "Set GuildBattle Color : %d", colorIndex);
+    sprintf_s(Buffer, sizeof(Buffer), "Set GuildBattle Color : %d", colorIndex);
   }
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
@@ -1611,7 +1607,7 @@ bool __fastcall ct_cur_guildbattle_color(CPlayer *pOne)
 
   if ( !pOne )
     return 0;
-  sprintf(Buffer, "Guild Battle Currect Color : %d", pOne->m_byGuildBattleColorInx);
+  sprintf_s(Buffer, sizeof(Buffer), "Guild Battle Currect Color : %d", pOne->m_byGuildBattleColorInx);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
 }
@@ -1659,7 +1655,7 @@ bool __fastcall ct_regen_gravitystone(CPlayer *pOne)
 
   if (s_nWordCount == 1)
   {
-    sprintf(Buffer, "Regen Stone(%d) PortalInx : %d", regenPos, portalInx);
+    sprintf_s(Buffer, sizeof(Buffer), "Regen Stone(%d) PortalInx : %d", regenPos, portalInx);
     pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   }
   return true;
@@ -1887,7 +1883,7 @@ bool __fastcall ct_add_one_day_guild_schedule(CPlayer *pOne)
       CGuild *pSrcGuild = GetGuildPtrFromName(g_Guild, MAX_GUILD, guildNames[j * 2]);
       if (!pSrcGuild)
       {
-        sprintf(Buffer, "Invalid Src Guild : %s", guildNames[j * 2]);
+        sprintf_s(Buffer, sizeof(Buffer), "Invalid Src Guild : %s", guildNames[j * 2]);
         pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
         return false;
       }
@@ -1895,7 +1891,7 @@ bool __fastcall ct_add_one_day_guild_schedule(CPlayer *pOne)
       CGuild *pDestGuild = GetGuildPtrFromName(g_Guild, MAX_GUILD, guildNames[j * 2 + 1]);
       if (!pDestGuild)
       {
-        sprintf(Buffer, "Invalid Dest Guild : %s", guildNames[j * 2 + 1]);
+        sprintf_s(Buffer, sizeof(Buffer), "Invalid Dest Guild : %s", guildNames[j * 2 + 1]);
         pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
         return false;
       }
@@ -1908,7 +1904,7 @@ bool __fastcall ct_add_one_day_guild_schedule(CPlayer *pOne)
     }
   }
 
-  sprintf(Buffer, "Add GuildBattle Schedule : %u", result);
+  sprintf_s(Buffer, sizeof(Buffer), "Add GuildBattle Schedule : %u", result);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return result == 0;
 }
@@ -2082,8 +2078,7 @@ bool __fastcall ct_server_time(CPlayer *pOne)
   std::time(&currentTime);
   localTime = std::localtime(&currentTime);
   if ( localTime )
-    sprintf(
-      Buffer,
+    sprintf_s(Buffer, sizeof(Buffer),
       "%04d-%02d-%02d %02d:%02d:%02d",
       localTime->tm_year + 1900,
       localTime->tm_mon + 1,
@@ -2092,7 +2087,7 @@ bool __fastcall ct_server_time(CPlayer *pOne)
       localTime->tm_min,
       localTime->tm_sec);
   else
-    sprintf(Buffer, "::localtime Fail!");
+    sprintf_s(Buffer, sizeof(Buffer), "::localtime Fail!");
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
 }
@@ -2404,11 +2399,11 @@ bool __fastcall ct_InformPatriarchProcessor(CPlayer *pOne)
   processorType = processor->GetProcessorType();
   if ( processorType == ElectProcessor::_eNonProcessor )
   {
-    sprintf(buffer, "Current active processor : %s", "None");
+    sprintf_s(buffer, sizeof(buffer), "Current active processor : %s", "None");
   }
   else
   {
-    sprintf(buffer, "Current active processor : %s", kProcessorNames[static_cast<int>(processorType)]);
+    sprintf_s(buffer, sizeof(buffer), "Current active processor : %s", kProcessorNames[static_cast<int>(processorType)]);
   }
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
   return 1;
@@ -2649,7 +2644,7 @@ bool __fastcall ct_query_remain_ore(CPlayer *pOne)
       {
         if ( *MultipleRate != 1.0 )
         {
-          sprintf(Buffer, "%s_%d : %0.f", dayofweek[j], k + 1, (float)(*MultipleRate * 100.0));
+          sprintf_s(Buffer, sizeof(Buffer), "%s_%d : %0.f", dayofweek[j], k + 1, (float)(*MultipleRate * 100.0));
           pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
         }
         ++MultipleRate;
@@ -2657,7 +2652,7 @@ bool __fastcall ct_query_remain_ore(CPlayer *pOne)
     }
   }
   RemainOre = oreAmountManager->GetRemainOre();
-  sprintf(Buffer, "Remain Ore : %d", RemainOre);
+  sprintf_s(Buffer, sizeof(Buffer), "Remain Ore : %d", RemainOre);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
   return 1;
 }
@@ -2797,11 +2792,11 @@ bool __fastcall ct_eventset_start(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 32);
   if ( !pOne )
     return 0;
-  started = g_MonsterEventSet->StartEventSet(szTran, pwszErrCode, pOne);
+  started = g_MonsterEventSet->StartEventSet(szTran, pwszErrCode, sizeof(pwszErrCode), pOne);
   if ( started )
-    sprintf(wszRespon, "Event Set Start Success %s >> %s", s_pwszDstCheat[0], pwszErrCode);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Event Set Start Success %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   else
-    sprintf(wszRespon, "Event Set Start Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Event Set Start Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
   return started;
 }
@@ -2813,13 +2808,13 @@ bool __fastcall ct_eventset_stop(CPlayer *pOne)
   bool stopped; // [rsp+114h] [rbp-24h]
 
   W2M(s_pwszDstCheat[0], szTran, 32);
-  stopped = g_MonsterEventSet->StopEventSet(szTran, pwszErrCode);
+  stopped = g_MonsterEventSet->StopEventSet(szTran, pwszErrCode, sizeof(pwszErrCode));
   if ( !pOne )
     return 0;
   if ( stopped )
-    sprintf(wszRespon, "Event Set Stop %s", s_pwszDstCheat[0]);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Event Set Stop %s", s_pwszDstCheat[0]);
   else
-    sprintf(wszRespon, "Event Set Stop Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
+    sprintf_s(wszRespon, sizeof(wszRespon), "Event Set Stop Error %s >> %s", s_pwszDstCheat[0], pwszErrCode);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
   return stopped;
 }
@@ -3122,7 +3117,7 @@ bool __fastcall ct_mepcbang(CPlayer *pOne)
   rewardListIndex = pcBang->ClassCodePasing(avatorData, pOne);
   if ( rewardListIndex == static_cast<unsigned int>(-1) )
     return 0;
-  sprintf(wszRespon, "you pcbang reward list index : %u", rewardListIndex);
+  sprintf_s(wszRespon, sizeof(wszRespon), "you pcbang reward list index : %u", rewardListIndex);
   pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
   return 1;
 }
@@ -3843,8 +3838,7 @@ bool ct_debug(CPlayer* pOne)
     {
         if (!pOne)
             return 0;
-        sprintf(
-            wszRespon,
+        sprintf_s(wszRespon, sizeof(wszRespon),
             "serial: %d",
             pOne->m_TargetObject.pObject->m_dwObjSerial);
         
@@ -4246,6 +4240,7 @@ bool __fastcall ct_loot_item(CPlayer *pOne)
   W2M(s_pwszDstCheat[0], szTran, 32);
   return pOne->dev_loot_item(szTran, nNum, 0LL, 0);
 }
+
 
 
 

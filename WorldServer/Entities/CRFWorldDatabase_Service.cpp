@@ -481,7 +481,7 @@ __int64 CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
   SQLLEN indicator = 0;
   SQLRETURN sqlRet = SQL_ERROR;
 
-  sprintf(query, "{ CALL pSelect_PrimiumPlayTime( %u ) }", dwAccSerial);
+  sprintf_s(query, "{ CALL pSelect_PrimiumPlayTime( %u ) }", dwAccSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -551,7 +551,7 @@ __int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
   unsigned __int16 dateFields[24]{};
   tm updatedTm{};
 
-  sprintf(query, "{ CALL pSelect_PvpOrderView( %u ) }", dwSerial);
+  sprintf_s(query, "{ CALL pSelect_PvpOrderView( %u ) }", dwSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -726,7 +726,7 @@ bool CRFWorldDatabase::Insert_ItemCombineEx(unsigned int dwCharacterSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
-  sprintf(Buffer, "{ CALL pInsert_CombineEx_Result( %d ) }", dwCharacterSerial);
+  sprintf_s(Buffer, "{ CALL pInsert_CombineEx_Result( %d ) }", dwCharacterSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -734,7 +734,7 @@ bool CRFWorldDatabase::Insert_NpcQuest_History(unsigned int dwSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
-  sprintf(Buffer, "{ CALL pInsert_NpcQuest_History( %d ) }", dwSerial);
+  sprintf_s(Buffer, "{ CALL pInsert_NpcQuest_History( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -769,7 +769,7 @@ bool CRFWorldDatabase::Insert_PrimiumPlayTime(unsigned int dwAccSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
-  sprintf(Buffer, "{ CALL pInsert_PrimiumPlayTime( %d ) }", dwAccSerial);
+  sprintf_s(Buffer, "{ CALL pInsert_PrimiumPlayTime( %d ) }", dwAccSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -777,7 +777,7 @@ bool CRFWorldDatabase::Insert_PvpOrderViewInfo(unsigned int dwSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
-  sprintf(Buffer, "{ CALL pInsert_PvpOrderView( %d ) }", dwSerial);
+  sprintf_s(Buffer, "{ CALL pInsert_PvpOrderView( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -785,7 +785,7 @@ bool CRFWorldDatabase::Insert_PvpPointLimitInfoRecord(unsigned int dwSerial)
 {
   char Buffer[272]; // [rsp+30h] [rbp-128h] BYREF
 
-  sprintf(Buffer, "{ CALL pInsert_pplirecord( %d ) }", dwSerial);
+  sprintf_s(Buffer, "{ CALL pInsert_pplirecord( %d ) }", dwSerial);
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
@@ -796,7 +796,7 @@ char CRFWorldDatabase::Select_ItemCombineEx(unsigned int dwSerial,
   SQLRETURN sqlRet = SQL_ERROR;
   char query[260]{};
 
-  sprintf(query, "{ CALL pSelect_CombineEx_Result_20071010( %d ) }", dwSerial);
+  sprintf_s(query, "{ CALL pSelect_CombineEx_Result_20071010( %d ) }", dwSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -918,7 +918,7 @@ char CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
   SQLRETURN sqlRet = SQL_ERROR;
   char query[260]{};
 
-  sprintf(query, "{ CALL pSelect_NpcQuest_History_20080811( %d ) }", dwSerial);
+  sprintf_s(query, "{ CALL pSelect_NpcQuest_History_20080811( %d ) }", dwSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -1007,7 +1007,7 @@ char CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
   unsigned __int16 dateFields[24]{};
   tm updatedTm{};
 
-  sprintf(query, "{ CALL pSelect_ppliinfo( %u ) }", dwSerial);
+  sprintf_s(query, "{ CALL pSelect_ppliinfo( %u ) }", dwSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -1107,10 +1107,10 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     return 0;
   }
 
-  sprintf(buffer, "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, ", 50);
+  sprintf_s(buffer, "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, ", 50);
   std::strcat(buffer, "b.serial, b.lv, g.Pvppoint, g.GuildGrade as CurGrade into #tbl_RankInGuild ");
   std::strcat(buffer, "from tbl_general as g join tbl_base as b on g.serial = b.serial ");
-  sprintf(source, "where g.guildserial=%d and b.dck=0 order by g.Pvppoint desc", dwGuildSerial);
+  sprintf_s(source, "where g.guildserial=%d and b.dck=0 order by g.Pvppoint desc", dwGuildSerial);
   std::strcat(buffer, source);
   ret = SQLExecDirectA(m_hStmtUpdate, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
   if (ret && ret != SQL_SUCCESS_WITH_INFO)
@@ -1209,7 +1209,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     false);
 
   std::memset(gradeRows, 0, 600);
-  sprintf(buffer, "select serial, Grade from #tbl_RankInGuildCom order by Grade");
+  sprintf_s(buffer, "select serial, Grade from #tbl_RankInGuildCom order by Grade");
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
@@ -1250,7 +1250,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     SQLCloseCursor(m_hStmtSelect);
   }
 
-  sprintf(buffer, "select serial, lv, Pvppoint, CurGrade from #tbl_RankInGuildAll order by NewRank");
+  sprintf_s(buffer, "select serial, lv, Pvppoint, CurGrade from #tbl_RankInGuildAll order by NewRank");
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
@@ -1332,7 +1332,7 @@ unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildS
     dwGuildSerial);
   if (this->m_hStmtUpdate || this->ReConnectDataBase())
   {
-    sprintf(
+    sprintf_s(
       query,
       "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, b.serial, b.lv, g.Pvppoint, g.GuildGrade as"
       " CurGrade into #tbl_RankInGuild from tbl_general as g join tbl_base as b on g.serial = b.serial where g.guildseria"
@@ -2060,7 +2060,7 @@ __int64 CRFWorldDatabase::select_atrade_taxrate(
   char Buffer[132]{};
 
   memset(Buffer, 0, 128);
-  sprintf(
+  sprintf_s(
     Buffer,
     "SELECT TOP 1 SuggesterName, Tax, NextTax FROM [dbo].[tbl_ATradeTaxRate] WHERE Race=%d ORDER BY serial DESC",
     byRace);
@@ -2150,7 +2150,7 @@ char CRFWorldDatabase::Select_CheckGreetRecord(int nUseType)
   SQLRETURN ret = 0;
   unsigned int targetValue[4]{};
 
-  sprintf(Buffer, "select count(useType) from tbl_GreetMsg where useType = %d", nUseType);
+  sprintf_s(Buffer, "select count(useType) from tbl_GreetMsg where useType = %d", nUseType);
   if (this->m_bSaveDBLog)
   {
     this->Log(Buffer);
@@ -2224,7 +2224,7 @@ bool CRFWorldDatabase::Insert_GreetingRecord(int nUseType, const char *wszName, 
 {
   char Buffer[528]{};
 
-  sprintf(Buffer, "{CALL pInsert_GreetingMsgRecord_071119(%d,'%s','%s')}", nUseType, wszName, wszMessage);
+  sprintf_s(Buffer, "{CALL pInsert_GreetingMsgRecord_071119(%d,'%s','%s')}", nUseType, wszName, wszMessage);
   return this->ExecUpdateQuery(Buffer, true);
 }
 
@@ -2242,7 +2242,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
   SQLLEN strLen = 0;
   SQLRETURN ret = 0;
 
-  sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 0);
+  sprintf_s(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 0);
   if (this->m_bSaveDBLog)
   {
     this->Log(Buffer);
@@ -2262,7 +2262,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
           SQLCloseCursor(this->m_hStmtSelect);
         }
 
-        sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 1);
+        sprintf_s(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 1);
         if (this->m_bSaveDBLog)
         {
           this->Log(Buffer);
@@ -2282,7 +2282,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
                 SQLCloseCursor(this->m_hStmtSelect);
               }
 
-              sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 2);
+              sprintf_s(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 2);
               if (this->m_bSaveDBLog)
               {
                 this->Log(Buffer);
@@ -2302,7 +2302,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
                       SQLCloseCursor(this->m_hStmtSelect);
                     }
 
-                    sprintf(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 255);
+                    sprintf_s(Buffer, "select GMsg,Name from tbl_GreetMsg where usetype = %d", 255);
                     if (this->m_bSaveDBLog)
                     {
                       this->Log(Buffer);
@@ -3021,7 +3021,7 @@ bool CRFWorldDatabase::Insert_DefaultWeeklyGuildPvpPointSumRecord()
 {
   char Buffer[272]{};
 
-  sprintf(Buffer, "{ CALL pInsert_DefaultRecordWeeklyGuildPVPPointSum }");
+  sprintf_s(Buffer, "{ CALL pInsert_DefaultRecordWeeklyGuildPVPPointSum }");
   return this->ExecUpdateQuery(Buffer, false);
 }
 
@@ -3033,7 +3033,7 @@ unsigned __int8 CRFWorldDatabase::Select_Economy_History(
   char Buffer[260]{};
   int rowCount = 0;
 
-  sprintf(Buffer, "{ CALL pSelect_Last_Economy_History ( %d )}", dwDate);
+  sprintf_s(Buffer, "{ CALL pSelect_Last_Economy_History ( %d )}", dwDate);
   if (m_bSaveDBLog)
   {
     Log(Buffer);
@@ -3187,28 +3187,28 @@ unsigned __int8 CRFWorldDatabase::Select_Economy_History(
 bool CRFWorldDatabase::UpdateClearGuildBattleInfo(unsigned int dwStartID, unsigned int dwEndID)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pUpdate_ClearGuildBattleInfo( %u, %u ) }", dwStartID, dwEndID);
+  sprintf_s(buffer, "{ CALL pUpdate_ClearGuildBattleInfo( %u, %u ) }", dwStartID, dwEndID);
   return ExecUpdateQuery(buffer, 1);
 }
 
 bool CRFWorldDatabase::UpdateWinGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pUpdate_WinGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
+  sprintf_s(buffer, "{ CALL pUpdate_WinGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
   return ExecUpdateQuery(buffer, 1);
 }
 
 bool CRFWorldDatabase::UpdateLoseGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pUpdate_LoseGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
+  sprintf_s(buffer, "{ CALL pUpdate_LoseGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
   return ExecUpdateQuery(buffer, 1);
 }
 
 bool CRFWorldDatabase::UpdateDrawGuildBattleResult(unsigned int dwGuildSerial, unsigned int dwScore)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pUpdate_DrawGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
+  sprintf_s(buffer, "{ CALL pUpdate_DrawGuildBattleRank( %u, %u ) }", dwGuildSerial, dwScore);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -3216,7 +3216,7 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
 {
   SQLLEN strLenOrInd = 0;
   char buffer[1044]{};
-  sprintf(buffer, "{ CALL pSelect_GuildBattleRank(%u) }", dwGuildSerial);
+  sprintf_s(buffer, "{ CALL pSelect_GuildBattleRank(%u) }", dwGuildSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3279,7 +3279,7 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
 bool CRFWorldDatabase::InsertGuildBattleRankRecord(unsigned int dwGuildSerial)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pInsert_GuildBattleRank( %u ) }", dwGuildSerial);
+  sprintf_s(buffer, "{ CALL pInsert_GuildBattleRank( %u ) }", dwGuildSerial);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -3294,7 +3294,7 @@ char CRFWorldDatabase::SelectGuildBattleRankList(
 
   char buffer[1048]{};
   SQLLEN strLenOrInd = 0;
-  sprintf(buffer, "{ CALL pSelect_GuildBattleRankList(%u) }", byRace);
+  sprintf_s(buffer, "{ CALL pSelect_GuildBattleRankList(%u) }", byRace);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3374,7 +3374,7 @@ char CRFWorldDatabase::SelectGuildBattleRerservedList(
   char buffer[1028]{};
   unsigned int count = 0;
 
-  sprintf(buffer, "{ CALL pSelect_GuildBattleReservedSchedule( %u, %u ) }", uiStartSLID, uiEndSLID);
+  sprintf_s(buffer, "{ CALL pSelect_GuildBattleReservedSchedule( %u, %u ) }", uiStartSLID, uiEndSLID);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3437,7 +3437,7 @@ char CRFWorldDatabase::SelectGuildBattleScheduleInfoID(unsigned int dwID)
   char buffer[1028]{};
   unsigned int targetValue = 0;
 
-  sprintf(buffer, "{ CALL pSelect_GuildBattleScheduleID( %u ) }", dwID);
+  sprintf_s(buffer, "{ CALL pSelect_GuildBattleScheduleID( %u ) }", dwID);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3514,7 +3514,7 @@ char CRFWorldDatabase::SelectGuildBattleScheduleInfoID(unsigned int dwID)
 bool CRFWorldDatabase::UpdateClearGuildBattleScheduleInfo(unsigned int uiStartListID, unsigned int uiEndListID)
 {
   char buffer[1040]{};
-  sprintf(buffer, "{ CALL pUpdate_ClearGuildBattleScheduleInfo( %u, %u ) }", uiStartListID, uiEndListID);
+  sprintf_s(buffer, "{ CALL pUpdate_ClearGuildBattleScheduleInfo( %u, %u ) }", uiStartListID, uiEndListID);
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -3523,7 +3523,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
   SQLLEN strLenOrInd = 0;
   char buffer[1028]{};
 
-  sprintf(buffer, "select count(id) from [dbo].[tbl_ReservedGuildBattleInfo]");
+  sprintf_s(buffer, "select count(id) from [dbo].[tbl_ReservedGuildBattleInfo]");
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3596,7 +3596,7 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
   SQLLEN strLenOrInd = 0;
   char buffer[260]{};
 
-  sprintf(buffer, "select count(id) from [dbo].[tbl_GuildBattleScheduleInfo]");
+  sprintf_s(buffer, "select count(id) from [dbo].[tbl_GuildBattleScheduleInfo]");
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3678,7 +3678,7 @@ char CRFWorldDatabase::LoadGuildBattleInfo(
   char buffer[1028]{};
   unsigned int count = 0;
 
-  sprintf(buffer, "{ CALL pSelect_ReservedGuildBattleInfo(%u,%u) }", dwStartID, dwRowCnt + dwStartID);
+  sprintf_s(buffer, "{ CALL pSelect_ReservedGuildBattleInfo(%u,%u) }", dwStartID, dwRowCnt + dwStartID);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3741,7 +3741,7 @@ unsigned __int8 CRFWorldDatabase::LoadGuildBattleScheduleInfo(
   SQLLEN strLenOrInd = 0;
   char buffer[1028]{};
 
-  sprintf(buffer, "{ CALL pSelect_ReservedGuildBattleSchedule( %u, %u ) }", uiStartListID, uiStartListID);
+  sprintf_s(buffer, "{ CALL pSelect_ReservedGuildBattleSchedule( %u, %u ) }", uiStartListID, uiStartListID);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -3815,14 +3815,14 @@ unsigned __int8 CRFWorldDatabase::LoadGuildBattleScheduleInfo(
 bool CRFWorldDatabase::DeleteGuildBattleInfo()
 {
   char buffer[1040]{};
-  sprintf(buffer, "truncate table tbl_ReservedGuildBattleInfo");
+  sprintf_s(buffer, "truncate table tbl_ReservedGuildBattleInfo");
   return ExecUpdateQuery(buffer, 1);
 }
 
 bool CRFWorldDatabase::DeleteGuildBattleScheduleInfo()
 {
   char buffer[1040]{};
-  sprintf(buffer, "truncate table [dbo].[tbl_GuildBattleScheduleInfo]");
+  sprintf_s(buffer, "truncate table [dbo].[tbl_GuildBattleScheduleInfo]");
   return ExecUpdateQuery(buffer, 1);
 }
 
@@ -3840,7 +3840,7 @@ char CRFWorldDatabase::InsertGuildBattleDefaultRecord(unsigned int dwRowCnt)
   char buffer[1028]{};
   for (unsigned int j = 0; j < dwRowCnt; ++j)
   {
-    sprintf(buffer, "{ CALL pInsert_GuildBattleInfo( %u, 0, 0, 0, 0 ) }", j);
+    sprintf_s(buffer, "{ CALL pInsert_GuildBattleInfo( %u, 0, 0, 0, 0 ) }", j);
     if (!ExecUpdateQuery(buffer, 1))
     {
       DeleteGuildBattleInfo();
@@ -3879,7 +3879,7 @@ char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
       for (unsigned int m = 0; m < unitPerDay; ++m)
       {
         const unsigned int id = j * unitPerDay * uiMapCnt + m + k * unitPerDay;
-        sprintf(
+        sprintf_s(
           buffer,
           "INSERT INTO [dbo].[tbl_GuildBattleScheduleInfo]( [ID], [SLID], [State], [StartTime], [BattleTurm] )VALUES( %d, %d, 0, 0, 0 )",
           id,
@@ -3902,7 +3902,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharNumInWorld(unsigned int dwAccountSe
   SQLRETURN sqlRet = SQL_ERROR;
   char query[260]{};
 
-  sprintf(query, "{ CALL pSelect_CharNumInWorld( %d ) }", dwAccountSerial);
+  sprintf_s(query, "{ CALL pSelect_CharNumInWorld( %d ) }", dwAccountSerial);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -3987,7 +3987,7 @@ unsigned __int8 CRFWorldDatabase::Select_Exist_Economy(
   SQLRETURN sqlRet = SQL_ERROR;
   char query[260]{};
 
-  sprintf(query, "{ CALL pSelect_Exist_Economy( %d ) }", dwDate);
+  sprintf_s(query, "{ CALL pSelect_Exist_Economy( %d ) }", dwDate);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -4123,7 +4123,7 @@ unsigned __int8 CRFWorldDatabase::Select_MacroData(unsigned int dwSerial,
   SQLRETURN sqlRet = SQL_ERROR;
   char query[260]{};
 
-  sprintf(
+  sprintf_s(
     query,
     "Select hp, fp, sp, action0, action1, action2, action3, action4, action5, action6, action7, action8, action9, chat0, "
     "chat1, chat2, chat3, chat4, hpvalue, fpvalue, spvalue from tbl_macro where serial=%d order by belt asc",
@@ -4251,7 +4251,7 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchComm(unsigned int dwSerial,
   char query[144]{};
 
   GetTodayStr(today);
-  sprintf(query, "{ CALL pSelect_PatriarchComm( %d, '%s' ) }", dwSerial, today);
+  sprintf_s(query, "{ CALL pSelect_PatriarchComm( %d, '%s' ) }", dwSerial, today);
   if (this->m_bSaveDBLog)
   {
     this->Log(query);
@@ -4481,7 +4481,7 @@ unsigned __int8 CRFWorldDatabase::Select_PvpRankInfo(unsigned __int8 byRace,
   char query[260]{};
 
   int rankIndex = 0;
-  sprintf(
+  sprintf_s(
     query,
     "select top 100 Rank,Lv,Rate,Grade,PvpPoint,Name,GuildName,serial,guildserial from tbl_PvpRank%s where race = %d orde"
     "r by grade desc, rate ",
@@ -4879,3 +4879,4 @@ unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvat
   this->ErrorAction(sqlRet, this->m_hStmtSelect);
   return 1;
 }
+

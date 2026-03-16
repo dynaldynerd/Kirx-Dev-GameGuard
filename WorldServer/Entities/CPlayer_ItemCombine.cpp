@@ -857,11 +857,11 @@ char ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
             continue;
           }
 
-          cumulativeWeight += static_cast<unsigned int>(pfld->m_listOutput[outputIndex].m_nOutNum);
+          cumulativeWeight += pfld->m_listOutput[outputIndex].m_dwPdProp;
           if (randomWeight < cumulativeWeight)
           {
             selectedOutputIndices[selectedCount++] = outputIndex;
-            remainWeight -= static_cast<unsigned int>(pfld->m_listOutput[outputIndex].m_nOutNum);
+            remainWeight -= pfld->m_listOutput[outputIndex].m_dwPdProp;
             found = true;
             break;
           }
@@ -878,7 +878,7 @@ char ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
             continue;
           }
 
-          cumulativeWeight += static_cast<unsigned int>(pfld->m_listOutput[outputIndex].m_nOutNum);
+          cumulativeWeight += pfld->m_listOutput[outputIndex].m_dwPdProp;
           if (randomWeight < cumulativeWeight)
           {
             selectedOutputIndices[selectedCount++] = outputIndex;

@@ -247,18 +247,23 @@ unsigned __int8 AutominePersonalMgr::request_query(const _qry_case_make_storage 
       const auto *entries = updateQuery->entries();
       char buffer[10244]{};
       std::memset(buffer, 0, 10240);
-      sprintf(buffer, "update [dbo].[tbl_aminepersonal_inven] set ");
+      sprintf_s(buffer, sizeof(buffer), "update [dbo].[tbl_aminepersonal_inven] set ");
 
       int len = static_cast<int>(std::strlen(buffer));
       for (int j = 0; j < updateQuery->byChangeCount; ++j)
       {
         const _qry_case_make_storage_update_entry &entry = entries[j];
         char *dest = &buffer[len];
-        sprintf(dest, ",K%d=%d,N%d=%d,", entry.bySlot, entry.dwItemKey, entry.bySlot, entry.byAmount);
+        const size_t remaining = sizeof(buffer) - static_cast<size_t>(len);
+        sprintf_s(dest, remaining, ",K%d=%d,N%d=%d,", entry.bySlot, entry.dwItemKey, entry.bySlot, entry.byAmount);
       }
 
       len = static_cast<int>(std::strlen(buffer));
-      sprintf(&buffer[len - 1], " where avatorserial = %d", updateQuery->base.dwAvatorSerial);
+      if (len > 0)
+      {
+        const size_t remaining = sizeof(buffer) - static_cast<size_t>(len - 1);
+        sprintf_s(&buffer[len - 1], remaining, " where avatorserial = %d", updateQuery->base.dwAvatorSerial);
+      }
       if (g_Main.m_pWorldDB->update_amine_personal(buffer))
       {
         return 0;
@@ -893,3 +898,4 @@ bool AutominePersonalMgr::Is_MineRun(int n)
   AutominePersonal *machine = player->m_Param.m_pAPM;
   return machine && machine->is_run();
 }
+

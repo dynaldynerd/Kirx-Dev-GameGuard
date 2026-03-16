@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CLogFile.h"
@@ -283,7 +283,7 @@ unsigned __int8 CUnmannedTraderRegistItemInfo::SellWaitItem(
     char timeBuffer[64]{};
     if (timeInfo)
     {
-      std::sprintf(
+      sprintf_s(
         timeBuffer,
         "%04d-%02d-%02d %02d:%02d:%02d",
         timeInfo->tm_year + 1900,
@@ -295,7 +295,7 @@ unsigned __int8 CUnmannedTraderRegistItemInfo::SellWaitItem(
     }
     else
     {
-      std::sprintf(timeBuffer, "Invalid(%u)", static_cast<unsigned int>(tResultTime));
+      sprintf_s(timeBuffer, "Invalid(%u)", static_cast<unsigned int>(tResultTime));
     }
 
     _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
@@ -500,3 +500,4 @@ bool CUnmannedTraderRegistItemInfo::IsWaitNoitfyClose()
   const unsigned int state = m_kState.GetState();
   return state == 6 || state == 13;
 }
+

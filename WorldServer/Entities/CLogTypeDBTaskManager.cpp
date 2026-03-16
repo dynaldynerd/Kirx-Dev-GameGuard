@@ -443,7 +443,7 @@ bool CLogTypeDBTaskManager::InitLogger()
 
   const unsigned int korLocalTime = GetKorLocalTime();
   char dest[128]{};
-  sprintf_s(dest, "..\\ZoneServerLog\\Systemlog\\LogTypeDBTaskError%u.log", korLocalTime);
+  sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\Systemlog\\LogTypeDBTaskError%u.log", korLocalTime);
   m_pkLogger->SetWriteLogFile(dest, 1, 0, 1, 1);
   return true;
 }
@@ -611,8 +611,7 @@ bool CLogTypeDBTaskManager::Push(unsigned __int8 byQueryType, char *pcData, unsi
       wSize);
 
     char buffer[1040]{};
-    sprintf_s(
-      buffer,
+    sprintf_s(buffer, sizeof(buffer),
       "CLogTypeDBTaskManager::Push( BYTE byQueryType(%u), char * pcData, WORD wSize(%u) ) : m_kPool.GetEmpty() is NULL!",
       byQueryType,
       wSize);

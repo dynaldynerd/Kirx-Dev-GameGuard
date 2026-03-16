@@ -138,8 +138,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
   const unsigned int now = GetKorLocalTime();
-  sprintf(
-    buffer,
+  sprintf_s(buffer, sizeof(buffer),
     "..\\ZoneServerLog\\systemlog\\Concession\\AutoMine_R%d_T%d_%d.log",
     m_byRace,
     m_byCollisionType,
@@ -147,8 +146,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
   m_Log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   const unsigned int now2 = GetKorLocalTime();
-  sprintf(
-    buffer,
+  sprintf_s(buffer, sizeof(buffer),
     "..\\ZoneServerLog\\systemlog\\Concession\\err_automineR%d_T%d_%d.log",
     m_byRace,
     m_byCollisionType,
@@ -1501,3 +1499,4 @@ unsigned __int8 AutoMineMachineMng::_db_qry_update_moveore(const _qry_case_amine
 
   return 24;
 }
+

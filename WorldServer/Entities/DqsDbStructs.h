@@ -4,8 +4,6 @@
 #include "InvenKey.h"
 #include "StoragePos.h"
 
-#pragma pack(push, 8)
-
 struct _AVATOR_DATA;
 
 struct _worlddb_character_base_info
@@ -332,7 +330,6 @@ struct _personal_amine_inven
   __list list[40];
 };
 
-/* 1174 */
 #pragma pack(push, 1)
 struct   _NOT_ARRANGED_AVATOR_DB
 {
@@ -1085,5 +1082,37 @@ inline _rege_char_data::_rege_char_data()
   std::memset(this, 0, sizeof(*this));
 }
 
-#pragma pack(pop)
+#if defined(_MSC_VER)
+static_assert(sizeof(_worlddb_character_base_info) == 224, "_worlddb_character_base_info size mismatch");
+static_assert(offsetof(_worlddb_character_base_info, dwSerial) == 20, "_worlddb_character_base_info.dwSerial offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, byRace) == 24, "_worlddb_character_base_info.byRace offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, dwDalant) == 32, "_worlddb_character_base_info.dwDalant offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, lnUIDArray) == 152, "_worlddb_character_base_info.lnUIDArray offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, dwCheckSum) == 216, "_worlddb_character_base_info.dwCheckSum offset mismatch");
 
+static_assert(sizeof(_worlddb_time_limit_info) == 16, "_worlddb_time_limit_info size mismatch");
+static_assert(offsetof(_worlddb_time_limit_info, dwAccSerial) == 0, "_worlddb_time_limit_info.dwAccSerial offset mismatch");
+static_assert(offsetof(_worlddb_time_limit_info, dwFatigue) == 4, "_worlddb_time_limit_info.dwFatigue offset mismatch");
+static_assert(offsetof(_worlddb_time_limit_info, byTLStatus) == 8, "_worlddb_time_limit_info.byTLStatus offset mismatch");
+static_assert(offsetof(_worlddb_time_limit_info, dwLastLogoutTime) == 12, "_worlddb_time_limit_info.dwLastLogoutTime offset mismatch");
+
+static_assert(sizeof(_worlddb_trade_info::__trade_key) == 80, "_worlddb_trade_info::__trade_key size mismatch");
+static_assert(
+  offsetof(_worlddb_trade_info::__trade_key, dwRegistSerial) == 4,
+  "_worlddb_trade_info::__trade_key.dwRegistSerial offset mismatch");
+static_assert(
+  offsetof(_worlddb_trade_info::__trade_key, dwPrice) == 12,
+  "_worlddb_trade_info::__trade_key.dwPrice offset mismatch");
+static_assert(
+  offsetof(_worlddb_trade_info::__trade_key, tStartTime) == 16,
+  "_worlddb_trade_info::__trade_key.tStartTime offset mismatch");
+static_assert(
+  offsetof(_worlddb_trade_info::__trade_key, wszBuyerName) == 48,
+  "_worlddb_trade_info::__trade_key.wszBuyerName offset mismatch");
+
+static_assert(sizeof(_worlddb_update_char_query) == 168, "_worlddb_update_char_query size mismatch");
+static_assert(offsetof(_worlddb_update_char_query, szBaseQuery) == 0, "_worlddb_update_char_query.szBaseQuery offset mismatch");
+static_assert(
+  offsetof(_worlddb_update_char_query, szTimeLimitInfoQuery) == 160,
+  "_worlddb_update_char_query.szTimeLimitInfoQuery offset mismatch");
+#endif

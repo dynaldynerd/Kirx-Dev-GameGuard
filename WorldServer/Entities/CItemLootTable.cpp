@@ -107,7 +107,7 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
       {
         if (errCode)
         {
-          std::sprintf(errCode, "CItemLootTable.. %d rec %s item no search table", lootIndex, itemCode);
+          sprintf_s(errCode, sizeof(errCode), "CItemLootTable.. %d rec %s item no search table", lootIndex, itemCode);
         }
         return false;
       }
@@ -117,7 +117,7 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
       {
         if (errCode)
         {
-          std::sprintf(errCode, "CItemLootTable.. %d rec %s item no search index", lootIndex, itemCode);
+          sprintf_s(errCode, sizeof(errCode), "CItemLootTable.. %d rec %s item no search index", lootIndex, itemCode);
         }
         return false;
       }
@@ -132,3 +132,4 @@ bool CItemLootTable::Indexing(CRecordData *itemTables, char *errCode)
   __trace("loot load time :  %d", timeGetTime() - startTick);
   return true;
 }
+

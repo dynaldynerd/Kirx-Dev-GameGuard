@@ -2180,6 +2180,7 @@ struct _unmannedtrader_Regist_item_inform_zocl
 {
   struct __list
   {
+    char bWaitingRegister;
     unsigned __int16 wItemSerial;
     unsigned int dwRegistSerial;
     unsigned int dwPrice;
@@ -2360,6 +2361,7 @@ struct _personal_amine_mineore_zocl
 
   void clear();
 };
+#pragma pack(pop)
 
 // moved from CMainThread.h
 #pragma pack(push, 1)
@@ -2928,7 +2930,7 @@ struct _unmannedtrader_search_list_result_zocl
   char byPage;
   unsigned int dwMaxPage;
   char byCnt;
-  _unmannedtrader_search_list_result_zocl::__list List[10];
+  __list List[10];
 };
 #pragma pack(pop)
 

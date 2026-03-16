@@ -2,11 +2,10 @@
 
 #include "IdaCompat.h"
 #include "base_fld.h"
-
-#pragma pack(push, 1)
-
 #include "SkillCommon.h"
 
+
+#pragma pack(push, 1)
 struct  _RadarItem_fld : _base_fld
 {
   int m_bExist;

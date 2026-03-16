@@ -491,7 +491,7 @@ void CMainThread::gm_DisplayAll()
 void CMainThread::gm_PreCloseAnn()
 {
   char buffer[132]{};
-  sprintf_s(buffer, "%s server close warning.", m_szWorldName);
+  sprintf_s(buffer, sizeof(buffer), "%s server close warning.", m_szWorldName);
 
   for (int index = 0; index < MAX_PLAYER; ++index)
   {
@@ -666,7 +666,7 @@ void CMainThread::GetTommorrowStr(char *szTommorrow)
   const unsigned int year = static_cast<unsigned int>(localTime.tm_year + 1900);
   const unsigned int month = static_cast<unsigned int>(localTime.tm_mon + 1);
   const unsigned int day = static_cast<unsigned int>(localTime.tm_mday);
-  sprintf(szTommorrow, "%04u%02u%02u", year, month, day);
+  sprintf_s(szTommorrow, sizeof(szTommorrow), "%04u%02u%02u", year, month, day);
 }
 
 void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, _CLID *pcidGM, int bLogin)
@@ -689,19 +689,19 @@ void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, 
     char buffer[144]{};
     if (byBlockResult == 1)
     {
-      sprintf(buffer, "Kick - Success");
+      sprintf_s(buffer, sizeof(buffer), "Kick - Success");
     }
     else if (byBlockResult == -1)
     {
-      sprintf(buffer, "Kick - ChatBlock is already adjusted");
+      sprintf_s(buffer, sizeof(buffer), "Kick - ChatBlock is already adjusted");
     }
     else if (byBlockResult == -2)
     {
-      sprintf(buffer, "Kick - OtherBlock is already adjusted");
+      sprintf_s(buffer, sizeof(buffer), "Kick - OtherBlock is already adjusted");
     }
     else
     {
-      sprintf(buffer, "Kick - Failed");
+      sprintf_s(buffer, sizeof(buffer), "Kick - Failed");
     }
 
     gameMaster->SendData_ChatTrans(
@@ -1412,11 +1412,11 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   std::memcpy(temp, buffer, static_cast<size_t>(len - 8));
   if (len == 9)
   {
-    sprintf(yearString, "200%s", temp);
+    sprintf_s(yearString, sizeof(yearString), "200%s", temp);
   }
   else if (len == 10)
   {
-    sprintf(yearString, "20%s", temp);
+    sprintf_s(yearString, sizeof(yearString), "20%s", temp);
   }
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
@@ -1456,11 +1456,11 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
   std::memcpy(temp, buffer, static_cast<size_t>(len - 8));
   if (len == 9)
   {
-    sprintf(yearString, "200%s", temp);
+    sprintf_s(yearString, sizeof(yearString), "200%s", temp);
   }
   else if (len == 10)
   {
-    sprintf(yearString, "20%s", temp);
+    sprintf_s(yearString, sizeof(yearString), "20%s", temp);
   }
   yearString[4] = 0;
   tmLast.tm_year = atoi(yearString) - 1900;
@@ -3642,6 +3642,8 @@ bool CMainThread::NetworkInit()
   params[0].m_wSocketMaxNum = MAX_PLAYER;
   params[0].m_bRealSockCheck = 1;
   params[0].m_bSystemLogFile = 1;
+  params[0].m_bRecvLogFile = 1;
+  params[0].m_bSendLogFile = 1;
   if (m_bReleaseServiceMode)
   {
     params[0].m_byRecvThreadNum = 8;
@@ -4631,7 +4633,7 @@ void __cdecl CMainThread::DQSThread(void *param)
 
   char logPath[128]{};
   const unsigned int now = GetKorLocalTime();
-  sprintf_s(logPath, "..\\ZoneServerLog\\Systemlog\\DQSError%u.log", now);
+  sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\Systemlog\\DQSError%u.log", now);
   self->m_logDQS.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
   int throttle = 0;
@@ -5307,3 +5309,4 @@ void CMainThread::SerivceForceSet(bool bService)
 {
   m_bWorldService = bService;
 }
+

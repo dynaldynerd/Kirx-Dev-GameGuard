@@ -752,138 +752,192 @@ struct _apex_result_request_clzo
 {
   unsigned int dwResult;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _new_pos_start_request_clzo
 {
   unsigned __int8 byMapInMode;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _goto_base_portal_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _goto_avator_request_clzo
 {
   char wszAvatorName[17];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _move_portal_request_clzo
 {
   char byPortalIndex;
   unsigned __int16 wConsumeSerial[3];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _enter_return_gate_request_clzo
 {
   unsigned __int16 wGateIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _move_type_change_request_clzo
 {
   char byMoveType;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _init_class_request_clzo
 {
   unsigned __int8 byInitType;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _exchange_dalant_for_gold_request_clzo
 {
   unsigned int dwDalant;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _exchange_gold_for_dalant_request_clzo
 {
   unsigned int dwGold;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _limit_item_num_request_clzo
 {
   unsigned int dwStoreIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _darkhole_open_request_clzo
 {
   unsigned int dwItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _post_index_request_clzo
 {
   unsigned int dwPostIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _post_return_confirm_request_clzo
 {
   unsigned int dwPostSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _transform_siege_mode_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _transship_renew_ticket_request_clzo
 {
   unsigned __int16 wTicketSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_join_invitation_request_clzo
 {
   unsigned __int16 wDstIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_join_application_request_clzo
 {
   unsigned __int16 wBossIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_leave_compulsion_request_clzo
 {
   unsigned int dwExiterSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_succession_request_clzo
 {
   unsigned int dwSuccessorSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_join_invitation_answer_clzo
 {
   _CLID idBoss;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_join_application_answer_clzo
 {
   _CLID idApplicant;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_lock_request_clzo
 {
   bool bLock;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _away_party_invitation_request_clzo
 {
   char wszCharName[17];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _back_tower_request_clzo
 {
   unsigned int dwTowerObjSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _d_trade_answer_request_clzo
 {
   _CLID idAsker;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _dtrade_ok_request_clzo
 {
   unsigned int dwKey[4];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _animus_recall_request_clzo
 {
   unsigned __int16 wAnimusItemSerial;
@@ -891,69 +945,95 @@ struct _animus_recall_request_clzo
   unsigned __int16 wAnimusClientHP;
   unsigned __int16 wAnimusClientFP;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _unit_leave_request_clzo
 {
   __int16 zPos[3];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _npc_rec_index_request_clzo
 {
   unsigned int dwRecIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _npc_quest_request_clzo
 {
   unsigned int dwRecIndex;
   unsigned int dwNPCQuestIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_cancel_suggest_request_clzo
 {
   unsigned int dwMatterVoteSynKey;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_query_info_request_clzo
 {
   unsigned int dwGuildSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_push_money_request_clzo
 {
   unsigned int dwPushGold;
   unsigned int dwPushDalant;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_battle_take_gravity_stone_request_clzo
 {
   int nObjectIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_battle_goal_request_clzo
 {
   int nGoalObjectIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_establish_request_clzo
 {
   char wszGuildName[17];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_join_apply_request_clzo
 {
   char wszGuildName[17];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _buddy_del_request_clzo
 {
   unsigned int dwBuddySerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _exchange_gold_for_pvp_request_clzo
 {
   unsigned int dwGold;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _use_potion_request_clzo
 {
   char byReqType;
@@ -961,99 +1041,134 @@ struct _use_potion_request_clzo
   unsigned int dwReserved;
   _STORAGE_POS_INDIV Item;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _throw_storage_request_clzo
 {
   _STORAGE_POS_INDIV Item;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _equip_part_request_clzo
 {
   _STORAGE_POS_INDIV Item;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _embellish_request_clzo
 {
   _STORAGE_POS_INDIV Item;
   unsigned __int16 wChangeSerial;
 };
+#pragma pack(pop)
 static_assert(sizeof(_embellish_request_clzo) == 6);
 
+#pragma pack(push, 1)
 struct _off_part_request_clzo
 {
   _STORAGE_POS_INDIV Item;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _add_bag_request_clzo
 {
   unsigned __int16 wBagSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _use_recover_loss_exp_item_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _exchange_item_request_clzo
 {
   unsigned __int16 wManualIndex;
   unsigned __int16 wTarSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _use_firecracker_item_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _use_soccer_ball_item_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _use_radar_item_request_clzo
 {
   _STORAGE_POS_INDIV Item;
   unsigned __int16 wConsumeItemSerial[3];
 };
+#pragma pack(pop)
 static_assert(sizeof(_use_radar_item_request_clzo) == 10);
 
+#pragma pack(push, 1)
 struct _use_recall_teleport_item_request_clzo
 {
   _STORAGE_POS_INDIV Item;
   char wszRecallName[17];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _character_rename_cash_request_clzo
 {
   char bChange;
   _STORAGE_POS_INDIV Item;
   char szNewName[16];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _party_req_block_report_clzo
 {
   bool bBlock;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _whisper_block_report_clzo
 {
   bool bBlock;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _trade_block_report_clzo
 {
   bool bBlock;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _guild_battle_block_report_clzo
 {
   bool bBlock;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _trunk_hint_answer_request_clzo
 {
   char wszAnswer[17];
 };
+#pragma pack(pop)
 
 static_assert(sizeof(_new_pos_start_request_clzo) == 1);
 static_assert(sizeof(_goto_avator_request_clzo) == 17);
@@ -1075,11 +1190,14 @@ static_assert(sizeof(_trade_block_report_clzo) == 1);
 static_assert(sizeof(_guild_battle_block_report_clzo) == 1);
 static_assert(sizeof(_trunk_hint_answer_request_clzo) == 17);
 
+#pragma pack(push, 1)
 struct _char_slot_request_clzo
 {
   char bySlotIndex;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _alter_window_info_request_clzo
 {
   unsigned int dwSkill[2];
@@ -1089,27 +1207,35 @@ struct _alter_window_info_request_clzo
   unsigned int dwInven;
   unsigned int dwInvenBag[5];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_operator_request_clzo
 {
   char byRaceCode;
   char bySize;
   char wszChatData[255];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_message_request_clzo
 {
   char bySize;
   char wszChatData[255];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_trade_request_clzo
 {
   char byRaceCode;
   char bySize;
   char wszChatData[255];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_far_request_clzo
 {
   char wszName[16];
@@ -1117,14 +1243,18 @@ struct _chat_far_request_clzo
   char bySize;
   char wszChatData[255];
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_multi_far_request_clzo
 {
   char byRaceCode;
   char byUnknown;
   unsigned __int8 byTransNum;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct _chat_toggle_request_clzo
 {
   char byRecvType;
