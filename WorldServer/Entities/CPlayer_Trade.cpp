@@ -696,9 +696,6 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     codeB[index] = static_cast<unsigned int>(rand() + (rand() << 16));
   }
 
-  unsigned int *keyA = CalcCodeKey(codeA);
-  unsigned int *keyB = CalcCodeKey(codeB);
-
   auto setTradeStart = [](_DTRADE_PARAM &trade, unsigned __int16 dstIndex, unsigned int dstSerial, unsigned __int8 emptyCount, const unsigned int *key)
   {
     trade.bDTradeMode = true;
@@ -717,12 +714,15 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     std::memcpy(trade.dwKey, key, sizeof(trade.dwKey));
   };
 
+  unsigned int *keyA = CalcCodeKey(codeA);
   setTradeStart(
     this->m_pmTrd,
     asker->m_ObjID.m_wIndex,
     asker->m_dwObjSerial,
     static_cast<unsigned __int8>(this->m_Param.m_dbInven.GetNumEmptyCon()),
     keyA);
+
+  unsigned int *keyB = CalcCodeKey(codeB);
   setTradeStart(
     asker->m_pmTrd,
     this->m_ObjID.m_wIndex,
@@ -1147,40 +1147,6 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   _STORAGE_LIST::_db_con tradeItems[2][15] = {};
   int tradedItemCount[2] = {0, 0};
   CPlayer *players[2] = {this, nullptr};
-  auto getEffectiveEmptyInventorySlots = [] (CPlayer *player, int *emptySlotCount)
-  {
-    *emptySlotCount = player->m_Param.m_dbInven.GetNumEmptyCon();
-
-    for (int tradeSlot = 0; tradeSlot < 15; ++tradeSlot)
-    {
-      _DTRADE_ITEM *tradeItem = &player->m_pmTrd.DItemNode[tradeSlot];
-      if (!tradeItem->bLoad || tradeItem->byStorageCode != 0)
-      {
-        continue;
-      }
-
-      _STORAGE_LIST::_db_con *sourceItem = player->m_Param.m_dbInven.GetPtrFromSerial(
-        static_cast<unsigned __int16>(tradeItem->dwSerial));
-      if (!sourceItem)
-      {
-        return false;
-      }
-
-      if (IsOverLapItem(sourceItem->m_byTableCode))
-      {
-        if (sourceItem->m_dwDur == tradeItem->byAmount)
-        {
-          ++(*emptySlotCount);
-        }
-      }
-      else
-      {
-        ++(*emptySlotCount);
-      }
-    }
-
-    return true;
-  };
 
   auto closeTrade = [&]() {
     this->m_pmTrd.Init();
@@ -1223,21 +1189,6 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   else
   {
     players[1] = tradeDst;
-
-    // Yorozuya trade fix (non-IDA): recompute effective inventory space at
-    // commit time instead of trusting the cached trade-start empty-slot count.
-    int thisEffectiveEmptyInven = 0;
-    int dstEffectiveEmptyInven = 0;
-    if (!getEffectiveEmptyInventorySlots(this, &thisEffectiveEmptyInven)
-        || !getEffectiveEmptyInventorySlots(tradeDst, &dstEffectiveEmptyInven))
-    {
-      resultCode = 4;
-    }
-    else if (this->m_pmTrd.bySellItemNum > dstEffectiveEmptyInven
-             || tradeDst->m_pmTrd.bySellItemNum > thisEffectiveEmptyInven)
-    {
-      resultCode = 100;
-    }
 
     for (int side = 0; !resultCode && side < 2; ++side)
     {
