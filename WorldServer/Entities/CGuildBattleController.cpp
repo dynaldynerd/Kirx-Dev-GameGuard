@@ -525,7 +525,9 @@ bool CGuildBattleController::UpdateReservedGuildBattleSchedule(unsigned int dwSL
     reinterpret_cast<_worlddb_guild_battle_reserved_schedule_info *>(byOutData));
 }
 
-void CGuildBattleController::CompleteUpdateReservedSchedule(unsigned int dwMapID, unsigned __int8 *pLoadData)
+void CGuildBattleController::CompleteUpdateReservedSchedule(
+  unsigned int dwMapID,
+  unsigned __int8 *pLoadData)
 {
   GUILD_BATTLE::CGuildBattleReservedScheduleListManager *reserved =
     GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
@@ -570,28 +572,11 @@ void CGuildBattleController::PushClearGuildBattleRank()
 
 unsigned __int8 CGuildBattleController::Start(CPlayer *pkPlayer)
 {
-  if (!pkPlayer)
-  {
-    return static_cast<unsigned __int8>(-114);
-  }
-
-  unsigned int guildSerial = static_cast<unsigned int>(-1);
-  if (pkPlayer->m_Param.m_pGuild)
-  {
-    guildSerial = pkPlayer->m_Param.m_pGuild->m_dwSerial;
-  }
-
-  if (guildSerial == static_cast<unsigned int>(-1))
-  {
-    return static_cast<unsigned __int8>(-115);
-  }
-
-  const int playerIndex = pkPlayer->m_ObjID.m_wIndex;
+  const unsigned int guildSerial =
+    pkPlayer->m_Param.m_pGuild ? pkPlayer->m_Param.m_pGuild->m_dwSerial : static_cast<unsigned int>(-1);
   const unsigned int charSerial = pkPlayer->m_pUserDB->m_dwSerial;
   GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
-  manager->JoinGuild(playerIndex, guildSerial, charSerial);
-  manager->LogIn(playerIndex, guildSerial, charSerial);
-  return 0;
+  return manager->Start(pkPlayer, guildSerial, charSerial);
 }
 
 void CGuildBattleController::LogIn(CPlayer *pkPlayer)

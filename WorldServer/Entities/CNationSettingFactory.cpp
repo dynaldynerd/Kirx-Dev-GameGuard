@@ -305,6 +305,12 @@ bool CNationSettingFactory::RegistCheatTableUnion(CNationSettingData *pkData)
     return false;
   if (!RegistCheat(pkData, "adgusc", ct_add_guild_schedule, 8, 7))
     return false;
+  if (!RegistCheat(pkData, "adgusc phase", ct_set_guildbattle_phase, 8, 7))
+    return false;
+  if (!RegistCheat(pkData, "adgusc curphase", ct_cur_guildbattle_phase, 8, 7))
+    return false;
+  if (!RegistCheat(pkData, "adgusc curround", ct_cur_guildbattle_round, 8, 7))
+    return false;
   if (!RegistCheat(pkData, "seguco", ct_set_guildbattle_color, 8, 7))
     return false;
   if (!RegistCheat(pkData, "cuguco", ct_cur_guildbattle_color, 8, 7))
