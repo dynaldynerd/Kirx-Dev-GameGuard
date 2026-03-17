@@ -2418,7 +2418,7 @@ void CMainThread::UpdateReservedGuildBattleSchedule(_DB_QRY_SYN_DATA *pData)
   auto *updateReservedScheduleQuery = reinterpret_cast<_qry_case_updatereservedschedule *>(pData->m_sData);
   CGuildBattleController *controller = CGuildBattleController::Instance();
   controller->CompleteUpdateReservedSchedule(
-    updateReservedScheduleQuery->dwSLID,
+    updateReservedScheduleQuery->dwMapID,
     &updateReservedScheduleQuery->byLoadDataStartPosition);
 }
 
