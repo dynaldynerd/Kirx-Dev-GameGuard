@@ -38,6 +38,7 @@
 #include "lt_qry_case_unmandtrader_select_list.h"
 #include "Packet/ZoneAccountPacket.h"
 #include "insert_trc_info.h"
+#include "qry_case_inputgmoney.h"
 #include "PatriarchElectProcessor.h"
 #include "RFEvent_ClassRefine.h"
 #include "TRC_AutoTrade.h"
@@ -343,14 +344,14 @@ void CMainThread::OnDQSRun()
       }
       case 19:
       {
-        auto *pushMoneyQuery = reinterpret_cast<_qry_case_inputgmoney_local *>(queryEntry->m_sData);
+        auto *pushMoneyQuery = reinterpret_cast<_qry_case_inputgmoney *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_input_guild_money(
           pushMoneyQuery->in_pusherserial,
-          pushMoneyQuery->tmp_guildindex,
+          pushMoneyQuery->in_guildserial,
           pushMoneyQuery->dwAddDalant,
           pushMoneyQuery->dwAddGold,
-          &pushMoneyQuery->out_totalgold,
           &pushMoneyQuery->out_totaldalant,
+          &pushMoneyQuery->out_totalgold,
           pushMoneyQuery->in_date,
           pushMoneyQuery->in_w_pushername);
         break;
@@ -360,11 +361,11 @@ void CMainThread::OnDQSRun()
         auto *outputMoneyQuery = reinterpret_cast<_qry_case_outputgmoney *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_output_guild_money(
           outputMoneyQuery->in_poperserial,
-          outputMoneyQuery->tmp_guildindex,
+          outputMoneyQuery->in_guildserial,
           outputMoneyQuery->dwSubDalant,
           outputMoneyQuery->dwSubGold,
-          &outputMoneyQuery->out_totalgold,
           &outputMoneyQuery->out_totaldalant,
+          &outputMoneyQuery->out_totalgold,
           outputMoneyQuery->in_date,
           outputMoneyQuery->in_w_popername,
           &outputMoneyQuery->byProcRet);
@@ -375,12 +376,12 @@ void CMainThread::OnDQSRun()
         auto *buyEmblemQuery = reinterpret_cast<_qry_case_buyemblem *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_buy_emblem(
           buyEmblemQuery->in_guildserial,
-          static_cast<unsigned int>(buyEmblemQuery->in_emblemdlant),
+          buyEmblemQuery->in_emblemdlant,
           buyEmblemQuery->in_emblemback,
           buyEmblemQuery->in_emblemmark,
           buyEmblemQuery->in_suggestorSerial,
-          &buyEmblemQuery->out_totalgold,
           &buyEmblemQuery->out_totaldalant,
+          &buyEmblemQuery->out_totalgold,
           buyEmblemQuery->in_date,
           buyEmblemQuery->tmp_w_suggestorname,
           &buyEmblemQuery->byProcRet);
@@ -508,8 +509,8 @@ void CMainThread::OnDQSRun()
           inBattleCostQuery->dwGuildIndex,
           inBattleCostQuery->dwAddDalant,
           inBattleCostQuery->dwAddGold,
-          &inBattleCostQuery->out_totalgold,
           &inBattleCostQuery->out_totaldalant,
+          &inBattleCostQuery->out_totalgold,
           inBattleCostQuery->byDate,
           "Scramble Cost");
         break;
@@ -523,8 +524,8 @@ void CMainThread::OnDQSRun()
           srcGuildOutBattleCostQuery->dwGuildIndex,
           srcGuildOutBattleCostQuery->dwSubDalant,
           srcGuildOutBattleCostQuery->dwSubGold,
-          &srcGuildOutBattleCostQuery->out_totalgold,
           &srcGuildOutBattleCostQuery->out_totaldalant,
+          &srcGuildOutBattleCostQuery->out_totalgold,
           srcGuildOutBattleCostQuery->byDate,
           "Scramble Cost",
           &srcGuildOutBattleCostQuery->byProcRet);
@@ -951,8 +952,8 @@ void CMainThread::OnDQSRun()
           destGuildOutBattleCostQuery->dwGuildIndex,
           destGuildOutBattleCostQuery->dwSubDalant,
           destGuildOutBattleCostQuery->dwSubGold,
-          &destGuildOutBattleCostQuery->out_totalgold,
           &destGuildOutBattleCostQuery->out_totaldalant,
+          &destGuildOutBattleCostQuery->out_totalgold,
           destGuildOutBattleCostQuery->byDate,
           "Scramble Cost",
           &destGuildOutBattleCostQuery->byProcRet);

@@ -1221,6 +1221,8 @@ public:
   unsigned int GetMoney(unsigned __int8 byMoneyCode);
   void SendMsg_ChatFarFailure(char bBlock);
   CPlayer *FindFarChatPlayerWithTemp(char *pwszName);
+  bool pc_CustomCommand(char *pwszChatData);
+  bool pc_CustomCommand_GuildHonor(char *pwszCommandArgs);
   void pc_ChatOperatorRequest(unsigned __int8 byRaceCode, char *pwszChatData);
   void pc_ChatCircleRequest(char *pwszChatData);
   void pc_ChatFarRequest(char *pwszName, char *pwszChatData);

@@ -72,6 +72,7 @@
 #include "DqsOnRunPayloads.h"
 #include "EconomySystemFunctions.h"
 #include "TimeItem.h"
+#include "qry_case_inputgmoney.h"
 #include "trans_ship_renew_ticket_result_zocl.h"
 #include "trans_gm_msg_inform_zocl.h"
 #include "trunk_change_passwd_result_zocl.h"
@@ -667,7 +668,7 @@ void CPlayer::Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData)
 
 void CPlayer::Guild_Push_Money_Complete(_DB_QRY_SYN_DATA *pData)
 {
-  const auto *query = reinterpret_cast<_qry_case_inputgmoney_local *>(pData->m_sData);
+  const auto *query = reinterpret_cast<_qry_case_inputgmoney *>(pData->m_sData);
   CGuild *guild = &g_Guild[query->tmp_guildindex];
 
   if (guild->m_dwSerial != query->in_guildserial)
@@ -1347,7 +1348,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
 
   if (!result)
   {
-    _qry_case_inputgmoney_local query{};
+    _qry_case_inputgmoney query{};
     query.in_pusherserial = this->m_id.dwSerial;
     query.tmp_guildindex = guild->m_nIndex;
     query.in_guildserial = guild->m_dwSerial;
@@ -1359,7 +1360,7 @@ void CPlayer::pc_GuildPushMoneyRequest(unsigned int dwPushDalant, unsigned int d
     query.in_date[3] = GetCurrentMin();
     std::strcpy(query.in_w_pushername, this->m_Param.GetCharNameW());
 
-    if (g_Main.PushDQSData(-1, nullptr, 19, reinterpret_cast<char *>(&query), static_cast<int>(sizeof(query))))
+    if (g_Main.PushDQSData(-1, nullptr, 19, reinterpret_cast<char *>(&query), static_cast<int>(query.size())))
     {
       guild->m_bIOWait = true;
       this->SubDalant(dwPushDalant);

@@ -978,35 +978,35 @@ public:
     unsigned int dwCharSerial,
     unsigned int dwGuildIndex);
   unsigned __int8 db_input_guild_money(
+    unsigned int dwPusherSerial,
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwAccountSerial,
-    unsigned int dwParam,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    const char *pszPurpose);
+    unsigned int dwAddDalant,
+    unsigned int dwAddGold,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    const char *pwszName);
   unsigned __int8 db_output_guild_money(
+    unsigned int dwPoperSerial,
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwAccountSerial,
-    unsigned int dwParam,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    const char *pszPurpose,
-    unsigned __int8 *pbyRetCode);
+    unsigned int dwSubDalant,
+    unsigned int dwSubGold,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    const char *pwszName,
+    unsigned __int8 *pbyProcRet);
   unsigned __int8 db_buy_emblem(
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwGuildIndex,
+    int nEmblemDalant,
     unsigned int dwEmblemBack,
     unsigned int dwEmblemMark,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    char *pwszGuildName,
-    unsigned __int8 *pbyRetCode);
+    unsigned int dwSuggestorSerial,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    char *pwszName,
+    unsigned __int8 *pbyProcRet);
   unsigned __int8 db_disjoint_guild(unsigned int dwGuildSerial);
   unsigned __int8 db_char_set_alive(
     unsigned int dwSerial,

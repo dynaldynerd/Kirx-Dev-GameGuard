@@ -322,6 +322,14 @@ char CMainThread::db_Insert_guild(
   {
     return 24;
   }
+  if (!m_pWorldDB->Update_GuildEmblem(
+        *dwGuildSerial,
+        0.0,
+        static_cast<unsigned int>(-1),
+        static_cast<unsigned int>(-1)))
+  {
+    return 24;
+  }
 
   CCheckSumGuildData checksum(*dwGuildSerial);
   checksum.Encode(0.0, 0.0);
@@ -389,30 +397,30 @@ unsigned __int8 CMainThread::db_update_guildmember_del(
 }
 
 unsigned __int8 CMainThread::db_input_guild_money(
+  unsigned int dwPusherSerial,
   unsigned int dwGuildSerial,
-  unsigned int dwCharSerial,
-  unsigned int dwAccountSerial,
-  unsigned int dwParam,
-  long double *dCurTotalDalant,
-  long double *dCurTotalGold,
-  unsigned __int8 *pbyDate,
-  const char *pszPurpose)
+  unsigned int dwAddDalant,
+  unsigned int dwAddGold,
+  long double *dTotalDalant,
+  long double *dTotalGold,
+  unsigned __int8 *byDate,
+  const char *pwszName)
 {
-  if (!m_pWorldDB->Update_InputGuildMoney(dwCharSerial, static_cast<int>(dwAccountSerial), dwParam))
+  if (!m_pWorldDB->Update_InputGuildMoney(dwGuildSerial, static_cast<int>(dwAddDalant), dwAddGold))
   {
     return 24;
   }
 
   _worlddb_guild_info::__guild_info guildData{};
-  if (!m_pWorldDB->Select_GuildData(dwCharSerial, &guildData))
+  if (!m_pWorldDB->Select_GuildData(dwGuildSerial, &guildData))
   {
     return 24;
   }
 
-  *dCurTotalDalant = guildData.dDalant;
-  *dCurTotalGold = guildData.dGold;
+  *dTotalDalant = guildData.dDalant;
+  *dTotalGold = guildData.dGold;
 
-  CCheckSumGuildData checksum(dwCharSerial);
+  CCheckSumGuildData checksum(dwGuildSerial);
   checksum.Encode(guildData.dDalant, guildData.dGold);
   if (!checksum.Update(m_pWorldDB))
   {
@@ -420,21 +428,21 @@ unsigned __int8 CMainThread::db_input_guild_money(
   }
 
   char buffer[28]{};
-  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", pbyDate[0], pbyDate[1], pbyDate[2], pbyDate[3]);
+  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", byDate[0], byDate[1], byDate[2], byDate[3]);
   if (!m_pWorldDB->Insert_GuildMoneyHistory(
-        dwCharSerial,
-        static_cast<double>(dwAccountSerial),
-        static_cast<double>(dwParam),
-        *dCurTotalDalant,
-        *dCurTotalGold,
-        buffer,
         dwGuildSerial,
-        pszPurpose))
+        static_cast<double>(dwAddDalant),
+        static_cast<double>(dwAddGold),
+        *dTotalDalant,
+        *dTotalGold,
+        buffer,
+        dwPusherSerial,
+        pwszName))
   {
     return 24;
   }
 
-  unsigned __int8 check = g_Main.check_min_max_guild_money(dwCharSerial, dCurTotalDalant, dCurTotalGold);
+  unsigned __int8 check = g_Main.check_min_max_guild_money(dwGuildSerial, dTotalDalant, dTotalGold);
   if (check)
   {
     return check;
@@ -443,47 +451,47 @@ unsigned __int8 CMainThread::db_input_guild_money(
 }
 
 unsigned __int8 CMainThread::db_output_guild_money(
+  unsigned int dwPoperSerial,
   unsigned int dwGuildSerial,
-  unsigned int dwCharSerial,
-  unsigned int dwAccountSerial,
-  unsigned int dwParam,
-  long double *dCurTotalDalant,
-  long double *dCurTotalGold,
-  unsigned __int8 *pbyDate,
-  const char *pszPurpose,
-  unsigned __int8 *pbyRetCode)
+  unsigned int dwSubDalant,
+  unsigned int dwSubGold,
+  long double *dTotalDalant,
+  long double *dTotalGold,
+  unsigned __int8 *byDate,
+  const char *pwszName,
+  unsigned __int8 *pbyProcRet)
 {
-  unsigned __int8 check = check_min_max_guild_money(dwCharSerial, dCurTotalDalant, dCurTotalGold);
+  unsigned __int8 check = check_min_max_guild_money(dwGuildSerial, dTotalDalant, dTotalGold);
   if (check)
   {
     return check;
   }
 
-  if ((*dCurTotalDalant == 0.0 && dwAccountSerial)
-      || (*dCurTotalGold == 0.0 && dwParam)
-      || static_cast<double>(dwAccountSerial) > *dCurTotalDalant
-      || static_cast<double>(dwParam) > *dCurTotalGold)
+  if ((*dTotalDalant == 0.0 && dwSubDalant)
+      || (*dTotalGold == 0.0 && dwSubGold)
+      || static_cast<double>(dwSubDalant) > *dTotalDalant
+      || static_cast<double>(dwSubGold) > *dTotalGold)
   {
-    *pbyRetCode = 1;
+    *pbyProcRet = 1;
     return 0;
   }
 
-  *dCurTotalDalant = *dCurTotalDalant - static_cast<double>(dwAccountSerial);
-  *dCurTotalGold = *dCurTotalGold - static_cast<double>(dwParam);
+  *dTotalDalant = *dTotalDalant - static_cast<double>(dwSubDalant);
+  *dTotalGold = *dTotalGold - static_cast<double>(dwSubGold);
 
   char buffer[48]{};
-  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", pbyDate[0], pbyDate[1], pbyDate[2], pbyDate[3]);
+  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", byDate[0], byDate[1], byDate[2], byDate[3]);
 
   m_pWorldDB->SetAutoCommitMode(false);
-  if (!m_pWorldDB->Update_SetGuildMoney(dwCharSerial, *dCurTotalDalant, *dCurTotalGold))
+  if (!m_pWorldDB->Update_SetGuildMoney(dwGuildSerial, *dTotalDalant, *dTotalGold))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);
     return 24;
   }
 
-  CCheckSumGuildData checksum(dwCharSerial);
-  checksum.Encode(*dCurTotalDalant, *dCurTotalGold);
+  CCheckSumGuildData checksum(dwGuildSerial);
+  checksum.Encode(*dTotalDalant, *dTotalGold);
   if (!checksum.Update(m_pWorldDB))
   {
     m_pWorldDB->RollbackTransaction();
@@ -492,14 +500,14 @@ unsigned __int8 CMainThread::db_output_guild_money(
   }
 
   if (!m_pWorldDB->Insert_GuildMoneyHistory(
-        dwCharSerial,
-        -static_cast<double>(dwAccountSerial),
-        -static_cast<double>(dwParam),
-        *dCurTotalDalant,
-        *dCurTotalGold,
-        buffer,
         dwGuildSerial,
-        pszPurpose))
+        -static_cast<double>(dwSubDalant),
+        -static_cast<double>(dwSubGold),
+        *dTotalDalant,
+        *dTotalGold,
+        buffer,
+        dwPoperSerial,
+        pwszName))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);
@@ -513,44 +521,39 @@ unsigned __int8 CMainThread::db_output_guild_money(
 
 unsigned __int8 CMainThread::db_buy_emblem(
   unsigned int dwGuildSerial,
-  unsigned int dwCharSerial,
-  unsigned int dwGuildIndex,
+  int nEmblemDalant,
   unsigned int dwEmblemBack,
   unsigned int dwEmblemMark,
-  long double *dCurTotalDalant,
-  long double *dCurTotalGold,
-  unsigned __int8 *pbyDate,
-  char *pwszGuildName,
-  unsigned __int8 *pbyRetCode)
+  unsigned int dwSuggestorSerial,
+  long double *dTotalDalant,
+  long double *dTotalGold,
+  unsigned __int8 *byDate,
+  char *pwszName,
+  unsigned __int8 *pbyProcRet)
 {
-  const int emblemDalant = static_cast<int>(dwCharSerial);
-  const unsigned int suggestorSerial = dwEmblemMark;
-  const unsigned int emblemBack = dwGuildIndex;
-  const unsigned int emblemMark = dwEmblemBack;
-
-  unsigned __int8 check = check_min_max_guild_money(dwGuildSerial, dCurTotalDalant, dCurTotalGold);
+  unsigned __int8 check = check_min_max_guild_money(dwGuildSerial, dTotalDalant, dTotalGold);
   if (check)
   {
     return check;
   }
 
-  if ((*dCurTotalDalant == 0.0 && emblemDalant) || (-static_cast<double>(emblemDalant) > *dCurTotalDalant))
+  if ((*dTotalDalant == 0.0 && nEmblemDalant) || (-static_cast<double>(nEmblemDalant) > *dTotalDalant))
   {
-    *pbyRetCode = 1;
+    *pbyProcRet = 1;
     return 0;
   }
 
-  *dCurTotalDalant = *dCurTotalDalant + static_cast<double>(emblemDalant);
+  *dTotalDalant = *dTotalDalant + static_cast<double>(nEmblemDalant);
 
   char buffer[48]{};
-  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", pbyDate[0], pbyDate[1], pbyDate[2], pbyDate[3]);
+  sprintf_s(buffer, 9uLL, "%02d%02d%02d%02d", byDate[0], byDate[1], byDate[2], byDate[3]);
 
   m_pWorldDB->SetAutoCommitMode(false);
   if (!m_pWorldDB->Update_GuildEmblem(
         dwGuildSerial,
-        *dCurTotalDalant,
-        emblemBack,
-        emblemMark))
+        *dTotalDalant,
+        dwEmblemBack,
+        dwEmblemMark))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);
@@ -558,7 +561,7 @@ unsigned __int8 CMainThread::db_buy_emblem(
   }
 
   CCheckSumGuildData checksum(dwGuildSerial);
-  checksum.Encode(*dCurTotalDalant, *dCurTotalGold);
+  checksum.Encode(*dTotalDalant, *dTotalGold);
   if (!checksum.Update(m_pWorldDB))
   {
     m_pWorldDB->RollbackTransaction();
@@ -568,13 +571,13 @@ unsigned __int8 CMainThread::db_buy_emblem(
 
   if (!m_pWorldDB->Insert_GuildMoneyHistory(
         dwGuildSerial,
-        static_cast<double>(emblemDalant),
+        static_cast<double>(nEmblemDalant),
         0.0,
-        *dCurTotalDalant,
-        *dCurTotalGold,
+        *dTotalDalant,
+        *dTotalGold,
         buffer,
-        suggestorSerial,
-        pwszGuildName))
+        dwSuggestorSerial,
+        pwszName))
   {
     m_pWorldDB->RollbackTransaction();
     m_pWorldDB->SetAutoCommitMode(true);

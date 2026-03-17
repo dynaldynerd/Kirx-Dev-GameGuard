@@ -184,14 +184,23 @@ char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
       &pkInfo->GuildData[j].dDalant,
       &pkInfo->GuildData[j].dGold);
 
+    unsigned int emblemBack = pkInfo->GuildData[j].dwEmblemBack;
+    unsigned int emblemMark = pkInfo->GuildData[j].dwEmblemMark;
+    if (emblemBack == 0 && emblemMark == 0)
+    {
+      // Legacy/default guild rows can come back as 0/0 even though live no-emblem state uses -1/-1.
+      emblemBack = static_cast<unsigned int>(-1);
+      emblemMark = static_cast<unsigned int>(-1);
+    }
+
     g_Guild[j].SetGuild(
       pkInfo->GuildData[j].dwGuildSerial,
       pkInfo->GuildData[j].byGuildGrade,
       pkInfo->GuildData[j].byRace,
       pkInfo->GuildData[j].wszGuildName,
       pkInfo->GuildData[j].wszGreetingMsg,
-      pkInfo->GuildData[j].dwEmblemBack,
-      pkInfo->GuildData[j].dwEmblemMark,
+      emblemBack,
+      emblemMark,
       memberCount,
       members,
       pkInfo->GuildData[j].dDalant,

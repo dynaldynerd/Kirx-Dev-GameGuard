@@ -16,6 +16,7 @@
 #include "combine_ex_item_request_clzo.h"
 #include "combine_ex_item_result_zocl.h"
 #include "exchange_lend_item_result_zocl.h"
+#include "guild_honor_set_request_clzo.h"
 #include "guildroom_out_result_zocl.h"
 #include "buy_offer.h"
 #include "sell_offer.h"
@@ -15584,6 +15585,14 @@ void CPlayer::pc_ChatOperatorRequest(unsigned __int8 byRaceCode, char *pwszChatD
 
 void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
 {
+  if (pwszChatData && pwszChatData[0] == '@')
+  {
+    if (pc_CustomCommand(&pwszChatData[1]))
+    {
+      return;
+    }
+  }
+
   if ((!m_pUserDB || !m_pUserDB->m_bChatLock)
       && m_pCurMap
       && GetCurSecNum() != -1
@@ -15683,6 +15692,105 @@ void CPlayer::pc_ChatCircleRequest(char *pwszChatData)
       }
     }
   }
+}
+
+bool CPlayer::pc_CustomCommand(char *pwszChatData)
+{
+  if (!pwszChatData || !pwszChatData[0])
+  {
+    return false;
+  }
+
+  char commandLine[272]{};
+  strcpy_s(commandLine, sizeof(commandLine), pwszChatData);
+
+  char *context = nullptr;
+  char *command = strtok_s(commandLine, " ", &context);
+  if (!command)
+  {
+    return false;
+  }
+
+  if (_stricmp(command, "guildhonor") == 0)
+  {
+    return pc_CustomCommand_GuildHonor(context);
+  }
+
+  return false;
+}
+
+bool CPlayer::pc_CustomCommand_GuildHonor(char *pwszCommandArgs)
+{
+  const unsigned int charSerial = m_Param.GetCharSerial();
+  const int raceCode = m_Param.GetRaceCode();
+  const unsigned int currentRaceBossSerial =
+    CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
+  if (charSerial != currentRaceBossSerial)
+  {
+    return false;
+  }
+
+  char usageMessage[] = "guildhonor usage: @guildhonor <guild> <tax> [<guild> <tax> ...] (1-5 pairs)";
+  char guildNameError[] = "guildhonor error: guild name must be 1-16 chars";
+  char taxError[] = "guildhonor error: tax must be an integer between 0 and 50";
+  char pairLimitError[] = "guildhonor error: supports at most 5 guild/tax pairs";
+  _guild_honor_set_request_clzo request{};
+  int pairCount = 0;
+  char commandArgs[272]{};
+  if (pwszCommandArgs && pwszCommandArgs[0])
+  {
+    strcpy_s(commandArgs, sizeof(commandArgs), pwszCommandArgs);
+  }
+  char *context = nullptr;
+
+  for (; pairCount < 5; ++pairCount)
+  {
+    char *guildName = strtok_s(pairCount == 0 ? commandArgs : nullptr, " ", &context);
+    if (!guildName)
+    {
+      break;
+    }
+
+    char *taxToken = strtok_s(nullptr, " ", &context);
+    if (!taxToken)
+    {
+      SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, usageMessage, 0xFFu, nullptr);
+      return true;
+    }
+
+    if (!guildName[0] || std::strlen(guildName) > 16)
+    {
+      SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, guildNameError, 0xFFu, nullptr);
+      return true;
+    }
+
+    char *end = nullptr;
+    const long taxRate = std::strtol(taxToken, &end, 10);
+    if (end == taxToken || *end != 0 || taxRate < 0 || taxRate > 50)
+    {
+      SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, taxError, 0xFFu, nullptr);
+      return true;
+    }
+
+    strcpy_s(request.GuildList[pairCount].wszGuildName, sizeof(request.GuildList[pairCount].wszGuildName), guildName);
+    request.GuildList[pairCount].byTaxRate = static_cast<unsigned __int8>(taxRate);
+  }
+
+  if (pairCount == 0)
+  {
+    SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, usageMessage, 0xFFu, nullptr);
+    return true;
+  }
+
+  if (strtok_s(nullptr, " ", &context))
+  {
+    SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, pairLimitError, 0xFFu, nullptr);
+    return true;
+  }
+
+  request.byListNum = static_cast<unsigned __int8>(pairCount);
+  pc_GuildSetHonorRequest(&request);
+  return true;
 }
 
 void CPlayer::pc_ChatFarRequest(char *pwszName, char *pwszChatData)

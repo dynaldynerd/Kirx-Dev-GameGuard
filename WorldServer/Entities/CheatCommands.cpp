@@ -3834,17 +3834,68 @@ bool __fastcall ct_ReqChangeHonorGuild(CPlayer *pOne)
 
 bool ct_debug(CPlayer* pOne)
 {
-    if (pOne->m_TargetObject.pObject != NULL)
-    {
-        if (!pOne)
-            return 0;
-        sprintf_s(wszRespon, sizeof(wszRespon),
-            "serial: %d",
-            pOne->m_TargetObject.pObject->m_dwObjSerial);
-        
-        pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+  if (!pOne)
+  {
+    return 0;
+  }
 
-    }
+  const unsigned __int8 race = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
+  if (race >= 3u)
+  {
+    sprintf_s(wszRespon, sizeof(wszRespon), "Honor next: invalid race %u", race);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+    return 1;
+  }
+
+  CHonorGuild *honorGuild = CHonorGuild::Instance();
+  _guild_honor_list_result_zocl *nextList = honorGuild->m_pNextHonorGuild[race];
+  if (!nextList)
+  {
+    sprintf_s(wszRespon, sizeof(wszRespon), "Honor next: race=%u next list is null", race);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+    return 1;
+  }
+
+  sprintf_s(
+    wszRespon,
+    sizeof(wszRespon),
+    "Honor next: race=%u bNext=%u byListNum=%u byUI=%u",
+    race,
+    honorGuild->m_bNext[race] ? 1 : 0,
+    nextList->byListNum,
+    nextList->byUI);
+  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+
+  if (!nextList->byListNum)
+  {
+    char emptyMessage[] = "Honor next: empty list (DB may persist sentinel GuildSerial=-1)";
+    pOne->SendData_ChatTrans(
+      0,
+      0xFFFFFFFF,
+      0xFFu,
+      0,
+      emptyMessage,
+      0xFFu,
+      0LL);
+    return 1;
+  }
+
+  for (unsigned __int8 index = 0; index < nextList->byListNum && index < 5u; ++index)
+  {
+    const _guild_honor_list_result_zocl::__list &entry = nextList->GuildList[index];
+    sprintf_s(
+      wszRespon,
+      sizeof(wszRespon),
+      "Honor next[%u]: serial=%u tax=%u guild=%s master=%s",
+      index,
+      entry.dwGuildSerial,
+      entry.byTaxRate,
+      entry.wszGuildName,
+      entry.wszMasterName);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+  }
+
+  return 1;
 }
 
 bool __fastcall ct_goto_char(CPlayer *pOne)
