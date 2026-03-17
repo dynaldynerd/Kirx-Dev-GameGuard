@@ -299,6 +299,7 @@ struct  _UNIT_DB_BASE
 /* 1562 */
 struct  _QUEST_DB_BASE
 {
+  #pragma pack(push, 1)
   struct   _LIST
   {
     unsigned __int8 byQuestType;
@@ -309,7 +310,9 @@ struct  _QUEST_DB_BASE
     _LIST();
     void Init();
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct   _NPC_QUEST_HISTORY
   {
     char szQuestCode[8];
@@ -320,7 +323,9 @@ struct  _QUEST_DB_BASE
     _NPC_QUEST_HISTORY();
     void Init();
   };
+  #pragma pack(pop)
 
+  #pragma pack(push, 1)
   struct   _START_NPC_QUEST_HISTORY
   {
     char szQuestCode[64];
@@ -331,6 +336,7 @@ struct  _QUEST_DB_BASE
     _START_NPC_QUEST_HISTORY();
     void Init();
   };
+  #pragma pack(pop)
 
   _LIST m_List[30];
   _NPC_QUEST_HISTORY m_History[70];

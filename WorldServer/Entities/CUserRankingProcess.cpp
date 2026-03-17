@@ -6,6 +6,7 @@
 #include "pvp_rank_list_result_data_zocl.h"
 #include "qry_case_rank_racerank_guildrank.h"
 #include "WorldServerUtil.h"
+#include "PatriarchElectProcessor.h"
 
 #include <ctime>
 #include <cstring>
@@ -334,9 +335,16 @@ char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
     g_Main.m_logLoadingError.Write("Race_%d Ranking Complete!!", race);
   }
 
-  PvpRankDataPacking(&g_Main.m_logLoadingError);
-  g_Main.m_logLoadingError.Write("PvpRankData Packing Complete!!");
-  return 1;
+  PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
+  if (processor->LoadDatabae())
+  {
+    g_Main.m_logLoadingError.Write("PvpRankData Packing Complete!!");
+    return 1;
+  }
+
+  MyMessageBox("DatabaseInit", "!!! Failed init(Patriarch Elect system.)");
+  g_Main.m_logLoadingError.Write("!!! Failed init(Patriarch Elect system.)");
+  return 0;
 }
 
 void CPvpUserRankingInfo::ClearTomorrowPvpRankData()

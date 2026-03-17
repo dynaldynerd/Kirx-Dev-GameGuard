@@ -4584,7 +4584,15 @@ const int member = static_cast<int>(GetMember(dwSerial));
     for (int index = 0; index < MAX_PLAYER; ++index)
     {
       CPlayer *player = &g_Player[index];
-      if (!player->m_bLive || player->m_bBlockGuildBattleMsg)
+      // NOTE: This is not IDA parity. We ignore the client-side block flag and
+      // only suppress messages for players not participating in this battle.
+      if (!player->m_bLive || !player->m_bInGuildBattle)
+      {
+        continue;
+      }
+      const unsigned int guildSerial =
+        player->m_Param.m_pGuild ? player->m_Param.m_pGuild->m_dwSerial : static_cast<unsigned int>(-1);
+      if (guildSerial != m_k1P.GetGuildSerial() && guildSerial != m_k2P.GetGuildSerial())
       {
         continue;
       }

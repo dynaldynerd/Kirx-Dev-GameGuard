@@ -141,11 +141,9 @@ void CPlayer::SendMsg_InsertQuestItemInform(_STORAGE_LIST::_db_con *pItem)
 
 void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData)
 {
-
   _npc_quest_list_result_zocl packet{};
   packet.byQuestNum = static_cast<unsigned __int8>(pQuestIndexData->nQuestNum);
-  const int questCount = std::min<int>(pQuestIndexData->nQuestNum, 30);
-  for (int index = 0; index < questCount; ++index)
+  for (int index = 0; index < pQuestIndexData->nQuestNum; ++index)
   {
     packet.QuestIndexList[index] = pQuestIndexData->IndexData[index].dwQuestIndex;
   }
@@ -155,7 +153,7 @@ void CPlayer::SendMsg_NpcQuestListResult(_NPCQuestIndexTempData *pQuestIndexData
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    0x79u);
 }
 
 void CPlayer::SendMsg_ResultNpcQuest(char bSucc)
@@ -411,17 +409,6 @@ bool CPlayer::Emb_CreateNPCQuest(char *pszEventCode, unsigned int dwNPCQuestInde
   if (!sourceEvent)
   {
     return false;
-  }
-
-  // Yorozuya quest fix (non-IDA): reject starting the same NPC quest when it
-  // is already active in the live quest list.
-  for (unsigned int index = 0; index < 10; ++index)
-  {
-    _QUEST_DB_BASE::_LIST *questSlot = &m_QuestMgr.m_pQuestData->m_List[index];
-    if (questSlot->byQuestType == quest_happen_type_npc && questSlot->wIndex == dwNPCQuestIndex)
-    {
-      return false;
-    }
   }
 
   char skipStartHistoryInsert = 0;
