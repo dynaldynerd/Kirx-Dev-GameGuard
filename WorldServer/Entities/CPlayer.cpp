@@ -21126,7 +21126,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
           remainHp = 0;
           dam = static_cast<int>(pMon->GetHP());
         }
-        const float baseExp = (record->m_fLevel * 0.69999999f) * (static_cast<float>(dam) / record->m_fMaxHP);
+        const float baseExp = (record->m_fExt * 0.69999999f) * (static_cast<float>(dam) / record->m_fMaxHP);
         if (IsRidingUnit())
         {
           const float expUnit = baseExp / 180.0f;
@@ -21145,11 +21145,11 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         const int emoState = pMon->GetEmotionState();
         if (emoState == 4)
         {
-          killExp = record->m_fLevel * 0.5f;
+          killExp = record->m_fExt * 0.5f;
         }
         else
         {
-          killExp = record->m_fLevel * 0.30000001f;
+          killExp = record->m_fExt * 0.30000001f;
         }
 
         if (m_pPartyMgr->IsPartyMode())
