@@ -615,6 +615,7 @@ void CPlayer::Guild_Force_Leave_Complete(_DB_QRY_SYN_DATA *pData)
   _guild_member_info *member = guild->GetMemberFromSerial(query->in_leaverserial);
   if (!member)
   {
+    CGuildBattleController::Instance()->LeaveGuild(guild->m_dwSerial, query->in_leaverserial);
     return;
   }
 
