@@ -39,9 +39,7 @@
 #include "log_case_charselect.h"
 #include "qry_logout.h"
 
-namespace
-{
-bool IsValidBaseShape(unsigned int baseShape)
+bool CUserDB::IsValidBaseShape(unsigned int baseShape)
 {
   for (int i = 2; i < 8; ++i)
   {
@@ -52,7 +50,6 @@ bool IsValidBaseShape(unsigned int baseShape)
     }
   }
   return true;
-}
 }
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
@@ -2386,22 +2383,21 @@ bool CUserDB::Insert_Char_Request(
     return false;
   }
 
+  bool invalidName = false;
+
   // Yorozuya fix (non-IDA parity): reject empty character names.
   if (!pwszCharName || !*pwszCharName)
   {
-    Insert_Char_Complete(47, nullptr);
-    return true;
+    invalidName = true;
   }
 
   // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
-  if (!IsValidBaseShape(dwBaseShape))
+  if (!invalidName && !IsValidBaseShape(dwBaseShape))
   {
-    Insert_Char_Complete(47, nullptr);
-    return true;
+    invalidName = true;
   }
 
-  bool invalidName = false;
-  for (char *cursor = pwszCharName; ; ++cursor)
+  for (char *cursor = pwszCharName; !invalidName; ++cursor)
   {
     if (*cursor == 32 || *cursor == 39)
     {

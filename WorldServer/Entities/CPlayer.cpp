@@ -193,15 +193,13 @@ int CPlayer::s_nMonDefPoint = 12;
 CRecordData CPlayer::s_tblLimMastery[3][4];
 CRecordData CPlayer::s_tblLimMasteryContinue[3][4];
 
-namespace
-{
-int GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel)
+int CPlayer::GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel)
 {
   const int *attackTypeByLevel = &skillField->m_nAttackable;
   return attackTypeByLevel[skillLevel];
 }
 
-bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
+bool CPlayer::CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
 {
   if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
   {
@@ -218,16 +216,15 @@ bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
   return true;
 }
 
-unsigned int AdjustAttackDelayMs(unsigned int delayMs)
+unsigned int CPlayer::AdjustAttackDelayMs(unsigned int delayMs)
 {
   const unsigned int collisionMs = 50;
   return delayMs > collisionMs ? delayMs - collisionMs : delayMs;
 }
 
-bool IsAttackDelayReady(DWORD now, DWORD endTime)
+bool CPlayer::IsAttackDelayReady(DWORD now, DWORD endTime)
 {
   return static_cast<int>(now - endTime) >= 0;
-}
 }
 
 bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)

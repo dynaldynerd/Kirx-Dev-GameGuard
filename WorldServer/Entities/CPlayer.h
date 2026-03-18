@@ -982,6 +982,11 @@ private:
     void init();
   };
 
+  static int GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel);
+  static bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer);
+  static unsigned int AdjustAttackDelayMs(unsigned int delayMs);
+  static bool IsAttackDelayReady(DWORD now, DWORD endTime);
+
 public:
   CPlayer();
   virtual ~CPlayer();

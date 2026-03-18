@@ -24,6 +24,7 @@ public:
   static CLogFile s_logAvatorDB;
   static CMgrAccountLobbyHistory s_MgrLobbyHistory;
   static _MOVE_LOBBY_DELAY s_MoveLobbyDelay;
+  static bool IsValidBaseShape(unsigned int baseShape);
 
   _GLBID m_gidGlobal;
   _CLID m_idWorld;
