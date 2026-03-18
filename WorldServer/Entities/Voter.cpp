@@ -203,9 +203,38 @@ int Voter::_Vote(CPlayer *player, char *payload)
 
   if (isValidPlayerAndUser)
   {
+    if (!player->m_bOper)
+    {
+      return 11;
+    }
     if (player->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote)
     {
       return 10;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime < g_Main.m_dwCheatSetPlayTime)
+    {
+      return 11;
+    }
+    if (!player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt < g_Main.m_dwCheatSetScanerCnt)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbAvator.m_byLevel < g_Main.m_dwCheatSetLevel)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade < 2u)
+    {
+      return 11;
+    }
+
+    if (CandidateMgr::Instance()->IsRegistedAvator_2(raceCode, player->m_Param.GetCharSerial()))
+    {
+      return 11;
     }
 
     const unsigned __int8 voteScore = (player->m_Param.m_byPvPGrade < 4u) ? 1u : 2u;
