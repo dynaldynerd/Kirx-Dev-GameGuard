@@ -38,6 +38,22 @@
 #include "log_change_class_after_init_class.h"
 #include "log_case_charselect.h"
 #include "qry_logout.h"
+
+namespace
+{
+bool IsValidBaseShape(unsigned int baseShape)
+{
+  for (int i = 2; i < 8; ++i)
+  {
+    const unsigned int nibble = (baseShape << (i * 4)) >> 28;
+    if (nibble == 0xF)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+}
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
@@ -2368,6 +2384,20 @@ bool CUserDB::Insert_Char_Request(
   if (m_RegedList[bySlotIndex].m_bySlotIndex != 255)
   {
     return false;
+  }
+
+  // Yorozuya fix (non-IDA parity): reject empty character names.
+  if (!pwszCharName || !*pwszCharName)
+  {
+    Insert_Char_Complete(47, nullptr);
+    return true;
+  }
+
+  // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
+  if (!IsValidBaseShape(dwBaseShape))
+  {
+    Insert_Char_Complete(47, nullptr);
+    return true;
   }
 
   bool invalidName = false;
