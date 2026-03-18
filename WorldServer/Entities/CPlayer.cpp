@@ -217,6 +217,17 @@ bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
 
   return true;
 }
+
+unsigned int AdjustAttackDelayMs(unsigned int delayMs)
+{
+  const unsigned int collisionMs = 50;
+  return delayMs > collisionMs ? delayMs - collisionMs : delayMs;
+}
+
+bool IsAttackDelayReady(DWORD now, DWORD endTime)
+{
+  return static_cast<int>(now - endTime) >= 0;
+}
 }
 
 bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)
@@ -1637,6 +1648,8 @@ void CPlayer::Init(_object_id *pID)
   m_MoveHackInfo.m_fLastSpeed = 0.0f;
   m_MoveHackInfo.m_nCountMove = 0;
   m_MoveHackInfo.m_nCountWarning = 0;
+  // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
+  std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
   m_NameChangeBuddyInfo.Init();
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
@@ -1704,6 +1717,8 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_bUpCheckEquipEffect = 1;
   this->m_bDownCheckEquipEffect = 0;
   std::memset(this->m_byEffectEquipCode, 0, sizeof(this->m_byEffectEquipCode));
+  // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
+  std::memset(this->m_dwForceAttackDelayEnd, 0, sizeof(this->m_dwForceAttackDelayEnd));
   this->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
 
   CMapData *map = g_MapOper.GetMap(pData.dbAvator.m_byMapCode);
@@ -18262,6 +18277,25 @@ char CPlayer::_pre_check_force_attack(
       g_Main.m_tblItemData[10].GetRecord(effBulletItem->m_wItemIndex));
     *ppEffBtProp = effBulletItem;
     *ppfldEffBt = effBulletField;
+  }
+
+  // Yorozuya fix (non-IDA parity): extra force-attack delay tracking.
+  const int forceClass = static_cast<int>(forceField->m_nClass);
+  const int forceLevel = static_cast<int>(forceField->m_nLv);
+  if (forceClass >= 0 && forceClass < 6 && forceLevel >= 0 && forceLevel < 4)
+  {
+    const DWORD now = GetTickCount();
+    if (!IsAttackDelayReady(now, m_dwForceAttackDelayEnd[forceClass][forceLevel]))
+    {
+      return static_cast<char>(-5);
+    }
+
+    int delay = static_cast<int>(forceField->m_fActDelay + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13));
+    if (delay < 0)
+    {
+      delay = 0;
+    }
+    m_dwForceAttackDelayEnd[forceClass][forceLevel] = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
   }
 
   return 0;
