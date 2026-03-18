@@ -1632,6 +1632,11 @@ void CPlayer::Init(_object_id *pID)
   m_tmrEffectStartTime.BeginTimer(3600000);
   m_tmrEffectEndTime.BeginTimer(60000);
   m_kMoveDelayChecker.Init(10);
+  m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
+  m_MoveHackInfo.m_dwWarningEndTime = 0;
+  m_MoveHackInfo.m_fLastSpeed = 0.0f;
+  m_MoveHackInfo.m_nCountMove = 0;
+  m_MoveHackInfo.m_nCountWarning = 0;
   m_NameChangeBuddyInfo.Init();
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
@@ -1860,6 +1865,12 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
         0,
         this->m_pUserDB->m_AvatorData.dbPotionNextUseTime.dwPotionNextUseTime[n]);
     }
+
+    this->m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
+    this->m_MoveHackInfo.m_dwWarningEndTime = 0;
+    this->m_MoveHackInfo.m_fLastSpeed = this->GetMoveSpeed();
+    this->m_MoveHackInfo.m_nCountMove = 0;
+    this->m_MoveHackInfo.m_nCountWarning = 0;
 
     this->m_bCntEnable = 0;
     return 1;
@@ -3090,6 +3101,177 @@ bool CPlayer::IsOutExtraStopPos(float *pfStopPos)
   return GetSqrt(m_fTarPos, pfStopPos) > 20.0f;
 }
 
+bool CPlayer::CheckWallHack(float *pfTar)
+{
+  constexpr unsigned int kMaxPathPos = 16;
+  constexpr int kPathNotFound = 0;
+
+  float curPos[3]{};
+  float crossPos[3]{};
+  float movePos[kMaxPathPos + 1][3]{};
+  unsigned int count = 0;
+
+  std::memcpy(curPos, m_fCurPos, sizeof(curPos));
+  if (m_pCurMap->m_Level.mBsp->CanYouGoThere(curPos, pfTar, reinterpret_cast<float (*)[3]>(crossPos)))
+  {
+    return true;
+  }
+
+  if (m_pCurMap->m_Level.mBsp->GetPathFind(curPos, pfTar, movePos, &count, kMaxPathPos) == kPathNotFound)
+  {
+    return false;
+  }
+
+  return count >= 2;
+}
+
+bool CPlayer::CheckFlyHack(float *pfTar)
+{
+  if (Get3DSqrt(m_fCurPos, pfTar) <= 15.0f && std::fabs(m_fCurPos[1] - pfTar[1]) >= 120.0f)
+  {
+    return false;
+  }
+
+  float cur[3]{};
+  std::memcpy(cur, m_fCurPos, sizeof(cur));
+
+  if (!m_pCurMap->m_Level.GetNextYposFarProgress(cur, pfTar, &pfTar[1])
+      && !m_pCurMap->m_Level.GetNextYposForServerFar(cur, pfTar, &pfTar[1]))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool CPlayer::CheckSpeedHack(float fRealSpeed, float *pfTar)
+{
+  const unsigned int now = GetLoopTime();
+  unsigned int tmTime = 100;
+
+  if (!m_bMove || m_MoveHackInfo.m_nCountMove < 1)
+  {
+    if (!std::memcmp(m_fCurPos, pfTar, sizeof(m_fCurPos)))
+    {
+      return true;
+    }
+
+    m_MoveHackInfo.m_nCountMove = 0;
+    tmTime += 600;
+  }
+  else
+  {
+    const unsigned int diff = now - m_MoveHackInfo.m_dwLastMoveTime;
+    tmTime += diff;
+    if (tmTime > 5000)
+    {
+      tmTime = 2500;
+    }
+  }
+
+  const float fDist = fRealSpeed * 15.0f * static_cast<float>(tmTime) / 1000.0f;
+  const float fSqrt = Get3DSqrt(m_fCurPos, pfTar);
+  if (fSqrt < fDist)
+  {
+    return true;
+  }
+
+  const float fRatio = fSqrt / fDist;
+  if (fRatio <= 1.3f)
+  {
+    return true;
+  }
+  if (fRatio >= 5.0f)
+  {
+    return false;
+  }
+
+  if (m_MoveHackInfo.m_dwWarningEndTime == 0 || now > m_MoveHackInfo.m_dwWarningEndTime)
+  {
+    m_MoveHackInfo.m_nCountWarning = 0;
+  }
+
+  int countWarning = m_MoveHackInfo.m_nCountWarning;
+  m_MoveHackInfo.m_dwWarningEndTime = now + 3000;
+
+  if (countWarning >= 15)
+  {
+    return false;
+  }
+
+  if (fRatio > 1.3f && fRatio <= 1.65f)
+  {
+    countWarning += 2;
+  }
+  else if (fRatio > 1.65f && fRatio <= 2.1f)
+  {
+    countWarning += 5;
+  }
+  else
+  {
+    countWarning += 9;
+  }
+
+  m_MoveHackInfo.m_nCountWarning = ++countWarning;
+  return true;
+}
+
+void CPlayer::MoveError()
+{
+  SendMsg_MoveError(11);
+  if (m_bMove)
+  {
+    const bool outExtra = IsOutExtraStopPos(m_fCurPos);
+    SendMsg_Stop(outExtra);
+    Stop();
+  }
+}
+
+bool CPlayer::CheckMove(float *pfTar)
+{
+  bool result = false;
+
+  do
+  {
+    const float lastSpeed = m_MoveHackInfo.m_fLastSpeed;
+    float currentSpeed = GetMoveSpeed();
+    m_MoveHackInfo.m_fLastSpeed = currentSpeed;
+    if (lastSpeed > currentSpeed)
+    {
+      currentSpeed = lastSpeed;
+    }
+
+    if (!CheckSpeedHack(currentSpeed, pfTar))
+    {
+      break;
+    }
+
+    if (!CheckWallHack(pfTar))
+    {
+      break;
+    }
+
+    if (!CheckFlyHack(pfTar))
+    {
+      break;
+    }
+
+    result = true;
+  } while (false);
+
+  if (!result)
+  {
+    MoveError();
+  }
+  else
+  {
+    ++m_MoveHackInfo.m_nCountMove;
+    m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
+  }
+
+  return result;
+}
+
 void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 {
   if (byMoveType != 2)
@@ -3102,6 +3284,11 @@ void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 
 void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
 {
+  if (!CheckMove(pfCur))
+  {
+    return;
+  }
+
   unsigned __int8 errorCode = 0;
   const unsigned __int8 prevMoveType = m_byMoveType;
   if (m_pmTrd.bDTradeMode)
@@ -3243,6 +3430,11 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
 
 void CPlayer::pc_RealMovPos(float *pfCur)
 {
+  if (!CheckMove(pfCur))
+  {
+    return;
+  }
+
   unsigned __int8 errorCode = 0;
   if (m_bMove)
   {
@@ -3317,6 +3509,11 @@ void CPlayer::pc_RealMovPos(float *pfCur)
 
 void CPlayer::pc_MoveStop(float *pfCur)
 {
+  if (!CheckMove(pfCur))
+  {
+    return;
+  }
+
   unsigned __int8 errorCode = 0;
   if (m_bMove)
   {

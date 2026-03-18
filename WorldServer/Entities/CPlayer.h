@@ -10,6 +10,7 @@
 #include "CMgrAvatorItemHistory.h"
 #include "CMgrAvatorLvHistory.h"
 #include "CRecordData.h"
+#include "MoveHackInfo.h"
 #include "SKILL_IDX_PER_MASTERY.h"
 #include "ANIMUS_RETURN_DELAY.h"
 #include "BILLING_FORCE_CLOSE_DELAY.h"
@@ -1453,6 +1454,11 @@ public:
   void pc_MoveStop(float *pfCur);
   void pc_Stop();
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
+  bool CheckMove(float *pfTar);
+  void MoveError();
+  bool CheckSpeedHack(float fRealSpeed, float *pfTar);
+  bool CheckFlyHack(float *pfTar);
+  bool CheckWallHack(float *pfTar);
   void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
   void pc_GotoAvatorRequest(const char *pwszAvatorName);
   void RecallRandomPositionInRange(
@@ -2598,6 +2604,7 @@ public:
   unsigned __int8 m_byModeType;
   unsigned __int8 m_byStandType;
   CRealMoveRequestDelayChecker m_kMoveDelayChecker;
+  MoveHackInfo m_MoveHackInfo;
   _WEAPON_PARAM m_pmWpn;
   _DTRADE_PARAM m_pmTrd;
   _MASTERY_PARAM m_pmMst;
