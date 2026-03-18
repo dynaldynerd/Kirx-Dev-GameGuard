@@ -5,6 +5,7 @@
 #include "CMapData.h"
 #include "CNetworkEX.h"
 #include "CPlayer.h"
+#include "CTrap.h"
 #include "GlobalObjects.h"
 #include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
@@ -15,16 +16,47 @@
 
 namespace
 {
-bool CanSendCircleReportToPlayer(const CGameObject *sourceObject, const CGameObject *targetObject)
+bool CanSendCircleReportToPlayer(
+  const CGameObject *sourceObject,
+  const CPlayer *targetPlayer,
+  unsigned __int16 nMsgSize,
+  bool bToOne)
 {
-  if (!sourceObject->m_bObserver)
+  if (sourceObject->m_bObserver && !targetPlayer->m_byUserDgr)
   {
-    return true;
+    return false;
   }
 
-  // GetSectorListPlayer() only contains players, so the downcast is intentional.
-  const CPlayer *targetPlayer = static_cast<const CPlayer *>(targetObject);
-  return targetPlayer->m_byUserDgr != 0;
+  if (!sourceObject->m_ObjID.m_byKind)
+  {
+    if (!sourceObject->m_ObjID.m_byID)
+    {
+      const CPlayer *sourcePlayer = static_cast<const CPlayer *>(sourceObject);
+      // Yorozuya fix implementation (non-IDA): hide stealth/invisible players unless the
+      // viewer has the detect effect.
+      if (sourcePlayer->GetStealth(true) && targetPlayer->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) <= 0.0f)
+      {
+        return false;
+      }
+    }
+    else if (sourceObject->m_ObjID.m_byID == 7)
+    {
+      const CTrap *trap = static_cast<const CTrap *>(sourceObject);
+      if (trap->m_dwMasterSerial != targetPlayer->m_Param.GetCharSerial())
+      {
+        if (!(nMsgSize == 5 && !bToOne))
+        {
+          // Yorozuya fix implementation (non-IDA): hide traps unless detection is active.
+          if (!targetPlayer->m_EP.GetEff_State(EFF_STATE_TRAP_DETECTION))
+          {
+            return false;
+          }
+        }
+      }
+    }
+  }
+
+  return true;
 }
 }
 
@@ -1002,7 +1034,8 @@ void CGameObject::CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned _
             CGameObject *m_pItem = m_pNext->m_pItem;
             m_pNext = m_pNext->m_pNext;
             _object_id *p_m_ObjID = &m_pItem->m_ObjID;
-            if (m_pItem != this && CanSendCircleReportToPlayer(this, m_pItem))
+            if (m_pItem != this
+                && CanSendCircleReportToPlayer(this, static_cast<CPlayer *>(m_pItem), nMsgSize, bToOne))
               g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
           }
         }
@@ -1054,7 +1087,7 @@ void CGameObject::CircleReport(
             _object_id *p_m_ObjID = &m_pItem->m_ObjID;
             if (m_pItem != this
               && m_pItem->m_dwObjSerial != dwPassObjSerial
-              && CanSendCircleReportToPlayer(this, m_pItem))
+              && CanSendCircleReportToPlayer(this, static_cast<CPlayer *>(m_pItem), nMsgSize, bToOne))
             {
               g_Network.m_pProcess[0]->LoadSendMsg(p_m_ObjID->m_wIndex, pbyType, szMsg, nMsgSize);
             }

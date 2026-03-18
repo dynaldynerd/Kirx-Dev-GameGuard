@@ -78,6 +78,26 @@
 #include "PCBANG_PRIMIUM_FAVOR.h"
 #include "economy_history_data.h"
 #include "DqsDbStructs.h"
+
+namespace
+{
+bool CanSendPlayerViewMessage(const CPlayer *sourcePlayer, const CPlayer *targetPlayer)
+{
+  if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
+  {
+    return false;
+  }
+
+  // Yorozuya fix implementation (non-IDA): hide stealth/invisible players unless the
+  // viewer has the detect effect.
+  if (sourcePlayer->GetStealth(true) && targetPlayer->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) <= 0.0f)
+  {
+    return false;
+  }
+
+  return true;
+}
+}
 #include "EconomySystemFunctions.h"
 #include "TimeItem.h"
 #include "trans_ship_renew_ticket_result_zocl.h"
@@ -2693,7 +2713,8 @@ void CPlayer::SendMsg_Notify_Gravity_Stone_Owner_Die()
 void CPlayer::SendMsg_FixPosition(int n)
 {
 
-  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  CPlayer *targetPlayer = &g_Player[n];
+  if (!CanSendPlayerViewMessage(this, targetPlayer))
   {
     return;
   }
@@ -2715,7 +2736,8 @@ void CPlayer::SendMsg_FixPosition(int n)
 void CPlayer::SendMsg_RealMovePoint(int n)
 {
 
-  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  CPlayer *targetPlayer = &g_Player[n];
+  if (!CanSendPlayerViewMessage(this, targetPlayer))
   {
     return;
   }

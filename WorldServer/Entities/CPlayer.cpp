@@ -200,6 +200,23 @@ int GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel)
   const int *attackTypeByLevel = &skillField->m_nAttackable;
   return attackTypeByLevel[skillLevel];
 }
+
+bool CanSendPlayerViewMessage(const CPlayer *sourcePlayer, const CPlayer *targetPlayer)
+{
+  if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
+  {
+    return false;
+  }
+
+  // Yorozuya fix implementation (non-IDA): hide stealth/invisible players unless the
+  // viewer has the detect effect.
+  if (sourcePlayer->GetStealth(true) && targetPlayer->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) <= 0.0f)
+  {
+    return false;
+  }
+
+  return true;
+}
 }
 
 bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)
@@ -12849,43 +12866,47 @@ void CPlayer::SendMsg_OtherShapeError(CPlayer *pDst, unsigned __int8 byErrCode)
 
 void CPlayer::SendMsg_OtherShapeAll(CPlayer *pDst)
 {
-  if (!this->m_bObserver || pDst->m_byUserDgr)
+  if (!CanSendPlayerViewMessage(this, pDst))
   {
-    if (this->m_bLive)
-    {
-      unsigned __int8 pbyType[2] = {3, 31};
-      const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufShapeAll.size());
-      g_Network.m_pProcess[0]->LoadSendMsg(
-        pDst->m_ObjID.m_wIndex,
-        pbyType,
-        reinterpret_cast<char *>(&this->m_bufShapeAll),
-        nLen);
-    }
-    else
-    {
-      SendMsg_OtherShapeError(pDst, 0);
-    }
+    return;
+  }
+
+  if (this->m_bLive)
+  {
+    unsigned __int8 pbyType[2] = {3, 31};
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufShapeAll.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pDst->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&this->m_bufShapeAll),
+      nLen);
+  }
+  else
+  {
+    SendMsg_OtherShapeError(pDst, 0);
   }
 }
 
 void CPlayer::SendMsg_OtherShapePart(CPlayer *pDst)
 {
-  if (!this->m_bObserver || pDst->m_byUserDgr)
+  if (!CanSendPlayerViewMessage(this, pDst))
   {
-    if (this->m_bLive)
-    {
-      unsigned __int8 pbyType[2] = {3, 32};
-      const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufSpapePart.size());
-      g_Network.m_pProcess[0]->LoadSendMsg(
-        pDst->m_ObjID.m_wIndex,
-        pbyType,
-        reinterpret_cast<char *>(&this->m_bufSpapePart),
-        nLen);
-    }
-    else
-    {
-      SendMsg_OtherShapeError(pDst, 0);
-    }
+    return;
+  }
+
+  if (this->m_bLive)
+  {
+    unsigned __int8 pbyType[2] = {3, 32};
+    const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufSpapePart.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      pDst->m_ObjID.m_wIndex,
+      pbyType,
+      reinterpret_cast<char *>(&this->m_bufSpapePart),
+      nLen);
+  }
+  else
+  {
+    SendMsg_OtherShapeError(pDst, 0);
   }
 }
 
@@ -17491,6 +17512,39 @@ char CPlayer::_pre_check_skill_attack(
   if (!pSkillFld)
   {
     return static_cast<char>(-60);
+  }
+
+  if (byEffectCode == 2)
+  {
+    if (IsSiegeMode())
+    {
+      // Yorozuya fix implementation (non-IDA): siege mode can only use siege skills.
+      if (pSkillFld->m_nTempEffectType != 23)
+      {
+        return static_cast<char>(-20);
+      }
+
+      if (m_pSiegeItem)
+      {
+        _SiegeKitItem_fld *siegeRecord = reinterpret_cast<_SiegeKitItem_fld *>(
+          g_Main.m_tblItemData[27].GetRecord(m_pSiegeItem->m_wItemIndex));
+        if (siegeRecord)
+        {
+          if (siegeRecord->m_nLevelLim == 30 && pSkillFld->m_nLv != 0)
+          {
+            return static_cast<char>(-20);
+          }
+          if (siegeRecord->m_nLevelLim == 40 && pSkillFld->m_nLv != 1)
+          {
+            return static_cast<char>(-20);
+          }
+        }
+      }
+    }
+    else if (pSkillFld->m_nTempEffectType == 23)
+    {
+      return static_cast<char>(-20);
+    }
   }
 
   if (!IsSFUsableGauge(byEffectCode, pSkillFld->m_dwIndex, pdwDecPoint))

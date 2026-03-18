@@ -31,6 +31,7 @@
 #include "CHolyStoneSystem.h"
 #include "CPotionMgr.h"
 #include "guild_honor_set_request_clzo.h"
+#include "WorldServerUtil.h"
 #include "CMgrGuildHistory.h"
 #include "CMgrAvatorItemHistory.h"
 #include "CPostSystemManager.h"
@@ -1182,13 +1183,17 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   {
     resultCode = 13;
   }
-  else if (this->m_pmTrd.bySellItemNum > tradeDst->m_pmTrd.byEmptyInvenNum)
-  {
-    resultCode = 100;
-  }
   else
   {
     players[1] = tradeDst;
+
+    const unsigned __int8 srcEmptySlots = this->m_Param.m_dbInven.GetNumEmptyCon();
+    const unsigned __int8 dstEmptySlots = tradeDst->m_Param.m_dbInven.GetNumEmptyCon();
+    if (this->m_pmTrd.bySellItemNum > dstEmptySlots
+        || tradeDst->m_pmTrd.bySellItemNum > srcEmptySlots)
+    {
+      resultCode = 100;
+    }
 
     for (int side = 0; !resultCode && side < 2; ++side)
     {
@@ -1205,6 +1210,54 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
       {
         resultCode = 5;
         break;
+      }
+    }
+
+    if (!resultCode)
+    {
+      auto isTradeExchangeable = [](CPlayer *player) -> bool {
+        for (int tradeSlot = 0; tradeSlot < 15; ++tradeSlot)
+        {
+          _DTRADE_ITEM *tradeItem = &player->m_pmTrd.DItemNode[tradeSlot];
+          if (!tradeItem->bLoad)
+          {
+            continue;
+          }
+
+          if (tradeItem->byStorageCode >= 8u)
+          {
+            return false;
+          }
+
+          _STORAGE_LIST *storage = player->m_Param.m_pStoragePtr[tradeItem->byStorageCode];
+          if (!storage)
+          {
+            return false;
+          }
+
+          _STORAGE_LIST::_db_con *item =
+            storage->GetPtrFromSerial(static_cast<unsigned __int16>(tradeItem->dwSerial));
+          if (!item)
+          {
+            return false;
+          }
+
+          if (item->m_byTableCode >= 37u)
+          {
+            return false;
+          }
+
+          if (!IsExchangeItem(item->m_byTableCode, item->m_wItemIndex))
+          {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      if (!isTradeExchangeable(this) || !isTradeExchangeable(tradeDst))
+      {
+        resultCode = 10;
       }
     }
 
