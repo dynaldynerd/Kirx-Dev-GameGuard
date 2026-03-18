@@ -2506,8 +2506,7 @@ char CPlayer::mgr_recall_player(char *pwszCharName)
     const char *sourceCharacterName; // rax
     CUserDB *targetUserDb; // [rsp+20h] [rbp-18h]
     CPlayer *targetPlayer; // [rsp+28h] [rbp-10h]
-  if ( this->m_pCurMap->m_pMapSet->m_nMapType )
-      return 0;
+  // non-IDA: allow recall regardless of current map type.
     targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
     if ( !targetUserDb )
       return 0;

@@ -901,8 +901,8 @@ void CDarkHoleChannel::OpenDungeon(
 
   if (pQuestSetup->bPartyOnly)
   {
-    CPlayer *outMember = nullptr;
-    (void)pOpener->_GetPartyMemberInCircle(&outMember, 8, 1);
+    CPlayer *outMember[8]{};
+    (void)pOpener->_GetPartyMemberInCircle(outMember, 8, 1);
     m_pPartyMng = pOpener->m_pPartyMgr;
   }
 
