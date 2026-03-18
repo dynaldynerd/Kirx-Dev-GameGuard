@@ -25774,6 +25774,10 @@ char CPlayer::pc_CharacterRenameCheck(const char *strCharacterName)
       break;
     }
   }
+  if (!IsSQLValidString(dest))
+  {
+    return 6;
+  }
 
   CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
   if (!nationSetting->IsNormalString(dest))

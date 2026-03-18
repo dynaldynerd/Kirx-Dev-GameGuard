@@ -81,8 +81,31 @@ bool CCheckSumCharacAccountTrunkData::Update(CRFWorldDatabase *pkDB)
     return false;
   }
 
-  return pkDB->Update_NpcData(m_dwSerial, m_dwValues)
-      && pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues);
+  if (!pkDB->Update_NpcData(m_dwSerial, m_dwValues))
+  {
+    if (!InsertCharacData(pkDB))
+    {
+      return false;
+    }
+    if (!pkDB->Update_NpcData(m_dwSerial, m_dwValues))
+    {
+      return false;
+    }
+  }
+
+  if (!pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues))
+  {
+    if (!InsertTrunkData(pkDB))
+    {
+      return false;
+    }
+    if (!pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues))
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 __int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumCharacAccountTrunkData *kSrcValue)

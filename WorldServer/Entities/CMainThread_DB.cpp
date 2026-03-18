@@ -1487,6 +1487,31 @@ bool CMainThread::_db_Update_MacroData(
   {
     return 0;
   }
+  for (int belt = 0; belt < 2; ++belt)
+  {
+    for (int slot = 0; slot < 5; ++slot)
+    {
+      char *chat = pMacro->mcr_Chat[belt].Chat[slot];
+      if (!IsSQLValidString(chat))
+      {
+        chat[0] = '\0';
+      }
+    }
+  }
+  if (pOldMacro)
+  {
+    for (int belt = 0; belt < 2; ++belt)
+    {
+      for (int slot = 0; slot < 5; ++slot)
+      {
+        char *chat = pOldMacro->mcr_Chat[belt].Chat[slot];
+        if (!IsSQLValidString(chat))
+        {
+          chat[0] = '\0';
+        }
+      }
+    }
+  }
   if (pOldMacro)
   {
     int changed = 1;
@@ -1531,4 +1556,3 @@ bool CMainThread::_db_Update_MacroData(
   }
   return m_pWorldDB->Update_MacroData(dwSerial, pMacro);
 }
-

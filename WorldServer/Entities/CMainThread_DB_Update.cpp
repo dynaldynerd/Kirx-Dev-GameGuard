@@ -2464,6 +2464,25 @@ char CMainThread::_db_Update_CryMsg(
   char *buffer = pSzQuery;
   sprintf_s(pSzQuery, kDbQuerySize, "UPDATE tbl_CryMsg SET ");
   size_t initialLength = std::strlen(buffer);
+  for (int index = 0; index < 10; ++index)
+  {
+    char *newMsg = pNewData->dbBossCry.m_List[index].wszCryMsg;
+    if (!IsSQLValidString(newMsg))
+    {
+      newMsg[0] = '\0';
+    }
+  }
+  if (pOldData)
+  {
+    for (int index = 0; index < 10; ++index)
+    {
+      char *oldMsg = pOldData->dbBossCry.m_List[index].wszCryMsg;
+      if (!IsSQLValidString(oldMsg))
+      {
+        oldMsg[0] = '\0';
+      }
+    }
+  }
 
   for (int index = 0; index < 10; ++index)
   {
