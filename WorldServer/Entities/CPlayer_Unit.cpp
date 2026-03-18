@@ -634,7 +634,13 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
   _STORAGE_LIST::_db_con *pInvenItem = this->m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   _STORAGE_LIST::_db_con *pWeapon = this->m_Param.m_dbEquip.m_pStorageList + 6;
 
-  if (!pInvenItem || pInvenItem->m_byTableCode != 27)
+  // Yorozuya fix implementation (non-IDA): prevent jumping into siege kit while moving.
+  if (m_bMove)
+  {
+    byRetCode = 11;
+  }
+
+  if (!byRetCode && (!pInvenItem || pInvenItem->m_byTableCode != 27))
   {
     byRetCode = 1;
   }

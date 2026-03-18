@@ -5760,6 +5760,23 @@ void CPlayer::SenseState()
   SetStateFlag();
   if (oldState != m_dwLastState)
   {
+    // Yorozuya fix implementation (non-IDA): refresh view when transparency-related flags are cleared.
+    const unsigned __int64 newState = m_dwLastState;
+    bool breakTransparent = false;
+    const int transparentBits[] = {2, 9, 51, 52};
+    for (int index = 0; index < 4; ++index)
+    {
+      const unsigned __int64 bit = 1ULL << transparentBits[index];
+      if ((oldState & bit) && !(newState & bit))
+      {
+        breakTransparent = true;
+        break;
+      }
+    }
+    if (breakTransparent)
+    {
+      SendMsg_NewViewOther(3);
+    }
     SendMsg_StateInform(m_dwLastState);
   }
 }
