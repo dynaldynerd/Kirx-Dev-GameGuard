@@ -201,7 +201,7 @@ int GetSkillAttackTypeForLevel(const _skill_fld *skillField, int skillLevel)
   return attackTypeByLevel[skillLevel];
 }
 
-bool CanSendPlayerViewMessage(const CPlayer *sourcePlayer, const CPlayer *targetPlayer)
+bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
 {
   if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
   {

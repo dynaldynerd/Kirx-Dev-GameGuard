@@ -17,8 +17,8 @@
 namespace
 {
 bool CanSendCircleReportToPlayer(
-  const CGameObject *sourceObject,
-  const CPlayer *targetPlayer,
+  CGameObject *sourceObject,
+  CPlayer *targetPlayer,
   unsigned __int16 nMsgSize,
   bool bToOne)
 {
@@ -31,7 +31,7 @@ bool CanSendCircleReportToPlayer(
   {
     if (!sourceObject->m_ObjID.m_byID)
     {
-      const CPlayer *sourcePlayer = static_cast<const CPlayer *>(sourceObject);
+      CPlayer *sourcePlayer = static_cast<CPlayer *>(sourceObject);
       // Yorozuya fix implementation (non-IDA): hide stealth/invisible players unless the
       // viewer has the detect effect.
       if (sourcePlayer->GetStealth(true) && targetPlayer->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) <= 0.0f)

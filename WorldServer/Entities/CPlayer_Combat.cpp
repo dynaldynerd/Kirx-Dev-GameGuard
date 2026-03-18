@@ -81,7 +81,7 @@
 
 namespace
 {
-bool CanSendPlayerViewMessage(const CPlayer *sourcePlayer, const CPlayer *targetPlayer)
+bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
 {
   if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
   {
@@ -628,6 +628,32 @@ unsigned __int8 CPlayer::skill_process(
   {
     return 2;
   }
+  if (!(nEffectCode == 2 && skillField->m_nTempEffectType == 36 && skillField->m_nEffectClass == 6))
+  {
+    // Yorozuya fix implementation (non-IDA): enforce skill cast radius for buff/debuff.
+    float availableDist = static_cast<float>(m_pmWpn.wGaAttRange);
+    availableDist += static_cast<float>(skillField->m_nBonusDistance);
+    availableDist += target->GetWidth() / 2.0f;
+    if (m_pmWpn.byWpType == 7)
+    {
+      availableDist += m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
+    }
+    else
+    {
+      availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
+    }
+    availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
+
+    float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+    if (dist > availableDist)
+    {
+      dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        return static_cast<unsigned __int8>(-3);
+      }
+    }
+  }
   if (!IsEffectableDst(skillField->m_strActableDst, target))
   {
     return 5;
@@ -949,7 +975,23 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(forceFld->m_strActableDst, target))
+    else
+    {
+      // Yorozuya fix implementation (non-IDA): enforce force cast radius for buff/debuff.
+      float availableDist = static_cast<float>(forceFld->m_nActDistance + 40);
+      availableDist += target->GetWidth() / 2.0f;
+      availableDist += m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_8);
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
+        {
+          byErrCode = 8;
+        }
+      }
+    }
+    if (!byErrCode && !IsEffectableDst(forceFld->m_strActableDst, target))
     {
       byErrCode = 5;
     }
