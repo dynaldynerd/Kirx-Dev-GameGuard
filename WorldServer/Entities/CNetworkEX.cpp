@@ -2025,33 +2025,18 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
 
 char CNetworkEX::Apex_R(int n, unsigned __int16 wSize, char *pBuf)
 {
-  auto *request = reinterpret_cast<_apex_result_request_clzo *>(pBuf);
-  CPlayer *player = &g_Player[n];
-  if (player)
-  {
-    CChiNetworkEX::Instance()->Send_Trans(
-      player,
-      static_cast<int>(request->dwResult));
-  }
-  else
-  {
-    CAsyncLogger::Instance()->FormatLog(12, "Apex_R - !pOne:g_Player[%d]", n);
-  }
-  return 1;
+  UNREFERENCED_PARAMETER(n);
+  UNREFERENCED_PARAMETER(wSize);
+  UNREFERENCED_PARAMETER(pBuf);
+  return 0;
 }
 
 char CNetworkEX::Apex_T(int n, unsigned __int16 wSize, char *pBuf)
 {
-  CPlayer *player = &g_Player[n];
-  if (player)
-  {
-    CChiNetworkEX::Instance()->Send_ClienInform(player, wSize, pBuf);
-  }
-  else
-  {
-    CAsyncLogger::Instance()->FormatLog(12, "Apex_T - !pOne : g_Player[%d]", n);
-  }
-  return 1;
+  UNREFERENCED_PARAMETER(n);
+  UNREFERENCED_PARAMETER(wSize);
+  UNREFERENCED_PARAMETER(pBuf);
+  return 0;
 }
 
 bool CNetworkEX::NewPosStartRequest(unsigned int n, const _new_pos_start_request_clzo *request)
@@ -3726,16 +3711,8 @@ bool CNetworkEX::UseFireCrackerItemRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::SetItemCheckRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_set_item_check_request_clzo *>(pBuf);
-  auto *player = &g_Player[n];
-  if (player->m_bOper)
-  {
-    player->pc_SetItemCheckRequest(
-      request->dwSetIndex,
-      static_cast<unsigned __int8>(request->bySetItemNum),
-      static_cast<unsigned __int8>(request->bySetEffectNum),
-      request->bSet);
-  }
+  UNREFERENCED_PARAMETER(n);
+  UNREFERENCED_PARAMETER(pBuf);
   return true;
 }
 
@@ -7807,7 +7784,7 @@ char CNetworkEX::DTradeAskRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
   auto *request = reinterpret_cast<_dtrade_ask_request_clzo *>(pBuf);
-  CPlayer *targetPlayer = &g_Player[request->wDstIndex];
+  const unsigned __int16 dstIndex = request->wDstIndex;
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return 1;
@@ -7819,15 +7796,15 @@ char CNetworkEX::DTradeAskRequest(int n, char *pBuf)
     return 1;
   }
 
-  if (player->m_EP.GetEff_State(EFF_STATE_INVISIBLE) || targetPlayer->m_EP.GetEff_State(EFF_STATE_INVISIBLE))
-  {
-    player->SendMsg_DTradeAskResult(32);
-    return 1;
-  }
-
-  const unsigned __int16 dstIndex = request->wDstIndex;
   if (dstIndex < MAX_PLAYER)
   {
+    CPlayer *targetPlayer = &g_Player[dstIndex];
+    if (player->m_EP.GetEff_State(EFF_STATE_INVISIBLE) || targetPlayer->m_EP.GetEff_State(EFF_STATE_INVISIBLE))
+    {
+      player->SendMsg_DTradeAskResult(32);
+      return 1;
+    }
+
     player->pc_DTradeAskRequest(dstIndex);
     return 1;
   }
