@@ -17029,7 +17029,14 @@ __int64 GetItemEquipGrade(int nTableCode, const char *szRecordCode)
 
 _STORAGE_LIST::_db_con *CPlayer::IsBulletValidity(unsigned __int16 wBulletSerial)
 {
-  if (wBulletSerial == 65535)
+  // Yorozuya fix (non-IDA parity): block bullet usage for non-ranged weapon types.
+  if (m_pmWpn.byWpType != 5 && m_pmWpn.byWpType != 6 && m_pmWpn.byWpType != 7 && m_pmWpn.byWpType != 11)
+  {
+    return nullptr;
+  }
+
+  // IDA uses 0xFF; also guard 0xFFFF for callers using -1 (non-IDA parity).
+  if (wBulletSerial == 0xFF || wBulletSerial == 0xFFFF)
   {
     return nullptr;
   }
