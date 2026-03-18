@@ -197,6 +197,36 @@ bool GetTrunkSlotRaceBySerial(
   return false;
 }
 
+bool CheckTrunkItemRace(CPlayer *player, unsigned __int16 wItemSerial, unsigned __int8 byStorageCode)
+{
+  if (!player)
+  {
+    return false;
+  }
+
+  if (byStorageCode == 5)
+  {
+    const unsigned __int8 race = player->m_Param.GetTrunkSlotRace(wItemSerial);
+    if (race == static_cast<unsigned __int8>(-1))
+    {
+      return false;
+    }
+    return race == player->m_Param.GetRaceCode();
+  }
+
+  if (byStorageCode == 7)
+  {
+    const unsigned __int8 race = player->m_Param.GetExtTrunkSlotRace(wItemSerial);
+    if (race == static_cast<unsigned __int8>(-1))
+    {
+      return false;
+    }
+    return race == player->m_Param.GetRaceCode();
+  }
+
+  return true;
+}
+
 bool IsEconomyFeeLevel(int level)
 {
   return level == 30 || level == 40 || level == 50 || level == 60;
@@ -481,6 +511,11 @@ void CPlayer::pc_TrunkAlterItemSlotRequest(
     return;
   }
 
+  if ((byStorageIndex == 5 || byStorageIndex == 7) && !CheckTrunkItemRace(this, item->m_wSerial, byStorageIndex))
+  {
+    return;
+  }
+
   item->m_byClientIndex = byClientSlotIndex;
   UpdateStorageClientSlotInUserDB(this, byStorageIndex, item->m_byStorageIndex, byClientSlotIndex);
 }
@@ -540,6 +575,12 @@ void CPlayer::pc_TrunkResDivision(
       else if (pTargetOre->m_bLock)
       {
         byErrCode = 11;
+      }
+      else if ((byStorageIndex == 5 || byStorageIndex == 7)
+               && (!CheckTrunkItemRace(this, wStartSerial, byStorageIndex)
+                   || !CheckTrunkItemRace(this, wTarSerial, byStorageIndex)))
+      {
+        byErrCode = 17;
       }
       else if (!IsOverLapItem(pStartOre->m_byTableCode) || !IsOverLapItem(pTargetOre->m_byTableCode))
       {
@@ -616,6 +657,12 @@ void CPlayer::pc_TrunkPotionDivision(
       else if (pTargetPotion->m_bLock)
       {
         byRetCode = static_cast<char>(-11);
+      }
+      else if ((byStorageIndex == 5 || byStorageIndex == 7)
+               && (!CheckTrunkItemRace(this, wStartSerial, byStorageIndex)
+                   || !CheckTrunkItemRace(this, wTarSerial, byStorageIndex)))
+      {
+        byRetCode = 17;
       }
       else if (pStartPotion->m_byTableCode != 13 || pTargetPotion->m_byTableCode != 13)
       {
@@ -764,20 +811,10 @@ void CPlayer::pc_TrunkIoMoveRequest(
           }
           else
           {
-            const int raceCode = this->m_Param.GetRaceCode();
-            if (byStartStorageIndex == 5)
+            if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+                && !CheckTrunkItemRace(this, wItemSerial, byStartStorageIndex))
             {
-              if (this->m_Param.GetTrunkSlotRace(wItemSerial) != raceCode)
-              {
-                byRetCode = 17;
-              }
-            }
-            else if (byStartStorageIndex == 7)
-            {
-              if (this->m_Param.GetExtTrunkSlotRace(wItemSerial) != raceCode)
-              {
-                byRetCode = 17;
-              }
+              byRetCode = 17;
             }
           }
         }
@@ -989,19 +1026,15 @@ void CPlayer::pc_TrunkIoSwapRequest(
           {
             byRetCode = 6;
           }
-          else if (byStartStorageIndex == 5)
+          else if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+                   && !CheckTrunkItemRace(this, wStartItemSerial, byStartStorageIndex))
           {
-            if (this->m_Param.GetTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
-            {
-              byRetCode = 17;
-            }
+            byRetCode = 17;
           }
-          else if (byStartStorageIndex == 7)
+          else if ((byTarStorageIndex == 5 || byTarStorageIndex == 7)
+                   && !CheckTrunkItemRace(this, wTarItemSerial, byTarStorageIndex))
           {
-            if (this->m_Param.GetExtTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
-            {
-              byRetCode = 17;
-            }
+            byRetCode = 17;
           }
         }
       }
@@ -1172,6 +1205,17 @@ void CPlayer::pc_TrunkIoMergeRequest(
       }
       else
       {
+        if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+            && !CheckTrunkItemRace(this, wStartItemSerial, byStartStorageIndex))
+        {
+          byRetCode = 17;
+        }
+        else if ((byTarStorageIndex == 5 || byTarStorageIndex == 7)
+                 && !CheckTrunkItemRace(this, wTarItemSerial, byTarStorageIndex))
+        {
+          byRetCode = 17;
+        }
+
         if ((byStartStorageIndex == 5 && byTarStorageIndex != 7) || (byStartStorageIndex == 7 && byTarStorageIndex != 5))
         {
           dwSub = static_cast<unsigned int>(
