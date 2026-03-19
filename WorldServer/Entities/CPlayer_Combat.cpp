@@ -3007,6 +3007,9 @@ void CPlayer::SendMsg_FixPosition(int n)
 
   unsigned __int8 type[2] = {4, 9};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+
+  // Yorozuya fix (non-IDA parity): refresh full shape-all for the target viewer.
+  SendMsg_OtherShapeAll(targetPlayer);
 }
 
 void CPlayer::SendMsg_RealMovePoint(int n)
