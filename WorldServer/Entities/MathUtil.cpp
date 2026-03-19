@@ -14,6 +14,26 @@ float DotProduct(const float *a1, const float *a2)
     return (a1[1] * a2[1]) + (*a1 * *a2) + (a1[2] * a2[2]);
 }
 
+static inline float SseLength2D(float dx, float dz)
+{
+    const __m128 diff = _mm_set_ps(0.0f, 0.0f, dz, dx);
+    const __m128 sq = _mm_mul_ps(diff, diff);
+    const __m128 dz2 = _mm_shuffle_ps(sq, sq, _MM_SHUFFLE(1, 1, 1, 1));
+    const __m128 sum = _mm_add_ss(sq, dz2);
+    return _mm_cvtss_f32(_mm_sqrt_ss(sum));
+}
+
+static inline float SseLength3D(float dx, float dy, float dz)
+{
+    const __m128 diff = _mm_set_ps(0.0f, dz, dy, dx);
+    const __m128 sq = _mm_mul_ps(diff, diff);
+    const __m128 dy2 = _mm_shuffle_ps(sq, sq, _MM_SHUFFLE(1, 1, 1, 1));
+    const __m128 dz2 = _mm_shuffle_ps(sq, sq, _MM_SHUFFLE(2, 2, 2, 2));
+    __m128 sum = _mm_add_ss(sq, dy2);
+    sum = _mm_add_ss(sum, dz2);
+    return _mm_cvtss_f32(_mm_sqrt_ss(sum));
+}
+
 float GetSqrt(float *fPos, float *fTar)
 {
     float dx = fTar[0] - fPos[0];
@@ -30,11 +50,11 @@ float GetDist(float *const a1, float *const a2)
 
 float Get3DSqrt(float *Pos, float *Tar)
 {
-
     const float dx = *Pos - *Tar;
     const float dy = Pos[1] - Tar[1];
     const float dz = Pos[2] - Tar[2];
-    return std::sqrt((dx * dx) + (dy * dy) + (dz * dz));
+    // Yorozuya fix (non-IDA parity): SIMD-optimized 3D distance (x/y/z).
+    return SseLength3D(dx, dy, dz);
 }
 
 float GetYAngle(float *Pos, float *Tar)
