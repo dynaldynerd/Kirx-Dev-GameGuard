@@ -2385,18 +2385,21 @@ bool CUserDB::Insert_Char_Request(
 
   bool invalidName = false;
 
-  // Yorozuya fix (non-IDA parity): reject empty character names.
-  if (!pwszCharName || !*pwszCharName)
+  do
   {
-    invalidName = true;
-  }
-  // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
-  else if (!IsValidBaseShape(dwBaseShape))
-  {
-    invalidName = true;
-  }
-  else
-  {
+    // Yorozuya fix (non-IDA parity): reject empty character names.
+    if (!pwszCharName || !*pwszCharName)
+    {
+      invalidName = true;
+      break;
+    }
+    // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
+    if (!IsValidBaseShape(dwBaseShape))
+    {
+      invalidName = true;
+      break;
+    }
+
     for (char *cursor = pwszCharName; ; ++cursor)
     {
       if (*cursor == 32 || *cursor == 39)
@@ -2409,11 +2412,16 @@ bool CUserDB::Insert_Char_Request(
         break;
       }
     }
-    if (!invalidName && *pwszCharName == 42)
+    if (invalidName)
+    {
+      break;
+    }
+    if (*pwszCharName == 42)
     {
       invalidName = true;
+      break;
     }
-    for (int k = 0; !invalidName && k < 3; ++k)
+    for (int k = 0; k < 3; ++k)
     {
       if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
       {
@@ -2421,18 +2429,20 @@ bool CUserDB::Insert_Char_Request(
         break;
       }
     }
-
-    if (!invalidName)
+    if (invalidName)
     {
-      CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-      if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
-           && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
-          || !manager->IsNormalString(pwszCharName))
-      {
-        invalidName = true;
-      }
+      break;
+    }
+
+    CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+    if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
+         && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
+        || !manager->IsNormalString(pwszCharName))
+    {
+      invalidName = true;
     }
   }
+  while (false);
   if (invalidName)
   {
     Insert_Char_Complete(47, nullptr);
