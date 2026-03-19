@@ -1674,6 +1674,8 @@ void CPlayer::Init(_object_id *pID)
   std::memset(m_dwSkillAttackDelayEnd, 0, sizeof(m_dwSkillAttackDelayEnd));
   m_pdwClassSkillAttackDelayEnd = nullptr;
   m_dwClassSkillDelayCount = 0;
+  // Yorozuya fix (non-IDA parity): reset unit attack delay tracking.
+  m_dwUnitAttackDelayEnd = 0;
   m_NameChangeBuddyInfo.Init();
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
@@ -1756,6 +1758,8 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
       0,
       sizeof(unsigned int) * this->m_dwClassSkillDelayCount);
   }
+  // Yorozuya fix (non-IDA parity): reset unit attack delay tracking.
+  this->m_dwUnitAttackDelayEnd = 0;
   this->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
 
   CMapData *map = g_MapOper.GetMap(pData.dbAvator.m_byMapCode);
@@ -18541,6 +18545,23 @@ char CPlayer::_pre_check_unit_attack(
     {
       return static_cast<char>(-3);
     }
+  }
+
+  // Yorozuya fix (non-IDA parity): extra unit attack delay tracking.
+  if (!m_bSFDelayNotCheck)
+  {
+    const DWORD now = GetTickCount();
+    if (!IsAttackDelayReady(now, m_dwUnitAttackDelayEnd))
+    {
+      return static_cast<char>(-5);
+    }
+
+    int delay = static_cast<int>(weaponField->m_nAttackDel);
+    if (delay < 0)
+    {
+      delay = 0;
+    }
+    m_dwUnitAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
   }
 
   *ppWeaponFld = weaponField;

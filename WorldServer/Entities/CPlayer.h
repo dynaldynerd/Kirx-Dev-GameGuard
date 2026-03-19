@@ -2739,6 +2739,8 @@ public:
   unsigned int m_dwSkillAttackDelayEnd[4][4];
   unsigned int *m_pdwClassSkillAttackDelayEnd;
   unsigned int m_dwClassSkillDelayCount;
+  // Yorozuya fix (non-IDA parity): unit attack delay tracking.
+  unsigned int m_dwUnitAttackDelayEnd;
   float m_fUnitPv_AttFc;
   float m_fUnitPv_DefFc;
   float m_fUnitPv_RepPr;
