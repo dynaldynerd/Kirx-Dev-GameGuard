@@ -1060,24 +1060,21 @@ unsigned __int8 AutominePersonal::sub_battery(unsigned int dwUsed)
   }
 
   unsigned __int8 dischargedSlot = static_cast<unsigned __int8>(-1);
-  unsigned int remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(dwUsed);
-  if (!m_pBatterySlot[m_byUseBattery].get_dur())
-  {
-    dischargedSlot = m_byUseBattery;
-    m_pBatterySlot[dischargedSlot].clear();
+  unsigned int remainUsage = 0;
 
-    m_byUseBattery = s_conver_index[m_byUseBattery];
-    if (remainUsage)
+  // Yorozuya fix (non-IDA parity): log battery discharge before clearing and
+  // handle spillover discharge on the next slot.
+  do
+  {
+    const unsigned __int8 startSlot = m_byUseBattery;
+    remainUsage = m_pBatterySlot[startSlot].sub_dur(dwUsed);
+    if (m_pBatterySlot[startSlot].get_dur())
     {
-      remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(remainUsage);
-      if (remainUsage)
-      {
-        m_pBatterySlot[m_byUseBattery].clear();
-        m_byUseBattery = static_cast<unsigned __int8>(-1);
-      }
+      break;
     }
 
-    _STORAGE_LIST::_db_con *dischargedBattery = m_pBatterySlot[dischargedSlot].get_battery();
+    dischargedSlot = startSlot;
+    _STORAGE_LIST::_db_con *dischargedBattery = m_pBatterySlot[startSlot].get_battery();
     CPlayer::s_MgrItemHistory.personal_amine_itemlog(
       "BATTERY_DISCHARGE",
       dischargedSlot,
@@ -1085,7 +1082,32 @@ unsigned __int8 AutominePersonal::sub_battery(unsigned int dwUsed)
       dischargedBattery->m_wItemIndex,
       static_cast<unsigned int>(dischargedBattery->m_dwDur),
       m_pOwner->m_szItemHistoryFileName);
-  }
+    m_pBatterySlot[startSlot].clear();
+
+    const unsigned __int8 nextSlot = s_conver_index[startSlot];
+    m_byUseBattery = nextSlot;
+    if (!remainUsage)
+    {
+      break;
+    }
+
+    remainUsage = m_pBatterySlot[nextSlot].sub_dur(remainUsage);
+    if (!remainUsage)
+    {
+      break;
+    }
+
+    _STORAGE_LIST::_db_con *nextBattery = m_pBatterySlot[nextSlot].get_battery();
+    CPlayer::s_MgrItemHistory.personal_amine_itemlog(
+      "BATTERY_DISCHARGE",
+      nextSlot,
+      nextBattery->m_byTableCode,
+      nextBattery->m_wItemIndex,
+      static_cast<unsigned int>(nextBattery->m_dwDur),
+      m_pOwner->m_szItemHistoryFileName);
+    m_pBatterySlot[nextSlot].clear();
+    m_byUseBattery = static_cast<unsigned __int8>(-1);
+  } while (false);
 
   return dischargedSlot;
 }
