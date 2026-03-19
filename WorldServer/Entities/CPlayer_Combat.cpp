@@ -1269,30 +1269,93 @@ void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDs
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(skillFld->m_strActableDst, target))
+    else
     {
-      byErrCode = 5;
-    }
-    else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-    {
-      byErrCode = 8;
-    }
-    else if (skillFld->m_nContEffectType != -1)
-    {
-      if (!target->IsRecvableContEffect())
+      // Yorozuya fix (non-IDA parity): enforce throw-skill target range (with Y distance check).
+      float availableDist = (target->GetWidth() / 2.0f) + static_cast<float>(m_pmWpn.wGaAttRange);
+      if (m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
       {
-        byErrCode = 13;
+        availableDist += m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
       }
-      else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+      else
       {
-        const bool inGuildRoom = m_Param.m_pGuild
-          && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-            m_Param.m_pGuild->m_dwSerial,
-            m_ObjID.m_wIndex,
-            m_pUserDB->m_dwSerial);
-        if (IsInTown() || target->IsInTown() || inGuildRoom)
+        availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
+      }
+
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
         {
-          byErrCode = 18;
+          byErrCode = 5;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 5;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra normal-attack delay tracking for throw skills.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const DWORD now = GetTickCount();
+        if (!IsAttackDelayReady(now, m_dwNormalAttackDelayEnd))
+        {
+          byErrCode = 9;
+        }
+        else
+        {
+          const int addDelay = static_cast<int>(CalcEquipAttackDelay());
+          const int level = static_cast<int>(GetLevel());
+          int attackDelay = static_cast<int>(m_pmWpn.GetAttackDelay(level, addDelay));
+          if (m_pmWpn.byWpType != 11 && !m_pmWpn.byWpClass)
+          {
+            attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_9));
+          }
+          if (m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
+          {
+            attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11));
+          }
+          if (attackDelay < 0)
+          {
+            attackDelay = 0;
+          }
+          m_dwNormalAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(attackDelay));
+        }
+      }
+
+      if (!byErrCode && !IsEffectableDst(skillFld->m_strActableDst, target))
+      {
+        byErrCode = 5;
+      }
+      else if (!byErrCode && skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
+      {
+        byErrCode = 8;
+      }
+      else if (!byErrCode && skillFld->m_nContEffectType != -1)
+      {
+        if (!target->IsRecvableContEffect())
+        {
+          byErrCode = 13;
+        }
+        else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+        {
+          const bool inGuildRoom = m_Param.m_pGuild
+            && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+              m_Param.m_pGuild->m_dwSerial,
+              m_ObjID.m_wIndex,
+              m_pUserDB->m_dwSerial);
+          if (IsInTown() || target->IsInTown() || inGuildRoom)
+          {
+            byErrCode = 18;
+          }
         }
       }
     }
