@@ -514,8 +514,16 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   {
     return 2;
   }
-  if (!IsOverLapItem((*pItem)->m_byTableCode)
-      || pItemInfo->byNum <= (*pItem)->m_dwDur)
+  const bool isOverlap = IsOverLapItem((*pItem)->m_byTableCode);
+  // Yorozuya fix (non-IDA parity): validate overlap count range (1..99).
+  if (isOverlap)
+  {
+    if (pItemInfo->byNum == 0 || pItemInfo->byNum > 99)
+    {
+      return 5;
+    }
+  }
+  if (!isOverlap || pItemInfo->byNum <= (*pItem)->m_dwDur)
   {
     return 0;
   }
