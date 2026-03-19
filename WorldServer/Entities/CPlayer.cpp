@@ -227,6 +227,25 @@ bool CPlayer::IsAttackDelayReady(DWORD now, DWORD endTime)
   return static_cast<int>(now - endTime) >= 0;
 }
 
+void CPlayer::EnsureClassSkillDelayStorage()
+{
+  if (m_pdwClassSkillAttackDelayEnd)
+  {
+    return;
+  }
+
+  const int recordNum = g_Main.m_tblEffectData[2].GetRecordNum();
+  if (recordNum <= 0)
+  {
+    m_dwClassSkillDelayCount = 0;
+    return;
+  }
+
+  m_dwClassSkillDelayCount = static_cast<unsigned int>(recordNum);
+  m_pdwClassSkillAttackDelayEnd = new unsigned int[m_dwClassSkillDelayCount];
+  std::memset(m_pdwClassSkillAttackDelayEnd, 0, sizeof(unsigned int) * m_dwClassSkillDelayCount);
+}
+
 bool CheckSameItemFromString_CodeIndex(char *psItemCode, unsigned __int8 byTableCode, unsigned __int16 wIndex)
 {
   if (!psItemCode)
@@ -1651,6 +1670,10 @@ void CPlayer::Init(_object_id *pID)
   m_dwNormalAttackDelayEnd = 0;
   // Yorozuya fix (non-IDA parity): reset siege attack delay tracking.
   m_dwSiegeAttackDelayEnd = 0;
+  // Yorozuya fix (non-IDA parity): reset skill attack delay tracking.
+  std::memset(m_dwSkillAttackDelayEnd, 0, sizeof(m_dwSkillAttackDelayEnd));
+  m_pdwClassSkillAttackDelayEnd = nullptr;
+  m_dwClassSkillDelayCount = 0;
   m_NameChangeBuddyInfo.Init();
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
@@ -1724,6 +1747,15 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_dwNormalAttackDelayEnd = 0;
   // Yorozuya fix (non-IDA parity): reset siege attack delay tracking.
   this->m_dwSiegeAttackDelayEnd = 0;
+  // Yorozuya fix (non-IDA parity): reset skill attack delay tracking.
+  std::memset(this->m_dwSkillAttackDelayEnd, 0, sizeof(this->m_dwSkillAttackDelayEnd));
+  if (this->m_pdwClassSkillAttackDelayEnd && this->m_dwClassSkillDelayCount)
+  {
+    std::memset(
+      this->m_pdwClassSkillAttackDelayEnd,
+      0,
+      sizeof(unsigned int) * this->m_dwClassSkillDelayCount);
+  }
   this->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
 
   CMapData *map = g_MapOper.GetMap(pData.dbAvator.m_byMapCode);
@@ -1910,6 +1942,11 @@ CPlayer::~CPlayer()
     operator delete[](s_pnLinkForceItemToEffect);
     s_pnLinkForceItemToEffect = nullptr;
   }
+
+  // Yorozuya fix (non-IDA parity): free class-skill attack delay tracking.
+  delete[] m_pdwClassSkillAttackDelayEnd;
+  m_pdwClassSkillAttackDelayEnd = nullptr;
+  m_dwClassSkillDelayCount = 0;
 }
 
 void CPlayer::PastWhisperInit()
@@ -18063,6 +18100,66 @@ char CPlayer::_pre_check_skill_attack(
       if (siegeRecord && siegeRecord->m_fMinDst > dist)
       {
         return static_cast<char>(-3);
+      }
+    }
+  }
+
+  // Yorozuya fix (non-IDA parity): extra skill attack delay tracking.
+  if (!m_bSFDelayNotCheck)
+  {
+    const DWORD now = GetTickCount();
+    if (byEffectCode == 2)
+    {
+      EnsureClassSkillDelayStorage();
+      if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+      {
+        const unsigned int skillIndex = static_cast<unsigned int>(pSkillFld->m_dwIndex);
+        if (skillIndex < m_dwClassSkillDelayCount)
+        {
+          if (!IsAttackDelayReady(now, m_pdwClassSkillAttackDelayEnd[skillIndex]))
+          {
+            return static_cast<char>(-5);
+          }
+        }
+      }
+    }
+    else
+    {
+      const int skillClass = static_cast<int>(pSkillFld->m_nClass);
+      const int skillLevel = static_cast<int>(pSkillFld->m_nLv);
+      if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+      {
+        if (!IsAttackDelayReady(now, m_dwSkillAttackDelayEnd[skillClass][skillLevel]))
+        {
+          return static_cast<char>(-5);
+        }
+      }
+    }
+
+    int delay = static_cast<int>(pSkillFld->m_fActDelay + m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY));
+    if (delay < 0)
+    {
+      delay = 0;
+    }
+    const unsigned int delayMs = AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+    if (byEffectCode == 2)
+    {
+      if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+      {
+        const unsigned int skillIndex = static_cast<unsigned int>(pSkillFld->m_dwIndex);
+        if (skillIndex < m_dwClassSkillDelayCount)
+        {
+          m_pdwClassSkillAttackDelayEnd[skillIndex] = now + delayMs;
+        }
+      }
+    }
+    else
+    {
+      const int skillClass = static_cast<int>(pSkillFld->m_nClass);
+      const int skillLevel = static_cast<int>(pSkillFld->m_nLv);
+      if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+      {
+        m_dwSkillAttackDelayEnd[skillClass][skillLevel] = now + delayMs;
       }
     }
   }

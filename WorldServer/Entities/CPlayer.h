@@ -986,6 +986,7 @@ private:
   static bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer);
   static unsigned int AdjustAttackDelayMs(unsigned int delayMs);
   static bool IsAttackDelayReady(DWORD now, DWORD endTime);
+  void EnsureClassSkillDelayStorage();
 
 public:
   CPlayer();
@@ -2734,6 +2735,10 @@ public:
   unsigned int m_dwNormalAttackDelayEnd;
   // Yorozuya fix (non-IDA parity): siege attack delay tracking.
   unsigned int m_dwSiegeAttackDelayEnd;
+  // Yorozuya fix (non-IDA parity): skill attack delay tracking.
+  unsigned int m_dwSkillAttackDelayEnd[4][4];
+  unsigned int *m_pdwClassSkillAttackDelayEnd;
+  unsigned int m_dwClassSkillDelayCount;
   float m_fUnitPv_AttFc;
   float m_fUnitPv_DefFc;
   float m_fUnitPv_RepPr;
