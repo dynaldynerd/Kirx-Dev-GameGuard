@@ -13161,6 +13161,9 @@ void CPlayer::SendMsg_OtherShapeAll(CPlayer *pDst)
     return;
   }
 
+  // Yorozuya fix (non-IDA parity): refresh the view circle before sending shape-all.
+  NewViewCircleObject();
+
   if (this->m_bLive)
   {
     unsigned __int8 pbyType[2] = {3, 31};
@@ -13184,20 +13187,8 @@ void CPlayer::SendMsg_OtherShapePart(CPlayer *pDst)
     return;
   }
 
-  if (this->m_bLive)
-  {
-    unsigned __int8 pbyType[2] = {3, 32};
-    const unsigned __int16 nLen = static_cast<unsigned __int16>(this->m_bufSpapePart.size());
-    g_Network.m_pProcess[0]->LoadSendMsg(
-      pDst->m_ObjID.m_wIndex,
-      pbyType,
-      reinterpret_cast<char *>(&this->m_bufSpapePart),
-      nLen);
-  }
-  else
-  {
-    SendMsg_OtherShapeError(pDst, 0);
-  }
+  // Yorozuya fix (non-IDA parity): always send full shape-all instead of part.
+  SendMsg_OtherShapeAll(pDst);
 }
 
 void CPlayer::SendMsg_OtherShapePartEx_CashChange(
