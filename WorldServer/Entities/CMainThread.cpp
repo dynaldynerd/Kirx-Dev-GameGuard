@@ -4317,24 +4317,25 @@ void CMainThread::CheckServerRateINIFile()
 
 void CMainThread::CheckForceClose()
 {
-  if (!m_tmCheckForceClose.CountingTimer())
-  {
-    return;
-  }
-
-  const unsigned __int16 randomValue = static_cast<unsigned __int16>(rand() % 3);
-  if (randomValue == 0)
-  {
-    std::memset(this, 0, sizeof(CMainThread));
-  }
-  else if (randomValue == 1)
-  {
-    std::memset(g_Monster, 0, 8);
-  }
-  else if (randomValue == 2)
-  {
-    std::memset(&g_Network, 0, sizeof(g_Network));
-  }
+  // Yorozuya fix (non-IDA parity): no-op force-close crash logic.
+  // if (!m_tmCheckForceClose.CountingTimer())
+  // {
+  //   return;
+  // }
+  //
+  // const unsigned __int16 randomValue = static_cast<unsigned __int16>(rand() % 3);
+  // if (randomValue == 0)
+  // {
+  //   std::memset(this, 0, sizeof(CMainThread));
+  // }
+  // else if (randomValue == 1)
+  // {
+  //   std::memset(g_Monster, 0, 8);
+  // }
+  // else if (randomValue == 2)
+  // {
+  //   std::memset(&g_Network, 0, sizeof(g_Network));
+  // }
 }
 
 void CMainThread::ServerStateMsgGotoWebAgent()
