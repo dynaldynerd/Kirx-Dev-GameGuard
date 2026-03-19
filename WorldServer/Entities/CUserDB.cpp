@@ -2390,46 +2390,47 @@ bool CUserDB::Insert_Char_Request(
   {
     invalidName = true;
   }
-
   // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
-  if (!invalidName && !IsValidBaseShape(dwBaseShape))
+  else if (!IsValidBaseShape(dwBaseShape))
   {
     invalidName = true;
   }
+  else
+  {
+    for (char *cursor = pwszCharName; ; ++cursor)
+    {
+      if (*cursor == 32 || *cursor == 39)
+      {
+        invalidName = true;
+        break;
+      }
+      if (!*cursor)
+      {
+        break;
+      }
+    }
+    if (!invalidName && *pwszCharName == 42)
+    {
+      invalidName = true;
+    }
+    for (int k = 0; !invalidName && k < 3; ++k)
+    {
+      if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
+      {
+        invalidName = true;
+        break;
+      }
+    }
 
-  for (char *cursor = pwszCharName; !invalidName; ++cursor)
-  {
-    if (*cursor == 32 || *cursor == 39)
+    if (!invalidName)
     {
-      invalidName = true;
-      break;
-    }
-    if (!*cursor)
-    {
-      break;
-    }
-  }
-  if (!invalidName && *pwszCharName == 42)
-  {
-    invalidName = true;
-  }
-  for (int k = 0; !invalidName && k < 3; ++k)
-  {
-    if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
-    {
-      invalidName = true;
-      break;
-    }
-  }
-
-  if (!invalidName)
-  {
-    CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-    if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
-         && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
-        || !manager->IsNormalString(pwszCharName))
-    {
-      invalidName = true;
+      CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+      if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
+           && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
+          || !manager->IsNormalString(pwszCharName))
+      {
+        invalidName = true;
+      }
     }
   }
   if (invalidName)
