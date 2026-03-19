@@ -4585,15 +4585,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
     for (int index = 0; index < MAX_PLAYER; ++index)
     {
       CPlayer *player = &g_Player[index];
-      // NOTE: This is not IDA parity. We ignore the client-side block flag and
-      // only suppress messages for players not participating in this battle.
-      if (!player->m_bLive || !player->m_bInGuildBattle)
-      {
-        continue;
-      }
-      const unsigned int guildSerial =
-        player->m_Param.m_pGuild ? player->m_Param.m_pGuild->m_dwSerial : static_cast<unsigned int>(-1);
-      if (guildSerial != m_k1P.GetGuildSerial() && guildSerial != m_k2P.GetGuildSerial())
+      if (!player->m_bLive || player->m_bBlockGuildBattleMsg)
       {
         continue;
       }
@@ -4607,17 +4599,17 @@ const int member = static_cast<int>(GetMember(dwSerial));
       }
     }
 
-    if (!b1P || m_k1P.GetGuildRace() == m_k2P.GetGuildRace())
+    m_k1P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
+    m_k2P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
+    /*if (!b1P || m_k1P.GetGuildRace() == m_k2P.GetGuildRace())
     {
       if (m_k1P.GetGuildRace() != m_k2P.GetGuildRace())
       {
-        m_k1P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
       }
     }
     else
     {
-      m_k2P.SendMsg(type, reinterpret_cast<char *>(&msg), msg.size());
-    }
+    }*/
   }
 
   void CNormalGuildBattle::GuildBattleResultLogNotifyWeb(const _qry_case_guild_battel_result_log *sheet)
