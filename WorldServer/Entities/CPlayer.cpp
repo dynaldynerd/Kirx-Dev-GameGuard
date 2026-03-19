@@ -1737,6 +1737,9 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_bBuddyListDownload = 0;
   this->m_bGuildDownload = 0;
   this->m_bGuildListDownload = 0;
+  // Yorozuya fix (non-IDA parity): reset post load flags on login.
+  this->m_bPostLoad = false;
+  this->m_bPostLoading = false;
   this->m_byMapInModeBuffer = 0;
   this->m_pBeforeTownCheckMap = nullptr;
   this->m_bCreateComplete = 0;
@@ -1922,6 +1925,7 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
         this->m_pUserDB->m_AvatorData.dbPotionNextUseTime.dwPotionNextUseTime[n]);
     }
 
+    // Yorozuya fix (non-IDA parity): reset move-hack tracking on login.
     this->m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
     this->m_MoveHackInfo.m_dwWarningEndTime = 0;
     this->m_MoveHackInfo.m_fLastSpeed = this->GetMoveSpeed();
@@ -14461,6 +14465,7 @@ char CPlayer::Create()
   this->m_bMineMode = 0;
   this->m_dwMineNextTime = static_cast<unsigned int>(-1);
 
+  // Yorozuya fix (non-IDA parity): reset attack delay checker on login.
   _ATTACK_DELAY_CHECKER::Init(&this->m_AttDelayChker);
   for (int k = 0; k < 10; ++k)
   {
