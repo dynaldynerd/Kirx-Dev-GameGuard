@@ -19674,6 +19674,11 @@ void CPlayer::make_siege_attack_param(
   {
     pAP->nTol = m_pmWpn.byAttTolType;
   }
+  // Yorozuya fix (non-IDA parity): if no bullet and nTol is 0xFF, set to -1.
+  if (!pBulletFld && pAP->nTol == 0xFF)
+  {
+    pAP->nTol = -1;
+  }
 
   pAP->nClass = m_pmWpn.byWpClass;
   pAP->nWpType = m_pmWpn.byWpType;
