@@ -572,6 +572,12 @@ unsigned __int8 CPlayer::skill_process(
     return 27;
   }
 
+  // Yorozuya fix (non-IDA parity): block skill usage in siege mode.
+  if (IsSiegeMode())
+  {
+    return 14;
+  }
+
   unsigned __int8 masteryIndex = static_cast<unsigned __int8>(-1);
   if (nEffectCode)
   {
@@ -630,7 +636,7 @@ unsigned __int8 CPlayer::skill_process(
   }
   if (!(nEffectCode == 2 && skillField->m_nTempEffectType == 36 && skillField->m_nEffectClass == 6))
   {
-    // Yorozuya fix implementation (non-IDA): enforce skill cast radius for buff/debuff.
+    // Yorozuya fix implementation (non-IDA): enforce skill cast radius for buff/debuff (with Y distance check).
     float availableDist = static_cast<float>(m_pmWpn.wGaAttRange);
     availableDist += static_cast<float>(skillField->m_nBonusDistance);
     availableDist += target->GetWidth() / 2.0f;
@@ -653,7 +659,48 @@ unsigned __int8 CPlayer::skill_process(
         return static_cast<unsigned __int8>(-3);
       }
     }
+
+    const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+    const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+    if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+    {
+      return static_cast<unsigned __int8>(-3);
+    }
   }
+
+  // Yorozuya fix (non-IDA parity): extra skill delay tracking for skill_process.
+  if (!m_bSFDelayNotCheck)
+  {
+    const DWORD now = GetTickCount();
+    if (nEffectCode == 2)
+    {
+      EnsureClassSkillDelayStorage();
+      if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+      {
+        const unsigned int skillIndex = static_cast<unsigned int>(skillField->m_dwIndex);
+        if (skillIndex < m_dwClassSkillDelayCount)
+        {
+          if (!IsAttackDelayReady(now, m_pdwClassSkillAttackDelayEnd[skillIndex]))
+          {
+            return 9;
+          }
+        }
+      }
+    }
+    else
+    {
+      const int skillClass = static_cast<int>(skillField->m_nClass);
+      const int skillLevel = static_cast<int>(skillField->m_nLv);
+      if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+      {
+        if (!IsAttackDelayReady(now, m_dwSkillAttackDelayEnd[skillClass][skillLevel]))
+        {
+          return 9;
+        }
+      }
+    }
+  }
+
   if (!IsEffectableDst(skillField->m_strActableDst, target))
   {
     return 5;
@@ -843,6 +890,38 @@ unsigned __int8 CPlayer::skill_process(
     DeleteUseConsumeItem(consumeItems, consumeCount, overlap);
     const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
     _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(skillField->m_fActDelay + addDelay));
+
+    // Yorozuya fix (non-IDA parity): extra skill delay tracking for skill_process.
+    if (!m_bSFDelayNotCheck)
+    {
+      const DWORD now = GetTickCount();
+      int delay = static_cast<int>(skillField->m_fActDelay + addDelay);
+      if (delay < 0)
+      {
+        delay = 0;
+      }
+      const unsigned int delayMs = AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+      if (nEffectCode == 2)
+      {
+        if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+        {
+          const unsigned int skillIndex = static_cast<unsigned int>(skillField->m_dwIndex);
+          if (skillIndex < m_dwClassSkillDelayCount)
+          {
+            m_pdwClassSkillAttackDelayEnd[skillIndex] = now + delayMs;
+          }
+        }
+      }
+      else
+      {
+        const int skillClass = static_cast<int>(skillField->m_nClass);
+        const int skillLevel = static_cast<int>(skillField->m_nLv);
+        if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+        {
+          m_dwSkillAttackDelayEnd[skillClass][skillLevel] = now + delayMs;
+        }
+      }
+    }
   }
 
   return errorCode;
