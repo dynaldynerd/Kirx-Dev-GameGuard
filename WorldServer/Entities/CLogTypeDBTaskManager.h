@@ -2,6 +2,8 @@
 
 #include "IdaCompat.h"
 
+#include <atomic>
+#include <mutex>
 #include <vector>
 
 #include "CNetIndexList.h"
@@ -108,5 +110,8 @@ public:
   CLogTypeDBTaskPool m_kPool;
   CLogFile *m_pkLogger;
 
+  // Yorozuya fix (non-IDA parity): stop flag + lock for safe ProcThread teardown.
+  static std::atomic<bool> s_bDBProcDestroy;
+  static std::mutex s_mtxDestroy;
   static CLogTypeDBTaskManager *ms_Instance;
 };
