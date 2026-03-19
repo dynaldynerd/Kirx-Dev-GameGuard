@@ -8186,6 +8186,17 @@ char CPlayer::ApplyEquipItemEffect(int iItemEffectCode, bool bEquip)
 
 char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
 {
+  // Yorozuya fix (non-IDA parity): enforce equip-grade check (skip siege kit).
+  if (pCon->m_byTableCode != 27)
+  {
+    const unsigned __int8 equipGrade =
+      static_cast<unsigned __int8>(GetItemEquipGrade(pCon->m_byTableCode, pCon->m_wItemIndex));
+    if (!IsEquipAbleGrade(equipGrade))
+    {
+      return 0;
+    }
+  }
+
   const unsigned __int8 itemEquipLevel =
     static_cast<unsigned __int8>(GetItemEquipLevel(pCon->m_byTableCode, pCon->m_wItemIndex));
   const unsigned __int8 itemEquipUpLevel =
