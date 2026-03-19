@@ -1447,6 +1447,13 @@ void CPlayer::Loop()
     timeLimitJade->CheckStartTime();
     timeLimitJade->CheckEndTime();
   }
+  if (m_tmrSetItemUpdate.CountingTimer())
+  {
+    if (!IsSiegeMode() && !IsRidingUnit())
+    {
+      UpdateActiveSetItemEffects();
+    }
+  }
 
   if (m_tmrSiegeTime.CountingTimer())
   {

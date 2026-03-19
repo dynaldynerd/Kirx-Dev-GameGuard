@@ -1661,6 +1661,8 @@ void CPlayer::Init(_object_id *pID)
   m_bSFDelayNotCheck = false;
   m_tmrEffectStartTime.BeginTimer(3600000);
   m_tmrEffectEndTime.BeginTimer(60000);
+  // Yorozuya fix (non-IDA parity): periodic set-item refresh.
+  m_tmrSetItemUpdate.BeginTimer(10000);
   m_kMoveDelayChecker.Init(10);
   m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
   m_MoveHackInfo.m_dwWarningEndTime = 0;
@@ -1919,6 +1921,11 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
     this->m_kPcBangCoupon.LoadData(m_pUserDB->m_dwAccountSerial, p_dbPlayTimeInPcbang);
 
     this->SetLastAttBuff(this->m_pUserDB->m_AvatorData.dbSupplement.bLastAttBuff);
+    // Yorozuya fix (non-IDA parity): clear last-attack buff if not in guild and not destroyer.
+    if (!this->m_Param.m_pGuild && this->m_Param.GetCharSerial() != g_HolySys.GetDestroyerSerial())
+    {
+      this->SetLastAttBuff(false);
+    }
 
     for (int n = 0; n < 38; ++n)
     {

@@ -2761,6 +2761,8 @@ public:
   CCouponMgr m_kPcBangCoupon;
   CMyTimer m_tmrEffectStartTime;
   CMyTimer m_tmrEffectEndTime;
+  // Yorozuya fix (non-IDA parity): periodic set-item refresh timer.
+  CMyTimer m_tmrSetItemUpdate;
   unsigned __int8 m_byBattleTournamentGrade;
   _NameChangeBuddyInfo m_NameChangeBuddyInfo;
   unsigned int m_dwPcBangGiveItemListIndex;
