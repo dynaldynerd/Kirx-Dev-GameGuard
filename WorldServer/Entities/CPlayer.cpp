@@ -19778,6 +19778,11 @@ void CPlayer::make_wpactive_skill_attack_param(
   {
     pAP->nTol = m_pmWpn.byAttTolType;
   }
+  // Yorozuya fix (non-IDA parity): if no bullet and nTol is 0xFF, set to -1.
+  if (!pBulletItem && pAP->nTol == 0xFF)
+  {
+    pAP->nTol = -1;
+  }
 
   pAP->nClass = m_pmWpn.byWpClass;
   if (m_pmWpn.byWpType == 7)
