@@ -70,7 +70,7 @@ void CMgrAvatorItemHistory::lenditem_del_from_inven(
 
   if (record)
   {
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
     sprintf_s(
       sData,
@@ -83,7 +83,7 @@ void CMgrAvatorItemHistory::lenditem_del_from_inven(
   }
   else
   {
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       sData,
       sizeof(sData),
@@ -285,7 +285,7 @@ if (pkInfo && byMaxCnt)
         }
         else
         {
-          const int startTime = info->GetStartTime();
+          const int startTime = static_cast<int>(info->GetStartTime());
           sprintf_s(buffer, sizeof(buffer), "invalid(%u)", startTime);
         }
 
@@ -1443,7 +1443,7 @@ void CMgrAvatorItemHistory::patriarch_push_money(
 
 void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned int dwDalant, char *pszFileName)
 {
-  const unsigned int korTime = GetKorLocalTime();
+  const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(
     sData,
     sizeof(sData),
@@ -1456,7 +1456,7 @@ void CMgrAvatorItemHistory::raceboss_giveback(unsigned int dwSerial, unsigned in
 
 void CMgrAvatorItemHistory::raceboss_candidate(int ncost, unsigned int dwSerial, char *pszFileName)
 {
-  const unsigned int korTime = GetKorLocalTime();
+  const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(
     sData,
     sizeof(sData),
@@ -1591,7 +1591,7 @@ sData[0] = 0;
   if (record)
   {
     (void)GetItemTableCode(record->m_strCode);
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     const char *itemKorName = GetItemKorName(byTbl, wIndex);
     sprintf_s(
       sData,
@@ -1609,7 +1609,7 @@ sData[0] = 0;
   }
   else
   {
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(sData, sizeof(sData), "[BUY_CASHITEM] - [Report Server Developer][T:%u]\r\n", korTime);
   }
   WriteFile(pFileName, sData);
@@ -1648,7 +1648,7 @@ void CMgrAvatorItemHistory::cashitem_del_from_inven(
   if (record)
   {
     (void)GetItemTableCode(record->m_strCode);
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     const char *itemKorName = GetItemKorName(byTblCode, wItemIndex);
     sprintf_s(
       sData,
@@ -1661,7 +1661,7 @@ void CMgrAvatorItemHistory::cashitem_del_from_inven(
   }
   else
   {
-    const unsigned int korTime = GetKorLocalTime();
+    const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       sData,
       sizeof(sData),
@@ -1682,7 +1682,7 @@ void CMgrAvatorItemHistory::rollback_cashitem(
   char *pFileName)
 {
   sData[0] = 0;
-  const unsigned int korTime = GetKorLocalTime();
+  const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(
     sData,
     sizeof(sData),
@@ -2917,7 +2917,7 @@ void CMgrAvatorItemHistory::combine_ex_reward_item(
         sizeof(sBuf),
         "\t%s_%I64u_@%s[%I64u] Inven \r\n",
         record->m_strCode,
-        list->dwDur,
+        static_cast<unsigned __int64>(list->dwDur),
         upgInfo,
         lnUIDs[itemIndex]);
       std::strcat(sData, sBuf);
@@ -3182,7 +3182,7 @@ void CMgrAvatorItemHistory::guild_suggest_change_taxrate(
   char *szFile)
 {
   std::memset(sData, 0, sizeof(sData));
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(sData, sizeof(sData), "[SUGGEST TAX RATE][Guild:%d] - %d - %d\r\n", dwGuild, dwMatterObj2, korLocalTime);
   WriteFile(szFile, sData);
 }
@@ -3276,7 +3276,7 @@ void CMgrAvatorItemHistory::raceboss_vote(
   char *pAvatorName,
   char *pszFileName)
 {
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(
     sData,
     "[RACE BOSS]vote: Serial:%d\tTarget:%s(%d)\tTime:%d\n",

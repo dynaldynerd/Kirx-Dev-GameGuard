@@ -1211,7 +1211,7 @@ CObjectList *CMapData::GetSectorListTower(unsigned __int16 wLayerIndex, unsigned
 
 void CMapData::GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecNum)
 {
-  if (nSecNum < this->m_SecInfo.m_nSecNum)
+  if (nSecNum < static_cast<unsigned int>(this->m_SecInfo.m_nSecNum))
   {
     int secX = static_cast<int>(nSecNum) % this->m_SecInfo.m_nSecNumW;
     int secY = static_cast<int>(nSecNum) / this->m_SecInfo.m_nSecNumW;
@@ -1270,7 +1270,7 @@ bool CMapData::UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsign
 
 void CMapData::EnterMap(CGameObject *pObj, unsigned int dwSecIndex)
 {
-  if (dwSecIndex >= this->m_SecInfo.m_nSecNum)
+  if (dwSecIndex >= static_cast<unsigned int>(this->m_SecInfo.m_nSecNum))
     return;
 
   _object_list_point *pItem = &pObj->m_SectorPoint;
@@ -1309,7 +1309,7 @@ void CMapData::EnterMap(CGameObject *pObj, unsigned int dwSecIndex)
 
 void CMapData::ExitMap(CGameObject *pObj, unsigned int dwSecIndex)
 {
-  if (dwSecIndex >= this->m_SecInfo.m_nSecNum)
+  if (dwSecIndex >= static_cast<unsigned int>(this->m_SecInfo.m_nSecNum))
     return;
 
   _object_list_point *pItem = &pObj->m_SectorPoint;

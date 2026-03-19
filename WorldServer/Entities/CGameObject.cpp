@@ -971,7 +971,8 @@ unsigned int CGameObject::CalcSecIndex()
   unsigned int secX = static_cast<unsigned int>(static_cast<int>(this->m_fAbsPos[0] / 100.0f));
   unsigned int secZ = static_cast<unsigned int>(static_cast<int>(this->m_fAbsPos[2] / 100.0f));
   _sec_info *SecInfo = this->m_pCurMap->GetSecInfo();
-  if (secX < SecInfo->m_nSecNumW && secZ < SecInfo->m_nSecNumH)
+  if (secX < static_cast<unsigned int>(SecInfo->m_nSecNumW)
+    && secZ < static_cast<unsigned int>(SecInfo->m_nSecNumH))
     return SecInfo->m_nSecNumW * secZ + secX;
   g_Main.m_logSystemError.Write(
     "kind(%d), id(%d).. Out of Sector",
@@ -1113,7 +1114,7 @@ bool CGameObject::Create(_object_create_setdata *pData)
 
   unsigned int dwSecIndex = static_cast<unsigned int>(this->CalcSecIndex());
   _sec_info *SecInfo = pData->m_pMap->GetSecInfo();
-  if (dwSecIndex < SecInfo->m_nSecNum)
+  if (dwSecIndex < static_cast<unsigned int>(SecInfo->m_nSecNum))
   {
     pData->m_pMap->EnterMap(this, dwSecIndex);
     this->m_bLive = 1;

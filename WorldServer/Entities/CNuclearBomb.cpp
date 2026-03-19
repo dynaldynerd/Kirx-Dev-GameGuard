@@ -233,7 +233,7 @@ unsigned __int8 CNuclearBomb::GetMasterRace()
 
 unsigned __int8 CNuclearBomb::GetMasterClass()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   const unsigned int charSerial = m_pMaster->m_Param.GetCharSerial();
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
   const unsigned __int8 bossType = ranking->GetBossType(raceCode, charSerial);
@@ -423,7 +423,7 @@ void CNuclearBomb::SendMsg_Attack(int StartNum, int Obj_Num)
 
 void CNuclearBomb::SendMsg_InformAttack()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
@@ -446,7 +446,7 @@ void CNuclearBomb::SendMsg_InformAttack()
 
 void CNuclearBomb::SendMsg_MasterDie()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];

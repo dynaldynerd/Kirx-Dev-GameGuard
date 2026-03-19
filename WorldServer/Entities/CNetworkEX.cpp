@@ -228,11 +228,11 @@ bool CNetWorking::SetNetSystem(
 
   CreateDirectoryA(this->m_szLogPath, nullptr);
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(szFileName, "%s\\%s_Sys%u.log", this->m_szLogPath, this->m_szSystemName, korLocalTime);
   this->m_LogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
 
-  const unsigned int fgLogTime = GetKorLocalTime();
+  const unsigned int fgLogTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(szFileName, "%s\\%s_CcrFgSys%u.log", this->m_szLogPath, this->m_szSystemName, fgLogTime);
   g_FgLogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
 
@@ -264,7 +264,7 @@ bool CNetWorking::SetNetSystem(
         *(slash + 1) = 0;
       }
       strcat_s(filename, 260, "fireguard\\");
-      const int pathLen = std::strlen(filename);
+      const int pathLen = static_cast<int>(std::strlen(filename));
       if (AddEnvVariable("path", filename, pathLen) <= 0)
       {
         this->m_LogFile.Write("SetNetSystem(%d) CCRFG SERVER : AddEnvVariable() Fail", nIndex);
@@ -274,7 +274,7 @@ bool CNetWorking::SetNetSystem(
       if (this->m_bUseFG)
       {
         g_pfnCallBack.pfunc = CcrFgCallback;
-        const unsigned int nameLen = std::strlen(this->m_szServerName);
+        const unsigned int nameLen = static_cast<unsigned int>(std::strlen(this->m_szServerName));
         const int result = _CcrFG_rs_Initialize(
           reinterpret_cast<int (__fastcall *)(int, void *, void *, int, void *)>(g_pfnCallBack.pfunc),
           reinterpret_cast<unsigned __int8 *>(this->m_szServerName),
@@ -2750,7 +2750,7 @@ bool CNetworkEX::BuyStoreRequest(unsigned int n, char *pBuf)
     unsigned __int8 mapCode = static_cast<unsigned __int8>(-1);
     if (request->bUseNPCLinkIntem)
     {
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       if (raceCode == 1)
       {
         mapCode = 1;
@@ -2886,7 +2886,7 @@ bool CNetworkEX::SellStoreRequest(unsigned int n, char *pBuf)
   unsigned __int8 mapCode = static_cast<unsigned __int8>(-1);
   if (request->bUseNPCLinkIntem)
   {
-    const int raceCode = player->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
     if (raceCode == 1)
     {
       mapCode = 1;
@@ -4649,7 +4649,7 @@ bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
   }
 
   const unsigned int charSerial = player->m_Param.GetCharSerial();
-  const int raceCode = player->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
   CPvpUserAndGuildRankingSystem *rank = CPvpUserAndGuildRankingSystem::Instance();
   const unsigned int bossSerial = rank->GetCurrentRaceBossSerial(static_cast<unsigned __int8>(raceCode), 0);
   if (charSerial != bossSerial)
@@ -4663,7 +4663,7 @@ bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
     std::memcpy(msg, request->wszChatData, size);
     msg[size] = 0;
     char *bossName = player->m_Param.GetCharNameA();
-    const int senderRace = player->m_Param.GetRaceCode();
+    const int senderRace = static_cast<int>(player->m_Param.GetRaceCode());
     g_Main.pc_SetRaceGreetingMsg( senderRace, bossName, msg);
   }
   else
@@ -8993,7 +8993,7 @@ bool CNetworkEX::GuildBattlePossibleGuildBattleList(int n, char *pBuf)
   auto *request = reinterpret_cast<_possible_battle_guild_list_request_clzo *>(pBuf);
   if (player->m_bOper)
   {
-    const int raceCode = player->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
     CGuildBattleController *controller = CGuildBattleController::Instance();
     controller->SendPossibleBattleGuildList(
       n,
@@ -9019,7 +9019,7 @@ bool CNetworkEX::GuildBattleRankListRequest(int n, char *pBuf)
     guildSerial = player->m_Param.m_pGuild->m_dwSerial;
   }
   const unsigned int mapId = static_cast<unsigned __int8>(request->byRace);
-  const int raceCode = player->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
   CGuildBattleController *controller = CGuildBattleController::Instance();
   controller->SendRankList(
     n,
@@ -9056,7 +9056,7 @@ bool CNetworkEX::GuildBattleReservedScheduleRequest(int n, char *pBuf)
   {
     guildSerial = player->m_Param.m_pGuild->m_dwSerial;
   }
-  const unsigned int mapId = player->m_Param.GetRaceCode();
+  const unsigned int mapId = static_cast<unsigned int>(player->m_Param.GetRaceCode());
   CGuildBattleController *controller = CGuildBattleController::Instance();
   controller->SendReservedScheduleList(
     n,
@@ -9073,7 +9073,7 @@ bool CNetworkEX::GuildBattleCurrentBattleInfoRequest(int n, char *pBuf)
 CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    const unsigned int mapId = player->m_Param.GetRaceCode();
+    const unsigned int mapId = static_cast<unsigned int>(player->m_Param.GetRaceCode());
     CGuildBattleController *controller = CGuildBattleController::Instance();
     controller->SendCurrentBattleInfoRequest(n, mapId);
   }
@@ -9300,7 +9300,7 @@ CPlayer *player = &g_Player[n];
     return true;
   }
 
-  const int raceCode = player->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
   CUnmannedTraderTaxRateManager *taxMgr = CUnmannedTraderTaxRateManager::Instance();
   taxMgr->SendTaxRate(n, raceCode);
   return true;

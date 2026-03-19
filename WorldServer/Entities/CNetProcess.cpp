@@ -989,7 +989,7 @@ int CNetProcess::LoadSendMsg(
 
   _NET_BUFFER *sendBuffer = &m_pSendBuffer[dwClientIndex];
   if (m_Type.m_bSendSafe
-      && sendBuffer->GetLeftLoadSize() > m_Type.m_dwSendSafeSize
+      && static_cast<unsigned int>(sendBuffer->GetLeftLoadSize()) > m_Type.m_dwSendSafeSize
       && m_bPassablePacket[pbyType[0]][pbyType[1]])
   {
     return 0;
@@ -1150,7 +1150,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
   m_dwCurTime = timeGetTime();
   m_bUseFG = bUseFG;
 
-  unsigned int korLocalTime = GetKorLocalTime();
+  unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(
     szFileName,
     "%s\\%s_%s_Send%d.log",
@@ -1160,7 +1160,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     korLocalTime);
   m_LogFile[0].SetWriteLogFile(szFileName, pType->m_bSendLogFile, 0, 1, 1);
 
-  korLocalTime = GetKorLocalTime();
+  korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(
     szFileName,
     "%s\\%s_%s_Recv%d.log",
@@ -1170,7 +1170,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     korLocalTime);
   m_LogFile[1].SetWriteLogFile(szFileName, pType->m_bRecvLogFile, 0, 1, 1);
 
-  korLocalTime = GetKorLocalTime();
+  korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(
     szFileName,
     "%s\\%s_%s_System%d.log",
@@ -1180,7 +1180,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     korLocalTime);
   m_LogFile[2].SetWriteLogFile(szFileName, pType->m_bSystemLogFile, 0, 1, 1);
 
-  korLocalTime = GetKorLocalTime();
+  korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(
     szFileName,
     "%s\\%s_%s_Hack%d.log",
@@ -1426,7 +1426,9 @@ void CNetProcess::Release()
 
 void CNetProcess::CloseAll()
 {
-  for (int nIndex = 0; nIndex < static_cast<unsigned int>(m_Type.m_wSocketMaxNum); ++nIndex)
+  for (int nIndex = 0;
+       static_cast<unsigned int>(nIndex) < static_cast<unsigned int>(m_Type.m_wSocketMaxNum);
+       ++nIndex)
   {
     PushCloseNode(static_cast<unsigned int>(nIndex));
   }
@@ -1891,7 +1893,7 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
 
     socket->m_dwLastRecvTime = now;
     recvBuffer->AddPopPos(msgSize);
-    if (++processed > m_Type.m_dwProcessMsgNumPerLoop)
+    if (static_cast<unsigned int>(++processed) > m_Type.m_dwProcessMsgNumPerLoop)
     {
       return;
     }

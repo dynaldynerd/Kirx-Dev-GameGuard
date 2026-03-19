@@ -859,13 +859,13 @@ bool CUnmannedTraderUserInfoTable::SubCompleteBuyProcBuy(
     {
       dwTaxTotal = 75 * pkQueryList->dwTax / 100;
       dwTax = dwTaxTotal / 2;
-      const int raceCode = pkBuyPlayer->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(pkBuyPlayer->m_Param.GetRaceCode());
       CUnmannedTraderTaxRateManager::Instance()->SetPatriarchTaxMoney(raceCode, dwTax);
       CHonorGuild::Instance()->SetGuildMaintainMoney(raceCode, dwTaxTotal, pkQueryList->dwSeller);
     }
     else
     {
-      const int buyerRace = pkBuyPlayer->m_Param.GetRaceCode();
+      const int buyerRace = static_cast<int>(pkBuyPlayer->m_Param.GetRaceCode());
       const int holyMasterRace = g_HolySys.GetHolyMasterRace();
       if (buyerRace == holyMasterRace)
       {

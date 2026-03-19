@@ -156,8 +156,8 @@ bool CPlayer::dev_avator_copy(char *pwszDstName)
     return false;
   }
 
-  const int dstRaceSex = dstPlayer->m_Param.GetRaceSexCode();
-  const int srcRaceSex = this->m_Param.GetRaceSexCode();
+  const int dstRaceSex = static_cast<int>(dstPlayer->m_Param.GetRaceSexCode());
+  const int srcRaceSex = static_cast<int>(this->m_Param.GetRaceSexCode());
   if (dstRaceSex != srcRaceSex)
   {
     return false;
@@ -609,7 +609,7 @@ bool CPlayer::dev_loot_bag()
       if ( itemIndex >= recordCount )
         break;
       itemEquipCivil = GetItemEquipCivil(12, itemIndex);
-      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
       if ( itemEquipCivil[raceSexCode] == '1' )
       {
         itemRecord = g_Main.m_tblItemData[12].GetRecord( itemIndex);
@@ -745,7 +745,7 @@ bool CPlayer::dev_loot_mine()
     if (weaponRecord && weaponRecord->m_bExist && weaponRecord->m_nType == 10)
     {
       char *equipCivil = GetItemEquipCivil(6, recordIndex);
-      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
       if (equipCivil[raceSexCode] == '1')
         loot_item(this, weaponRecord->m_strCode, 1, 0LL, 0);
     }
@@ -761,7 +761,7 @@ bool CPlayer::dev_loot_mine()
       char *equipCivil = GetItemEquipCivil(16, recordIndex);
       if (equipCivil)
       {
-        const int raceSexCode = this->m_Param.GetRaceSexCode();
+        const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
         if (equipCivil[raceSexCode] == '1')
           loot_item(this, batteryRecord->m_strCode, 1, 0LL, 0);
       }
@@ -1276,8 +1276,8 @@ bool CPlayer::dev_up_all_pt(int nLv)
     float raceOffsetSquared; // [rsp+90h] [rbp-18h]
   if ( nLv <= 0 || nLv > 99 )
       return false;
-    baseOffsetSquared = pow(1000.0, 2);
-    const float baseLevelSquared = pow((float)nLv, 2);
+    baseOffsetSquared = static_cast<float>(pow(1000.0, 2));
+    const float baseLevelSquared = static_cast<float>(pow((float)nLv, 2));
     const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0));
     newStatValue = (int)pow((float)(baseRoot + -1000.0) / 2.0, 2);
     for ( statIndex = 0; (int)statIndex < 2; ++statIndex )
@@ -1289,16 +1289,16 @@ bool CPlayer::dev_up_all_pt(int nLv)
     this->Emb_UpdateStat( 2u, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(1u, 0, newStatValue);
     this->SendMsg_StatInform( 2u, newStatValue, 0);
-    forceOffsetSquared = pow(100.0, 2);
-    const float forceLevelSquared = pow((float)nLv, 2);
-    const float forceRoot = sqrt(forceOffsetSquared + (float)((float)(4.0 * forceLevelSquared) * 100.0)) + -100.0;
+    forceOffsetSquared = static_cast<float>(pow(100.0, 2));
+    const float forceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float forceRoot = static_cast<float>(sqrt(forceOffsetSquared + (float)((float)(4.0 * forceLevelSquared) * 100.0)) + -100.0);
     newStatValue = (int)pow(forceRoot / 2.0, 2);
     this->Emb_UpdateStat( 3u, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(2u, 0, newStatValue);
     this->SendMsg_StatInform( 3u, newStatValue, 0);
-    const float skillLevelSquared = pow((float)nLv, 2);
-    const float skillLevelPow4 = pow(skillLevelSquared, 2);
-    newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
+    const float skillLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float skillLevelPow4 = static_cast<float>(pow(skillLevelSquared, 2));
+    static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0f) - 1) + 0.0099999998f));
     memset(skillCountByMastery, 0, 32);
     skillRecord = 0LL;
     for ( skillIndex = 0; skillIndex < 48; ++skillIndex )
@@ -1331,9 +1331,9 @@ bool CPlayer::dev_up_all_pt(int nLv)
         this->SendMsg_StatInform( statIndex + 4, newMasteryCum, 0);
       }
     }
-    const float forceItemLevelSquared = pow((float)nLv, 2);
-    const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
-    newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
+    const float forceItemLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float forceItemLevelPow4 = static_cast<float>(pow(forceItemLevelSquared, 2));
+    static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0f) - 1) + 0.0099999998f));
     for ( statIndex = 0; (int)statIndex < 24; ++statIndex )
     {
       this->Emb_UpdateStat( statIndex + 52, newStatValue, 0);
@@ -1362,9 +1362,9 @@ bool CPlayer::dev_up_all_pt(int nLv)
     }
     else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
     {
-      raceOffsetSquared = pow(1000.0, 2);
-      const float raceLevelSquared = pow((float)nLv, 2);
-      const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+      raceOffsetSquared = static_cast<float>(pow(1000.0, 2));
+      const float raceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+      const float raceRoot = static_cast<float>(sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0);
       newStatValue = (int)pow(raceRoot / 2.0, 2);
     }
     this->Emb_UpdateStat( 79, newStatValue, 0);
@@ -1453,32 +1453,32 @@ bool CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
       {
         case 1:
         {
-          weaponOffsetSquared = pow(1000.0, 2);
-          const float weaponLevelSquared = pow((float)nLv, 2);
-          const float weaponRoot = sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0;
+          weaponOffsetSquared = static_cast<float>(pow(1000.0, 2));
+          const float weaponLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float weaponRoot = static_cast<float>(sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0);
           newStatValue = (int)pow(weaponRoot / 2.0, 2);
           break;
         }
         case 2:
         {
-          classOffsetSquared = pow(1000.0, 2);
-          const float classLevelSquared = pow((float)nLv, 2);
-          const float classRoot = sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0;
+          classOffsetSquared = static_cast<float>(pow(1000.0, 2));
+          const float classLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float classRoot = static_cast<float>(sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0);
           newStatValue = (int)pow(classRoot / 2.0, 2);
           break;
         }
         case 4:
         {
-          const float forceItemLevelSquared = pow((float)nLv, 2);
-          const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
-          newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
+          const float forceItemLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float forceItemLevelPow4 = static_cast<float>(pow(forceItemLevelSquared, 2));
+          static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0f) - 1) + 0.0099999998f));
           break;
         }
         case 3:
         {
-          const float skillLevelSquared = pow((float)nLv, 2);
-          const float skillLevelPow4 = pow(skillLevelSquared, 2);
-          newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
+          const float skillLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float skillLevelPow4 = static_cast<float>(pow(skillLevelSquared, 2));
+          static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0f) - 1) + 0.0099999998f));
           break;
         }
         case 5:
@@ -1501,9 +1501,9 @@ bool CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
           }
           else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
           {
-            raceOffsetSquared = pow(1000.0, 2);
-            const float raceLevelSquared = pow((float)nLv, 2);
-            const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+            raceOffsetSquared = static_cast<float>(pow(1000.0, 2));
+            const float raceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+            const float raceRoot = static_cast<float>(sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0);
             newStatValue = (int)pow(raceRoot / 2.0, 2);
           }
           break;
@@ -1512,9 +1512,9 @@ bool CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
     }
     else
     {
-      baseOffsetSquared = pow(1000.0, 2);
-      const float baseLevelSquared = pow((float)nLv, 2);
-      const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0)) + -1000.0;
+      baseOffsetSquared = static_cast<float>(pow(1000.0, 2));
+      const float baseLevelSquared = static_cast<float>(pow((float)nLv, 2));
+      const float baseRoot = static_cast<float>(sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0)) + -1000.0);
       newStatValue = (int)pow(baseRoot / 2.0, 2);
     }
     if ( !newStatValue )
@@ -1609,7 +1609,7 @@ bool CPlayer::dev_view_method(char *pwszDstName)
 
   CLogFile log;
   const int currentSec = GetCurrentSec();
-  const unsigned int korTime = GetKorLocalTime();
+  const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
   const char *charNameA = target->m_Param.GetCharNameA();
 
   char buffer[152]{};
@@ -1876,7 +1876,7 @@ bool CPlayer::mgr_free_ride_ship()
     return false;
   }
 
-  const unsigned __int16 raceCode = this->m_Param.GetRaceCode();
+  const unsigned __int16 raceCode = static_cast<unsigned short>(this->m_Param.GetRaceCode());
   this->OutOfMap(pIntoMap, raceCode, 4u, fPos);
   const unsigned __int8 mapCode = this->m_Param.GetMapCode();
   this->SendMsg_GotoRecallResult(0, mapCode, fPos, 4u);
@@ -2123,7 +2123,7 @@ bool CPlayer::mgr_item_telekinesis()
               dh_event_take,
               item.m_byTableCode,
               item.m_wItemIndex,
-              item.m_dwDur,
+              static_cast<int>(item.m_dwDur),
               itemBox);
           }
 
@@ -2622,7 +2622,7 @@ bool CPlayer::mgr_whisper(char *pwszMsg)
       if ( g_UserDB[playerIndex].m_bActive && g_UserDB[playerIndex].m_byUserDgr >= 2u )
       {
         senderName = this->m_Param.GetCharNameW();
-        const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+        const unsigned __int8 raceCode = static_cast<unsigned char>(this->m_Param.GetRaceCode());
         g_Player[playerIndex].SendData_ChatTrans(
           
           5u,

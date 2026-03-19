@@ -85,7 +85,7 @@ void CSkyBox::LoadSkyBox(char *szFileName)
       }
       while (materialIndex < this->mMatNum);
     }
-    for (unsigned int groupIndex = 0; groupIndex < this->mMatGroupNum; ++groupIndex)
+    for (unsigned int groupIndex = 0; groupIndex < static_cast<unsigned int>(this->mMatGroupNum); ++groupIndex)
       std::memset(this->mMatGroupSort, 0, 2LL * this->mMatGroupNum);
 
     __int64 sortIndex = 0;
@@ -110,12 +110,12 @@ void CSkyBox::LoadSkyBox(char *szFileName)
             }
             ++groupIter;
           }
-          while (groupIter < this->mMatGroupNum);
+          while (groupIter < static_cast<unsigned int>(this->mMatGroupNum));
         }
         ++materialNameIndex;
         ++materialNameIter;
       }
-      while (materialNameIndex < this->mMatNum);
+      while (materialNameIndex < static_cast<unsigned int>(this->mMatNum));
     }
   }
 }

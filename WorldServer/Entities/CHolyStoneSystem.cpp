@@ -811,7 +811,7 @@ unsigned int CHolyStoneSystem::GetStartBattleTickTime()
   ATL::CTime now = ATL::CTime::GetCurrentTime();
   ATL::CTimeSpan span = now - startTime;
 
-  const int totalHours = (span.GetDays() * 24) + span.GetHours();
+  const int totalHours = static_cast<int>((span.GetDays() * 24) + span.GetHours());
   const int totalMinutes = (totalHours * 60) + span.GetMinutes();
   return GetLoopTime() - 60000 * totalMinutes;
 }
@@ -1028,7 +1028,7 @@ bool CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetLevel() >= 25)
       {
-        const int raceCode = pOne->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
         if (raceCode == GetHolyMasterRace() && !pOne->m_byUserDgr)
         {
           return true;
@@ -1049,7 +1049,7 @@ bool CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetLevel() >= 25)
       {
-        const int raceCode = pOne->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
         if (raceCode == GetKeeperDestroyRace() && !pOne->m_byUserDgr)
         {
           return true;
@@ -1687,8 +1687,8 @@ void CHolyStoneSystem::GiveHSKQuest()
           for (int k = 0; k < 8 && partyMembers[k]; ++k)
           {
             CPlayer *member = &g_Player[partyMembers[k]->m_wZoneIndex];
-            const int memberRace = member->m_Param.GetRaceCode();
-            const int playerRace = player->m_Param.GetRaceCode();
+            const int memberRace = static_cast<int>(member->m_Param.GetRaceCode());
+            const int playerRace = static_cast<int>(player->m_Param.GetRaceCode());
             if (memberRace == playerRace && member->m_byHSKQuestCode == 100)
             {
               const unsigned __int8 byNumOfTime = GetNumOfTime();
@@ -1726,7 +1726,7 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
     if (player->m_bLive)
     {
       const unsigned int serial = player->m_Param.GetCharSerial();
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -1747,7 +1747,7 @@ void CHolyStoneSystem::SendHolyStoneHP(CPlayer *pkPlayer)
   }
 
   const unsigned int serial = pkPlayer->m_Param.GetCharSerial();
-  const unsigned __int8 raceCode = pkPlayer->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pkPlayer->m_Param.GetRaceCode());
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
   if (!ranking->IsCurrentRaceBossGroup(raceCode, serial))
   {
@@ -1784,7 +1784,7 @@ void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
     if (player->m_bLive && player->m_bOper)
     {
       const unsigned int serial = player->m_Param.GetCharSerial();
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -1815,7 +1815,7 @@ void CHolyStoneSystem::WriteLogPer10Min_Combat()
       continue;
     }
 
-    const int race = player->m_Param.GetRaceCode();
+    const int race = static_cast<int>(player->m_Param.GetRaceCode());
     if (race < 0 || race >= 3)
     {
       continue;
@@ -1975,7 +1975,7 @@ bool CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
 
   WriteLogPer10Min_Combat();
 
-  const int attackerRace = pAtter->m_Param.GetRaceCode();
+  const int attackerRace = static_cast<int>(pAtter->m_Param.GetRaceCode());
   SetHolyMasterRace(attackerRace);
   SetDestroyStoneRace(byDestroyStoneRaceCode);
   CRaceBuffManager::Instance()->RequestHolyQuestRaceBuff(2);
@@ -2075,11 +2075,11 @@ bool CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
   SendMsg_ExitStone();
   RecoverPvpCash();
 
-  CRaceBossWinRate::Instance()->UpdateWinCnt(pAtter->m_Param.GetRaceCode());
+  CRaceBossWinRate::Instance()->UpdateWinCnt(static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode()));
 
   _race_battle_log_info qryData{};
   qryData.byNth = static_cast<unsigned __int8>(m_SaveData.m_byNumOfTime);
-  qryData.dwEndTime = GetKorLocalTime();
+  qryData.dwEndTime = static_cast<unsigned int>(GetKorLocalTime());
   qryData.byWinRace = static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode());
   qryData.byLoseRace = byDestroyStoneRaceCode;
   qryData.dwBossSerilal0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
@@ -2147,7 +2147,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
     CPlayer *player = &g_Player[j];
     if (player->m_bLive && player->m_bOper && player->m_byHSKQuestCode != 100)
     {
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (race == byFailRace)
       {
         const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();

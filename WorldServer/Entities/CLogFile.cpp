@@ -409,7 +409,7 @@ void CLogFile::WriteString(const char *fmt)
   {
     SetFilePointer(hFile, 0, nullptr, FILE_END);
     DWORD written = 0;
-    const DWORD len = std::strlen(line);
+    const DWORD len = static_cast<DWORD>(std::strlen(line));
     WriteFile(hFile, line, len, &written, nullptr);
     CloseHandle(hFile);
   }

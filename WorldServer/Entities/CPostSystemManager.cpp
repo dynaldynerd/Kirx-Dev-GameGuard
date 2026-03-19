@@ -80,7 +80,7 @@ bool CPostSystemManager::InitLogger()
   }
 
   char path[128]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\PostSystem\\PostSystem%u.log", now);
   m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
   return true;

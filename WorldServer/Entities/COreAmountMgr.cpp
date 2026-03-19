@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "COreAmountMgr.h"
 
@@ -35,7 +35,7 @@ COreAmountMgr::COreAmountMgr()
   m_ftWrite.dwLowDateTime = 0;
   m_ftWrite.dwHighDateTime = 0;
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char logPath[128]{};
   sprintf_s(logPath, "..\\ZoneServerLog\\ServiceLog\\OreAmount_%u.log", korLocalTime);
   m_logOreAmount.SetWriteLogFile(logPath, 1, 0, 1, 1);

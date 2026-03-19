@@ -709,7 +709,7 @@ bool CRFWorldDatabase::Select_ArrangeInfo( unsigned int dwSerial)
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65530, arrangeInfo, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65530), arrangeInfo, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
@@ -776,10 +776,10 @@ bool CRFWorldDatabase::Select_ChracterSerialRace(
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, pSerial, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), pSerial, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
-          sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65530, pbyRace, 0LL, &strLenOrIndPtr);
+          sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65530), pbyRace, 0LL, &strLenOrIndPtr);
           if ( !sqlStatus || sqlStatus == 1 )
           {
             if ( this->m_hStmtSelect )
@@ -854,7 +854,7 @@ bool CRFWorldDatabase::Select_GuildSerial(
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, pdwGuildSerial, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), pdwGuildSerial, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
@@ -1619,7 +1619,7 @@ bool CRFWorldDatabase::SelectAllGuildSerialGrade(
             break;
         }
         sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &strLenOrIndPtr);
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65521, &pbyGrade[*pdwCount], 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65521), &pbyGrade[*pdwCount], 0LL, &strLenOrIndPtr);
         ++*pdwCount;
       }
       if ( this->m_hStmtSelect )
@@ -1667,7 +1667,7 @@ bool CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, &accountSerial, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), &accountSerial, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
@@ -1685,7 +1685,7 @@ bool CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
                 if ( sqlStatus != 1 )
                   break;
               }
-              sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 65518, &characterSerialBySlot[slotIndex], 0LL, &strLenOrIndPtr);
+              sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), &characterSerialBySlot[slotIndex], 0LL, &strLenOrIndPtr);
             }
             if ( this->m_hStmtSelect )
               SQLCloseCursor(this->m_hStmtSelect);
@@ -3650,7 +3650,7 @@ bool CRFWorldDatabase::Update_RankInGuild_Step5(
                 break;
             }
             sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pGuildMemberRankData->MemberData[memberIndex], 0LL, &strLenOrIndPtr);
-            sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, 65518, &memberLevel, 0LL, &strLenOrIndPtr);
+            sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65518), &memberLevel, 0LL, &strLenOrIndPtr);
             sqlStatus = SQLGetData(this->m_hStmtSelect, 3u, 8, &memberPvpPoint, 0LL, &strLenOrIndPtr);
             sqlStatus = SQLGetData(
                    this->m_hStmtSelect,

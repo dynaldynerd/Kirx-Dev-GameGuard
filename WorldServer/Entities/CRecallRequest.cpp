@@ -187,7 +187,7 @@ unsigned __int8 CRecallRequest::Regist(
 
   if (pkObj->m_Param.m_pGuild)
   {
-    const int raceCode = pkObj->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkObj->m_Param.GetRaceCode());
     for (int roomType = 0; roomType < 2; ++roomType)
     {
       CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();

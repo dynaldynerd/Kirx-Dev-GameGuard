@@ -300,7 +300,7 @@ void CPlayer::SendMsg_ForceResult(unsigned __int8 byErrCode, const _CHRID *targe
   toSelf.byErrCode = byErrCode;
   if (pForceItem)
   {
-    toSelf.dwItemCum = pForceItem->m_dwDur;
+    toSelf.dwItemCum = static_cast<unsigned int>(pForceItem->m_dwDur);
   }
 
   unsigned __int8 selfType[2] = {17, 2};
@@ -451,7 +451,7 @@ void CPlayer::skill_process_for_aura(int nSkillIndex)
 
     CPlayer *targetPlayer = static_cast<CPlayer *>(target);
     const unsigned int targetSerial = targetPlayer->m_Param.GetCharSerial();
-    const int raceCode = targetPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(targetPlayer->m_Param.GetRaceCode());
     const unsigned __int8 bossType =
       CPvpUserAndGuildRankingSystem::Instance()->GetBossType(static_cast<unsigned __int8>(raceCode), targetSerial);
     if (bossType != 4 && bossType != 8)
@@ -1173,7 +1173,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
 
   if (!byErrCode)
   {
-    forceLevel = GetSFLevel(forceFld->m_nLv, forceItem->m_dwDur);
+    forceLevel = static_cast<int>(GetSFLevel(forceFld->m_nLv, static_cast<unsigned int>(forceItem->m_dwDur)));
     const bool hadStealth = GetStealth(true);
     bool upMastery = false;
     unsigned __int8 assistErr = 0;
@@ -1232,7 +1232,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
                   * static_cast<float>(effHave - 1.0f));
           }
 
-          const unsigned int oldDur = forceItem->m_dwDur;
+          const unsigned int oldDur = static_cast<unsigned int>(forceItem->m_dwDur);
           unsigned int newDur = oldDur;
           if (alter > 0)
           {
@@ -2999,7 +2999,7 @@ void CPlayer::SendMsg_FixPosition(int n)
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
   msg.wEquipVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceCode = m_Param.GetRaceSexCode();
+  msg.byRaceCode = static_cast<char>(m_Param.GetRaceSexCode());
   FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
   msg.dwStateFlag = GetStateFlag();
@@ -3025,7 +3025,7 @@ void CPlayer::SendMsg_RealMovePoint(int n)
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
   msg.dwEquipVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceCode = m_Param.GetRaceSexCode();
+  msg.byRaceCode = static_cast<char>(m_Param.GetRaceSexCode());
   FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
   msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
@@ -3212,7 +3212,7 @@ int CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
   if (!m_bInGuildBattle)
   {
     const unsigned int charSerial = m_Param.GetCharSerial();
-    const int raceCode = m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(m_Param.GetRaceCode());
     const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
     if (!bossType)
     {
@@ -3578,7 +3578,7 @@ void CPlayer::RecvKillMessage(CCharacter *pDier)
   }
 
   CPlayer *deadPlayer = static_cast<CPlayer *>(pDier);
-  char *raceCode = cvt_string(deadPlayer->m_Param.GetRaceCode());
+  char *raceCode = cvt_string(static_cast<int>(deadPlayer->m_Param.GetRaceCode()));
   if (!Emb_CreateQuestEvent(quest_happen_type_pk, raceCode))
   {
     Emb_CheckActForQuest(2, raceCode, 1u, false);

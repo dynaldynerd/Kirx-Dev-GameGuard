@@ -128,7 +128,7 @@ void CChatStealSystem::StealChatMsg(CPlayer *pPlayer, unsigned __int8 byChatType
   if (stealType <= 6u && pPlayer
       && m_TargetInfo.m_dwTargetSerial == pPlayer->m_Param.GetCharSerial())
   {
-    const int byRaceCode = pPlayer->m_Param.GetRaceCode();
+    const int byRaceCode = static_cast<int>(pPlayer->m_Param.GetRaceCode());
     char *pwszSender = pPlayer->m_Param.GetCharNameW();
     const unsigned int charSerial = pPlayer->m_Param.GetCharSerial();
     SendStealMsg(m_pGM, byChatType, charSerial, pwszSender, static_cast<unsigned __int8>(byRaceCode), szChatMsg);

@@ -224,7 +224,7 @@ void CPlayer::pc_RequestDialogWithNPC(CItemStore *pStore)
   }
 
   const int npcRace = pStore->m_byNpcRaceCode;
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   if (npcRace != raceCode && npcRace != 255)
   {
     return;
@@ -248,7 +248,7 @@ void CPlayer::pc_RequestWatchingWithNPC(CItemStore *pStore)
   }
 
   const int npcRace = pStore->m_byNpcRaceCode;
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   if (npcRace != raceCode && npcRace != 255)
   {
     return;
@@ -333,7 +333,7 @@ void CPlayer::pc_RequestQuestListFromNPC(CItemStore *pStore)
   }
 
   const int npcRaceCode = pStore->m_byNpcRaceCode;
-  const int raceCode = m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(m_Param.GetRaceCode());
   if (npcRaceCode != raceCode && npcRaceCode != 255)
   {
     return;
@@ -367,7 +367,7 @@ void CPlayer::pc_RequestQuestFromNPC(CItemStore *pStore, unsigned int dwNPCQuest
   }
 
   const int npcRaceCode = pStore->m_byNpcRaceCode;
-  const int raceCode = m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(m_Param.GetRaceCode());
   if (npcRaceCode != raceCode && npcRaceCode != 255)
   {
     return;

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderTradeInfo.h"
 #include "CUnmannedTraderEnvironmentValue.h"
@@ -146,7 +146,7 @@ void CUnmannedTraderTradeInfo::NotifyIncome()
     CPlayer *player = &g_Player[k];
     if (player->m_bLive)
     {
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       g_Network.m_pProcess[0]->LoadSendMsg(
         player->m_ObjID.m_wIndex,
         type,

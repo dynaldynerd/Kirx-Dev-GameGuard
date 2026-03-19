@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -479,7 +479,7 @@ unsigned __int8 ItemCombineMgr::RequestCombineProcess(
   }
   else if (combineRecord && combineRecord->m_bCombineExist)
   {
-    const int raceSexCode = m_pMaster->m_Param.GetRaceSexCode();
+    const int raceSexCode = static_cast<int>(m_pMaster->m_Param.GetRaceSexCode());
     if (combineRecord->m_strCivil[raceSexCode] == '1')
     {
       if (combineRecord->m_dwCommit <= m_pMaster->m_Param.GetDalant())

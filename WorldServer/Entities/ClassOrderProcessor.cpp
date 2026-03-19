@@ -109,7 +109,7 @@ int ClassOrderProcessor::_CheckUserInfo(unsigned __int8 byRace, unsigned __int8 
 int ClassOrderProcessor::_QueryAppoint(CPlayer *player, char *data)
 {
   const unsigned int serial = player->m_Param.GetCharSerial();
-  const int race = player->m_Param.GetRaceCode();
+  const int race = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(race, 0);
   if (serial != raceBossSerial)
     return 20;
@@ -118,7 +118,10 @@ int ClassOrderProcessor::_QueryAppoint(CPlayer *player, char *data)
   {
     const unsigned __int8 classType = static_cast<unsigned __int8>(*data + 5);
     CPlayer *target = static_cast<CPlayer *>(g_Main.GetCharW(data + 1));
-    const int result = _CheckUserInfo(player->m_Param.GetRaceCode(), classType, target);
+    const int result = _CheckUserInfo(
+      static_cast<unsigned __int8>(player->m_Param.GetRaceCode()),
+      classType,
+      target);
     SendMsg_QueryAppointResult(player->m_id.wIndex, static_cast<unsigned __int8>(result), static_cast<unsigned __int8>(*data), data + 1);
   }
 
@@ -128,7 +131,7 @@ int ClassOrderProcessor::_QueryAppoint(CPlayer *player, char *data)
 int ClassOrderProcessor::_RequestAppoint(CPlayer *player, char *data)
 {
   const unsigned int serial = player->m_Param.GetCharSerial();
-  const int race = player->m_Param.GetRaceCode();
+  const int race = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(race, 0);
   if (serial != raceBossSerial)
     return 20;
@@ -138,7 +141,10 @@ int ClassOrderProcessor::_RequestAppoint(CPlayer *player, char *data)
 
   const unsigned __int8 classType = static_cast<unsigned __int8>(*data + 5);
   CPlayer *target = static_cast<CPlayer *>(g_Main.GetCharW(data + 1));
-  const int checkResult = _CheckUserInfo(player->m_Param.GetRaceCode(), classType, target);
+  const int checkResult = _CheckUserInfo(
+    static_cast<unsigned __int8>(player->m_Param.GetRaceCode()),
+    classType,
+    target);
   if (checkResult != 0)
   {
     SendMsg_QueryAppointResult(
@@ -165,7 +171,7 @@ int ClassOrderProcessor::_RequestAppoint(CPlayer *player, char *data)
 
 int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
 {
-  const int race = player->m_Param.GetRaceCode();
+  const int race = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(race, 0);
   CPlayer *raceBoss = GetPtrPlayerFromSerial(g_Player, MAX_PLAYER, raceBossSerial);
 
@@ -210,7 +216,7 @@ int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
   if (CandidateMgr::Instance()->AppointPatriarchGroup(player, classType))
     {
       const unsigned int playerSerial = player->m_Param.GetCharSerial();
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       const unsigned int patriarchSerial =
         CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
       const unsigned int electSerial = PatriarchElectProcessor::Instance()->GetElectSerial();
@@ -239,7 +245,7 @@ int ClassOrderProcessor::_ResponseAppoint(CPlayer *player, char *data)
 int ClassOrderProcessor::_RequestDischarge(CPlayer *player, char *data)
 {
   const unsigned int playerSerial = player->m_Param.GetCharSerial();
-  const int playerRace = player->m_Param.GetRaceCode();
+  const int playerRace = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned int raceBossSerial =
     CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(playerRace, 0);
   if (playerSerial != raceBossSerial)
@@ -273,7 +279,7 @@ int ClassOrderProcessor::_RequestDischarge(CPlayer *player, char *data)
     g_Main.m_kEtcNotifyInfo.Notify(static_cast<unsigned __int8>(online->m_Param.GetRaceCode()), online->m_ObjID.m_wIndex);
   }
 
-  const int race = player->m_Param.GetRaceCode();
+  const int race = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned __int16 len = static_cast<unsigned __int16>(sizeof(_kSend[race]));
   g_Network.m_pProcess[0]->LoadSendMsg(
     player->m_ObjID.m_wIndex,
@@ -294,12 +300,12 @@ int ClassOrderProcessor::_RequestDischarge(CPlayer *player, char *data)
 void ClassOrderProcessor::SendMsg_PatriarchInform(CPlayer *player)
 {
   const unsigned int playerSerial = player->m_Param.GetCharSerial();
-  const int raceCode = player->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
   if (playerSerial != raceBossSerial)
     return;
 
-  const int race = player->m_Param.GetRaceCode();
+  const int race = static_cast<int>(player->m_Param.GetRaceCode());
   const unsigned __int16 len = static_cast<unsigned __int16>(sizeof(_kSend[race]));
   g_Network.m_pProcess[0]->LoadSendMsg(
     player->m_ObjID.m_wIndex,

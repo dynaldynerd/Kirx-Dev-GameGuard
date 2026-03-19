@@ -509,7 +509,7 @@ void CPlayer::AlterExp_Potion(long double dAlterExp)
     return;
   }
 
-  const float playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(this->m_id.wIndex);
+  const float playerPenalty = static_cast<float>(g_Main.m_pTimeLimitMgr->GetPlayerPenalty(this->m_id.wIndex));
   const long double finalAlterExp = dAlterExp * static_cast<long double>(playerPenalty);
   if (finalAlterExp <= 0.0)
   {
@@ -1175,7 +1175,7 @@ void CPlayer::CheckNameChange()
       CPlayer *target = &g_Player[m_NameChangeBuddyInfo.nSendNum];
       if (target->m_bLive && this != target)
       {
-        const int targetRaceCode = target->m_Param.GetRaceCode();
+        const int targetRaceCode = static_cast<int>(target->m_Param.GetRaceCode());
         if (targetRaceCode == m_Param.GetRaceCode())
         {
           for (int j = 0; j < 50; ++j)
@@ -1487,7 +1487,7 @@ void CPlayer::Loop()
     if (m_pDHChannel)
     {
       unsigned __int8 raceSerial = 255;
-      const int raceCode = m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(m_Param.GetRaceCode());
       if (raceCode == 0)
       {
         raceSerial = 0;
@@ -2019,7 +2019,7 @@ unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, uns
     return 0;
   }
 
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   if (raceCode >= 3)
   {
     g_Main.m_logSystemError.Write("_check_mastery_cum_lim.. racecode : %d", raceCode);

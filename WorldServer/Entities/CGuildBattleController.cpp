@@ -745,7 +745,7 @@ bool CGuildBattleController::CheatCreateFieldObject(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *mapData = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(raceCode, mapData->m_nMapCode);
   }
@@ -758,7 +758,7 @@ bool CGuildBattleController::CheatDestroyFieldObject(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *mapData = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(raceCode, mapData->m_nMapCode);
   }
@@ -776,7 +776,7 @@ bool CGuildBattleController::CheatDestroyStone(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *mapData = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(raceCode, mapData->m_nMapCode);
   }
@@ -794,7 +794,7 @@ bool CGuildBattleController::CheatDropStone(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *mapData = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(raceCode, mapData->m_nMapCode);
   }
@@ -807,7 +807,7 @@ bool CGuildBattleController::CheatForceTakeStone(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *mapData = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(raceCode, mapData->m_nMapCode);
   }
@@ -826,7 +826,7 @@ void CGuildBattleController::DropGravityStone(CPlayer *pkPlayer)
     return;
   }
 
-  const int raceCode = pkPlayer->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
   (void)raceCode;
 
   unsigned int guildSerial = static_cast<unsigned int>(-1);
@@ -851,7 +851,7 @@ void CGuildBattleController::DropGravityStone(CPlayer *pkPlayer)
 
 void CGuildBattleController::Kill(CPlayer *pkSrcPlayer, CPlayer *pkDestPlayer)
 {
-  const int raceCode = pkSrcPlayer->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pkSrcPlayer->m_Param.GetRaceCode());
   (void)raceCode;
 
   unsigned int guildSerial = static_cast<unsigned int>(-1);
@@ -871,7 +871,7 @@ int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *curMap = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
   }
@@ -912,7 +912,7 @@ bool CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *curMap = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
   }
@@ -947,7 +947,7 @@ bool CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
   if (pkPlayer->m_pCurMap)
   {
     CMapData *curMap = pkPlayer->m_pCurMap;
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     GUILD_BATTLE::CNormalGuildBattleFieldList *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
     field = fieldList->GetField(static_cast<unsigned __int8>(raceCode), curMap->m_nMapCode);
   }

@@ -117,7 +117,7 @@ bool CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
     m_pkSendList[m].byCnt = m_dwRecordCnt[m] <= 10 ? m_dwRecordCnt[m] : 10;
     for (int n = 0; n < m_pkSendList[m].byCnt; ++n)
     {
-      m_pkSendList[m].list[n].byRank = m_ppkRaceStartPos[m][n]->m_wRank;
+      m_pkSendList[m].list[n].byRank = static_cast<unsigned char>(m_ppkRaceStartPos[m][n]->m_wRank);
       std::strcpy(m_pkSendList[m].list[n].wszGuildName, m_ppkRaceStartPos[m][n]->m_wszGuildName);
       m_pkSendList[m].list[n].byGrade = m_ppkRaceStartPos[m][n]->m_byGrade;
       std::strcpy(m_pkSendList[m].list[n].wszMasterName, m_ppkRaceStartPos[m][n]->m_wszMasterName);
@@ -193,7 +193,7 @@ void CTotalGuildRankInfo::Send(
       }
       else
       {
-        m_pkSendList[byTabRace].list[10].byRank = m_ppkRaceStartPos[bySelfRace][found]->m_wRank;
+        m_pkSendList[byTabRace].list[10].byRank = static_cast<unsigned char>(m_ppkRaceStartPos[bySelfRace][found]->m_wRank);
         std::strcpy(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszGuildName);

@@ -194,7 +194,7 @@ bool CItemStoreManager::InitLogger()
   if (this->m_pkLogger)
   {
     char Buffer[144];
-    unsigned int KorLocalTime = GetKorLocalTime();
+    unsigned int KorLocalTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(Buffer, sizeof(Buffer), "..\\ZoneServerLog\\Systemlog\\ItemStoreSystem\\ItemStoreSystem%u.log", KorLocalTime);
     this->m_pkLogger->SetWriteLogFile(Buffer, 1, 0, 1, 1);
     return true;

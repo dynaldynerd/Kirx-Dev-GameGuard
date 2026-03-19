@@ -787,7 +787,7 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     MultiTexOff();
 
     D3DLIGHT8 light{};
-    const unsigned int dayColor = CN_MixDayColor();
+    const unsigned int dayColor = static_cast<unsigned int>(CN_MixDayColor());
     GetMatLightFromColor(&light, &material, dayColor, 1.0f);
 
     light.Direction.x = -light.Direction.x;
@@ -860,7 +860,10 @@ void CEntity::SetMaterialAndLight(unsigned int a2)
     if (mFlag & 0x20)
     {
       d3dDevice->SetTextureStageState(d3dDevice, 0, D3DTSS_COLORARG2, 3u);
-      d3dDevice->SetRenderState(d3dDevice, D3DRS_TEXTUREFACTOR, CN_MixDayColor());
+      d3dDevice->SetRenderState(
+        d3dDevice,
+        D3DRS_TEXTUREFACTOR,
+        static_cast<unsigned int>(CN_MixDayColor()));
       d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_TEXCOORDINDEX, 1u);
       d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_COLORARG1, 2u);
       d3dDevice->SetTextureStageState(d3dDevice, 1, D3DTSS_COLORARG2, 1u);
@@ -900,11 +903,16 @@ void CEntity::SetVertexShaderID(_ENTITY_LIST *a2, float (*const a3)[4], unsigned
     transformedDir[1] /= dirLength;
     transformedDir[2] /= dirLength;
 
-    SetLitGrassVS(mAddFrame, a2->Factor, alpha, CN_MixDayColor(), transformedDir);
+    SetLitGrassVS(
+      mAddFrame,
+      a2->Factor,
+      alpha,
+      static_cast<unsigned int>(CN_MixDayColor()),
+      transformedDir);
   }
   else
   {
-    SetGrassVS(mAddFrame, a2->Factor, alpha, CN_MixDayColor());
+    SetGrassVS(mAddFrame, a2->Factor, alpha, static_cast<int>(CN_MixDayColor()));
   }
 }
 

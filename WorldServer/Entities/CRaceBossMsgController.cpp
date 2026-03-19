@@ -756,7 +756,7 @@ bool CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
 
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    const unsigned __int8 raceCode = pkSender->m_Param.GetRaceCode();
+    const unsigned __int8 raceCode = static_cast<unsigned char>(pkSender->m_Param.GetRaceCode());
     const unsigned int serial = pkSender->m_Param.GetCharSerial();
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     if (ranking->GetCurrentRaceBossSerial(raceCode, 0) == serial)

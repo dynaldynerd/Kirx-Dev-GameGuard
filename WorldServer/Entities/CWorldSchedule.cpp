@@ -39,7 +39,7 @@ bool CWorldSchedule::Init()
   if (!g_logSchedule.m_bInit)
   {
     char logPath[128]{};
-    const unsigned int now = GetKorLocalTime();
+    const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(logPath, "..\\ZoneServerLog\\ServiceLog\\Schedule%u.log", now);
     g_logSchedule.SetWriteLogFile(logPath, 1, 0, 1, 1);
   }

@@ -83,7 +83,7 @@ CUserDB::CUserDB()
   m_bCreateTrunkFree = false;
   if (!CUserDB::s_logAvatorDB.m_bInit)
   {
-    const unsigned int localTime = GetKorLocalTime();
+    const unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
     char buffer[80]{};
     sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\AvatorDBError%d.log", localTime);
     CUserDB::s_logAvatorDB.SetWriteLogFile(buffer, 1, false, true, true);
@@ -4090,7 +4090,7 @@ void CUserDB::Select_Char_Complete(
 
     std::strcpy(m_wszAvatorName, pLoadData->dbAvator.m_wszAvatorName);
     W2M(pLoadData->dbAvator.m_wszAvatorName, m_aszAvatorName, 17);
-    m_byNameLen = std::strlen(m_wszAvatorName);
+    m_byNameLen = static_cast<unsigned char>(std::strlen(m_wszAvatorName));
     m_tmrCheckPlayMin.TermTimeRun();
     m_dwSerial = pLoadData->dbAvator.m_dwRecordNum;
     slotIndex = pLoadData->dbAvator.m_bySlotIndex;

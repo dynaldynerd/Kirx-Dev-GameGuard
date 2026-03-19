@@ -50,7 +50,7 @@ CMgrGuildHistory::CMgrGuildHistory()
   sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\Guild", returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\%u", m_szStdPath, korLocalTime);
   CreateDirectoryA(m_szStdPath, nullptr);
 

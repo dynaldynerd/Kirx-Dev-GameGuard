@@ -184,7 +184,7 @@ bool CGoldenBoxItemMgr::_init_loggers()
 
   char filePath[256];
   memset(filePath, 0, sizeof(filePath));
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\GoldenAgeEvent\\%u.his", now);
   _kLogger.SetWriteLogFile(filePath, 1, 0, 1, 1);
   return true;
@@ -947,7 +947,7 @@ unsigned __int16 CGoldenBoxItemMgr::GetOreItemTotalCnt()
 
 unsigned __int8 CGoldenBoxItemMgr::IsBuyRaceBossGoldBox(CPlayer *pOne)
 {
-  const int raceCode = pOne->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
   CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
   if (pOne->m_dwObjSerial != rankingSystem->GetCurrentRaceBossSerial(raceCode, 0))
   {

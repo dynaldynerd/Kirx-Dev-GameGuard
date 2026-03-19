@@ -617,7 +617,7 @@ int CPotionMgr::PreCheckPotion(
       CPlayer *targetPlayer = static_cast<CPlayer *>(*pTargetCharacter);
       if (targetPlayer->m_Param.m_pGuild)
       {
-        const int raceCode = targetPlayer->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(targetPlayer->m_Param.GetRaceCode());
         CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
         CMapData *raceMap = roomSystem->GetMapData(static_cast<unsigned __int8>(raceCode), 0);
         CMapData *raceMap2 = roomSystem->GetMapData(static_cast<unsigned __int8>(raceCode), 1);
@@ -632,7 +632,7 @@ int CPotionMgr::PreCheckPotion(
     }
     else if ((pFld->m_nTempEffectType == 49 || pFld->m_nTempEffectType == 71) && pUsePlayer->m_Param.m_pGuild)
     {
-      const int raceCode = pUsePlayer->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(pUsePlayer->m_Param.GetRaceCode());
       CGuildRoomSystem *roomSystem = CGuildRoomSystem::GetInstance();
       CMapData *raceMap = roomSystem->GetMapData(static_cast<unsigned __int8>(raceCode), 0);
       CMapData *raceMap2 = roomSystem->GetMapData(static_cast<unsigned __int8>(raceCode), 1);

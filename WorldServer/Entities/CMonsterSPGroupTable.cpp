@@ -39,7 +39,7 @@ bool CMonsterSPGroupTable::Create(
         return false;
     std::memset(groups, 0, sizeof(_monster_sp_group) * recordCount);
     m_pRecordData = groups;
-    for (int n = 0; n < m_dwRecordNum; ++n)
+    for (int n = 0; static_cast<unsigned int>(n) < m_dwRecordNum; ++n)
     {
         _monster_sp_group *group = &this->m_pRecordData[n];
         _monster_fld *monsterRecord = (_monster_fld*)pMonsterRecordData->GetRecord(n);

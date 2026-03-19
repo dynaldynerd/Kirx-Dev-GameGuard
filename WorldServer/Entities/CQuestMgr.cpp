@@ -742,7 +742,7 @@ bool CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
           m_pMaster->Emb_AlterDurPoint(0, index, -static_cast<int>(consume), true, true);
         if (newDur)
         {
-          m_pMaster->SendMsg_AdjustAmountInform(0, item->m_wSerial, newDur);
+          m_pMaster->SendMsg_AdjustAmountInform(0, item->m_wSerial, static_cast<unsigned int>(newDur));
         }
         else
         {
@@ -1355,17 +1355,18 @@ bool CQuestMgr::__CheckCond_LV(unsigned __int8 byCompare, int nLv)
   {
     if (byCompare == 1)
     {
-    if (this->m_pMaster->m_Param.GetLevel() < static_cast<unsigned int>(nLv))
+    if (static_cast<unsigned int>(this->m_pMaster->m_Param.GetLevel()) < static_cast<unsigned int>(nLv))
       {
         return true;
       }
     }
-    else if (byCompare == 2 && this->m_pMaster->m_Param.GetLevel() > static_cast<unsigned int>(nLv))
+    else if (byCompare == 2
+             && static_cast<unsigned int>(this->m_pMaster->m_Param.GetLevel()) > static_cast<unsigned int>(nLv))
     {
       return true;
     }
   }
-  else if (this->m_pMaster->m_Param.GetLevel() == static_cast<unsigned int>(nLv))
+  else if (static_cast<unsigned int>(this->m_pMaster->m_Param.GetLevel()) == static_cast<unsigned int>(nLv))
   {
     return true;
   }

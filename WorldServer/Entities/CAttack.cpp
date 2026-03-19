@@ -309,7 +309,7 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
     if (!attacker->m_bInGuildBattle)
     {
       const unsigned int dwSerial = attacker->m_Param.GetCharSerial();
-      const int raceCode = attacker->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(attacker->m_Param.GetRaceCode());
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       const unsigned __int8 bossType = ranking->GetBossType(static_cast<unsigned __int8>(raceCode), dwSerial);
       if (bossType)
@@ -513,7 +513,7 @@ void CAttack::AttackForce(_attack_param *pParam, bool bUseEffBullet)
     if (!attacker->m_bInGuildBattle)
     {
       const unsigned int dwSerial = attacker->m_Param.GetCharSerial();
-      const int raceCode = attacker->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(attacker->m_Param.GetRaceCode());
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       const unsigned __int8 bossType = ranking->GetBossType(static_cast<unsigned __int8>(raceCode), dwSerial);
       if (bossType)

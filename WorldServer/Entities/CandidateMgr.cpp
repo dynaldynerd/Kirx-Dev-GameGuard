@@ -63,11 +63,11 @@ bool CandidateMgr::Initialize(int maxCount)
 {
   char filePath[256]{};
 
-  const unsigned int sysTime = GetKorLocalTime();
+  const unsigned int sysTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\SystemLog\\Patriarch\\CandidateMgr_%u.log", sysTime);
   m_kSysLog.SetWriteLogFile(filePath, true, false, true, true);
 
-  const unsigned int voteTime = GetKorLocalTime();
+  const unsigned int voteTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(filePath, sizeof(filePath), "..\\ZoneServerLog\\ServiceLog\\Patriarch\\VoteResult_%u.log", voteTime);
   m_kVoteResultLog.SetWriteLogFile(filePath, true, false, true, true);
 
@@ -253,12 +253,12 @@ CandidateMgr::_candidate_info *CandidateMgr::GetEmptyPatriarchGroup(unsigned __i
 
 bool CandidateMgr::AppointPatriarchGroup(CPlayer *pOne, _candidate_info::ClassType eClassType)
 {
-  _candidate_info *candidate = GetEmptyPatriarchGroup(pOne->m_Param.GetRaceCode());
+  _candidate_info *candidate = GetEmptyPatriarchGroup(static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode()));
   if (candidate == nullptr)
     return false;
 
   candidate->bLoad = true;
-  candidate->byRace = pOne->m_Param.GetRaceCode();
+  candidate->byRace = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   candidate->byLevel = pOne->m_Param.GetLevel();
   candidate->dwRank = pOne->m_Param.GetPvpRank();
   candidate->dPvpPoint = pOne->m_Param.GetPvPPoint();
@@ -302,7 +302,7 @@ bool CandidateMgr::DischargePatriarchGroup(unsigned __int8 byRace, _candidate_in
 
 bool CandidateMgr::Regist(CPlayer *pOne)
 {
-  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   _candidate_info *const empty = GetEmpty(raceCode);
   if (empty == nullptr)
   {

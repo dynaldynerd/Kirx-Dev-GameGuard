@@ -429,7 +429,7 @@ void CGuild::ClearVote()
     {
       m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
       m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
-      m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(172, m_wszName);
+      m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(static_cast<char>(172), m_wszName);
       m_GuildBattleSugestMatter.Clear();
     }
 
@@ -483,7 +483,7 @@ void CGuild::Loop(bool bChangeDay)
       {
         m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
         m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
-        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(170, m_wszName);
+        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(static_cast<char>(170), m_wszName);
         m_GuildBattleSugestMatter.Clear();
       }
       SendMsg_VoteComplete(false);
@@ -509,7 +509,7 @@ void CGuild::Loop(bool bChangeDay)
       {
         m_GuildBattleSugestMatter.pkSrc->m_GuildBattleSugestMatter.Clear();
         m_GuildBattleSugestMatter.pkSrc->PushDQSInGuildBattleCost();
-        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(170, m_wszName);
+        m_GuildBattleSugestMatter.pkSrc->SendMsg_ApplyGuildBattleResultInform(static_cast<char>(170), m_wszName);
         m_GuildBattleSugestMatter.Clear();
       }
       SendMsg_VoteComplete(false);

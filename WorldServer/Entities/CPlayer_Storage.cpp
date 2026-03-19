@@ -643,7 +643,7 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
           false,
           "CPlayer::pc_ForceInvenChange() -- 0"))
     {
-      this->SendMsg_ForceInvenChange(255);
+      this->SendMsg_ForceInvenChange(static_cast<char>(255));
       return;
     }
 
@@ -654,7 +654,7 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
       if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
       {
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_ForceInvenChange(255);
+        this->SendMsg_ForceInvenChange(static_cast<char>(255));
         return;
       }
       if (!this->Emb_DelStorage(
@@ -666,7 +666,7 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
       {
         this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_ForceInvenChange(255);
+        this->SendMsg_ForceInvenChange(static_cast<char>(255));
         return;
       }
 
@@ -675,14 +675,14 @@ void CPlayer::pc_ForceInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wR
       this->Emb_AddStorage(targetStorage->m_nListCode, &replaceForRestore, true, false);
       this->Emb_DelStorage(sourceStorage->m_nListCode, replaceItem->m_byStorageIndex, false, false, nullptr);
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_ForceInvenChange(255);
+      this->SendMsg_ForceInvenChange(static_cast<char>(255));
       return;
     }
 
     if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
     {
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_ForceInvenChange(255);
+      this->SendMsg_ForceInvenChange(static_cast<char>(255));
       return;
     }
     this->Emb_EquipLink();

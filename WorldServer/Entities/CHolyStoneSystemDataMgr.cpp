@@ -38,11 +38,11 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   }
 
   char logPath[128]{};
-  unsigned int now = GetKorLocalTime();
+  unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\ServiceLog\\HolyStoneSystem%u.log", now);
   clsHolyStoneSystem->m_logQuest.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
-  now = GetKorLocalTime();
+  now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\ServiceLog\\HolyStoneDestroy%u.log", now);
   clsHolyStoneSystem->m_logQuestDestroy.SetWriteLogFile(logPath, 1, 0, 1, 1);
 

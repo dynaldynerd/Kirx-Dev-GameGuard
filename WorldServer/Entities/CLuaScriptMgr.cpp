@@ -112,12 +112,12 @@ bool CLuaScriptMgr::InitSDM()
   CreateDirectoryA(kLuaScriptLogDir, nullptr);
 
   char dest[256]{};
-  const unsigned int errorTime = GetKorLocalTime();
+  const unsigned int errorTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptError%u.log", errorTime);
   m_LogScriptError.SetWriteLogFile(dest, 1, 1, 1, 1);
 
   std::memset(dest, 0, sizeof(dest));
-  const unsigned int stateTime = GetKorLocalTime();
+  const unsigned int stateTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\LuaScriptLog\\LuaScriptState%u.log", stateTime);
   m_LogScriptState.SetWriteLogFile(dest, 1, 1, 1, 1);
 

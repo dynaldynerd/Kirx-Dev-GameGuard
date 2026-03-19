@@ -1694,7 +1694,7 @@ char CMainThread::Init()
   CreateDirectoryA("..\\ZoneServerLog\\ServerExitLog", nullptr);
   clear_file("..\\ZoneServerLog\\ServerExitLog", 15);
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   _CrtSetReportHook(MyCrtDebugReportHook);
 
   char buffer[132]{};
@@ -4645,7 +4645,7 @@ void __cdecl CMainThread::DQSThread(void *param)
   }
 
   char logPath[128]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(logPath, sizeof(logPath), "..\\ZoneServerLog\\Systemlog\\DQSError%u.log", now);
   self->m_logDQS.SetWriteLogFile(logPath, 1, 0, 1, 1);
 
@@ -4855,7 +4855,7 @@ void CMainThread::pc_AllUserMsgInform(char *pwszMsg)
   }
 
   _trans_gm_msg_inform_zocl msg{};
-  msg.wMsgSize = std::strlen(pwszMsg);
+  msg.wMsgSize = static_cast<unsigned short>(std::strlen(pwszMsg));
   std::memcpy(msg.wszChatData, pwszMsg, msg.wMsgSize);
   msg.wszChatData[msg.wMsgSize] = 0;
 
@@ -4873,7 +4873,7 @@ void CMainThread::pc_AllUserMsgInform(char *pwszMsg)
 void CMainThread::pc_AllUserGMNoticeInform(char *pwszMsg)
 {
   _trans_gm_msg_inform_zocl msg{};
-  msg.wMsgSize = std::strlen(pwszMsg);
+  msg.wMsgSize = static_cast<unsigned short>(std::strlen(pwszMsg));
   std::memcpy(msg.wszChatData, pwszMsg, msg.wMsgSize);
   msg.wszChatData[msg.wMsgSize] = 0;
 

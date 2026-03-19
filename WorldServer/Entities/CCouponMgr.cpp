@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CCouponMgr.h"
 
@@ -302,7 +302,7 @@ void CCouponMgr::SendMsg_CouponLendResult(unsigned __int16 wIdx, _STORAGE_LIST::
   _add_lend_item_result_zocl msg{};
   msg.byTblCode = pCoupon->m_byTableCode;
   msg.wItemIdx = pCoupon->m_wItemIndex;
-  msg.dwDur = pCoupon->m_dwDur;
+  msg.dwDur = static_cast<unsigned int>(pCoupon->m_dwDur);
   msg.dwUp = pCoupon->m_dwLv;
   msg.dwItemSerial = pCoupon->m_wSerial;
   msg.byCsMethod = pCoupon->m_byCsMethod;
@@ -381,7 +381,7 @@ void CCouponMgr::LogOut(bool bForceClose)
     {
       m_pkInfo->bForcedClose = bForceClose;
       m_pkInfo->dwContPlayTime = m_dwContTime;
-      m_pkInfo->dwLastConnTime = GetKorLocalTime();
+      m_pkInfo->dwLastConnTime = static_cast<unsigned int>(GetKorLocalTime());
       m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
       m_pkInfo->byEnsureTime = m_byRemainTime;
     }

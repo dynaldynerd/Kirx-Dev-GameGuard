@@ -204,7 +204,7 @@ unsigned int CUnmannedTraderDivisionInfo::GetID()
 
 unsigned int CUnmannedTraderDivisionInfo::GetSize()
 {
-  return this->m_vecClass.size();
+  return static_cast<unsigned int>(this->m_vecClass.size());
 }
 
 bool CUnmannedTraderDivisionInfo::IsExistSortTypeID(unsigned int dwID)

@@ -300,7 +300,7 @@ bool AutominePersonal::regist_to_map(
     m_pItem->m_byStorageIndex,
     m_pItem->m_byTableCode,
     m_pItem->m_wItemIndex,
-    m_pItem->m_dwDur,
+    static_cast<unsigned int>(m_pItem->m_dwDur),
     m_pOwner->m_szItemHistoryFileName);
   return true;
 }
@@ -381,7 +381,7 @@ bool AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int1
     bySlotIdx,
     item->m_byTableCode,
     item->m_wItemIndex,
-    item->m_dwDur,
+    static_cast<unsigned int>(item->m_dwDur),
     m_pOwner->m_szItemHistoryFileName);
   return true;
 }
@@ -433,7 +433,7 @@ bool AutominePersonal::initialize(unsigned __int16 wIndex)
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\SystemLog\\Concession\\AminePersonal.log");
   m_logProcess.SetWriteLogFile(dest, 1, 0, 1, 1);
 
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\SystemLog\\log_AminePersonal_%u.log", now);
   m_logSysErr.SetWriteLogFile(dest, 1, 0, 1, 1);
 
@@ -641,7 +641,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
             static_cast<unsigned __int8>(-1),
             battery.m_byTableCode,
             battery.m_wItemIndex,
-            battery.m_dwDur,
+            static_cast<unsigned int>(battery.m_dwDur),
             m_pOwner->m_szItemHistoryFileName);
         }
         else
@@ -649,14 +649,14 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
           _STORAGE_LIST::_db_con *added = m_pOwner->Emb_AddStorage(0, &battery, false, true);
           if (added)
           {
-            uninstallPacket.battery[uninstallPacket.byCnt].dwDur = battery.m_dwDur;
+            uninstallPacket.battery[uninstallPacket.byCnt].dwDur = static_cast<unsigned int>(battery.m_dwDur);
             uninstallPacket.battery[uninstallPacket.byCnt++].wSerial = battery.m_wSerial;
             CPlayer::s_MgrItemHistory.personal_amine_itemlog(
               "MOVE_TO_INVEN",
               added->m_byStorageIndex,
               added->m_byTableCode,
               added->m_wItemIndex,
-              added->m_dwDur,
+              static_cast<unsigned int>(added->m_dwDur),
               m_pOwner->m_szItemHistoryFileName);
           }
           else
@@ -1187,7 +1187,10 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
       inventoryItem->m_byStorageIndex,
       inventoryItem->m_wItemIndex,
       newDur);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+    eAddMineOre(
+      static_cast<int>(m_pOwner->m_Param.GetRaceCode()),
+      static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+      1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;
@@ -1213,7 +1216,10 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     ++m_byFilledSlotCnt;
     send_current_state();
     make_minepacket(newOre.m_wItemIndex, newOre.m_wSerial, newOre.m_byStorageIndex, newOre.m_wItemIndex, 1u);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+    eAddMineOre(
+      static_cast<int>(m_pOwner->m_Param.GetRaceCode()),
+      static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+      1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;

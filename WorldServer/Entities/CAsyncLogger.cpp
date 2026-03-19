@@ -258,7 +258,8 @@ void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)
   int bufferIndex = -1;
   for (int index = 0; index < 3; ++index)
   {
-    if (m_kBufferList[index].GetBufferSize() >= iLenStr && m_kBufferList[index].GetEmptySize())
+    if (m_kBufferList[index].GetBufferSize() >= static_cast<unsigned int>(iLenStr)
+      && m_kBufferList[index].GetEmptySize())
     {
       bufferIndex = index;
       break;

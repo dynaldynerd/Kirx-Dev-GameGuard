@@ -2262,7 +2262,7 @@ sprintf_s(buffer, "Map%d", uiMapInx);
 
   void CNormalGuildBattleLogger::CreateLogFile(char *szLogName)
   {
-    const unsigned int korLocalTime = GetKorLocalTime();
+    const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
     char buffer[144]{};
     if (szLogName)
     {
@@ -4093,7 +4093,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
         continue;
       }
 
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       if (raceCode == firstRace || raceCode == secondRace)
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -4127,7 +4127,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
         continue;
       }
 
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       if (raceCode == firstRace || raceCode == secondRace)
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -4581,7 +4581,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
     schedule->GetLeftTime(&msg.byLeftHour, &msg.byLeftMin, &msg.byLeftSec);
 
-    const int raceCode = pkPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pkPlayer->m_Param.GetRaceCode());
     for (int index = 0; index < MAX_PLAYER; ++index)
     {
       CPlayer *player = &g_Player[index];
@@ -7390,7 +7390,7 @@ const int member = static_cast<int>(GetMember(dwSerial));
 
   void CGuildBattleLogger::CreateLogFile(char *szLogName)
   {
-    const unsigned int korLocalTime = GetKorLocalTime();
+    const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
     char buffer[128]{};
     if (szLogName)
     {

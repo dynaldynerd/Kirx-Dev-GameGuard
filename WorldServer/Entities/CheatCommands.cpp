@@ -202,7 +202,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
     byCommandSizeList[j] = static_cast<unsigned __int8>(std::strlen(command->pwszCommand));
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char buffer[144]{};
   sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
@@ -216,13 +216,13 @@ static const char aA_48[] = "<unknown>";
 static const char aA_49[] = "<unknown>";
 static const char aA_50[] = "<unknown>";
 static const char aCheatHelpSynta_0[] = "Cheat Help : Syntax = timeset ";
-static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset Ãƒâ€¡Ãƒâ€¡";
-static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset Ãƒâ€¡ÃƒÂ Ãƒâ‚¬";
+static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã¢â‚¬Â¡";
+static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â ÃƒÆ’Ã¢â€šÂ¬";
 static const char aCheatHelpSynta_3[] = "Cheat Help : Syntax = %eventset ";
 static const char aOne_3[] = "<unknown>";
-static const char aCoacE[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
-static const char aCoacCodeDBoxAc[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ [Code_%d Box] Ãƒâ‚¬Ãƒâ€¡ Ãƒâ‚¬ÃƒÅ“";
-static const char aCoacE_0[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
+static const char aCoacE[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ ÃƒÆ’Ã‹â€ ";
+static const char aCoacCodeDBoxAc[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ [Code_%d Box] ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã¢â‚¬Â¡ ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã…â€œ";
+static const char aCoacE_0[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ ÃƒÆ’Ã‹â€ ";
 static const char aE_2[] = "<unknown>";
 static const char aAi_8[] = "<unknown>";
 static const char aAo_6[] = "<unknown>";
@@ -405,7 +405,7 @@ static bool ParsePercentCheatValue(float *outPercent)
     return false;
   }
 
-  float percent = atof(s_pwszDstCheat[0]);
+  float percent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if (percent <= 0.0f)
   {
     return false;
@@ -1281,7 +1281,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     equipPartCode = 1;
   }
-  else if ( !std::strcmp("Ã¥Â°Â©", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("ÃƒÂ¥Ã‚Â°Ã‚Â©", s_pwszDstCheat[0]) )
   {
     equipPartCode = 2;
   }
@@ -1479,13 +1479,13 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   {
     std::strcpy(Destination, "irtal12");
   }
-  else if ( !std::strcmp(Str1, "ÃšÂº") )
+  else if ( !std::strcmp(Str1, "ÃƒÅ¡Ã‚Âº") )
   {
     std::strcpy(Destination, "irtal13");
   }
   else
   {
-    if ( std::strcmp(Str1, "ÃˆÂ°") )
+    if ( std::strcmp(Str1, "ÃƒË†Ã‚Â°") )
       return 0;
     std::strcpy(Destination, "irtal14");
   }
@@ -2071,7 +2071,7 @@ bool __fastcall ct_recv_reserved_schedulelist(CPlayer *pOne)
   dwGuildSerial = -1;
   if ( pOne->m_Param.m_pGuild )
     dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
-  uiMapID = pOne->m_Param.GetRaceCode();
+  uiMapID = static_cast<unsigned int>(pOne->m_Param.GetRaceCode());
   n = pOne->m_ObjID.m_wIndex;
 
   GUILD_BATTLE::CGuildBattleReservedScheduleListManager *listManager =
@@ -2126,7 +2126,7 @@ bool __fastcall ct_recv_current_battle_info(CPlayer *pOne)
 
   if ( !pOne )
     return 0;
-  uiMapID = pOne->m_Param.GetRaceCode();
+  uiMapID = static_cast<unsigned int>(pOne->m_Param.GetRaceCode());
   n = pOne->m_ObjID.m_wIndex;
 
   GUILD_BATTLE::CCurrentGuildBattleInfoManager *infoManager =
@@ -2341,7 +2341,7 @@ bool __fastcall ct_amp_full(CPlayer *pOne)
       updatePacket.byChangedNum = 1;
       updatePacket.change[0].wItemIndex = storageItem.m_wItemIndex;
       updatePacket.change[0].wItemSerial = storageItem.m_wSerial;
-      updatePacket.change[0].dwDur = storageItem.m_dwDur;
+      updatePacket.change[0].dwDur = static_cast<unsigned int>(storageItem.m_dwDur);
       pbyType[0] = 14;
       pbyType[1] = 55;
       const unsigned __int16 packetSize =
@@ -2440,10 +2440,10 @@ bool __fastcall ct_PcBandPrimium(CPlayer *pOne)
 {
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  const float sharedRate = atof(s_pwszDstCheat[0]);
+  const float sharedRate = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( sharedRate <= 0.0 || sharedRate > 2.0 )
     return 0;
-  const float itemDropRate = atof(s_pwszDstCheat[1]);
+  const float itemDropRate = static_cast<float>(atof(s_pwszDstCheat[1]));
   if ( itemDropRate <= 0.0 || itemDropRate > 2.0 )
     return 0;
   PCBANG_PRIMIUM_FAVOR::MINING_SPEED = sharedRate;
@@ -2515,7 +2515,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
   }
   if ( !std::strcmp("end", s_pwszDstCheat[0]) )
     return g_HolySys.ct_StopBattle();
-  if ( std::strcmp("Ã…Â°", s_pwszDstCheat[0]) )
+  if ( std::strcmp("Ãƒâ€¦Ã‚Â°", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !std::strcmp("state", s_pwszDstCheat[0]) )
       return g_HolySys.ct_State(pOne);
@@ -3775,7 +3775,7 @@ bool __fastcall ct_Win_RaceWar(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  RaceCode = pOne->m_Param.GetRaceCode();
+  RaceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
   g_HolySys.m_SaveData.m_nHolyMasterRace = RaceCode;
   return 1;
 }
@@ -3904,10 +3904,10 @@ bool __fastcall ct_set_hp(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  hpPercent = atof(s_pwszDstCheat[0]);
+  hpPercent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( hpPercent <= 0.0 || hpPercent > 100.0 )
     return 0;
-  probability = hpPercent / 100.0;
+  probability = static_cast<float>(hpPercent / 100.0);
   pOne->dev_set_hp(probability);
   return 1;
 }
@@ -4385,7 +4385,7 @@ bool __fastcall ct_set_exp_rate(CPlayer *pOne)
     return 0;
   if ( s_nWordCount != 1 )
     return 0;
-  expPercent = atof(s_pwszDstCheat[0]);
+  expPercent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( expPercent < 0.0 || expPercent >= 100.0 )
     return 0;
   lv = pOne->m_Param.GetLevel();

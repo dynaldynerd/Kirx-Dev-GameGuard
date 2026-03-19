@@ -388,7 +388,10 @@ void CPlayer::pc_MineComplete()
           }
         }
 
-        eAddMineOre(m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+        eAddMineOre(
+          static_cast<int>(m_Param.GetRaceCode()),
+          static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+          1);
         COreAmountMgr::Instance()->DecreaseOre(1u);
       }
     }
@@ -420,7 +423,7 @@ void CPlayer::SendMsg_CuttingCompleteResult(unsigned __int8 byRet)
 void CPlayer::pc_CuttingComplete(unsigned __int8 byNpcRace)
 {
 unsigned __int64 addGold = 0;
-  const unsigned int texRate = 10000 - eGetTexRate(this->m_Param.GetRaceCode());
+  const unsigned int texRate = 10000 - eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode()));
   bool hasResource = false;
 
   for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
@@ -457,7 +460,7 @@ unsigned __int64 addGold = 0;
 
   if (!this->m_byUserDgr)
   {
-    eAddGold(this->m_Param.GetRaceCode(), static_cast<int>(addGold));
+    eAddGold(static_cast<int>(this->m_Param.GetRaceCode()), static_cast<int>(addGold));
   }
 
   if (this->m_pUserDB)
@@ -643,7 +646,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
   unsigned int leftOreCount = 0;
   unsigned int consumedDalant = 0;
 
-  const int raceCode = m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(m_Param.GetRaceCode());
   const unsigned int texRate = eGetTexRate(raceCode) + 10000;
 
   const int maxResKind = GetMaxResKind();
@@ -733,7 +736,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
         const int dalantDrain = static_cast<int>(consumedDalant / static_cast<unsigned int>(managerDivisor));
         if (dalantDrain > 0)
         {
-          eAddDalant(m_Param.GetRaceCode(), -dalantDrain);
+          eAddDalant(static_cast<int>(m_Param.GetRaceCode()), -dalantDrain);
         }
       }
     }
@@ -741,7 +744,10 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
     const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(m_Param.GetRaceCode(), level, consumedDalant);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+        level,
+        consumedDalant);
     }
 
     if (m_pUserDB && CActionPointSystemMgr::Instance()->GetEventStatus(0) == 2)

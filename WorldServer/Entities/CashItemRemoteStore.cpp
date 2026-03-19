@@ -944,7 +944,7 @@ CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_check_valid(
   const __int64 couponError = _buybygold_check_coupon(pOne, pRecv, pSheet);
   if (couponError)
   {
-    return couponError;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(couponError);
   }
   return 0;
 }
@@ -991,7 +991,7 @@ CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item(
   __int64 errorCode = _buybygold_buy_single_item_check_item(pOne, pSrc, pSheet, &cashField);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   unsigned int pushedPrice = 0;
@@ -1009,7 +1009,7 @@ CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item(
     &discountRate);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   _STORAGE_LIST::_db_con giveItem;
@@ -1017,13 +1017,13 @@ CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item(
   if (errorCode)
   {
     pOne->AddGold(static_cast<int>(pushedPrice), true);
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   errorCode = _buybygold_buy_single_item_additional_process(pOne, pSrc, pSheet, Send);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   _buybygold_buy_single_item_proc_complete(
@@ -1087,7 +1087,7 @@ CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item_ch
   const __int64 itemError = _check_buyitem(raceSexCode, pSrc, *pCsFld);
   if (itemError)
   {
-    return itemError;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(itemError);
   }
   return 0;
 }
@@ -1854,24 +1854,24 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
 
   char buffer[260];
   std::memset(buffer, 0, 256);
-  unsigned int logTime = GetKorLocalTime();
+  unsigned int logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\Shop_%u.sys", logDir, logTime);
   _kLoggers[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\Shop_%u.prc", logDir, logTime);
   _kLoggers[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\DiscountRate_%u.log", logDir, logTime);
   m_cde.m_cde_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   for (int j = 0; j < 3; ++j)
   {
     std::memset(buffer, 0, 256);
-    logTime = GetKorLocalTime();
+    logTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(buffer, 256, "%s\\CashEvent_%dType_%u.log", logDir, j, logTime);
     m_cash_event[j].m_event_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
     m_cash_event[j].m_event_log.Write("Event State");
@@ -1885,7 +1885,7 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
   }
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\ConditionalEvent_%u.log", logDir, logTime);
   m_con_event.m_conevent_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 

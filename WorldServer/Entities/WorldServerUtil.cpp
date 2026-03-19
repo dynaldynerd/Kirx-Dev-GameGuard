@@ -5009,7 +5009,7 @@ struct R3Texture *R3GetTexInfoR3T(char *szFileName, int flag)
   }
 
   int textureCount = dword_140978964;
-  if (textureCount >= dword_140978968)
+  if (static_cast<unsigned int>(textureCount) >= dword_140978968)
   {
     textureTable =
       static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
@@ -5103,7 +5103,7 @@ int R3GetPreTextureId(char *szFileName)
   }
 
   int textureCount = dword_140978964;
-  if (textureCount >= dword_140978968)
+  if (static_cast<unsigned int>(textureCount) >= dword_140978968)
   {
     textureTable =
       static_cast<R3Texture *>(ReAlloc(textureTable, 144 * dword_140978968, 16 * (9 * dword_140978968 + 144)));
@@ -5243,10 +5243,10 @@ void SetNoLodTextere()
     _R3MATERIAL *const material = &qword_184A79DA8[i];
     if ((material->m_dwFlag & 2) != 0)
     {
-      SetR3D3DTexture(static_cast<unsigned int>(material->m_iDetailSurface), 2147483648);
+      SetR3D3DTexture(static_cast<unsigned int>(material->m_iDetailSurface), static_cast<int>(2147483648));
       for (unsigned int layerIndex = 0; layerIndex < material->m_dwLayerNum; ++layerIndex)
       {
-        SetR3D3DTexture(static_cast<unsigned int>(material->m_Layer[layerIndex].m_iSurface), 2147483648);
+        SetR3D3DTexture(static_cast<unsigned int>(material->m_Layer[layerIndex].m_iSurface), static_cast<int>(2147483648));
       }
     }
   }
@@ -5296,7 +5296,7 @@ __int64 GetNowR3D3DTexCnt()
 
 void SetNowR3D3DTexCnt(int cnt)
 {
-  if (cnt < dword_14097895C)
+  if (static_cast<unsigned int>(cnt) < dword_14097895C)
     std::memset(&GetTextureSlots()[cnt], 0, sizeof(R3TextureSlot) * (dword_14097895C - cnt));
   dword_14097895C = cnt;
 }
@@ -5308,7 +5308,7 @@ __int64 GetNowR3TexCnt()
 
 void SetNowR3TexCnt(int cnt)
 {
-  if (cnt < dword_140978964)
+  if (static_cast<unsigned int>(cnt) < dword_140978964)
   {
     R3Texture *texture = &GetTextureTable()[cnt];
     __int64 clearCount = dword_140978964 - cnt;
@@ -5345,7 +5345,7 @@ void R3LoadTextureMem(int id)
         break;
       ++ownerIndex;
       ++texture;
-    } while (ownerIndex < dword_140978964);
+    } while (static_cast<unsigned int>(ownerIndex) < dword_140978964);
 
     if (_bittest(reinterpret_cast<const long *>(&textures[ownerIndex].mFlag), 15))
     {
@@ -5382,7 +5382,7 @@ void R3ReleaseTextureMem(int id)
         break;
       ++ownerIndex;
       ++texture;
-    } while (ownerIndex < dword_140978964);
+    } while (static_cast<unsigned int>(ownerIndex) < dword_140978964);
   }
 
   const int refCnt = static_cast<int>(textures[ownerIndex].mSameCnt);
@@ -5628,7 +5628,7 @@ void R3RestoreAllTextures()
         }
       }
       ++textureIndex;
-    } while (textureIndex < dword_140978964);
+    } while (static_cast<unsigned int>(textureIndex) < dword_140978964);
   }
   RestoreSystemTexture();
 }
@@ -5680,7 +5680,7 @@ void Error(char *source, char *msg)
     exit(1);
   }
 
-  static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-ì—ì„œ"
+  static const unsigned char asc_140884708[7] = {0x3C, 0x2D, 0xBF, 0xA1, 0xB7, 0xAF, 0x00}; // "<-Ã¬â€”ÂÃ¬â€žÅ“"
   char *suffixDst = &fullMessage[std::strlen(fullMessage) + 1];
   std::memcpy(suffixDst - 1, asc_140884708, sizeof(asc_140884708));
   errorHandler(fullMessage);
@@ -5703,7 +5703,7 @@ void Warning(char *source, char *msg)
   void (*warningHandler)(char *) = WarningMessageProc;
   if (warningHandler)
   {
-    static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-ì—ëŸ¬"
+    static const char kSuffix[] = "\x3C\x2D\xBF\xA1\xB7\xAF"; // "<-Ã¬â€”ÂÃ«Å¸Â¬"
     strcat_s(fullMessage, kSuffix);
     warningHandler(fullMessage);
   }
@@ -6522,7 +6522,9 @@ static _LIGHTMAP **LoadR3TLightMap(struct R3Texture *a1, D3DFORMAT a2)
                    reinterpret_cast<unsigned short *>(reinterpret_cast<unsigned char *>(buf) + 72));
 
       GetTextureSlots()[lightmapIndex + a1->mStartID].mTexture =
-        GetD3DTextureFromBuffer(reinterpret_cast<unsigned char *>(buf), elementSize);
+        GetD3DTextureFromBuffer(
+          reinterpret_cast<unsigned char *>(buf),
+          static_cast<unsigned int>(elementSize));
       Dfree(buf);
       ++lightmapIndex;
       ++cur;

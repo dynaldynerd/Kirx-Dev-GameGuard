@@ -44,7 +44,7 @@ TRC_AutoTrade::TRC_AutoTrade()
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
-  this->m_byCurDay = systemTime.wDay;
+  this->m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
   this->m_wCurMonth = systemTime.wMonth;
   this->m_wCurYear = systemTime.wYear;
 }
@@ -67,7 +67,7 @@ TRC_AutoTrade::TRC_AutoTrade(unsigned char byRace)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
-  this->m_byCurDay = systemTime.wDay;
+  this->m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
   this->m_wCurMonth = systemTime.wMonth;
   this->m_wCurYear = systemTime.wYear;
 }
@@ -78,11 +78,11 @@ bool TRC_AutoTrade::Initialzie()
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog\\Concession", nullptr);
 
   char buffer[144]{};
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\ATradeTax\\atrade_earn_%d_%u.log", this->m_byRace, korLocalTime);
   this->m_serviceLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  const unsigned int korLocalTime2 = GetKorLocalTime();
+  const unsigned int korLocalTime2 = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "..\\ZoneServerLog\\SystemLog\\Concession\\system_TRC_%d_%u.log", this->m_byRace, korLocalTime2);
   this->m_sysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
@@ -168,7 +168,7 @@ void TRC_AutoTrade::set_suggested(
 
   this->m_suggested.dwNext = dwNext;
   this->m_bChangeTaxRate = true;
-  this->m_suggested.dwSuggestedTime = GetKorLocalTime();
+  this->m_suggested.dwSuggestedTime = static_cast<unsigned int>(GetKorLocalTime());
   this->m_serviceLog.Write("[Suggest Change Tax Rate]:[SUBPATRIARCH:%s] - %d(%%)", wszMatterDst, dwNext);
   this->PushDQSData();
 }
@@ -189,7 +189,7 @@ int TRC_AutoTrade::ChangeTaxRate()
       ChangeTaxRate(static_cast<float>(static_cast<int>(m_suggested.dwNext)) / 100.0f);
     }
 
-    m_byCurDay = systemTime.wDay;
+    m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
     m_wCurMonth = systemTime.wMonth;
     m_wCurYear = systemTime.wYear;
     his_income_money();
@@ -206,6 +206,7 @@ int TRC_AutoTrade::ChangeTaxRate()
 
     CHonorGuild::Instance()->ChangeHonorGuild(m_byRace);
   }
+  return 0;
 }
 
 int TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)

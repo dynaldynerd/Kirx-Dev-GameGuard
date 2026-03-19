@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderController.h"
 
@@ -237,7 +237,7 @@ bool CUnmannedTraderController::InitLogger()
     return false;
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char path[128]{};
   sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%u.log", korLocalTime);
   this->m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
@@ -309,7 +309,7 @@ unsigned __int8 CUnmannedTraderController::SelectSearchList(
     return 0;
   }
 
-  if (pData->byPage >= pageCount)
+  if (static_cast<unsigned int>(pData->byPage) >= pageCount)
   {
     *byProcRet = 63;
     return 0;
@@ -512,7 +512,8 @@ bool CUnmannedTraderController::InsertDefalutRecord()
   int emptyCount = g_Main.m_pWorldDB->Select_UnmannedTraderSingleItemEmptyRecordCnt();
   if (emptyCount >= 0)
   {
-    if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt <= emptyCount
+    if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt
+      <= static_cast<unsigned int>(emptyCount)
       || g_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord(
         CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt))
     {

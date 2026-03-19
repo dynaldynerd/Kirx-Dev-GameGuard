@@ -188,13 +188,14 @@ void CPlayer::SendMsg_EconomyHistoryInform()
 
 void CPlayer::SendMsg_EconomyRateInform(char bStart)
 {
-_economy_rate_inform_zocl msg{};
+  _economy_rate_inform_zocl msg{};
 
   msg.bStart = bStart;
-  msg.fPayExgRate = static_cast<float>(eGetRate(this->m_Param.GetRaceCode()));
-  msg.fTexRate = eGetTex(this->m_Param.GetRaceCode());
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
+  msg.fPayExgRate = static_cast<float>(eGetRate(raceCode));
+  msg.fTexRate = eGetTex(raceCode);
   msg.wMgrValue = static_cast<unsigned __int16>(eGetMgrValue());
-  msg.fOreSellRate = eGetOreRate(this->m_Param.GetRaceCode());
+  msg.fOreSellRate = eGetOreRate(raceCode);
 
   if (!bStart)
   {

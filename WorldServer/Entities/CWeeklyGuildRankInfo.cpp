@@ -279,7 +279,7 @@ bool CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData
     m_pkSendList[n].byCnt = m_dwRecordCnt[n] <= 10 ? m_dwRecordCnt[n] : 10;
     for (int ii = 0; ii < m_pkSendList[n].byCnt; ++ii)
     {
-      m_pkSendList[n].list[ii].byRank = m_ppkRaceStartPos[n][ii]->m_wRank;
+      m_pkSendList[n].list[ii].byRank = static_cast<char>(m_ppkRaceStartPos[n][ii]->m_wRank);
       std::strcpy(m_pkSendList[n].list[ii].wszGuildName, m_ppkRaceStartPos[n][ii]->m_wszGuildName);
       m_pkSendList[n].list[ii].byGrade = m_ppkRaceStartPos[n][ii]->m_byGrade;
       m_pkSendList[n].list[ii].dwPvpPoint =
@@ -503,7 +503,7 @@ void CWeeklyGuildRankInfo::Send(
       }
       else
       {
-        m_pkSendList[byTabRace].list[10].byRank = m_ppkRaceStartPos[bySelfRace][found]->m_wRank;
+        m_pkSendList[byTabRace].list[10].byRank = static_cast<char>(m_ppkRaceStartPos[bySelfRace][found]->m_wRank);
         std::strcpy(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszGuildName);

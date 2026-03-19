@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -628,7 +628,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 0"))
     {
-      this->SendMsg_AnimusInvenChange(255);
+      this->SendMsg_AnimusInvenChange(static_cast<char>(255));
       return;
     }
 
@@ -639,7 +639,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
       if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
       {
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(255);
+        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
         return;
       }
       if (!this->Emb_DelStorage(
@@ -656,7 +656,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(255);
+        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
         return;
       }
     }
@@ -675,14 +675,14 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(255);
+        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
         return;
       }
     }
     else if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
     {
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_AnimusInvenChange(255);
+      this->SendMsg_AnimusInvenChange(static_cast<char>(255));
       return;
     }
     this->Emb_EquipLink();

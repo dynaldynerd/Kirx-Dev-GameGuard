@@ -1029,7 +1029,7 @@ bool CRFWorldDatabase::create_sumtotal_dungeon(int nRecodeNum, char **ppKey)
 
   for (int index = 0; index < nRecodeNum; ++index)
   {
-    const int queryLength = std::strlen(buffer);
+    const int queryLength = static_cast<int>(std::strlen(buffer));
     if (queryLength >= 0)
     {
       const size_t remaining = sizeof(buffer) - static_cast<size_t>(queryLength);
@@ -1037,7 +1037,7 @@ bool CRFWorldDatabase::create_sumtotal_dungeon(int nRecodeNum, char **ppKey)
     }
   }
 
-  const int queryLength = std::strlen(buffer);
+  const int queryLength = static_cast<int>(std::strlen(buffer));
   sprintf_s(
     &buffer[queryLength],
     sizeof(buffer) - static_cast<size_t>(queryLength),
@@ -5983,7 +5983,7 @@ int CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordSerial(unsigned 
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 4294967291;
+          return static_cast<int>(4294967291u);
         }
 
         if (m_hStmtSelect)

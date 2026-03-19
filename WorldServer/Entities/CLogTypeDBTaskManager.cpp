@@ -450,7 +450,7 @@ bool CLogTypeDBTaskManager::InitLogger()
     return false;
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char dest[128]{};
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\Systemlog\\LogTypeDBTaskError%u.log", korLocalTime);
   m_pkLogger->SetWriteLogFile(dest, 1, 0, 1, 1);

@@ -376,7 +376,7 @@ void CPlayer::Guild_Insert_Complete(_DB_QRY_SYN_DATA *pData)
       const unsigned int estConsumeDalant =
         static_cast<unsigned int>(g_Main.m_GuildCreateEventInfo.GetEstConsumeDalant());
 
-      guildMaster->SendMsg_GuildEstablishFail(255);
+      guildMaster->SendMsg_GuildEstablishFail(static_cast<char>(255));
       guildMaster->AddDalant(estConsumeDalant, 0);
       std::strcpy(guildNameWide, query->in_w_guildName);
       W2M(guildNameWide, guildNameAnsi, 128);
@@ -531,7 +531,7 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
   {
     if (player)
     {
-      player->SendMsg_GuildSelfLeaveResult(255);
+      player->SendMsg_GuildSelfLeaveResult(static_cast<char>(255));
     }
     return;
   }
@@ -549,7 +549,7 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
             player->m_ObjID.m_wIndex,
             player->m_pUserDB->m_dwSerial))
       {
-        player->SendMsg_GuildSelfLeaveResult(255);
+        player->SendMsg_GuildSelfLeaveResult(static_cast<char>(255));
         return;
       }
     }
@@ -1633,7 +1633,7 @@ void CPlayer::pc_GuildRoomRestTimeRequest(_guildroom_resttime_request_clzo *pPro
 void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
 {
   const unsigned int charSerial = this->m_Param.GetCharSerial();
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   const unsigned int raceBossSerial =
     CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(raceCode, 0);
 
@@ -1652,7 +1652,7 @@ void CPlayer::pc_GuildSetHonorRequest(_guild_honor_set_request_clzo *pData)
 
 void CPlayer::pc_GuildHonorListRequest(unsigned __int8 byUI)
 {
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   CHonorGuild::Instance()->SendCurrHonorGuildList(this->m_ObjID.m_wIndex, static_cast<unsigned __int8>(raceCode), byUI);
 }
 
@@ -1678,7 +1678,7 @@ void CPlayer::pc_GuildQueryInfoRequest(unsigned int dwGuildSerial)
 void CPlayer::pc_GuildListRequest(unsigned __int8 byPage)
 {
   const unsigned int charSerial = this->m_Param.GetCharSerial();
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
     static_cast<unsigned __int8>(raceCode),
     0);
@@ -1697,7 +1697,7 @@ void CPlayer::pc_GuildListRequest(unsigned __int8 byPage)
 void CPlayer::pc_GuildNextHonorListRequest()
 {
   const unsigned int charSerial = this->m_Param.GetCharSerial();
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
     static_cast<unsigned __int8>(raceCode),
     0);

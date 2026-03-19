@@ -185,7 +185,8 @@ void CMonsterHierarchy::OnChildRegenLoop()
     return;
   }
 
-  if (m_pParentMon || GetLoopTime() - m_dwChildRecallTime <= monsterRecord->m_nGuardRecallTimeMS)
+  if (m_pParentMon
+    || GetLoopTime() - m_dwChildRecallTime <= static_cast<unsigned int>(monsterRecord->m_nGuardRecallTimeMS))
   {
     return;
   }

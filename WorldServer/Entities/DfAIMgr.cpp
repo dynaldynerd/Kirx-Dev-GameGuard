@@ -1133,8 +1133,8 @@ int DfAIMgr::CheckAlienation(CMonster *pMon)
   float targetPos[3];
   float src[3];
 
-  targetPos[0] = pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(static_cast<int>(dist)));
-  targetPos[2] = pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(static_cast<int>(dist)));
+  targetPos[0] = static_cast<float>(pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(static_cast<int>(dist))));
+  targetPos[2] = static_cast<float>(pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(static_cast<int>(dist))));
   targetPos[1] = pMon->m_fCurPos[1];
 
   if (!pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, targetPos, &src))
@@ -1189,9 +1189,9 @@ int DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int bAt
         float midPos[3];
 
         tarPos[0] =
-          pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          static_cast<float>(pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(50 - rand() % 100 + dist)));
         tarPos[2] =
-          pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          static_cast<float>(pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(50 - rand() % 100 + dist)));
         tarPos[1] = pMon->m_fCurPos[1];
 
         if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, tarPos, &midPos))

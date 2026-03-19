@@ -73,13 +73,13 @@ void AutominePersonalMgr::release()
 bool AutominePersonalMgr::initialize()
 {
   char dest[128]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   std::memset(dest, 0, sizeof(dest));
 
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\SystemLog\\Concession\\ampersonalmgr_%u.log", now);
   m_logService.SetWriteLogFile(dest, 1, 0, 1, 1);
 
-  const unsigned int now2 = GetKorLocalTime();
+  const unsigned int now2 = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\systemlog\\log_ampersonalmgr_%u.log", now2);
   m_logError.SetWriteLogFile(dest, 1, 0, 1, 1);
 
@@ -546,7 +546,7 @@ bool AutominePersonalMgr::selectore(unsigned int n, const _personal_automine_sel
     return true;
   }
 
-  machine->set_selore(m_wOreIndex[oreSlot]);
+  machine->set_selore(static_cast<unsigned __int8>(m_wOreIndex[oreSlot]));
 
   _personal_automine_selore_zocl msg{};
   msg.dwObjSerial = machine->get_objserial();
@@ -677,7 +677,7 @@ bool AutominePersonalMgr::extract_battery(unsigned int n, const _personal_automi
     added->m_byStorageIndex,
     added->m_byTableCode,
     added->m_wItemIndex,
-    added->m_dwDur,
+    static_cast<unsigned int>(added->m_dwDur),
     owner->m_szItemHistoryFileName);
   return true;
 }
@@ -764,7 +764,7 @@ bool AutominePersonalMgr::extract_battery(unsigned int n)
     added->m_byStorageIndex,
     added->m_byTableCode,
     added->m_wItemIndex,
-    added->m_dwDur,
+    static_cast<unsigned int>(added->m_dwDur),
     owner->m_szItemHistoryFileName);
   }
   return true;
@@ -841,7 +841,7 @@ bool AutominePersonalMgr::pop_ore(unsigned int n, const _personal_automine_popor
     added->m_byStorageIndex,
     added->m_byTableCode,
     added->m_wItemIndex,
-    added->m_dwDur,
+    static_cast<unsigned int>(added->m_dwDur),
     player->m_szItemHistoryFileName);
   return true;
 }

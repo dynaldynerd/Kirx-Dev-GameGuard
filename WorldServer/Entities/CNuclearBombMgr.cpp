@@ -213,7 +213,7 @@ unsigned __int8 CNuclearBombMgr::GetBossType(unsigned __int8 byRace, unsigned in
 
 bool CNuclearBombMgr::IsPatriarch(CPlayer *pOne)
 {
-  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   const unsigned int charSerial = pOne->m_Param.GetCharSerial();
   return GetBossType(raceCode, charSerial) < 3u;
 }
@@ -238,7 +238,7 @@ bool CNuclearBombMgr::CreateMissile(
   unsigned int informTime,
   unsigned int startTime)
 {
-  const unsigned __int8 raceCode = pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pMaster->m_Param.GetRaceCode());
   const unsigned int charSerial = pMaster->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
 
@@ -267,7 +267,7 @@ bool CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
     return false;
   }
 
-  const unsigned __int8 raceCode = player->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(player->m_Param.GetRaceCode());
   const unsigned int charSerial = player->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
   if (!IsPatriarch(player))
@@ -344,7 +344,7 @@ bool CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
     return true;
   }
 
-  const unsigned __int8 raceCode = master->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(master->m_Param.GetRaceCode());
   const unsigned int charSerial = master->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)

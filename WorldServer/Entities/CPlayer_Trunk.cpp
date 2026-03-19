@@ -307,7 +307,10 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwSub);
     }
   }
 
@@ -445,7 +448,10 @@ void CPlayer::pc_TrunkExtendRequest()
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwSub);
     }
   }
 
@@ -793,14 +799,17 @@ void CPlayer::pc_TrunkIoMoveRequest(
           if (byStartStorageIndex == 5 || byStartStorageIndex == 7)
           {
             dwConsumDalant = static_cast<unsigned int>(
-              GetItemStoragePrice(pFixingItem->m_byTableCode, pFixingItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+              static_cast<int>(GetItemStoragePrice(
+                pFixingItem->m_byTableCode,
+                pFixingItem->m_wItemIndex,
+                static_cast<int>(this->m_Param.GetRaceCode()))));
             if (IsOverLapItem(pFixingItem->m_byTableCode))
             {
               dwConsumDalant *= static_cast<unsigned int>(pFixingItem->m_dwDur);
             }
 
             const unsigned __int64 taxAdjusted =
-              static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+              static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
               * static_cast<unsigned __int64>(dwConsumDalant);
             dwConsumDalant = static_cast<unsigned int>(taxAdjusted / 10000);
           }
@@ -859,7 +868,10 @@ void CPlayer::pc_TrunkIoMoveRequest(
       const int level = this->m_Param.GetLevel();
       if (IsEconomyFeeLevel(level))
       {
-        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwConsumDalant);
+        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+          static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+          level,
+          dwConsumDalant);
       }
     }
   }
@@ -950,7 +962,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
           else if (!IsItemEquipCivil(
                      pStartItem->m_byTableCode,
                      pStartItem->m_wItemIndex,
-                     this->m_Param.GetRaceSexCode()))
+                     static_cast<unsigned char>(this->m_Param.GetRaceSexCode())))
           {
             byRetCode = 44;
           }
@@ -986,7 +998,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
           else if (!IsItemEquipCivil(
                      pTargetItem->m_byTableCode,
                      pTargetItem->m_wItemIndex,
-                     this->m_Param.GetRaceSexCode()))
+                     static_cast<unsigned char>(this->m_Param.GetRaceSexCode())))
           {
             byRetCode = 44;
           }
@@ -1010,14 +1022,17 @@ void CPlayer::pc_TrunkIoSwapRequest(
           if (pFeeItem)
           {
             dwConsumDalant = static_cast<unsigned int>(
-              GetItemStoragePrice(pFeeItem->m_byTableCode, pFeeItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+              static_cast<int>(GetItemStoragePrice(
+                pFeeItem->m_byTableCode,
+                pFeeItem->m_wItemIndex,
+                static_cast<int>(this->m_Param.GetRaceCode()))));
             if (IsOverLapItem(pFeeItem->m_byTableCode))
             {
               dwConsumDalant *= static_cast<unsigned int>(pFeeItem->m_dwDur);
             }
 
             const unsigned __int64 taxAdjusted =
-              static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+              static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
               * static_cast<unsigned __int64>(dwConsumDalant);
             dwConsumDalant = static_cast<unsigned int>(taxAdjusted / 10000);
           }
@@ -1120,7 +1135,10 @@ void CPlayer::pc_TrunkIoSwapRequest(
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwConsumDalant);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwConsumDalant);
     }
   }
 
@@ -1219,14 +1237,17 @@ void CPlayer::pc_TrunkIoMergeRequest(
         if ((byStartStorageIndex == 5 && byTarStorageIndex != 7) || (byStartStorageIndex == 7 && byTarStorageIndex != 5))
         {
           dwSub = static_cast<unsigned int>(
-            GetItemStoragePrice(pStartItem->m_byTableCode, pStartItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+            static_cast<int>(GetItemStoragePrice(
+              pStartItem->m_byTableCode,
+              pStartItem->m_wItemIndex,
+              static_cast<int>(this->m_Param.GetRaceCode()))));
           if (IsOverLapItem(pStartItem->m_byTableCode))
           {
             dwSub *= wMoveAmount;
           }
 
           const unsigned __int64 taxAdjusted =
-            static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+            static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
             * static_cast<unsigned __int64>(dwSub);
           dwSub = static_cast<unsigned int>(taxAdjusted / 10000);
         }
@@ -1254,7 +1275,10 @@ void CPlayer::pc_TrunkIoMergeRequest(
       const int level = this->m_Param.GetLevel();
       if (IsEconomyFeeLevel(level))
       {
-        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+          static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+          level,
+          dwSub);
       }
     }
   }

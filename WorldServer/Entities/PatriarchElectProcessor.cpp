@@ -145,7 +145,7 @@ bool PatriarchElectProcessor::Initialize()
   clear_file("..\\ZoneServerLog\\Systemlog\\Patriarch", 30);
 
   memset(buffer, 0, 256);
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "..\\ZoneServerLog\\SystemLog\\Patriarch\\PatriarchElect_%u.log", now);
   _kSysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
@@ -494,7 +494,7 @@ void PatriarchElectProcessor::SendMsg_ConnectNewUser(CPlayer *pOne)
     if (CanAddMoneyForMaxLimMoney(addMoney, dalant))
     {
       const unsigned int charSerial = pOne->m_Param.GetCharSerial();
-      const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+      const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
       _qry_case_request_refund query(raceCode, pOne->m_id.wIndex, charSerial, addMoney);
       const int size = query.size();
       g_Main.PushDQSData(static_cast<unsigned __int8>(-1), nullptr, 123, reinterpret_cast<char *>(&query), size);
@@ -766,7 +766,7 @@ bool PatriarchElectProcessor::CheatClearPatriarch()
 
 bool PatriarchElectProcessor::CheatSetPatriarch(CPlayer *pOne, int eClass)
 {
-  const int raceCode = pOne->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
   if (raceCode < 0 || raceCode >= 3)
   {
     return false;
@@ -912,7 +912,7 @@ void PatriarchElectProcessor::CompleteRequestRefund(_DB_QRY_SYN_DATA *pData)
         const unsigned int serial = player->m_Param.GetCharSerial();
         CPlayer::s_MgrItemHistory.raceboss_giveback(
           serial,
-          qryData->dwRefund,
+          static_cast<unsigned int>(qryData->dwRefund),
           player->m_szItemHistoryFileName);
         return;
       }

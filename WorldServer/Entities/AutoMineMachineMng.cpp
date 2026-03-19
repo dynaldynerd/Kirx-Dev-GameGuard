@@ -137,7 +137,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
 
   char buffer[1040]{};
   std::memset(buffer, 0, 1024);
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, sizeof(buffer),
     "..\\ZoneServerLog\\systemlog\\Concession\\AutoMine_R%d_T%d_%d.log",
     m_byRace,
@@ -145,7 +145,7 @@ bool AutoMineMachine::Initialize(unsigned __int8 byRace, unsigned __int8 byColli
     now);
   m_Log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  const unsigned int now2 = GetKorLocalTime();
+  const unsigned int now2 = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, sizeof(buffer),
     "..\\ZoneServerLog\\systemlog\\Concession\\err_automineR%d_T%d_%d.log",
     m_byRace,
@@ -1049,7 +1049,7 @@ bool AutoMineMachineMng::OpenUI(int n)
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type != static_cast<unsigned __int8>(-1))
   {
@@ -1074,7 +1074,7 @@ bool AutoMineMachineMng::CloseUI(int n)
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1095,7 +1095,7 @@ bool AutoMineMachineMng::StartWorkMachine(int n)
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1116,7 +1116,7 @@ bool AutoMineMachineMng::StopWorkMachine(int n)
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1137,7 +1137,7 @@ bool AutoMineMachineMng::SelectOreType(int n, const _pt_automine_selectore_clzo 
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1158,7 +1158,7 @@ bool AutoMineMachineMng::GetOutOre(int n, const _pt_automine_getoutore_clzo *req
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1179,7 +1179,7 @@ bool AutoMineMachineMng::MoveOrePos(int n, const _pt_automine_moveore_clzo *requ
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1205,7 +1205,7 @@ bool AutoMineMachineMng::BatteryCharge(int n, const _pt_automine_charge_clzo *re
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {
@@ -1226,7 +1226,7 @@ bool AutoMineMachineMng::OreMerge(int n, const _pt_automine_merge_clzo *request)
     return true;
   }
 
-  const unsigned __int8 raceCode = pUser->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pUser->m_Param.GetRaceCode());
   const unsigned __int8 type = get_type(pUser, raceCode);
   if (type == static_cast<unsigned __int8>(-1))
   {

@@ -79,7 +79,7 @@ bool CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
   std::strcpy(started.wszContent, pwszContent);
-  started.wContentSize = std::strlen(pwszContent) + 1;
+  started.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -97,7 +97,7 @@ bool CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
   std::strcpy(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
+  m_SendStarted.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
   m_SendStarted.wLeftSec = 300;
   return true;
 }
@@ -133,7 +133,7 @@ bool CVoteSystem::StartVote(
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
   std::strcpy(started.wszContent, pwszContent);
-  started.wContentSize = std::strlen(pwszContent) + 1;
+  started.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -142,7 +142,7 @@ bool CVoteSystem::StartVote(
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
   std::strcpy(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
+  m_SendStarted.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
   m_SendStarted.wLeftSec = 300;
 
   for (int index = 0; index < MAX_PLAYER; ++index)
@@ -152,7 +152,7 @@ bool CVoteSystem::StartVote(
         static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
     {
       const unsigned int charSerial = player->m_Param.GetCharSerial();
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       if (ranking->GetBossType(raceCode, charSerial) == 255)
       {

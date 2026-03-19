@@ -256,7 +256,7 @@ void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
     const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
-    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)
@@ -437,7 +437,7 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
     if (!m_pAttPlayer->m_bInGuildBattle)
     {
       const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
-      const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
       if (bossType)
@@ -552,7 +552,7 @@ void CPlayerAttack::WPActiveAttackSkill(_attack_param *pParam)
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
     const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
-    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)
@@ -632,7 +632,7 @@ void CPlayerAttack::WPActiveAttackForce(_attack_param *pParam)
   if (!m_pAttPlayer->m_bInGuildBattle)
   {
     const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
-    const int raceCode = m_pAttPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
     if (bossType)

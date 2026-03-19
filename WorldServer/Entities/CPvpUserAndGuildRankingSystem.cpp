@@ -53,7 +53,7 @@ bool CPvpUserAndGuildRankingSystem::InitLogger()
   }
 
   char path[1024]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\RankJob%u.log", now);
   m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
   m_kUserRankingProcess.SetLogger(m_pkLogger);
