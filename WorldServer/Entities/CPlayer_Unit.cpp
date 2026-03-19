@@ -1748,7 +1748,8 @@ void CPlayer::pc_UnitDeliveryRequest(
   CParkingUnit *parkingUnit = nullptr;
   unsigned __int8 transDistCode = 0;
   // Yorozuya fix (non-IDA parity): ignore packet position and use current player position.
-  const float *deliveryPos = m_fCurPos;
+  float deliveryPos[3]{};
+  std::memcpy(deliveryPos, m_fCurPos, sizeof(deliveryPos));
 
   if (!unitData->dwGauge)
   {

@@ -177,6 +177,9 @@
 #include <cmath>
 #include <mmsystem.h>
 
+__int64 GetItemEquipGrade(int nTableCode, int nItemIndex);
+__int64 GetItemEquipGrade(int nTableCode, const char *szRecordCode);
+
 _skill_fld *CPlayer::ms_pXmas_Snow_Effect;
 _skill_fld *CPlayer::ms_pXmas_Snow_Bullet_Effect;
 CMgrAvatorItemHistory CPlayer::s_MgrItemHistory;
