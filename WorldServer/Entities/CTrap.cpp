@@ -524,6 +524,22 @@ void CTrap::RecvKillMessage(CCharacter *pDier)
 
 void CTrap::SendMsg_FixPosition(int n)
 {
+  CPlayer *targetPlayer = &g_Player[n];
+  // Yorozuya fix (non-IDA parity): hide trap position unless viewer is owner or
+  // has trap-detection effect.
+  if (m_dwMasterSerial != targetPlayer->m_Param.GetCharSerial())
+  {
+    if (!targetPlayer->m_EP.GetEff_State(EFF_STATE_TRAP_DETECTION))
+    {
+      return;
+    }
+  }
+
+  SendMsg_FixPositionImpl(n);
+}
+
+void CTrap::SendMsg_FixPositionImpl(int n)
+{
 
   _trap_fixpositon_zocl msg{};
   msg.wRecIndex = static_cast<unsigned __int16>(m_pRecordSet->m_dwIndex);
@@ -582,6 +598,16 @@ void CTrap::SendMsg_Create()
 
 void CTrap::SendMsg_Attack(CAttack *pAt)
 {
+  // Yorozuya fix (non-IDA parity): reveal trap to damaged players before attack inform.
+  for (int j = 0; j < pAt->m_nDamagedObjNum; ++j)
+  {
+    CCharacter *target = pAt->m_DamList[j].m_pChar;
+    if (!target->m_ObjID.m_byKind && !target->m_ObjID.m_byID)
+    {
+      SendMsg_FixPositionImpl(target->m_ObjID.m_wIndex);
+    }
+  }
+
   const unsigned __int8 listCount = pAt->m_nDamagedObjNum > 32 ? 0 : static_cast<unsigned __int8>(pAt->m_nDamagedObjNum);
   _attack_trap_inform_zocl payload{};
   payload.dwAtterSerial = m_dwObjSerial;

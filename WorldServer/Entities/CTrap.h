@@ -83,6 +83,9 @@ public:
     unsigned int dwAttackSerial,
     bool bJadeReturn) override;
   __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
+
+private:
+  void SendMsg_FixPositionImpl(int n);
 };
 
 CTrap *CreateTrap(
