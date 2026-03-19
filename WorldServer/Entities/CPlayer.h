@@ -2730,6 +2730,8 @@ public:
   _ATTACK_DELAY_CHECKER m_AttDelayChker;
   // Yorozuya fix (non-IDA parity): per-force attack delay tracking.
   unsigned int m_dwForceAttackDelayEnd[6][4];
+  // Yorozuya fix (non-IDA parity): normal attack delay tracking.
+  unsigned int m_dwNormalAttackDelayEnd;
   float m_fUnitPv_AttFc;
   float m_fUnitPv_DefFc;
   float m_fUnitPv_RepPr;

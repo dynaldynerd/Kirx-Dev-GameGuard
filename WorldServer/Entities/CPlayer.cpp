@@ -1647,6 +1647,8 @@ void CPlayer::Init(_object_id *pID)
   m_MoveHackInfo.m_nCountWarning = 0;
   // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
   std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
+  // Yorozuya fix (non-IDA parity): reset normal attack delay tracking.
+  m_dwNormalAttackDelayEnd = 0;
   m_NameChangeBuddyInfo.Init();
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
@@ -1716,6 +1718,8 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   std::memset(this->m_byEffectEquipCode, 0, sizeof(this->m_byEffectEquipCode));
   // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
   std::memset(this->m_dwForceAttackDelayEnd, 0, sizeof(this->m_dwForceAttackDelayEnd));
+  // Yorozuya fix (non-IDA parity): reset normal attack delay tracking.
+  this->m_dwNormalAttackDelayEnd = 0;
   this->m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
 
   CMapData *map = g_MapOper.GetMap(pData.dbAvator.m_byMapCode);
@@ -17658,6 +17662,37 @@ char CPlayer::_pre_check_normal_attack(
     {
       return static_cast<char>(-3);
     }
+  }
+
+  // Yorozuya fix (non-IDA parity): extra normal attack delay tracking.
+  if (!bCount && !m_bSFDelayNotCheck)
+  {
+    const DWORD now = GetTickCount();
+    if (!IsAttackDelayReady(now, m_dwNormalAttackDelayEnd))
+    {
+      return static_cast<char>(-5);
+    }
+
+    int effPlus = 0;
+    if (m_pmWpn.byWpType != 7)
+    {
+      effPlus = static_cast<int>(m_EP.GetEff_Plus(m_pmWpn.byWpClass + 9));
+    }
+
+    const int addDelay = static_cast<int>(CalcEquipAttackDelay());
+    const int level = static_cast<int>(GetLevel());
+    const unsigned int attackDelay = m_pmWpn.GetAttackDelay(level, addDelay);
+    int delay = effPlus + static_cast<int>(attackDelay);
+    if (m_pmWpn.byWpType == 7)
+    {
+      const float effPlusInner = m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11);
+      delay = static_cast<int>(static_cast<float>(delay) + effPlusInner);
+    }
+    if (delay < 0)
+    {
+      delay = 0;
+    }
+    m_dwNormalAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
   }
 
   *ppBulletProp = bulletItem;
