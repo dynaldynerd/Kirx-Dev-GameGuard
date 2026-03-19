@@ -496,73 +496,96 @@ void CPlayer::pc_MineStart(
   {
     resultCode = 9;
   }
-  else if (byMineIndex >= m_pCurMap->m_nResDumNum)
-  {
-    resultCode = 1;
-  }
   else
   {
-    resDummy = &m_pCurMap->m_pResDummy[byMineIndex];
-    if (!resDummy || resDummy->m_byQualityGrade == 2)
+    // Yorozuya fix (non-IDA parity): block deprecated ore items by code.
+    static const char *const kDeprecatedOreCodes[] = {
+      "ioblu04",
+      "iored04",
+      "ioyel04",
+      "iogre04",
+      "iobla04",
+    };
+    for (const char *code : kDeprecatedOreCodes)
     {
-      resultCode = 28;
-    }
-    else if (resDummy->m_byQualityGrade == 2 || IsMiningByMinigTicket())
-    {
-      resDummySector = m_pCurMap->GetResDummySector(byMineIndex, m_fCurPos);
-      if (resDummySector == -1)
+      if (!std::strcmp(oreRecord->m_strCode, code))
       {
-        resultCode = 2;
+        resultCode = 9;
+        break;
+      }
+    }
+
+    if (!resultCode)
+    {
+      if (byMineIndex >= m_pCurMap->m_nResDumNum)
+      {
+        resultCode = 1;
       }
       else
       {
-        toolItem = &m_Param.m_dbEquip.m_pStorageList[6];
-        if (!toolItem->m_bLoad)
+        resDummy = &m_pCurMap->m_pResDummy[byMineIndex];
+        if (!resDummy || resDummy->m_byQualityGrade == 2)
         {
-          resultCode = 4;
+          resultCode = 28;
         }
-        else if (toolItem->m_bLock)
+        else if (resDummy->m_byQualityGrade == 2 || IsMiningByMinigTicket())
         {
-          resultCode = 12;
-        }
-        else
-        {
-          _WeaponItem_fld *toolRecord = reinterpret_cast<_WeaponItem_fld *>(
-            g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex));
-          if (!toolRecord || toolRecord->m_nType != 10)
+          resDummySector = m_pCurMap->GetResDummySector(byMineIndex, m_fCurPos);
+          if (resDummySector == -1)
           {
-            resultCode = 5;
+            resultCode = 2;
           }
           else
           {
-            batteryItem = m_Param.m_dbInven.GetPtrFromSerial(wBatterySerial);
-            if (!batteryItem)
+            toolItem = &m_Param.m_dbEquip.m_pStorageList[6];
+            if (!toolItem->m_bLoad)
             {
-              resultCode = 8;
+              resultCode = 4;
             }
-            else if (batteryItem->m_byTableCode != 16)
-            {
-              resultCode = 8;
-            }
-            else if (batteryItem->m_wItemIndex >= 6u && batteryItem->m_wItemIndex <= 9u)
-            {
-              resultCode = 8;
-            }
-            else if (batteryItem->m_bLock)
+            else if (toolItem->m_bLock)
             {
               resultCode = 12;
             }
-            else if (!COreAmountMgr::Instance()->IsOreRemain())
+            else
             {
-              resultCode = 27;
+              _WeaponItem_fld *toolRecord = reinterpret_cast<_WeaponItem_fld *>(
+                g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex));
+              if (!toolRecord || toolRecord->m_nType != 10)
+              {
+                resultCode = 5;
+              }
+              else
+              {
+                batteryItem = m_Param.m_dbInven.GetPtrFromSerial(wBatterySerial);
+                if (!batteryItem)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_byTableCode != 16)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_wItemIndex >= 6u && batteryItem->m_wItemIndex <= 9u)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_bLock)
+                {
+                  resultCode = 12;
+                }
+                else if (!COreAmountMgr::Instance()->IsOreRemain())
+                {
+                  resultCode = 27;
+                }
+              }
             }
           }
         }
+        else
+        {
+          resultCode = 26;
+        }
       }
-    }
-    else
-    {
-      resultCode = 26;
     }
   }
 
