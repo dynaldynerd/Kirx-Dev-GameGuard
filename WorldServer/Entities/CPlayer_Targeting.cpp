@@ -2710,6 +2710,19 @@ void CPlayer::pc_ChangeModeType(unsigned __int8 nModeType, unsigned __int8 nStan
 
 void CPlayer::pc_GestureRequest(unsigned __int8 byGestureType)
 {
+  // Yorozuya fix (non-IDA parity): block gestures while mining, in siege mode, or riding a unit.
+  if (IsMineMode())
+  {
+    return;
+  }
+  if (IsActingSiegeMode() || IsSiegeMode())
+  {
+    return;
+  }
+  if (IsRidingUnit())
+  {
+    return;
+  }
   this->SendMsg_GestureInform(byGestureType);
 }
 
