@@ -912,6 +912,11 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
   {
     byErrCode = 14;
   }
+  // Yorozuya fix (non-IDA parity): block force request in siege mode.
+  else if (IsSiegeMode())
+  {
+    byErrCode = 14;
+  }
   else if (m_byMoveType == 2)
   {
     byErrCode = 28;
@@ -958,6 +963,15 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
     }
   }
 
+  // Yorozuya fix (non-IDA parity): enforce fixed-weapon compatibility.
+  if (!byErrCode && std::strchr(forceFld->m_strFixWeapon, '1') != nullptr)
+  {
+    if (m_pmWpn.GetAttackToolType() != 1 || forceFld->m_strFixWeapon[m_pmWpn.byWpType] != '1')
+    {
+      byErrCode = 8;
+    }
+  }
+
   if (!byErrCode && !m_bSFDelayNotCheck
       && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 1u, forceFld->m_dwIndex, forceFld->m_nMastIndex))
   {
@@ -988,6 +1002,40 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
         if (dist > availableDist)
         {
           byErrCode = 8;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 8;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra force attack delay tracking.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const int forceClass = static_cast<int>(forceFld->m_nClass);
+        const int forceLevel = static_cast<int>(forceFld->m_nLv);
+        if (forceClass >= 0 && forceClass < 6 && forceLevel >= 0 && forceLevel < 4)
+        {
+          const DWORD now = GetTickCount();
+          if (!IsAttackDelayReady(now, m_dwForceAttackDelayEnd[forceClass][forceLevel]))
+          {
+            byErrCode = 9;
+          }
+          else
+          {
+            int delay = static_cast<int>(forceFld->m_fActDelay + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13));
+            if (delay < 0)
+            {
+              delay = 0;
+            }
+            m_dwForceAttackDelayEnd[forceClass][forceLevel] = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+          }
         }
       }
     }
