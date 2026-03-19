@@ -1747,6 +1747,8 @@ void CPlayer::pc_UnitDeliveryRequest(
   unsigned int consumeDalant = 0;
   CParkingUnit *parkingUnit = nullptr;
   unsigned __int8 transDistCode = 0;
+  // Yorozuya fix (non-IDA parity): ignore packet position and use current player position.
+  const float *deliveryPos = m_fCurPos;
 
   if (!unitData->dwGauge)
   {
@@ -1813,7 +1815,7 @@ void CPlayer::pc_UnitDeliveryRequest(
 
       if (!resultCode)
       {
-        if (GetSqrt(m_fCurPos, pfNewPos) > 40.0f)
+        if (GetSqrt(m_fCurPos, deliveryPos) > 40.0f)
         {
           resultCode = 24;
         }
@@ -1840,7 +1842,7 @@ void CPlayer::pc_UnitDeliveryRequest(
     createData.byCreateType = 0;
     createData.m_pMap = m_pCurMap;
     createData.m_nLayerIndex = m_wMapLayerIndex;
-    std::memcpy(createData.m_fStartPos, pfNewPos, sizeof(createData.m_fStartPos));
+    std::memcpy(createData.m_fStartPos, deliveryPos, sizeof(createData.m_fStartPos));
     createData.byTransDistCode = transDistCode;
 
     unsigned int maxGauge = 10000u;
