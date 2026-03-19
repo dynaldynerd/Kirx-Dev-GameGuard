@@ -1029,11 +1029,10 @@ void AutominePersonal::set_delaysec(unsigned __int8 dwDS)
 
 void AutominePersonal::send_attacked()
 {
-  const float hp = static_cast<float>(GetHP());
-  const float maxHp = static_cast<float>(GetMaxHP());
+  // Yorozuya fix (non-IDA parity): broadcast automine HP-rate to nearby clients.
   _personal_automine_alter_dur_zocl alterDurPacket{};
   alterDurPacket.dwObjSerial = m_dwObjSerial;
-  alterDurPacket.wHPRate = static_cast<unsigned __int16>(static_cast<int>((hp / maxHp) * 10000.0f));
+  alterDurPacket.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
 
   unsigned __int8 circleType[2] = {14, 60};
   CircleReport(
