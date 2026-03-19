@@ -5164,6 +5164,27 @@ void CPlayer::NetClose(bool bMoveOutLobby)
   }
   m_Param.m_bPersonalAmineInven = 0;
 
+  // Yorozuya fix (non-IDA parity): reset post-load flags and custom delay/hack trackers on disconnect.
+  m_bPostLoad = false;
+  m_bPostLoading = false;
+  m_MoveHackInfo.m_dwLastMoveTime = 0;
+  m_MoveHackInfo.m_dwWarningEndTime = 0;
+  m_MoveHackInfo.m_fLastSpeed = 0.0f;
+  m_MoveHackInfo.m_nCountMove = 0;
+  m_MoveHackInfo.m_nCountWarning = 0;
+  std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
+  m_dwNormalAttackDelayEnd = 0;
+  m_dwSiegeAttackDelayEnd = 0;
+  std::memset(m_dwSkillAttackDelayEnd, 0, sizeof(m_dwSkillAttackDelayEnd));
+  if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount)
+  {
+    std::memset(
+      m_pdwClassSkillAttackDelayEnd,
+      0,
+      sizeof(unsigned int) * m_dwClassSkillDelayCount);
+  }
+  m_dwUnitAttackDelayEnd = 0;
+
   LendItemMng::Instance()->Release(m_ObjID.m_wIndex);
 
   if (m_bLoad && m_bOper)
