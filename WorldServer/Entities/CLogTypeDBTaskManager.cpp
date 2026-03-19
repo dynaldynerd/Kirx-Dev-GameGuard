@@ -386,6 +386,11 @@ CLogTypeDBTaskManager::CLogTypeDBTaskManager()
 
 CLogTypeDBTaskManager::~CLogTypeDBTaskManager()
 {
+  // Yorozuya fix (non-IDA parity): signal DB thread to stop before teardown.
+  {
+    std::unique_lock<std::mutex> lock(s_mtxDestroy);
+    s_bDBProcDestroy = true;
+  }
   CleanUp();
 }
 
