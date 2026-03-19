@@ -45,7 +45,8 @@ float GetDist(float *const a1, float *const a2)
 {
     const float dx = *a2 - *a1;
     const float dz = a2[2] - a1[2];
-    return std::sqrt((dx * dx) + (dz * dz));
+    // Yorozuya fix (non-IDA parity): SIMD-optimized 2D distance (x/z).
+    return SseLength2D(dx, dz);
 }
 
 float Get3DSqrt(float *Pos, float *Tar)
