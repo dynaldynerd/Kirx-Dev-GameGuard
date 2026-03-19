@@ -1570,30 +1570,74 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(skillFld->m_strActableDst, target))
+    else
     {
-      byErrCode = 5;
-    }
-    else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-    {
-      byErrCode = 8;
-    }
-    else if (skillFld->m_nContEffectType != -1)
-    {
-      if (!target->IsRecvableContEffect())
+      // Yorozuya fix (non-IDA parity): enforce unit throw range (with Y distance check).
+      float availableDist = (target->GetWidth() / 2.0f) + weaponRecord->m_fAttackRange;
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
       {
-        byErrCode = 13;
-      }
-      else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
-      {
-        const bool inGuildRoom = m_Param.m_pGuild
-          && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-            m_Param.m_pGuild->m_dwSerial,
-            m_ObjID.m_wIndex,
-            m_pUserDB->m_dwSerial);
-        if (IsInTown() || target->IsInTown() || inGuildRoom)
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
         {
-          byErrCode = 18;
+          byErrCode = 5;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 5;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra unit-attack delay tracking.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const DWORD now = GetTickCount();
+        if (!IsAttackDelayReady(now, m_dwUnitAttackDelayEnd))
+        {
+          byErrCode = 9;
+        }
+        else
+        {
+          int delay = static_cast<int>(weaponRecord->m_nAttackDel);
+          if (delay < 0)
+          {
+            delay = 0;
+          }
+          m_dwUnitAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+        }
+      }
+
+      if (!byErrCode && !IsEffectableDst(skillFld->m_strActableDst, target))
+      {
+        byErrCode = 5;
+      }
+      else if (!byErrCode && skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
+      {
+        byErrCode = 8;
+      }
+      else if (!byErrCode && skillFld->m_nContEffectType != -1)
+      {
+        if (!target->IsRecvableContEffect())
+        {
+          byErrCode = 13;
+        }
+        else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+        {
+          const bool inGuildRoom = m_Param.m_pGuild
+            && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+              m_Param.m_pGuild->m_dwSerial,
+              m_ObjID.m_wIndex,
+              m_pUserDB->m_dwSerial);
+          if (IsInTown() || target->IsInTown() || inGuildRoom)
+          {
+            byErrCode = 18;
+          }
         }
       }
     }
