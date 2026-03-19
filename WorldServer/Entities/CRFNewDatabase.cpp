@@ -133,8 +133,16 @@ bool CRFNewDatabase::ConfigUserODBC(
   offset = static_cast<unsigned __int16>(sprintf_s(buffer, "DSN=%s%c", szDSN, 0));
   offset = static_cast<unsigned __int16>(
     offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DESCRIPTION=%s%c", szDatabase, 0));
-  offset = static_cast<unsigned __int16>(
-    offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=%s,%u%c", szServer, wPort, 0));
+  if (bTrustedConnection)
+  {
+    offset = static_cast<unsigned __int16>(
+      offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=(local)%c", 0));
+  }
+  else
+  {
+    offset = static_cast<unsigned __int16>(
+      offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=%s,%u%c", szServer, wPort, 0));
+  }
   offset = static_cast<unsigned __int16>(
     offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DATABASE=%s%c", szDatabase, 0));
   if (bTrustedConnection)
