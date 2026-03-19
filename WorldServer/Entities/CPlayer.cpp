@@ -3310,6 +3310,12 @@ void CPlayer::MoveError()
 
 bool CPlayer::CheckMove(float *pfTar)
 {
+  // Non-IDA parity: observers bypass move-hack checks (speed/wall/fly).
+  if (m_bObserver)
+  {
+    return true;
+  }
+
   bool result = false;
 
   do
