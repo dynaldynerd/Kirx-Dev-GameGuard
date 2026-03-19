@@ -3009,7 +3009,19 @@ void CPlayer::SendMsg_FixPosition(int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 
   // Yorozuya fix (non-IDA parity): refresh full shape-all for the target viewer.
-  SendMsg_OtherShapeAll(targetPlayer);
+  if (!m_bLive)
+  {
+    SendMsg_OtherShapeError(targetPlayer, 0);
+    return;
+  }
+
+  unsigned __int8 shapeType[2] = {3, 31};
+  const unsigned __int16 shapeLen = static_cast<unsigned __int16>(m_bufShapeAll.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetPlayer->m_ObjID.m_wIndex,
+    shapeType,
+    reinterpret_cast<char *>(&m_bufShapeAll),
+    shapeLen);
 }
 
 void CPlayer::SendMsg_RealMovePoint(int n)
@@ -3037,6 +3049,21 @@ void CPlayer::SendMsg_RealMovePoint(int n)
 
   unsigned __int8 type[2] = {4, 21};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+
+  // Yorozuya fix (non-IDA parity): refresh full shape-all for the target viewer.
+  if (!m_bLive)
+  {
+    SendMsg_OtherShapeError(targetPlayer, 0);
+    return;
+  }
+
+  unsigned __int8 shapeType[2] = {3, 31};
+  const unsigned __int16 shapeLen = static_cast<unsigned __int16>(m_bufShapeAll.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetPlayer->m_ObjID.m_wIndex,
+    shapeType,
+    reinterpret_cast<char *>(&m_bufShapeAll),
+    shapeLen);
 }
 
 float CPlayer::CalcDPRate()
