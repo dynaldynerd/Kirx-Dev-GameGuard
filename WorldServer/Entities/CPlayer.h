@@ -2732,6 +2732,8 @@ public:
   unsigned int m_dwForceAttackDelayEnd[6][4];
   // Yorozuya fix (non-IDA parity): normal attack delay tracking.
   unsigned int m_dwNormalAttackDelayEnd;
+  // Yorozuya fix (non-IDA parity): siege attack delay tracking.
+  unsigned int m_dwSiegeAttackDelayEnd;
   float m_fUnitPv_AttFc;
   float m_fUnitPv_DefFc;
   float m_fUnitPv_RepPr;
