@@ -113,9 +113,10 @@ void CMgrGuildHistory::OnLoop()
   }
 }
 
-unsigned int CMgrGuildHistory::GetTotalWaitSize()
+int CMgrGuildHistory::GetTotalWaitSize()
 {
-  return m_listLogData.size();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData.size());
 }
 
 void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)

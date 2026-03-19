@@ -96,14 +96,16 @@ void CPostReturnStorage::DelPostData(unsigned int dwPostSerial)
   }
 }
 
-unsigned int CPostReturnStorage::GetReturnPostInx()
+int CPostReturnStorage::GetReturnPostInx()
 {
   for (int j = 0; j < 10; ++j)
   {
     if (m_PostData[j].GetState() == 100)
     {
-      return static_cast<unsigned int>(j);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(j));
     }
   }
-  return static_cast<unsigned int>(-1);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(-1));
 }

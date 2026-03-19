@@ -232,7 +232,7 @@ void CAsyncLogger::Loop()
   }
 }
 
-unsigned int CAsyncLogger::GetTotalWaitSize()
+int CAsyncLogger::GetTotalWaitSize()
 {
   if (m_kBufferList == nullptr)
   {
@@ -244,7 +244,8 @@ unsigned int CAsyncLogger::GetTotalWaitSize()
   {
     totalCount += static_cast<unsigned int>(m_kBufferList[index].GetProcCount());
   }
-  return totalCount;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(totalCount);
 }
 
 void CAsyncLogger::Log(const char *szFileName, const char *szLog, int iLenStr)

@@ -47,10 +47,10 @@ bool CRaceBuffHolyQuestResultInfo::Load()
   return false;
 }
 
-char CRaceBuffHolyQuestResultInfo::Save()
+bool CRaceBuffHolyQuestResultInfo::Save()
 {
   SaveINI();
-  return 1;
+  return true;
 }
 
 bool CRaceBuffHolyQuestResultInfo::LoadINI()

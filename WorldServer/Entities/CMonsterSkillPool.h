@@ -16,8 +16,8 @@ public:
   CMonsterSkillPool();
   ~CMonsterSkillPool();
   void Init();
-  __int64 Set(CMonster *pMyMonster);
-  __int64 InsertSkill(CMonsterSkill *skill);
+  int Set(CMonster *pMyMonster);
+  int InsertSkill(CMonsterSkill *skill);
   CMonsterSkill *GetMonSkill(unsigned int nIndex);
   CMonsterSkill *GetMonSkillKind(unsigned int nKind);
 };

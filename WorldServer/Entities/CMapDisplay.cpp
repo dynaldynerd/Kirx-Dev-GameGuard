@@ -73,17 +73,17 @@ CMapDisplay::~CMapDisplay()
   }
 }
 
-char CMapDisplay::OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex)
+bool CMapDisplay::OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex)
 {
   if (m_bDisplayMode)
   {
-    return 0;
+    return false;
   }
 
   m_bDisplayMode = true;
   if (InitSurface(pMap) != 0)
   {
-    return 0;
+    return false;
   }
 
   m_pActMap = pMap;
@@ -92,32 +92,32 @@ char CMapDisplay::OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex)
   {
     m_wLayerIndex = 0;
   }
-  return 1;
+  return true;
 }
 
-char CMapDisplay::ChangeMap(CMapData *pMap)
+bool CMapDisplay::ChangeMap(CMapData *pMap)
 {
   if (!m_bDisplayMode)
   {
-    return 0;
+    return false;
   }
 
   if (m_pActMap == pMap)
   {
-    return 0;
+    return false;
   }
 
   InitSurface(pMap);
   m_pActMap = pMap;
   m_wLayerIndex = 0;
-  return 1;
+  return true;
 }
 
-char CMapDisplay::ChangeLayer(unsigned __int16 wLayerIndex)
+bool CMapDisplay::ChangeLayer(unsigned __int16 wLayerIndex)
 {
   if (!m_bDisplayMode)
   {
-    return 0;
+    return false;
   }
 
   if (wLayerIndex < m_pActMap->m_pMapSet->m_nLayerNum && m_wLayerIndex != wLayerIndex)
@@ -125,7 +125,7 @@ char CMapDisplay::ChangeLayer(unsigned __int16 wLayerIndex)
     m_wLayerIndex = wLayerIndex;
   }
 
-  return 1;
+  return true;
 }
 
 void CMapDisplay::DrawDisplay()
@@ -146,16 +146,16 @@ void CMapDisplay::DrawDisplay()
   Present();
 }
 
-char CMapDisplay::OffDisplay()
+bool CMapDisplay::OffDisplay()
 {
   if (!m_bDisplayMode)
   {
-    return 0;
+    return false;
   }
 
   if (FAILED(ReleaseDisplay()))
   {
-    return 0;
+    return false;
   }
 
   std::memset(m_nDummyDrawNum, 0, sizeof(m_nDummyDrawNum));
@@ -173,7 +173,7 @@ char CMapDisplay::OffDisplay()
   m_wOldLayerIndex = m_wLayerIndex;
   m_pActMap = nullptr;
   m_wLayerIndex = 0;
-  return 1;
+  return true;
 }
 
 void CMapDisplay::DrawMap()
@@ -400,7 +400,7 @@ void CMapDisplay::DrawObject()
   }
 }
 
-__int64 CMapDisplay::_DrawObject(CGameObject *pObj, CSurface *pSF)
+HRESULT CMapDisplay::_DrawObject(CGameObject *pObj, CSurface *pSF)
 {
   if (!pObj || !pSF)
   {
@@ -442,7 +442,7 @@ __int64 CMapDisplay::_DrawObject(CGameObject *pObj, CSurface *pSF)
     DDBLTFAST_SRCCOLORKEY);
 }
 
-__int64 CMapDisplay::DrawSelectMonsterLookAtPos(CMonster *pMon)
+HRESULT CMapDisplay::DrawSelectMonsterLookAtPos(CMonster *pMon)
 {
   if (!m_pSFCircle || !pMon)
   {
@@ -537,7 +537,7 @@ CGameObject *CMapDisplay::SelectObject(CPoint *pt)
   return nullptr;
 }
 
-int CMapDisplay::InitSurface(CMapData *pMap)
+HRESULT CMapDisplay::InitSurface(CMapData *pMap)
 {
   if (m_bDisplayMode && ReleaseDisplay() != 0)
   {
@@ -583,7 +583,7 @@ int CMapDisplay::InitSurface(CMapData *pMap)
   return result;
 }
 
-int CMapDisplay::CreateObjSurface()
+HRESULT CMapDisplay::CreateObjSurface()
 {
   const char *characterBitmaps[13] = {
     ".\\Bitmap\\Player.bmp",

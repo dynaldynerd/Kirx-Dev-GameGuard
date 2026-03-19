@@ -218,17 +218,17 @@ unsigned __int8 CPvpUserRankingInfo::GetBossType(unsigned __int8 byRaceCode, uns
   return static_cast<unsigned __int8>(-1);
 }
 
-char CPvpUserRankingInfo::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)
+bool CPvpUserRankingInfo::IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial)
 {
   for (int j = 1; j < 9; ++j)
   {
     unsigned long *serials = m_dwCurrentRaceBossSerial[byRace];
     if (serials && serials[j] == dwSerial)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void CPvpUserRankingInfo::SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial)
@@ -295,7 +295,7 @@ void CPvpUserRankingInfo::IncreaseVesion()
   ++m_byPvpRankDataVersion;
 }
 
-char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
+bool CPvpUserRankingInfo::LoadPvpRank(char *szDate)
 {
   for (int race = 0; race < 3; ++race)
   {
@@ -313,7 +313,7 @@ char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
       if (selectResult != 2)
       {
         MyMessageBox("DatabaseInit", "load race rank fail");
-        return 0;
+        return false;
       }
 
       for (int index = 0; index < 9; ++index)
@@ -339,12 +339,12 @@ char CPvpUserRankingInfo::LoadPvpRank(char *szDate)
   if (processor->LoadDatabae())
   {
     g_Main.m_logLoadingError.Write("PvpRankData Packing Complete!!");
-    return 1;
+    return true;
   }
 
   MyMessageBox("DatabaseInit", "!!! Failed init(Patriarch Elect system.)");
   g_Main.m_logLoadingError.Write("!!! Failed init(Patriarch Elect system.)");
-  return 0;
+  return false;
 }
 
 void CPvpUserRankingInfo::ClearTomorrowPvpRankData()
@@ -677,7 +677,7 @@ void CUserRankingProcess::SetLogger(CLogFile *pkLogger)
   m_kGuildRanking.SetLogger(pkLogger);
 }
 
-char CUserRankingProcess::Load()
+bool CUserRankingProcess::Load()
 {
   char szDate[40]{};
   GetRankDateStr(szDate, 10uLL);
@@ -687,23 +687,23 @@ char CUserRankingProcess::Load()
     m_pkLogger->Write(
       "CUserRankingProcess::Load() : CheckAndCreateTodayPvpRankTable(szDate(%s)) Fail!",
       szDate);
-    return 0;
+    return false;
   }
 
   if (!m_kPvpRankingInfo.LoadPvpRank(szDate))
   {
     m_pkLogger->Write("CUserRankingProcess::Load() : LoadPvpRank(szDate(%s)) Fail!", szDate);
-    return 0;
+    return false;
   }
 
   CheckTomorrowPvpRankDate();
   m_kPvpRankingInfo.IncreaseVesion();
   if (!m_kGuildRanking.Load())
   {
-    return 0;
+    return false;
   }
   m_eState = PS_WAIT;
-  return 1;
+  return true;
 }
 
 void CUserRankingProcess::GetRankDateStr(char *szDate, unsigned __int64 tDateStrSize)
@@ -748,7 +748,7 @@ void CUserRankingProcess::GetTommorrowStr(char *szTommorrow)
   sprintf_s(szTommorrow, 10, "%d%s%s", local.tm_year + 1900, month, day);
 }
 
-char CUserRankingProcess::CheckAndCreateTodayPvpRankTable(char *szDate)
+bool CUserRankingProcess::CheckAndCreateTodayPvpRankTable(char *szDate)
 {
   char tableName[56]{};
   sprintf_s(tableName, 32uLL, "tbl_PvpRank%s", szDate);
@@ -757,13 +757,13 @@ char CUserRankingProcess::CheckAndCreateTodayPvpRankTable(char *szDate)
     if (!g_Main.m_pWorldDB->Update_RaceRank(szDate))
     {
       MyMessageBox("DatabaseInit", "create race-rank-table fail");
-      return 0;
+      return false;
     }
 
     g_Main.m_logLoadingError.Write("Today Rank Table(%s) Make Complete!!", tableName);
   }
 
-  return 1;
+  return true;
 }
 
 void CUserRankingProcess::CheckTomorrowPvpRankDate()

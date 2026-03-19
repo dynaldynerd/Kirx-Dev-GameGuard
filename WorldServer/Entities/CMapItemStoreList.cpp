@@ -31,17 +31,17 @@ void CMapItemStoreList::SetTypeNSerial(unsigned __int8 byType, int nSerial)
     this->m_nSerial = nSerial;
 }
 
-char CMapItemStoreList::CopyItemStoreData(CMapItemStoreList *pDest)
+bool CMapItemStoreList::CopyItemStoreData(CMapItemStoreList *pDest)
 {
     if (m_bUse || !pDest)
     {
-        return 0;
+        return false;
     }
 
     m_nItemStoreNum = pDest->m_nItemStoreNum;
     if (m_nItemStoreNum <= 0)
     {
-        return 0;
+        return false;
     }
 
     m_ItemStore = new CItemStore[m_nItemStoreNum];
@@ -68,7 +68,7 @@ char CMapItemStoreList::CopyItemStoreData(CMapItemStoreList *pDest)
             9616);
     }
 
-    return 1;
+    return true;
 }
 
 bool CMapItemStoreList::CreateStores(CMapData *pMap)

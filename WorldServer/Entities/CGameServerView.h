@@ -29,7 +29,7 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL PreCreateWindow(CREATESTRUCT &cs) override;
+  int PreCreateWindow(CREATESTRUCT &cs) override;
   void OnInitialUpdate() override;
 
   afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

@@ -38,11 +38,11 @@ void CParkingUnit::Init(_object_id *pID)
   m_wHPRate = 0;
 }
 
-char CParkingUnit::Create(_parkingunit_create_setdata *pParam)
+bool CParkingUnit::Create(_parkingunit_create_setdata *pParam)
 {
   if (!CGameObject::Create(pParam))
   {
-    return 0;
+    return false;
   }
 
   m_dwObjSerial = s_dwSerialCounter++;
@@ -56,7 +56,7 @@ char CParkingUnit::Create(_parkingunit_create_setdata *pParam)
   m_wHPRate = pParam->wHPRate;
   ++s_nLiveNum;
   SendMsg_Create();
-  return 1;
+  return true;
 }
 
 bool CParkingUnit::Destroy(unsigned __int8 byDestoryType)

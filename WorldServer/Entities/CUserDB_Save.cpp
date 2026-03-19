@@ -10,19 +10,19 @@
 
 #include <mmsystem.h>
 
-char CUserDB::UpdateContUserSave(bool bDirect)
+bool CUserDB::UpdateContUserSave(bool bDirect)
 {
   if ( this->m_bDBWaitState )
-    return 0;
+    return false;
 
   DWORD timeNow = timeGetTime();
   if ( !bDirect )
   {
     if ( timeNow - this->m_dwTermContSaveTime < 300000 )
-      return 0;
+      return false;
     this->m_dwTermContSaveTime = timeNow;
     if ( !this->m_bDataUpdate && timeNow - this->m_dwLastContSaveTime < 600000 )
-      return 0;
+      return false;
   }
 
   _qry_case_contsave pQryData{};
@@ -65,20 +65,20 @@ char CUserDB::UpdateContUserSave(bool bDirect)
     this->m_AvatorData.PostUpdateInit();
     this->m_bDataUpdate = 0;
     this->m_dwLastContSaveTime = timeNow;
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
-char CUserDB::Setting_Class(char *pszClassCode)
+bool CUserDB::Setting_Class(char *pszClassCode)
 {
   if (!g_Main.m_tblClass.GetRecord(pszClassCode))
   {
-    return 0;
+    return false;
   }
 
   std::strcpy(this->m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
   this->m_bDataUpdate = 1;
-  return 1;
+  return true;
 }

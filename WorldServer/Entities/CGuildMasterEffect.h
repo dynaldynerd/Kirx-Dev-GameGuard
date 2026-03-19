@@ -23,7 +23,7 @@ public:
   void adjust_effect(CPlayer *pP, unsigned __int8 byGrade, bool bAdd);
   char in_player(CPlayer *pP, unsigned __int8 byGrade);
   char out_player(CPlayer *pP, unsigned __int8 byGrade);
-  char change_player(CPlayer *pP, unsigned __int8 byBeforeGrade, unsigned __int8 byAfterGrade);
+  bool change_player(CPlayer *pP, unsigned __int8 byBeforeGrade, unsigned __int8 byAfterGrade);
   void show_to_all(CPlayer *pP, unsigned __int8 byBeforeGrade, unsigned __int8 byGrade, unsigned __int8 byState);
 
   unsigned __int8 m_byAdjustableGrade;

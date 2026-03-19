@@ -17,7 +17,7 @@ public:
   void SendMsg_TalikList(unsigned int n);
   int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
   int GetMyClassVal(char *pClass);
-  double CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass, unsigned __int8 nParty);
+  long double CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass, unsigned __int8 nParty);
   bool IsPvpMap(CPlayer *pOne);
   bool CheckPvpLoseCondition(CPlayer *pKiller, CPlayer *pDier);
   bool CheckPvpHaveCondition(CPlayer *pKiller, CPlayer *pDier, double dOldTempPoint);

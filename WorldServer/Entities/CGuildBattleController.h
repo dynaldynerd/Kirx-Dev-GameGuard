@@ -19,14 +19,14 @@ public:
   void CleanUp();
   void Clear();
   void Flip();
-  char Load();
-  char LoadINI(
+  bool Load();
+  bool LoadINI(
     unsigned int *uiMapCnt,
     unsigned int *iToday,
     unsigned int *iTodayDayID,
     int *iTomorrow,
     int *iTomorrowDayID);
-  char SaveINI();
+  bool SaveINI();
   unsigned __int8 IsAvailableSuggest(
     CGuild *pSrcGuild,
     unsigned int dwDestGuild,
@@ -99,13 +99,13 @@ public:
   void CheckGetGravityStone(unsigned __int16 wIndex, unsigned int dwObjSerial, CPlayer *pkPlayer);
   void CheckGoal(CPlayer *pkPlayer, int iPortalInx);
   bool CheatCreateFieldObject(CPlayer *pkPlayer);
-  char CheatDestroyFieldObject(CPlayer *pkPlayer);
-  char CheatDestroyStone(CPlayer *pkPlayer);
+  bool CheatDestroyFieldObject(CPlayer *pkPlayer);
+  bool CheatDestroyStone(CPlayer *pkPlayer);
   bool CheatDropStone(CPlayer *pkPlayer);
   bool CheatForceTakeStone(CPlayer *pkPlayer);
   int CheatRegenStone(CPlayer *pkPlayer, int iRengenPos);
-  char CheatTakeStone(int iPortalInx, CPlayer *pkPlayer);
-  char CheatGetStone(CPlayer *pkPlayer);
+  bool CheatTakeStone(int iPortalInx, CPlayer *pkPlayer);
+  bool CheatGetStone(CPlayer *pkPlayer);
   static void Destroy();
   void DropGravityStone(CPlayer *pkPlayer);
   void Kill(CPlayer *pkSrcPlayer, CPlayer *pkDestPlayer);

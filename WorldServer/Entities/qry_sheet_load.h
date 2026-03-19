@@ -24,7 +24,7 @@ struct  _qry_sheet_load
 
   _qry_sheet_load();
   ~_qry_sheet_load();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -39,8 +39,9 @@ inline _qry_sheet_load::_qry_sheet_load()
 
 inline _qry_sheet_load::~_qry_sheet_load() = default;
 
-inline __int64 _qry_sheet_load::size() const
+inline int _qry_sheet_load::size() const
 {
-  return 37512LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(37512LL);
 }
 

@@ -60,14 +60,14 @@ bool CCheckSumGuildData::Update(CRFWorldDatabase *pkDB)
   return pkDB && pkDB->Update_UnitData(m_dwGuildSerial, m_dValues);
 }
 
-__int64 CCheckSumGuildData::Load(CRFWorldDatabase *pkDB, CCheckSumGuildData *kSrcValue)
+int CCheckSumGuildData::Load(CRFWorldDatabase *pkDB, CCheckSumGuildData *kSrcValue)
 {
   if (!m_dwGuildSerial || m_dwGuildSerial == static_cast<unsigned int>(-1) || !pkDB)
   {
     return 0;
   }
 
-  unsigned int resultFlag = 0;
+  int resultFlag = 0;
   unsigned __int8 ret = pkDB->Select_UnitData(m_dwGuildSerial, m_dValues);
   if (ret == 1)
   {
@@ -85,7 +85,7 @@ __int64 CCheckSumGuildData::Load(CRFWorldDatabase *pkDB, CCheckSumGuildData *kSr
   return resultFlag;
 }
 
-__int64 CCheckSumGuildData::CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumGuildData *kSrcValue)
+int CCheckSumGuildData::CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumGuildData *kSrcValue)
 {
   if (!pkDB || !wszName)
   {

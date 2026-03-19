@@ -47,36 +47,37 @@
 #include "ObjectCreateSetData.h"
 #include "Packet/ZoneWebPacket.h"
 
-__int64 _qry_case_in_guildbattlecost::size()
+int _qry_case_in_guildbattlecost::size()
 {
   return 40;
 }
 
-__int64 _qry_case_dest_guild_out_guildbattlecost::size()
+int _qry_case_dest_guild_out_guildbattlecost::size()
 {
   return 64;
 }
 
-__int64 _qry_case_src_guild_out_guildbattlecost::size()
+int _qry_case_src_guild_out_guildbattlecost::size()
 {
   return 64;
 }
 
-__int64 _qry_case_addguildbattleschedule::size()
+int _qry_case_addguildbattleschedule::size()
 {
   return 48;
 }
 
-__int64 _possible_battle_guild_list_result_zocl::size()
+int _possible_battle_guild_list_result_zocl::size()
 {
   if (byCount > 4u)
   {
     byCount = 0;
   }
-  return 204 - 23LL * (4 - byCount);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(204 - 23LL * (4 - byCount));
 }
 
-__int64 _guild_battle_rank_list_result_zocl::size()
+int _guild_battle_rank_list_result_zocl::size()
 {
   if (byCnt <= 11)
   {
@@ -86,7 +87,7 @@ __int64 _guild_battle_rank_list_result_zocl::size()
   return 0;
 }
 
-__int64 _guild_battle_reserved_schedule_result_zocl::size()
+int _guild_battle_reserved_schedule_result_zocl::size()
 {
   if (byCnt <= 5u)
   {

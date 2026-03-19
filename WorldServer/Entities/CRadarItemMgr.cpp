@@ -138,7 +138,7 @@ void CRadarItemMgr::SetUseRadar(
   m_nMonNum = 0;
 }
 
-char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
+bool CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
 {
   ResetFlags();
   m_RadarResult.nSize = 0;
@@ -147,12 +147,12 @@ char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
   {
     m_bPlayerEnd = true;
     m_bMonEnd = true;
-    return 0;
+    return false;
   }
 
   if (m_bPlayerEnd && m_bMonEnd)
   {
-    return 0;
+    return false;
   }
 
   CPartyPlayer *partyMgr = m_pMaster->m_pPartyMgr;
@@ -293,7 +293,7 @@ char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
     }
   }
 
-  return 1;
+  return true;
 }
 
 void CRadarItemMgr::ResetFlags()

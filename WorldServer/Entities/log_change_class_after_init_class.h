@@ -17,7 +17,7 @@ struct _log_change_class_after_init_class
   unsigned __int8 byMin;
   unsigned __int8 bySec;
 
-  __int64 size() const
+  int size() const
   {
     return 32;
   }

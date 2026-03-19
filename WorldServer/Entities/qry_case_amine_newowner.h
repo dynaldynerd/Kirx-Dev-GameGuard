@@ -11,7 +11,7 @@ struct   _qry_case_amine_newowner
   unsigned int dwGuildSerial;
 
   _qry_case_amine_newowner();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -20,7 +20,7 @@ inline _qry_case_amine_newowner::_qry_case_amine_newowner()
 {
 }
 
-inline __int64 _qry_case_amine_newowner::size() const
+inline int _qry_case_amine_newowner::size() const
 {
   return 7;
 }

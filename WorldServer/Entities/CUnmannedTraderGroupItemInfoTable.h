@@ -31,13 +31,13 @@ public:
     unsigned __int8 bySortType,
     unsigned int *dwListIndex);
   CUnmannedTraderSortType *GetSortType(unsigned __int8 byDivision, unsigned __int8 bySortType);
-  char IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex);
-  char IncreaseVersion(
+  bool IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex);
+  bool IncreaseVersion(
     unsigned __int8 byTableCode,
     unsigned __int16 wItemTableIndex,
     unsigned __int8 byRegistDivision,
     unsigned __int8 byRegistClass);
-  char IncreaseVersion(unsigned __int8 byDivision, unsigned __int8 byClass);
+  bool IncreaseVersion(unsigned __int8 byDivision, unsigned __int8 byClass);
 
   static CUnmannedTraderGroupItemInfoTable *ms_Instance;
 

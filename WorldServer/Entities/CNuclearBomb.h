@@ -35,14 +35,14 @@ public:
   CNuclearBomb();
   ~CNuclearBomb();
 
-  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
+  int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
   void Loop() override;
   bool Init(_object_id *pID);
   bool Create(_nuclear_create_setdata *pData);
   bool Destroy();
   bool GetUse();
   unsigned __int8 GetBombStatus();
-  __int64 GetDamagedObjNum();
+  int GetDamagedObjNum();
   void SetBombStatus();
   void Attack(int startNum, int objCount);
   float *GetMissilePos();
@@ -50,7 +50,7 @@ public:
   void SetNuclearIndex(unsigned __int16 wItemIndex);
   unsigned __int16 GetControlSerial();
   void SetControlSerial(unsigned __int16 wControlSerial);
-  __int64 GetMasterRace();
+  unsigned __int8 GetMasterRace();
   unsigned __int8 GetMasterClass();
   void GetShowEffectList();
   void NuclearDamege();
@@ -65,7 +65,7 @@ public:
   void SendMsg_DropMissile();
   void RecvKillMessage(CCharacter *pDier) override;
 
-  static __int64 GetNewSerial();
+  static unsigned int GetNewSerial();
 
   static unsigned int s_dwSerialCnt;
 

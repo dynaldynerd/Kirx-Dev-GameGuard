@@ -9,7 +9,7 @@ struct  MonsterSetInfoData
   MonsterSetInfoData();
 
   void Init();
-  bool Load(const char *fileName);
+  int Load(const char *fileName);
   unsigned __int8 GetLevelContSFTime(unsigned __int8 byEffectCode, unsigned __int8 byLevel);
   int GetLostMonsterTargetDistance();
   float GetMonsterForcePowerRate();

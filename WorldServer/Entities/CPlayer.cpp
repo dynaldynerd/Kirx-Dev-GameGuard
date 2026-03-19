@@ -725,7 +725,7 @@ void _ATTACK_DELAY_CHECKER::Init(_ATTACK_DELAY_CHECKER *self)
   self->m_nNextAddTime = 0;
 }
 
-char _ATTACK_DELAY_CHECKER::_delay_check(
+bool _ATTACK_DELAY_CHECKER::_delay_check(
   _ATTACK_DELAY_CHECKER *self,
   unsigned __int8 code,
   unsigned __int16 index,
@@ -744,7 +744,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
     {
       if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
       {
-        return 0;
+        return false;
       }
       self->m_nNextAddTime = -diff;
     }
@@ -754,7 +754,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
     {
       if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
       {
-        return 0;
+        return false;
       }
       if (self->m_nNextAddTime)
       {
@@ -768,7 +768,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
         self->m_nNextAddTime = -diff;
       }
     }
-    return 1;
+    return true;
   }
 
   const unsigned int nextTime = self->dwLastGnAttackTime + 1000;
@@ -777,7 +777,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
   {
     if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
     {
-      return 0;
+      return false;
     }
     self->m_nNextAddTime = -diff;
   }
@@ -787,7 +787,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
   {
     if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
     {
-      return 0;
+      return false;
     }
     if (self->m_nNextAddTime)
     {
@@ -813,7 +813,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
       {
         if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
         {
-          return 0;
+          return false;
         }
         if (self->m_nNextAddTime)
         {
@@ -842,7 +842,7 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
       {
         if (-diff > _ATTACK_DELAY_CHECKER::s_nSpareTime)
         {
-          return 0;
+          return false;
         }
         if (self->m_nNextAddTime)
         {
@@ -856,14 +856,14 @@ char _ATTACK_DELAY_CHECKER::_delay_check(
           self->m_nNextAddTime = -diff;
         }
       }
-      return 1;
+      return true;
     }
   }
 
-  return 1;
+  return true;
 }
 
-char _ATTACK_DELAY_CHECKER::IsDelay(
+bool _ATTACK_DELAY_CHECKER::IsDelay(
   _ATTACK_DELAY_CHECKER *self,
   unsigned __int8 code,
   unsigned __int16 index,
@@ -872,10 +872,10 @@ char _ATTACK_DELAY_CHECKER::IsDelay(
   self->m_nNextAddTime = 0;
   if (_delay_check(self, code, index, mastery))
   {
-    return 1;
+    return true;
   }
   ++self->nFailCount;
-  return 0;
+  return false;
 }
 
 void _ATTACK_DELAY_CHECKER::SetDelay(_ATTACK_DELAY_CHECKER *self, unsigned int delay)
@@ -991,7 +991,7 @@ void _TRAP_PARAM::Init()
   m_nCount = 0;
 }
 
-char _TOWER_PARAM::PushList(_STORAGE_LIST::_db_con *pTowerItem, CGuardTower *pTowerObj)
+bool _TOWER_PARAM::PushList(_STORAGE_LIST::_db_con *pTowerItem, CGuardTower *pTowerObj)
 {
   for (int index = 0; index < 6; ++index)
   {
@@ -1000,10 +1000,10 @@ char _TOWER_PARAM::PushList(_STORAGE_LIST::_db_con *pTowerItem, CGuardTower *pTo
       m_List[index].m_pTowerItem = pTowerItem;
       m_List[index].m_wItemSerial = pTowerItem->m_wSerial;
       m_List[index].m_pTowerObj = pTowerObj;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void _TOWER_PARAM::NotifyOwnerAttackInform(CCharacter *pDst)
@@ -1018,7 +1018,7 @@ void _TOWER_PARAM::NotifyOwnerAttackInform(CCharacter *pDst)
   }
 }
 
-char _TRAP_PARAM::PushItem(CTrap *pTrap, unsigned int dwTrapSerial)
+bool _TRAP_PARAM::PushItem(CTrap *pTrap, unsigned int dwTrapSerial)
 {
   for (int index = 0; index < 20; ++index)
   {
@@ -1027,13 +1027,13 @@ char _TRAP_PARAM::PushItem(CTrap *pTrap, unsigned int dwTrapSerial)
       m_Item[index].pItem = pTrap;
       m_Item[index].dwSerial = dwTrapSerial;
       ++m_nCount;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char _TRAP_PARAM::PopItem(unsigned int dwTrapSerial)
+bool _TRAP_PARAM::PopItem(unsigned int dwTrapSerial)
 {
   for (int index = 0; index < 20; ++index)
   {
@@ -1041,10 +1041,10 @@ char _TRAP_PARAM::PopItem(unsigned int dwTrapSerial)
     {
       m_Item[index].init();
       --m_nCount;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void _CRYMSG_LIST::_LIST::Init()
@@ -1199,11 +1199,12 @@ void _COMBINEKEY::LoadDBKey(_COMBINEKEY pl_nKey)
   *this = pl_nKey;
 }
 
-__int64 _COMBINEKEY::CovDBKey()
+int _COMBINEKEY::CovDBKey()
 {
   int key = 0;
   std::memcpy(&key, this, sizeof(key));
-  return static_cast<__int64>(key);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<__int64>(key));
 }
 
 _ITEMCOMBINE_DB_BASE::_LIST::_LIST()
@@ -1615,7 +1616,7 @@ void CPlayer::SetStaticMember()
   CPlayer::s_BillingForceCloseDelay.Init(2532, 1000 * delay);
 }
 
-void CPlayer::Init(_object_id *pID)
+char CPlayer::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
   m_EP.AllocEffParam();
@@ -1685,9 +1686,10 @@ void CPlayer::Init(_object_id *pID)
   m_dwPcBangGiveItemListIndex = static_cast<unsigned int>(-1);
   m_tmrAccumPlayingTime.BeginTimer(300000);
   m_tmrPremiumPVPInform.BeginTimer(1800000);
+  return true;
 }
 
-char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
+bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
 {
   _AVATOR_DATA pData{};
   std::memcpy(&pData, &pUser->m_AvatorData, sizeof(pData));
@@ -1795,7 +1797,7 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
           static_cast<int>(pData.dbAvator.m_fStartPos[0]),
           static_cast<int>(pData.dbAvator.m_fStartPos[1]),
           static_cast<int>(pData.dbAvator.m_fStartPos[2]));
-        return 0;
+        return false;
       }
       pData.dbAvator.m_byMapCode = posStartMap->m_pMapSet->m_dwIndex;
     }
@@ -1806,7 +1808,7 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
         "Load() : failure : %s.. no used map(%s)..",
         pUser->m_aszAvatorName,
         map->m_pMapSet->m_strCode);
-      return 0;
+      return false;
     }
   }
 
@@ -1943,14 +1945,14 @@ char CPlayer::Load(CUserDB *pUser, bool bFirstStart)
     this->m_MoveHackInfo.m_nCountWarning = 0;
 
     this->m_bCntEnable = 0;
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
     "Load() : failure : %d:%s",
     pData.dbAvator.m_dwRecordNum,
     pUser->m_aszAvatorName);
-  return 0;
+  return false;
 }
 
 CPlayer::~CPlayer()
@@ -2055,7 +2057,7 @@ void _WEAPON_PARAM::FixUnit(_UNIT_DB_BASE::_LIST *pUnit)
   pFixUnit = pUnit;
 }
 
-unsigned int _WEAPON_PARAM::GetWeaponTolType(_STORAGE_LIST::_db_con *pItem)
+int _WEAPON_PARAM::GetWeaponTolType(_STORAGE_LIST::_db_con *pItem)
 {
   if (!pItem)
   {
@@ -2093,7 +2095,8 @@ unsigned int _WEAPON_PARAM::GetWeaponTolType(_STORAGE_LIST::_db_con *pItem)
   {
     return 0;
   }
-  return static_cast<unsigned int>(record->m_nProperty);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(record->m_nProperty));
 }
 
 unsigned int _WEAPON_PARAM::GetAttackDelay(int nLv, int nAddDelay)
@@ -2101,7 +2104,7 @@ unsigned int _WEAPON_PARAM::GetAttackDelay(int nLv, int nAddDelay)
   return static_cast<unsigned int>(nAddDelay + 1000 * (nLv / nLv));
 }
 
-unsigned int _WEAPON_PARAM::GetAttackToolType()
+int _WEAPON_PARAM::GetAttackToolType()
 {
   if (pFixWp)
   {
@@ -2132,7 +2135,7 @@ void _MASTERY_PARAM::SetStaticMember(CRecordData *pSkillData, CRecordData *pForc
   InitMasteryFormula(pSkillData, pForceData);
 }
 
-char _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
+bool _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
 {
   m_byRaceCode = byRaceCode;
   std::memcpy(&m_BaseCum, pStatBase, sizeof(m_BaseCum));
@@ -2159,11 +2162,11 @@ char _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
     _skill_fld *record = reinterpret_cast<_skill_fld *>(s_pSkillData->GetRecord(nMasteryIndex));
     if (!record)
     {
-      return 0;
+      return false;
     }
     if (record->m_nLv > 3)
     {
-      return 0;
+      return false;
     }
     if (record->m_nLv >= 0)
     {
@@ -2220,10 +2223,10 @@ char _MASTERY_PARAM::Init(_STAT_DB_BASE *pStatBase, unsigned __int8 byRaceCode)
   m_ppbyEquipMasteryPrt[3] = &m_mtyStaff;
   m_ppbyEquipMasteryPrt[4] = &m_mtyShield;
   m_ppbyEquipMasteryPrt[5] = &m_mtySuffer;
-  return 1;
+  return true;
 }
 
-char _MASTERY_PARAM::IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 byIndex)
+bool _MASTERY_PARAM::IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 byIndex)
 {
   if (byCode)
   {
@@ -2232,19 +2235,19 @@ char _MASTERY_PARAM::IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 
       case 3u:
         if (byIndex >= 8u)
         {
-          return 0;
+          return false;
         }
         break;
       case 4u:
   if (byIndex >= 24)
         {
-          return 0;
+          return false;
         }
         break;
       case 5u:
         if (byIndex >= 3u)
         {
-          return 0;
+          return false;
         }
         break;
       case 1u:
@@ -2252,18 +2255,18 @@ char _MASTERY_PARAM::IsValidMasteryCode(unsigned __int8 byCode, unsigned __int8 
       case 6u:
         if (byIndex)
         {
-          return 0;
+          return false;
         }
         break;
       default:
-        return 0;
+        return false;
     }
   }
   else if (byIndex >= 2u)
   {
-    return 0;
+    return false;
   }
-  return 1;
+  return true;
 }
 
 void _mastery_up_data::init()
@@ -2291,14 +2294,16 @@ void _skill_lv_up_data::set(unsigned __int16 index, unsigned __int8 lv)
   byLv = lv;
 }
 
-unsigned __int8 _MASTERY_PARAM::GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
+int _MASTERY_PARAM::GetMasteryPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
 {
-  return m_ppbyMasteryPtr[byCode][byMast];
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_ppbyMasteryPtr[byCode][byMast]);
 }
 
-unsigned int _MASTERY_PARAM::GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
+int _MASTERY_PARAM::GetCumPerMast(unsigned __int8 byCode, unsigned __int8 byMast)
 {
-  return m_ppdwMasteryCumPtr[byCode][byMast];
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_ppdwMasteryCumPtr[byCode][byMast]);
 }
 
 bool _MASTERY_PARAM::AlterCumPerMast(
@@ -2477,9 +2482,10 @@ bool _MASTERY_PARAM::AlterCumPerMast(
   return updated;
 }
 
-unsigned __int8 _MASTERY_PARAM::GetSkillLv(unsigned __int8 bySkillIndex)
+int _MASTERY_PARAM::GetSkillLv(unsigned __int8 bySkillIndex)
 {
-  return m_lvSkill[bySkillIndex];
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_lvSkill[bySkillIndex]);
 }
 
 unsigned __int8 _MASTERY_PARAM::GetEquipMastery(int nEquipMasteryCode)
@@ -2691,7 +2697,7 @@ void MiningTicket::Init()
   m_dwTakeLastCriTicket.Init();
 }
 
-bool MiningTicket::AuthLastMentalTicket(
+int MiningTicket::AuthLastMentalTicket(
   unsigned __int16 byCurrentYear,
   unsigned __int8 byCurrentMonth,
   unsigned __int8 byCurrentDay,
@@ -2708,7 +2714,7 @@ bool MiningTicket::AuthLastMentalTicket(
   return !(current != m_dwTakeLastMentalTicket);
 }
 
-bool MiningTicket::AuthLastCriTicket(
+int MiningTicket::AuthLastCriTicket(
   unsigned __int16 byCurrentYear,
   unsigned __int8 byCurrentMonth,
   unsigned __int8 byCurrentDay,
@@ -4776,7 +4782,7 @@ bool CPlayer::Emb_DelStorage(
   return true;
 }
 
-unsigned __int64 CPlayer::Emb_AlterDurPoint(
+unsigned int CPlayer::Emb_AlterDurPoint(
   unsigned __int8 byStorageCode,
   unsigned __int8 byStorageIndex,
   int nAlter,
@@ -4795,7 +4801,8 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
     alter = static_cast<int>(16777215 - pkItem->m_dwDur);
     if (alter <= 0)
     {
-      return static_cast<unsigned int>(pkItem->m_dwDur);
+      // narrowing cast for thunk return parity
+      return static_cast<unsigned int>(static_cast<unsigned int>(pkItem->m_dwDur));
     }
   }
 
@@ -4840,7 +4847,8 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
               fld->m_strCode,
               pkItem->m_byTableCode,
               pkItem->m_wItemIndex);
-            return static_cast<unsigned int>(pkItem->m_dwDur);
+            // narrowing cast for thunk return parity
+            return static_cast<unsigned int>(static_cast<unsigned int>(pkItem->m_dwDur));
           }
         }
       }
@@ -4898,7 +4906,8 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
       SendMsg_DeleteStorageInform(byStorageCode, itemSerial);
     }
 
-    return static_cast<unsigned int>(leftDur);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(static_cast<unsigned int>(leftDur));
   }
 
   const char *charName = m_Param.GetCharNameA();
@@ -4907,12 +4916,14 @@ unsigned __int64 CPlayer::Emb_AlterDurPoint(
     charName,
     byStorageCode,
     byStorageIndex);
-  return static_cast<unsigned int>(pkItem->m_dwDur);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(static_cast<unsigned int>(pkItem->m_dwDur));
 }
 
-unsigned __int16 CPlayer::GetVisualVer()
+int CPlayer::GetVisualVer()
 {
-  return m_wVisualVer;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_wVisualVer);
 }
 
 void CPlayer::UpdateVisualVer(CashChangeStateFlag byChangeFlagMask)
@@ -5529,18 +5540,18 @@ void CPlayer::SendMsg_AnimusReturnResult(
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-char CPlayer::mgr_tracing(int bOper)
+bool CPlayer::mgr_tracing(int bOper)
 {
   const bool bOn = bOper != 0;
   if (m_bObserver == bOn)
   {
-    return 0;
+    return false;
   }
   _AnimusReturn(1);
   SendMsg_Destroy();
   m_bObserver = bOn;
   SendMsg_NewViewOther(0);
-  return 1;
+  return true;
 }
 
 void CPlayer::SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wItemSerial, unsigned __int64 dwDur)
@@ -5678,14 +5689,16 @@ bool CPlayer::IsLastAttBuff()
   return m_Param.m_bLastAttBuff;
 }
 
-__int64 CPlayer::GetLevel()
+int CPlayer::GetLevel()
 {
-  return m_Param.GetLevel();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_Param.GetLevel());
 }
 
-__int64 CPlayer::GetHP()
+int CPlayer::GetHP()
 {
-  return m_Param.GetHP();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_Param.GetHP());
 }
 
 float CPlayer::GetMoveSpeed()
@@ -5763,7 +5776,7 @@ float CPlayer::GetMoveSpeed()
   return 0.0f;
 }
 
-__int64 CPlayer::GetMaxHP()
+int CPlayer::GetMaxHP()
 {
   const float baseMax = static_cast<float>(m_nMaxPoint[0]);
   const float rate = m_EP.GetEff_Rate(EFF_RATE_MAX_HP);
@@ -5772,7 +5785,8 @@ __int64 CPlayer::GetMaxHP()
   {
     return 1;
   }
-  return maxHp;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(maxHp);
 }
 
 unsigned __int16 CPlayer::CalcCurHPRate()
@@ -5794,14 +5808,14 @@ unsigned __int16 CPlayer::CalcCurHPRate()
   return static_cast<unsigned int>(static_cast<int>((hp / static_cast<float>(maxHp)) * 10000.0f));
 }
 
-__int64 CPlayer::CalcCurFPRate()
+unsigned __int16 CPlayer::CalcCurFPRate()
 {
   const int scaledFp = 10000 * GetFP();
   const int maxFp = GetMaxFP();
   return static_cast<unsigned int>(scaledFp / maxFp);
 }
 
-__int64 CPlayer::CalcCurSPRate()
+unsigned __int16 CPlayer::CalcCurSPRate()
 {
   const int scaledSp = 10000 * GetSP();
   const int maxSp = GetMaxSP();
@@ -6085,30 +6099,30 @@ void CPlayer::SendMsg_StateInform(unsigned __int64 dwStateFlag)
   CircleReport(type, reinterpret_cast<char *>(&msg), 12, true);
 }
 
-char CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
+bool CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
 {
   if (byType >= 3u)
   {
-    return 0;
+    return false;
   }
   if (g_Main.IsReleaseServiceMode() && m_byUserDgr == 2)
   {
-    return 0;
+    return false;
   }
   if (!m_pUserDB)
   {
-    return 0;
+    return false;
   }
   if (m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType] == static_cast<unsigned int>(-1))
   {
-    return 0;
+    return false;
   }
 
   PatriarchElectProcessor *processor = PatriarchElectProcessor::Instance();
   const unsigned int currentElectSerial = processor->GetCurrPatriarchElectSerial();
   if (m_pUserDB->m_AvatorData.dbAvator.m_dwElectSerial[byType] != currentElectSerial)
   {
-    return 0;
+    return false;
   }
 
   __int64 nowTime = 0;
@@ -6117,7 +6131,7 @@ char CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
   if (nowMin - static_cast<int>(m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType]) >= 4320)
   {
     m_pUserDB->m_AvatorData.dbAvator.m_dwPunishment[byType] = static_cast<unsigned int>(-1);
-    return 0;
+    return false;
   }
 
   if (bSend)
@@ -6130,7 +6144,7 @@ char CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
     const unsigned __int16 len = static_cast<unsigned __int16>(msg.size());
     g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), len);
   }
-  return 1;
+  return true;
 }
 
 bool CPlayer::IsMapLoading()
@@ -6313,7 +6327,7 @@ void CPlayer::pc_SetInGuildBattle(bool bInGuildBattle, unsigned __int8 byColorIn
   }
 }
 
-char CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop)
+bool CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bDrop)
 {
   const char *fallback = "NONE";
   char *reason = szReason;
@@ -6362,7 +6376,7 @@ char CPlayer::pc_GiveItem(_STORAGE_LIST::_db_con *kItem, char *szReason, bool bD
       kItem,
       m_szItemHistoryFileName);
   }
-  return success ? 1 : 0;
+  return (success ? 1 : 0) != 0;
 }
 
 void CPlayer::SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byReason)
@@ -6382,7 +6396,7 @@ void CPlayer::SendMsg_RewardAddItem(_STORAGE_LIST::_db_con *pItem, unsigned __in
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, byType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-char CPlayer::SetHP(int nHP, bool bOver)
+bool CPlayer::SetHP(int nHP, bool bOver)
 {
   const int curHp = static_cast<int>(GetHP());
   if (!bOver && nHP > curHp)
@@ -6394,7 +6408,7 @@ char CPlayer::SetHP(int nHP, bool bOver)
     }
     else if (curHp >= maxHp && nHP >= curHp)
     {
-      return 0;
+      return false;
     }
   }
 
@@ -6410,10 +6424,10 @@ char CPlayer::SetHP(int nHP, bool bOver)
 
   if (curHp == nHP)
   {
-    return 0;
+    return false;
   }
   m_Param.SetHP(nHP);
-  return 1;
+  return true;
 }
 
 bool CPlayer::SetTarPos(float *fTarPos, bool /*bColl*/)
@@ -6433,7 +6447,7 @@ bool CPlayer::RobbedHP(CCharacter *pDst, int nDecHP)
   return true;
 }
 
-char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
+bool CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
 {
   bool bValidDst = false;
   if (!pDstObj->m_ObjID.m_byID)
@@ -6442,7 +6456,7 @@ char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
   }
   if (!bValidDst)
   {
-    return 0;
+    return false;
   }
 
   const int hp = static_cast<int>(pDstObj->GetHP());
@@ -6457,7 +6471,7 @@ char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
 
   if (static_cast<float>(hp) / static_cast<float>(maxHp) > 0.80000001f)
   {
-    return 0;
+    return false;
   }
 
   if (hpGap > 0)
@@ -6475,7 +6489,7 @@ char CPlayer::SF_HFSInc_Once(CPlayer *pDstObj)
     pDstObj->SetSP(maxSp, false);
     pDstObj->SendMsg_SetSPInform();
   }
-  return 1;
+  return true;
 }
 
 bool CPlayer::SF_Resurrect_Once(CCharacter *pDstObj)
@@ -8172,7 +8186,7 @@ void CPlayer::SetEquipEffect(_STORAGE_LIST::_db_con *pItem, bool bEquip)
   apply_case_equip_upgrade_effect(pItem, bEquip);
 }
 
-char CPlayer::ApplyEquipItemEffect(int iItemEffectCode, bool bEquip)
+bool CPlayer::ApplyEquipItemEffect(int iItemEffectCode, bool bEquip)
 {
   for (int index = 0; index < 15; ++index)
   {
@@ -8212,10 +8226,10 @@ char CPlayer::ApplyEquipItemEffect(int iItemEffectCode, bool bEquip)
       }
     }
   }
-  return 0;
+  return false;
 }
 
-char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
+bool CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
 {
   // Yorozuya fix (non-IDA parity): enforce equip-grade check (skip siege kit).
   if (pCon->m_byTableCode != 27)
@@ -8224,7 +8238,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
       static_cast<unsigned __int8>(GetItemEquipGrade(pCon->m_byTableCode, pCon->m_wItemIndex));
     if (!IsEquipAbleGrade(equipGrade))
     {
-      return 0;
+      return false;
     }
   }
 
@@ -8236,7 +8250,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
   const float effHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
   if (static_cast<float>(itemEquipLevel) > (level + effHave))
   {
-    return 0;
+    return false;
   }
 
   if (itemEquipUpLevel != static_cast<unsigned __int8>(-1))
@@ -8246,7 +8260,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
     const float curEffHave = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
     if ((curLevel - curEffHave) > limitLevel)
     {
-      return 0;
+      return false;
     }
   }
 
@@ -8255,7 +8269,7 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
     GetItemEquipMastery(pCon->m_byTableCode, pCon->m_wItemIndex, &limNum);
   if (!equipMastery)
   {
-    return 1;
+    return true;
   }
 
   for (int index = 0; index < limNum; ++index)
@@ -8271,30 +8285,35 @@ char CPlayer::IsEffectableEquip(_STORAGE_LIST::_storage_con *pCon)
           : static_cast<int>(m_pmMst.GetEquipMastery(equipMasteryCode));
       if (cappedMastery < equipMastery[index].nLimMastery)
       {
-        return 0;
+        return false;
       }
     }
   }
 
-  return 1;
+  return true;
 }
 
-unsigned int CPlayer::_check_equipmastery_lim(int EquipMasteryCode)
+int CPlayer::_check_equipmastery_lim(int EquipMasteryCode)
 {
   switch (EquipMasteryCode)
   {
     case 0:
-      return static_cast<unsigned int>(_check_mastery_lim(0, 0));
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(_check_mastery_lim(0, 0)));
     case 1:
-      return static_cast<unsigned int>(_check_mastery_lim(0, 1u));
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(_check_mastery_lim(0, 1u)));
     case 2:
-      return static_cast<unsigned int>(_check_mastery_lim(6u, 0));
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(_check_mastery_lim(6u, 0)));
     case 3:
       return 99;
     case 4:
-      return static_cast<unsigned int>(_check_mastery_lim(2u, 0));
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(_check_mastery_lim(2u, 0)));
     case 5:
-      return static_cast<unsigned int>(_check_mastery_lim(1u, 0));
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(_check_mastery_lim(1u, 0)));
     default:
       return 99;
   }
@@ -8376,7 +8395,7 @@ bool CPlayer::_check_embel_part(_STORAGE_LIST::_db_con *pFixingItem)
   return itemEquipLevel <= (level + effHave);
 }
 
-__int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
+unsigned int CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)
 {
   _MasteryLimit_fld *curRecord = nullptr;
   _MasteryLimit_fld *baseRecord = nullptr;
@@ -8476,9 +8495,11 @@ __int64 CPlayer::_check_mastery_lim(unsigned __int8 byMasteryClass, unsigned __i
 
           if (curLim <= baseLim)
           {
-            return static_cast<unsigned int>(baseLim);
+            // narrowing cast for thunk return parity
+            return static_cast<unsigned int>(static_cast<unsigned int>(baseLim));
           }
-          return static_cast<unsigned int>(curLim);
+          // narrowing cast for thunk return parity
+          return static_cast<unsigned int>(static_cast<unsigned int>(curLim));
         }
 
         g_Main.m_logSystemError.Write("_check_mastery_lim.. pCurFld : NULL");
@@ -9114,7 +9135,7 @@ int CPlayer::GetDP()
   return m_Param.GetDP();
 }
 
-char CPlayer::SetDP(int nDP, bool bOver)
+bool CPlayer::SetDP(int nDP, bool bOver)
 {
   const int currentDp = m_Param.GetDP();
   if (!bOver && nDP > currentDp)
@@ -9125,7 +9146,7 @@ char CPlayer::SetDP(int nDP, bool bOver)
       const int currentMax = GetMaxDP();
       if (currentDp >= currentMax && nDP >= currentDp)
       {
-        return 0;
+        return false;
       }
     }
     else
@@ -9140,11 +9161,11 @@ char CPlayer::SetDP(int nDP, bool bOver)
   }
   if (currentDp == nDP)
   {
-    return 0;
+    return false;
   }
 
   m_Param.SetDP(nDP);
-  return 1;
+  return true;
 }
 
 void CPlayer::SendMsg_SetDPInform()
@@ -10538,11 +10559,12 @@ int CPlayer::GetCashAmount()
   return m_nCashAmount;
 }
 
-__int64 CPlayer::GetBillingType()
+int CPlayer::GetBillingType()
 {
   if (m_pUserDB)
   {
-    return static_cast<unsigned int>(m_pUserDB->GetBillingType());
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(m_pUserDB->GetBillingType()));
   }
   return 0;
 }
@@ -10653,7 +10675,7 @@ m_nMaxPoint[0] = _CalcMaxHP();
   m_nMaxPoint[2] = _CalcMaxSP();
 }
 
-__int16 CPlayer::_TowerReturn(_STORAGE_LIST::_db_con *pTowerItem)
+unsigned __int16 CPlayer::_TowerReturn(_STORAGE_LIST::_db_con *pTowerItem)
 {
   if (!pTowerItem)
   {
@@ -11058,9 +11080,10 @@ _other_shape_all_zocl::_other_shape_all_zocl()
   bySpecialPart = static_cast<unsigned __int8>(-1);
 }
 
-unsigned __int64 _other_shape_all_zocl::size()
+int _other_shape_all_zocl::size()
 {
-  return bySpecialPart == 255 ? 62u : 68u;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(bySpecialPart == 255 ? 62u : 68u);
 }
 
 _other_shape_part_zocl::_other_shape_part_zocl()
@@ -11068,14 +11091,16 @@ _other_shape_part_zocl::_other_shape_part_zocl()
   bySpecialPart = static_cast<unsigned __int8>(-1);
 }
 
-unsigned __int64 _other_shape_part_zocl::size()
+int _other_shape_part_zocl::size()
 {
-  return bySpecialPart == 255 ? 36u : 42u;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(bySpecialPart == 255 ? 36u : 42u);
 }
 
-unsigned __int64 _base_download_result_zocl::size()
+int _base_download_result_zocl::size()
 {
-  return byRetCode ? 1u : 258u;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(byRetCode ? 1u : 258u);
 }
 
 _inven_download_result_zocl::_inven_download_result_zocl()
@@ -11083,17 +11108,19 @@ _inven_download_result_zocl::_inven_download_result_zocl()
   bySlotNum = 0;
 }
 
-unsigned __int64 _inven_download_result_zocl::size()
+int _inven_download_result_zocl::size()
 {
   if (byRetCode)
   {
-    return 1u;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(1u);
   }
   if (bySlotNum > 100)
   {
     bySlotNum = 0;
   }
-  return static_cast<unsigned __int64>(2103 - 21LL * (100 - bySlotNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(2103 - 21LL * (100 - bySlotNum)));
 }
 
 _force_download_result_zocl::_force_download_result_zocl()
@@ -11101,17 +11128,19 @@ _force_download_result_zocl::_force_download_result_zocl()
   bySlotNum = 0;
 }
 
-unsigned __int64 _force_download_result_zocl::size()
+int _force_download_result_zocl::size()
 {
   if (byRetCode)
   {
-    return 1u;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(1u);
   }
   if (bySlotNum > 88)
   {
     bySlotNum = 0;
   }
-  return static_cast<unsigned __int64>(970 - 11LL * (88 - bySlotNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(970 - 11LL * (88 - bySlotNum)));
 }
 
 _cum_download_result_zocl::_cum_download_result_zocl()
@@ -11120,17 +11149,19 @@ _cum_download_result_zocl::_cum_download_result_zocl()
   byLeftCuttingResNum = 0;
 }
 
-unsigned __int64 _cum_download_result_zocl::size()
+int _cum_download_result_zocl::size()
 {
   if (byRetCode)
   {
-    return 1u;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(1u);
   }
   if (byLeftCuttingResNum > 20)
   {
     byLeftCuttingResNum = 0;
   }
-  return static_cast<unsigned __int64>(362 - 2LL * (20 - byLeftCuttingResNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(362 - 2LL * (20 - byLeftCuttingResNum)));
 }
 
 _quest_download_result_zocl::__list::__list()
@@ -11143,17 +11174,19 @@ _quest_download_result_zocl::_quest_download_result_zocl()
   bySlotNum = 0;
 }
 
-unsigned __int64 _quest_download_result_zocl::size()
+int _quest_download_result_zocl::size()
 {
   if (byRetCode)
   {
-    return 1u;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(1u);
   }
   if (bySlotNum > 30)
   {
     bySlotNum = 0;
   }
-  return static_cast<unsigned __int64>(422 - 14LL * (30 - bySlotNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(422 - 14LL * (30 - bySlotNum)));
 }
 
 _quest_history_download_result_zocl::_quest_history_download_result_zocl()
@@ -11161,13 +11194,14 @@ _quest_history_download_result_zocl::_quest_history_download_result_zocl()
   bySlotNum = 0;
 }
 
-unsigned __int64 _quest_history_download_result_zocl::size()
+int _quest_history_download_result_zocl::size()
 {
   if (bySlotNum > 70)
   {
     bySlotNum = 0;
   }
-  return static_cast<unsigned __int64>(631 - 9LL * (70 - bySlotNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(631 - 9LL * (70 - bySlotNum)));
 }
 
 _unit_download_result_zocl::_list::_list()
@@ -11180,13 +11214,14 @@ _unit_download_result_zocl::_unit_download_result_zocl()
   byUnitNum = 0;
 }
 
-unsigned __int64 _unit_download_result_zocl::size()
+int _unit_download_result_zocl::size()
 {
   if (byUnitNum > 4u)
   {
     byUnitNum = 0;
   }
-  return static_cast<unsigned __int64>(253 - 63LL * (4 - byUnitNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(253 - 63LL * (4 - byUnitNum)));
 }
 
 _animus_download_result_zocl::_animus_download_result_zocl()
@@ -11194,18 +11229,20 @@ _animus_download_result_zocl::_animus_download_result_zocl()
   byAnimusNum = 0;
 }
 
-unsigned __int64 _animus_download_result_zocl::size()
+int _animus_download_result_zocl::size()
 {
   if (byAnimusNum > 4u)
   {
     byAnimusNum = 0;
   }
-  return static_cast<unsigned __int64>(73 - 18LL * (4 - byAnimusNum));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(73 - 18LL * (4 - byAnimusNum)));
 }
 
-unsigned __int64 _personal_automine_download_zocl::size()
+int _personal_automine_download_zocl::size()
 {
-  return static_cast<unsigned __int64>(202 - 5LL * (40 - byCnt));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int64>(202 - 5LL * (40 - byCnt)));
 }
 
 _Init_action_point_zocl::_Init_action_point_zocl()
@@ -11349,18 +11386,18 @@ void CPlayer::SendMsg_Alter_Action_Point(unsigned __int8 byActCode, unsigned int
     msg.size());
 }
 
-char CPlayer::Update_GoldPoint(unsigned int dwPoint)
+bool CPlayer::Update_GoldPoint(unsigned int dwPoint)
 {
   CActionPointSystemMgr *actionPointMgr = CActionPointSystemMgr::Instance();
   if (actionPointMgr->GetEventStatus(2u) != 2)
   {
-    return 0;
+    return false;
   }
 
   const unsigned int totalPoint = dwPoint + m_pUserDB->GetActPoint(2u);
   m_pUserDB->Update_User_Action_Point(2u, totalPoint);
   SendMsg_Alter_Action_Point(2u, totalPoint);
-  return 1;
+  return true;
 }
 
 void CPlayer::Potion_Buf_Extend()
@@ -14037,7 +14074,7 @@ void CPlayer::CheckGroupMapPoint()
   }
 }
 
-char CPlayer::Corpse(CCharacter *pAtter)
+bool CPlayer::Corpse(CCharacter *pAtter)
 {
   Stop();
   DTradeInit();
@@ -14234,7 +14271,7 @@ char CPlayer::Corpse(CCharacter *pAtter)
 
   m_QuestMgr.CheckFailLoop(2, nullptr);
   SenseState();
-  return 1;
+  return true;
 }
 
 void CPlayer::pc_Revival(bool bUseableJade)
@@ -14345,12 +14382,12 @@ void CPlayer::pc_LinkBoardRequest()
   }
 }
 
-char CPlayer::IntoMap(unsigned __int8 byMapInMode)
+bool CPlayer::IntoMap(unsigned __int8 byMapInMode)
 {
   if (this->m_pCurMap->m_pMapSet->m_nMapType == 1
       && !this->m_pCurMap->m_ls[this->m_wMapLayerIndex].IsActiveLayer())
   {
-    return 0;
+    return false;
   }
 
   if (byMapInMode == 6)
@@ -14363,7 +14400,7 @@ char CPlayer::IntoMap(unsigned __int8 byMapInMode)
   _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
   if (secIndex >= static_cast<unsigned int>(secInfo->m_nSecNum))
   {
-    return 0;
+    return false;
   }
 
   this->m_pCurMap->EnterMap(this, secIndex);
@@ -14378,14 +14415,14 @@ char CPlayer::IntoMap(unsigned __int8 byMapInMode)
 
   SetStateFlag();
   CheckPos_Region();
-  return 1;
+  return true;
 }
 
-char CPlayer::Create()
+bool CPlayer::Create()
 {
   if (!this->m_bLoad || this->m_bLive || !this->m_pUserDB)
   {
-    return 0;
+    return false;
   }
 
   const DWORD nowTime = timeGetTime();
@@ -14417,7 +14454,7 @@ char CPlayer::Create()
     char buffer[132]{};
     sprintf_s(buffer, "Close.. %s: Create() Map(%s) Pos(%d, %d, %d)", charName, mapCode, posX, posY, posZ);
     g_Network.Close(0, this->m_ObjID.m_wIndex, false, buffer);
-    return 0;
+    return false;
   }
 
   if (this->m_pUserDB->m_byUILock == 2)
@@ -14715,7 +14752,7 @@ char CPlayer::Create()
       this->m_pUserDB->m_szLobbyHistoryFileName);
   }
 
-  return 1;
+  return true;
 }
 
 void CPlayer::CreateComplete()
@@ -15222,12 +15259,12 @@ void CPlayer::CreateComplete()
   SendMsg_BuyCashItemMode();
 }
 
-char CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty)
+bool CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __int16 wAddCount, bool bParty)
 {
   _quest_check_result *checkResult = m_QuestMgr.CheckReqAct(nActCode, pszReqCode, wAddCount, bParty);
   if (!checkResult)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < checkResult->m_byCheckNum; ++j)
@@ -15290,20 +15327,20 @@ char CPlayer::Emb_CheckActForQuest(int nActCode, char *pszReqCode, unsigned __in
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent)
+bool CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *pHappenEvent)
 {
   if (!m_pUserDB)
   {
-    return 0;
+    return false;
   }
 
   _Quest_fld *quest = m_QuestMgr.GetQuestFromEvent(bySelectQuest);
   if (!quest)
   {
-    return 0;
+    return false;
   }
 
   int slotIndex = -1;
@@ -15320,7 +15357,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
   {
     if (m_QuestMgr.GetCountQuestType(pHappenEvent->m_pEvent->m_nQuestType) >= 5)
     {
-      return 0;
+      return false;
     }
   }
   else if (m_QuestMgr.GetCountQuestType(pHappenEvent->m_pEvent->m_nQuestType) >= 20)
@@ -15334,7 +15371,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
       {
         if (slot->dwPassSec == static_cast<unsigned int>(-1))
         {
-          return 0;
+          return false;
         }
         if (slot->dwPassSec >= maxPassSec)
         {
@@ -15353,7 +15390,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
 
   if (slotIndex == -1)
   {
-    return 0;
+    return false;
   }
 
   _QUEST_DB_BASE::_LIST *slot = &m_Param.m_QuestDB.m_List[slotIndex];
@@ -15403,7 +15440,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
           {
             if (!Emb_DelStorage(0, item->m_byStorageIndex, false, true, "CPlayer::pcChatAllRequest()"))
             {
-              return 0;
+              return false;
             }
             CPlayer::s_MgrItemHistory.delete_npc_quest_item(m_ObjID.m_wIndex,
               item,
@@ -15414,7 +15451,7 @@ char CPlayer::Emb_StartQuest(unsigned __int8 bySelectQuest, _happen_event_cont *
     }
   }
 
-  return 1;
+  return true;
 }
 
 _Quest_fld *CPlayer::_Reward_Quest(_Quest_fld *pQuestFld, unsigned __int8 byRewardItemIndex)
@@ -17255,7 +17292,7 @@ _STORAGE_LIST::_db_con *CPlayer::IsEffBulletValidity(unsigned __int16 wEffBullet
   return nullptr;
 }
 
-char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int16 *pwDelPoint)
+bool CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex, unsigned __int16 *pwDelPoint)
 {
   int hpCost = 0;
   int fpCost = 0;
@@ -17266,7 +17303,7 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
     _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
     if (!record)
     {
-      return 0;
+      return false;
     }
     hpCost = record->m_nNeedHP;
     const float fpBase = static_cast<float>(record->m_nNeedFP);
@@ -17278,7 +17315,7 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
     _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
     if (!record)
     {
-      return 0;
+      return false;
     }
     hpCost = record->m_nNeedHP;
     const float fpBase = static_cast<float>(record->m_nNeedFP);
@@ -17301,7 +17338,7 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
 
   if (GetHP() < hpCost || GetFP() < fpCost || GetSP() < spCost)
   {
-    return 0;
+    return false;
   }
 
   if (pwDelPoint)
@@ -17311,10 +17348,10 @@ char CPlayer::IsSFUsableGauge(unsigned __int8 byEffectCode, unsigned __int16 wEf
     pwDelPoint[2] = static_cast<unsigned __int16>(spCost);
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex)
+bool CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEffectIndex)
 {
   const unsigned __int8 raceSexCode = m_Param.GetRaceSexCode();
 
@@ -17323,7 +17360,7 @@ char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEf
     _skill_fld *record = reinterpret_cast<_skill_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
     if (record->m_strUsableRace[raceSexCode] == '1')
     {
-      return 1;
+      return true;
     }
   }
   else
@@ -17331,31 +17368,31 @@ char CPlayer::IsSFUseableRace(unsigned __int8 byEffectCode, unsigned __int16 wEf
     _force_fld *record = reinterpret_cast<_force_fld *>(g_Main.m_tblEffectData[byEffectCode].GetRecord(wEffectIndex));
     if (record->m_strUsableRace[raceSexCode] == '1')
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
+bool CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryIndex)
 {
   if (nMasteryIndex < 0)
   {
-    return 0;
+    return false;
   }
 
   if (byMasteryCode == 4)
   {
     if (nMasteryIndex >= 24)
     {
-      return 0;
+      return false;
     }
   }
   else
   {
     if (byMasteryCode != 3 || nMasteryIndex >= 8)
     {
-      return 0;
+      return false;
     }
   }
 
@@ -17375,18 +17412,18 @@ char CPlayer::IsSFUsableSFMastery(unsigned __int8 byMasteryCode, int nMasteryInd
     const int mastery = m_pmMst.GetMasteryPerMast(byMasteryCode, static_cast<unsigned __int8>(j + baseIndex));
     if (mastery < limits[j])
     {
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld)
+bool CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld)
 {
   if (byEffectCode == 2 || m_bFreeSFByClass)
   {
-    return 1;
+    return true;
   }
 
   int classCount = 1;
@@ -17404,7 +17441,7 @@ char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld
   else if (m_Param.m_pClassData->m_nClass == 3 && !byEffectCode
            && get_sf_need_special_type(byEffectCode, pSFFld) > 0)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < classCount; ++j)
@@ -17412,11 +17449,11 @@ char CPlayer::IsSFActableByClass(unsigned __int8 byEffectCode, _base_fld *pSFFld
     const int checkClass = (j == 0) ? classCode : prevClass;
     if (check_sf_class(checkClass, byEffectCode, pSFFld))
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 unsigned __int8 CPlayer::_GetPartyMemberInCircle(CPlayer **out_ppMember, int nMax, bool bOne)
@@ -17510,7 +17547,7 @@ void CPlayer::SendMsg_InsertItemInform(char byStorageCode, _STORAGE_LIST::_db_co
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-char CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
+bool CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
 {
   if (byGradeLv >= 8u)
   {
@@ -17518,13 +17555,13 @@ char CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
     {
       if (!m_Param.m_pGuild)
       {
-        return 0;
+        return false;
       }
 
       const unsigned int guildMasterSerial = m_Param.m_pGuild->GetGuildMasterSerial();
       if (guildMasterSerial != m_Param.GetCharSerial())
       {
-        return 0;
+        return false;
       }
     }
     else if (byGradeLv == 9)
@@ -17534,14 +17571,14 @@ char CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
       CPvpUserAndGuildRankingSystem *rankingSystem = CPvpUserAndGuildRankingSystem::Instance();
       if (!rankingSystem->IsCurrentRaceBossGroup(raceCode, charSerial))
       {
-        return 0;
+        return false;
       }
     }
     else
     {
       if (byGradeLv != 10)
       {
-        return 0;
+        return false;
       }
 
       const unsigned int charSerial = m_Param.GetCharSerial();
@@ -17550,19 +17587,19 @@ char CPlayer::IsEquipAbleGrade(unsigned __int8 byGradeLv)
       const unsigned int raceBossSerial = rankingSystem->GetCurrentRaceBossSerial(raceCode, 0);
       if (charSerial != raceBossSerial)
       {
-        return 0;
+        return false;
       }
     }
   }
   else if (byGradeLv > static_cast<unsigned int>(m_Param.m_byPvPGrade))
   {
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::_pre_check_normal_attack(
+int CPlayer::_pre_check_normal_attack(
   CCharacter *pDst,
   unsigned __int16 wBulletSerial,
   bool bCount,
@@ -17783,7 +17820,7 @@ char CPlayer::_pre_check_normal_attack(
   return 0;
 }
 
-char CPlayer::_pre_check_skill_attack(
+int CPlayer::_pre_check_skill_attack(
   CCharacter *pDst,
   float *pfAttackPos,
   unsigned __int8 byEffectCode,
@@ -18211,7 +18248,7 @@ char CPlayer::_pre_check_skill_attack(
   return 0;
 }
 
-char CPlayer::_pre_check_force_attack(
+int CPlayer::_pre_check_force_attack(
   CCharacter *pDst,
   float *pfTarPos,
   unsigned __int16 wForceItemSerial,
@@ -18476,7 +18513,7 @@ char CPlayer::_pre_check_force_attack(
   return 0;
 }
 
-char CPlayer::_pre_check_unit_attack(
+int CPlayer::_pre_check_unit_attack(
   CCharacter *pDst,
   unsigned __int8 byWeaponPart,
   _UnitPart_fld **ppWeaponFld,
@@ -18608,7 +18645,7 @@ char CPlayer::_pre_check_unit_attack(
   return 0;
 }
 
-char CPlayer::_pre_check_siege_attack(
+int CPlayer::_pre_check_siege_attack(
   CCharacter *pDst,
   float *pfAttackPos,
   unsigned __int16 wBulletSerial,
@@ -18857,7 +18894,7 @@ char CPlayer::_pre_check_siege_attack(
   return 0;
 }
 
-char CPlayer::_pre_check_wpactive_skill_attack(
+bool CPlayer::_pre_check_wpactive_skill_attack(
   unsigned __int8 byEffectCode,
   _skill_fld *pSkillFld,
   unsigned __int16 wBulletSerial,
@@ -18869,12 +18906,12 @@ char CPlayer::_pre_check_wpactive_skill_attack(
 
   if (IsSiegeMode())
   {
-    return 0;
+    return false;
   }
 
   if (IsRidingUnit())
   {
-    return 0;
+    return false;
   }
 
   if (wBulletSerial != 65535)
@@ -18883,37 +18920,37 @@ char CPlayer::_pre_check_wpactive_skill_attack(
     if (!bulletItem)
     {
       SendMsg_AdjustAmountInform(2u, wBulletSerial, 0);
-      return 0;
+      return false;
     }
     bulletField = reinterpret_cast<_BulletItem_fld *>(
       g_Main.m_tblItemData[10].GetRecord(bulletItem->m_wItemIndex));
     if (bulletItem->m_bLock)
     {
-      return 0;
+      return false;
     }
   }
 
   if ((m_pmWpn.byWpType == 5 || m_pmWpn.byWpType == 6 || m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
       && !bulletField)
   {
-    return 0;
+    return false;
   }
 
   if (byEffectCode)
   {
     if (byEffectCode == 3 && std::strcmp(bulletField->m_strEffectIndex, pSkillFld->m_strCode))
     {
-      return 0;
+      return false;
     }
   }
   else if (pSkillFld->m_nMastIndex > 8u)
   {
-    return 0;
+    return false;
   }
 
   *ppBulletProp = bulletItem;
   *ppfldBullet = bulletField;
-  return 1;
+  return true;
 }
 
 bool CPlayer::_pre_check_wpactive_force_attack()
@@ -19162,11 +19199,11 @@ bool CPlayer::_pre_check_skill_enable(_skill_fld *pSkillFld)
   return pSkillFld->m_bEnable != 0;
 }
 
-char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
+bool CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
 {
   if (!pSkillFld)
   {
-    return 0;
+    return false;
   }
 
   bool pass = false;
@@ -19310,7 +19347,7 @@ char CPlayer::_pre_check_skill_gradelimit(_skill_fld *pSkillFld)
     }
   }
 
-  return static_cast<char>(pass);
+  return (static_cast<char>(pass)) != 0;
 }
 
 void CPlayer::make_gen_attack_param(
@@ -19929,7 +19966,7 @@ void CPlayer::make_wpactive_force_attack_param(
   }
 }
 
-char CPlayer::WeaponSFActive(
+bool CPlayer::WeaponSFActive(
   _be_damaged_char *pDamList,
   int *nDamagedObjNum,
   int *nShotNum,
@@ -19937,7 +19974,7 @@ char CPlayer::WeaponSFActive(
 {
   if (!pDamList)
   {
-    return 0;
+    return false;
   }
 
   char result = 0;
@@ -19952,9 +19989,9 @@ char CPlayer::WeaponSFActive(
       {
         if (forceField->m_bAttackable)
         {
-          return pc_WPActiveAttack_Force(pDamList, nDamagedObjNum, forceField);
+          return (pc_WPActiveAttack_Force(pDamList, nDamagedObjNum, forceField)) != 0;
         }
-        return WPActiveForce(pDamList, *nDamagedObjNum, forceField);
+        return (WPActiveForce(pDamList, *nDamagedObjNum, forceField)) != 0;
       }
     }
     else if (effectCode == 2)
@@ -19965,9 +20002,9 @@ char CPlayer::WeaponSFActive(
       {
         if (skillField->m_nAttackable <= 0)
         {
-          return WPActiveSkill(pDamList, *nDamagedObjNum, skillField, effectCode);
+          return (WPActiveSkill(pDamList, *nDamagedObjNum, skillField, effectCode)) != 0;
         }
-        return pc_WPActiveAttack_Skill(pDamList, nDamagedObjNum, nShotNum, skillField, effectCode, wBulletSerial);
+        return (pc_WPActiveAttack_Skill(pDamList, nDamagedObjNum, nShotNum, skillField, effectCode, wBulletSerial)) != 0;
       }
     }
   }
@@ -19979,16 +20016,16 @@ char CPlayer::WeaponSFActive(
     {
       if (skillField->m_nAttackable <= 0)
       {
-        return WPActiveSkill(pDamList, *nDamagedObjNum, skillField, effectCode);
+        return (WPActiveSkill(pDamList, *nDamagedObjNum, skillField, effectCode)) != 0;
       }
-      return pc_WPActiveAttack_Skill(pDamList, nDamagedObjNum, nShotNum, skillField, effectCode, wBulletSerial);
+      return (pc_WPActiveAttack_Skill(pDamList, nDamagedObjNum, nShotNum, skillField, effectCode, wBulletSerial)) != 0;
     }
   }
 
-  return result;
+  return (result) != 0;
 }
 
-char CPlayer::pc_WPActiveAttack_Skill(
+bool CPlayer::pc_WPActiveAttack_Skill(
   _be_damaged_char *pDamList,
   int *nDamagedObjNum,
   int *nShotNum,
@@ -20013,7 +20050,7 @@ char CPlayer::pc_WPActiveAttack_Skill(
 
   if (!_pre_check_wpactive_skill_attack(byEffectCode, pSkillFld, wBulletSerial, &bulletItem, &bulletField))
   {
-    return 0;
+    return false;
   }
 
   float addBulletFc = FLOAT_1_0;
@@ -20063,17 +20100,17 @@ char CPlayer::pc_WPActiveAttack_Skill(
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::pc_WPActiveAttack_Force(_be_damaged_char *pDamList, int *nDamagedObjNum, _force_fld *pForceFld)
+bool CPlayer::pc_WPActiveAttack_Force(_be_damaged_char *pDamList, int *nDamagedObjNum, _force_fld *pForceFld)
 {
   float attackPos[3]{};
   std::memcpy(attackPos, pDamList->m_pChar->m_fCurPos, sizeof(attackPos));
 
   if (!_pre_check_wpactive_force_attack())
   {
-    return 0;
+    return false;
   }
 
   _attack_param param{};
@@ -20108,7 +20145,7 @@ char CPlayer::pc_WPActiveAttack_Force(_be_damaged_char *pDamList, int *nDamagedO
     }
   }
 
-  return 1;
+  return true;
 }
 
 bool CPlayer::WPActiveSkill(
@@ -21616,7 +21653,7 @@ void CPlayer::pc_PlayAttack_SelfDestruction()
   SendMsg_SetSPInform();
 }
 
-unsigned int CPlayer::_check_exp_after_attack(
+int CPlayer::_check_exp_after_attack(
   int nDamagedObjNum,
   _be_damaged_char *pList,
   CPartyModeKillMonsterExpNotify *kPartyExpNotify)
@@ -21636,7 +21673,8 @@ unsigned int CPlayer::_check_exp_after_attack(
       CalcExp(entry->m_pChar, nDam, kPartyExpNotify);
     }
   }
-  return totalDamage;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(totalDamage);
 }
 
 void CPlayer::_check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget)
@@ -22104,7 +22142,7 @@ void CPlayer::SendMsg_Recover()
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-char CPlayer::GetUseConsumeItem(
+bool CPlayer::GetUseConsumeItem(
   _consume_item_list *pConsumeList,
   unsigned __int16 *pItemSerials,
   _STORAGE_LIST::_db_con **ppConsumeItems,
@@ -22113,7 +22151,7 @@ char CPlayer::GetUseConsumeItem(
 {
   if (!pConsumeList || !pItemSerials || !ppConsumeItems || !pnConsume || !pbOverLap)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -22123,23 +22161,23 @@ char CPlayer::GetUseConsumeItem(
     {
       if (pItemSerials[j] == 255)
       {
-        return 0;
+        return false;
       }
       _STORAGE_LIST::_db_con *item = m_Param.m_dbInven.GetPtrFromSerial(pItemSerials[j]);
       if (!item)
       {
-        return 0;
+        return false;
       }
       _base_fld *record = g_Main.m_tblItemData[item->m_byTableCode].GetRecord(item->m_wItemIndex);
       if (std::strcmp(pConsumeList[j].m_itmNeedItemCode, record->m_strCode))
       {
-        return 0;
+        return false;
       }
       if (needCount > 0 && IsOverLapItem(item->m_byTableCode))
       {
         if (item->m_dwDur < needCount)
         {
-          return 0;
+          return false;
         }
         pbOverLap[j] = true;
       }
@@ -22147,17 +22185,17 @@ char CPlayer::GetUseConsumeItem(
       pnConsume[j] = needCount;
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::DeleteUseConsumeItem(
+bool CPlayer::DeleteUseConsumeItem(
   _STORAGE_LIST::_db_con **ppConsumeItems,
   int *pnConsume,
   bool *pbOverLap)
 {
   if (!ppConsumeItems || !pnConsume || !pbOverLap)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -22197,10 +22235,10 @@ char CPlayer::DeleteUseConsumeItem(
       }
     }
   }
-  return 1;
+  return true;
 }
 
-__int64 CPlayer::CalcEquipAttackDelay()
+int CPlayer::CalcEquipAttackDelay()
 {
   unsigned int totalDelay = 0;
   for (int j = 0; j < 5; ++j)
@@ -22248,10 +22286,11 @@ __int64 CPlayer::CalcEquipAttackDelay()
     }
   }
 
-  return totalDelay;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(totalDelay);
 }
 
-__int64 CPlayer::GetMasteryCumAfterAttack(int nDstLv)
+int CPlayer::GetMasteryCumAfterAttack(int nDstLv)
 {
   int diff = nDstLv - static_cast<int>(GetLevel());
   if (diff <= 5)
@@ -22274,9 +22313,11 @@ __int64 CPlayer::GetMasteryCumAfterAttack(int nDstLv)
 
   if (diff > limit)
   {
-    return static_cast<unsigned int>(limit);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(limit));
   }
-  return static_cast<unsigned int>(diff);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(diff));
 }
 
 bool CPlayer::IsPassMasteryLimitLvDiff(int iDstLevel)
@@ -22298,7 +22339,7 @@ void CPlayer::SetBattleMode(bool bAttack)
   m_dwBattleTime = timeGetTime();
 }
 
-__int64 CPlayer::AttackableHeight()
+int CPlayer::AttackableHeight()
 {
   if (m_pmWpn.byWpClass)
   {
@@ -22307,7 +22348,7 @@ __int64 CPlayer::AttackableHeight()
   return 50;
 }
 
-__int64 CPlayer::GetDamageLevel(int nAttackPart)
+int CPlayer::GetDamageLevel(int nAttackPart)
 {
   if (IsRidingUnit() || nAttackPart > 5)
   {
@@ -22324,13 +22365,14 @@ __int64 CPlayer::GetDamageLevel(int nAttackPart)
     g_Main.m_tblItemData[nAttackPart].GetRecord(equip->m_wItemIndex));
   if (record)
   {
-    return static_cast<unsigned int>(record->m_nLevelLim);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(record->m_nLevelLim));
   }
 
   return 1;
 }
 
-__int64 CPlayer::GetDamageDP(int nAttackPart)
+int CPlayer::GetDamageDP(int nAttackPart)
 {
   if (IsRidingUnit() || nAttackPart > 5)
   {
@@ -22351,20 +22393,22 @@ __int64 CPlayer::GetDamageDP(int nAttackPart)
 
   if (record)
   {
-    return static_cast<unsigned int>(record->m_nDefence_DP);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(record->m_nDefence_DP));
   }
 
   return 0;
 }
 
-__int64 CPlayer::GetAttackDP()
+int CPlayer::GetAttackDP()
 {
   if (IsRidingUnit())
   {
     _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
     if (record)
     {
-      return static_cast<unsigned int>(record->m_nAttack_DP);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(record->m_nAttack_DP));
     }
   }
   else
@@ -22375,21 +22419,23 @@ __int64 CPlayer::GetAttackDP()
       _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex));
       if (record)
       {
-        return static_cast<unsigned int>(record->m_nAttack_DP);
+        // narrowing cast for thunk return parity
+        return static_cast<int>(static_cast<unsigned int>(record->m_nAttack_DP));
       }
     }
   }
   return 0;
 }
 
-__int64 CPlayer::GetAttackLevel()
+int CPlayer::GetAttackLevel()
 {
   if (IsRidingUnit())
   {
     _UnitPart_fld *record = reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[3].GetRecord(m_pUsingUnit->byPart[3]));
     if (record)
     {
-      return static_cast<unsigned int>(record->m_nLevelLim);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(record->m_nLevelLim));
     }
   }
   else
@@ -22400,7 +22446,8 @@ __int64 CPlayer::GetAttackLevel()
       _WeaponItem_fld *record = reinterpret_cast<_WeaponItem_fld *>(g_Main.m_tblItemData[6].GetRecord(equip->m_wItemIndex));
       if (record)
       {
-        return static_cast<unsigned int>(record->m_nLevelLim);
+        // narrowing cast for thunk return parity
+        return static_cast<int>(static_cast<unsigned int>(record->m_nLevelLim));
       }
     }
   }
@@ -22412,12 +22459,13 @@ float CPlayer::GetAttackRange()
   return static_cast<float>(m_pmWpn.wGaAttRange);
 }
 
-__int64 CPlayer::GetWeaponRange()
+int CPlayer::GetWeaponRange()
 {
-  return static_cast<unsigned int>(m_pmWpn.wGaAttRange) - 40;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(m_pmWpn.wGaAttRange) - 40);
 }
 
-__int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+int CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
   float masteryPerMast = 0.0f;
   if (m_pmWpn.byWpType == 255 || m_pmWpn.byWpType == 9)
@@ -22498,7 +22546,8 @@ __int64 CPlayer::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
   {
     return 95;
   }
-  return static_cast<unsigned int>(attackProb);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(attackProb));
 }
 
 bool CPlayer::IsBeAttackedAble(bool bFirst)
@@ -22523,7 +22572,7 @@ void CPlayer::SetAttackPart(int nAttactPart)
   m_nLastBeatenPart = nAttactPart;
 }
 
-char CPlayer::dev_trap_attack_grade(int nPoint)
+bool CPlayer::dev_trap_attack_grade(int nPoint)
 {
   m_nTrapMaxAttackPnt = nPoint;
   for (int j = 0; j < 20; ++j)
@@ -22533,35 +22582,35 @@ char CPlayer::dev_trap_attack_grade(int nPoint)
       m_pmTrp.m_Item[j].pItem->m_nTrapMaxAttackPnt = nPoint;
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_MaxAttackPoint(int nMax)
+bool CPlayer::mgr_MaxAttackPoint(int nMax)
 {
   if (m_nMaxAttackPnt == nMax)
   {
-    return 0;
+    return false;
   }
   m_nMaxAttackPnt = nMax;
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_set_animus_attack_point(int nPoint)
+bool CPlayer::mgr_set_animus_attack_point(int nPoint)
 {
   if (!m_pUserDB)
   {
-    return 0;
+    return false;
   }
   if (m_nAnimusAttackPnt == nPoint)
   {
-    return 0;
+    return false;
   }
   m_nAnimusAttackPnt = nPoint;
   if (m_pRecalledAnimusChar)
   {
     m_pRecalledAnimusChar->m_nMaxAttackPnt = nPoint;
   }
-  return 1;
+  return true;
 }
 
 void CPlayer::SendMsg_TakeNewResult(char byErrCode, _STORAGE_LIST::_db_con *pItem)
@@ -25707,7 +25756,7 @@ void CPlayer::pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv
   SendMsg_CombineItemExAcceptResult(&send);
 }
 
-__int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
+int CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
 {
   if (GetCurSecNum() == -1 || m_bMapLoading)
   {
@@ -25761,7 +25810,8 @@ __int64 CPlayer::pc_UseFireCracker(unsigned __int16 wItemSerial)
   CPlayer::s_MgrItemHistory.consume_del_item(m_ObjID.m_wIndex,
     item,
     m_szItemHistoryFileName);
-  return item->m_wItemIndex;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(item->m_wItemIndex);
 }
 
 unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigned __int16 *wItemIndex)
@@ -25822,7 +25872,7 @@ unsigned __int8 CPlayer::pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigne
   return 0;
 }
 
-char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pConsumeSerial)
+bool CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pConsumeSerial)
 {
   unsigned __int8 errCode = 0;
   CRadarItemMgr *radarMgr = &m_pUserDB->m_RadarItemMgr;
@@ -25944,14 +25994,14 @@ char CPlayer::pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pCons
     radarMgr->RadarProc(radarFld);
     SendMsg_RadarCharSearchResult();
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::pc_RadarCharInfo()
+bool CPlayer::pc_RadarCharInfo()
 {
   if (!m_pUserDB)
   {
-    return 0;
+    return false;
   }
   CRadarItemMgr *radarMgr = &m_pUserDB->m_RadarItemMgr;
   if (radarMgr->IsUse())
@@ -25959,19 +26009,19 @@ char CPlayer::pc_RadarCharInfo()
     _RadarItem_fld *radarFld = (_RadarItem_fld *)g_Main.m_tblItemData[34].GetRecord(radarMgr->m_strRadarCode);
     if (!radarFld)
     {
-      return 0;
+      return false;
     }
     radarMgr->RadarProc(radarFld);
     SendMsg_RadarCharSearchResult();
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::pc_NPCLinkCheckItemRequest(_STORAGE_POS_INDIV *pStorage)
+bool CPlayer::pc_NPCLinkCheckItemRequest(_STORAGE_POS_INDIV *pStorage)
 {
   const unsigned __int8 result = pc_NPCLinkCheckItemRequest_Use(pStorage);
   SendMsg_NPCLinkItemCheckResult(result, pStorage);
-  return 1;
+  return true;
 }
 
 unsigned __int8 CPlayer::pc_NPCLinkCheckItemRequest_Check(_STORAGE_POS_INDIV *pStorage)
@@ -26132,11 +26182,11 @@ unsigned __int8 CPlayer::pc_RenameItemNConditionCheck(_STORAGE_POS_INDIV *pItemI
   return 0;
 }
 
-char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, const char *strCharacterName)
+bool CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, const char *strCharacterName)
 {
   if (!pItem)
   {
-    return 0;
+    return false;
   }
 
   _STORAGE_POS_INDIV itemInfo{};
@@ -26150,7 +26200,7 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
   }
   if (itemInfo.byStorageCode)
   {
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con *item = nullptr;
@@ -26158,19 +26208,19 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
   if (errCode)
   {
     SendMsg_CharacterRenameCashResult(bChange, errCode);
-    return 0;
+    return false;
   }
   if (!item)
   {
     SendMsg_CharacterRenameCashResult(bChange, 1u);
-    return 0;
+    return false;
   }
 
   const int cashType = GetUsePcCashType(item->m_byTableCode, item->m_wItemIndex);
   if (!IsUsableAccountType(cashType))
   {
     SendMsg_PremiumCashItemUse(65535);
-    return 1;
+    return true;
   }
 
   if (bChange)
@@ -26191,13 +26241,13 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
           {
             m_ReNamePotionUseInfo.Init();
             SendMsg_CharacterRenameCashResult(1, errCode);
-            return 0;
+            return false;
           }
-          return 1;
+          return true;
         }
         m_ReNamePotionUseInfo.Init();
         SendMsg_CharacterRenameCashResult(1, 9u);
-        return 0;
+        return false;
       }
 
       m_ReNamePotionUseInfo.Init();
@@ -26209,12 +26259,12 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
         item->m_byTableCode,
         item->m_wItemIndex);
       errCode = 48;
-      return 0;
+      return false;
     }
 
     m_ReNamePotionUseInfo.Init();
     SendMsg_CharacterRenameCashResult(1, 48);
-    return 0;
+    return false;
   }
 
   errCode = pc_CharacterRenameCheck(strCharacterName);
@@ -26236,10 +26286,10 @@ char CPlayer::pc_CharacterRenameCash(bool bChange, _STORAGE_POS_INDIV *pItem, co
       SendMsg_CharacterRenameCashResult(0, 10);
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::pc_CharacterRenameCheck(const char *strCharacterName)
+unsigned __int8 CPlayer::pc_CharacterRenameCheck(const char *strCharacterName)
 {
   char errCode = 0;
   char dest[17]{};
@@ -26472,13 +26522,13 @@ char CPlayer::ProcessSetItemCheckRequest(
   return 1;
 }
 
-char CPlayer::pc_SetItemCheckRequest(
+bool CPlayer::pc_SetItemCheckRequest(
   unsigned int dwSetItem,
   unsigned __int8 bySetItemNum,
   unsigned __int8 bySetEffectNum,
   bool bSet)
 {
-  return ProcessSetItemCheckRequest(dwSetItem, bySetItemNum, bySetEffectNum, bSet, true);
+  return (ProcessSetItemCheckRequest(dwSetItem, bySetItemNum, bySetEffectNum, bSet, true)) != 0;
 }
 
 void CPlayer::UpdateLastMetalTicket(
@@ -26945,14 +26995,14 @@ void CPlayer::pc_QuestGiveupRequest(unsigned __int8 byQuestDBSlot)
   SendMsg_QuestGiveUpResult(result);
 }
 
-char CPlayer::Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode)
+bool CPlayer::Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode)
 {
   const unsigned __int8 raceCode = static_cast<unsigned __int8>(m_Param.GetRaceCode());
   _happen_event_cont *src =
     m_QuestMgr.CheckQuestHappenEvent(static_cast<QUEST_HAPPEN>(HappenType), pszEventCode, raceCode);
   if (!src)
   {
-    return 0;
+    return false;
   }
 
   _happen_event_cont happenEvent{};
@@ -26961,12 +27011,12 @@ char CPlayer::Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode)
   if (happenEvent.m_pEvent->m_bSelectQuestManual)
   {
     SendMsg_SelectWaitedQuest(HappenType, happenEvent.m_nIndexInType, happenEvent.m_nRaceCode);
-    return 1;
+    return true;
   }
 
   if (Emb_StartQuest(255, &happenEvent))
   {
-    return 1;
+    return true;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -26974,10 +27024,10 @@ char CPlayer::Emb_CreateQuestEvent(__int32 HappenType, char *pszEventCode)
     if (!m_QuestMgr.m_pTempHappenEvent[j].isset())
     {
       std::memcpy(&m_QuestMgr.m_pTempHappenEvent[j], &happenEvent, sizeof(m_QuestMgr.m_pTempHappenEvent[j]));
-      return 0;
+      return false;
     }
   }
-  return 0;
+  return false;
 }
 
 void CPlayer::pc_GuildManageRequest(

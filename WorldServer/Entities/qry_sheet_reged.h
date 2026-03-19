@@ -14,14 +14,15 @@ struct  _qry_sheet_reged
 
   _qry_sheet_reged();
   ~_qry_sheet_reged();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
 inline _qry_sheet_reged::_qry_sheet_reged() = default;
 inline _qry_sheet_reged::~_qry_sheet_reged() = default;
 
-inline __int64 _qry_sheet_reged::size() const
+inline int _qry_sheet_reged::size() const
 {
-  return 4280LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(4280LL);
 }

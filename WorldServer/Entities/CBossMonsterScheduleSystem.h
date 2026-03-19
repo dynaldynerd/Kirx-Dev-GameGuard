@@ -39,7 +39,7 @@ public:
   void Savechedule(BossSchedule_Map *pMapSchedule, BossSchedule *pSchedule);
   void AnalysisMsg(ScheduleMSG *pMSG);
   void RespawnMonster();
-  __int64 WorkProc() override;
+  int WorkProc() override;
 
   CMapOperation *m_pMapOper;
   BossSchedule_TBL *m_pCurTBL;

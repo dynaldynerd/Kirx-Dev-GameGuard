@@ -44,7 +44,7 @@ static const char *s_szOreKind_160[5] = {
 
 AutoMineMachineMng *AutoMineMachineMng::m_pInstance;
 
-__int64 _pt_automine_charge_money_db_update_fail_zocl::size()
+int _pt_automine_charge_money_db_update_fail_zocl::size()
 {
   return 4;
 }
@@ -193,12 +193,12 @@ bool AutoMineMachine::_InitMineOre()
   return true;
 }
 
-unsigned int AutoMineMachine::_Convert_GoldToGage(int nGold)
+int AutoMineMachine::_Convert_GoldToGage(int nGold)
 {
   const int gage = 86400 * nGold / 5000;
   if (gage <= 86400)
   {
-    return static_cast<unsigned int>(gage);
+    return gage;
   }
   return 86400;
 }

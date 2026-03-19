@@ -186,7 +186,7 @@ bool CRFWorldDatabase::Delete_Guild( unsigned int dwGuildSerial)
   return this->ExecUpdateQuery( Buffer, 1);
 }
 
-bool CRFWorldDatabase::Delete_PatriarchComm( unsigned int dwSerial, char *pszDepDate)
+unsigned __int8 CRFWorldDatabase::Delete_PatriarchComm( unsigned int dwSerial, char *pszDepDate)
 {
   char Buffer[144]; // [rsp+30h] [rbp-A8h] BYREF
   sprintf_s(Buffer, "{ CALL pDelete_PatriarchComm( %d, '%s') }", dwSerial, pszDepDate);
@@ -1212,7 +1212,7 @@ bool CRFWorldDatabase::UpdateGuildMoney(unsigned int dwSerial, long double dDala
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
+bool CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
 {
   SQLLEN strLenOrInd = 0;
   SQLRETURN ret = SQL_ERROR;
@@ -1232,7 +1232,7 @@ char CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
   if (!m_hStmtSelect && !ReConnectDataBase())
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
-    return 0;
+    return false;
   }
 
   ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
@@ -1282,21 +1282,21 @@ char CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
     {
       FmtLog("%s Success", query);
     }
-    return 1;
+    return true;
   }
 
   if (ret == SQL_NO_DATA)
   {
     pGuildInfo->wGuildCount = static_cast<unsigned __int16>(index);
-    return 1;
+    return true;
   }
 
   ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
   ErrorAction(ret, m_hStmtSelect);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Select_GuildMemberData(
+bool CRFWorldDatabase::Select_GuildMemberData(
   unsigned __int16 wMaxMember,
   unsigned int dwGuildSerial,
   _worlddb_guild_member_info *pGuildMemberInfo)
@@ -1320,7 +1320,7 @@ char CRFWorldDatabase::Select_GuildMemberData(
   if (!m_hStmtSelect && !ReConnectDataBase())
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
-    return 0;
+    return false;
   }
 
   ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
@@ -1378,7 +1378,7 @@ char CRFWorldDatabase::Select_GuildMemberData(
     {
       FmtLog("%s Success", query);
     }
-    return 1;
+    return true;
   }
 
   if (ret != SQL_NO_DATA)
@@ -1386,10 +1386,10 @@ char CRFWorldDatabase::Select_GuildMemberData(
     ErrorMsgLog(ret, query, "SQLExecDirect", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
   }
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Select_GuildMoneyIOData(
+bool CRFWorldDatabase::Select_GuildMoneyIOData(
   unsigned int dwGuildSerial,
   _worlddb_guild_money_io_info *pGuildIOData)
 {
@@ -1416,7 +1416,7 @@ char CRFWorldDatabase::Select_GuildMoneyIOData(
   if (!m_hStmtSelect && !ReConnectDataBase())
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
-    return 0;
+    return false;
   }
 
   ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), -3);
@@ -1470,7 +1470,7 @@ char CRFWorldDatabase::Select_GuildMoneyIOData(
     {
       FmtLog("%s Success", query);
     }
-    return 1;
+    return true;
   }
 
   if (ret != SQL_NO_DATA)
@@ -1478,10 +1478,10 @@ char CRFWorldDatabase::Select_GuildMoneyIOData(
     ErrorMsgLog(ret, query, "SQLExecDirect", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
   }
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Select_GuildData(
+bool CRFWorldDatabase::Select_GuildData(
         unsigned int dwGuildSerial,
         _worlddb_guild_info::__guild_info *pGuildData)
 {
@@ -1509,7 +1509,7 @@ char CRFWorldDatabase::Select_GuildData(
           SQLCloseCursor(this->m_hStmtSelect);
         if ( this->m_bSaveDBLog )
           this->FmtLog( "%s Success", queryBuffer);
-        return 1;
+        return true;
       }
       else
       {
@@ -1520,7 +1520,7 @@ char CRFWorldDatabase::Select_GuildData(
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
-        return 0;
+        return false;
       }
     }
     else
@@ -1530,17 +1530,17 @@ char CRFWorldDatabase::Select_GuildData(
         this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
         this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
   }
   else
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::SelectAllGuildSerial(
+bool CRFWorldDatabase::SelectAllGuildSerial(
         unsigned int *pdwCount,
         unsigned int *pdwSerial)
 {
@@ -1572,27 +1572,27 @@ char CRFWorldDatabase::SelectAllGuildSerial(
         SQLCloseCursor(this->m_hStmtSelect);
       if ( this->m_bSaveDBLog )
         this->FmtLog( "%s Success", queryBuffer);
-      return 1;
+      return true;
     }
     else if ( sqlStatus == 100 )
     {
-      return 1;
+      return true;
     }
     else
     {
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
       this->ErrorAction( sqlStatus, this->m_hStmtSelect);
-      return 0;
+      return false;
     }
   }
   else
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::SelectAllGuildSerialGrade(
+bool CRFWorldDatabase::SelectAllGuildSerialGrade(
         unsigned int *pdwCount,
         unsigned int *pdwSerial,
         unsigned __int8 *pbyGrade)
@@ -1626,27 +1626,27 @@ char CRFWorldDatabase::SelectAllGuildSerialGrade(
         SQLCloseCursor(this->m_hStmtSelect);
       if ( this->m_bSaveDBLog )
         this->FmtLog( "%s Success", queryBuffer);
-      return 1;
+      return true;
     }
     else if ( sqlStatus == 100 )
     {
-      return 1;
+      return true;
     }
     else
     {
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
       this->ErrorAction( sqlStatus, this->m_hStmtSelect);
-      return 0;
+      return false;
     }
   }
   else
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
+bool CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
 {
   SQLLEN strLenOrIndPtr;
   SQLRETURN sqlStatus;
@@ -1699,7 +1699,7 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
             }
             if ( this->m_bSaveDBLog )
               this->Log( "Update_CharSlot Success");
-            return 1;
+            return true;
           }
           else
           {
@@ -1708,7 +1708,7 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
               this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
               this->ErrorAction( sqlStatus, this->m_hStmtSelect);
             }
-            return 0;
+            return false;
           }
         }
         else
@@ -1717,7 +1717,7 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
           this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           if ( this->m_hStmtSelect )
             SQLCloseCursor(this->m_hStmtSelect);
-          return 0;
+          return false;
         }
       }
       else
@@ -1729,7 +1729,7 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
         }
         if ( this->m_hStmtSelect )
           SQLCloseCursor(this->m_hStmtSelect);
-        return 0;
+        return false;
       }
     }
     else
@@ -1739,30 +1739,30 @@ char CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
         this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirectA", this->m_hStmtSelect);
         this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
   }
   else
   {
     this->FmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_GuildRank(char *szDate)
+bool CRFWorldDatabase::Update_GuildRank(char *szDate)
 {
   if (!Update_GuildRank_Step1(szDate))
   {
-    return 0;
+    return false;
   }
   if (!Update_GuildRank_Step2(szDate))
   {
-    return 0;
+    return false;
   }
-  return Update_GuildRank_Step3(szDate);
+  return (Update_GuildRank_Step3(szDate)) != 0;
 }
 
-char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
+bool CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
 {
   SQLRETURN sqlStatus;
   char queryBuffer[1040];
@@ -1781,7 +1781,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
         "CRFWorldDatabase::Update_GuildRank_Step1(szDate(%s)) : Drop tbl_GuildRank%s Table Fail!",
         szDate,
         szDate);
-      return 0;
+      return false;
     }
   }
   this->SetAutoCommitMode( 0);
@@ -1805,7 +1805,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Create #tbl_GuildRankTemp Table Fail NO_DATA!",
@@ -1836,7 +1836,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : Create tbl_GuildRank%s Table Fail NO_DATA!",
@@ -1858,7 +1858,7 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
     this->FmtLog(
       "CRFWorldDatabase::Update_GuildRank_Step1(char* szDate(%s)) : End drop table #tbl_GuildRankTemp",
       szDate);
-    return 1;
+    return true;
   }
   else
   {
@@ -1867,11 +1867,11 @@ char CRFWorldDatabase::Update_GuildRank_Step1( char *szDate)
       szDate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
+bool CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
 {
   char queryBuffer[1040];
 
@@ -1926,7 +1926,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
                 this->FmtLog(
                   "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : End Update Rate",
                   szDate);
-                return 1;
+                return true;
               }
               else
               {
@@ -1934,7 +1934,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
                   "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
                   szDate,
                   queryBuffer);
-                return 0;
+                return false;
               }
             }
             else
@@ -1943,7 +1943,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
                 "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
                 szDate,
                 queryBuffer);
-              return 0;
+              return false;
             }
           }
           else
@@ -1952,7 +1952,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
               "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
               szDate,
               queryBuffer);
-            return 0;
+            return false;
           }
         }
         else
@@ -1961,7 +1961,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
             "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
             szDate,
             queryBuffer);
-          return 0;
+          return false;
         }
       }
       else
@@ -1970,7 +1970,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
           "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
           szDate,
           queryBuffer);
-        return 0;
+        return false;
       }
     }
     else
@@ -1979,7 +1979,7 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
         "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
         szDate,
         queryBuffer);
-      return 0;
+      return false;
     }
   }
   else
@@ -1988,11 +1988,11 @@ char CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
       "CRFWorldDatabase::Update_GuildRank_Step2(char* szDate(%s)) : %s Fail!",
       szDate,
       queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
+bool CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
 {
   char queryBuffer[1040];
 
@@ -2022,7 +2022,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       this->FmtLog(
         "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : Update_GuildRank Success",
         szDate);
-      return 1;
+      return true;
     }
     else
     {
@@ -2030,7 +2030,7 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
         "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : %s Fail!",
         szDate,
         queryBuffer);
-      return 0;
+      return false;
     }
   }
   else
@@ -2039,56 +2039,56 @@ char CRFWorldDatabase::Update_GuildRank_Step3( char *szDate)
       "CRFWorldDatabase::Update_GuildRank_Step3(char* szDate(%s)) : %s Fail!",
       szDate,
       queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RaceRank(char *szDate)
+bool CRFWorldDatabase::Update_RaceRank(char *szDate)
 {
   if (!Update_RaceRank_Step1(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step2(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step3(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step4(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step5(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step6(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step7(szDate))
   {
-    return 0;
+    return false;
   }
 
   if (!Update_RaceRank_Step8(szDate))
   {
-    return 0;
+    return false;
   }
 
-  return Update_RaceRank_Step9(szDate);
+  return (Update_RaceRank_Step9(szDate)) != 0;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
 {
   SQLRETURN sqlStatus;
   char queryBuffer[1028];
@@ -2099,7 +2099,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Start Create #tbl_PvpRankB Table",
@@ -2125,7 +2125,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Create #tbl_PvpRankB Table Fail NO_DATA!",
@@ -2149,7 +2149,7 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
       this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtUpdate);
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankB Table Fail NO_DATA!",
@@ -2160,10 +2160,10 @@ char CRFWorldDatabase::Update_RaceRank_Step1( char *szDate)
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : End Set Rate #tbl_PvpRankB Table",
     szDate);
   this->SetAutoCommitMode( 1);
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
 {
   SQLRETURN sqlStatus;
   char queryBuffer[1028];
@@ -2173,7 +2173,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Start Create #tbl_PvpRankC Table",
@@ -2201,7 +2201,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
       this->SetAutoCommitMode( 1);
       if ( !this->Update_RaceRank_Step_6_1( szDate) )
         this->Update_RaceRank_Step_6_1( szDate);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Create #tbl_PvpRankB Table Fail NO_DATA!",
@@ -2228,7 +2228,7 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
       "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : End Set Rate #tbl_PvpRankC Table",
       szDate);
     this->SetAutoCommitMode( 1);
-    return 1;
+    return true;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankC Table Fail SQL_ERROR!",
@@ -2238,10 +2238,10 @@ char CRFWorldDatabase::Update_RaceRank_Step2( char *szDate)
   this->SetAutoCommitMode( 1);
   if ( !this->Update_RaceRank_Step_6_1( szDate) )
     this->Update_RaceRank_Step_6_1( szDate);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
 {
   SQLRETURN sqlStatus;
   char queryBuffer[1028];
@@ -2251,7 +2251,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
   if ( !this->m_hStmtUpdate && !this->ReConnectDataBase() )
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Start Create #tbl_PvpRankC Table",
@@ -2281,7 +2281,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
         this->Update_RaceRank_Step_6_1( szDate);
       if ( !this->Update_RaceRank_Step_6_2( szDate) )
         this->Update_RaceRank_Step_6_2( szDate);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step2(szDate(%s)) : Create #tbl_PvpRankB Table Fail NO_DATA!",
@@ -2308,7 +2308,7 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step3(szDate(%s)) : End Set Rate #tbl_PvpRankA Table",
       szDate);
-    return 1;
+    return true;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step1(szDate(%s)) : Set Rate #tbl_PvpRankA Table Fail SQL_ERROR!",
@@ -2320,10 +2320,10 @@ char CRFWorldDatabase::Update_RaceRank_Step3( char *szDate)
     this->Update_RaceRank_Step_6_1( szDate);
   if ( !this->Update_RaceRank_Step_6_2( szDate) )
     this->Update_RaceRank_Step_6_2( szDate);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
 {
   SQLRETURN sqlStatus;
   char queryBuffer[1040];
@@ -2343,7 +2343,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
         "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : Drop tbl_PvpRank%s Table Fail!",
         szDate,
         szDate);
-      return 0;
+      return false;
     }
   }
   this->SetAutoCommitMode( 0);
@@ -2364,7 +2364,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
       szDate);
     this->RollbackTransaction();
     this->SetAutoCommitMode( 1);
-    return 0;
+    return false;
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step4(szDate(%s)) : End Create tbl_PvpRank%s Table",
@@ -2395,7 +2395,7 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
       this->RollbackTransaction();
       this->SetAutoCommitMode( 1);
       this->Update_RaceRank_Step6( szDate);
-      return 0;
+      return false;
     }
     this->FmtLog(
       "CRFWorldDatabase::Update_RaceRank(szDate(%s)) : Union #tbl_PvpRankB,C,A To tbl_PvpRank%s Fail NO_DATA!",
@@ -2408,10 +2408,10 @@ char CRFWorldDatabase::Update_RaceRank_Step4( char *szDate)
     "CRFWorldDatabase::Update_RaceRank(szDate(%s)) : End Union #tbl_PvpRankB,C,A To tbl_PvpRank%s",
     szDate,
     szDate);
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
 {
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
   this->FmtLog(
@@ -2598,7 +2598,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                         "ade tbl_PvpRank%s",
                                                         szDate,
                                                         szDate);
-                                                      return 1;
+                                                      return true;
                                                     }
                                                     else
                                                     {
@@ -2607,7 +2607,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                         szDate,
                                                         Buffer);
                                                       this->Update_RaceRank_Step6( szDate);
-                                                      return 0;
+                                                      return false;
                                                     }
                                                   }
                                                   else
@@ -2617,7 +2617,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                       szDate,
                                                       Buffer);
                                                     this->Update_RaceRank_Step6( szDate);
-                                                    return 0;
+                                                    return false;
                                                   }
                                                 }
                                                 else
@@ -2627,7 +2627,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                     szDate,
                                                     Buffer);
                                                   this->Update_RaceRank_Step6( szDate);
-                                                  return 0;
+                                                  return false;
                                                 }
                                               }
                                               else
@@ -2637,7 +2637,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                   szDate,
                                                   Buffer);
                                                 this->Update_RaceRank_Step6( szDate);
-                                                return 0;
+                                                return false;
                                               }
                                             }
                                             else
@@ -2647,7 +2647,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                                 szDate,
                                                 Buffer);
                                               this->Update_RaceRank_Step6( szDate);
-                                              return 0;
+                                              return false;
                                             }
                                           }
                                           else
@@ -2657,7 +2657,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                               szDate,
                                               Buffer);
                                             this->Update_RaceRank_Step6( szDate);
-                                            return 0;
+                                            return false;
                                           }
                                         }
                                         else
@@ -2667,7 +2667,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                             szDate,
                                             Buffer);
                                           this->Update_RaceRank_Step6( szDate);
-                                          return 0;
+                                          return false;
                                         }
                                       }
                                       else
@@ -2677,7 +2677,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                           szDate,
                                           Buffer);
                                         this->Update_RaceRank_Step6( szDate);
-                                        return 0;
+                                        return false;
                                       }
                                     }
                                     else
@@ -2687,7 +2687,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                         szDate,
                                         Buffer);
                                       this->Update_RaceRank_Step6( szDate);
-                                      return 0;
+                                      return false;
                                     }
                                   }
                                   else
@@ -2697,7 +2697,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                       szDate,
                                       Buffer);
                                     this->Update_RaceRank_Step6( szDate);
-                                    return 0;
+                                    return false;
                                   }
                                 }
                                 else
@@ -2707,7 +2707,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                     szDate,
                                     Buffer);
                                   this->Update_RaceRank_Step6( szDate);
-                                  return 0;
+                                  return false;
                                 }
                               }
                               else
@@ -2717,7 +2717,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                   szDate,
                                   Buffer);
                                 this->Update_RaceRank_Step6( szDate);
-                                return 0;
+                                return false;
                               }
                             }
                             else
@@ -2727,7 +2727,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                                 szDate,
                                 Buffer);
                               this->Update_RaceRank_Step6( szDate);
-                              return 0;
+                              return false;
                             }
                           }
                           else
@@ -2737,7 +2737,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                               szDate,
                               Buffer);
                             this->Update_RaceRank_Step6( szDate);
-                            return 0;
+                            return false;
                           }
                         }
                         else
@@ -2747,7 +2747,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                             szDate,
                             Buffer);
                           this->Update_RaceRank_Step6( szDate);
-                          return 0;
+                          return false;
                         }
                       }
                       else
@@ -2757,7 +2757,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                           szDate,
                           Buffer);
                         this->Update_RaceRank_Step6( szDate);
-                        return 0;
+                        return false;
                       }
                     }
                     else
@@ -2767,7 +2767,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                         szDate,
                         Buffer);
                       this->Update_RaceRank_Step6( szDate);
-                      return 0;
+                      return false;
                     }
                   }
                   else
@@ -2777,7 +2777,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                       szDate,
                       Buffer);
                     this->Update_RaceRank_Step6( szDate);
-                    return 0;
+                    return false;
                   }
                 }
                 else
@@ -2787,7 +2787,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                     szDate,
                     Buffer);
                   this->Update_RaceRank_Step6( szDate);
-                  return 0;
+                  return false;
                 }
               }
               else
@@ -2797,7 +2797,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                   szDate,
                   Buffer);
                 this->Update_RaceRank_Step6( szDate);
-                return 0;
+                return false;
               }
             }
             else
@@ -2807,7 +2807,7 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
                 szDate,
                 Buffer);
               this->Update_RaceRank_Step6( szDate);
-              return 0;
+              return false;
             }
           }
           else
@@ -2817,39 +2817,39 @@ char CRFWorldDatabase::Update_RaceRank_Step5( char *szDate)
               szDate,
               Buffer);
             this->Update_RaceRank_Step6( szDate);
-            return 0;
+            return false;
           }
         }
         else
         {
           this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step5(szDate(%s)) : %s Fail!", szDate, Buffer);
           this->Update_RaceRank_Step6( szDate);
-          return 0;
+          return false;
         }
       }
       else
       {
         this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step5(szDate(%s)) : %s Fail!", szDate, Buffer);
         this->Update_RaceRank_Step6( szDate);
-        return 0;
+        return false;
       }
     }
     else
     {
       this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step5(szDate(%s)) : %s Fail!", szDate, Buffer);
       this->Update_RaceRank_Step6( szDate);
-      return 0;
+      return false;
     }
   }
   else
   {
     this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step5(szDate(%s)) : %s Fail!", szDate, Buffer);
     this->Update_RaceRank_Step6( szDate);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step_6_1( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step_6_1( char *szDate)
 {
   char Buffer[1040]{};
 
@@ -2863,14 +2863,14 @@ char CRFWorldDatabase::Update_RaceRank_Step_6_1( char *szDate)
     FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step_6_1(szDate(%s)) : End drop #tbl_PvpRankB Table",
       szDate);
-    return 1;
+    return true;
   }
 
   FmtLog("CRFWorldDatabase::Update_RaceRank_Step_6_1(szDate(%s)) : %s Fail!", szDate, Buffer);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step_6_2( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step_6_2( char *szDate)
 {
   char Buffer[1040]{};
 
@@ -2884,14 +2884,14 @@ char CRFWorldDatabase::Update_RaceRank_Step_6_2( char *szDate)
     FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step_6_2(szDate(%s)) : End drop #tbl_PvpRankC Table",
       szDate);
-    return 1;
+    return true;
   }
 
   FmtLog("CRFWorldDatabase::Update_RaceRank_Step_6_2(szDate(%s)) : %s Fail!", szDate, Buffer);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step_6_3( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step_6_3( char *szDate)
 {
   char Buffer[1040]{};
 
@@ -2905,14 +2905,14 @@ char CRFWorldDatabase::Update_RaceRank_Step_6_3( char *szDate)
     FmtLog(
       "CRFWorldDatabase::Update_RaceRank_Step_6_3(szDate(%s)) : End drop #tbl_PvpRankA Table",
       szDate);
-    return 1;
+    return true;
   }
 
   FmtLog("CRFWorldDatabase::Update_RaceRank_Step_6_3(szDate(%s)) : %s Fail!", szDate, Buffer);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step6( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step6( char *szDate)
 {
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step6(szDate(%s)) : Start drop #tbl_PvpRankB,C,A Table",
@@ -2926,28 +2926,28 @@ char CRFWorldDatabase::Update_RaceRank_Step6( char *szDate)
         this->FmtLog(
           "CRFWorldDatabase::Update_RaceRank_Step6(szDate(%s)) : End drop #tbl_PvpRankB,C,A Table",
           szDate);
-        return 1;
+        return true;
       }
       else
       {
         this->Update_RaceRank_Step_6_3( szDate);
-        return 0;
+        return false;
       }
     }
     else
     {
       this->Update_RaceRank_Step_6_2( szDate);
-      return 0;
+      return false;
     }
   }
   else
   {
     this->Update_RaceRank_Step_6_1( szDate);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
 {
   char Buffer[1028]; // [rsp+30h] [rbp-428h] BYREF
   int j; // [rsp+434h] [rbp-24h]
@@ -2966,7 +2966,7 @@ char CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
     if ( !this->ExecUpdateQuery( Buffer, 0) )
     {
       this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step7(szDate(%s)) : %s Fail!", szDate, Buffer);
-      return 0;
+      return false;
     }
     sprintf_s(
       Buffer,
@@ -2976,23 +2976,23 @@ char CRFWorldDatabase::Update_RaceRank_Step7( char *szDate)
     if ( !this->ExecUpdateQuery( Buffer, 0) )
     {
       this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step7(szDate(%s)) : %s Fail!", szDate, Buffer);
-      return 0;
+      return false;
     }
     sprintf_s(Buffer, "drop table #tbl_PvpRank");
     if ( !this->ExecUpdateQuery( Buffer, 0) )
     {
       this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step7(szDate(%s)) : %s Fail!", szDate, Buffer);
-      return 0;
+      return false;
     }
   }
   this->FmtLog(
     "CRFWorldDatabase::Update_RaceRank_Step7(szDate(%s)) : End Update Rank tbl_PvpRank%s Table",
     szDate,
     szDate);
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
 {
   char Buffer[1040]; // [rsp+40h] [rbp-428h] BYREF
   this->FmtLog(
@@ -3014,16 +3014,16 @@ char CRFWorldDatabase::Update_RaceRank_Step8( char *szDate)
       "CRFWorldDatabase::Update_RaceRank_Step8(szDate(%s)) : End Set GuildName tbl_PvpRank%s Table",
       szDate,
       szDate);
-    return 1;
+    return true;
   }
   else
   {
     this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step8(szDate(%s)) : %s Fail!", szDate, Buffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
+bool CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
 {
   char Buffer[1040]; // [rsp+30h] [rbp-428h] BYREF
   this->FmtLog(
@@ -3051,22 +3051,22 @@ char CRFWorldDatabase::Update_RaceRank_Step9( char *szDate)
         "CRFWorldDatabase::Update_RaceRank_Step9(szDate(%s)) : End Create tbl_PvpRankToday Table",
         szDate);
       this->FmtLog( "CRFWorldDatabase Date(%s) : Update_RaceRank End Success!", szDate);
-      return 1;
+      return true;
     }
     else
     {
       this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step9(szDate(%s)) : %s Fail!", szDate, Buffer);
-      return 0;
+      return false;
     }
   }
   else
   {
     this->FmtLog( "CRFWorldDatabase::Update_RaceRank_Step9(szDate(%s)) : %s Fail!", szDate, Buffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
+bool CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
 {
   this->FmtLog( "CRFWorldDatabase::Update_RankInGuild_Step2( dwGuildSerial(%u) ) Start!", dwGuildSerial);
   if ( this->ExecUpdateQuery(
@@ -3188,7 +3188,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                         this->FmtLog(
                                                           "CRFWorldDatabase::Update_RankInGuild_Step2( dwGuildSerial(%u) ) End!",
                                                           dwGuildSerial);
-                                                        return 1;
+                                                        return true;
                                                       }
                                                       else
                                                       {
@@ -3199,7 +3199,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                           dwGuildSerial);
                                                         if ( !this->Update_RankInGuild_Step7() )
                                                           this->Update_RankInGuild_Step7();
-                                                        return 0;
+                                                        return false;
                                                       }
                                                     }
                                                     else
@@ -3211,7 +3211,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                         dwGuildSerial);
                                                       if ( !this->Update_RankInGuild_Step7() )
                                                         this->Update_RankInGuild_Step7();
-                                                      return 0;
+                                                      return false;
                                                     }
                                                   }
                                                   else
@@ -3223,7 +3223,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                       dwGuildSerial);
                                                     if ( !this->Update_RankInGuild_Step7() )
                                                       this->Update_RankInGuild_Step7();
-                                                    return 0;
+                                                    return false;
                                                   }
                                                 }
                                                 else
@@ -3235,7 +3235,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                     dwGuildSerial);
                                                   if ( !this->Update_RankInGuild_Step7() )
                                                     this->Update_RankInGuild_Step7();
-                                                  return 0;
+                                                  return false;
                                                 }
                                               }
                                               else
@@ -3247,7 +3247,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                   dwGuildSerial);
                                                 if ( !this->Update_RankInGuild_Step7() )
                                                   this->Update_RankInGuild_Step7();
-                                                return 0;
+                                                return false;
                                               }
                                             }
                                             else
@@ -3258,7 +3258,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                                 dwGuildSerial);
                                               if ( !this->Update_RankInGuild_Step7() )
                                                 this->Update_RankInGuild_Step7();
-                                              return 0;
+                                              return false;
                                             }
                                           }
                                           else
@@ -3269,7 +3269,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                               dwGuildSerial);
                                             if ( !this->Update_RankInGuild_Step7() )
                                               this->Update_RankInGuild_Step7();
-                                            return 0;
+                                            return false;
                                           }
                                         }
                                         else
@@ -3281,7 +3281,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                             dwGuildSerial);
                                           if ( !this->Update_RankInGuild_Step7() )
                                             this->Update_RankInGuild_Step7();
-                                          return 0;
+                                          return false;
                                         }
                                       }
                                       else
@@ -3292,7 +3292,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                           dwGuildSerial);
                                         if ( !this->Update_RankInGuild_Step7() )
                                           this->Update_RankInGuild_Step7();
-                                        return 0;
+                                        return false;
                                       }
                                     }
                                     else
@@ -3303,7 +3303,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                         dwGuildSerial);
                                       if ( !this->Update_RankInGuild_Step7() )
                                         this->Update_RankInGuild_Step7();
-                                      return 0;
+                                      return false;
                                     }
                                   }
                                   else
@@ -3314,7 +3314,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                       dwGuildSerial);
                                     if ( !this->Update_RankInGuild_Step7() )
                                       this->Update_RankInGuild_Step7();
-                                    return 0;
+                                    return false;
                                   }
                                 }
                                 else
@@ -3325,7 +3325,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                     dwGuildSerial);
                                   if ( !this->Update_RankInGuild_Step7() )
                                     this->Update_RankInGuild_Step7();
-                                  return 0;
+                                  return false;
                                 }
                               }
                               else
@@ -3336,7 +3336,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                   dwGuildSerial);
                                 if ( !this->Update_RankInGuild_Step7() )
                                   this->Update_RankInGuild_Step7();
-                                return 0;
+                                return false;
                               }
                             }
                             else
@@ -3347,7 +3347,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                                 dwGuildSerial);
                               if ( !this->Update_RankInGuild_Step7() )
                                 this->Update_RankInGuild_Step7();
-                              return 0;
+                              return false;
                             }
                           }
                           else
@@ -3358,7 +3358,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                               dwGuildSerial);
                             if ( !this->Update_RankInGuild_Step7() )
                               this->Update_RankInGuild_Step7();
-                            return 0;
+                            return false;
                           }
                         }
                         else
@@ -3369,7 +3369,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                             dwGuildSerial);
                           if ( !this->Update_RankInGuild_Step7() )
                             this->Update_RankInGuild_Step7();
-                          return 0;
+                          return false;
                         }
                       }
                       else
@@ -3380,7 +3380,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                           dwGuildSerial);
                         if ( !this->Update_RankInGuild_Step7() )
                           this->Update_RankInGuild_Step7();
-                        return 0;
+                        return false;
                       }
                     }
                     else
@@ -3391,7 +3391,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                         dwGuildSerial);
                       if ( !this->Update_RankInGuild_Step7() )
                         this->Update_RankInGuild_Step7();
-                      return 0;
+                      return false;
                     }
                   }
                   else
@@ -3402,7 +3402,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                       dwGuildSerial);
                     if ( !this->Update_RankInGuild_Step7() )
                       this->Update_RankInGuild_Step7();
-                    return 0;
+                    return false;
                   }
                 }
                 else
@@ -3413,7 +3413,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                     dwGuildSerial);
                   if ( !this->Update_RankInGuild_Step7() )
                     this->Update_RankInGuild_Step7();
-                  return 0;
+                  return false;
                 }
               }
               else
@@ -3424,7 +3424,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                   dwGuildSerial);
                 if ( !this->Update_RankInGuild_Step7() )
                   this->Update_RankInGuild_Step7();
-                return 0;
+                return false;
               }
             }
             else
@@ -3435,7 +3435,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
                 dwGuildSerial);
               if ( !this->Update_RankInGuild_Step7() )
                 this->Update_RankInGuild_Step7();
-              return 0;
+              return false;
             }
           }
           else
@@ -3446,7 +3446,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
               dwGuildSerial);
             if ( !this->Update_RankInGuild_Step7() )
               this->Update_RankInGuild_Step7();
-            return 0;
+            return false;
           }
         }
         else
@@ -3457,7 +3457,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
             dwGuildSerial);
           if ( !this->Update_RankInGuild_Step7() )
             this->Update_RankInGuild_Step7();
-          return 0;
+          return false;
         }
       }
       else
@@ -3468,7 +3468,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
           dwGuildSerial);
         if ( !this->Update_RankInGuild_Step7() )
           this->Update_RankInGuild_Step7();
-        return 0;
+        return false;
       }
     }
     else
@@ -3478,7 +3478,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
         dwGuildSerial);
       if ( !this->Update_RankInGuild_Step7() )
         this->Update_RankInGuild_Step7();
-      return 0;
+      return false;
     }
   }
   else
@@ -3489,11 +3489,11 @@ char CRFWorldDatabase::Update_RankInGuild_Step2( unsigned int dwGuildSerial)
       dwGuildSerial);
     if ( !this->Update_RankInGuild_Step7() )
       this->Update_RankInGuild_Step7();
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
+bool CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
 {
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step3( dwGuildSerial(%u) ) : Start!",
@@ -3515,7 +3515,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
         this->FmtLog(
           "CRFWorldDatabase::Update_RankInGuild_Step3( dwGuildSerial(%u) ) : End!",
           dwGuildSerial);
-        return 1;
+        return true;
       }
       else
       {
@@ -3524,7 +3524,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
           "NewRank*10000)/(select count(*) from #tbl_RankInGuildCom) ) ",
           dwGuildSerial);
         this->Update_RankInGuild_Step6();
-        return 0;
+        return false;
       }
     }
     else
@@ -3538,7 +3538,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
         this->Update_RankInGuild_Step7();
       if ( !this->Update_RankInGuild_Step8() )
         this->Update_RankInGuild_Step8();
-      return 0;
+      return false;
     }
   }
   else
@@ -3549,11 +3549,11 @@ char CRFWorldDatabase::Update_RankInGuild_Step3( unsigned int dwGuildSerial)
       dwGuildSerial);
     if ( !this->Update_RankInGuild_Step7() )
       this->Update_RankInGuild_Step7();
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step4( unsigned int dwGuildSerial)
+bool CRFWorldDatabase::Update_RankInGuild_Step4( unsigned int dwGuildSerial)
 {
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step4( dwGuildSerial(%u) ) : Start Apply tb_gneral!",
@@ -3566,7 +3566,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step4( unsigned int dwGuildSerial)
     this->FmtLog(
       "CRFWorldDatabase::Update_RankInGuild_Step4( dwGuildSerial(%u) ) : End Apply tbl_general!",
       dwGuildSerial);
-    return 1;
+    return true;
   }
   else
   {
@@ -3575,11 +3575,11 @@ char CRFWorldDatabase::Update_RankInGuild_Step4( unsigned int dwGuildSerial)
       "from ( select serial, NewRank from #tbl_RankInGuildAll ) as rank where tbl_general.serial = rank.serial Fail!",
       dwGuildSerial);
     this->Update_RankInGuild_Step6();
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step5(
+bool CRFWorldDatabase::Update_RankInGuild_Step5(
         unsigned int dwGuildSerial,
         _worlddb_rankinguild_info *pGuildMemberRankData)
 {
@@ -3681,7 +3681,7 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
           this->FmtLog(
             "CRFWorldDatabase::Update_RankInGuild_Step5( dwGuildSerial(%u), pGuildMemberRankData ) : End Set Return Result!",
             dwGuildSerial);
-          return 1;
+          return true;
         }
         else
         {
@@ -3702,13 +3702,13 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
             this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
             this->ErrorAction( sqlStatus, this->m_hStmtSelect);
           }
-          return 0;
+          return false;
         }
       }
       else
       {
         this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-        return 0;
+        return false;
       }
     }
     else
@@ -3730,17 +3730,17 @@ char CRFWorldDatabase::Update_RankInGuild_Step5(
         this->ErrorMsgLog( sqlStatus, queryBuffer, "SQLExecDirect", this->m_hStmtSelect);
         this->ErrorAction( sqlStatus, this->m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
   }
   else
   {
     this->ErrFmtLog( "ReConnectDataBase Fail. Query : %s", queryBuffer);
-    return 0;
+    return false;
   }
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step6()
+bool CRFWorldDatabase::Update_RankInGuild_Step6()
 {
   this->FmtLog(
     "CRFWorldDatabase::Update_RankInGuild_Step6() : Start drop #tbl_RankInGuild, #tbl_RankInGuildAll, #tbl_RankInGuildCom Table");
@@ -3752,24 +3752,24 @@ char CRFWorldDatabase::Update_RankInGuild_Step6()
       {
         this->FmtLog(
           "CRFWorldDatabase::Update_RankInGuild_Step6() : End drop #tbl_RankInGuild, #tbl_RankInGuildAll, #tbl_RankInGuildCom Table");
-        return 1;
+        return true;
       }
       else
       {
         this->Update_RankInGuild_Step9();
-        return 0;
+        return false;
       }
     }
     else
     {
       this->Update_RankInGuild_Step8();
-      return 0;
+      return false;
     }
   }
   else
   {
     this->Update_RankInGuild_Step7();
-    return 0;
+    return false;
   }
 }
 

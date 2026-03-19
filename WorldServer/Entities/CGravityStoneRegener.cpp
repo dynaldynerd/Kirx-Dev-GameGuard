@@ -23,11 +23,11 @@ CGravityStoneRegener::CGravityStoneRegener() : m_eState(GSR_NONE), m_iPortalInx(
 
 CGravityStoneRegener::~CGravityStoneRegener() = default;
 
-char CGravityStoneRegener::Create(CMapData *pkMap)
+bool CGravityStoneRegener::Create(CMapData *pkMap)
 {
   if (m_eState == GSR_NONE || !pkMap)
   {
-    return 0;
+    return false;
   }
 
   _object_create_setdata data;
@@ -37,12 +37,12 @@ char CGravityStoneRegener::Create(CMapData *pkMap)
   data.m_pRecordSet = nullptr;
   if (!CGameObject::Create(&data))
   {
-    return 0;
+    return false;
   }
 
   m_dwObjSerial = ms_dwSerialCnt++;
   m_eState = GSR_CREATE;
-  return 1;
+  return true;
 }
 
 void CGravityStoneRegener::Destroy()
@@ -192,12 +192,12 @@ bool CGravityStoneRegener::Init(unsigned int uiMapInx, unsigned __int16 wInx, CM
   return true;
 }
 
-char CGravityStoneRegener::ClearRegen()
+bool CGravityStoneRegener::ClearRegen()
 {
   if (m_eState == GSR_CREATE || m_eState == GSR_REGEN || m_eState == GSR_TAKE)
   {
     m_eState = GSR_CREATE;
-    return 1;
+    return true;
   }
 
   const char *stateName[] = {"NONE", "INIT", "CREATE", "REGEN", "TAKE", "DESTROY"};
@@ -209,7 +209,7 @@ char CGravityStoneRegener::ClearRegen()
   GUILD_BATTLE::CGuildBattleLogger::Instance()->Log(
     "CGravityStoneRegener::ClearRegen() : (%s) : Invalid Goal State",
     stateName[static_cast<int>(m_eState) + 1]);
-  return 0;
+  return false;
 }
 
 int CGravityStoneRegener::GetPortalInx() const

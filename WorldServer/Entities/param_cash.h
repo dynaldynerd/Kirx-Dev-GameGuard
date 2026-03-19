@@ -27,7 +27,7 @@ struct  _param_cash_select : _param_cash
 
   _param_cash_select(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock);
   ~_param_cash_select();
-  __int64 size();
+  int size();
 };
 
 struct  _param_cash_update : _param_cash
@@ -71,7 +71,7 @@ struct  _param_cash_update : _param_cash
 
   _param_cash_update(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock);
   ~_param_cash_update();
-  __int64 size();
+  int size();
 };
 
 struct  _param_cash_rollback : _param_cash
@@ -99,7 +99,7 @@ struct  _param_cash_rollback : _param_cash
 
   _param_cash_rollback(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock);
   ~_param_cash_rollback();
-  __int64 size();
+  int size();
 };
 
 struct  _param_cashitem_dblog : _param_cash
@@ -122,13 +122,13 @@ struct  _param_cashitem_dblog : _param_cash
 
   _param_cashitem_dblog(unsigned int dwAv);
   ~_param_cashitem_dblog();
-  __int64 size();
+  int size();
 };
 
 struct _param_cash_total_selling
 {
   unsigned int dwTotalSellCash;
 
-  __int64 size();
+  int size();
 };
 

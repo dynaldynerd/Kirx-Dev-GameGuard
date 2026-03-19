@@ -121,31 +121,31 @@ int CGuildRoomInfo::GetRestTime()
   return static_cast<int>(m_timer - now);
 }
 
-char CGuildRoomInfo::IsMemberIn(int n, unsigned int dwCharSerial)
+bool CGuildRoomInfo::IsMemberIn(int n, unsigned int dwCharSerial)
 {
   for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
   {
     RoomCharInfo &member = m_vecRoomMember[j];
     if (member.bIn && member.iCharIdx == n && member.dwCharSerial == dwCharSerial)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts)
+bool CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts)
 {
   if (IsRent())
   {
-    return 0;
+    return false;
   }
 
   RoomCharInfo value{};
   m_vecRoomMember.assign(100, value);
   if (m_vecRoomMember.size() != 100)
   {
-    return 0;
+    return false;
   }
 
   m_bRent = true;
@@ -158,21 +158,21 @@ char CGuildRoomInfo::SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, 
   tagTIMESTAMP_STRUCT restoreTs{};
   std::memcpy(&restoreTs, ts, sizeof(restoreTs));
   SetRoomTime_Restore(&restoreTs);
-  return 1;
+  return true;
 }
 
-char CGuildRoomInfo::SetRoom(int iGuildInx, unsigned int dwGuildSerial)
+bool CGuildRoomInfo::SetRoom(int iGuildInx, unsigned int dwGuildSerial)
 {
   if (IsRent())
   {
-    return 0;
+    return false;
   }
 
   RoomCharInfo value{};
   m_vecRoomMember.assign(100, value);
   if (m_vecRoomMember.size() != 100)
   {
-    return 0;
+    return false;
   }
 
   for (size_t j = 0; j < m_vecRoomMember.size(); ++j)
@@ -188,7 +188,7 @@ char CGuildRoomInfo::SetRoom(int iGuildInx, unsigned int dwGuildSerial)
   m_pLayerSet->ActiveLayer(pMB);
   SetRoomTime();
   SendDQS_RoomInsert();
-  return 1;
+  return true;
 }
 
 void CGuildRoomInfo::SetRoomTime()
@@ -311,11 +311,11 @@ int CGuildRoomInfo::RoomOut(int n, unsigned int dwCharSerial)
   return 1;
 }
 
-char CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx)
+bool CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx)
 {
   if (iMemberIdx >= 100)
   {
-    return 0;
+    return false;
   }
 
   if (iMemberIdx == -1)
@@ -343,7 +343,7 @@ char CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberI
         newPos,
         1))
   {
-    return 0;
+    return false;
   }
 
   CPlayer *player = &g_Player[n];
@@ -355,8 +355,8 @@ char CGuildRoomInfo::SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberI
       CGuildRoomInfo::sm_neutal_map[m_byRace]->m_pMapSet->m_dwIndex,
       0,
       newPos);
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }

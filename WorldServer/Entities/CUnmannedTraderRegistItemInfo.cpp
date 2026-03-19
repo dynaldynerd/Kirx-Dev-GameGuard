@@ -429,7 +429,7 @@ __int64 CUnmannedTraderRegistItemInfo::GetResultTime()
   return m_tResultTime;
 }
 
-__int64 CUnmannedTraderRegistItemInfo::GetLeftSec()
+unsigned int CUnmannedTraderRegistItemInfo::GetLeftSec()
 {
   __int64 now = 0;
   time_18(&now);
@@ -440,7 +440,8 @@ __int64 CUnmannedTraderRegistItemInfo::GetLeftSec()
     return 0;
   }
 
-  return static_cast<unsigned int>(endTime - now);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(static_cast<unsigned int>(endTime - now));
 }
 
 unsigned __int8 CUnmannedTraderRegistItemInfo::GetSellTurm()

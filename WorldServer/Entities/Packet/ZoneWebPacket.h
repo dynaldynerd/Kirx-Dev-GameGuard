@@ -11,7 +11,7 @@ struct _login_zone_result_zoct
 {
   unsigned __int8 byRet;
 
-  unsigned __int16 size() const
+  int size() const
   {
     return 1;
   }
@@ -25,7 +25,7 @@ struct _connection_status_result_zoct
 {
   unsigned __int8 bStatus[6];
 
-  unsigned __int16 size() const
+  int size() const
   {
     return 6;
   }

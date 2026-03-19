@@ -118,8 +118,8 @@ public:
   void SendInfomSender(unsigned int dwSerial, unsigned __int8 ucRemainCnt);
   void SendRequestWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
 
-  char Send(CPlayer *pkSender, const char *pwszMsg);
-  char Send(
+  bool Send(CPlayer *pkSender, const char *pwszMsg);
+  bool Send(
     unsigned __int8 ucRace,
     unsigned int dwSerial,
     const char *wszName,
@@ -129,8 +129,8 @@ public:
   void SendWebRaceBossSMSErrorResult(char iRet, unsigned int dwWebDBID);
   void SendComfirmWeb(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
   void SendConfirmCtrl(unsigned __int8 ucRace, RACE_BOSS_MSG::CMsg *pkMsg);
-  char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID);
-  char Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager);
+  bool Cancel(unsigned __int8 ucRace, unsigned int dwMsgID);
+  bool Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager);
   void SendCancleInfomSender(unsigned int dwSerial);
   void SendCancleInfomManager(
     unsigned __int16 usInx,

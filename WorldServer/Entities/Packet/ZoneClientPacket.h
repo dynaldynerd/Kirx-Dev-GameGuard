@@ -21,7 +21,7 @@ struct _a_trade_adjust_price_result_zocl
   unsigned __int16 wItemSerial;
   unsigned int dwNewPrice;
   unsigned int dwRegistSerial;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -32,7 +32,7 @@ struct _a_trade_clear_item_result_zocl
   unsigned __int8 byRetCode;
   unsigned __int16 wItemSerial;
   unsigned int dwRegistSerial;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -47,7 +47,7 @@ struct _add_lend_item_result_zocl
   unsigned int dwItemSerial;
   unsigned __int8 byCsMethod;
   unsigned int dwT;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(*this));
   }
@@ -71,7 +71,7 @@ struct _alter_action_point_zocl
 {
   unsigned __int8 byActionCode;
   unsigned int dwActionPoint;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_alter_action_point_zocl));
   }
@@ -109,7 +109,7 @@ struct _animus_download_result_zocl
   unsigned __int8 byAnimusNum;
   _list AnimusList[4];
   _animus_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -121,7 +121,7 @@ struct _atrade_taxrate_result_zocl
   unsigned int dwEmblemBack;
   unsigned int dwEmblemMark;
   char wszGuildName[17];
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -208,7 +208,7 @@ struct _base_download_result_zocl
   unsigned __int16 wMaxDP;
   unsigned __int16 wDP;
   unsigned __int8 byHonorGuildRank;
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -246,7 +246,7 @@ struct _buy_store_success_zocl
   unsigned __int8 byBuyNum;
   _list OfferList[100];
   _buy_store_success_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -255,7 +255,7 @@ struct _buy_store_success_zocl
 struct _chat_far_failure_zocl
 {
   bool bBlock;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -264,7 +264,7 @@ struct _chat_far_failure_zocl
 struct _chat_guild_failure_zocl
 {
   unsigned __int8 byErrCode;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -273,7 +273,7 @@ struct _chat_guild_failure_zocl
 struct _chat_lock_inform_zocl
 {
   bool bLock;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -283,7 +283,7 @@ struct _chat_multi_far_failure_zocl
 {
   char wszDstName[17];
   unsigned __int8 byFailCode;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -294,7 +294,7 @@ struct _chat_multi_far_trans_zocl
   unsigned __int16 wSize;
   char sData[500];
   _chat_multi_far_trans_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -311,7 +311,7 @@ struct _chat_steal_message_gm_zocl
   unsigned __int8 bySize;
   char wszChatData[256];
   _chat_steal_message_gm_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -364,7 +364,7 @@ struct _create_holy_master_zocl
   char wszName[17];
   int nControlSec;
   unsigned int dwObjSerial;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_create_holy_master_zocl));
   }
@@ -380,7 +380,7 @@ struct _cum_download_result_zocl
   unsigned __int8 byLeftCuttingResNum;
   unsigned __int16 wleftResList[20];
   _cum_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -389,7 +389,7 @@ struct _cum_download_result_zocl
 struct _darkhole_answer_reenter_result_zocl
 {
   unsigned __int8 byRetCode;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -399,7 +399,7 @@ struct _darkhole_ask_reenter_inform_zocl
 {
   unsigned __int16 wChannelIndex;
   unsigned int dwChannelSerial;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -408,7 +408,7 @@ struct _darkhole_ask_reenter_inform_zocl
 struct _darkhole_channel_close_inform_zocl
 {
   char sDum;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -419,7 +419,7 @@ struct _darkhole_clear_out_result_zocl
   unsigned __int8 byRetCode;
   unsigned __int16 wTarMapIndex;
   __int16 zTarPos[3];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -435,7 +435,7 @@ struct _darkhole_create_zocl
   char wszOpenerName[17];
   unsigned int dwOpenerSerial;
   _darkhole_create_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -445,7 +445,7 @@ struct _darkhole_destroy_zocl
 {
   unsigned __int16 wIndex;
   unsigned int dwSerial;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -457,7 +457,7 @@ struct _darkhole_enter_result_zocl
   unsigned int dwHoleSerial;
   unsigned __int8 byMapCode;
   __int16 zPos[3];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -473,7 +473,7 @@ struct _darkhole_fixpositon_zocl
   char wszOpenerName[17];
   unsigned int dwOpenerSerial;
   _darkhole_fixpositon_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -484,7 +484,7 @@ struct _darkhole_giveup_out_result_zocl
   unsigned __int8 byRetCode;
   unsigned __int16 wTarMapIndex;
   __int16 zTarPos[3];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -494,7 +494,7 @@ struct _darkhole_job_count_inform_zocl
 {
   unsigned __int8 byJobIndex;
   unsigned __int16 wJobCount;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -503,7 +503,7 @@ struct _darkhole_job_count_inform_zocl
 struct _darkhole_job_pass_inform_zocl
 {
   unsigned __int8 byJobIndex;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -512,7 +512,7 @@ struct _darkhole_job_pass_inform_zocl
 struct _darkhole_leader_change_inform_zocl
 {
   unsigned int dwNewLeaderSerial;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -529,7 +529,7 @@ struct _darkhole_member_info_inform_zocl
   unsigned __int16 wMemberNum;
   __list List[32];
   _darkhole_member_info_inform_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -555,7 +555,7 @@ struct _darkhole_mission_info_inform_zocl
   unsigned __int8 byJobNum;
   __job Job[128];
   _darkhole_mission_info_inform_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -564,7 +564,7 @@ struct _darkhole_mission_info_inform_zocl
 struct _darkhole_mission_pass_inform_zocl
 {
   char szCompleteMsgCode[17];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -573,7 +573,7 @@ struct _darkhole_mission_pass_inform_zocl
 struct _darkhole_mission_quest_inform_zocl
 {
   char sDum;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -584,7 +584,7 @@ struct _darkhole_new_member_inform_zocl
   unsigned int dwNewMemberSerial;
   char wszNewMemberName[17];
   bool bReconnect;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -609,7 +609,7 @@ struct _darkhole_new_mission_inform_zocl
   _darkhole_new_mission_inform_zocl() : szDescirptCode{}, dwLimTimeSec(0), byOrder(0), byJobNum(0), Job{}
   {
   }
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -622,7 +622,7 @@ struct _darkhole_open_all_portal_by_result_inform_zocl
   _darkhole_open_all_portal_by_result_inform_zocl() : byCnt(0), byPotalIndex{}
   {
   }
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -631,7 +631,7 @@ struct _darkhole_open_all_portal_by_result_inform_zocl
 struct _darkhole_open_portal_by_react_inform_zocl
 {
   unsigned __int16 wPortalIndex;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -642,7 +642,7 @@ struct _darkhole_open_result_zocl
   unsigned __int8 byRetCode;
   unsigned __int16 wHoleIndex;
   unsigned int dwHoleSerial;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -652,7 +652,7 @@ struct _darkhole_outof_member_inform_zocl
 {
   unsigned int dwMemberSerial;
   bool bDisconnect;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -666,7 +666,7 @@ struct _darkhole_quest_info_inform_zocl
   long double dRwExp;
   unsigned int dwRwPvp;
   unsigned int dwRwDalant;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -677,7 +677,7 @@ struct _darkhole_real_add_time_inform_zocl
   int nAddSec;
   unsigned int dwTotalLimSec;
   char szMsg[17];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -686,7 +686,7 @@ struct _darkhole_real_add_time_inform_zocl
 struct _darkhole_real_msg_inform_zocl
 {
   char szMsg[17];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -698,7 +698,7 @@ struct _darkhole_state_change_zocl
   unsigned int dwSerial;
   unsigned __int8 bHurry;
   _darkhole_state_change_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -707,7 +707,7 @@ struct _darkhole_state_change_zocl
 struct _darkhole_timeout_inform_zocl
 {
   char sDum;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -738,7 +738,7 @@ struct _combine_lend_item_result_zocl
   unsigned int dwFee;
   unsigned int dwLeftDalant;
   _lend_item Item;
-  __int64 size() const
+  int size() const
   {
     return 29LL;
   }
@@ -747,7 +747,7 @@ struct _exchange_lend_item_result_zocl
 {
   unsigned __int8 byErrorCode;
   _combine_lend_item_result_zocl::_lend_item Item;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -766,7 +766,7 @@ struct _force_download_result_zocl
   unsigned __int8 bySlotNum;
   _list ItemSlotInfo[88];
   _force_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -785,7 +785,7 @@ struct _gm_msg_gmcall_list_response_zocl
   int m_nMaxUser;
   _call_node m_arCallNode[10];
   static void Init(_gm_msg_gmcall_list_response_zocl *msg);
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_gm_msg_gmcall_list_response_zocl));
   }
@@ -818,7 +818,7 @@ struct _guild_alter_member_grade_inform_zocl
   unsigned __int8 byAlterMemberNum;
   __list MemberList[50];
   _guild_alter_member_grade_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -835,7 +835,7 @@ struct _guild_alter_member_state_inform_zocl
   unsigned __int8 byAlterMemberNum;
   __list MemberList[50];
   _guild_alter_member_state_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -856,7 +856,7 @@ struct _guild_battle_get_gravity_stone_result_zocl
   char wszCharName[17];
   int iTakePortalInx;
   unsigned __int8 byColor;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_guild_battle_get_gravity_stone_result_zocl));
   }
@@ -878,7 +878,7 @@ struct _guild_battle_goal_result_zocl
   unsigned __int8 byLeftHour;
   unsigned __int8 byLeftMin;
   unsigned __int8 byLeftSec;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_guild_battle_goal_result_zocl));
   }
@@ -898,7 +898,7 @@ struct _guild_battle_suggest_request_result_zocl
 {
   unsigned __int8 byRet;
   char wszDestGuildName[17];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -931,7 +931,7 @@ struct _guild_vote_process_inform_zocl
   unsigned __int8 byCommentLen;
   char wszComment[65];
   _guild_vote_process_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -943,7 +943,7 @@ struct _guildroom_out_result_zocl
   unsigned __int8 byMapIndex;
   unsigned __int16 wMapLayerIndex;
   __int16 sNewPos[3];
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -954,7 +954,7 @@ struct _holy_keeper_attackable_inform_zocl
   unsigned int dwKeeperSerial;
   unsigned __int8 byMasterRace;
   bool bAttackAbleState;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_holy_keeper_attackable_inform_zocl));
   }
@@ -1008,7 +1008,7 @@ struct _inven_download_result_zocl
   unsigned __int8 bySlotNum;
   _list ItemSlotInfo[100];
   _inven_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1042,7 +1042,7 @@ struct _itembox_take_add_result_zocl
   char sErrorCode;
   unsigned __int16 wItemSerial;
   unsigned __int8 byAmount;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1058,7 +1058,7 @@ struct _itembox_take_new_result_zocl
   unsigned __int16 wItemSerial;
   unsigned __int8 byCsMethod;
   unsigned int dwT;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1075,7 +1075,7 @@ struct _limit_item_num_info_zocl
   unsigned __int8 byLimitItemNum;
   _limit_item_info LimitItemInfo[16];
   _limit_item_num_info_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1086,7 +1086,7 @@ struct _limitedsale_event_inform_zocl
   unsigned __int8 byTableCode;
   unsigned int dwIndex;
   unsigned __int16 wNum;
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1095,7 +1095,7 @@ struct _limitedsale_event_inform_zocl
 struct _move_to_own_stonemap_inform_zocl
 {
   unsigned __int8 byStoneMapMoveInfo;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1106,7 +1106,7 @@ struct _move_to_own_stonemap_result_zocl
   unsigned __int8 byRetCode;
   unsigned __int8 byMapIndex;
   __int16 sNewPos[3];
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1117,7 +1117,7 @@ struct _not_arranged_char_inform_zocl
   unsigned __int8 byCharNum;
   _NOT_ARRANGED_AVATOR_DB CharList[50];
   _not_arranged_char_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1141,7 +1141,7 @@ struct _notify_cont_play_time_zocl
 {
   unsigned __int8 byContTime;
   unsigned __int8 byContMin;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(*this));
   }
@@ -1153,7 +1153,7 @@ struct _notify_cont_play_time_zocl
 struct _notify_coupon_ensure_time_zocl
 {
   unsigned __int8 byCouponTime;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(*this));
   }
@@ -1165,7 +1165,7 @@ struct _notify_coupon_ensure_time_zocl
 struct _notify_coupon_error_zocl
 {
   unsigned __int8 byRetCode;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(*this));
   }
@@ -1186,7 +1186,7 @@ struct _notify_local_time_result_zocl
   int tm_wday;
   int tm_yday;
   int tm_isdst;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1195,7 +1195,7 @@ struct _notify_local_time_result_zocl
 struct _notify_not_use_premium_cashitem_zocl
 {
   unsigned __int16 wItemSerial;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_notify_not_use_premium_cashitem_zocl));
   }
@@ -1224,7 +1224,7 @@ struct _notify_race_boss_winrate_zocl
 struct _notify_remain_coupon_zocl
 {
   unsigned __int8 byRemainCoupon;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(*this));
   }
@@ -1237,7 +1237,7 @@ struct _npclink_check_item_result_zocl
 {
   unsigned __int8 byRet;
   _STORAGE_POS_INDIV storage;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1268,7 +1268,7 @@ struct _nuclear_result_code_zocl
 {
   unsigned __int8 byRetCode;
   _nuclear_result_code_zocl();
-  unsigned __int16 size() const
+  int size() const
   {
     return 1;
   }
@@ -1281,7 +1281,7 @@ struct _personal_amine_errmsg_zocl
 {
   unsigned __int8 byErrCode;
   _personal_amine_errmsg_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1297,7 +1297,7 @@ struct _personal_amine_fixpos_zocl
   unsigned __int16 wItemSerial;
   unsigned int dwOwnerSeiral;
   _personal_amine_fixpos_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1308,7 +1308,7 @@ struct _personal_amine_infoui_open_zocl
   unsigned int dwObjSerial;
   unsigned int dwBattery[2];
   _personal_amine_infoui_open_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1319,7 +1319,7 @@ struct _personal_amine_make_storage_zocl
   unsigned int dwAvatorSerial;
   unsigned int dwTotGold;
   _personal_amine_make_storage_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1330,7 +1330,7 @@ struct _personal_automine_alter_dur_zocl
   unsigned int dwObjSerial;
   unsigned __int16 wHPRate;
   _personal_automine_alter_dur_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1340,7 +1340,7 @@ struct _personal_automine_attacked_zocl
 {
   unsigned __int16 wItemSerial;
   _personal_automine_attacked_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1353,7 +1353,7 @@ struct _personal_automine_battery_extract_zocl
   unsigned int dwDur;
   unsigned __int8 byRetCode;
   _personal_automine_battery_extract_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1365,7 +1365,7 @@ struct _personal_automine_battery_insert_zocl
   unsigned int dwOwnerSerial;
   unsigned __int16 wItemSerial;
   _personal_automine_battery_insert_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1376,7 +1376,7 @@ struct _personal_automine_delbattery_zocl
   unsigned int dwObjSerial;
   unsigned __int8 bySlot;
   _personal_automine_delbattery_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1394,7 +1394,7 @@ struct _personal_automine_download_zocl
   unsigned __int8 byHaveBag;
   unsigned __int8 byCnt;
   __list list[40];
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1410,7 +1410,7 @@ struct _personal_automine_install_zocl
   float fPos[3];
   unsigned __int8 byFilledSlotCnt;
   _personal_automine_install_zocl();
-  unsigned int size() const
+  int size() const
   {
     return sizeof(*this);
   }
@@ -1424,7 +1424,7 @@ struct _personal_automine_popore_zocl
   unsigned __int16 wItemSerial;
   unsigned __int8 byNum;
   _personal_automine_popore_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1435,7 +1435,7 @@ struct _personal_automine_selore_zocl
   unsigned int dwObjSerial;
   unsigned __int8 bySelectOre;
   _personal_automine_selore_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1448,7 +1448,7 @@ struct _personal_automine_stop_zocl
   unsigned __int8 byStopType;
   unsigned __int16 wItemSerial;
   _personal_automine_stop_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1480,7 +1480,7 @@ struct _post_content_result_zocl
   _post_item Item;
   unsigned int dwGold;
   _post_content_result_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1495,7 +1495,7 @@ struct _post_recv_delivery_zocl
   bool bItem;
   bool bGold;
   unsigned __int8 byState;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1506,7 +1506,7 @@ struct _post_result_zocl
   unsigned __int8 byErrCode;
   unsigned int dwGold;
   _post_result_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1528,7 +1528,7 @@ struct _post_return_zocl
   char wszContent[201];
   _post_item Item;
   unsigned int dwGold;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1539,7 +1539,7 @@ struct _pt_automine_getoutore_zocl
   unsigned __int8 byRetCode;
   unsigned __int16 wItemSerial;
   _pt_automine_getoutore_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1559,7 +1559,7 @@ struct _pt_automine_result_zocl
 {
   unsigned __int8 byType;
   unsigned __int8 byRetCode;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1572,7 +1572,7 @@ struct _pt_automine_state_zocl
   unsigned __int8 byPage;
   _INVENKEY item;
   _pt_automine_state_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1583,7 +1583,7 @@ struct _pt_inform_appoint_zocl
   unsigned __int8 byClassType;
   char wszAvatorName[17];
   _pt_inform_appoint_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1595,7 +1595,7 @@ struct _pt_inform_commission_income_zocl
   unsigned __int8 byMonth;
   unsigned __int8 byDay;
   unsigned int dwCommission;
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1605,7 +1605,7 @@ struct _pt_inform_punishment_zocl
 {
   unsigned __int8 byType;
   int nRemainMin;
-  __int64 size() const
+  int size() const
   {
     return 5;
   }
@@ -1619,7 +1619,7 @@ struct _pt_inform_tax_rate_zocl
   unsigned __int8 byCurrTax;
   unsigned __int8 byNextTax;
   _pt_inform_tax_rate_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1632,7 +1632,7 @@ struct _pt_result_appoint_zocl
   long double dPvpPoint;
   char wszAvatorName[17];
   _pt_result_appoint_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1643,7 +1643,7 @@ struct _pt_result_change_tax_rate_zocl
   unsigned __int8 byRet;
   unsigned __int8 byNextTax;
   _pt_result_change_tax_rate_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -1652,7 +1652,7 @@ struct _pt_result_change_tax_rate_zocl
 struct _pt_result_code_zocl
 {
   unsigned __int8 byRetCode;
-  __int64 size() const
+  int size() const
   {
     return 1;
   }
@@ -1665,7 +1665,7 @@ struct _pt_result_punishment_zocl
 {
   unsigned __int8 byType;
   char wszCharName[17];
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1676,7 +1676,7 @@ struct _pvp_cash_recover_itemlist_result_zocl
   unsigned __int8 byItemNum;
   int nTalikInfo[14];
   _pvp_cash_recover_itemlist_result_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1690,7 +1690,7 @@ struct _pvp_rank_list_result_data_zocl
   unsigned __int16 wRankDataLen;
   char szPvpRankData[4000];
   _pvp_rank_list_result_data_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1716,7 +1716,7 @@ struct _quest_download_result_zocl
   unsigned __int8 bySlotNum;
   __list SlotInfo[30];
   _quest_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1732,7 +1732,7 @@ struct _quest_history_download_result_zocl
   unsigned __int8 bySlotNum;
   __list SlotInfo[70];
   _quest_history_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1749,7 +1749,7 @@ struct _radar_char_list_result_zocl
   unsigned __int8 byListNum;
   _char_info CharInfo[50];
   _radar_char_list_result_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1772,7 +1772,7 @@ struct _result_csi_buy_zocl
   bool bAdjustDiscount;
   __item item[40];
   _result_csi_buy_zocl();
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(806 - 20LL * (40 - nNum));
   }
@@ -1784,7 +1784,7 @@ struct _result_csi_buy_zocl
 struct _result_csi_error_zocl
 {
   unsigned __int8 byRetCode;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_result_csi_error_zocl));
   }
@@ -1802,7 +1802,7 @@ struct _result_csi_goods_list_zocl
   unsigned __int8 bySetDiscount[4];
   bool bLimSale;
   unsigned __int8 byLimDiscount;
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_result_csi_goods_list_zocl));
   }
@@ -1857,7 +1857,7 @@ struct _starting_vote_inform_zocl
   unsigned __int16 wContentSize;
   char wszContent[1280];
   _starting_vote_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1873,7 +1873,7 @@ struct _store_list_result_zocl
   unsigned __int8 byStoreNum;
   _store_pos StorePos[100];
   _store_list_result_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1888,7 +1888,7 @@ struct _talik_crystal_exchange_zocl
   unsigned __int8 byErrorCode;
   _remain_item RemainItem[24];
   _talik_crystal_exchange_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1928,7 +1928,7 @@ struct _trans_gm_msg_inform_zocl
   unsigned __int16 wMsgSize;
   char wszChatData[1281];
   _trans_gm_msg_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -1976,7 +1976,7 @@ struct _trunk_download_result_zocl
   _list ExtList[40];
   _list List[100];
   _trunk_download_result_zocl();
-  unsigned __int16 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -2096,7 +2096,7 @@ struct _unit_download_result_zocl
   unsigned __int8 byUnitNum;
   _list UnitList[4];
   _unit_download_result_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -2120,7 +2120,7 @@ struct _unmannedtrader_buy_item_result_zocl
   unsigned __int8 byNum;
   __list List[10];
   _unmannedtrader_buy_item_result_zocl();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2132,7 +2132,7 @@ struct _unmannedtrader_close_item_inform_zocl
   unsigned __int16 wItemSerial;
   unsigned int dwRegistSerial;
   unsigned int dwPrice;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2149,7 +2149,7 @@ struct _unmannedtrader_continue_item_inform_zocl
   unsigned __int8 byTaxRate;
   unsigned __int8 byNum;
   __list List[10];
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2170,7 +2170,7 @@ struct _unmannedtrader_re_regist_result_zocl
   unsigned int dwLeftDalant;
   unsigned __int8 byNum;
   __list List[10];
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -2190,7 +2190,7 @@ struct _unmannedtrader_Regist_item_inform_zocl
   unsigned __int8 byNum;
   __list List[10];
   _unmannedtrader_Regist_item_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -2206,7 +2206,7 @@ struct _unmannedtrader_regist_item_success_result_zocl
   unsigned int dwLeftDalant;
   unsigned __int16 wSepaSerial;
   unsigned __int8 bySepaAmount;
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2383,7 +2383,7 @@ struct _personal_automine_uninstall_zocl
   __battery battery[2];
 
   _personal_automine_uninstall_zocl();
-  unsigned int size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2395,7 +2395,7 @@ struct _personal_automine_uninstall_circle_zocl
   unsigned __int8 byActType;
 
   _personal_automine_uninstall_circle_zocl();
-  unsigned int size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2408,7 +2408,7 @@ struct _personal_automine_current_state_zocl
   unsigned int dwBatteryGage;
 
   _personal_automine_current_state_zocl();
-  unsigned int size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -2610,7 +2610,7 @@ struct _weekly_guild_rank_result_zocl
   char byCnt;
   _weekly_guild_rank_result_zocl::_list list[11];
 
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -2771,7 +2771,7 @@ struct _started_vote_inform_zocl
   char wszContent[1280];
 
   _started_vote_inform_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -3257,7 +3257,7 @@ struct _pt_result_fcandidacy_list_zocl
   _pt_result_fcandidacy_list_zocl::__candi_info Candidacy[500];
 
   _pt_result_fcandidacy_list_zocl();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -6635,7 +6635,7 @@ struct _pt_automine_charge_money_db_update_fail_zocl
 {
   int nCharge;
 
-  __int64 size();
+  int size();
 };
 
 // moved from CHonorGuild.h
@@ -6754,7 +6754,7 @@ struct _other_shape_all_zocl
   unsigned __int8 byUnitPartIndex[6];
 
   _other_shape_all_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -6781,7 +6781,7 @@ struct _other_shape_part_zocl
   unsigned __int8 byUnitPartIndex[6];
 
   _other_shape_part_zocl();
-  unsigned __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -6819,7 +6819,7 @@ struct _total_guild_rank_result_zocl
   unsigned __int8 byCnt;
   _list list[11];
 
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -6838,7 +6838,7 @@ struct _pt_trans_votepaper_zocl
   #pragma pack(pop)
 
   _pt_trans_votepaper_zocl();
-  __int64 size() const;
+  int size() const;
 
   unsigned __int8 byCnt;
   __body body[8];
@@ -6859,7 +6859,7 @@ struct _pt_notify_vote_score_zocl
   #pragma pack(pop)
 
   _pt_notify_vote_score_zocl();
-  __int64 size() const;
+  int size() const;
 
   unsigned __int8 byRace;
   unsigned __int8 byVoteRate;
@@ -6904,7 +6904,7 @@ struct _pt_query_appoint_zocl
   char wszAvatorName[17];
 
   _pt_query_appoint_zocl();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -6931,7 +6931,7 @@ struct _possible_battle_guild_list_result_zocl
   unsigned __int8 byCount;
   __list DestGuild[4];
 
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -6974,7 +6974,7 @@ struct _guild_battle_rank_list_result_zocl
   unsigned __int8 byCnt;
   _guild_battle_rank_list_result_zocl_list list[11];
 
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -7006,7 +7006,7 @@ struct _guild_battle_reserved_schedule_result_zocl
   unsigned __int8 byCnt;
   __list List[5];
 
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 

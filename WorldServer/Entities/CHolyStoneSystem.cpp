@@ -576,19 +576,19 @@ bool CHolyStoneSystem::AuthMiningTicket(unsigned int dwKey)
   return authKey.___u0.uiData == dwKey;
 }
 
-char CHolyStoneSystem::ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
+bool CHolyStoneSystem::ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
 {
   if (m_SaveData.m_nSceneCode < 2 || m_SaveData.m_nSceneCode >= 6)
   {
-    return 0;
+    return false;
   }
 
   m_SaveData.m_nHolyMasterRace = nRace;
   SetScene(m_SaveData.m_byNumOfTime, nKeeperState, nPassTime, 1);
-  return 1;
+  return true;
 }
 
-char CHolyStoneSystem::ct_State(CPlayer *pOne)
+bool CHolyStoneSystem::ct_State(CPlayer *pOne)
 {
   unsigned int remainMinute = 0;
   bool showStage1 = false;
@@ -697,18 +697,18 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
 
-  return 1;
+  return true;
 }
 
-char CHolyStoneSystem::ct_StopBattle()
+bool CHolyStoneSystem::ct_StopBattle()
 {
   if (m_SaveData.m_nSceneCode != 1)
   {
-    return 0;
+    return false;
   }
 
   m_dwCheckTime[1] = GetLoopTime();
-  return 1;
+  return true;
 }
 
 char *CHolyStoneSystem::GetHolyMentalString()
@@ -1020,7 +1020,7 @@ unsigned __int8 CHolyStoneSystem::GetKeeperDestroyRace()
   return m_byKeeperDestroyRace;
 }
 
-char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode)
+bool CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode)
 {
   if (byCreateCode == 4)
   {
@@ -1031,7 +1031,7 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
         const int raceCode = pOne->m_Param.GetRaceCode();
         if (raceCode == GetHolyMasterRace() && !pOne->m_byUserDgr)
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1039,7 +1039,7 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetRaceCode() == GetHolyMasterRace())
       {
-        return 1;
+        return true;
       }
     }
   }
@@ -1052,7 +1052,7 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
         const int raceCode = pOne->m_Param.GetRaceCode();
         if (raceCode == GetKeeperDestroyRace() && !pOne->m_byUserDgr)
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1060,12 +1060,12 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetRaceCode() == GetKeeperDestroyRace())
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CHolyStoneSystem::UnAllRegisterPerAutoMine()
@@ -1955,22 +1955,22 @@ void CHolyStoneSystem::ReceiveDestroyKeeper(CCharacter *pCharacter)
   }
 }
 
-char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode)
+bool CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode)
 {
   if (GetSceneCode() != 1)
   {
-    return 0;
+    return false;
   }
 
   CHolyScheduleData::__HolyScheduleNode *scheduleNode = m_ScheculeData.GetIndex(GetNumOfTime());
   if (!scheduleNode)
   {
-    return 0;
+    return false;
   }
 
   if (GetHolyMasterRace() != -1)
   {
-    return 0;
+    return false;
   }
 
   WriteLogPer10Min_Combat();
@@ -2103,7 +2103,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
       report.size());
   }
 
-  return 1;
+  return true;
 }
 
 void CHolyStoneSystem::PeneltyLoseRace(unsigned __int8 byDestroyedRace)

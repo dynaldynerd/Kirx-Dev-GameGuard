@@ -20,8 +20,8 @@ public:
   bool LoadIni();
   void Loop();
   void CheckNuclearState(CPlayer *pOne);
-  char Request_EnableNuclearControl(int n, char *pMsg);
-  char Request_SelectDropPosition(int n, float *pMsg);
+  bool Request_EnableNuclearControl(int n, char *pMsg);
+  bool Request_SelectDropPosition(int n, float *pMsg);
   void SendMsg_Result(unsigned int n, unsigned __int8 byCode);
   unsigned __int8 GetBossType(unsigned __int8 byRace, unsigned int dwSerial);
   bool IsPatriarch(CPlayer *pOne);

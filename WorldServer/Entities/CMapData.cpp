@@ -398,7 +398,7 @@ bool CMapData::GetRandPosInDummy(_dummy_position *pPos, float *pNewPos, bool bRe
     return true;
 }
 
-__int64 CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
+int CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
 {
   if (m_nResDumNum <= 0)
   {
@@ -411,7 +411,7 @@ __int64 CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
     return -1;
   }
 
-  unsigned int sectorIndex = static_cast<unsigned int>(-1);
+  int sectorIndex = -1;
   if (dummy->GetQualityGrade())
   {
     return 100;
@@ -430,7 +430,7 @@ __int64 CMapData::GetResDummySector(int nDummyIndex, float *pCurPos)
     std::memcpy(extDummy->mBBmax, dummy->m_fMaxLocal[j], sizeof(extDummy->mBBmax));
     if (m_Dummy.IsInBBox(dumPos->m_wLineIndex, pCurPos))
     {
-      sectorIndex = static_cast<unsigned int>(j);
+      sectorIndex = j;
       break;
     }
   }
@@ -1238,7 +1238,7 @@ void CMapData::GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecN
   }
 }
 
-char CMapData::UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec)
+bool CMapData::UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec)
 {
   if (dwOldSec != static_cast<unsigned int>(-1))
   {
@@ -1265,7 +1265,7 @@ char CMapData::UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsign
     newSectorListPlayer->PushItem(newSectorNetPoint);
   }
 
-  return 1;
+  return true;
 }
 
 void CMapData::EnterMap(CGameObject *pObj, unsigned int dwSecIndex)

@@ -11,7 +11,7 @@ public:
   ~CBattleTournamentInfo();
   void Init();
   void SetLoad(bool bLoad);
-  char SetWinnerInfo(unsigned int dwSerial, char *pwszCharName, unsigned __int8 byGrade);
+  bool SetWinnerInfo(unsigned int dwSerial, char *pwszCharName, unsigned __int8 byGrade);
   unsigned __int8 GetWinnerGrade(unsigned int dwSerial, char *pwszCharName);
 
   bool m_bLoad;

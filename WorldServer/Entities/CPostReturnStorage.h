@@ -26,7 +26,7 @@ public:
     unsigned __int64 lnUID);
   CPostData *GetPostDataFromSerial(unsigned int dwPostSerial);
   void DelPostData(unsigned int dwPostSerial);
-  unsigned int GetReturnPostInx();
+  int GetReturnPostInx();
 
   CPostData m_PostData[10];
   int m_nSize;

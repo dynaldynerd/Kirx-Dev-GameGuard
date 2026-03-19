@@ -268,7 +268,7 @@ void CTransportShip::ReEnterMember(CPlayer *pExiter)
   }
 }
 
-char CTransportShip::RenewOldMember(CPlayer *pMember)
+bool CTransportShip::RenewOldMember(CPlayer *pMember)
 {
   for (int index = 0; index < MAX_PLAYER; ++index)
   {
@@ -281,16 +281,16 @@ char CTransportShip::RenewOldMember(CPlayer *pMember)
     __mgr_member *emptyNewMember = GetEmptyNewMember();
     if (!emptyNewMember)
     {
-      return 0;
+      return false;
     }
 
     emptyNewMember->pPtr = pMember;
     emptyNewMember->dwSerial = pMember->m_dwObjSerial;
     oldMember->init();
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 void CTransportShip::ExitMember(CPlayer *pExiter, bool bLogoff)
@@ -607,18 +607,18 @@ bool CTransportShip::IsMemberBeforeLogoff(unsigned int dwPlayerSerial)
   return this->m_listLogoffMember.IsInList(dwPlayerSerial);
 }
 
-char CTransportShip::IsOldMember(CPlayer *pMember)
+bool CTransportShip::IsOldMember(CPlayer *pMember)
 {
   for (int j = 0; j < MAX_PLAYER; ++j)
   {
     __mgr_member *member = &m_OldMember[j];
     if (member->is_fill() && member->pPtr == pMember && member->dwSerial == pMember->m_dwObjSerial)
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CTransportShip::GetStartPosInShip(float *pfPos)

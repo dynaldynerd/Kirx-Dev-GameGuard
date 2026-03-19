@@ -23,7 +23,7 @@
 #include <sql.h>
 #include <sqlext.h>
 
-__int64 CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
+int CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
@@ -77,7 +77,8 @@ __int64 CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
       {
         SQLCloseCursor(this->m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     unsigned __int8 result = 0;
@@ -95,7 +96,8 @@ __int64 CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -108,7 +110,7 @@ __int64 CRFWorldDatabase::Select_FailBattleCount(unsigned __int8 byRace,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
+int CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
@@ -162,7 +164,8 @@ __int64 CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
       {
         SQLCloseCursor(this->m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     unsigned __int8 result = 0;
@@ -180,7 +183,8 @@ __int64 CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -193,7 +197,7 @@ __int64 CRFWorldDatabase::Select_LoseBattleCount(unsigned __int8 byRace,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_OreCutting(unsigned int dwSerial,
+int CRFWorldDatabase::Select_OreCutting(unsigned int dwSerial,
         _worlddb_ore_cutting *pOreCutting)
 {
   char query[536]{};
@@ -282,7 +286,8 @@ __int64 CRFWorldDatabase::Select_OreCutting(unsigned int dwSerial,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -295,7 +300,7 @@ __int64 CRFWorldDatabase::Select_OreCutting(unsigned int dwSerial,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PcBangFavorItem(unsigned int dwSerial,
+int CRFWorldDatabase::Select_PcBangFavorItem(unsigned int dwSerial,
         _worlddb_pcbang_favor_item *pPcBangFavorItem)
 {
   char query[1048]{};
@@ -357,7 +362,8 @@ __int64 CRFWorldDatabase::Select_PcBangFavorItem(unsigned int dwSerial,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -370,7 +376,7 @@ __int64 CRFWorldDatabase::Select_PcBangFavorItem(unsigned int dwSerial,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
+int CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
         _worlddb_potion_delay_info *pPotionDelayInfo)
 {
   char query[1024]{};
@@ -461,7 +467,8 @@ __int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -474,7 +481,7 @@ __int64 CRFWorldDatabase::Select_PotionDelay(unsigned int dwSerial,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
+int CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
         _PCBANG_PLAY_TIME *kInfo)
 {
   char query[280]{};
@@ -529,7 +536,8 @@ __int64 CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -542,7 +550,7 @@ __int64 CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
+int CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
         _pvporderview_info *kInfo)
 {
   char query[280]{};
@@ -624,7 +632,8 @@ __int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -637,7 +646,7 @@ __int64 CRFWorldDatabase::Select_PvpOrderViewInfo(unsigned int dwSerial,
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_WinBattleCount(unsigned __int8 byRace,
+int CRFWorldDatabase::Select_WinBattleCount(unsigned __int8 byRace,
         unsigned int dwSerial,
         unsigned int *dwCount)
 {
@@ -691,7 +700,8 @@ __int64 CRFWorldDatabase::Select_WinBattleCount(unsigned __int8 byRace,
       {
         SQLCloseCursor(this->m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     unsigned __int8 result = 0;
@@ -709,7 +719,8 @@ __int64 CRFWorldDatabase::Select_WinBattleCount(unsigned __int8 byRace,
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -789,7 +800,7 @@ bool CRFWorldDatabase::Insert_PvpPointLimitInfoRecord(unsigned int dwSerial)
   return this->ExecUpdateQuery(Buffer, 1);
 }
 
-char CRFWorldDatabase::Select_ItemCombineEx(unsigned int dwSerial,
+unsigned __int8 CRFWorldDatabase::Select_ItemCombineEx(unsigned int dwSerial,
         _worlddb_itemcombineex_info *pdbItemCombineExInfo)
 {
   SQLLEN indicator = 0;
@@ -911,7 +922,7 @@ char CRFWorldDatabase::Select_ItemCombineEx(unsigned int dwSerial,
   return 1;
 }
 
-char CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
+unsigned __int8 CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
         _worlddb_npc_quest_complete_history *pNpcQHis)
 {
   SQLLEN indicator = 0;
@@ -998,7 +1009,7 @@ char CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
   return 1;
 }
 
-char CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
+unsigned __int8 CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
         _pvppointlimit_info *kInfo)
 {
   char query[280]{};
@@ -1085,7 +1096,7 @@ char CRFWorldDatabase::Select_PvpPointLimitInfo(unsigned int dwSerial,
   return 1;
 }
 
-char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_rankinguild_info *pGuildMemberRankData)
+bool CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_rankinguild_info *pGuildMemberRankData)
 {
   SQLRETURN ret = 0;
   SQLLEN indicator[5]{};
@@ -1104,7 +1115,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
   if (!(m_hStmtUpdate || ReConnectDataBase()))
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-    return 0;
+    return false;
   }
 
   sprintf_s(buffer, "select top %u IDENTITY(int, 1, 1) AS Rank, -1 as Rate, -1 as NewGrade, ", 50);
@@ -1120,7 +1131,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
     {
       ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtUpdate);
     }
-    return 0;
+    return false;
   }
 
   ExecUpdateQuery("update #tbl_RankInGuild set Rate = ( (Rank*10000)/(select count(*) from #tbl_RankInGuild) )", false);
@@ -1213,7 +1224,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-    return 0;
+    return false;
   }
 
   ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
@@ -1227,7 +1238,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
       ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction(ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   int row = 0;
@@ -1254,7 +1265,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
   if (!(m_hStmtSelect || ReConnectDataBase()))
   {
     ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-    return 0;
+    return false;
   }
 
   ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
@@ -1268,7 +1279,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
       ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction(ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   row = 0;
@@ -1319,7 +1330,7 @@ char CRFWorldDatabase::Update_RankInGuild(unsigned int dwGuildSerial, _worlddb_r
   ExecUpdateQuery("drop table #tbl_RankInGuild", false);
   ExecUpdateQuery("drop table #tbl_RankInGuildAll", false);
   ExecUpdateQuery("drop table #tbl_RankInGuildCom", false);
-  return 1;
+  return true;
 }
 
 unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildSerial)
@@ -1366,7 +1377,7 @@ unsigned __int8 CRFWorldDatabase::Update_RankInGuild_Step1(unsigned int dwGuildS
   return 1;
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step7()
+bool CRFWorldDatabase::Update_RankInGuild_Step7()
 {
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step7() : Start drop #tbl_RankInGuild Table");
@@ -1374,10 +1385,10 @@ char CRFWorldDatabase::Update_RankInGuild_Step7()
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step7() : End drop #tbl_RankInGuild Table");
   else
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step7() : drop table #tbl_RankInGuild Fail!");
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step8()
+bool CRFWorldDatabase::Update_RankInGuild_Step8()
 {
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step8() : Start drop #tbl_RankInGuildAll Table");
@@ -1385,10 +1396,10 @@ char CRFWorldDatabase::Update_RankInGuild_Step8()
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step8() : End drop #tbl_RankInGuildAll Table");
   else
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step8() : drop table #tbl_RankInGuildAll Fail!");
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::Update_RankInGuild_Step9()
+bool CRFWorldDatabase::Update_RankInGuild_Step9()
 {
 
   this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step9() : Start drop #tbl_RankInGuildCom Table");
@@ -1396,10 +1407,10 @@ char CRFWorldDatabase::Update_RankInGuild_Step9()
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step9() : End drop #tbl_RankInGuildCom Table");
   else
     this->FmtLog("CRFWorldDatabase::Update_RankInGuild_Step9() : drop table #tbl_RankInGuildCom Fail!");
-  return 1;
+  return true;
 }
 
-unsigned __int8 CRFWorldDatabase::Select_CashLimSale(_worlddb_cash_limited_sale *pcashlimitedsale)
+int CRFWorldDatabase::Select_CashLimSale(_worlddb_cash_limited_sale *pcashlimitedsale)
 {
   char query[1024]{};
   SQLLEN indicator = 0;
@@ -1463,7 +1474,8 @@ unsigned __int8 CRFWorldDatabase::Select_CashLimSale(_worlddb_cash_limited_sale 
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)
@@ -1488,7 +1500,7 @@ bool CRFWorldDatabase::Update_DisappearOwnerRecord()
   return ExecUpdateQuery(Buffer, 0);
 }
 
-__int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
+int CRFWorldDatabase::Select_PostStorageEmptyRecord()
 {
   SQLLEN StrLen_or_IndPtr = 0;
   SQLRETURN ret = 0;
@@ -1517,7 +1529,8 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 4294967290LL;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(4294967290LL);
         }
 
         if (m_hStmtSelect)
@@ -1528,7 +1541,8 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
         {
           FmtLog("%s Success", Buffer);
         }
-        return TargetValue[0];
+        // narrowing cast for thunk return parity
+        return static_cast<int>(TargetValue[0]);
       }
 
       unsigned int result = 0;
@@ -1546,7 +1560,8 @@ __int64 CRFWorldDatabase::Select_PostStorageEmptyRecord()
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
     if (ret == 100)
     {
@@ -1676,7 +1691,7 @@ unsigned __int8 CRFWorldDatabase::Select_PostRegistryData(unsigned int dwMax, CP
   return 1;
 }
 
-char CRFWorldDatabase::Insert_PSDefaultRecord(unsigned int dwCum)
+bool CRFWorldDatabase::Insert_PSDefaultRecord(unsigned int dwCum)
 {
   char Buffer[68]{};
   sprintf_s(Buffer, 64, "{ CALL pInsert_PostStorageRecord }");
@@ -1684,10 +1699,10 @@ char CRFWorldDatabase::Insert_PSDefaultRecord(unsigned int dwCum)
   {
     if (!ExecUpdateQuery(Buffer, 1))
     {
-      return 0;
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_RaceBossCurrentWinRate(
@@ -1804,7 +1819,7 @@ unsigned __int8 CRFWorldDatabase::Select_RaceBossCurrentWinRate(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfoCnt(unsigned int *pdwCnt)
+int CRFWorldDatabase::Select_UnmannedTraderItemStateInfoCnt(unsigned int *pdwCnt)
 {
   SQLLEN StrLen_or_IndPtr = 0;
   SQLRETURN ret = 0;
@@ -1872,7 +1887,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfoCnt(unsigned int *pd
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_UnmannedTraderItemStateInfo(
+int CRFWorldDatabase::Select_UnmannedTraderItemStateInfo(
   _unmannedtrader_stade_id_info *pkInfo,
   unsigned int dwMaxCnt)
 {
@@ -1934,11 +1949,11 @@ bool CRFWorldDatabase::Truncate_UnmannedTraderItemStateRecord()
   return ExecUpdateQuery(Buffer, 1);
 }
 
-char CRFWorldDatabase::Insert_UnmannedTraderItemStateRecord(unsigned int dwRowCnt, wchar_t **ppwszStr)
+bool CRFWorldDatabase::Insert_UnmannedTraderItemStateRecord(unsigned int dwRowCnt, wchar_t **ppwszStr)
 {
   if (!dwRowCnt)
   {
-    return 0;
+    return false;
   }
 
   SetAutoCommitMode(0);
@@ -1954,12 +1969,12 @@ char CRFWorldDatabase::Insert_UnmannedTraderItemStateRecord(unsigned int dwRowCn
     {
       RollbackTransaction();
       SetAutoCommitMode(1);
-      return 0;
+      return false;
     }
   }
   CommitTransaction();
   SetAutoCommitMode(1);
-  return 1;
+  return true;
 }
 
 bool CRFWorldDatabase::Update_UnmannedTraderClearDanglingOwnerRecord()
@@ -1974,7 +1989,7 @@ bool CRFWorldDatabase::Update_UnmannedTraderClearDanglingOwnerRecord()
   return ExecUpdateQuery(Buffer, 0);
 }
 
-__int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
+int CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
 {
   SQLLEN StrLen_or_IndPtr = 0;
   SQLRETURN ret = 0;
@@ -2003,7 +2018,8 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 4294967290LL;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(4294967290LL);
         }
 
         if (m_hStmtSelect)
@@ -2014,7 +2030,8 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
         {
           FmtLog("%s Success", Buffer);
         }
-        return TargetValue[0];
+        // narrowing cast for thunk return parity
+        return static_cast<int>(TargetValue[0]);
       }
 
       unsigned int result = 0;
@@ -2032,7 +2049,8 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == 100)
@@ -2049,7 +2067,7 @@ __int64 CRFWorldDatabase::Select_UnmannedTraderSingleItemEmptyRecordCnt()
   return -1;
 }
 
-__int64 CRFWorldDatabase::select_atrade_taxrate(
+int CRFWorldDatabase::select_atrade_taxrate(
   unsigned __int8 byRace,
   char *pwszName,
   unsigned __int8 *byCurrTax,
@@ -2108,7 +2126,8 @@ __int64 CRFWorldDatabase::select_atrade_taxrate(
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -2126,7 +2145,8 @@ __int64 CRFWorldDatabase::select_atrade_taxrate(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == 100)
@@ -2143,7 +2163,7 @@ __int64 CRFWorldDatabase::select_atrade_taxrate(
   return 1;
 }
 
-char CRFWorldDatabase::Select_CheckGreetRecord(int nUseType)
+unsigned __int8 CRFWorldDatabase::Select_CheckGreetRecord(int nUseType)
 {
   char Buffer[152]{};
   SQLLEN strLen = 0;
@@ -2228,7 +2248,7 @@ bool CRFWorldDatabase::Insert_GreetingRecord(int nUseType, const char *wszName, 
   return this->ExecUpdateQuery(Buffer, true);
 }
 
-char CRFWorldDatabase::LoadGreetingMsg(
+bool CRFWorldDatabase::LoadGreetingMsg(
   char *pwszGMGreetingmsg,
   char *pwszRaceGreetingmsgA,
   char *pwszRaceGreetingmsgB,
@@ -2325,7 +2345,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
                           {
                             this->FmtLog("%s Success", Buffer);
                           }
-                          return 1;
+                          return true;
                         }
                         else
                         {
@@ -2338,7 +2358,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
                           {
                             SQLCloseCursor(this->m_hStmtSelect);
                           }
-                          return 0;
+                          return false;
                         }
                       }
                       else
@@ -2348,13 +2368,13 @@ char CRFWorldDatabase::LoadGreetingMsg(
                           this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
                           this->ErrorAction(ret, this->m_hStmtSelect);
                         }
-                        return 0;
+                        return false;
                       }
                     }
                     else
                     {
                       this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-                      return 0;
+                      return false;
                     }
                   }
                   else
@@ -2368,7 +2388,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
                     {
                       SQLCloseCursor(this->m_hStmtSelect);
                     }
-                    return 0;
+                    return false;
                   }
                 }
                 else
@@ -2378,13 +2398,13 @@ char CRFWorldDatabase::LoadGreetingMsg(
                     this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
                     this->ErrorAction(ret, this->m_hStmtSelect);
                   }
-                  return 0;
+                  return false;
                 }
               }
               else
               {
                 this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-                return 0;
+                return false;
               }
             }
             else
@@ -2398,7 +2418,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
               {
                 SQLCloseCursor(this->m_hStmtSelect);
               }
-              return 0;
+              return false;
             }
           }
           else
@@ -2408,13 +2428,13 @@ char CRFWorldDatabase::LoadGreetingMsg(
               this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
               this->ErrorAction(ret, this->m_hStmtSelect);
             }
-            return 0;
+            return false;
           }
         }
         else
         {
           this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-          return 0;
+          return false;
         }
       }
       else
@@ -2428,7 +2448,7 @@ char CRFWorldDatabase::LoadGreetingMsg(
         {
           SQLCloseCursor(this->m_hStmtSelect);
         }
-        return 0;
+        return false;
       }
     }
     else
@@ -2438,13 +2458,13 @@ char CRFWorldDatabase::LoadGreetingMsg(
         this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
         this->ErrorAction(ret, this->m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
   }
   else
   {
     this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-    return 0;
+    return false;
   }
 }
 
@@ -2474,7 +2494,7 @@ unsigned __int8 CRFWorldDatabase::Select_LimitInfo(unsigned __int8 *pData, unsig
   return 0;
 }
 
-char CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo, int nMax)
+bool CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo, int nMax)
 {
   char Buffer[152]{};
   SQLLEN strLen = 0;
@@ -2510,7 +2530,7 @@ char CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo
           {
             SQLCloseCursor(this->m_hStmtSelect);
           }
-          return 0;
+          return false;
         }
         if (j >= nMax)
         {
@@ -2530,7 +2550,7 @@ char CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo
           {
             SQLCloseCursor(this->m_hStmtSelect);
           }
-          return 0;
+          return false;
         }
       }
       if (this->m_hStmtSelect)
@@ -2541,25 +2561,25 @@ char CRFWorldDatabase::Select_BattleTournamentInfo(TournamentWinner *pWinnerInfo
       {
         this->FmtLog("%s Success", Buffer);
       }
-      return 1;
+      return true;
     }
     else if (ret == 100)
     {
-      return 1;
+      return true;
     }
     else
     {
       this->ErrorMsgLog(ret, Buffer, "SQLExecDirect", this->m_hStmtSelect);
       this->ErrorAction(ret, this->m_hStmtSelect);
-      return 0;
+      return false;
     }
   }
 
   this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", Buffer);
-  return 0;
+  return false;
 }
 
-__int64 CRFWorldDatabase::Select_GodenBoxItem(_worlddb_golden_box_item *goldenboxitem, int *pnSerial)
+int CRFWorldDatabase::Select_GodenBoxItem(_worlddb_golden_box_item *goldenboxitem, int *pnSerial)
 {
   char query[1024]{};
   SQLLEN strLen = 0;
@@ -2659,7 +2679,8 @@ __int64 CRFWorldDatabase::Select_GodenBoxItem(_worlddb_golden_box_item *goldenbo
         {
           SQLCloseCursor(this->m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
     }
     else if (ret == 100)
@@ -2678,7 +2699,7 @@ __int64 CRFWorldDatabase::Select_GodenBoxItem(_worlddb_golden_box_item *goldenbo
   return 1;
 }
 
-char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
+bool CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
 {
   char query[256]{};
   SQLLEN strLen = 0;
@@ -2729,7 +2750,7 @@ char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
       {
         this->FmtLog("%s Success", query);
       }
-      return 1;
+      return true;
     }
     else
     {
@@ -2738,15 +2759,15 @@ char CRFWorldDatabase::Select_GuildRoomInfo(_guildroom_info *pInfo)
         this->ErrorMsgLog(ret, query, "SQLExecDirect", this->m_hStmtSelect);
         this->ErrorAction(ret, this->m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
   }
 
   this->ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum)
+unsigned __int8 CRFWorldDatabase::Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum)
 {
   char query[132]{};
   SQLLEN strLen = 0;
@@ -2822,7 +2843,7 @@ char CRFWorldDatabase::Select_UsedLimitItemRecordNum(unsigned int *pdwUsedNum)
   return 1;
 }
 
-char CRFWorldDatabase::Select_TotalRecordNum(unsigned int *pdwTotalNum)
+unsigned __int8 CRFWorldDatabase::Select_TotalRecordNum(unsigned int *pdwTotalNum)
 {
   char query[132]{};
   SQLLEN strLen = 0;
@@ -3212,7 +3233,7 @@ bool CRFWorldDatabase::UpdateDrawGuildBattleResult(unsigned int dwGuildSerial, u
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
+bool CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
 {
   SQLLEN strLenOrInd = 0;
   char buffer[1044]{};
@@ -3238,7 +3259,7 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return 0;
+          return false;
         }
 
         if (m_hStmtSelect)
@@ -3249,7 +3270,7 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
         {
           FmtLog("%s Success", buffer);
         }
-        return 1;
+        return true;
       }
 
       if (ret != SQL_NO_DATA)
@@ -3261,7 +3282,7 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
 
     if (ret != SQL_NO_DATA)
@@ -3269,11 +3290,11 @@ char CRFWorldDatabase::SelectGuildBattleRankRecord(unsigned int dwGuildSerial)
       ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
       ErrorAction(ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
 bool CRFWorldDatabase::InsertGuildBattleRankRecord(unsigned int dwGuildSerial)
@@ -3283,13 +3304,13 @@ bool CRFWorldDatabase::InsertGuildBattleRankRecord(unsigned int dwGuildSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::SelectGuildBattleRankList(
+bool CRFWorldDatabase::SelectGuildBattleRankList(
   unsigned __int8 byRace,
   _worlddb_guild_battle_rank_list *pkInfo)
 {
   if (!pkInfo)
   {
-    return 0;
+    return false;
   }
 
   char buffer[1048]{};
@@ -3344,30 +3365,30 @@ char CRFWorldDatabase::SelectGuildBattleRankList(
       {
         FmtLog("%s Success", buffer);
       }
-      return 1;
+      return true;
     }
     if (ret == 100)
     {
-      return 1;
+      return true;
     }
 
     ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::SelectGuildBattleRerservedList(
+bool CRFWorldDatabase::SelectGuildBattleRerservedList(
   unsigned int uiStartSLID,
   unsigned int uiEndSLID,
   _worlddb_guild_battle_reserved_schedule_info *pkInfo)
 {
   if (!pkInfo)
   {
-    return 0;
+    return false;
   }
 
   SQLLEN strLenOrInd = 0;
@@ -3415,7 +3436,7 @@ char CRFWorldDatabase::SelectGuildBattleRerservedList(
       {
         FmtLog("%s Success", buffer);
       }
-      return 1;
+      return true;
     }
 
     if (ret != 100)
@@ -3423,14 +3444,14 @@ char CRFWorldDatabase::SelectGuildBattleRerservedList(
       ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction(ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
-char CRFWorldDatabase::SelectGuildBattleScheduleInfoID(unsigned int dwID)
+unsigned __int8 CRFWorldDatabase::SelectGuildBattleScheduleInfoID(unsigned int dwID)
 {
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
@@ -3518,7 +3539,7 @@ bool CRFWorldDatabase::UpdateClearGuildBattleScheduleInfo(unsigned int uiStartLi
   return ExecUpdateQuery(buffer, 1);
 }
 
-__int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
+int CRFWorldDatabase::SelectRowCountGuildBattleInfo()
 {
   SQLLEN strLenOrInd = 0;
   char buffer[1028]{};
@@ -3556,7 +3577,8 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
         {
           FmtLog("%s Success", buffer);
         }
-        return count;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(count);
       }
 
       unsigned int result = 0;
@@ -3575,7 +3597,8 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
     if (ret == 100)
     {
@@ -3588,10 +3611,11 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleInfo()
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return static_cast<__int64>(-1);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<__int64>(-1));
 }
 
-__int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
+int CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
 {
   SQLLEN strLenOrInd = 0;
   char buffer[260]{};
@@ -3629,7 +3653,8 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
         {
           FmtLog("%s Success", buffer);
         }
-        return count;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(count);
       }
 
       unsigned int result = 0;
@@ -3648,7 +3673,8 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
     if (ret == 100)
     {
@@ -3661,17 +3687,18 @@ __int64 CRFWorldDatabase::SelectRowCountGuildBattleScheduleInfo()
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return static_cast<__int64>(-1);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<__int64>(-1));
 }
 
-char CRFWorldDatabase::LoadGuildBattleInfo(
+bool CRFWorldDatabase::LoadGuildBattleInfo(
   unsigned int dwStartID,
   unsigned int dwRowCnt,
   _worlddb_guild_battle_info *pkInfo)
 {
   if (!pkInfo)
   {
-    return 0;
+    return false;
   }
 
   SQLLEN strLenOrInd = 0;
@@ -3713,7 +3740,7 @@ char CRFWorldDatabase::LoadGuildBattleInfo(
       {
         FmtLog("%s Success", buffer);
       }
-      return 1;
+      return true;
     }
 
     if (ret != 100)
@@ -3721,11 +3748,11 @@ char CRFWorldDatabase::LoadGuildBattleInfo(
       ErrorMsgLog(ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction(ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
 unsigned __int8 CRFWorldDatabase::LoadGuildBattleScheduleInfo(
@@ -3826,15 +3853,15 @@ bool CRFWorldDatabase::DeleteGuildBattleScheduleInfo()
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::InsertGuildBattleDefaultRecord(unsigned int dwRowCnt)
+bool CRFWorldDatabase::InsertGuildBattleDefaultRecord(unsigned int dwRowCnt)
 {
   if (!dwRowCnt)
   {
-    return 0;
+    return false;
   }
   if (!DeleteGuildBattleInfo())
   {
-    return 0;
+    return false;
   }
 
   char buffer[1028]{};
@@ -3844,13 +3871,13 @@ char CRFWorldDatabase::InsertGuildBattleDefaultRecord(unsigned int dwRowCnt)
     if (!ExecUpdateQuery(buffer, 1))
     {
       DeleteGuildBattleInfo();
-      return 0;
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
-char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
+bool CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
   unsigned int uiDayCnt,
   unsigned int uiMapCnt,
   unsigned __int8 byMaxHour,
@@ -3858,15 +3885,15 @@ char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
 {
   if (!uiDayCnt || !uiMapCnt || !byUnitTimeCntPerTime)
   {
-    return 0;
+    return false;
   }
   if (uiDayCnt > 0x1E || byMaxHour > 24)
   {
-    return 0;
+    return false;
   }
   if (!DeleteGuildBattleScheduleInfo())
   {
-    return 0;
+    return false;
   }
 
   char buffer[1028]{};
@@ -3887,12 +3914,12 @@ char CRFWorldDatabase::InsertGuildBattleScheduleDefaultRecord(
         if (!ExecUpdateQuery(buffer, 1))
         {
           DeleteGuildBattleScheduleInfo();
-          return 0;
+          return false;
         }
       }
     }
   }
-  return 1;
+  return true;
 }
 
 unsigned __int8 CRFWorldDatabase::Select_CharNumInWorld(unsigned int dwAccountSerial,
@@ -4242,7 +4269,7 @@ unsigned __int8 CRFWorldDatabase::Select_MacroData(unsigned int dwSerial,
   return 1;
 }
 
-unsigned __int8 CRFWorldDatabase::Select_PatriarchComm(unsigned int dwSerial,
+int CRFWorldDatabase::Select_PatriarchComm(unsigned int dwSerial,
         _patriarch_comm_list *pOutList)
 {
   SQLLEN indicator = 0;
@@ -4770,7 +4797,7 @@ unsigned __int8 CRFWorldDatabase::Select_ReturnPost(unsigned int dwMax,
   return result;
 }
 
-unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvatorSerial,
+int CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvatorSerial,
         unsigned __int8 *byRefinedCnt,
         unsigned int *dwRefineDate)
 {
@@ -4831,7 +4858,8 @@ unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvat
         {
           SQLCloseCursor(this->m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -4849,7 +4877,8 @@ unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvat
       {
         SQLCloseCursor(this->m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     unsigned __int8 result = 0;
@@ -4867,7 +4896,8 @@ unsigned __int8 CRFWorldDatabase::Select_RFEvent_ClassRefine(unsigned int dwAvat
     {
       SQLCloseCursor(this->m_hStmtSelect);
     }
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   if (sqlRet == SQL_NO_DATA)

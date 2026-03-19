@@ -24,7 +24,7 @@ public:
 
   CPartyModeKillMonsterExpNotify();
   ~CPartyModeKillMonsterExpNotify();
-  char Add(CPlayer *pkMember, float fExp);
+  bool Add(CPlayer *pkMember, float fExp);
   void Notify();
   void SetKillMonsterFlag();
 };

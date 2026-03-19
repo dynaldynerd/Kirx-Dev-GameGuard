@@ -35,8 +35,8 @@ struct  _talk_crystal_matrial_combine_node
 
   _talk_crystal_matrial_combine_node();
   void Init();
-  char Set(int nMixIndex, int nNeedItemNum, unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
-  char Push(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byUseCount, unsigned __int8 byClientIndex);
+  bool Set(int nMixIndex, int nNeedItemNum, unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
+  bool Push(_STORAGE_LIST::_db_con *pItem, unsigned __int8 byUseCount, unsigned __int8 byClientIndex);
   void Consume(int nConsumeCount);
   void Make(int nMakeCount);
   int GetMixNeedNum();
@@ -51,7 +51,7 @@ public:
 
   CTalkCrystalCombineManager();
   void Init();
-  char Doit(CPlayer *pPlayer, unsigned __int8 byExchangeNum, _talik_crystal_exchange_clzo::_list *pList);
+  bool Doit(CPlayer *pPlayer, unsigned __int8 byExchangeNum, _talik_crystal_exchange_clzo::_list *pList);
   unsigned __int8 CombinePreProcess(CPlayer *pPlayer, unsigned __int8 byExchangeNum, _talik_crystal_exchange_clzo::_list *pList);
   unsigned __int8 CombineProcess();
   unsigned __int8 CheckMixItem(

@@ -108,26 +108,26 @@ char CGuildMasterEffect::out_player(CPlayer *pP, unsigned __int8 byGrade)
   return 1;
 }
 
-char CGuildMasterEffect::change_player(
+bool CGuildMasterEffect::change_player(
   CPlayer *pP,
   unsigned __int8 byBeforeGrade,
   unsigned __int8 byAfterGrade)
 {
   if (!pP || byBeforeGrade > 8u || byAfterGrade > 8u)
   {
-    return 0;
+    return false;
   }
   if (byBeforeGrade == byAfterGrade)
   {
-    return 1;
+    return true;
   }
   if (!pP->m_Param.m_pGuild)
   {
-    return 0;
+    return false;
   }
   if (pP->m_Param.m_byClassInGuild != 2)
   {
-    return 0;
+    return false;
   }
   adjust_effect(pP, byBeforeGrade, false);
   if (byAfterGrade >= m_byAdjustableGrade)
@@ -135,7 +135,7 @@ char CGuildMasterEffect::change_player(
     adjust_effect(pP, byAfterGrade, true);
   }
   show_to_all(pP, byBeforeGrade, byAfterGrade, 2u);
-  return 1;
+  return true;
 }
 
 void CGuildMasterEffect::show_to_all(

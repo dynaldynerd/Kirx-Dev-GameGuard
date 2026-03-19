@@ -37,7 +37,7 @@ public:
   ~CMonsterSkill();
   void Init();
   void Copy(const CMonsterSkill *other);
-  __int64 SetSkill(
+  int SetSkill(
     _monster_fld *pMonsterFld,
     _monster_sp_fld *pSPCont,
     int nSFLv,
@@ -49,7 +49,7 @@ public:
     int nMotive,
     int nMotiveValue,
     int skillDestType);
-  __int64 SetForce(
+  int SetForce(
     _monster_fld *pMonsterFld,
     _monster_sp_fld *pSPCont,
     int nSFLv,
@@ -60,38 +60,38 @@ public:
     int nMotive,
     int nMotiveValue,
     int skillDestType);
-  __int64 SetGen(
+  int SetGen(
     _monster_fld *pMonsterFld,
     int nSFLv,
     unsigned int dwDelayTime,
     float fAttackDist,
     unsigned int dwCastDelay);
-  __int64 Use(unsigned int dwUsedTime, bool bCount);
+  int Use(unsigned int dwUsedTime, bool bCount);
   bool IsExit();
   bool IsAttackAble();
-  __int64 GetType();
-  __int64 GetUseType();
-  __int64 GetMotive();
-  __int64 GetMotiveValue();
-  __int64 GetExceptMotive();
-  __int64 GetExceptMotiveValue();
-  __int64 GetDstCaseType();
-  __int64 GetBeforeTime();
-  __int64 GetNextActionDelayTime();
-  __int64 GetSPActionProbability();
-  __int64 GetSPLimitCount();
-  __int64 GetSFLv();
-  __int64 GetElement();
+  int GetType();
+  int GetUseType();
+  int GetMotive();
+  int GetMotiveValue();
+  int GetExceptMotive();
+  int GetExceptMotiveValue();
+  int GetDstCaseType();
+  unsigned int GetBeforeTime();
+  unsigned int GetNextActionDelayTime();
+  int GetSPActionProbability();
+  int GetSPLimitCount();
+  int GetSFLv();
+  int GetElement();
   __int64 GetStdDmg();
-  __int64 GetMinDmg();
-  __int64 GetMaxDmg();
-  __int64 GetMinProb();
-  __int64 GetMaxProb();
+  int GetMinDmg();
+  int GetMaxDmg();
+  int GetMinProb();
+  int GetMaxProb();
   float GetAttackDist();
   _base_fld *GetFld();
   void NextPass();
   void SetAccumulationCountAdd(int nTempAccumulationCount);
-  __int64 GetAccumulationCount();
+  int GetAccumulationCount();
 };
 
 int _Check_SF_UseType(_base_fld *pFld, int nEffectType);

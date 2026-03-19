@@ -48,7 +48,7 @@ public:
     const char *pszFtpDirectory);
 
   static int __cdecl printf(const char *format, ...);
-  static bool GetDisplayInfo(int nDeviceIndex, char *lpszDeviceInfo, char *lpszMonitorInfo);
+  static int GetDisplayInfo(int nDeviceIndex, char *lpszDeviceInfo, char *lpszMonitorInfo);
   static BasicType GetBasicType(ULONG typeIndex, DWORD64 modBase);
   static char *FormatOutputValue(
     char *pszCurrBuffer,
@@ -57,12 +57,12 @@ public:
     BasicType basicType,
     unsigned __int64 length,
     const void *pAddress);
-  static char FormatSymbolValue(
+  static bool FormatSymbolValue(
     SYMBOL_INFO *pSym,
     STACKFRAME64 *sf,
     char *pszBuffer,
     unsigned int cbBuffer);
-  static BOOL CALLBACK EnumerateSymbolsCallback(
+  static int EnumerateSymbolsCallback(
     SYMBOL_INFO *pSymInfo,
     ULONG SymbolSize,
     void *UserContext);

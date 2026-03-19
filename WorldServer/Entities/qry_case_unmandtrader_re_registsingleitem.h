@@ -29,7 +29,7 @@ struct _qry_case_unmandtrader_re_registsingleitem
   unsigned int dwOwnerSerial;
   __list List[10];
 
-  __int64 size()
+  int size()
   {
     if (byNum > 10)
     {

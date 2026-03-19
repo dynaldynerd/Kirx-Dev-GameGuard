@@ -18,7 +18,7 @@ CPlayerAttack::CPlayerAttack(CPlayer *pThis)
 {
 }
 
-__int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
+int CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
 {
   _skill_fld *skillRecord = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   const float levelFactor =
@@ -80,11 +80,13 @@ __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
     static_cast<int>(((static_cast<double>(maxAttack + 125) / static_cast<double>(maxAttack + 50)) * maxAttack) + 0.5);
   if (m_pp->nMaxAttackPnt > 0)
   {
-    return maxDamage;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(maxDamage);
   }
   if (m_pp->nMaxAttackPnt < 0)
   {
-    return minAttack;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(minAttack);
   }
 
   const unsigned int midAttack = static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f));
@@ -118,20 +120,25 @@ __int64 CPlayerAttack::_CalcSkillAttPnt(bool bUseEffBullet)
     if (randValue >= maxSel)
     {
       m_bIsCrtAtt = true;
-      return maxDamage;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(maxDamage);
     }
     if ((maxAttack - static_cast<int>(midAttack)) <= 0)
     {
-      return midAttack;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(midAttack);
     }
-    return (rand() % (maxAttack - static_cast<int>(midAttack))) + midAttack;
+    // narrowing cast for thunk return parity
+    return static_cast<int>((rand() % (maxAttack - static_cast<int>(midAttack))) + midAttack);
   }
 
   if ((static_cast<int>(midAttack) - static_cast<int>(minAttack)) <= 0)
   {
-    return minAttack;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(minAttack);
   }
-  return (rand() % (static_cast<int>(midAttack) - static_cast<int>(minAttack))) + minAttack;
+  // narrowing cast for thunk return parity
+  return static_cast<int>((rand() % (static_cast<int>(midAttack) - static_cast<int>(minAttack))) + minAttack);
 }
 
 void CPlayerAttack::AttackSkill(_attack_param *pParam, bool bUseEffBullet)

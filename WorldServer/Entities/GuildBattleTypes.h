@@ -13,7 +13,7 @@ struct _qry_case_in_guildbattlecost
   long double out_totalgold;
   long double out_totaldalant;
 
-  __int64 size();
+  int size();
 };
 
 struct _qry_case_dest_guild_out_guildbattlecost
@@ -31,7 +31,7 @@ struct _qry_case_dest_guild_out_guildbattlecost
   unsigned int dwMapInx;
   unsigned __int8 byProcRet;
 
-  __int64 size();
+  int size();
 };
 
 struct _qry_case_src_guild_out_guildbattlecost
@@ -49,7 +49,7 @@ struct _qry_case_src_guild_out_guildbattlecost
   unsigned int dwMapInx;
   unsigned __int8 byProcRet;
 
-  __int64 size();
+  int size();
 };
 
 struct _qry_case_addguildbattleschedule
@@ -64,7 +64,7 @@ struct _qry_case_addguildbattleschedule
   __int64 tStartTime;
   unsigned __int16 wTurmMin;
 
-  __int64 size();
+  int size();
 };
 
 

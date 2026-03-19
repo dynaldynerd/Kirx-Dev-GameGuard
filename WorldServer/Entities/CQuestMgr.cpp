@@ -125,24 +125,24 @@ _happen_event_cont *CQuestMgr::GetLastHappenEvent()
   return nullptr;
 }
 
-char CQuestMgr::IsRecvedQuestByNPC(int nEventIndex)
+bool CQuestMgr::IsRecvedQuestByNPC(int nEventIndex)
 {
   (void)nEventIndex;
-  return 1; // this is not a stub
+  return true;// this is not a stub
 }
 
-char CQuestMgr::IsRecvedQuestByNPC(const char *pszNPCCode)
+bool CQuestMgr::IsRecvedQuestByNPC(const char *pszNPCCode)
 {
   (void)pszNPCCode;
-  return 1; // this is not a stub
+  return true; // this is not a stub
 }
 
-char CQuestMgr::ReturnItem(char *pszItemCode, int nEndReturnItemCnt, unsigned __int8 byQuestDBSlot)
+bool CQuestMgr::ReturnItem(char *pszItemCode, int nEndReturnItemCnt, unsigned __int8 byQuestDBSlot)
 {
   (void)pszItemCode;
   (void)nEndReturnItemCnt;
   (void)byQuestDBSlot;
-  return 1; // this is not a stub
+  return true;// this is not a stub
 }
 
 void CQuestMgr::SendMsgToMaster_ReturnItemAfterQuest(
@@ -578,12 +578,12 @@ _quest_check_result *CQuestMgr::CheckReqAct(
   return &s_QuestCKRet;
 }
 
-char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond, char *pszCode)
+bool CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond, char *pszCode)
 {
   char failed = 0;
   if (!m_pMaster)
   {
-    return failed;
+    return (failed) != 0;
   }
 
   _QUEST_DB_BASE::_LIST *slot = &m_pMaster->m_Param.m_QuestDB.m_List[byQuestDBSlot];
@@ -592,23 +592,23 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
 
   if (slot->wIndex == 65535)
   {
-    return failed;
+    return (failed) != 0;
   }
 
   _Quest_fld *record = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(slot->wIndex));
   if (!record)
   {
-    return failed;
+    return (failed) != 0;
   }
 
   if (slot->dwPassSec == static_cast<unsigned int>(-1))
   {
-    return failed;
+    return (failed) != 0;
   }
 
   if (!record->m_bFailCheck)
   {
-    return failed;
+    return (failed) != 0;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -668,13 +668,13 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
 
     if (!std::strcmp(record->m_strFailLinkQuest, "-1"))
     {
-      return failed;
+      return (failed) != 0;
     }
 
     _Quest_fld *nextRecord = reinterpret_cast<_Quest_fld *>(CQuestMgr::s_tblQuest->GetRecord(record->m_strFailLinkQuest));
     if (!nextRecord)
     {
-      return failed;
+      return (failed) != 0;
     }
 
     if (backup.byQuestType != 1
@@ -699,25 +699,25 @@ char CQuestMgr::CheckFailCondition(unsigned __int8 byQuestDBSlot, int nFailCond,
 
       m_pMaster->m_pUserDB->Update_QuestInsert(byQuestDBSlot, slot);
       m_pMaster->SendMsg_InsertNextQuest(byQuestDBSlot, slot);
-      return failed;
+      return (failed) != 0;
     }
   }
 
-  return failed;
+  return (failed) != 0;
 }
 
-char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
+bool CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
 {
   const int itemTableCode = GetItemTableCode(pszItemCode);
   if (itemTableCode == 255)
   {
-    return 0;
+    return false;
   }
 
   _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(pszItemCode, 2, 5);
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   int leftCount = wCount;
@@ -765,26 +765,26 @@ char CQuestMgr::DeleteQuestItem(char *pszItemCode, unsigned __int16 wCount)
 
       if (leftCount <= 0)
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
+bool CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
 {
   const int itemTableCode = GetItemTableCode(pszItemCode);
   if (itemTableCode == -1)
   {
-    return 0;
+    return false;
   }
 
   _base_fld *record = g_Main.m_tblItemData[itemTableCode].GetRecordByHash(pszItemCode, 2, 5);
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   int count = 0;
@@ -812,12 +812,12 @@ char CQuestMgr::__CheckCond_Have(int nAmonut, char *pszItemCode)
 
       if (count >= nAmonut)
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CQuestMgr::DeleteQuestData(unsigned __int8 bySlot)
@@ -835,7 +835,7 @@ bool CQuestMgr::CanGiveupQuest(unsigned __int8 byQuestDBSlot)
   return slot->byQuestType != 0xFF && slot->byQuestType == 1;
 }
 
-char CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
+bool CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
 {
   for (int j = 0; j < 70; ++j)
   {
@@ -844,13 +844,13 @@ char CQuestMgr::IsCompleteNpcQuest(char *pszCode, int bQuestRepeat)
       && std::strncmp(history.szQuestCode, pszCode, 7) == 0
       && bQuestRepeat != 1)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char CQuestMgr::IsProcNpcQuest(char *pszCode)
+bool CQuestMgr::IsProcNpcQuest(char *pszCode)
 {
   for (int j = 0; j < 30; ++j)
   {
@@ -860,14 +860,14 @@ char CQuestMgr::IsProcNpcQuest(char *pszCode)
       _base_fld *record = CQuestMgr::s_tblQuest->GetRecord(slot->wIndex);
       if (record && std::strncmp(record->m_strCode, pszCode, 7) == 0)
       {
-        return 1;
+        return true;
       }
     }
   }
-  return 0;
+  return false;
 }
 
-__int64 CQuestMgr::GetCountQuestType(int nType)
+int CQuestMgr::GetCountQuestType(int nType)
 {
   unsigned int count = 0;
   for (int j = 0; j < 30; ++j)
@@ -878,7 +878,8 @@ __int64 CQuestMgr::GetCountQuestType(int nType)
       ++count;
     }
   }
-  return count;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(count);
 }
 
 _Quest_fld *CQuestMgr::GetQuestFromEvent(unsigned __int8 bySelect)
@@ -1241,7 +1242,7 @@ _quest_fail_result *CQuestMgr::CheckLimLv(int nNewLv)
 }
 
 
-char CQuestMgr::IsProcLinkNpcQuest(char *pszCode, int nLinkQuestGroupID)
+bool CQuestMgr::IsProcLinkNpcQuest(char *pszCode, int nLinkQuestGroupID)
 {
 for (int j = 0; j < 30; ++j)
   {
@@ -1255,12 +1256,12 @@ for (int j = 0; j < 30; ++j)
       {
         if (record->m_nLinkQuestGroupID == nLinkQuestGroupID)
         {
-          return 0;
+          return false;
         }
       }
     }
   }
-  return 1;
+  return true;
 }
 
 
@@ -1324,7 +1325,7 @@ bool CQuestMgr::_CheckCondition(_happen_event_condition_node *pCond)
 }
 
 
-char CQuestMgr::__CheckCond_Class(char *pszClassCode)
+bool CQuestMgr::__CheckCond_Class(char *pszClassCode)
 {
   for (int j = 0; j < 4; ++j)
   {
@@ -1335,20 +1336,20 @@ char CQuestMgr::__CheckCond_Class(char *pszClassCode)
     }
     if (!std::strcmp(effectRecord->m_strCode, pszClassCode))
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 
-char CQuestMgr::__CheckCond_Dummy(int bInclude, char *pszDummyCode)
+bool CQuestMgr::__CheckCond_Dummy(int bInclude, char *pszDummyCode)
 {
-return 1; // this is not a stub
+return true;// this is not a stub
 }
 
 
-char CQuestMgr::__CheckCond_LV(unsigned __int8 byCompare, int nLv)
+bool CQuestMgr::__CheckCond_LV(unsigned __int8 byCompare, int nLv)
 {
   if (byCompare)
   {
@@ -1356,19 +1357,19 @@ char CQuestMgr::__CheckCond_LV(unsigned __int8 byCompare, int nLv)
     {
     if (this->m_pMaster->m_Param.GetLevel() < static_cast<unsigned int>(nLv))
       {
-        return 1;
+        return true;
       }
     }
     else if (byCompare == 2 && this->m_pMaster->m_Param.GetLevel() > static_cast<unsigned int>(nLv))
     {
-      return 1;
+      return true;
     }
   }
   else if (this->m_pMaster->m_Param.GetLevel() == static_cast<unsigned int>(nLv))
   {
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 
@@ -1432,7 +1433,7 @@ char codeBuf[32]{};
 }
 
 
-char CQuestMgr::__CheckCond_Dalant(unsigned __int8 byCompare, unsigned int nDalant)
+bool CQuestMgr::__CheckCond_Dalant(unsigned __int8 byCompare, unsigned int nDalant)
 {
   if (byCompare)
   {
@@ -1440,23 +1441,23 @@ char CQuestMgr::__CheckCond_Dalant(unsigned __int8 byCompare, unsigned int nDala
     {
       if (this->m_pMaster->m_Param.GetDalant() < nDalant)
       {
-        return 1;
+        return true;
       }
     }
     else if (byCompare == 2 && this->m_pMaster->m_Param.GetDalant() > nDalant)
     {
-      return 1;
+      return true;
     }
   }
   else if (this->m_pMaster->m_Param.GetDalant() == nDalant)
   {
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 
-char CQuestMgr::__CheckCond_Gold(unsigned __int8 byCompare, unsigned int nGold)
+bool CQuestMgr::__CheckCond_Gold(unsigned __int8 byCompare, unsigned int nGold)
 {
   if (byCompare)
   {
@@ -1464,23 +1465,23 @@ char CQuestMgr::__CheckCond_Gold(unsigned __int8 byCompare, unsigned int nGold)
     {
       if (this->m_pMaster->m_Param.GetGold() < nGold)
       {
-        return 1;
+        return true;
       }
     }
     else if (byCompare == 2 && this->m_pMaster->m_Param.GetGold() > nGold)
     {
-      return 1;
+      return true;
     }
   }
   else if (this->m_pMaster->m_Param.GetGold() == nGold)
   {
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 
-char CQuestMgr::__CheckCond_Grade(unsigned __int8 byCompare, int nGrade)
+bool CQuestMgr::__CheckCond_Grade(unsigned __int8 byCompare, int nGrade)
 {
   if (byCompare)
   {
@@ -1488,19 +1489,19 @@ char CQuestMgr::__CheckCond_Grade(unsigned __int8 byCompare, int nGrade)
     {
       if (this->m_pMaster->m_Param.m_byPvPGrade < nGrade)
       {
-        return 1;
+        return true;
       }
     }
     else if (byCompare == 2 && this->m_pMaster->m_Param.m_byPvPGrade > nGrade)
     {
-      return 1;
+      return true;
     }
   }
   else if (this->m_pMaster->m_Param.m_byPvPGrade == nGrade)
   {
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 

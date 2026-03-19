@@ -7,11 +7,12 @@ _trans_gm_msg_inform_zocl::_trans_gm_msg_inform_zocl()
   wMsgSize = 0;
 }
 
-__int64 _trans_gm_msg_inform_zocl::size()
+int _trans_gm_msg_inform_zocl::size()
 {
   if (wMsgSize > 1280)
   {
     wMsgSize = 0;
   }
-  return 1283LL - (1280 - wMsgSize);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1283LL - (1280 - wMsgSize));
 }

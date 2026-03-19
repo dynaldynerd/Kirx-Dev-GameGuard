@@ -13,17 +13,17 @@ public:
   CVoteSystem();
   ~CVoteSystem();
 
-  char StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsigned __int8 byRaceCode);
-  char StartVote(
+  bool StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsigned __int8 byRaceCode);
+  bool StartVote(
     unsigned __int8 byRaceCode,
     unsigned __int8 byPunishType,
     char *pwszContent,
     char *pwszName,
     unsigned int dwSerial);
   void CompleteSelectCharSerial(const _qry_case_select_charserial *query);
-  char ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint);
+  bool ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint);
   void Loop();
-  char StopVote();
+  bool StopVote();
   void SendMsg_StartedVoteInform(unsigned int n, unsigned int dwAvatorSerial, bool bPunish);
   void ProcessPunishment();
 

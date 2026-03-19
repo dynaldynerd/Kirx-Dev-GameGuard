@@ -14,7 +14,7 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnSetActive() override;
+  int OnSetActive() override;
 
   afx_msg void OnButtonMapchange();
 
@@ -35,8 +35,8 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnInitDialog() override;
-  BOOL OnSetActive() override;
+  int OnInitDialog() override;
+  int OnSetActive() override;
 
   afx_msg void OnButtonUpdateserver();
 
@@ -56,8 +56,8 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnSetActive() override;
-  BOOL OnKillActive() override;
+  int OnSetActive() override;
+  int OnKillActive() override;
 
   afx_msg void OnTimer(UINT_PTR nIDEvent);
   afx_msg void OnButtonUpdatelistsize();
@@ -81,8 +81,8 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnSetActive() override;
-  BOOL OnKillActive() override;
+  int OnSetActive() override;
+  int OnKillActive() override;
 
   afx_msg void OnTimer(UINT_PTR nIDEvent);
   afx_msg void OnBUTTONMainThreadControlApply();

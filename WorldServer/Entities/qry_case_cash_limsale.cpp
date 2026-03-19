@@ -7,7 +7,8 @@ qry_case_cash_limsale::qry_case_cash_limsale()
   std::memset(this, 0, sizeof(qry_case_cash_limsale));
 }
 
-__int64 qry_case_cash_limsale::size()
+int qry_case_cash_limsale::size()
 {
-  return 328LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(328LL);
 }

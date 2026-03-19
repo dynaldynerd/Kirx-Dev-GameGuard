@@ -64,9 +64,9 @@ CHolyKeeper::~CHolyKeeper()
   }
 }
 
-__int64 CHolyKeeper::GetAttackDP()
+int CHolyKeeper::GetAttackDP()
 {
-  return static_cast<unsigned int>(m_pRec->m_nAttack_DP);
+  return m_pRec->m_nAttack_DP;
 }
 
 float CHolyKeeper::GetAttackRange()
@@ -74,12 +74,12 @@ float CHolyKeeper::GetAttackRange()
   return m_pRec->m_fAttExt;
 }
 
-__int64 CHolyKeeper::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CHolyKeeper::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
-if (nAttactPart == -1)
-    return static_cast<unsigned int>(m_nDefPart[rand() % 5]);
+  if (nAttactPart == -1)
+    return m_nDefPart[rand() % 5];
 
-  return static_cast<unsigned int>(m_nDefPart[nAttactPart]);
+  return m_nDefPart[nAttactPart];
 }
 
 float CHolyKeeper::GetDefFacing(int nPart)
@@ -92,17 +92,19 @@ float CHolyKeeper::GetDefGap(int nPart)
 return m_pRec->m_fDefGap;
 }
 
-__int64 CHolyKeeper::GetDefSkill(bool bBackAttackDamage)
+int CHolyKeeper::GetDefSkill(bool bBackAttackDamage)
 {
-return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fDefSklUnit);
 }
 
-__int64 CHolyKeeper::GetFireTol()
+int CHolyKeeper::GetFireTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fFireTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fFireTol);
 }
 
-__int64 CHolyKeeper::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+int CHolyKeeper::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
 int hitRate = static_cast<int>(
     (m_pRec->m_fAttSklUnit - (static_cast<float>(pDst->GetLevel()) + static_cast<float>(pDst->GetDefSkill(bBackAttack)))) / 4.0f
@@ -116,22 +118,24 @@ int hitRate = static_cast<int>(
     return 5;
   if (hitRate > 95)
     return 95;
-  return static_cast<unsigned int>(hitRate);
+  return hitRate;
 }
 
-__int64 CHolyKeeper::GetHP()
+int CHolyKeeper::GetHP()
 {
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-__int64 CHolyKeeper::GetLevel()
+int CHolyKeeper::GetLevel()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fLevel));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fLevel);
 }
 
-__int64 CHolyKeeper::GetMaxHP()
+int CHolyKeeper::GetMaxHP()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fMaxHP));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fMaxHP);
 }
 
 char *CHolyKeeper::GetObjName()
@@ -149,22 +153,24 @@ char *CHolyKeeper::GetObjName()
   return s_keeperObjectName;
 }
 
-__int64 CHolyKeeper::GetObjRace()
+int CHolyKeeper::GetObjRace()
 {
   if (m_nMasterRace == -1)
     return 16;
 
-  return static_cast<unsigned int>(m_nMasterRace);
+  return m_nMasterRace;
 }
 
-__int64 CHolyKeeper::GetSoilTol()
+int CHolyKeeper::GetSoilTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fSoilTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fSoilTol);
 }
 
-__int64 CHolyKeeper::GetWaterTol()
+int CHolyKeeper::GetWaterTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWaterTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fWaterTol);
 }
 
 float CHolyKeeper::GetWeaponAdjust()
@@ -172,7 +178,7 @@ float CHolyKeeper::GetWeaponAdjust()
   return m_pRec->m_fDefGap;
 }
 
-__int64 CHolyKeeper::GetWeaponClass()
+int CHolyKeeper::GetWeaponClass()
 {
   return 1;
 }
@@ -182,9 +188,10 @@ float CHolyKeeper::GetWidth()
   return m_pRec->m_fWidth;
 }
 
-__int64 CHolyKeeper::GetWindTol()
+int CHolyKeeper::GetWindTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWindTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fWindTol);
 }
 
 bool CHolyKeeper::IsBeAttackedAble(bool bFirst)
@@ -193,13 +200,13 @@ bool CHolyKeeper::IsBeAttackedAble(bool bFirst)
   return true;
 }
 
-char CHolyKeeper::IsBeDamagedAble(CCharacter *pAtter)
+bool CHolyKeeper::IsBeDamagedAble(CCharacter *pAtter)
 {
   if (pAtter->m_ObjID.m_byID != 0)
     return true;
 
   CPlayer *player = static_cast<CPlayer *>(pAtter);
-  return static_cast<char>(!g_Main.IsReleaseServiceMode() || player->m_byUserDgr == 0);
+  return !g_Main.IsReleaseServiceMode() || player->m_byUserDgr == 0;
 }
 
 void CHolyKeeper::Init(_object_id *pID)
@@ -580,12 +587,12 @@ void CHolyKeeper::SendMsg_RealMovePoint(int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-__int64 CHolyKeeper::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
+int CHolyKeeper::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
 if (g_HolySys.GetSceneCode() != 3)
-    return static_cast<unsigned int>(m_nHP);
+    return m_nHP;
   if (g_HolySys.GetHolyMasterRace() == pDst->GetObjRace())
-    return static_cast<unsigned int>(m_nHP);
+    return m_nHP;
 
   if (nDam > 1)
   {
@@ -600,10 +607,10 @@ if (g_HolySys.GetSceneCode() != 3)
     g_HolySys.ReceiveDestroyKeeper(pDst);
   }
 
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-__int64 CHolyKeeper::SetDamage(
+int CHolyKeeper::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -615,21 +622,21 @@ __int64 CHolyKeeper::SetDamage(
 return SetDamage(nDam, pDst, nDstLv);
 }
 
-void CHolyKeeper::CheckAttack()
+bool CHolyKeeper::CheckAttack()
 {
   if (m_bMove || m_bExit || m_nHP <= 0)
-    return;
+    return false;
 
   const unsigned int now = GetLoopTime();
   if (now < m_dwNextGenAttackTime)
-    return;
+    return false;
 
   const float speedFactor = m_bChaos ? 4.0f : 2.0f;
   m_dwNextGenAttackTime = static_cast<unsigned int>(static_cast<float>(m_dwNextGenAttackTime) + m_pRec->m_fAttSpd * speedFactor);
 
   CCharacter *target = SearchAttackTarget();
   if (target == nullptr)
-    return;
+    return false;
 
   m_ap.pDst = target;
   std::memcpy(m_ap.fArea, target->m_fCurPos, sizeof(m_ap.fArea));
@@ -650,6 +657,7 @@ void CHolyKeeper::CheckAttack()
   }
 
   SendMsg_Attack();
+  return true;
 }
 
 void CHolyKeeper::CheckExit()

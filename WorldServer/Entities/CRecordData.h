@@ -23,7 +23,7 @@ public:
   bool LoadRecordHeader(void *hFile, char *errCode);
   bool LoadRecordData(void *hFile, char *errCode);
   unsigned int FileSize(const char *fileName);
-  unsigned int GetRecordNum() const;
+  int GetRecordNum() const;
   _base_fld *GetRecord(int index);
   _base_fld *GetRecord(const char *code);
   _base_fld *GetRecord(const char *szRecordCode, int nCompareLen);

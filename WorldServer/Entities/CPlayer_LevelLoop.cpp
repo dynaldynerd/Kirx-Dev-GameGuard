@@ -1615,7 +1615,7 @@ void CPlayer::SendMsg_SetHPInform()
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&hp), sizeof(hp));
 }
 
-__int64 CPlayer::SetDamage(
+int CPlayer::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -1630,7 +1630,8 @@ __int64 CPlayer::SetDamage(
 
   if (m_bCorpse || m_bMapLoading || CGameObject::GetCurSecNum() == static_cast<unsigned int>(-1))
   {
-    return static_cast<unsigned int>(m_Param.GetHP());
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_Param.GetHP());
   }
 
   if (pDst && m_EP.GetEff_Have(EFF_HAVE_JADE_RETURN_DAMAGE_RATE) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
@@ -1642,7 +1643,8 @@ __int64 CPlayer::SetDamage(
   if (pDst && m_EP.GetEff_Have(EFF_HAVE_JADE_RETURN_FULL_DAMAGE) > 0.0f && bJadeReturn && pDst->m_ObjID.m_byID == 0)
   {
     pDst->SetDamage(nDam, this, static_cast<int>(GetLevel()), true, -1, 0, false);
-    return static_cast<unsigned int>(m_Param.GetHP());
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_Param.GetHP());
   }
 
   CCharacter::BreakStealth();
@@ -1762,7 +1764,8 @@ __int64 CPlayer::SetDamage(
 
     m_nLastBeatenPart = 0;
     SetBattleMode(false);
-    return static_cast<unsigned int>(m_Param.GetHP());
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_Param.GetHP());
   }
 
   if (IsRidingUnit())
@@ -1927,10 +1930,11 @@ __int64 CPlayer::SetDamage(
 
   m_nLastBeatenPart = 0;
   SetBattleMode(false);
-  return static_cast<unsigned int>(m_Param.GetHP());
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_Param.GetHP());
 }
 
-char CPlayer::IsOverOneDay()
+bool CPlayer::IsOverOneDay()
 {
   const unsigned int lastConnTime = this->m_pUserDB->m_AvatorData.dbAvator.m_dwLastConnTime;
 
@@ -1973,30 +1977,30 @@ char CPlayer::IsOverOneDay()
   {
     if (curMonth - static_cast<int>(lastMonth) > 1)
     {
-      return 1;
+      return true;
     }
     if (curMonth - static_cast<int>(lastMonth) == 1 && curDay >= lastDay)
     {
-      return 1;
+      return true;
     }
   }
   else
   {
     if (curYear - static_cast<int>(lastYear) > 1)
     {
-      return 1;
+      return true;
     }
     if (curMonth != 1 || lastMonth != 12)
     {
-      return 1;
+      return true;
     }
     if (curDay >= lastDay)
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 unsigned int CPlayer::_check_mastery_cum_lim(unsigned __int8 byMasteryClass, unsigned __int8 byIndex)

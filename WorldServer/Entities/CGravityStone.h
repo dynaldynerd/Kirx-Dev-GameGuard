@@ -20,8 +20,8 @@ public:
   bool IsNearPosition(const float *pfCurPos);
   bool IsValidOwner(CPlayer *pkPlayer);
   bool IsInTown();
-  char CheckTakeTimeLimit();
-  char Regen(_object_create_setdata *pParam);
+  bool CheckTakeTimeLimit();
+  bool Regen(_object_create_setdata *pParam);
   unsigned __int8 Drop(CPlayer *pkPlayer);
   void SetOwner(CPlayer *pkPlayer);
   void SendMsg_Create();

@@ -24,9 +24,10 @@ _pt_result_fcandidacy_list_zocl::_pt_result_fcandidacy_list_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned __int16 _pt_result_fcandidacy_list_zocl::size() const
+int _pt_result_fcandidacy_list_zocl::size() const
 {
-  return static_cast<unsigned __int16>(1 + static_cast<unsigned int>(byCnt) * sizeof(__candi_info));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int16>(1 + static_cast<unsigned int>(byCnt) * sizeof(__candi_info)));
 }
 
 CandidateRegister::CandidateRegister()
@@ -94,7 +95,7 @@ int CandidateRegister::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
   }
 }
 
-unsigned int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
+int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
 {
   if (pOne->m_Param.m_byPvPGrade < 3)
   {

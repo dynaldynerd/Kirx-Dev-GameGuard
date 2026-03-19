@@ -129,7 +129,7 @@ public:
   void NotifyCloseItem(
     _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
     CLogFile *pkLogger);
-  char CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger);
+  bool CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger);
   void CompleteRegist(
     unsigned __int8 byRet,
     _qry_case_unmandtrader_registsingleitem *pLoadData,

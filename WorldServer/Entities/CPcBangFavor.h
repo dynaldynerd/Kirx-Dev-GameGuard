@@ -14,10 +14,10 @@ public:
 
   static CPcBangFavor *ms_pInstance;
   static CPcBangFavor *Instance();
-  bool Initialzie();
-  bool LoadPcBangData();
-  bool IsEnable();
-  int ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne);
+  int Initialzie();
+  int LoadPcBangData();
+  int IsEnable();
+  unsigned int ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne);
   bool PcBangGiveItem(CPlayer *pOne, int dwRecIndex, unsigned __int8 *bySeletItemIndex, int nSelectCount);
   void PcBangDeleteItem(CPlayer *pOne);
 

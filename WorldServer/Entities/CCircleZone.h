@@ -20,7 +20,7 @@ public:
 
   CCircleZone();
   ~CCircleZone();
-  char Create(CMapData *pkMap, unsigned __int8 byColor);
+  bool Create(CMapData *pkMap, unsigned __int8 byColor);
   void Destroy();
   bool Init(unsigned int uiMapInx, int iPlayerInx, int iNth, unsigned __int16 wInx, CMapData *pkMap);
   unsigned __int8 GetColor() const;

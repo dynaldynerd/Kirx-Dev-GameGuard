@@ -19,9 +19,9 @@ public:
 
   void SetDummyPoint(CMapData *pMap, float *pCenterPos, int nType, CRect *prcWnd);
   void SetDummyRange(CMapData *pMap, float *pLT, float *pRB, float *pRT, float *pLB, int nType, CRect *prcWnd);
-  char CalcAbsExt(CRect *prcArea);
+  bool CalcAbsExt(CRect *prcArea);
   void CalcScrExt(CRect *prcArea, CRect *prcWnd);
-  __int64 Draw(CSurface *pSF, CRect *prcArea);
+  HRESULT Draw(CSurface *pSF, CRect *prcArea);
 
   static HPEN s_hPen[10];
   static HPEN s_hDirection;

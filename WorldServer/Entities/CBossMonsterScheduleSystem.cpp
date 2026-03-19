@@ -350,7 +350,7 @@ void CBossMonsterScheduleSystem::AnalysisMsg(ScheduleMSG *pMSG)
   }
 }
 
-__int64 CBossMonsterScheduleSystem::WorkProc()
+int CBossMonsterScheduleSystem::WorkProc()
 {
   m_bRunning = true;
   while (IsRunning())

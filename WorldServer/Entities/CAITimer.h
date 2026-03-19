@@ -9,7 +9,7 @@ public:
   CAITimer();
   void Init(unsigned int delay);
   void Set(unsigned int delay);
-  __int64 Check();
+  int Check();
 
 private:
   unsigned int m_BefTime;

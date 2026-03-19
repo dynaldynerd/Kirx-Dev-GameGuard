@@ -34,7 +34,7 @@ public:
   CObjectList *GetSectorListPlayer(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   CObjectList *GetSectorListTower(unsigned __int16 wLayerIndex, unsigned int dwSecIndex);
   void GetRectInRadius(_pnt_rect *pRect, int nRadius, unsigned int nSecNum);
-  char UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec);
+  bool UpdateSecterList(CGameObject *pObj, unsigned int dwOldSec, unsigned int dwNewSec);
   void EnterMap(CGameObject *pObj, unsigned int dwSecIndex);
   void ExitMap(CGameObject *pObj, unsigned int dwSecIndex);
   bool IsMapIn(float *fPos);
@@ -42,7 +42,7 @@ public:
   bool OpenMap(char *szFileName, _map_fld *pMapSet, bool bUse);
   bool ConvertLocalToWorldDummy(CDummyPosTable *pTable, bool bCheckCenter);
   bool GetRandPosInDummy(_dummy_position *pDumPos, float *fOutPos, bool bRePos);
-  __int64 GetResDummySector(int nDummyIndex, float *pCurPos);
+  int GetResDummySector(int nDummyIndex, float *pCurPos);
   bool GetRandPosInRange(float *pStdPos, int nRange, float *pNewPos);
   bool GetRandPosVirtualDum(float *pStdPos, int nRange, float *pNewPos);
   bool GetRandPosVirtualDumExcludeStdRange(float *pStdPos, int nRange, int iExcludeRange, float *pNewPos);

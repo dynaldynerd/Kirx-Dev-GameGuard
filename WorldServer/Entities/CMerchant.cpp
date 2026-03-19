@@ -24,10 +24,11 @@ CMerchant::~CMerchant()
 {
 }
 
-__int64 CMerchant::GetFireTol()
+int CMerchant::GetFireTol()
 {
   const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fFireTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(recordSet->m_fFireTol);
 }
 
 char *CMerchant::GetObjName()
@@ -46,7 +47,7 @@ char *CMerchant::GetObjName()
   return objectName;
 }
 
-__int64 CMerchant::GetObjRace()
+int CMerchant::GetObjRace()
 {
   return m_byRaceCode;
 }
@@ -60,22 +61,25 @@ _dummy_position *CMerchant::GetStoreDummyName()
   return nullptr;
 }
 
-__int64 CMerchant::GetSoilTol()
+int CMerchant::GetSoilTol()
 {
   const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fSoilTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(recordSet->m_fSoilTol);
 }
 
-__int64 CMerchant::GetWaterTol()
+int CMerchant::GetWaterTol()
 {
   const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fWaterTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(recordSet->m_fWaterTol);
 }
 
-__int64 CMerchant::GetWindTol()
+int CMerchant::GetWindTol()
 {
   const _npc_fld *recordSet = reinterpret_cast<const _npc_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fWindTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(recordSet->m_fWindTol);
 }
 
 void CMerchant::Loop()

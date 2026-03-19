@@ -8,12 +8,12 @@ namespace
   unsigned int s_KeyBuffer[4]{};
 }
 
-unsigned __int64 _check_query::size() const
+int _check_query::size() const
 {
   return 1;
 }
 
-unsigned __int64 _check_speed_hack_ans::size() const
+int _check_speed_hack_ans::size() const
 {
   return 16;
 }

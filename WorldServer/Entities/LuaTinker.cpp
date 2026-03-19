@@ -156,14 +156,18 @@ void lua_tinker::init_u64(lua_State *L)
 /*---------------------------------------------------------------------------*/ 
 /* excution                                                                  */ 
 /*---------------------------------------------------------------------------*/ 
-void lua_tinker::dofile(lua_State *L, const char *filename)
+bool lua_tinker::dofile(lua_State *L, const char *filename)
 {
 	lua_pushcclosure(L, on_error, 0);
 	int errfunc = lua_gettop(L);
+	bool result = false;
 
     if(luaL_loadfile(L, filename) == 0)
 	{
-		lua_pcall(L, 0, 1, errfunc);
+		if (lua_pcall(L, 0, 1, errfunc) == 0)
+		{
+			result = true;
+		}
 	}
 	else
 	{
@@ -172,6 +176,7 @@ void lua_tinker::dofile(lua_State *L, const char *filename)
 
 	lua_remove(L, errfunc);
 	lua_pop(L, 1);
+	return result;
 }
 
 /*---------------------------------------------------------------------------*/ 

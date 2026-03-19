@@ -54,8 +54,8 @@ public:
   static CPvpCashMng *Instance();
   void Release();
   bool LoadData();
-  char IsTalikItem(const char *strCode);
-  unsigned __int8 GetTalikNum();
+  bool IsTalikItem(const char *strCode);
+  int GetTalikNum();
   int GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex);
   int GetTalikRecvrPoint(int i);
   int GetMyClassVal(char *pClass);

@@ -38,7 +38,7 @@ public:
   unsigned int m_dwLastDestroyTime;
 
   void Init(_object_id *pID);
-  char Create(_parkingunit_create_setdata *pParam);
+  bool Create(_parkingunit_create_setdata *pParam);
   bool Destroy(unsigned __int8 byDestoryType);
   unsigned __int16 CalcCurHPRate() override;
   void ChangeOwner(CPlayer *pNewOwner, unsigned __int8 byUnitSlotIndex);

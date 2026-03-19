@@ -66,7 +66,7 @@ void CMonsterSkill::Copy(const CMonsterSkill *other)
   m_pSPConst = other->m_pSPConst;
 }
 
-__int64 CMonsterSkill::SetSkill(
+int CMonsterSkill::SetSkill(
   _monster_fld *pMonsterFld,
   _monster_sp_fld *pSPCont,
   int nSFLv,
@@ -107,7 +107,7 @@ __int64 CMonsterSkill::SetSkill(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   if (nEffectType)
   {
@@ -127,7 +127,7 @@ m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   return 1;
 }
 
-__int64 CMonsterSkill::SetForce(
+int CMonsterSkill::SetForce(
   _monster_fld *pMonsterFld,
   _monster_sp_fld *pSPCont,
   int nSFLv,
@@ -167,7 +167,7 @@ __int64 CMonsterSkill::SetForce(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   m_UseType = _Check_SF_UseType(pForceFld, 1);
   m_nMotive = nMotive;
@@ -177,7 +177,7 @@ m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   return 1;
 }
 
-__int64 CMonsterSkill::SetGen(
+int CMonsterSkill::SetGen(
   _monster_fld *pMonsterFld,
   int nSFLv,
   unsigned int dwDelayTime,
@@ -205,7 +205,7 @@ __int64 CMonsterSkill::SetGen(
   }
   m_MaxDmg = 2 * m_StdDmg - m_MinDmg;
   const float damageRatio = static_cast<float>(m_MaxDmg + 125) / static_cast<float>(m_MaxDmg + 50);
-m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
+  m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   m_MaxProb = static_cast<int>(pMonsterFld->m_fMaxAFSelProb);
   m_UseType = 0;
   m_nMotive = 0;
@@ -220,7 +220,7 @@ m_MinProb = static_cast<int>(pMonsterFld->m_fMinAFSelProb);
   return 0;
 }
 
-__int64 CMonsterSkill::Use(unsigned int dwUsedTime, bool bCount)
+int CMonsterSkill::Use(unsigned int dwUsedTime, bool bCount)
 {
   m_BefTime = dwUsedTime;
   if (bCount)
@@ -240,85 +240,85 @@ bool CMonsterSkill::IsAttackAble()
   return m_UseType == 0;
 }
 
-__int64 CMonsterSkill::GetType()
+int CMonsterSkill::GetType()
 {
-  return static_cast<unsigned int>(m_nSFCode);
+  return m_nSFCode;
 }
 
-__int64 CMonsterSkill::GetUseType()
+int CMonsterSkill::GetUseType()
 {
-  return static_cast<unsigned int>(m_UseType);
+  return m_UseType;
 }
 
-__int64 CMonsterSkill::GetMotive()
+int CMonsterSkill::GetMotive()
 {
-  return static_cast<unsigned int>(m_nMotive);
+  return m_nMotive;
 }
 
-__int64 CMonsterSkill::GetMotiveValue()
+int CMonsterSkill::GetMotiveValue()
 {
-  return static_cast<unsigned int>(m_nMotivevalue);
+  return m_nMotivevalue;
 }
 
-__int64 CMonsterSkill::GetExceptMotive()
+int CMonsterSkill::GetExceptMotive()
 {
   if (m_pSPConst)
   {
-    return static_cast<unsigned int>(m_pSPConst->m_nMotiveExceptionCondition);
+    return m_pSPConst->m_nMotiveExceptionCondition;
   }
   return -1;
 }
 
-__int64 CMonsterSkill::GetExceptMotiveValue()
+int CMonsterSkill::GetExceptMotiveValue()
 {
   if (m_pSPConst)
   {
-    return static_cast<unsigned int>(m_pSPConst->m_nMotiveExceptionValue);
+    return m_pSPConst->m_nMotiveExceptionValue;
   }
   return -1;
 }
 
-__int64 CMonsterSkill::GetDstCaseType()
+int CMonsterSkill::GetDstCaseType()
 {
-  return static_cast<unsigned int>(m_nCaseType);
+  return m_nCaseType;
 }
 
-__int64 CMonsterSkill::GetBeforeTime()
+unsigned int CMonsterSkill::GetBeforeTime()
 {
   return m_BefTime;
 }
 
-__int64 CMonsterSkill::GetNextActionDelayTime()
+unsigned int CMonsterSkill::GetNextActionDelayTime()
 {
   return m_dwDelayTime;
 }
 
-__int64 CMonsterSkill::GetSPActionProbability()
+int CMonsterSkill::GetSPActionProbability()
 {
   if (m_pSPConst)
   {
-    return static_cast<unsigned int>(100 * m_pSPConst->m_nProbability);
+    return 100 * m_pSPConst->m_nProbability;
   }
   return 0;
 }
 
-__int64 CMonsterSkill::GetSPLimitCount()
+int CMonsterSkill::GetSPLimitCount()
 {
   if (m_pSPConst)
   {
-    return static_cast<unsigned int>(m_pSPConst->m_nLimitCount);
+    return m_pSPConst->m_nLimitCount;
   }
   return 0;
 }
 
-__int64 CMonsterSkill::GetSFLv()
+int CMonsterSkill::GetSFLv()
 {
-  return static_cast<unsigned int>(m_nSFLv);
+  return m_nSFLv;
 }
 
-__int64 CMonsterSkill::GetElement()
+int CMonsterSkill::GetElement()
 {
-  return static_cast<unsigned int>(m_Element);
+  return m_Element;
 }
 
 __int64 CMonsterSkill::GetStdDmg()
@@ -326,24 +326,24 @@ __int64 CMonsterSkill::GetStdDmg()
   return static_cast<unsigned int>(m_StdDmg);
 }
 
-__int64 CMonsterSkill::GetMinDmg()
+int CMonsterSkill::GetMinDmg()
 {
-  return static_cast<unsigned int>(m_MinDmg);
+  return m_MinDmg;
 }
 
-__int64 CMonsterSkill::GetMaxDmg()
+int CMonsterSkill::GetMaxDmg()
 {
-  return static_cast<unsigned int>(m_MaxDmg);
+  return m_MaxDmg;
 }
 
-__int64 CMonsterSkill::GetMinProb()
+int CMonsterSkill::GetMinProb()
 {
-  return static_cast<unsigned int>(m_MinProb);
+  return m_MinProb;
 }
 
-__int64 CMonsterSkill::GetMaxProb()
+int CMonsterSkill::GetMaxProb()
 {
-  return static_cast<unsigned int>(m_MaxProb);
+  return m_MaxProb;
 }
 
 float CMonsterSkill::GetAttackDist()
@@ -366,9 +366,9 @@ void CMonsterSkill::SetAccumulationCountAdd(int nTempAccumulationCount)
   m_nAccumulationCount += nTempAccumulationCount;
 }
 
-__int64 CMonsterSkill::GetAccumulationCount()
+int CMonsterSkill::GetAccumulationCount()
 {
-  return static_cast<unsigned int>(m_nAccumulationCount);
+  return m_nAccumulationCount;
 }
 
 int _Check_SF_UseType(_base_fld *pFld, int nEffectType)

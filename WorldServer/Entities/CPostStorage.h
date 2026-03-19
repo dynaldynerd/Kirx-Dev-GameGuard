@@ -12,7 +12,7 @@ public:
   void Init();
   int GetSize();
   CPostData *GetPostDataFromInx(unsigned int nIndex);
-  unsigned int AddPostTitleData(
+  int AddPostTitleData(
     unsigned int nIndex,
     unsigned int dwSerial,
     unsigned __int8 byState,
@@ -23,7 +23,7 @@ public:
     unsigned int dwUpt,
     unsigned int dwGold,
     unsigned __int64 lnUID);
-  char AddPostTitleDataByStorageIndex(
+  bool AddPostTitleDataByStorageIndex(
     unsigned int nStorageIndex,
     int nNumber,
     unsigned int dwSerial,
@@ -35,7 +35,7 @@ public:
     unsigned int dwUpt,
     unsigned int dwGold,
     unsigned __int64 lnUID);
-  unsigned int AddNewPost(
+  int AddNewPost(
     unsigned int dwSenderSerial,
     char *wszSendName,
     char *wszRecvName,
@@ -52,7 +52,7 @@ public:
   CPostData *GetPostDataFromSerial(unsigned int dwPostSerial);
   void DelPostData(unsigned int dwIndex);
   bool IsContentLoad(unsigned int dwIndex);
-  unsigned int SetPostContent(unsigned int dwSerial, char *wszContent);
+  int SetPostContent(unsigned int dwSerial, char *wszContent);
 
   CPostData m_PostData[50];
   int m_nSize;

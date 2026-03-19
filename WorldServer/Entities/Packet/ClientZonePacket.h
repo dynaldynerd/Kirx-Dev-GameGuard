@@ -164,7 +164,7 @@ struct _guild_honor_set_request_clzo
 struct _guild_manage_request_clzo
 {
   _guild_manage_request_clzo();
-  __int64 size();
+  int size();
   unsigned __int8 byManageType;
   unsigned int dwManageDst;
   unsigned int dwManageObj1;

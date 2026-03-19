@@ -64,9 +64,9 @@ public:
 
   static CandidateMgr *Instance();
   bool Initialize(int maxCount);
-  char LoadDatabase();
+  bool LoadDatabase();
   bool LoadLeaderPreVersion(unsigned __int8 byRace);
-  char LoadPatriarchGroup();
+  bool LoadPatriarchGroup();
   void Release();
   void InitCandidate();
   _candidate_info *GetEmpty(unsigned __int8 byRace);
@@ -91,18 +91,18 @@ public:
   void FinalDecision();
   void ApplyPatriarchGroup();
   void ChangeState_1to2();
-  __int64 Update_RegistCandidate_2st();
-  __int64 Update_Score();
-  __int64 Update_ClassType();
-  __int64 Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p);
-  __int64 Update_Refund();
-  __int64 Update_DischargePatriarch(_qry_case_discharge_patriarch *p);
-  __int64 CheckDBValidCharacter(unsigned __int8 byProc);
-  __int64 Update_VoteTime(unsigned int dwSerial);
+  int Update_RegistCandidate_2st();
+  int Update_Score();
+  int Update_ClassType();
+  int Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p);
+  int Update_Refund();
+  int Update_DischargePatriarch(_qry_case_discharge_patriarch *p);
+  int CheckDBValidCharacter(unsigned __int8 byProc);
+  int Update_VoteTime(unsigned int dwSerial);
   void CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_insert_candidate *p);
-  __int64 __SortByPvpPoint();
-  __int64 __SortByRank();
-  __int64 __SortByScore();
+  int __SortByPvpPoint();
+  int __SortByRank();
+  int __SortByScore();
   void __AddWinner(unsigned __int8 byRace, unsigned __int8 byNum);
 
   int m_nMaxNum;

@@ -428,7 +428,7 @@ void CGameObject::CalcScrNormalPoint(CRect *prcWnd)
   m_nScreenPos[1] = prcWnd->bottom * static_cast<int>(m_fAbsPos[2]) / bspInfo->m_nMapSize[2];
 }
 
-__int64 CGameObject::GetCurSecNum()
+unsigned int CGameObject::GetCurSecNum()
 {
   return m_dwCurSec;
 }
@@ -436,19 +436,19 @@ __int64 CGameObject::GetCurSecNum()
 bool CGameObject::IsBeAttackedAble(bool bFirst)
 {
   // this is not a stub
-return 0;
+  return false;
 }
 
-char CGameObject::IsBeDamagedAble(CCharacter *pAtter)
+bool CGameObject::IsBeDamagedAble(CCharacter *pAtter)
 {
   // this is not a stub
-return 1;
+  return true;
 }
 
-char CGameObject::IsRecvableContEffect()
+bool CGameObject::IsRecvableContEffect()
 {
   // this is not a stub
-  return 1;
+  return true;
 }
 
 bool CGameObject::IsRewardExp()
@@ -514,7 +514,7 @@ void CGameObject::AlterSec()
   // this is not a stub
 }
 
-__int64 CGameObject::AttackableHeight()
+int CGameObject::AttackableHeight()
 {
   return 50;
 }
@@ -534,7 +534,7 @@ void CGameObject::RecvKillMessage(CCharacter * /*pDier*/)
   // this is not a stub
 }
 
-__int64 CGameObject::CalcCirclePlayerNum(int nRange)
+int CGameObject::CalcCirclePlayerNum(int nRange)
 {
   if (m_bPlayerCircleList)
   {
@@ -545,7 +545,7 @@ __int64 CGameObject::CalcCirclePlayerNum(int nRange)
   _pnt_rect rect{};
   m_pCurMap->GetRectInRadius(&rect, nRange, m_dwCurSec);
 
-  unsigned int count = 0;
+  int count = 0;
   for (int y = rect.nStarty; y <= rect.nEndy; ++y)
   {
     for (int x = rect.nStartx; x <= rect.nEndx; ++x)
@@ -562,7 +562,7 @@ __int64 CGameObject::CalcCirclePlayerNum(int nRange)
   return count;
 }
 
-__int64 CGameObject::RerangeSecIndex(unsigned int dwOld, unsigned int dwNew)
+unsigned int CGameObject::RerangeSecIndex(unsigned int dwOld, unsigned int dwNew)
 {
   if (dwOld == static_cast<unsigned int>(-1))
   {
@@ -693,12 +693,12 @@ void CGameObject::ResetSector(unsigned int dwOldSec, unsigned int dwNewSec)
   }
 }
 
-char CGameObject::UpdateSecList()
+bool CGameObject::UpdateSecList()
 {
   unsigned int newSec = static_cast<unsigned int>(CalcSecIndex());
   if (m_dwCurSec == newSec)
   {
-    return 1;
+    return true;
   }
 
   const unsigned int oldSec = m_dwCurSec;
@@ -709,13 +709,13 @@ char CGameObject::UpdateSecList()
 
   if (!m_pCurMap->UpdateSecterList(this, m_dwCurSec, newSec))
   {
-    return 0;
+    return false;
   }
 
   SetCurSecNum(newSec);
   ResetSector(oldSec, newSec);
   AlterSec();
-  return 1;
+  return true;
 }
 
 void CGameObject::SendMsg_RealFixPosition(bool bCircle)
@@ -748,12 +748,12 @@ bool CGameObject::FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond
   return false;
 }
 
-__int64 CGameObject::GetAttackDP()
+int CGameObject::GetAttackDP()
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetAttackLevel()
+int CGameObject::GetAttackLevel()
 {
   __int64 *stackPtr = nullptr;
   __int64 i = 0;
@@ -775,7 +775,7 @@ float CGameObject::GetAttackRange()
   return 0.0f;
 }
 
-__int64 CGameObject::SetDamage(
+int CGameObject::SetDamage(
   int /*nDam*/,
   CCharacter * /*pDst*/,
   int /*nDstLv*/,
@@ -784,30 +784,30 @@ __int64 CGameObject::SetDamage(
   unsigned int /*dwAttackSerial*/,
   bool /*bJadeReturn*/)
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetHP()
+int CGameObject::GetHP()
 {
   return 1;
 }
 
-__int64 CGameObject::GetLevel()
+int CGameObject::GetLevel()
 {
   return 1;
 }
 
-__int64 CGameObject::GetMaxHP()
+int CGameObject::GetMaxHP()
 {
   return 1;
 }
 
-char CGameObject::SetCurPos(float *pPos)
+bool CGameObject::SetCurPos(float *pPos)
 {
   if (!m_pCurMap->IsMapIn(pPos))
-    return 0;
+    return false;
   std::memcpy(m_fCurPos, pPos, sizeof(m_fCurPos));
-  return 1;
+  return true;
 }
 
 void CGameObject::SetCurSecNum(unsigned int dwNewSecNum)
@@ -824,11 +824,11 @@ void CGameObject::SetStun(bool bStun)
   }
 }
 
-char CGameObject::Destroy()
+bool CGameObject::Destroy()
 {
   if (!m_bLive)
   {
-    return 0;
+    return false;
   }
 
   if (m_pCurMap)
@@ -951,10 +951,10 @@ void CGameObject::SendMsg_StunInform()
   // this is not a stub
 }
 
-char CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)
+bool CGameObject::SetHP(int /*nHP*/, bool /*bOver*/)
 {
   // this is not a stub
-  return 1;
+  return true;
 }
 
 void CGameObject::CalcAbsPos()
@@ -965,7 +965,7 @@ void CGameObject::CalcAbsPos()
   this->m_fAbsPos[2] = static_cast<float>(BspInfo->m_nMapMaxSize[2]) - this->m_fCurPos[2];
 }
 
-__int64 CGameObject::CalcSecIndex()
+unsigned int CGameObject::CalcSecIndex()
 {
   this->CalcAbsPos();
   unsigned int secX = static_cast<unsigned int>(static_cast<int>(this->m_fAbsPos[0] / 100.0f));
@@ -980,9 +980,9 @@ __int64 CGameObject::CalcSecIndex()
   return this->m_dwCurSec;
 }
 
-__int64 CGameObject::GetUseSectorRange()
+int CGameObject::GetUseSectorRange()
 {
-  return static_cast<unsigned int>(this->m_pCurMap->m_pMapSet->m_nRadius);
+  return this->m_pCurMap->m_pMapSet->m_nRadius;
 }
 
 unsigned __int16 CGameObject::CalcCurHPRate()
@@ -1098,10 +1098,10 @@ void CGameObject::CircleReport(
   }
 }
 
-char CGameObject::Create(_object_create_setdata *pData)
+bool CGameObject::Create(_object_create_setdata *pData)
 {
   if (this->m_bLive)
-    return 0;
+    return false;
 
   this->m_pCurMap = pData->m_pMap;
   this->m_wMapLayerIndex = pData->m_nLayerIndex;
@@ -1125,7 +1125,7 @@ char CGameObject::Create(_object_create_setdata *pData)
     this->m_bBreakTranspar = 0;
     this->m_dwLastSendTime = GetLoopTime();
     this->m_dwOldTickBreakTranspar = GetLoopTime();
-    return 1;
+    return true;
   }
 
   this->m_pCurMap = nullptr;
@@ -1134,13 +1134,13 @@ char CGameObject::Create(_object_create_setdata *pData)
     this->m_ObjID.m_byKind,
     this->m_ObjID.m_byID,
     this->m_ObjID.m_wIndex);
-  return 0;
+  return false;
 }
 
-__int64 CGameObject::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CGameObject::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
 // this is not a stub
-  return 1LL;
+  return true;
 }
 
 float CGameObject::GetDefFacing(int nPart)
@@ -1153,30 +1153,30 @@ float CGameObject::GetDefGap(int nPart)
 return FLOAT_0_5;
 }
 
-__int64 CGameObject::GetDefSkill(bool bBackAttackDamage)
+int CGameObject::GetDefSkill(bool bBackAttackDamage)
 {
 // this is not a stub
-  return 1LL;
+  return 1;
 }
 
-__int64 CGameObject::GetFireTol()
+int CGameObject::GetFireTol()
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetSoilTol()
+int CGameObject::GetSoilTol()
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetWaterTol()
+int CGameObject::GetWaterTol()
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetWindTol()
+int CGameObject::GetWindTol()
 {
-  return 0LL;
+  return 0;
 }
 
 float CGameObject::GetWeaponAdjust()
@@ -1184,25 +1184,25 @@ float CGameObject::GetWeaponAdjust()
   return FLOAT_0_5;
 }
 
-__int64 CGameObject::GetObjRace()
+int CGameObject::GetObjRace()
 {
   return -1;
 }
 
-__int64 CGameObject::GetAvoidRate()
+int CGameObject::GetAvoidRate()
 {
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+int CGameObject::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
 // this is not a stub
-  return 0LL;
+  return 0;
 }
 
-__int64 CGameObject::GetWeaponClass()
+int CGameObject::GetWeaponClass()
 {
-  return 0LL;
+  return 0;
 }
 
 float CGameObject::GetWidth()

@@ -157,16 +157,16 @@ bool CPvpCashMng::LoadData()
   return false;
 }
 
-char CPvpCashMng::IsTalikItem(const char *strCode)
+bool CPvpCashMng::IsTalikItem(const char *strCode)
 {
   for (int j = 0; j < 14; ++j)
   {
     if (!std::strcmp(m_TalikList.TalikInfo[j].m_pFld->m_strCode, strCode))
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 int CPvpCashMng::GetTalikRecvrPoint(unsigned __int8 byTblCode, unsigned int dwIndex)
@@ -187,9 +187,10 @@ int CPvpCashMng::GetTalikRecvrPoint(int i)
   return m_TalikList.TalikInfo[i].nRecvrPoint;
 }
 
-unsigned __int8 CPvpCashMng::GetTalikNum()
+int CPvpCashMng::GetTalikNum()
 {
-  return m_TalikList.byTalikNum;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_TalikList.byTalikNum);
 }
 
 int CPvpCashMng::GetMyClassVal(char *pClass)

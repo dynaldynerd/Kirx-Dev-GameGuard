@@ -59,7 +59,7 @@ CLevel::~CLevel()
   }
 }
 
-__int64 CLevel::IsLoadedBsp()
+int CLevel::IsLoadedBsp()
 {
   return mIsLoadedBsp;
 }

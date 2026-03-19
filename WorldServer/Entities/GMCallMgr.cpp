@@ -133,7 +133,7 @@ bool GMCallMgr::RequestGMList(CPlayer *pOne, int nCurrPageIndex)
   return pOne && pOne->m_byUserDgr >= 2u && SendResponseGMList(pOne, nCurrPageIndex) != 0;
 }
 
-char GMCallMgr::RequestAcceptGMCall(CPlayer *pOne, unsigned int dwUserSerial)
+bool GMCallMgr::RequestAcceptGMCall(CPlayer *pOne, unsigned int dwUserSerial)
 {
   int errorCode = 0;
   GMRequestData *requestData = nullptr;
@@ -185,18 +185,18 @@ char GMCallMgr::RequestAcceptGMCall(CPlayer *pOne, unsigned int dwUserSerial)
   if (errorCode)
   {
     SendResponseAcceptResult(pOne, targetPlayer, errorCode);
-    return 0;
+    return false;
   }
 
   SendResponseAcceptResult(pOne, targetPlayer, 0);
-  return 1;
+  return true;
 }
 
-char GMCallMgr::SendResponseGMCall(CPlayer *pOne, int bCallState)
+bool GMCallMgr::SendResponseGMCall(CPlayer *pOne, int bCallState)
 {
   if (!pOne)
   {
-    return 0;
+    return false;
   }
 
   _gm_msg_gmcall_response_zocl msg{};
@@ -210,14 +210,14 @@ char GMCallMgr::SendResponseGMCall(CPlayer *pOne, int bCallState)
     type,
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
-  return 1;
+  return true;
 }
 
-char GMCallMgr::SendResponseGMList(CPlayer *pOne, int nCurrPageIndex)
+bool GMCallMgr::SendResponseGMList(CPlayer *pOne, int nCurrPageIndex)
 {
   if (!pOne)
   {
-    return 0;
+    return false;
   }
 
   unsigned int list[MAX_PLAYER + 1]{};
@@ -265,7 +265,7 @@ char GMCallMgr::SendResponseGMList(CPlayer *pOne, int nCurrPageIndex)
     type,
     reinterpret_cast<char *>(&response),
     226u);
-  return 1;
+  return true;
 }
 
 void GMCallMgr::SendResponseAcceptResult(CPlayer *pOneGM, CPlayer *pOneUser, int nErrorCode)

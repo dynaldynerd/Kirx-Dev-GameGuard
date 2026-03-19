@@ -33,7 +33,7 @@ void MonsterSetInfoData::Init()
   m_nMonBlkCount = 0;
 }
 
-bool MonsterSetInfoData::Load(const char *fileName)
+int MonsterSetInfoData::Load(const char *fileName)
 {
   for (int j = 0; j < 4; ++j)
   {

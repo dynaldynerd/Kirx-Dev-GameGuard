@@ -80,50 +80,50 @@ public:
   void DummyCreate(unsigned int dwSerial);
   void ParamInit();
   bool Update_Map(unsigned __int8 map, float *pos);
-  char Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
-  char Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName);
-  char Update_DelBuddy(unsigned __int8 bySlotIndex);
-  char Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime);
-  char Update_UserPlayTime(unsigned int dwAccPlayTime);
-  char Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex);
-  char Update_LinkBoardLock(unsigned __int8 byLBLock);
-  char Update_WindowInfo(
+  bool Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate);
+  bool Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName);
+  bool Update_DelBuddy(unsigned __int8 bySlotIndex);
+  bool Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime);
+  bool Update_UserPlayTime(unsigned int dwAccPlayTime);
+  bool Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex);
+  bool Update_LinkBoardLock(unsigned __int8 byLBLock);
+  bool Update_WindowInfo(
     unsigned int *pdwSkill,
     unsigned int *pdwForce,
     unsigned int *pdwChar,
     unsigned int *pdwAnimus,
     unsigned int dwInven,
     unsigned int *pdwInvenBag);
-  char Update_Macro(char *pBuf);
+  bool Update_Macro(char *pBuf);
   void Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg);
-  char Update_BagNum(unsigned __int8 bagnum);
+  bool Update_BagNum(unsigned __int8 bagnum);
   void CalcRadarDelay();
   void SetRadarDelay(unsigned int dwDelay);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);
-  char Update_UserFatigue(unsigned int dwFatigue);
-  char Update_UserTLStatus(unsigned __int8 byStatus);
-  char Update_RaceVoteInfoInit();
+  bool Update_UserFatigue(unsigned int dwFatigue);
+  bool Update_UserTLStatus(unsigned __int8 byStatus);
+  bool Update_RaceVoteInfoInit();
   unsigned int GetActPoint(unsigned __int8 byCode);
   unsigned int *GetPtrActPoint();
   void SetActPoint(unsigned __int8 byCode, unsigned int dwLeftPoint);
-  char Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint);
-  char InitClass(char *pszClassCode);
-  char Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex);
+  bool Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint);
+  bool InitClass(char *pszClassCode);
+  bool Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex);
   void WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *szPrevClass);
   void StartFieldMode();
   void Update_PotionNextUseTime(unsigned __int8 byPotionClass, unsigned int dwNextUseTime);
   bool Update_AlterPvPPoint(long double dNewPoint);
-  char Update_AlterPvPCashBag(long double dNewPoint);
+  bool Update_AlterPvPCashBag(long double dNewPoint);
   bool Update_ItemAdd(
     unsigned __int8 storage,
     unsigned __int8 slot,
     const _STORAGE_LIST::_db_con *pItem,
     bool bUpdate);
   bool Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, bool bUpdate);
-  char Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos);
-  char Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate);
-  char Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
+  bool Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos);
+  bool Update_ItemUpgrade(unsigned __int8 storage, unsigned __int8 slot, unsigned int upg, bool bUpdate);
+  bool Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool bUpdate);
   bool Update_Money(unsigned int dalant, unsigned int gold);
   bool Update_SFContDelete(unsigned __int8 byContCode, unsigned __int8 bySlotIndex);
   bool Update_SFContInsert(
@@ -134,36 +134,36 @@ public:
     unsigned __int8 byLv,
     unsigned __int16 wDurSec);
   bool Update_SFContUpdate(unsigned __int8 byContCode, unsigned __int8 bySlotIndex, unsigned __int16 wTime);
-  char Update_TakeLastMentalTicket(unsigned int dwMentalTicket);
-  char Update_TrunkSlotNum(unsigned __int8 bySlotNum);
-  char Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum);
+  bool Update_TakeLastMentalTicket(unsigned int dwMentalTicket);
+  bool Update_TrunkSlotNum(unsigned __int8 bySlotNum);
+  bool Update_ExtTrunkSlotNum(unsigned __int8 byExtSlotNum);
   bool Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate);
   bool Update_UnitInsert(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
   bool Update_UnitDelete(unsigned __int8 bySlotIndex);
   bool Update_UnitData(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIST *pData);
-  char Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData);
-  char Update_QuestDelete(unsigned __int8 bySlotIndex);
-  char Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate);
-  char Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData);
+  bool Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData);
+  bool Update_QuestDelete(unsigned __int8 bySlotIndex);
+  bool Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate);
+  bool Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData);
   void Update_MaxLevel(unsigned __int8 byMaxLevel);
-  char Update_Level(unsigned __int8 lv, long double exp);
-  char Update_LossExp(long double dLossExp);
-  char Update_Exp(long double exp);
-  char Setting_Class(char *pszClassCode);
+  bool Update_Level(unsigned __int8 lv, long double exp);
+  bool Update_LossExp(long double dLossExp);
+  bool Update_Exp(long double exp);
+  bool Setting_Class(char *pszClassCode);
   void WriteLog_Level(unsigned __int8 byLv);
   void WriteLog_CharSelect();
-  char Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN);
-  char Update_CombineExResult_Pop();
-  char Update_CuttingEmpty();
-  char Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist);
-  char Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt);
-  char Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData);
-  char Update_TrunkHint(unsigned __int8 byHintIndex, char *pwszHintAnswer);
-  char Update_TrunkMoney(long double dGold, long double dDalant);
-  char Update_TrunkPassword(char *pwszPassword);
-  char Update_UserVoteData();
-  char Update_AutoTradeAllClear();
-  char Update_TakeLastCriTicket(unsigned int dwCriTicket);
+  bool Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN);
+  bool Update_CombineExResult_Pop();
+  bool Update_CuttingEmpty();
+  bool Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist);
+  bool Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt);
+  bool Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData);
+  bool Update_TrunkHint(unsigned __int8 byHintIndex, char *pwszHintAnswer);
+  bool Update_TrunkMoney(long double dGold, long double dDalant);
+  bool Update_TrunkPassword(char *pwszPassword);
+  bool Update_UserVoteData();
+  bool Update_AutoTradeAllClear();
+  bool Update_TakeLastCriTicket(unsigned int dwCriTicket);
   void SetDBPostData(
     unsigned int n,
     unsigned int dwSerial,
@@ -199,12 +199,12 @@ public:
     unsigned int dwUpt,
     unsigned int dwGold,
     unsigned __int64 lnUID);
-  char Update_DelPost(unsigned int dwSerial, unsigned int nIndex);
+  bool Update_DelPost(unsigned int dwSerial, unsigned int nIndex);
   bool IsReturnPostUpdate();
   void Update_ReturnPost(unsigned int dwSerial);
   void DelPostData(unsigned int dwIndex);
-  char Update_Param(_EXIT_ALTER_PARAM *pCon);
-  char Update_CopyAll(_AVATOR_DATA *pSrc);
+  bool Update_Param(_EXIT_ALTER_PARAM *pCon);
+  bool Update_CopyAll(_AVATOR_DATA *pSrc);
   void ForceCloseCommand(unsigned __int8 byKickType, unsigned int dwPushIP, bool bSlow, const char *pszCause);
   void Inform_For_Exit_By_FireguardBlock();
   void ClearBillingData();
@@ -237,11 +237,11 @@ public:
     char *pwszName,
     unsigned __int8 bySlotIndex);
   unsigned __int8 IsExistRequestMoveCharacterList(unsigned int dwCharSerial);
-  char DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated);
+  bool DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated);
   bool FirstSettingData();
-  char Update_PlayTime(unsigned int dwTotalTimeMin);
+  bool Update_PlayTime(unsigned int dwTotalTimeMin);
   void TotalPlayMinCheck();
-  char UpdateContUserSave(bool bDirect);
+  bool UpdateContUserSave(bool bDirect);
   void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
   void Reged_Char_Complete(unsigned __int8 byRetCode, _REGED *pRegedList, _NOT_ARRANGED_AVATOR_DB *pArrangedList);
   void Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex);
@@ -270,7 +270,7 @@ public:
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
   static void ReRangeClientIndex(_AVATOR_DATA *pData);
-  static char CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
+  static bool CheckDQSLoadCharacterData(_AVATOR_DATA *pData);
   static void OnLoop_Static();
 };
 

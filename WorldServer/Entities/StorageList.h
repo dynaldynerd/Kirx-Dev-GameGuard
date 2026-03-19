@@ -60,22 +60,22 @@ struct   _STORAGE_LIST
 
   _STORAGE_LIST();
   void SetMemory(_db_con *pList, int nListName, int nListNum, int nUsedNum);
-  char EmptyCon(int n);
+  bool EmptyCon(int n);
   void SetAllEmpty();
   void SetLock(int n, bool bLock);
-  int TransInCon(_storage_con *pCon);
+  unsigned int TransInCon(_storage_con *pCon);
   int GetIndexEmptyCon();
   int GetNumUseCon() const;
   int GetNumEmptyCon();
-  char AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
-  char UpdateCurDur(int n, int nUpdate);
-  char SetUseListNum(int nUsedNum);
+  bool AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur);
+  bool UpdateCurDur(int n, int nUpdate);
+  bool SetUseListNum(int nUsedNum);
   int GetIndexFromSerial(unsigned __int16 wSerial);
   _db_con *GetPtrFromSerial(unsigned __int16 wSerial);
   _db_con *GetPtrFromItemCode(char *pwszItemCode);
-  char GradeUp(int n, unsigned int dwUptInfo);
-  char GradeDown(int n, unsigned int dwUptInfo);
-  char SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo);
+  bool GradeUp(int n, unsigned int dwUptInfo);
+  bool GradeDown(int n, unsigned int dwUptInfo);
+  bool SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo);
 };
 #pragma pack(pop)
 

@@ -73,13 +73,13 @@ void CProcessThread::CompleteProcess(_SYN_DATA * /*pSynData*/)
 // this is not a stub
 }
 
-char CProcessThread::RegisterSyncData(int /*nCaseCode*/, unsigned int dwDataSize)
+bool CProcessThread::RegisterSyncData(int /*nCaseCode*/, unsigned int dwDataSize)
 {
   if (m_dwSynDataSize <= dwDataSize)
   {
     m_dwSynDataSize = dwDataSize;
   }
-  return 1;
+  return true;
 }
 
 CProcessThread::_SYN_DATA *CProcessThread::PushData(_SYN_HEADER *pHeader, char *pQryData, unsigned int nQrySize)
@@ -160,7 +160,7 @@ void CProcessThread::RunOnThread()
   ProcessOnThread();
 }
 
-char CProcessThread::StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum)
+bool CProcessThread::StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum)
 {
   m_dwSynDataNum = dwSynDataNum;
   std::memcpy(&m_Config, pConfig, sizeof(m_Config));
@@ -185,7 +185,7 @@ char CProcessThread::StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynData
 
   m_bThread = true;
   _beginthread((_beginthread_proc_type)CProcessThread::Thread, 0, this);
-  return 1;
+  return true;
 }
 
 void CProcessThread::Thread(void *pv)

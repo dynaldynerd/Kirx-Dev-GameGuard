@@ -57,9 +57,10 @@ _personal_automine_uninstall_zocl::_personal_automine_uninstall_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_uninstall_zocl::size() const
+int _personal_automine_uninstall_zocl::size() const
 {
-  return 24U - 6U * (2U - static_cast<unsigned int>(byCnt));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(24U - 6U * (2U - static_cast<unsigned int>(byCnt)));
 }
 
 _personal_automine_uninstall_circle_zocl::_personal_automine_uninstall_circle_zocl()
@@ -67,7 +68,7 @@ _personal_automine_uninstall_circle_zocl::_personal_automine_uninstall_circle_zo
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_uninstall_circle_zocl::size() const
+int _personal_automine_uninstall_circle_zocl::size() const
 {
   return 5;
 }
@@ -77,7 +78,7 @@ _personal_automine_current_state_zocl::_personal_automine_current_state_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_current_state_zocl::size() const
+int _personal_automine_current_state_zocl::size() const
 {
   return 7;
 }
@@ -338,24 +339,24 @@ CPlayer *AutominePersonal::GetOwner()
   return m_pOwner;
 }
 
-int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial)
+bool AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial)
 {
   if (bySlotIdx >= 2)
   {
     m_logSysErr.Write("insert_battery(%d, n)::excess of max solt index", bySlotIdx);
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con *item = m_pOwner->m_Param.m_pStoragePtr[0]->GetPtrFromSerial(wItemSerial);
   if (item == nullptr)
   {
     m_logSysErr.Write("Is not exist battery.");
-    return 0;
+    return false;
   }
 
   if (m_pBatterySlot[bySlotIdx].insert(item) != 0)
   {
-    return 0;
+    return false;
   }
 
   m_byUseBattery = bySlotIdx;
@@ -363,7 +364,7 @@ int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16
   {
     m_logSysErr.Write("insert_battery() - Emb_DelStorage Fail");
     m_pBatterySlot[bySlotIdx].clear();
-    return 0;
+    return false;
   }
 
   if (!m_bStart)
@@ -382,7 +383,7 @@ int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16
     item->m_wItemIndex,
     item->m_dwDur,
     m_pOwner->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
 AutominePersonal::AutominePersonal()
@@ -688,7 +689,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   circlePacket.dwObjSerial = m_dwObjSerial;
   circlePacket.byActType = byDestroyType;
   unsigned __int8 circleType[2] = {14, 65};
-  CircleReport(circleType, reinterpret_cast<char *>(&circlePacket), static_cast<unsigned __int16>(circlePacket.size()), 0);
+  CircleReport(circleType,reinterpret_cast<char *>(&circlePacket),static_cast<unsigned __int16>(circlePacket.size()),0,false);
 
   m_pBatterySlot[0].clear();
   m_pBatterySlot[1].clear();
@@ -704,7 +705,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   return CGameObject::Destroy();
 }
 
-__int64 AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
 if (m_pItem == nullptr)
   {
@@ -717,7 +718,8 @@ if (m_pItem == nullptr)
     return 1;
   }
 
-  return static_cast<unsigned int>(record->m_nDefFc);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(record->m_nDefFc);
 }
 
 float AutominePersonal::GetDefFacing(int nPart)
@@ -752,27 +754,28 @@ if (m_pItem == nullptr)
   return record->m_fDefGap;
 }
 
-__int64 AutominePersonal::GetHP()
+int AutominePersonal::GetHP()
 {
   if (m_pItem == nullptr)
   {
     return 0;
   }
-  return static_cast<unsigned int>(m_pItem->m_dwDur);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pItem->m_dwDur);
 }
 
-__int64 AutominePersonal::GetMaxHP()
+int AutominePersonal::GetMaxHP()
 {
-  return static_cast<unsigned int>(m_nMaxHP);
+  return m_nMaxHP;
 }
 
-__int64 AutominePersonal::GetObjRace()
+int AutominePersonal::GetObjRace()
 {
   if (m_pOwner == nullptr)
   {
     return 255;
   }
-  return static_cast<unsigned int>(m_pOwner->m_Param.GetRaceCode());
+  return static_cast<int>(m_pOwner->m_Param.GetRaceCode());
 }
 
 bool AutominePersonal::IsBeAttackedAble(bool bFirst)
@@ -781,10 +784,10 @@ bool AutominePersonal::IsBeAttackedAble(bool bFirst)
   return true;
 }
 
-char AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
+bool AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
 {
 // this is not a stub
-  return 1;
+  return true;
 }
 
 void AutominePersonal::Loop()
@@ -943,7 +946,7 @@ void AutominePersonal::SendMsg_FixPosition(int n)
     packet.size());
 }
 
-__int64 AutominePersonal::SetDamage(
+int AutominePersonal::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -952,7 +955,7 @@ __int64 AutominePersonal::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-if (m_pItem == nullptr)
+  if (m_pItem == nullptr)
   {
     return 0;
   }

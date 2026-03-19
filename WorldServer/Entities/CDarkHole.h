@@ -28,7 +28,7 @@ public:
   bool m_bHurry;
 
   void Init(_object_id *pID);
-  char Create(_darkhole_create_setdata *pParam);
+  bool Create(_darkhole_create_setdata *pParam);
   bool Destroy();
   bool EnterPlayer(
     CPlayer *pEnter,

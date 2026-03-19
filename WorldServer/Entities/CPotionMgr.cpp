@@ -248,7 +248,7 @@ bool _GetTempEffectValue(_skill_fld *pEffectFld, int nTempEffectType, float *fVa
 }
 }
 
-unsigned __int8 CPotionMgr::UsePotion(
+int CPotionMgr::UsePotion(
   CPlayer *pUsePlayer,
   CCharacter *pTargetCharacter,
   _PotionItem_fld *pfB,
@@ -265,7 +265,8 @@ unsigned __int8 CPotionMgr::UsePotion(
     PreCheckPotion(pUsePlayer, &pTargetCharacter, pfB, nCurTime, effectFld, checkDistance);
   if (preCheck)
   {
-    return static_cast<unsigned __int8>(preCheck);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned __int8>(preCheck));
   }
 
   _CheckPotion_fld *checkFld =
@@ -335,10 +336,11 @@ unsigned __int8 CPotionMgr::UsePotion(
   {
     return 21;
   }
-  return static_cast<unsigned __int8>(result);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int8>(result));
 }
 
-unsigned int CPotionMgr::PreCheckPotion(
+int CPotionMgr::PreCheckPotion(
   CPlayer *pUsePlayer,
   CCharacter **pTargetCharacter,
   const _PotionItem_fld *pfB,
@@ -348,7 +350,8 @@ unsigned int CPotionMgr::PreCheckPotion(
 {
   if (!pUsePlayer || !*pTargetCharacter || !pfB || !pFld)
   {
-    return static_cast<unsigned int>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(-1));
   }
 
   if (Major_Cash_Item)
@@ -685,7 +688,7 @@ unsigned int CPotionMgr::PreCheckPotion(
   return 0;
 }
 
-unsigned int CPotionMgr::ApplyPotion(
+int CPotionMgr::ApplyPotion(
   CPlayer *pUsePlayer,
   CPlayer *pApplyPlayer,
   _skill_fld *pEffecFld,
@@ -695,7 +698,8 @@ unsigned int CPotionMgr::ApplyPotion(
 {
   if (!pUsePlayer || !pApplyPlayer || !pEffecFld)
   {
-    return static_cast<unsigned int>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(-1));
   }
 
   if (pCheckFld)
@@ -811,22 +815,25 @@ unsigned int CPotionMgr::ApplyPotion(
 
   if (insertResult && tempResult)
   {
-    return insertResult;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(insertResult);
   }
   return 0;
 }
 
-unsigned int CPotionMgr::RemovePotionContEffect(CPlayer *pApplyPlayer, _ContPotionData *contPotionData)
+int CPotionMgr::RemovePotionContEffect(CPlayer *pApplyPlayer, _ContPotionData *contPotionData)
 {
   if (!contPotionData->IsLive())
   {
-    return static_cast<unsigned int>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(-1));
   }
 
   _skill_fld *effectRecord = reinterpret_cast<_skill_fld *>(m_tblPotionEffectData.GetRecord(contPotionData->m_dwPotionEffectIndex));
   if (!effectRecord)
   {
-    return static_cast<unsigned int>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(-1));
   }
 
   _cont_param_list *contParam = effectRecord->m_ContParamList;
@@ -861,7 +868,7 @@ unsigned int CPotionMgr::RemovePotionContEffect(CPlayer *pApplyPlayer, _ContPoti
   return 0;
 }
 
-unsigned int CPotionMgr::InsertPotionContEffect(
+int CPotionMgr::InsertPotionContEffect(
   CPlayer *pApplyPlayer,
   _ContPotionData *contPotionData,
   _skill_fld *pEffecFld,
@@ -869,7 +876,8 @@ unsigned int CPotionMgr::InsertPotionContEffect(
 {
   if (!pApplyPlayer || !pEffecFld)
   {
-    return static_cast<unsigned int>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(-1));
   }
 
   RemovePotionContEffect(pApplyPlayer, contPotionData);
@@ -932,7 +940,7 @@ void CPotionMgr::UpdatePotionContEffect(CPlayer *pPlayer)
   }
 }
 
-unsigned int CPotionMgr::SelectDeleteBuf(CPlayer *pOne, bool bUse, bool bRemove)
+int CPotionMgr::SelectDeleteBuf(CPlayer *pOne, bool bUse, bool bRemove)
 {
   int liveCount = 0;
   unsigned int selectedIndex = 0;
@@ -977,14 +985,15 @@ unsigned int CPotionMgr::SelectDeleteBuf(CPlayer *pOne, bool bUse, bool bRemove)
   {
     RemovePotionContEffect(pOne, &pOne->m_PotionParam.m_ContCommonPotionData[selectedIndex]);
   }
-  return selectedIndex;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(selectedIndex);
 }
 
-char CPotionMgr::CheckPotionUsableMap(const _PotionItem_fld *pPotionFld, CMapData *pMap)
+bool CPotionMgr::CheckPotionUsableMap(const _PotionItem_fld *pPotionFld, CMapData *pMap)
 {
   if (!pPotionFld || !pMap)
   {
-    return 0;
+    return false;
   }
 
   if (!pPotionFld->m_nPotionLim)
@@ -993,10 +1002,10 @@ char CPotionMgr::CheckPotionUsableMap(const _PotionItem_fld *pPotionFld, CMapDat
     {
       if (pPotionFld->m_nMapCode[j] == pMap->m_pMapSet->m_nPotionLim)
       {
-        return 0;
+        return false;
       }
     }
-    return 1;
+    return true;
   }
 
   if (pPotionFld->m_nPotionLim == 1)
@@ -1005,27 +1014,27 @@ char CPotionMgr::CheckPotionUsableMap(const _PotionItem_fld *pPotionFld, CMapDat
     {
       if (pPotionFld->m_nMapCode[j] == pMap->m_pMapSet->m_nPotionLim)
       {
-        return 1;
+        return true;
       }
     }
-    return 0;
+    return false;
   }
 
   if (pPotionFld->m_nPotionLim == 2)
   {
     if (pMap->m_pMapSet->m_nMapType == 1)
     {
-      return 0;
+      return false;
     }
-    return 1;
+    return true;
   }
 
   if (pPotionFld->m_nPotionLim == 3 && pMap->m_pMapSet->m_nMapType != 1)
   {
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
 void CPotionMgr::InsertMovePotionStoneEffect(CPlayer *pApplyPlayer)

@@ -17,8 +17,8 @@ public:
   void SetValue(unsigned int eType, long double dValue);
   bool Insert(CRFWorldDatabase *pkDB);
   bool Update(CRFWorldDatabase *pkDB);
-  __int64 Load(CRFWorldDatabase *pkDB, CCheckSumGuildData *kSrcValue);
-  __int64 CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumGuildData *kSrcValue);
+  int Load(CRFWorldDatabase *pkDB, CCheckSumGuildData *kSrcValue);
+  int CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumGuildData *kSrcValue);
 
   unsigned int m_dwGuildSerial;
   long double m_dValues[2];

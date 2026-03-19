@@ -389,11 +389,11 @@ bool CDarkHoleChannel::IsMoveNextMission(int nPortalIndex)
   return false;
 }
 
-char CDarkHoleChannel::IsAllMemberNearPosition(float *pfCenterPos, int nLen)
+bool CDarkHoleChannel::IsAllMemberNearPosition(float *pfCenterPos, int nLen)
 {
   if (!m_pQuestSetup)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 32; ++j)
@@ -402,10 +402,10 @@ char CDarkHoleChannel::IsAllMemberNearPosition(float *pfCenterPos, int nLen)
     if (entry->IsFill() && entry->pOne->m_dwObjSerial == entry->dwSerial
         && GetSqrt(pfCenterPos, entry->pOne->m_fCurPos) > static_cast<float>(nLen))
     {
-      return 0;
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
 _dh_mission_setup *CDarkHoleChannel::SearchMissionFromPos(float *pfStartPos)
@@ -427,12 +427,12 @@ _dh_mission_setup *CDarkHoleChannel::SearchMissionFromPos(float *pfStartPos)
   return nullptr;
 }
 
-char CDarkHoleChannel::GotoNextMissionByPosition(float *pfStartPos)
+bool CDarkHoleChannel::GotoNextMissionByPosition(float *pfStartPos)
 {
   _dh_mission_setup *nextMission = SearchMissionFromPos(pfStartPos);
   if (!nextMission)
   {
-    return 0;
+    return false;
   }
 
   m_MissionMgr.NextMission(nextMission);
@@ -441,7 +441,7 @@ char CDarkHoleChannel::GotoNextMissionByPosition(float *pfStartPos)
   ShareItemToMonster();
   m_dwSendNewMissionMsgNextTime = timeGetTime() + 3000;
   m_bMoveNextMission = false;
-  return 1;
+  return true;
 }
 
 void CDarkHoleChannel::NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission)
@@ -513,7 +513,7 @@ _darkhole_leader_change_inform_zocl msg{};
   }
 }
 
-char CDarkHoleChannel::ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos)
+bool CDarkHoleChannel::ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos)
 {
   pMember->m_pDHChannel = nullptr;
 
@@ -529,7 +529,7 @@ char CDarkHoleChannel::ClearMember(CPlayer *pMember, bool bDisconnect, _dh_playe
 
   if (!target)
   {
-    return 0;
+    return false;
   }
 
   if (poutPlayerPos)
@@ -563,7 +563,7 @@ char CDarkHoleChannel::ClearMember(CPlayer *pMember, bool bDisconnect, _dh_playe
   CDarkHoleChannel::__enter_member entry(0, bDisconnect, now);
   m_listEnterMember.FindNode(pMember->m_dwObjSerial, nullptr);
   m_listEnterMember.PushNode_Back(pMember->m_dwObjSerial, reinterpret_cast<char *>(&entry));
-  return 1;
+  return true;
 }
 
 void CDarkHoleChannel::SendMsg_JobCount(unsigned __int8 nJobIndex, unsigned __int16 nCount)
@@ -648,7 +648,7 @@ void CDarkHoleChannel::SendMsg_RealAddLimTime(int nAddSec, char *pMsg)
   }
 }
 
-char CDarkHoleChannel::CheckEvent(
+bool CDarkHoleChannel::CheckEvent(
   EM_DH_EVENT eventType,
   int nContentTable,
   int nContentIndex,
@@ -657,14 +657,14 @@ char CDarkHoleChannel::CheckEvent(
 {
   if (!m_MissionMgr.pCurMssionPtr)
   {
-    return 0;
+    return false;
   }
   if (m_bMoveNextMission || m_dwNextCloseTime != static_cast<unsigned int>(-1))
   {
-    return 0;
+    return false;
   }
 
-  char matched = 0;
+  bool matched = false;
   for (int nJobIndex = 0; nJobIndex < m_MissionMgr.pCurMssionPtr->nEmbJobSetupNum; ++nJobIndex)
   {
     _dh_job_setup *job = m_MissionMgr.pCurMssionPtr->EmbJobSetup[nJobIndex];
@@ -700,7 +700,7 @@ char CDarkHoleChannel::CheckEvent(
       SendMsg_JobCount(
         static_cast<unsigned __int8>(nJobIndex),
         static_cast<unsigned __int16>(m_MissionMgr.Count[nJobIndex].nCount));
-      matched = 1;
+      matched = true;
       break;
     }
   }
@@ -976,9 +976,9 @@ int CDarkHoleChannel::GetAllMemberNum()
   return static_cast<int>(m_listEnterMember.GetSize());
 }
 
-unsigned int CDarkHoleChannel::GetCurrentMemberNum()
+int CDarkHoleChannel::GetCurrentMemberNum()
 {
-  unsigned int count = 0;
+  int count = 0;
   for (int j = 0; j < 32; ++j)
   {
     if (m_Quester[j].IsFill())
@@ -1057,7 +1057,7 @@ bool CDarkHoleChannel::IsReEnterable(unsigned int dwEnterSerial)
   return m_listEnterMember.IsInList(dwEnterSerial, reinterpret_cast<char *>(&info)) && info.bDisnormalClose;
 }
 
-char CDarkHoleChannel::PushMember(
+bool CDarkHoleChannel::PushMember(
   CPlayer *pMember,
   bool bReconnect,
   CMapData *pOldMap,
@@ -1066,7 +1066,7 @@ char CDarkHoleChannel::PushMember(
 {
   if (GetCurrentMemberNum() >= 32)
   {
-    return 0;
+    return false;
   }
 
   _dh_player_mgr *slot = nullptr;
@@ -1081,7 +1081,7 @@ char CDarkHoleChannel::PushMember(
 
   if (!slot)
   {
-    return 0;
+    return false;
   }
 
   slot->pOne = pMember;
@@ -1110,7 +1110,7 @@ char CDarkHoleChannel::PushMember(
     m_listEnterMember.PushNode_Back(pMember->m_dwObjSerial, reinterpret_cast<char *>(&entry));
   }
   m_bCheckMemberClose = true;
-  return 1;
+  return true;
 }
 
 void CDarkHoleChannel::SendMsg_NewMember(CPlayer *pNewMember, bool bReconnect)
@@ -1849,9 +1849,9 @@ void CDarkHoleChannel::ChangeMonsterApparition(unsigned int nTermMSec)
   }
 }
 
-unsigned int CDarkHoleChannel::GetMonsterNumInCurMissionArea(int nMonsterRecIndex)
+int CDarkHoleChannel::GetMonsterNumInCurMissionArea(int nMonsterRecIndex)
 {
-  unsigned int count = 0;
+  int count = 0;
   for (int monsterIndex = 0; monsterIndex < MAX_MONSTER; ++monsterIndex)
   {
     CMonster *monster = &g_Monster[monsterIndex];
@@ -2146,7 +2146,7 @@ void CDarkHoleChannel::SendMsg_TimeOut()
   }
 }
 
-char CDarkHoleChannel::_Reward()
+bool CDarkHoleChannel::_Reward()
 {
   _STORAGE_LIST::_db_con rewardItem{};
   int isRewarded[4]{};
@@ -2188,6 +2188,6 @@ char CDarkHoleChannel::_Reward()
     }
   }
 
-  return 1;
+  return true;
 }
 

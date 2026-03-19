@@ -253,7 +253,7 @@ bool CItemStore::GetNpcRaceCode(unsigned __int8 *pbyRaceCode)
   return true;
 }
 
-unsigned int CItemStore::CalcSecIndex(float x, float z)
+int CItemStore::CalcSecIndex(float x, float z)
 {
   _bsp_info *bspInfo = &m_pExistMap->m_BspInfo;
   const float localX = static_cast<float>(-bspInfo->m_nMapMinSize[0]) + x;
@@ -261,7 +261,7 @@ unsigned int CItemStore::CalcSecIndex(float x, float z)
   const int secX = static_cast<int>(localX) / 100;
   const int secY = static_cast<int>(localZ) / 100;
   _sec_info *secInfo = &m_pExistMap->m_SecInfo;
-  return static_cast<unsigned int>(secInfo->m_nSecNumW * secY + secX);
+  return secInfo->m_nSecNumW * secY + secX;
 }
 
 void CItemStore::SetLimitItemInitTime()
@@ -639,22 +639,22 @@ float CItemStore::CalcBuyPrice(unsigned __int8 byTableCode, unsigned __int16 wIt
   return price / static_cast<float>(multi);
 }
 
-unsigned int CItemStore::CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit)
+int CItemStore::CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit)
 {
   *pbyMoneyUnit = m_pStorageItem[nGoodIndex].byMoneyUnit;
   switch (m_pStorageItem[nGoodIndex].byMoneyUnit)
   {
     case 2:
     case 3:
-      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nStdPoint);
+      return m_pStorageItem[nGoodIndex].nStdPoint;
     case 4:
-      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nResPoint);
+      return m_pStorageItem[nGoodIndex].nResPoint;
     case 5:
-      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nKillPoint);
+      return m_pStorageItem[nGoodIndex].nKillPoint;
     case 6:
-      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nGoldPoint);
+      return m_pStorageItem[nGoodIndex].nGoldPoint;
     default:
-      return static_cast<unsigned int>(m_pStorageItem[nGoodIndex].nStdPrice);
+      return m_pStorageItem[nGoodIndex].nStdPrice;
   }
 }
 
@@ -666,24 +666,28 @@ void CItemStore::SetZeroTradeMoney()
   m_dwLastTradeGold = 0;
 }
 
-unsigned int CItemStore::GetLastTradeDalant()
+int CItemStore::GetLastTradeDalant()
 {
-  return m_dwLastTradeDalant;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_dwLastTradeDalant);
 }
 
-unsigned int CItemStore::GetLastTradeGold()
+int CItemStore::GetLastTradeGold()
 {
-  return m_dwLastTradeGold;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_dwLastTradeGold);
 }
 
-unsigned int CItemStore::GetLastTradePoint()
+int CItemStore::GetLastTradePoint()
 {
-  return m_dwLastTradePoint;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_dwLastTradePoint);
 }
 
-unsigned int CItemStore::GetLastTradeActPoint(int nActPoint)
+int CItemStore::GetLastTradeActPoint(int nActPoint)
 {
-  return m_dwLastTradeActPoint[nActPoint];
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_dwLastTradeActPoint[nActPoint]);
 }
 
 void CItemStore::SubLimitItemNum(int nLimitItemIndex, int nSubNum)

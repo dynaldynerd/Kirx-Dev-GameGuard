@@ -22,7 +22,7 @@ struct   _qry_case_amine_batterycharge
   unsigned __int8 byProcRet;
 
   _qry_case_amine_batterycharge();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -47,7 +47,7 @@ inline _qry_case_amine_batterycharge::_qry_case_amine_batterycharge()
   }
 }
 
-inline __int64 _qry_case_amine_batterycharge::size() const
+inline int _qry_case_amine_batterycharge::size() const
 {
   return 46;
 }

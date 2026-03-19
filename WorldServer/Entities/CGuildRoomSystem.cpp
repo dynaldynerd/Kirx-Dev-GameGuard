@@ -337,7 +337,7 @@ for (int j = 0; j < 90; ++j)
   return false;
 }
 
-char CGuildRoomSystem::GetRestTime(unsigned int dwGuildSerial, int *tt)
+bool CGuildRoomSystem::GetRestTime(unsigned int dwGuildSerial, int *tt)
 {
   for (int j = 0; j < 90; ++j)
   {
@@ -345,15 +345,15 @@ char CGuildRoomSystem::GetRestTime(unsigned int dwGuildSerial, int *tt)
     if (room.IsRent() && room.GetGuildSerial() == dwGuildSerial)
     {
       *tt = room.GetRestTime();
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-__int64 CGuildRoomSystem::GetRoomCountByType(unsigned __int8 byRace, unsigned __int8 byRoomType)
+int CGuildRoomSystem::GetRoomCountByType(unsigned __int8 byRace, unsigned __int8 byRoomType)
 {
-  unsigned int count = 0;
+  int count = 0;
   int start = 30 * byRace;
   const int end = start + 30;
   while (start < end)

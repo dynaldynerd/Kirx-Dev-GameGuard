@@ -15,7 +15,7 @@ struct  _chat_message_receipt_udp
   char wszChatData[256];
 
   _chat_message_receipt_udp();
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -24,7 +24,8 @@ inline _chat_message_receipt_udp::_chat_message_receipt_udp()
   bySize = 0;
 }
 
-inline unsigned __int16 _chat_message_receipt_udp::size() const
+inline int _chat_message_receipt_udp::size() const
 {
-  return static_cast<unsigned __int16>(282 - (255 - bySize));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int16>(282 - (255 - bySize)));
 }

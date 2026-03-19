@@ -2,7 +2,8 @@
 
 #include "log_sheet_lv.h"
 
-__int64 _log_sheet_lv::size()
+int _log_sheet_lv::size()
 {
-  return 12LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(12LL);
 }

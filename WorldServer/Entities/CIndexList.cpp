@@ -309,13 +309,13 @@ bool CIndexList::IsSetting()
   return m_pBufNode != nullptr;
 }
 
-char CIndexList::CopyFront(unsigned int *pdwOutIndex, char *pInfoData)
+bool CIndexList::CopyFront(unsigned int *pdwOutIndex, char *pInfoData)
 {
   m_csList.Lock();
   if (m_Head.m_pNext == &m_Tail)
   {
     m_csList.Unlock();
-    return 0;
+    return false;
   }
 
   _index_node *frontNode = m_Head.m_pNext;
@@ -330,7 +330,7 @@ char CIndexList::CopyFront(unsigned int *pdwOutIndex, char *pInfoData)
   }
 
   m_csList.Unlock();
-  return 1;
+  return true;
 }
 
 CIndexList::_index_node *CIndexList::GetAllNode(unsigned int *pdwMaxNodeNum)

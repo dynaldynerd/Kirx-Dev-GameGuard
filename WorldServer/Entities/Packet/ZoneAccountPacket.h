@@ -13,7 +13,7 @@ struct _character_disconnect_result_wrac
   unsigned __int16 wClientIndex;
   unsigned __int8 byResult;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -24,7 +24,7 @@ struct _enter_lobby_report_wrac
 {
   _GLBID gidGlobal;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -37,7 +37,7 @@ struct _enter_world_request_wrac
   _CLID idLocal;
   unsigned int ulConnectIP;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -50,7 +50,7 @@ struct _holy_quest_report_wrac
   char wszCharName[17];
   unsigned __int8 byDestroyedRaceCode;
 
-  unsigned __int16 size() const
+  int size() const
   {
     return static_cast<unsigned __int16>(sizeof(_holy_quest_report_wrac));
   }
@@ -67,7 +67,7 @@ struct _select_avator_report_wrac
   unsigned int dwAvatorSerial;
   unsigned __int8 byLevel;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -79,7 +79,7 @@ struct _start_world_request_wrac
   unsigned int dwGateIP;
   unsigned __int16 wGatePort;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -91,7 +91,7 @@ struct _trans_account_report_wrac
   _GLBID gidGlobal;
   unsigned __int8 byRetCode;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -99,7 +99,7 @@ struct _trans_account_report_wrac
 
 struct _world_exit_report_wrac
 {
-  unsigned __int16 size() const
+  int size() const
   {
     return 0;
   }
@@ -109,7 +109,7 @@ struct _world_exit_report_wrac
 
 struct _world_account_ping_wrac
 {
-  unsigned __int16 size() const
+  int size() const
   {
     return 0;
   }
@@ -125,7 +125,7 @@ struct _open_world_request_wrac
   unsigned int dwWorldServerIP;
   unsigned __int8 byHash[32];
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -135,7 +135,7 @@ static_assert(sizeof(_open_world_request_wrac) == 70, "open world request packet
 
 struct _cashdb_setting_request_wrac
 {
-  unsigned __int16 size() const;
+  int size() const;
 };
 
 // uilock_user_refresh_info_request_wrac.h
@@ -148,7 +148,7 @@ struct _uilock_user_refresh_info_request_wrac
   unsigned __int8 byFindPassFailCount;
   _GLBID gidGlobal;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -161,7 +161,7 @@ struct _logout_account_request_wrac
 {
   _GLBID gidGlobal;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 

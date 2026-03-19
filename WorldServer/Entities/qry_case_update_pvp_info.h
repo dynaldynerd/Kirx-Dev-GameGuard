@@ -11,7 +11,7 @@ struct _qry_case_update_pvp_info
   unsigned int dwPadding;
   long double dPvpPoint;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

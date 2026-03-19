@@ -96,7 +96,7 @@ bool CandidateMgr::Initialize(int maxCount)
   return true;
 }
 
-char CandidateMgr::LoadDatabase()
+bool CandidateMgr::LoadDatabase()
 {
   InitCandidate();
 
@@ -111,7 +111,7 @@ char CandidateMgr::LoadDatabase()
             m_kCandidate[raceIndex])
           == 1)
       {
-        return 0;
+        return false;
       }
     }
   }
@@ -136,7 +136,7 @@ char CandidateMgr::LoadDatabase()
                 &m_kCandidate[raceIndex][candidateIndex].dwWinCnt)
               == 1)
           {
-            return 0;
+            return false;
           }
         }
         else if (m_kCandidate[raceIndex][candidateIndex].eStatus == _candidate_info::candidate_2st)
@@ -154,7 +154,7 @@ char CandidateMgr::LoadDatabase()
     }
   }
 
-  return 1;
+  return true;
 }
 
 bool CandidateMgr::LoadLeaderPreVersion(unsigned __int8 byRace)
@@ -163,7 +163,7 @@ bool CandidateMgr::LoadLeaderPreVersion(unsigned __int8 byRace)
   return result != 1 && result != 2;
 }
 
-char CandidateMgr::LoadPatriarchGroup()
+bool CandidateMgr::LoadPatriarchGroup()
 {
   for (int raceIndex = 0; raceIndex < 3; ++raceIndex)
   {
@@ -171,14 +171,14 @@ char CandidateMgr::LoadPatriarchGroup()
       g_Main.m_pWorldDB->Select_PatriarchGroup(static_cast<unsigned __int8>(raceIndex), m_kPatriarchGroup[raceIndex]);
     if (result == 1)
     {
-      return 0;
+      return false;
     }
     if (result == 2)
     {
       LoadLeaderPreVersion(static_cast<unsigned __int8>(raceIndex));
     }
   }
-  return 1;
+  return true;
 }
 
 void CandidateMgr::Release()
@@ -553,7 +553,7 @@ const CandidateMgr::_candidate_info *CandidateMgr::GetCandidate_2st(
   return nullptr;
 }
 
-__int64 CandidateMgr::__SortByPvpPoint()
+int CandidateMgr::__SortByPvpPoint()
 {
   for (int race = 0; race < 3; ++race)
   {
@@ -585,7 +585,7 @@ __int64 CandidateMgr::__SortByPvpPoint()
   return 0;
 }
 
-__int64 CandidateMgr::__SortByRank()
+int CandidateMgr::__SortByRank()
 {
   for (int race = 0; race < 3; ++race)
   {
@@ -616,7 +616,7 @@ __int64 CandidateMgr::__SortByRank()
   return 0;
 }
 
-__int64 CandidateMgr::__SortByScore()
+int CandidateMgr::__SortByScore()
 {
   for (int race = 0; race < 3; ++race)
   {
@@ -792,7 +792,7 @@ void CandidateMgr::ApplyPatriarchGroup()
   }
 }
 
-__int64 CandidateMgr::Update_RegistCandidate_2st()
+int CandidateMgr::Update_RegistCandidate_2st()
 {
   char source[240];
   char buffer[10244];
@@ -834,10 +834,11 @@ __int64 CandidateMgr::Update_RegistCandidate_2st()
     buffer[length - 3] = '\0';
   }
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
-__int64 CandidateMgr::Update_Score()
+int CandidateMgr::Update_Score()
 {
   unsigned int result = 0;
 
@@ -874,10 +875,11 @@ __int64 CandidateMgr::Update_Score()
     }
   }
 
-  return result;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(result);
 }
 
-__int64 CandidateMgr::Update_ClassType()
+int CandidateMgr::Update_ClassType()
 {
   unsigned int result = 0;
 
@@ -907,10 +909,11 @@ __int64 CandidateMgr::Update_ClassType()
     }
   }
 
-  return result;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(result);
 }
 
-__int64 CandidateMgr::Update_Refund()
+int CandidateMgr::Update_Refund()
 {
   for (int race = 0; race < 3; ++race)
   {
@@ -944,7 +947,7 @@ __int64 CandidateMgr::Update_Refund()
   return 0;
 }
 
-__int64 CandidateMgr::Update_DischargePatriarch(_qry_case_discharge_patriarch *p)
+int CandidateMgr::Update_DischargePatriarch(_qry_case_discharge_patriarch *p)
 {
   if (!GetPatriarchGroupBySerial(p->byRace, p->dwAvatorSerial))
   {
@@ -961,10 +964,11 @@ __int64 CandidateMgr::Update_DischargePatriarch(_qry_case_discharge_patriarch *p
     p->dwAvatorSerial,
     p->byRace);
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
-__int64 CandidateMgr::CheckDBValidCharacter(unsigned __int8 byProc)
+int CandidateMgr::CheckDBValidCharacter(unsigned __int8 byProc)
 {
   unsigned int dwDbSerial[4]{};
   dwDbSerial[0] = static_cast<unsigned int>(-1);
@@ -1020,7 +1024,7 @@ __int64 CandidateMgr::CheckDBValidCharacter(unsigned __int8 byProc)
   return 0;
 }
 
-__int64 CandidateMgr::Update_VoteTime(unsigned int dwSerial)
+int CandidateMgr::Update_VoteTime(unsigned int dwSerial)
 {
   _SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
@@ -1039,10 +1043,11 @@ __int64 CandidateMgr::Update_VoteTime(unsigned int dwSerial)
     systemTime.wMilliseconds,
     dwSerial);
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
-__int64 CandidateMgr::Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p)
+int CandidateMgr::Insert_Candidate(unsigned __int8 byQryCase, _qry_case_insert_candidate *p)
 {
   _candidate_info *candidate = nullptr;
 
@@ -1089,7 +1094,8 @@ __int64 CandidateMgr::Insert_Candidate(unsigned __int8 byQryCase, _qry_case_inse
     static_cast<unsigned __int8>(candidate->eClassType),
     static_cast<unsigned __int8>(candidate->eStatus));
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
 void CandidateMgr::CompleteInsertCandidate(unsigned __int8 byRet, _qry_case_insert_candidate *p)

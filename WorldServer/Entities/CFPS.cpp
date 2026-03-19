@@ -34,7 +34,7 @@ void CFPS::CalcFPS()
   m_dwFrameTime = now;
 }
 
-__int64 CFPS::GetFPS()
+unsigned int CFPS::GetFPS()
 {
   return m_dwFrames;
 }

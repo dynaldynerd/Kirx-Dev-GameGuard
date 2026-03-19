@@ -80,19 +80,19 @@ void PatriarchElectProcessor::Destroy()
   }
 }
 
-char PatriarchElectProcessor::LoadDatabae()
+bool PatriarchElectProcessor::LoadDatabae()
 {
   if (!LoadElectState())
   {
-    return 0;
+    return false;
   }
   if (!CandidateMgr::Instance()->LoadDatabase())
   {
-    return 0;
+    return false;
   }
   if (!CandidateMgr::Instance()->LoadPatriarchGroup())
   {
-    return 0;
+    return false;
   }
 
   for (int race = 0; race < 3; ++race)
@@ -134,7 +134,7 @@ char PatriarchElectProcessor::LoadDatabae()
   }
 
   CPvpUserAndGuildRankingSystem::Instance()->PvpRankDataPacking();
-  return 1;
+  return true;
 }
 
 bool PatriarchElectProcessor::Initialize()
@@ -400,7 +400,7 @@ void PatriarchElectProcessor::SetCurrPatriarchElectSerial(unsigned int dwSerial)
   _dwCurrPatriarchElectSerial = dwSerial;
 }
 
-char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
+bool PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
 {
   if (eCmd == _eReqDischarge || eCmd == _eReqPatriarchInform)
   {
@@ -408,13 +408,13 @@ char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
     const int result = static_cast<int>(orderProcessor->Doit(eCmd, pOne, pdata));
     if (!result)
     {
-      return 1;
+      return true;
     }
     if (pOne)
     {
       SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
     }
-    return 1;
+    return true;
   }
 
   int result = 0;
@@ -423,7 +423,7 @@ char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
   {
     if (!pOne || !pOne->m_bOper)
     {
-      return 1;
+      return true;
     }
 
     if (eCmd < _eRequestCandidateList)
@@ -448,18 +448,18 @@ char PatriarchElectProcessor::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
     }
 
     SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
-    return 1;
+    return true;
   }
 
   if (!result)
   {
-    return 1;
+    return true;
   }
   if (pOne)
   {
     SendMsg_ResultCode(pOne->m_id.wIndex, static_cast<unsigned __int8>(result));
   }
-  return 1;
+  return true;
 }
 
 void PatriarchElectProcessor::PushDQSCheckInvalidChar()
@@ -611,7 +611,7 @@ bool PatriarchElectProcessor::ForceChangeProcessor(ElectProcessor::ProcessorType
   return _kRunningProcessor->Initialize();
 }
 
-__int64 PatriarchElectProcessor::Insert_Elect()
+int PatriarchElectProcessor::Insert_Elect()
 {
   char buffer[1040]{};
   sprintf_s(
@@ -621,10 +621,11 @@ __int64 PatriarchElectProcessor::Insert_Elect()
     g_Main.m_szWorldName,
     _eProcessType);
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
-__int64 PatriarchElectProcessor::Update_Elect()
+int PatriarchElectProcessor::Update_Elect()
 {
   char buffer[272]{};
   sprintf_s(
@@ -651,7 +652,7 @@ __int64 PatriarchElectProcessor::Update_Elect()
   return 24;
 }
 
-char PatriarchElectProcessor::LoadElectState()
+bool PatriarchElectProcessor::LoadElectState()
 {
   _sel_patriarch_elect_state sheet{};
   strcpy_s(sheet.szWorldName, sizeof(sheet.szWorldName), g_Main.m_szWorldName);
@@ -659,7 +660,7 @@ char PatriarchElectProcessor::LoadElectState()
   const int result = g_Main.m_pWorldDB->Select_PatriarchElectState(&sheet);
   if (result == 1)
   {
-    return 0;
+    return false;
   }
 
   if (result != 2)
@@ -675,10 +676,10 @@ char PatriarchElectProcessor::LoadElectState()
     g_Main.m_dwServerResetToken = sheet.dwResetServerToken;
   }
 
-  return 1;
+  return true;
 }
 
-__int64 PatriarchElectProcessor::Request_Refund(char *pData)
+int PatriarchElectProcessor::Request_Refund(char *pData)
 {
   const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
@@ -688,10 +689,11 @@ __int64 PatriarchElectProcessor::Request_Refund(char *pData)
     query->byRace,
     query->dwAvatorSerial);
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
-__int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
+int PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
 {
   const auto *query = reinterpret_cast<const _qry_case_request_refund *>(pData);
   char buffer[272]{};
@@ -702,7 +704,8 @@ __int64 PatriarchElectProcessor::Insert_PatrirchItemChargeRefund(char *pData)
     query->dwAvatorSerial,
     query->dwRefund);
 
-  return g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(g_Main.m_pWorldDB->ExecUpdateQuery(buffer, true) ? 0 : 24);
 }
 
 bool PatriarchElectProcessor::CheatClearPatriarch()

@@ -410,7 +410,7 @@ unsigned __int8 ItemCombineMgr::LoadDB_CombineResult(_combine_ex_item_result_zoc
   return resultCode;
 }
 
-char ItemCombineMgr::ClearDB_CombineResult()
+unsigned __int8 ItemCombineMgr::ClearDB_CombineResult()
 {
   m_pMaster->m_Param.m_ItemCombineDB.Init();
   if (m_pMaster->m_pUserDB)
@@ -420,7 +420,7 @@ char ItemCombineMgr::ClearDB_CombineResult()
   return 0;
 }
 
-char ItemCombineMgr::UpdateDB_CombineResult(_combine_ex_item_result_zocl *pSaveData)
+unsigned __int8 ItemCombineMgr::UpdateDB_CombineResult(_combine_ex_item_result_zocl *pSaveData)
 {
   m_pMaster->m_Param.m_ItemCombineDB.Init();
   _ITEMCOMBINE_DB_BASE *combineDb = &m_pMaster->m_Param.m_ItemCombineDB;
@@ -799,7 +799,7 @@ int selectedCount = pRecv->SelectItemBuff.bySelectNum >= 24 ? 24 : pRecv->Select
 return 0;
 }
 
-char ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
+unsigned __int8 ItemCombineMgr::ConsumeMeterial_And_CalculateNewItems(
   _STORAGE_LIST::_db_con **pMt_Sv_Inv,
   unsigned __int8 byMtSlotNum,
   _combine_ex_item_request_clzo::_list *pipMaterials,

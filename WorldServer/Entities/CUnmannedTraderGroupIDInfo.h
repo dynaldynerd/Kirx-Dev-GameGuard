@@ -30,7 +30,7 @@ public:
     unsigned __int8 *byClass,
     unsigned __int8 *bySubClass,
     unsigned int *dwListIndex);
-  char IsExistGroupID(
+  bool IsExistGroupID(
     unsigned __int8 byDivision,
     unsigned __int8 byClass,
     unsigned __int8 bySubClass,

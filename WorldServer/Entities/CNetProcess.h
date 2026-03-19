@@ -145,7 +145,7 @@ public:
 
 struct _NET_BUFFER
 {
-  __int64 GetLeftLoadSize();
+  int GetLeftLoadSize();
   void AddPushPos(unsigned int dwAddSize);
   _NET_BUFFER();
   ~_NET_BUFFER();

@@ -207,13 +207,13 @@ void CGoldenBoxItemMgr::SetDBSerial(int nDBSerial)
   m_nDBSerial = nDBSerial;
 }
 
-char CGoldenBoxItemMgr::SynchINIANDDB()
+bool CGoldenBoxItemMgr::SynchINIANDDB()
 {
   for (int j = 0; j < 2; ++j)
   {
     if (!m_temp_db.bygolden_item_num[j])
     {
-      return 0;
+      return false;
     }
   }
 
@@ -221,7 +221,7 @@ char CGoldenBoxItemMgr::SynchINIANDDB()
   {
     if (m_temp_db.nBoxcode[k] <= 0)
     {
-      return 0;
+      return false;
     }
   }
 
@@ -231,14 +231,14 @@ char CGoldenBoxItemMgr::SynchINIANDDB()
     {
       if (m_temp_db.List[m][n].ncode <= 0)
       {
-        return 0;
+        return false;
       }
     }
   }
 
   if (!m_temp_db.bydck)
   {
-    return 0;
+    return false;
   }
 
   m_golden_box_item.m_bydck = m_temp_db.bydck;
@@ -270,7 +270,7 @@ char CGoldenBoxItemMgr::SynchINIANDDB()
   unsigned __int8 temp[sizeof(m_golden_box_item_New)]{};
   std::memcpy(temp, &m_golden_box_item_New, sizeof(m_golden_box_item_New));
   std::memcpy(&m_golden_box_item_Old, temp, sizeof(m_golden_box_item_Old));
-  return 1;
+  return true;
 }
 
 bool CGoldenBoxItemMgr::Load_Golden_Box_Item_Event()
@@ -996,7 +996,7 @@ bool CGoldenBoxItemMgr::StarterBox_InsertToInven(CPlayer *pOne, char *szItemCode
   return record && _insert_to_inven(pOne, itemTableCode, *record);
 }
 
-char CGoldenBoxItemMgr::_insert_to_inven(
+bool CGoldenBoxItemMgr::_insert_to_inven(
   CPlayer *pOne,
   unsigned __int8 byTableCode,
   unsigned __int16 wItemIndex)
@@ -1004,7 +1004,7 @@ char CGoldenBoxItemMgr::_insert_to_inven(
   _base_fld *record = g_Main.m_tblItemData[byTableCode].GetRecord(wItemIndex);
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con item{};
@@ -1028,14 +1028,14 @@ char CGoldenBoxItemMgr::_insert_to_inven(
   {
     const char *itemName = GetItemKorName(byTableCode, wItemIndex);
     _kLogger.Write("Failed _insert_to_inven() >> %s", itemName);
-    return 0;
+    return false;
   }
 
   pOne->SendMsg_RewardAddItem(addedItem, 10);
   char *charName = pOne->m_Param.GetCharNameA();
   const unsigned int charSerial = pOne->m_Param.GetCharSerial();
   pOne->SendMsg_Notify_Get_Golden_Box(2, charSerial, charName, addedItem, 0);
-  return 1;
+  return true;
 }
 
 void CGoldenBoxItemMgr::Set_StarterBox_Count(unsigned int dwNum, bool bAdd)

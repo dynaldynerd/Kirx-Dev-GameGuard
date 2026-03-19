@@ -22,9 +22,9 @@ void COpenDlg::DoDataExchange(CDataExchange *pDX)
   CDialog::DoDataExchange(pDX);
 }
 
-BOOL COpenDlg::OnInitDialog()
+int COpenDlg::OnInitDialog()
 {
   CDialog::OnInitDialog();
-  return TRUE;
+  return 1;
 }
 

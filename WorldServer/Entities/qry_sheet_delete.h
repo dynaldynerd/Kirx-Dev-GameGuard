@@ -9,11 +9,12 @@ struct _qry_sheet_delete
   unsigned __int8 byRaceCode;
   unsigned int dwAvatorSerial;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline __int64 _qry_sheet_delete::size() const
+inline int _qry_sheet_delete::size() const
 {
-  return 8LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(8LL);
 }

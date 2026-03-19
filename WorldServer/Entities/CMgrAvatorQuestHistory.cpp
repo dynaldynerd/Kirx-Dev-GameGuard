@@ -87,9 +87,10 @@ void CMgrAvatorQuestHistory::OnLoop()
   }
 }
 
-unsigned int CMgrAvatorQuestHistory::GetTotalWaitSize()
+int CMgrAvatorQuestHistory::GetTotalWaitSize()
 {
-  return m_listLogData.size();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData.size());
 }
 
 void CMgrAvatorQuestHistory::WriteFile(char *pszFileName, char *pszLog)

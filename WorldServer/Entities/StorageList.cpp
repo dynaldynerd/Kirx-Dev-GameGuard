@@ -88,18 +88,18 @@ void _STORAGE_LIST::_storage_con::lock(bool bLock)
   m_bLock = bLock;
 }
 
-char _STORAGE_LIST::EmptyCon(int n)
+bool _STORAGE_LIST::EmptyCon(int n)
 {
   if (m_nListCode == 1 && n >= 8)
   {
-    return 0;
+    return false;
   }
   if (!m_pStorageList[n].m_bLoad)
   {
-    return 0;
+    return false;
   }
   m_pStorageList[n].empty();
-  return 1;
+  return true;
 }
 
 void _STORAGE_LIST::SetAllEmpty()
@@ -115,7 +115,7 @@ void _STORAGE_LIST::SetLock(int n, bool bLock)
   m_pStorageList[n].lock(bLock);
 }
 
-int _STORAGE_LIST::TransInCon(_storage_con *pCon)
+unsigned int _STORAGE_LIST::TransInCon(_storage_con *pCon)
 {
   int slotIndex = 0;
   if (m_nListCode == 1)
@@ -231,15 +231,15 @@ _STORAGE_LIST::_db_con *_STORAGE_LIST::GetPtrFromItemCode(char *pwszItemCode)
   return nullptr;
 }
 
-char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
+bool _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
 {
   if (m_nListCode == 1 && n >= 8)
   {
-    return 0;
+    return false;
   }
   if (!m_pStorageList[n].m_bLoad)
   {
-    return 0;
+    return false;
   }
 
   if (nAlter <= 0)
@@ -270,49 +270,49 @@ char _STORAGE_LIST::AlterCurDur(int n, int nAlter, unsigned __int64 *pdwLeftDur)
     EmptyCon(n);
   }
   *pdwLeftDur = m_pStorageList[n].m_dwDur;
-  return 1;
+  return true;
 }
 
-char _STORAGE_LIST::UpdateCurDur(int n, int nUpdate)
+bool _STORAGE_LIST::UpdateCurDur(int n, int nUpdate)
 {
   if (m_nListCode != 3)
   {
-    return 0;
+    return false;
   }
   if (!m_pStorageList[n].m_bLoad)
   {
-    return 0;
+    return false;
   }
   m_pStorageList[n].m_dwDur = nUpdate;
-  return 1;
+  return true;
 }
 
-char _STORAGE_LIST::SetUseListNum(int nUsedNum)
+bool _STORAGE_LIST::SetUseListNum(int nUsedNum)
 {
   if (m_nUsedNum > m_nListNum)
   {
-    return 0;
+    return false;
   }
   m_nUsedNum = nUsedNum;
-  return 1;
+  return true;
 }
 
-char _STORAGE_LIST::GradeUp(int n, unsigned int dwUptInfo)
+bool _STORAGE_LIST::GradeUp(int n, unsigned int dwUptInfo)
 {
   m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
+  return true;
 }
 
-char _STORAGE_LIST::GradeDown(int n, unsigned int dwUptInfo)
+bool _STORAGE_LIST::GradeDown(int n, unsigned int dwUptInfo)
 {
   m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
+  return true;
 }
 
-char _STORAGE_LIST::SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo)
+bool _STORAGE_LIST::SetGrade(int n, unsigned __int8 byLv, unsigned int dwUptInfo)
 {
 m_pStorageList[n].m_dwLv = dwUptInfo;
-  return 1;
+  return true;
 }
 
 _STORAGE_LIST::_db_con *MakeLoot(unsigned __int8 byTableCode, unsigned __int16 wItemIndex)

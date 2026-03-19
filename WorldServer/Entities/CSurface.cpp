@@ -28,7 +28,7 @@ DDSURFACEDESC2 *CSurface::GetDDSurfaceDesc()
   return &m_ddsd;
 }
 
-BOOL CSurface::IsColorKeyed() const
+int CSurface::IsColorKeyed() const
 {
   return m_bColorKeyed;
 }
@@ -209,7 +209,7 @@ HRESULT CSurface::SetColorKey(DWORD dwColorKey)
   return m_pdds->SetColorKey(DDCKEY_SRCBLT, &ddck);
 }
 
-DWORD CSurface::ConvertGDIColor(COLORREF dwGDIColor)
+unsigned int CSurface::ConvertGDIColor(COLORREF dwGDIColor)
 {
   if (!m_pdds)
   {

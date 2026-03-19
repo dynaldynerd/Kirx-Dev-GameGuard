@@ -32,7 +32,7 @@ struct __declspec(align(8)) _qry_case_unmandtrader_registsingleitem
   unsigned __int64 lnUID;
   unsigned int dwTax;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

@@ -14,7 +14,7 @@ public:
   bool word(int *pnoutVal);
   bool word(float *pfoutVal);
   bool word(long double *pdoutVal);
-  unsigned int read_line_count();
+  int read_line_count();
 
   char *m_pLoadStr;
   char *m_pReadStr;

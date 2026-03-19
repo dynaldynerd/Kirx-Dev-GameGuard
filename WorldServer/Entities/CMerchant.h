@@ -12,12 +12,12 @@ public:
   CMerchant();
   ~CMerchant();
 
-  __int64 GetFireTol() override;
+  int GetFireTol() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
-  __int64 GetWindTol() override;
+  int GetObjRace() override;
+  int GetSoilTol() override;
+  int GetWaterTol() override;
+  int GetWindTol() override;
   void Loop() override;
   void OutOfSec() override;
   void SendMsg_FixPosition(int n) override;

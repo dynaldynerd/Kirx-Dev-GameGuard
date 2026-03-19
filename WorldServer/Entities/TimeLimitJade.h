@@ -46,8 +46,8 @@ public:
   bool InsertUseList(_STORAGE_LIST::_db_con *pkItem, unsigned __int16 dwStart, unsigned int dwEnd);
   bool DeleteWaitList(_STORAGE_LIST::_db_con *pkItem);
   bool DeleteUseList(_STORAGE_LIST::_db_con *pkItem, bool bItemDel);
-  __int64 CheckStartTime();
-  __int64 CheckEndTime();
+  int CheckStartTime();
+  int CheckEndTime();
 
   CPlayer *_pkOwner = nullptr;
   ListHeap<WaitCell> _heapWaitRow;

@@ -72,7 +72,7 @@ void CRaceBossWinRate::UpdateRaceBossWinRate()
   Notify();
 }
 
-char CRaceBossWinRate::LoadINI()
+bool CRaceBossWinRate::LoadINI()
 {
   m_byTotalBattleCnt = static_cast<unsigned __int8>(
     GetPrivateProfileIntA("RaceBossWinRate", "TotalBattleCnt", 0, "..\\SystemSave\\ServerState.ini"));
@@ -82,10 +82,10 @@ char CRaceBossWinRate::LoadINI()
     GetPrivateProfileIntA("RaceBossWinRate", "C_WinCnt", 0, "..\\SystemSave\\ServerState.ini"));
   m_byWinCnt[2] = static_cast<unsigned __int8>(
     GetPrivateProfileIntA("RaceBossWinRate", "A_WinCnt", 0, "..\\SystemSave\\ServerState.ini"));
-  return 1;
+  return true;
 }
 
-char CRaceBossWinRate::SaveINI()
+bool CRaceBossWinRate::SaveINI()
 {
   char buffer[272]{};
   std::memset(buffer, 0, 255u);
@@ -99,7 +99,7 @@ char CRaceBossWinRate::SaveINI()
       "TotalBattleCnt",
       buffer,
       "..\\SystemSave\\ServerState.ini");
-    return 0;
+    return false;
   }
 
   sprintf_s(buffer, "%d", m_byWinCnt[0]);
@@ -111,7 +111,7 @@ char CRaceBossWinRate::SaveINI()
       "B_WinCnt",
       buffer,
       "..\\SystemSave\\ServerState.ini");
-    return 0;
+    return false;
   }
 
   sprintf_s(buffer, "%d", m_byWinCnt[1]);
@@ -123,7 +123,7 @@ char CRaceBossWinRate::SaveINI()
       "C_WinCnt",
       buffer,
       "..\\SystemSave\\ServerState.ini");
-    return 0;
+    return false;
   }
 
   sprintf_s(buffer, "%d", m_byWinCnt[2]);
@@ -135,13 +135,13 @@ char CRaceBossWinRate::SaveINI()
       "A_WinCnt",
       buffer,
       "..\\SystemSave\\ServerState.ini");
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
-char CRaceBossWinRate::LoadBossCurrentWinRate()
+bool CRaceBossWinRate::LoadBossCurrentWinRate()
 {
   char outDay[48]{};
   _SYSTEMTIME systemTime{};
@@ -174,7 +174,7 @@ char CRaceBossWinRate::LoadBossCurrentWinRate()
         g_Main.m_pWorldDB->Select_RaceBossCurrentWinRate(j, outDay, &totalCnt, &winCnt);
       if (result == 1)
       {
-        return 0;
+        return false;
       }
 
       m_byTotalBattleCnt = static_cast<unsigned __int8>(totalCnt);
@@ -182,7 +182,7 @@ char CRaceBossWinRate::LoadBossCurrentWinRate()
     }
   }
 
-  return 1;
+  return true;
 }
 
 bool CRaceBossWinRate::LoadDB()

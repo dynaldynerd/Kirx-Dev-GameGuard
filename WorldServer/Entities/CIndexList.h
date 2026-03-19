@@ -39,7 +39,7 @@ public:
   bool FindNode(unsigned int dwIndex, char *pInfoData);
   bool IsInList(unsigned int dwIndex, char *pInfoData);
   bool IsSetting();
-  char CopyFront(unsigned int *pdwOutIndex, char *pInfoData);
+  bool CopyFront(unsigned int *pdwOutIndex, char *pInfoData);
   _index_node *GetAllNode(unsigned int *pdwMaxNodeNum);
   unsigned int GetSize();
   void ResetList();

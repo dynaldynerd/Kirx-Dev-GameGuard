@@ -33,5 +33,5 @@ public:
   void Close(CReturnGate *pkGate);
   int ProcessEnter(unsigned int uiGateInx, CPlayer *pkObj);
   void SendEnterResult(char iResult, CPlayer *pkObj);
-  char Enter(unsigned int uiGateInx, CPlayer *pkObj);
+  bool Enter(unsigned int uiGateInx, CPlayer *pkObj);
 };

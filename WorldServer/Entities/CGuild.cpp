@@ -826,7 +826,7 @@ void CGuild::SendMsg_DownPacket(unsigned __int8 bDowntype, _guild_member_info *p
     buddyLen);
 }
 
-char CGuild::RegSuggestedMatter(
+bool CGuild::RegSuggestedMatter(
   unsigned int dwSuggesterSerial,
   unsigned __int8 byMatterType,
   unsigned int dwMatterDst,
@@ -894,7 +894,7 @@ char CGuild::RegSuggestedMatter(
 
   if (!votableMemberCount)
   {
-    return 0;
+    return false;
   }
 
   if (byMatterType == 4)
@@ -912,7 +912,7 @@ char CGuild::RegSuggestedMatter(
 
   m_SuggestedMatter.nTotal_VotableMemNum = votableMemberCount;
   SendMsg_VoteProcessInform_Start();
-  return 1;
+  return true;
 }
 
 void CGuild::SendMsg_VoteProcessInform_Start()
@@ -1007,7 +1007,7 @@ void CGuild::InitVote()
   m_bNowProcessSgtMter = false;
 }
 
-char CGuild::LogoffMember(unsigned int dwMemberSerial)
+bool CGuild::LogoffMember(unsigned int dwMemberSerial)
 {
   for (int j = 0; j < 50; ++j)
   {
@@ -1019,10 +1019,10 @@ char CGuild::LogoffMember(unsigned int dwMemberSerial)
         ManageAcceptORRefuseGuildBattle(false);
       }
       member->pPlayer = nullptr;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 _guild_member_info *CGuild::LoginMember(unsigned int dwMemberSerial, CPlayer *pPtr)
@@ -1144,7 +1144,7 @@ void CGuild::SendMsg_GuildRoomRented(char byRoomType)
   }
 }
 
-char CGuild::PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode)
+bool CGuild::PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode)
 {
   for (int j = 0; j < 32; ++j)
   {
@@ -1155,17 +1155,17 @@ char CGuild::PopApplier(unsigned int dwApplierSerial, unsigned __int8 byDelCode)
       info->init();
       --m_nApplierNum;
       MakeDownApplierPacket();
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char CGuild::PushApplier(CPlayer *pApplier)
+bool CGuild::PushApplier(CPlayer *pApplier)
 {
   if (m_nApplierNum >= 32)
   {
-    return 0;
+    return false;
   }
   for (int j = 0; j < 32; ++j)
   {
@@ -1177,10 +1177,10 @@ char CGuild::PushApplier(CPlayer *pApplier)
       ++m_nApplierNum;
       SendMsg_AddJoinApplier(info);
       MakeDownApplierPacket();
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 _guild_member_info *CGuild::PushMember(_guild_member_info *pSheet)
@@ -1263,7 +1263,7 @@ void CGuild::SendMsg_LeaveMember(unsigned int dwMemberSerial, char bSelf, char b
   }
 }
 
-char CGuild::PopMember(unsigned int dwMemberSerial)
+bool CGuild::PopMember(unsigned int dwMemberSerial)
 {
   int memberIndex = -1;
   for (int j = 0; j < 50; ++j)
@@ -1277,7 +1277,7 @@ char CGuild::PopMember(unsigned int dwMemberSerial)
 
   if (memberIndex < 0)
   {
-    return 0;
+    return false;
   }
 
   for (int k = 0; k < 3; ++k)
@@ -1313,7 +1313,7 @@ char CGuild::PopMember(unsigned int dwMemberSerial)
     DB_Update_GuildMaster(nullptr);
   }
 
-  return 1;
+  return true;
 }
 
 unsigned __int8 CGuild::GetGrade()
@@ -2089,7 +2089,7 @@ void CGuild::AddScheduleComplete(unsigned __int8 byRet, CGuild *pSrcGuild)
   pSrcGuild->SetCopmlteGuildBattleSuggest();
 }
 
-char CGuild::SendMsg_GuildBattleProposed(char *pwszName)
+int CGuild::SendMsg_GuildBattleProposed(char *pwszName)
 {
   _guild_battle_propose_notify_zocl msg{};
   unsigned __int8 type[2] = {27, 92};
@@ -2508,7 +2508,7 @@ long double CGuild::GetTotalGold()
   return m_dTotalGold;
 }
 
-char CGuild::DB_Update_GuildMaster(_guild_member_info *pNewguildMaster)
+bool CGuild::DB_Update_GuildMaster(_guild_member_info *pNewguildMaster)
 {
   _qry_case_update_guildmaster qry{};
   qry.tmp_guildindex = m_nIndex;
@@ -2538,9 +2538,9 @@ char CGuild::DB_Update_GuildMaster(_guild_member_info *pNewguildMaster)
   const int nSize = static_cast<int>(qry.size());
   if (!g_Main.PushDQSData(-1, nullptr, 49, reinterpret_cast<char *>(&qry), nSize))
   {
-    return 0;
+    return false;
   }
-  return 1;
+  return true;
 }
 
 void CGuild::DB_Update_GuildMaster_Complete(
@@ -2797,22 +2797,22 @@ void CGuild::CompleteSelectMasterLastConn(unsigned long long dwLastConnTime)
   }
 }
 
-unsigned int CGuild::GetMemberNum()
+int CGuild::GetMemberNum()
 {
-  return static_cast<unsigned int>(m_nMemberNum);
+  return m_nMemberNum;
 }
 
-char CGuild::ActVote(_guild_member_info *pMemPtr, unsigned __int8 byCode)
+bool CGuild::ActVote(_guild_member_info *pMemPtr, unsigned __int8 byCode)
 {
   if (!pMemPtr)
   {
-    return 0;
+    return false;
   }
 
   pMemPtr->bVote = 1;
   ++m_SuggestedMatter.byVoteState[byCode];
   SendMsg_VoteState();
-  return 1;
+  return true;
 }
 
 void CGuild::CancelSuggestedMatter()
@@ -2848,9 +2848,9 @@ void CGuild::ForceLeave(unsigned int dwMemberSerial)
   g_Main.PushDQSData(-1, nullptr, 18, reinterpret_cast<char *>(&qry), nSize);
 }
 
-__int64 CGuild::GetMemberNumForJoin()
+int CGuild::GetMemberNumForJoin()
 {
-  return static_cast<unsigned int>(m_nTempMemberNum + m_nMemberNum);
+  return m_nTempMemberNum + m_nMemberNum;
 }
 
 unsigned __int8 CGuild::GetRace()

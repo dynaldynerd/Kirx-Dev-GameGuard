@@ -40,7 +40,7 @@ struct _qry_case_all_store_limit_item
   _qry_case_all_store_limit_item();
   ~_qry_case_all_store_limit_item();
 
-  char Init(unsigned int dwStoreNum);
+  bool Init(unsigned int dwStoreNum);
   void DataInit();
 };
 
@@ -78,7 +78,7 @@ public:
     int nBufSize);
   char SelectUsedRecordNum(unsigned int *pdwUsedNum);
   char SelectTotalRecordNum(unsigned int *pdwTotalNum);
-  char InsertNotEnoughLimitItemRecord(int nNum);
+  bool InsertNotEnoughLimitItemRecord(int nNum);
   char SelectStoreLimitItem();
   void SetStoreLimitItemData(_qry_case_all_store_limit_item::__list *pData);
   void SetEnforceInitNormalStore();

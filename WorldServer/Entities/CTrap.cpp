@@ -66,21 +66,22 @@ bool CTrap::Create(_trap_create_setdata *pData)
   return true;
 }
 
-char CTrap::IsHaveEmpty()
+bool CTrap::IsHaveEmpty()
 {
   for (int index = 0; index < MAX_TRAP; ++index)
   {
     if (!g_Trap[index].m_bLive)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-__int64 CTrap::GetNewSerial()
+unsigned int CTrap::GetNewSerial()
 {
-  return s_dwSerialCnt++;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(s_dwSerialCnt++);
 }
 
 CTrap *CreateTrap(CMapData *pMap, unsigned __int16 wLayer, float *fPos, CPlayer *pMaster, int nTrapItemIndex)
@@ -119,10 +120,11 @@ CTrap *CreateTrap(CMapData *pMap, unsigned __int16 wLayer, float *fPos, CPlayer 
   return nullptr;
 }
 
-__int64 CTrap::GetAttackDP()
+int CTrap::GetAttackDP()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nAttack_DP);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nAttack_DP));
 }
 
 float CTrap::GetAttackRange()
@@ -131,10 +133,11 @@ float CTrap::GetAttackRange()
   return recordSet->m_fAttGap;
 }
 
-__int64 CTrap::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CTrap::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nDefFc);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(recordSet->m_nDefFc));
 }
 
 float CTrap::GetDefFacing(int nPart)
@@ -149,19 +152,21 @@ float CTrap::GetDefGap(int nPart)
   return recordSet->m_fDefGap;
 }
 
-__int64 CTrap::GetDefSkill(bool bBackAttackDamage)
+int CTrap::GetDefSkill(bool bBackAttackDamage)
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nDefSklUnit);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nDefSklUnit));
 }
 
-__int64 CTrap::GetFireTol()
+int CTrap::GetFireTol()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nFireTol);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nFireTol));
 }
 
-__int64 CTrap::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+int CTrap::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
   int hitRate = static_cast<int>(
@@ -173,24 +178,28 @@ __int64 CTrap::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
     hitRate = 5;
   if (hitRate > 95)
     return 95;
-  return static_cast<unsigned int>(hitRate);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(hitRate));
 }
 
-__int64 CTrap::GetHP()
+int CTrap::GetHP()
 {
-  return static_cast<unsigned int>(m_nHP);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_nHP);
 }
 
-__int64 CTrap::GetLevel()
-{
-  const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nLevel);
-}
-
-__int64 CTrap::GetMaxHP()
+int CTrap::GetLevel()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(static_cast<int>(recordSet->m_fMaxHP));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nLevel));
+}
+
+int CTrap::GetMaxHP()
+{
+  const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(recordSet->m_fMaxHP));
 }
 
 char *CTrap::GetObjName()
@@ -209,26 +218,29 @@ char *CTrap::GetObjName()
   return s_trapObjectName;
 }
 
-__int64 CTrap::GetObjRace()
+int CTrap::GetObjRace()
 {
-  return m_byRaceCode;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(m_byRaceCode));
 }
 
-__int64 CTrap::AttackableHeight()
+int CTrap::AttackableHeight()
 {
   return 50;
 }
 
-__int64 CTrap::GetSoilTol()
+int CTrap::GetSoilTol()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nSoilTol);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nSoilTol));
 }
 
-__int64 CTrap::GetWaterTol()
+int CTrap::GetWaterTol()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nWaterTol);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nWaterTol));
 }
 
 float CTrap::GetWeaponAdjust()
@@ -236,7 +248,7 @@ float CTrap::GetWeaponAdjust()
   return 1.0f;
 }
 
-__int64 CTrap::GetWeaponClass()
+int CTrap::GetWeaponClass()
 {
   return 1;
 }
@@ -246,10 +258,11 @@ float CTrap::GetWidth()
   return 5.0f;
 }
 
-__int64 CTrap::GetWindTol()
+int CTrap::GetWindTol()
 {
   const _TrapItem_fld *recordSet = reinterpret_cast<const _TrapItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nWindTol);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(recordSet->m_nWindTol));
 }
 
 bool CTrap::IsBeAttackedAble(bool bFirst)
@@ -264,7 +277,7 @@ bool CTrap::IsInTown()
   return false;
 }
 
-void CTrap::Init(_object_id *pID)
+bool CTrap::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
   m_dwLastDestroyTime = 0;
@@ -279,6 +292,7 @@ void CTrap::Init(_object_id *pID)
   m_bComplete = false;
   m_bBreakTransparBuffer = false;
   m_nTrapMaxAttackPnt = 0;
+  return true;
 }
 
 void CTrap::MasterNetClose(long double dPvPPoint)
@@ -647,7 +661,7 @@ void CTrap::SendMsg_AlterTranspar(bool bTranspar)
   CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
-__int64 CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
+int CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
   if (nDam > 1)
   {
@@ -671,10 +685,11 @@ __int64 CTrap::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
     Destroy(1u);
   }
 
-  return static_cast<unsigned int>(m_nHP);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_nHP);
 }
 
-__int64 CTrap::SetDamage(
+int CTrap::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,

@@ -25,9 +25,9 @@ public:
   static void InitPen();
   static void DeletePen();
 
-  char InitLine(CMapData *pMap, CRect *prcWnd);
-  char Draw(CSurface *pSF, CRect *prcArea);
-  char DrawEx(int nLineIndex, HDC *pDC, CRect *prcArea);
+  bool InitLine(CMapData *pMap, CRect *prcWnd);
+  bool Draw(CSurface *pSF, CRect *prcArea);
+  bool DrawEx(int nLineIndex, HDC *pDC, CRect *prcArea);
 
   static HPEN s_hPen;
 

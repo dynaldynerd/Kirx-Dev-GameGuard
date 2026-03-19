@@ -20,7 +20,7 @@ namespace
 TaskPool::TaskPool()
   = default;
 
-__int64 TaskPool::Initialize(int nTskMaxNum, int nMaxTskSize)
+TaskPool::RCODE TaskPool::Initialize(int nTskMaxNum, int nMaxTskSize)
 {
   _nMaxTskNum = nTskMaxNum;
   if (!_create_task(nMaxTskSize))
@@ -75,7 +75,7 @@ Task *TaskPool::PopCompleteTsk(unsigned int *nIdx)
   return nullptr;
 }
 
-__int64 TaskPool::PushWaitTsk(int nTaskCode, unsigned __int8 *p, unsigned __int64 size)
+TaskPool::RCODE TaskPool::PushWaitTsk(int nTaskCode, unsigned __int8 *p, unsigned __int64 size)
 {
   unsigned int outIndex = 0;
   if (!_listEmptyIdx.PopNode_Front(&outIndex))
@@ -91,7 +91,7 @@ __int64 TaskPool::PushWaitTsk(int nTaskCode, unsigned __int8 *p, unsigned __int6
   return 4294967293;
 }
 
-__int64 TaskPool::PushCompleteTsk(unsigned int nIdx)
+TaskPool::RCODE TaskPool::PushCompleteTsk(unsigned int nIdx)
 {
   if (_listCompleteIdx.PushNode_Back(nIdx))
   {
@@ -100,7 +100,7 @@ __int64 TaskPool::PushCompleteTsk(unsigned int nIdx)
   return 4294967293;
 }
 
-__int64 TaskPool::PushEmptyTsk(unsigned int nIdx)
+TaskPool::RCODE TaskPool::PushEmptyTsk(unsigned int nIdx)
 {
   if (_listEmptyIdx.PushNode_Back(nIdx))
   {

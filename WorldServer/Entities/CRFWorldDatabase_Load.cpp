@@ -19,7 +19,7 @@ bool CRFWorldDatabase::Insert_Buddy(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *pBuddyData)
+unsigned __int8 CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *pBuddyData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -102,7 +102,7 @@ bool CRFWorldDatabase::Insert_BossCryRecord(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_info *pCryMsg)
+unsigned __int8 CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_info *pCryMsg)
 {
   char buffer[544]{};
   char source[260]{};
@@ -188,7 +188,7 @@ char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
   return 1;
 }
-char CRFWorldDatabase::Select_CharacterGeneralInfo(
+unsigned __int8 CRFWorldDatabase::Select_CharacterGeneralInfo(
   unsigned int dwCharacterSerial,
   _worlddb_character_general_info *pCharacterData)
 {
@@ -329,7 +329,7 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
   return 0;
 }
 
-char CRFWorldDatabase::Select_Inven(
+unsigned __int8 CRFWorldDatabase::Select_Inven(
   unsigned int dwCharacterSerial,
   unsigned __int16 wBagCount,
   _worlddb_inven_info *pInvenData)
@@ -407,7 +407,7 @@ char CRFWorldDatabase::Select_Inven(
   return 1;
 }
 
-char CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array *questData)
+unsigned __int8 CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array *questData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -556,7 +556,7 @@ char CRFWorldDatabase::Select_CharacterSerial(char *pwszCharacterName, unsigned 
   return 0;
 }
 
-__int64 CRFWorldDatabase::Select_Punishment(
+int CRFWorldDatabase::Select_Punishment(
   unsigned int dwSerial,
   unsigned int *pdwElectSerial,
   unsigned int *pdwPunishment)
@@ -598,7 +598,8 @@ __int64 CRFWorldDatabase::Select_Punishment(
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return result;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(result);
         }
 
         ret = SQLGetData(m_hStmtSelect, 1u, 65530, targetValue, 0, &indicator);
@@ -625,7 +626,8 @@ __int64 CRFWorldDatabase::Select_Punishment(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -642,7 +644,7 @@ __int64 CRFWorldDatabase::Select_Punishment(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PatriarchVoted(
+int CRFWorldDatabase::Select_PatriarchVoted(
   unsigned __int8 byRace,
   unsigned int dwSerial,
   bool *bOverlapVote)
@@ -698,7 +700,8 @@ sprintf_s(
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -717,7 +720,8 @@ sprintf_s(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -735,7 +739,7 @@ sprintf_s(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PatriarchRefundCount(
+int CRFWorldDatabase::Select_PatriarchRefundCount(
   unsigned __int8 byRaceCode,
   unsigned int dwAvatorSerial,
   unsigned int *pdwCnt)
@@ -790,7 +794,8 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -808,7 +813,8 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -825,7 +831,7 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
   return 1;
 }
 
-char CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay)
+unsigned __int8 CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay)
 {
   char buffer[260]{};
   unsigned __int8 chunk[1048]{};
@@ -920,7 +926,7 @@ bool CRFWorldDatabase::Insert_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_del
   return ExecUpdateBinaryQuery(buffer, reinterpret_cast<char *>(pSFDelay), 130, false);
 }
 
-char CRFWorldDatabase::Select_Start_NpcQuest_History_Count(unsigned int dwSerial, unsigned int *pdwCount)
+unsigned __int8 CRFWorldDatabase::Select_Start_NpcQuest_History_Count(unsigned int dwSerial, unsigned int *pdwCount)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1043,7 +1049,7 @@ unsigned __int8 CRFWorldDatabase::Select_Start_NpcQuest_History(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement(
+int CRFWorldDatabase::Select_Supplement(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1094,7 +1100,8 @@ __int64 CRFWorldDatabase::Select_Supplement(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1111,7 +1118,7 @@ __int64 CRFWorldDatabase::Select_Supplement(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement_Ex(
+int CRFWorldDatabase::Select_Supplement_Ex(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1168,7 +1175,8 @@ __int64 CRFWorldDatabase::Select_Supplement_Ex(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1185,7 +1193,7 @@ __int64 CRFWorldDatabase::Select_Supplement_Ex(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement_ActPoint(
+int CRFWorldDatabase::Select_Supplement_ActPoint(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1236,7 +1244,8 @@ __int64 CRFWorldDatabase::Select_Supplement_ActPoint(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1420,7 +1429,7 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
   return 1;
 }
 
-char CRFWorldDatabase::Select_AccountTrunk(
+unsigned __int8 CRFWorldDatabase::Select_AccountTrunk(
   unsigned int dwAccountSerial,
   unsigned __int8 byRace,
   _worlddb_trunk_info *pTrunkData)
@@ -1512,7 +1521,7 @@ bool CRFWorldDatabase::Insert_AccountTrunk(unsigned int dwAccountSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _worlddb_trunk_info *pTrunkData)
+unsigned __int8 CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _worlddb_trunk_info *pTrunkData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1596,7 +1605,7 @@ bool CRFWorldDatabase::Insert_AccountTrunkExtend(unsigned int dwAccountSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_userinterface_info *pUserinterfaceInfo)
+unsigned __int8 CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_userinterface_info *pUserinterfaceInfo)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1732,7 +1741,7 @@ bool CRFWorldDatabase::Insert_UserInterface(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit_info_array *pUnitInfo)
+unsigned __int8 CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit_info_array *pUnitInfo)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;

@@ -57,7 +57,7 @@ public:
   void SystemLog(const char *fmt, ...);
   int Init();
   void Loop();
-  unsigned int GetTotalWaitSize();
+  int GetTotalWaitSize();
   void ProcWrite();
   static void __cdecl ProcThread(void *param);
 

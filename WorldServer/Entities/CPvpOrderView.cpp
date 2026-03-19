@@ -22,13 +22,13 @@ int _pvp_order_view_inform_zocl::size() const
   return 24;
 }
 
-char CPvpOrderView::Init()
+bool CPvpOrderView::Init()
 {
   m_dwLastAttackTime = 0;
   m_dwLastDamagedTime = 0;
   m_bAttack = false;
   m_bDamaged = false;
-  return 1;
+  return true;
 }
 
 void CPvpOrderView::SetOrderViewAttackState()
@@ -79,7 +79,7 @@ void CPvpOrderView::SetPvpCash(long double dAlter)
   m_dPvpCash = dAlter;
 }
 
-char CPvpOrderView::SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne)
+bool CPvpOrderView::SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne)
 {
   std::tm lastTime{};
   if (std::tm *localLast = localtime_2(&pkInfo->tUpdatedate))
@@ -102,7 +102,7 @@ char CPvpOrderView::SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BA
     m_dPvpPoint = 0.0;
     m_dPvpTempCash = pkInfo->dPvpTempCash;
     m_dPvpCash = pkInfo->dPvpCash;
-    return 0;
+    return false;
   }
 
   m_dPvpCash = pkInfo->dPvpTempCash + pkInfo->dPvpCash;
@@ -111,7 +111,7 @@ char CPvpOrderView::SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BA
   Update_RaceWarRecvr(false);
   ResetPvPOrderView();
   m_dOriginalPvpPoint = pkInfo->dPvpPoint;
-return 1;
+return true;
 }
 
 void CPvpOrderView::UpdatePvpCash(double dPvpCash)

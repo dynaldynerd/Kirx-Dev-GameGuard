@@ -21,5 +21,5 @@ struct  qry_case_cash_limsale
   _db_cash_limited_sale OldSale;
 
   qry_case_cash_limsale();
-  __int64 size();
+  int size();
 };

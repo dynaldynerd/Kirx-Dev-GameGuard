@@ -18,9 +18,9 @@ void C24Timer::Init()
   m_dwBase24Time = static_cast<unsigned int>(GetCurrentMin() + 60 * GetCurrentHour());
 }
 
-__int64 C24Timer::Get24TimeFromTickTime(unsigned int dwTickTime)
+unsigned int C24Timer::Get24TimeFromTickTime(unsigned int dwTickTime)
 {
   const unsigned int passMinutes = (dwTickTime - m_dwBaseTickTime) / 60000;
-  return static_cast<__int64>(passMinutes + m_dwBase24Time);
+  return passMinutes + m_dwBase24Time;
 }
 

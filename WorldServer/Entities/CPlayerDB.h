@@ -13,8 +13,8 @@ public:
   CPlayerDB();
   ~CPlayerDB();
 
-  int GetRaceCode();
-  int GetRaceSexCode();
+  __int64 GetRaceCode();
+  __int64 GetRaceSexCode();
   int GetMapCode();
   void SetMapCode(unsigned __int8 byCode);
   char *GetCharNameA();
@@ -31,9 +31,9 @@ public:
   unsigned int GetGuildSerial();
   unsigned __int8 GetClassInGuild();
   void SetClassInGuild(unsigned __int8 byClassInGuild);
-  unsigned int GetLevel();
+  int GetLevel();
   void SetLevel(unsigned __int8 nLv);
-  unsigned int GetMaxLevel();
+  int GetMaxLevel();
   bool IsClassChangeableLv();
   unsigned __int8 GetTrunkSlotNum();
   unsigned __int8 GetExtTrunkSlotNum();
@@ -43,13 +43,13 @@ public:
   long double GetPvPCashBag();
   _class_fld *GetPtrCurClass();
   _class_fld *GetPtrBaseClass();
-  unsigned int GetHP();
+  int GetHP();
   void SetHP(unsigned int dwHP);
-  unsigned int GetFP();
+  int GetFP();
   void SetFP(unsigned int dwFP);
-  unsigned int GetSP();
+  int GetSP();
   void SetSP(unsigned int dwSP);
-  unsigned int GetDP();
+  int GetDP();
   void SetDP(unsigned int dwDP);
   unsigned int GetDalant();
   void SetDalant(unsigned int dwDt);
@@ -58,11 +58,11 @@ public:
   void SetCurPos(float *fPos);
   unsigned __int8 GetBagNum();
   void SetBagNum(unsigned __int8 byNum);
-  int GetUseSlot();
-  __int64 GetHaveUnitNum();
-  __int64 GetInvenItemCountFromCode(char *pszItemCode);
-  char DeleteItemCountFromCode(char *pszItemCode, int nCount);
-  char GetResBufferNum();
+  unsigned __int8 GetUseSlot();
+  int GetHaveUnitNum();
+  int GetInvenItemCountFromCode(char *pszItemCode);
+  bool DeleteItemCountFromCode(char *pszItemCode, int nCount);
+  unsigned __int8 GetResBufferNum();
   void AddTrunkDalant(int dwPush);
   void AddTrunkGold(int dwPush);
   void SubTrunkDalant(int dwSub);
@@ -70,7 +70,7 @@ public:
   _STORAGE_LIST::_db_con *GetItem(unsigned __int8 byInvenIndex);
   unsigned __int16 GetCurItemSerial();
   unsigned __int16 GetNewItemSerial();
-  static char CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
+  static unsigned __int8 CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate);
   bool BeHaveBoxOfAMP();
   void SetHaveBoxOfAMP(bool bFlag);
   void InitPlayerDB(CPlayer *pThis);
@@ -80,10 +80,10 @@ public:
   void SelectClass(unsigned __int8 byHistoryRecordNum, _class_fld *pSelectClass);
   bool IsActableClassSkill(char *pszSkillCode, int *pnClassGrade);
   void SetMaxLevel(unsigned __int8 nLv);
-  char ConvertAvatorDB(_AVATOR_DATA *pData);
-  char ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData);
+  bool ConvertAvatorDB(_AVATOR_DATA *pData);
+  bool ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData);
   void AppointSerialStorageItem();
-  char PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit);
+  bool PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit);
   _STORAGE_LIST::_db_con *GetPtrItemStorage(unsigned __int16 wSerial, unsigned __int8 *pbyStorageCode);
   void PopLink(int nLinkIndex);
 

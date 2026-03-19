@@ -25,7 +25,7 @@ public:
   HRESULT DrawTextA(HFONT hFont, char *strText, DWORD dwOriginX, DWORD dwOriginY, COLORREF crBackground, COLORREF crForeground);
 
   HRESULT SetColorKey(DWORD dwColorKey);
-  DWORD ConvertGDIColor(COLORREF dwGDIColor);
+  unsigned int ConvertGDIColor(COLORREF dwGDIColor);
   HRESULT FillColor(COLORREF crColor);
   static HRESULT GetBitMaskInfo(DWORD dwBitMask, DWORD *pdwShift, DWORD *pdwBits);
 

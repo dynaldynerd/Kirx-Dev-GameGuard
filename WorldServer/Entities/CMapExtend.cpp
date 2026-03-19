@@ -134,17 +134,17 @@ void CMapExtend::MoveScreenPoint(CPoint *pt)
   }
 }
 
-bool CMapExtend::EndScreenPoint(CSize *szMap)
+int CMapExtend::EndScreenPoint(CSize *szMap)
 {
   if (!m_bSetArea)
   {
-    return m_bExtendMode;
+    return m_bExtendMode ? 1 : 0;
   }
 
   if (!m_bMove)
   {
     m_bSetArea = 0;
-    return m_bExtendMode;
+    return m_bExtendMode ? 1 : 0;
   }
 
   const int startX = (m_ptStartScreen.x < m_ptMoveScreen.x) ? m_ptStartScreen.x : m_ptMoveScreen.x;
@@ -163,14 +163,14 @@ bool CMapExtend::EndScreenPoint(CSize *szMap)
   if (width < 10 && height < 10)
   {
     m_bSetArea = 0;
-    return m_bExtendMode;
+    return m_bExtendMode ? 1 : 0;
   }
 
   ConvertToMap(szMap);
   m_bSetArea = 0;
   m_bExtendMode = true;
   m_rcExtend.SetRect(m_ptStartMap, m_ptEndMap);
-  return m_bExtendMode;
+  return m_bExtendMode ? 1 : 0;
 }
 
 void CMapExtend::ConvertToMap(CSize *szMap)

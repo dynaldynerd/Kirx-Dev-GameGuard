@@ -21,7 +21,7 @@ public:
     int bOtherPlayerSupport,
     int bFirstAttack,
     int bTempSkill);
-  bool IsLive();
+  int IsLive();
 
 private:
   CCharacter *m_pCharacter;

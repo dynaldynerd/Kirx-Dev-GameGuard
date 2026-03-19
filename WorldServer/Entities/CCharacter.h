@@ -102,28 +102,28 @@ public:
   unsigned int GetNextGenAttTime();
   void SetNextGenAttTime(unsigned int dwNextTime);
   void ResetSlot();
-  __int64 GetSlot(CCharacter *p);
-  __int64 RemoveSlot(CCharacter *p);
-  __int64 GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target);
-  __int64 InsertSlot(CCharacter *p, int pos);
+  int GetSlot(CCharacter *p);
+  int RemoveSlot(CCharacter *p);
+  int GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target);
+  int InsertSlot(CCharacter *p, int pos);
   void BreakStealth();
-  __int64 GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint);
-  __int64 GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack);
-  __int64 GetAttackRandomPart();
+  int GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint);
+  int GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack);
+  int GetAttackRandomPart();
   void SendMsg_AttackActEffect(unsigned __int8 byActEffect, CCharacter *pDamer);
   void SendMsg_LastEffectChangeInform();
   void SendMsg_RobedHP(const CCharacter *pkPerform, unsigned __int16 wRobedHP);
   bool GetStealth(bool bInvisible);
   bool GetInvisible();
   void SFContInit();
-  char RemoveAllContinousEffect();
+  bool RemoveAllContinousEffect();
   bool RemoveAllContinousEffectGroup(unsigned int uiEffectCodeType);
   void RemoveSFContEffect(unsigned __int8 byContCode, unsigned __int16 wListIndex, bool bInit, bool bAura);
   void UpdateSFCont();
   void AlterContDurSec(unsigned __int8 byContCode, unsigned __int16 wListIndex, unsigned int dwStartSec, unsigned __int16 wNewDur);
   void RemoveSFContHelpByEffect(int nContParamCode, int nContParamIndex);
-  unsigned int CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex);
-  __int64 FindEffectDst(
+  unsigned __int16 CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex);
+  int FindEffectDst(
     int nEffectCode,
     int nAreaType,
     int nLv,
@@ -131,7 +131,7 @@ public:
     CCharacter *pOriDst,
     char *psActableDst,
     CCharacter **ppDsts);
-  __int64 FindPotionEffectDst(
+  int FindPotionEffectDst(
     int nAreaType,
     int nEffectAreaVal,
     bool bBenefit,
@@ -139,15 +139,15 @@ public:
     char *psActableDst,
     CCharacter **ppDsts,
     bool *pbPath);
-  __int64 _GetAreaEffectMember(
+  int _GetAreaEffectMember(
     CCharacter *pOriDst,
     bool bBenefit,
     int nLimitRadius,
     float *pTar,
     char *psActableDst,
     CCharacter **ppDsts);
-  __int64 _GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts);
-  __int64 _GetFlashEffectMember(
+  int _GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts);
+  int _GetFlashEffectMember(
     CCharacter *pOriDst,
     bool bBenefit,
     int nLimitRadius,
@@ -155,17 +155,17 @@ public:
     CCharacter *pOriTar,
     char *psActableDst,
     CCharacter **ppDsts);
-  char IsEffectableDst(char *psActableDst, CCharacter *pDst);
-  char IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex);
-  char IsPotionEffectableDst(char *psActableDst, CPlayer *pDst);
-  char AssistSkill(
+  bool IsEffectableDst(char *psActableDst, CCharacter *pDst);
+  bool IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex);
+  bool IsPotionEffectableDst(char *psActableDst, CPlayer *pDst);
+  bool AssistSkill(
     CCharacter *pDstChar,
     int nEffectCode,
     _skill_fld *pSkillFld,
     int nSkillLv,
     unsigned __int8 *pbyErrorCode,
     bool *pbUpMty);
-  char AssistForce(
+  bool AssistForce(
     CCharacter *pDstChar,
     _force_fld *pForceFld,
     int nForceLv,

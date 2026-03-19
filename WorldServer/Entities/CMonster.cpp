@@ -67,7 +67,7 @@ CMonster::~CMonster()
   _DestroySDM();
 }
 
-__int64 CMonster::AttackableHeight()
+int CMonster::AttackableHeight()
 {
   return 50;
 }
@@ -78,7 +78,7 @@ void CMonster::BeTargeted(CCharacter *pSeacher)
   m_LifeCicle = GetLoopTime();
 }
 
-void CMonster::Init(_object_id *pID)
+bool CMonster::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
   m_EP.AllocEffParam();
@@ -122,13 +122,14 @@ void CMonster::Init(_object_id *pID)
   m_pEventRespawn = nullptr;
   m_pEventSet = nullptr;
   _InitSDM_LootTBL();
+  return true;
 }
 
-char CMonster::Create(_monster_create_setdata *pData)
+bool CMonster::Create(_monster_create_setdata *pData)
 {
   if (!CCharacter::Create(pData))
   {
-    return 0;
+    return false;
   }
 
   m_pMonRec = reinterpret_cast<_monster_fld *>(pData->m_pRecordSet);
@@ -453,14 +454,14 @@ bool CMonster::GetViewAngleCap(int nCapKind, int *nOutValue)
   return true;
 }
 
-__int64 CMonster::GetMob_AsistType()
+int CMonster::GetMob_AsistType()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nAsitType);
+  return m_pMonRec->m_nAsitType;
 }
 
-__int64 CMonster::GetMob_SubRace()
+int CMonster::GetMob_SubRace()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nMobRace);
+  return m_pMonRec->m_nMobRace;
 }
 
 unsigned int CMonster::GetAggroShortTime()
@@ -528,9 +529,9 @@ unsigned int CMonster::GetNewMonSerial()
   return s_dwSerialCnt++;
 }
 
-__int64 CMonster::GetMonsterGrade()
+int CMonster::GetMonsterGrade()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nMobGrade);
+  return m_pMonRec->m_nMobGrade;
 }
 
 unsigned __int8 CMonster::GetMoveType()
@@ -552,7 +553,7 @@ unsigned __int8 CMonster::GetEmotionState()
   return static_cast<unsigned __int8>((___u23.m_nCommonStateChunk >> 2) & 7);
 }
 
-char CMonster::CheckMonsterStateData()
+bool CMonster::CheckMonsterStateData()
 {
   m_MonsterStateData.___u0.m_wSendChunkData &= 0xFFC3u;
   const unsigned __int8 moveType = GetMoveType();
@@ -566,10 +567,10 @@ char CMonster::CheckMonsterStateData()
     (static_cast<unsigned __int16>(combatState & 1) << 6) | (m_MonsterStateData.___u0.m_wSendChunkData & 0xFFBF);
   if (!m_MonsterStateData.operator!=(&m_BeforeMonsterStateData))
   {
-    return 0;
+    return false;
   }
   m_BeforeMonsterStateData.___u0.m_wSendChunkData = m_MonsterStateData.___u0.m_wSendChunkData;
-  return 1;
+  return true;
 }
 
 float CMonster::GetMoveSpeed()
@@ -607,7 +608,7 @@ unsigned __int16 CMonster::GetMonStateInfo()
   return m_MonsterStateData.GetStateChunk();
 }
 
-__int64 CMonster::GetAttackPart()
+int CMonster::GetAttackPart()
 {
   const int randValue = rand() % 100;
   if (randValue <= 20)
@@ -633,9 +634,9 @@ __int64 CMonster::GetAttackPart()
   return 3;
 }
 
-__int64 CMonster::GetAttackDP()
+int CMonster::GetAttackDP()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nAttack_DP);
+  return m_pMonRec->m_nAttack_DP;
 }
 
 float CMonster::GetAttackRange()
@@ -643,7 +644,7 @@ float CMonster::GetAttackRange()
   return m_pMonRec->m_fAttExt;
 }
 
-__int64 CMonster::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CMonster::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
 if (m_pMonRec == nullptr)
     return 0;
@@ -654,7 +655,7 @@ if (m_pMonRec == nullptr)
     if (blockPercent > 100)
       blockPercent = 100;
     if (rand() % 100 < blockPercent)
-      return static_cast<unsigned int>(-2);
+      return -2;
   }
 
   float defValue = 0.0f;
@@ -663,7 +664,8 @@ if (m_pMonRec == nullptr)
   else
     defValue = static_cast<float>(m_DefPart[nAttactPart]);
 
-  return static_cast<unsigned int>(static_cast<int>(defValue * m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE)));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(defValue * m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE));
 }
 
 float CMonster::GetDefFacing(int nPart)
@@ -676,7 +678,7 @@ float CMonster::GetDefGap(int nPart)
   return m_pMonRec->m_fDefGap;
 }
 
-__int64 CMonster::GetDefSkill(bool bBackAttackDamage)
+int CMonster::GetDefSkill(bool bBackAttackDamage)
 {
   float defSkill = m_pMonRec->m_fDefSklUnit;
   if (bBackAttackDamage)
@@ -692,10 +694,11 @@ __int64 CMonster::GetDefSkill(bool bBackAttackDamage)
     }
   }
 
-  return static_cast<unsigned int>(static_cast<int>(defSkill));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(defSkill);
 }
 
-__int64 CMonster::GetFireTol()
+int CMonster::GetFireTol()
 {
   float value = m_pMonRec->m_fFireTol + m_EP.GetEff_Plus(EFF_PLUS_FIRE_TOLERANCE);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_FIRE_TOLERANCE));
@@ -705,22 +708,23 @@ __int64 CMonster::GetFireTol()
     finalValue = 200;
   if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
-  return static_cast<unsigned int>(finalValue);
+  return finalValue;
 }
 
-__int64 CMonster::GetHP()
+int CMonster::GetHP()
 {
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-__int64 CMonster::GetLevel()
+int CMonster::GetLevel()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pMonRec->m_fLevel));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pMonRec->m_fLevel);
 }
 
-__int64 CMonster::GetMaxHP()
+int CMonster::GetMaxHP()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pMonRec->m_fMaxHP));
+  return static_cast<int>(m_pMonRec->m_fMaxHP);
 }
 
 char *CMonster::GetObjName()
@@ -737,12 +741,12 @@ char *CMonster::GetObjName()
   return s_monsterObjectName;
 }
 
-__int64 CMonster::GetObjRace()
+int CMonster::GetObjRace()
 {
   return 16;
 }
 
-__int64 CMonster::GetSoilTol()
+int CMonster::GetSoilTol()
 {
   float value = m_pMonRec->m_fSoilTol + m_EP.GetEff_Plus(EFF_PLUS_SOIL_TOLERANCE);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_SOIL_TOLERANCE));
@@ -752,10 +756,10 @@ __int64 CMonster::GetSoilTol()
     finalValue = 200;
   if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
-  return static_cast<unsigned int>(finalValue);
+  return finalValue;
 }
 
-__int64 CMonster::GetWaterTol()
+int CMonster::GetWaterTol()
 {
   float value = m_pMonRec->m_fWaterTol + m_EP.GetEff_Plus(EFF_PLUS_WATER_TOLERANCE);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_WATER_TOLERANCE));
@@ -765,7 +769,7 @@ __int64 CMonster::GetWaterTol()
     finalValue = 200;
   if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
-  return static_cast<unsigned int>(finalValue);
+  return finalValue;
 }
 
 float CMonster::GetWeaponAdjust()
@@ -773,9 +777,9 @@ float CMonster::GetWeaponAdjust()
   return m_pMonRec->m_fWeakPart;
 }
 
-__int64 CMonster::GetWeaponClass()
+int CMonster::GetWeaponClass()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_bAttRangeType);
+  return static_cast<int>(m_pMonRec->m_bAttRangeType);
 }
 
 float CMonster::GetWidth()
@@ -783,7 +787,7 @@ float CMonster::GetWidth()
   return m_pMonRec->m_fWidth;
 }
 
-__int64 CMonster::GetWindTol()
+int CMonster::GetWindTol()
 {
   float value = m_pMonRec->m_fWindTol + m_EP.GetEff_Plus(EFF_PLUS_WIND_TOLERANCE);
   int finalValue = static_cast<int>(value * m_EP.GetEff_Rate(EFF_RATE_WIND_TOLERANCE));
@@ -793,15 +797,15 @@ __int64 CMonster::GetWindTol()
     finalValue = 200;
   if (m_EP.GetEff_State(EFF_STATE_UNKNOWN_19) && finalValue > 0)
     finalValue = -finalValue;
-  return static_cast<unsigned int>(finalValue);
+  return finalValue;
 }
 
-__int64 CMonster::GetCritical_Exception_Rate()
+int CMonster::GetCritical_Exception_Rate()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nCriticalTol);
+  return m_pMonRec->m_nCriticalTol;
 }
 
-__int64 CMonster::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
+int CMonster::GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack)
 {
 if (!IsValidPlayer())
   {
@@ -828,7 +832,7 @@ if (!IsValidPlayer())
   {
     return 5;
   }
-  return static_cast<unsigned int>(attackProb);
+  return attackProb;
 }
 
 int CMonster::IsValidPlayer()
@@ -893,28 +897,28 @@ bool CMonster::IsAttackableInTown()
 
 bool CMonster::IsBeAttackedAble(bool bFirst)
 {
-if (!m_bLive || m_bObserver || m_bCorpse)
+  if (!m_bLive || m_bObserver || m_bCorpse)
     return false;
   if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
     return false;
   return !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE);
 }
 
-char CMonster::IsBeDamagedAble(CCharacter *pAtter)
+bool CMonster::IsBeDamagedAble(CCharacter *pAtter)
 {
   const unsigned __int8 attackerId = pAtter->m_ObjID.m_byID;
   if (!attackerId)
   {
     if (static_cast<CPlayer *>(pAtter)->m_bInGuildBattle)
     {
-      return 0;
+      return false;
     }
     return m_pMonRec->m_nRaceCode == -1
         || (m_pMonRec->m_nRaceCode != 3 && pAtter->GetObjRace() != m_pMonRec->m_nRaceCode);
   }
   if (attackerId == 1)
   {
-    return 0;
+    return false;
   }
   if (attackerId != 3)
   {
@@ -925,9 +929,9 @@ char CMonster::IsBeDamagedAble(CCharacter *pAtter)
   return attackerAnimus->m_pMaster == nullptr || !attackerAnimus->m_pMaster->m_bInGuildBattle;
 }
 
-char CMonster::IsRecvableContEffect()
+bool CMonster::IsRecvableContEffect()
 {
-  return static_cast<char>(!m_EP.GetEff_State(EFF_STATE_INSUPERABLE) && !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE));
+  return !m_EP.GetEff_State(EFF_STATE_INSUPERABLE) && !m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE);
 }
 
 bool CMonster::IsRewardExp()
@@ -1157,7 +1161,7 @@ void CMonster::UpdateSFCont()
   m_bLastContEffectUpdate = false;
 }
 
-char CMonster::CheckRespawnProcess()
+bool CMonster::CheckRespawnProcess()
 {
   const unsigned int loopTime = GetLoopTime();
   if (m_pActiveRec
@@ -1184,14 +1188,14 @@ char CMonster::CheckRespawnProcess()
 
         Destroy(1u, nullptr);
         Create(&data);
-        return 1;
+        return true;
       }
 
       m_LifeCicle = loopTime;
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CMonster::CheckMonsterRotate()
@@ -1226,16 +1230,16 @@ void CMonster::CheckAutoRecoverHP()
   AutoRecover();
 }
 
-char CMonster::CheckDelayDestroy()
+bool CMonster::CheckDelayDestroy()
 {
   if (m_dwDestroyNextTime == static_cast<unsigned int>(-1) || GetLoopTime() <= m_dwDestroyNextTime)
   {
-    return 0;
+    return false;
   }
 
   Destroy(1u, nullptr);
   m_dwDestroyNextTime = static_cast<unsigned int>(-1);
-  return 1;
+  return true;
 }
 
 void CMonster::AutoRecover()
@@ -1407,9 +1411,9 @@ CPlayer *CMonster::SearchNearPlayer()
   return CMonsterHelper::SearchNearPlayer(this, 0);
 }
 
-__int64 CMonster::AttackObject(int nDamage, CGameObject *pOri)
+int CMonster::AttackObject(int nDamage, CGameObject *pOri)
 {
-m_LifeCicle = GetLoopTime();
+  m_LifeCicle = GetLoopTime();
   return 1;
 }
 
@@ -1442,17 +1446,17 @@ bool CMonster::CheckEventEmotionPresentation(unsigned __int8 byCheckType, CChara
   return m_EmotionPresentationCheck.CheckEmotionState(this, byCheckType, pTarget);
 }
 
-__int64 CMonster::GetOffensiveType()
+int CMonster::GetOffensiveType()
 {
-  return static_cast<unsigned int>(m_pMonRec->m_nOffensiveType);
+  return m_pMonRec->m_nOffensiveType;
 }
 
-__int64 CMonster::GetHelpMeCase()
+int CMonster::GetHelpMeCase()
 {
   return 0;
 }
 
-bool CMonster::IsPreAttackAbleMon()
+int CMonster::IsPreAttackAbleMon()
 {
   return m_pMonRec->m_fEmoType > 5.0f;
 }
@@ -1654,9 +1658,9 @@ int CMonster::_AssistSF_Cont_Temp(CCharacter *pDst, CMonsterSkill *pskill)
   return result;
 }
 
-__int64 CMonster::Attack(CCharacter *pDst, CMonsterSkill *pskill)
+int CMonster::Attack(CCharacter *pDst, CMonsterSkill *pskill)
 {
-  unsigned int result = 0;
+  int result = 0;
   if (!pskill)
   {
     return result;
@@ -1842,16 +1846,16 @@ void CMonster::make_gen_attack_param(CCharacter *pDst, _attack_param *pAP)
   }
 }
 
-char CMonster::make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, int nEffectType, _attack_param *pAP)
+bool CMonster::make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, int nEffectType, _attack_param *pAP)
 {
   if (!pSkill)
   {
-    return 0;
+    return false;
   }
   const int skillType = static_cast<int>(pSkill->GetType());
   if (skillType != 1 && skillType != 2)
   {
-    return 0;
+    return false;
   }
 
   pAP->pDst = pDst;
@@ -1901,7 +1905,7 @@ char CMonster::make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, 
     std::memcpy(pAP->fArea, m_fCurPos, sizeof(pAP->fArea));
   }
   pAP->nMaxAttackPnt = 0;
-  return 1;
+  return true;
 }
 
 void CMonster::make_force_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, _attack_param *pAP)
@@ -2305,9 +2309,9 @@ void CMonster::_BossDieWriteLog_End()
   }
 }
 
-__int64 CMonster::GetMyDMGSFContCount()
+int CMonster::GetMyDMGSFContCount()
 {
-  unsigned int count = 0;
+  int count = 0;
   for (int j = 0; j < 2; ++j)
   {
     for (int k = 0; k < 8; ++k)
@@ -2322,7 +2326,7 @@ __int64 CMonster::GetMyDMGSFContCount()
   return count;
 }
 
-__int64 CMonster::GetMaxDMGSFContCount()
+int CMonster::GetMaxDMGSFContCount()
 {
   int maxCount = m_pMonRec->m_nInjuryLimit;
   if (maxCount > 8)
@@ -2333,7 +2337,7 @@ __int64 CMonster::GetMaxDMGSFContCount()
   {
     return 0;
   }
-  return static_cast<unsigned int>(maxCount);
+  return maxCount;
 }
 
 unsigned __int16 _GetMonsterContTime(unsigned __int8 byEffectCode, unsigned __int8 byLv)
@@ -2341,7 +2345,7 @@ unsigned __int16 _GetMonsterContTime(unsigned __int8 byEffectCode, unsigned __in
   return g_MonsterSetInfoData.GetLevelContSFTime(byEffectCode, byLv);
 }
 
-__int64 CMonster::CreateAI(int nType)
+int CMonster::CreateAI(int nType)
 {
   CRFMonsterAIMgr *aiMgr = CRFMonsterAIMgr::Instance();
   if (aiMgr)
@@ -2351,8 +2355,8 @@ __int64 CMonster::CreateAI(int nType)
     if (stateTable.operator UsStateTBL *())
     {
       UsStateTBL *state = stateTable.operator->();
-      const unsigned int result = state->SetHFSM(&m_AI, this);
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(state->SetHFSM(&m_AI, this));
     }
   }
 
@@ -2425,22 +2429,22 @@ void CMonster::CheckLootItem(CPlayer *pOwner)
   }
 }
 
-char CMonster::AddEventItem(_event_loot_item *pItem)
+bool CMonster::AddEventItem(_event_loot_item *pItem)
 {
   if (m_nEventItemNum >= 16)
   {
-    return 0;
+    return false;
   }
   std::memcpy(&m_eventItem[m_nEventItemNum], pItem, sizeof(m_eventItem[m_nEventItemNum]));
   ++m_nEventItemNum;
-  return 1;
+  return true;
 }
 
-char CMonster::_LootItem_Rwp(CPlayer *pOwner)
+bool CMonster::_LootItem_Rwp(CPlayer *pOwner)
 {
   if (!m_pEventRespawn)
   {
-    return 0;
+    return false;
   }
 
   bool noAuthor = false;
@@ -2456,7 +2460,7 @@ char CMonster::_LootItem_Rwp(CPlayer *pOwner)
     }
   }
 
-  char looted = 0;
+  bool looted = false;
   for (int j = 0; j < m_pEventRespawn->nUseRewardItemNum; ++j)
   {
     _event_respawn::_reward_item *reward = &m_pEventRespawn->RewardItem[j];
@@ -2477,12 +2481,12 @@ char CMonster::_LootItem_Rwp(CPlayer *pOwner)
               m_fCurPos,
               0))
         {
-          looted = 1;
+          looted = true;
           if (m_pMonRec->m_bMonsterCondition == 1)
           {
             CMonster::s_logTrace_Boss_Looting.Write( "\t LootItem : %s", reward->pItemFld->m_strCode);
           }
-          looted = 1;
+          looted = true;
         }
       }
     }
@@ -2491,9 +2495,9 @@ char CMonster::_LootItem_Rwp(CPlayer *pOwner)
   return looted;
 }
 
-char CMonster::_LootItem_EventSet(CPlayer *pOwner)
+bool CMonster::_LootItem_EventSet(CPlayer *pOwner)
 {
-  char looted = 0;
+  bool looted = false;
   if (!m_pEventSet)
   {
     return looted;
@@ -2552,7 +2556,7 @@ char CMonster::_LootItem_EventSet(CPlayer *pOwner)
                   eventLoot->bWithHolyScanner,
                   eventLoot->byLootAuth))
             {
-              looted = 1;
+              looted = true;
               g_Main.m_logEvent.Write( "Event Set Item >> %s, %d", itemCode, static_cast<int>(item.m_dwDur));
             }
           }
@@ -2564,9 +2568,9 @@ char CMonster::_LootItem_EventSet(CPlayer *pOwner)
   return looted;
 }
 
-char CMonster::_LootItem_Qst(CPlayer *pOwner)
+bool CMonster::_LootItem_Qst(CPlayer *pOwner)
 {
-  char looted = 0;
+  bool looted = false;
   for (int j = 0; j < m_nEventItemNum; ++j)
   {
     _event_loot_item *loot = &m_eventItem[j];
@@ -2610,23 +2614,23 @@ char CMonster::_LootItem_Qst(CPlayer *pOwner)
 
     if (CreateItemBox(&item, 5u, m_pCurMap, m_wMapLayerIndex, m_fCurPos, 0, nullptr, 0, 3u))
     {
-      looted = 1;
+      looted = true;
     }
   }
-return looted;
+  return looted;
 }
 
-char CMonster::_LootItem_Std(CPlayer *pOwner)
+bool CMonster::_LootItem_Std(CPlayer *pOwner)
 {
   if (!m_bStdItemLoot)
   {
-    return 0;
+    return false;
   }
 
   const _monster_loot_index lootIndex = CMonster::s_idxMonsterLoot[m_pRecordSet->m_dwIndex];
   if (lootIndex.nStartRecIndex == -1)
   {
-    return 0;
+    return false;
   }
 
   const bool isLootFree = pOwner->m_bLootFree;
@@ -2646,7 +2650,7 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
     }
   }
 
-  char looted = 0;
+  bool looted = false;
   for (int n = lootIndex.nStartRecIndex; n <= lootIndex.nEndRecIndex; ++n)
   {
     _ItemLooting_fld *lootRecord =
@@ -2792,7 +2796,7 @@ char CMonster::_LootItem_Std(CPlayer *pOwner)
                     m_fCurPos,
                     0))
               {
-                looted = 1;
+                looted = true;
                 if (m_pMonRec->m_bMonsterCondition == 1)
                 {
                   _base_fld *itemRec = g_Main.m_tblItemData[link->byTableCode].GetRecord(link->wItemIndex);
@@ -3078,7 +3082,7 @@ CLuaSignalReActor *CMonster::GetSignalReActor()
   return &m_LuaSignalReActor;
 }
 
-__int64 CMonster::SetDamage(
+int CMonster::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -3148,7 +3152,7 @@ __int64 CMonster::SetDamage(
     SetStun(true);
 
   m_AI.SendExternMsg(0, pDst, nDam);
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
 bool CMonster::RobbedHP(CCharacter *pDst, int nDecHP)
@@ -3163,7 +3167,7 @@ bool CMonster::RobbedHP(CCharacter *pDst, int nDecHP)
   return true;
 }
 
-char CMonster::SetHP(int nHP, bool bOver)
+bool CMonster::SetHP(int nHP, bool bOver)
 {
   int newHP = nHP;
   if (newHP < 0)
@@ -3177,10 +3181,10 @@ char CMonster::SetHP(int nHP, bool bOver)
   }
 
   if (m_nHP == newHP)
-    return 0;
+    return false;
 
   m_nHP = newHP;
-  return 1;
+  return true;
 }
 
 void CMonster::SetStun(bool bStun)

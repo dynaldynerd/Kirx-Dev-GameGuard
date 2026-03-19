@@ -15,7 +15,7 @@ public:
   ~CMgrAvatorQuestHistory();
   static void __cdecl IOThread(void *pv);
   void OnLoop();
-  unsigned int GetTotalWaitSize();
+  int GetTotalWaitSize();
   void WriteFile(char *pszFileName, char *pszLog);
   void GetNewFileName(unsigned int dwAvatorSerial, char *pszFileName);
   void init_quest(char *pszAvatorName, _QUEST_DB_BASE *pQuestDB, char *pszFileName);

@@ -14,17 +14,17 @@ public:
 
   CRusiaBillingMgr *Instance();
   void Release();
-  __int64 Init();
-  __int64 Free();
-  bool ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection);
-  bool LoadINIFile();
+  int Init();
+  int Free();
+  int ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection);
+  int LoadINIFile();
   void ArrangeString(char *szDest, char *szSorc, char cToken);
   char *dhExtractSubString(char *szSub, char *szFull, char cToken);
   void dhRExtractSubString(char *szSub, char *szFull, char cToken);
   void DeleteMem();
-  __int64 CallFunc_RFOnline_Auth(_param_cash_select *rParam);
-  __int64 CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx);
-  __int64 CallFunc_Item_Cancel(_param_cash_rollback::__list *list, char *szUserID);
+  int CallFunc_RFOnline_Auth(_param_cash_select *rParam);
+  int CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx);
+  int CallFunc_Item_Cancel(_param_cash_rollback::__list *list, char *szUserID);
 
   static CRusiaBillingMgr *m_pRusiaBill;
 

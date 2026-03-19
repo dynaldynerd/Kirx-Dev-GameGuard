@@ -994,11 +994,11 @@ void GuildCreateEventInfo::ReadEventInfo()
   m_ModifyInfo.bEnable = std::strcmp(returnedString, "TRUE") == 0;
 }
 
-char GuildCreateEventInfo::CheckEventDate()
+bool GuildCreateEventInfo::CheckEventDate()
 {
   if (!m_EventInfo.bEnable)
   {
-    return 0;
+    return false;
   }
 
   char changed = 0;
@@ -1017,10 +1017,10 @@ char GuildCreateEventInfo::CheckEventDate()
     SetConsumeDalantFree(false);
   }
 
-  return changed;
+  return (changed) != 0;
 }
 
-char GuildCreateEventInfo::ApplyModifiedGuildEventInfo()
+bool GuildCreateEventInfo::ApplyModifiedGuildEventInfo()
 {
   char changed = 0;
   if (m_EventInfo.dwStartDate != m_ModifyInfo.dwStartDate)
@@ -1038,10 +1038,10 @@ char GuildCreateEventInfo::ApplyModifiedGuildEventInfo()
   if (m_EventInfo.bEnable != m_ModifyInfo.bEnable)
   {
     m_EventInfo.bEnable = m_ModifyInfo.bEnable;
-    return 1;
+    return true;
   }
 
-  return changed;
+  return (changed) != 0;
 }
 
 void GuildCreateEventInfo::SetConsumeDalantFree(bool bEnable)
@@ -1057,14 +1057,16 @@ void GuildCreateEventInfo::SetConsumeDalantFree(bool bEnable)
   m_dwEmblemDalant = 3000000;
 }
 
-__int64 GuildCreateEventInfo::GetEstConsumeDalant() const
+unsigned int GuildCreateEventInfo::GetEstConsumeDalant() const
 {
-  return m_dwEstConsumeDalant;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(m_dwEstConsumeDalant);
 }
 
-__int64 GuildCreateEventInfo::GetEmblemDalant() const
+unsigned int GuildCreateEventInfo::GetEmblemDalant() const
 {
-  return m_dwEmblemDalant;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(m_dwEmblemDalant);
 }
 
 TimeLimitMgr *TimeLimitMgr::Instance()
@@ -1107,7 +1109,7 @@ unsigned __int16 TimeLimitMgr::GetPlayerData(
   return m_lstTLStaus[wIndex].m_byTL_Status;
 }
 
-char TimeLimitMgr::SetConfig(
+bool TimeLimitMgr::SetConfig(
   unsigned __int16 time1,
   unsigned __int16 time2,
   unsigned __int16 time3,
@@ -1119,10 +1121,10 @@ char TimeLimitMgr::SetConfig(
   {
     m_pwTime[index] = config[index];
   }
-  return 1;
+  return true;
 }
 
-__int64 TimeLimitMgr::SumMinuteOne(_SYSTEMTIME *tm)
+unsigned int TimeLimitMgr::SumMinuteOne(_SYSTEMTIME *tm)
 {
   int sumDays = 0;
   int daysInMonth = 0;
@@ -1152,7 +1154,8 @@ __int64 TimeLimitMgr::SumMinuteOne(_SYSTEMTIME *tm)
 
   sumDays += tm->wDay;
   sumDays *= 1440;
-  return 60 * tm->wHour + sumDays + static_cast<unsigned int>(tm->wMinute);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(60 * tm->wHour + sumDays + static_cast<unsigned int>(tm->wMinute));
 }
 
 void TimeLimitMgr::LoadTLINIFile()
@@ -1397,7 +1400,7 @@ void TimeLimitMgr::InsertPlayerStatus(
   Push_Data(&data, wIndex);
 }
 
-__int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
+unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
   sprintf_s(buffer, 15, "%d", dwLastConnTime);
@@ -1438,10 +1441,11 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   tmLast.tm_min = atoi(temp);
 
   std::memset(temp, 0, 3);
-  return SumMinuteBetweenSec(&tmLast);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
 }
 
-__int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
+unsigned int TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
   sprintf_s(buffer, 15, "%d", dwLastConnTime);
@@ -1485,7 +1489,8 @@ __int64 TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
   const unsigned int minutes = static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
   if (minutes)
   {
-    return 1000 * minutes / m_dwLogoutFDegree;
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(1000 * minutes / m_dwLogoutFDegree);
   }
   return 0;
 }
@@ -1495,7 +1500,7 @@ unsigned __int16 TimeLimitMgr::GetEndPlayTime()
   return m_pwTime[m_wPeriodCnt - 1];
 }
 
-char TimeLimitMgr::CheckPlayerStatus(
+bool TimeLimitMgr::CheckPlayerStatus(
   unsigned __int16 wIndex,
   unsigned int dwLastContSaveTime,
   unsigned __int8 *pbyStatus,
@@ -1504,7 +1509,7 @@ char TimeLimitMgr::CheckPlayerStatus(
   Player_TL_Status *data = Find_Data(wIndex);
   if (!data)
   {
-    return 0;
+    return false;
   }
 
   const unsigned int logoutFatigue = static_cast<unsigned int>(
@@ -1518,7 +1523,7 @@ char TimeLimitMgr::CheckPlayerStatus(
       data->m_byTL_Status = 99;
       *pbyStatus = 99;
       data->m_dPercent = m_pdPercent[m_wPeriodCnt - 1];
-      return 1;
+      return true;
     }
 
     if (data->m_dwFatigue < 100)
@@ -1536,7 +1541,7 @@ char TimeLimitMgr::CheckPlayerStatus(
 
     *pbyStatus = data->m_byTL_Status;
     *pdwFatigue = data->m_dwFatigue;
-    return 1;
+    return true;
   }
 
   data->m_dwFatigue = 0;
@@ -1544,22 +1549,22 @@ char TimeLimitMgr::CheckPlayerStatus(
   data->m_byTL_Status = 0;
   *pbyStatus = 0;
   data->m_dPercent = 1.0L;
-  return 1;
+  return true;
 }
 
-char TimeLimitMgr::UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus)
+bool TimeLimitMgr::UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus)
 {
   Player_TL_Status *data = Find_Data(wIndex);
   if (!data)
   {
-    return 0;
+    return false;
   }
 
   data->m_dwFatigue = dwFatigue;
   g_Player[wIndex].m_pUserDB->Update_UserFatigue(dwFatigue);
   data->m_byTL_Status = wStatus;
   g_Player[wIndex].m_pUserDB->Update_UserTLStatus(wStatus);
-  return 1;
+  return true;
 }
 
 void TimeLimitMgr::ReSetPercent(unsigned __int16 wIndex)
@@ -1595,7 +1600,7 @@ void TimeLimitMgr::ReSetPercent(unsigned __int16 wIndex)
   }
 }
 
-__int64 TimeLimitMgr::SumMinuteBetweenSec(tm *tmLast)
+unsigned int TimeLimitMgr::SumMinuteBetweenSec(tm *tmLast)
 {
   const __int64 lastTime = mktime_3(tmLast);
   if (lastTime == -1)
@@ -1607,7 +1612,8 @@ __int64 TimeLimitMgr::SumMinuteBetweenSec(tm *tmLast)
   time_20(&now);
   if (now >= lastTime)
   {
-    return now - lastTime;
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(now - lastTime);
   }
 
   return 0;
@@ -1640,12 +1646,13 @@ unsigned __int8 Player_TL_Status::GetTLStatus()
   return m_byTL_Status;
 }
 
-__int64 TimeLimitMgr::GetPlayFDegree()
+unsigned int TimeLimitMgr::GetPlayFDegree()
 {
-  return m_dwPlayFDegree;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(m_dwPlayFDegree);
 }
 
-bool CMainThread::Init()
+char CMainThread::Init()
 {
   CRtc::GetIntance()->Reg_Fn();
   g_WheatyExceptionReport.SetLogName("ZoneServer_MainLoop");
@@ -2054,7 +2061,7 @@ bool CMainThread::Init()
   return true;
 }
 
-bool CMainThread::LoadINI()
+int CMainThread::LoadINI()
 {
   const int worldSystemRet = LoadWorldSystemINI();
   if (worldSystemRet != 0)
@@ -2300,7 +2307,7 @@ bool CMainThread::check_dbsyn_data_size()
   return true; //this is not stub, original code is already like this
 }
 
-bool CMainThread::DataFileInit()
+char CMainThread::DataFileInit()
 {
   char szErrCode[152]{};
   if (!WriteTableData(37, m_tblItemData, true, szErrCode))
@@ -3642,8 +3649,13 @@ bool CMainThread::NetworkInit()
   params[0].m_wSocketMaxNum = MAX_PLAYER;
   params[0].m_bRealSockCheck = 1;
   params[0].m_bSystemLogFile = 1;
+#if 0 // packet log trace disabled (debug only)
   params[0].m_bRecvLogFile = 1;
   params[0].m_bSendLogFile = 1;
+#else
+  params[0].m_bRecvLogFile = 0;
+  params[0].m_bSendLogFile = 0;
+#endif
   if (m_bReleaseServiceMode)
   {
     params[0].m_byRecvThreadNum = 8;
@@ -4415,11 +4427,11 @@ void CMainThread::PingToAccount()
     request.size());
 }
 
-char CMainThread::LoadServerRateINIFile()
+bool CMainThread::LoadServerRateINIFile()
 {
   if (!GetLastWriteFileTime("./initialize/ServerRate.ini", &m_ServerRateLoad.m_ftWrite))
   {
-    return 0;
+    return false;
   }
 
   char returnedString[40]{};
@@ -4576,7 +4588,7 @@ char CMainThread::LoadServerRateINIFile()
     16,
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.byAddCharacter = static_cast<unsigned __int8>(atoi(returnedString));
-  return 1;
+  return true;
 }
 
 void CMainThread::SetServerRate()
@@ -5039,10 +5051,10 @@ void CMainThread::EndServer()
   // this is not a stub
 }
 
-char CMainThread::_CheckTotalSales()
+bool CMainThread::_CheckTotalSales()
 {
   CashItemRemoteStore::Instance()->Check_Total_Selling();
-  return 1;
+  return true;
 }
 
 char CMainThread::_GameDataBaseInit()

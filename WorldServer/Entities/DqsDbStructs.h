@@ -502,12 +502,12 @@ struct _qry_case_sendwebracebosssms
   unsigned int dwCharactSerial;
   unsigned __int8 byRace;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 
-inline unsigned __int16 _qry_case_sendwebracebosssms::size() const
+inline int _qry_case_sendwebracebosssms::size() const
 {
-  return 284;
+  return static_cast<unsigned __int16>(284);
 }
 
 struct _qry_case_gm_greetingmsg
@@ -516,7 +516,7 @@ struct _qry_case_gm_greetingmsg
   char in_gmname[17];
   char in_gmgreetingmsg[256];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_race_greetingmsg
@@ -525,15 +525,15 @@ struct _qry_case_race_greetingmsg
   char in_bossname[17];
   char in_racegreetingmsg[256];
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_gm_greetingmsg::size() const
+inline int _qry_case_gm_greetingmsg::size() const
 {
   return 274;
 }
 
-inline __int64 _qry_case_race_greetingmsg::size() const
+inline int _qry_case_race_greetingmsg::size() const
 {
   return 274;
 }
@@ -548,12 +548,13 @@ struct _qry_case_update_honor_guild
 {
   unsigned __int8 byRace;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_update_honor_guild::size() const
+inline int _qry_case_update_honor_guild::size() const
 {
-  return sizeof(*this);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(sizeof(*this));
 }
 
 struct _qry_case_guildroom_insert
@@ -580,7 +581,7 @@ struct _qry_case_forceleave
   int in_MemberNum;
   bool in_bPunish;
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_outputgmoney
@@ -596,7 +597,7 @@ struct _qry_case_outputgmoney
   long double out_totaldalant;
   unsigned __int8 byProcRet;
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_buyemblem
@@ -613,7 +614,7 @@ struct _qry_case_buyemblem
   long double out_totaldalant;
   unsigned __int8 byProcRet;
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_guildmaster
@@ -625,25 +626,25 @@ struct _qry_case_update_guildmaster
   unsigned int in_guild_new_masterSerial;
   unsigned __int8 in_guild_new_masterPrevGrade;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_forceleave::size() const
+inline int _qry_case_forceleave::size() const
 {
   return 28;
 }
 
-inline __int64 _qry_case_outputgmoney::size() const
+inline int _qry_case_outputgmoney::size() const
 {
   return 72;
 }
 
-inline __int64 _qry_case_buyemblem::size() const
+inline int _qry_case_buyemblem::size() const
 {
   return 72;
 }
 
-inline __int64 _qry_case_update_guildmaster::size() const
+inline int _qry_case_update_guildmaster::size() const
 {
   return 24;
 }
@@ -653,7 +654,7 @@ struct _qry_case_loadguildbattlerank
   unsigned __int8 byRace;
   unsigned __int8 byLoadDataStartPosition;
 
-  __int64 size();
+  int size();
 };
 
 struct _qry_case_load_guildbattle_totalrecord
@@ -663,7 +664,7 @@ struct _qry_case_load_guildbattle_totalrecord
   unsigned int dwTotLoseCnt;
   unsigned int dwTotDrawCnt;
 
-  __int64 size();
+  int size();
 };
 
 
@@ -672,7 +673,7 @@ struct _qry_case_raceboss_accumulation_winrate
   unsigned int dwTotalCnt[3];
   unsigned int dwWinCnt[3];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_vote_available
@@ -682,7 +683,7 @@ struct _qry_case_update_vote_available
   unsigned int dwCharSerial;
   char wszCharName[17];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_cheat_player_vote_info
@@ -691,7 +692,7 @@ struct _qry_case_cheat_player_vote_info
   unsigned int dwCharSerial;
   char wszCharName[17];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_player_vote_info
@@ -705,7 +706,7 @@ struct _qry_case_update_player_vote_info
   unsigned int dwCharSerial;
   char wszCharName[17];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_server_reset_token
@@ -723,7 +724,7 @@ struct _qry_case_select_charserial
   char wszCharName[17];
   char wszContent[1280];
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_user_guild_data
@@ -733,25 +734,25 @@ struct _qry_case_update_user_guild_data
   unsigned int dwGuildSerial;
   unsigned __int8 byGrade;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_select_charserial::size() const
+inline int _qry_case_select_charserial::size() const
 {
   return 1308;
 }
 
-inline __int64 _qry_case_raceboss_accumulation_winrate::size() const
+inline int _qry_case_raceboss_accumulation_winrate::size() const
 {
   return 24;
 }
 
-inline __int64 _qry_case_update_vote_available::size() const
+inline int _qry_case_update_vote_available::size() const
 {
   return 32;
 }
 
-inline __int64 _qry_case_update_user_guild_data::size() const
+inline int _qry_case_update_user_guild_data::size() const
 {
   return 16;
 }
@@ -781,7 +782,7 @@ struct  _qry_case_insert_patriarch_comm
   char szDepDate[9];
 
   _qry_case_insert_patriarch_comm();
-  __int64 size();
+  int size();
 };
 
 struct  _qry_case_select_patriarch_comm
@@ -789,7 +790,7 @@ struct  _qry_case_select_patriarch_comm
   unsigned int dwSerial;
   unsigned __int8 byDBRet;
 
-  __int64 size();
+  int size();
 };
 
 inline _qry_case_insert_patriarch_comm::_qry_case_insert_patriarch_comm()
@@ -797,22 +798,22 @@ inline _qry_case_insert_patriarch_comm::_qry_case_insert_patriarch_comm()
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_insert_patriarch_comm::size()
+inline int _qry_case_insert_patriarch_comm::size()
 {
   return 20;
 }
 
-inline __int64 _qry_case_select_patriarch_comm::size()
+inline int _qry_case_select_patriarch_comm::size()
 {
   return 8;
 }
 
-inline __int64 _qry_case_cheat_player_vote_info::size() const
+inline int _qry_case_cheat_player_vote_info::size() const
 {
   return 28;
 }
 
-inline __int64 _qry_case_update_player_vote_info::size() const
+inline int _qry_case_update_player_vote_info::size() const
 {
   return 48;
 }
@@ -825,7 +826,7 @@ struct _qry_case_insert_timelimit_info
   unsigned int dwFatigue;
   __int16 wStatus;
 
-  __int64 size() const;
+  int size() const;
 };
 
 struct _qry_case_update_punishment
@@ -836,15 +837,15 @@ struct _qry_case_update_punishment
   unsigned int dwAvatorSerial;
   unsigned int dwElectSerial;
 
-  __int64 size();
+  int size();
 };
 
-inline __int64 _qry_case_insert_timelimit_info::size() const
+inline int _qry_case_insert_timelimit_info::size() const
 {
   return 20;
 }
 
-inline __int64 _qry_case_update_punishment::size()
+inline int _qry_case_update_punishment::size()
 {
   return 36;
 }
@@ -917,7 +918,7 @@ struct  _qry_case_post_storage_list_get
   __list List[50];
 
   _qry_case_post_storage_list_get();
-  __int64 size();
+  int size();
 };
 
 struct  _qry_case_post_return_list_get
@@ -946,7 +947,7 @@ struct  _qry_case_post_return_list_get
   __list List[10];
 
   _qry_case_post_return_list_get();
-  __int64 size();
+  int size();
 };
 
 struct  _qry_case_post_content_get
@@ -958,7 +959,7 @@ struct  _qry_case_post_content_get
   char wszContent[201];
 
   _qry_case_post_content_get();
-  __int64 size();
+  int size();
 };
 
 struct  _qry_case_update_data_for_post_send
@@ -969,7 +970,7 @@ struct  _qry_case_update_data_for_post_send
   _AVATOR_DATA *pOldData;
 
   _qry_case_update_data_for_post_send();
-  __int64 size();
+  int size();
 };
 
 struct  _qry_case_update_data_for_trade
@@ -986,16 +987,16 @@ struct  _qry_case_update_data_for_trade
   list tradelist[2];
 
   _qry_case_update_data_for_trade();
-  __int64 size();
+  int size();
 };
 
 
-inline __int64 _qry_case_loadguildbattlerank::size()
+inline int _qry_case_loadguildbattlerank::size()
 {
   return 2;
 }
 
-inline __int64 _qry_case_load_guildbattle_totalrecord::size()
+inline int _qry_case_load_guildbattle_totalrecord::size()
 {
   return 16;
 }
@@ -1011,7 +1012,7 @@ inline _qry_case_post_storage_list_get::_qry_case_post_storage_list_get()
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_post_storage_list_get::size()
+inline int _qry_case_post_storage_list_get::size()
 {
   return 4016;
 }
@@ -1042,7 +1043,7 @@ inline _qry_case_post_return_list_get::_qry_case_post_return_list_get()
   dwMax = 10;
 }
 
-inline __int64 _qry_case_post_return_list_get::size()
+inline int _qry_case_post_return_list_get::size()
 {
   return 2816;
 }
@@ -1052,7 +1053,7 @@ inline _qry_case_post_content_get::_qry_case_post_content_get()
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_post_content_get::size()
+inline int _qry_case_post_content_get::size()
 {
   return 220;
 }
@@ -1062,7 +1063,7 @@ inline _qry_case_update_data_for_post_send::_qry_case_update_data_for_post_send(
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_update_data_for_post_send::size()
+inline int _qry_case_update_data_for_post_send::size()
 {
   return 24;
 }
@@ -1072,7 +1073,7 @@ inline _qry_case_update_data_for_trade::_qry_case_update_data_for_trade()
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_update_data_for_trade::size()
+inline int _qry_case_update_data_for_trade::size()
 {
   return 64;
 }

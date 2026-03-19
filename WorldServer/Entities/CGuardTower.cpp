@@ -29,15 +29,15 @@ CGuardTower::~CGuardTower()
 {
 }
 
-__int64 CGuardTower::AttackableHeight()
+int CGuardTower::AttackableHeight()
 {
   return 50;
 }
 
-__int64 CGuardTower::GetAttackDP()
+int CGuardTower::GetAttackDP()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nAttack_DP);
+  return recordSet->m_nAttack_DP;
 }
 
 float CGuardTower::GetAttackRange()
@@ -46,10 +46,10 @@ float CGuardTower::GetAttackRange()
   return static_cast<float>(recordSet->m_nGADst);
 }
 
-__int64 CGuardTower::GetDefFC(int /*nAttactPart*/, CCharacter * /*pAttChar*/, int * /*pnConvertPart*/)
+int CGuardTower::GetDefFC(int /*nAttactPart*/, CCharacter * /*pAttChar*/, int * /*pnConvertPart*/)
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nDefFc);
+  return recordSet->m_nDefFc;
 }
 
 float CGuardTower::GetDefFacing(int /*nPart*/)
@@ -64,19 +64,19 @@ float CGuardTower::GetDefGap(int /*nPart*/)
   return recordSet->m_fDefGap;
 }
 
-__int64 CGuardTower::GetDefSkill(bool /*bBackAttackDamage*/)
+int CGuardTower::GetDefSkill(bool /*bBackAttackDamage*/)
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nDefSklUnit);
+  return recordSet->m_nDefSklUnit;
 }
 
-__int64 CGuardTower::GetFireTol()
+int CGuardTower::GetFireTol()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nFireTol);
+  return recordSet->m_nFireTol;
 }
 
-__int64 CGuardTower::GetGenAttackProb(CCharacter *pDst, int /*nPart*/, bool bBackAttack)
+int CGuardTower::GetGenAttackProb(CCharacter *pDst, int /*nPart*/, bool bBackAttack)
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
   const double attackProb = static_cast<double>(recordSet->m_nAttSklUnit);
@@ -94,24 +94,25 @@ __int64 CGuardTower::GetGenAttackProb(CCharacter *pDst, int /*nPart*/, bool bBac
   {
     return 95;
   }
-  return static_cast<unsigned int>(hitRate);
+  return hitRate;
 }
 
-__int64 CGuardTower::GetHP()
+int CGuardTower::GetHP()
 {
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-__int64 CGuardTower::GetLevel()
-{
-  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nLevel);
-}
-
-__int64 CGuardTower::GetMaxHP()
+int CGuardTower::GetLevel()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nMaxHP);
+  return recordSet->m_nLevel;
+}
+
+int CGuardTower::GetMaxHP()
+{
+  const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(recordSet->m_nMaxHP);
 }
 
 char *CGuardTower::GetObjName()
@@ -148,21 +149,21 @@ char *CGuardTower::GetObjName()
   return objectName;
 }
 
-__int64 CGuardTower::GetObjRace()
+int CGuardTower::GetObjRace()
 {
-  return m_byRaceCode;
+  return static_cast<int>(m_byRaceCode);
 }
 
-__int64 CGuardTower::GetSoilTol()
+int CGuardTower::GetSoilTol()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nSoilTol);
+  return recordSet->m_nSoilTol;
 }
 
-__int64 CGuardTower::GetWaterTol()
+int CGuardTower::GetWaterTol()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nWaterTol);
+  return recordSet->m_nWaterTol;
 }
 
 float CGuardTower::GetWeaponAdjust()
@@ -171,7 +172,7 @@ float CGuardTower::GetWeaponAdjust()
   return recordSet->m_fAttGap;
 }
 
-__int64 CGuardTower::GetWeaponClass()
+int CGuardTower::GetWeaponClass()
 {
   return 1;
 }
@@ -182,10 +183,10 @@ float CGuardTower::GetWidth()
   return static_cast<float>(recordSet->m_nWidth);
 }
 
-__int64 CGuardTower::GetWindTol()
+int CGuardTower::GetWindTol()
 {
   const _GuardTowerItem_fld *recordSet = reinterpret_cast<const _GuardTowerItem_fld *>(m_pRecordSet);
-  return static_cast<unsigned int>(recordSet->m_nWindTol);
+  return recordSet->m_nWindTol;
 }
 
 bool CGuardTower::IsBeAttackedAble(bool /*bFirst*/)
@@ -193,12 +194,12 @@ bool CGuardTower::IsBeAttackedAble(bool /*bFirst*/)
   return true;
 }
 
-char CGuardTower::IsBeDamagedAble(CCharacter *pAtter)
+bool CGuardTower::IsBeDamagedAble(CCharacter *pAtter)
 {
   const unsigned __int8 attackerId = pAtter->m_ObjID.m_byID;
   if (attackerId && attackerId != 3)
   {
-    return 0;
+    return false;
   }
 
   CCharacter *validatedAttacker = nullptr;
@@ -213,15 +214,14 @@ char CGuardTower::IsBeDamagedAble(CCharacter *pAtter)
 
   if (!validatedAttacker)
   {
-    return 0;
+    return false;
   }
 
   float canMovePath[8]{};
-  return static_cast<unsigned int>(
-           pAtter->m_pCurMap->m_Level.mBsp->CanYouGoThere(
-             pAtter->m_fCurPos,
-             m_fCurPos,
-             reinterpret_cast<float (*)[3]>(canMovePath)))
+  return pAtter->m_pCurMap->m_Level.mBsp->CanYouGoThere(
+           pAtter->m_fCurPos,
+           m_fCurPos,
+           reinterpret_cast<float (*)[3]>(canMovePath))
     != 0;
 }
 
@@ -547,7 +547,7 @@ void CGuardTower::SendMsg_FixPosition(int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-__int64 CGuardTower::SetDamage(
+int CGuardTower::SetDamage(
   int nDam,
   CCharacter *pDst,
   int /*nDstLv*/,
@@ -592,7 +592,7 @@ __int64 CGuardTower::SetDamage(
     Destroy(1u, false);
   }
 
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
 bool CGuardTower::RobbedHP(CCharacter *pDst, int nDecHP)
@@ -646,7 +646,7 @@ bool CGuardTower::Create(_tower_create_setdata *pData)
   return true;
 }
 
-void CGuardTower::Init(_object_id *pID)
+bool CGuardTower::Init(_object_id *pID)
 {
   CCharacter::Init(pID);
   m_dwLastDestroyTime = 0;
@@ -664,6 +664,7 @@ void CGuardTower::Init(_object_id *pID)
   m_bQuick = false;
   m_pTarget = nullptr;
   m_pMasterSetTarget = nullptr;
+  return true;
 }
 
 bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
@@ -693,16 +694,16 @@ bool CGuardTower::Destroy(unsigned __int8 byDesType, bool bSystemBack)
   return true;
 }
 
-char CGuardTower::IsHaveEmpty()
+bool CGuardTower::IsHaveEmpty()
 {
   for (int j = 0; j < MAX_TOWER; ++j)
   {
     if (!g_Tower[j].m_bLive)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 bool CGuardTower::IsInTown()
@@ -785,7 +786,7 @@ void CGuardTower::NotifyOwnerAttackInform(CCharacter *pDst)
   }
 }
 
-__int64 CGuardTower::GetNewSerial()
+unsigned int CGuardTower::GetNewSerial()
 {
   return s_dwSerialCnt++;
 }

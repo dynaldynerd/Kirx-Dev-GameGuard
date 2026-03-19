@@ -190,7 +190,7 @@ void CCouponMgr::ReceivePrimiumCoupon(unsigned __int16 wIdx)
   }
 }
 
-char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
+bool CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
 {
   if (nMin)
   {
@@ -224,7 +224,7 @@ char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
 
     SendMsg_InPcBangTime(wIdx);
     SendMsg_CouponEnsure(wIdx, m_byRemainTime);
-    return 1;
+    return true;
   }
 
   m_dwContTime = 0;
@@ -235,7 +235,7 @@ char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
   SendMsg_InPcBangTime(wIdx);
   SendMsg_CouponEnsure(wIdx, m_byRemainTime);
   SendMsg_RemainCouponInform(wIdx, static_cast<unsigned __int8>(5u - m_byReceiveCoupon));
-  return 1;
+  return true;
 }
 
 void CCouponMgr::InitCuponInfo()

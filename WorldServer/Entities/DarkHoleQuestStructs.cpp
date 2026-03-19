@@ -435,7 +435,7 @@ void _dh_mission_mgr::OpenPortal(int nIndex)
   }
 }
 
-__int64 _dh_mission_mgr::GetLimMSecTime()
+unsigned int _dh_mission_mgr::GetLimMSecTime()
 {
   if (!pCurMssionPtr)
   {
@@ -443,8 +443,10 @@ __int64 _dh_mission_mgr::GetLimMSecTime()
   }
   if (pCurMssionPtr->dwLimTimeMSec == static_cast<unsigned int>(-1))
   {
-    return static_cast<__int64>(-1);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(static_cast<__int64>(-1));
   }
-  return static_cast<__int64>(nAddLimMSecTime) + pCurMssionPtr->dwLimTimeMSec;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(static_cast<__int64>(nAddLimMSecTime) + pCurMssionPtr->dwLimTimeMSec);
 }
 

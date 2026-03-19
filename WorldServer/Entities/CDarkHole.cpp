@@ -43,11 +43,11 @@ void CDarkHole::Init(_object_id *pID)
   std::memset(m_aszOpenerName, 0, sizeof(m_aszOpenerName));
 }
 
-char CDarkHole::Create(_darkhole_create_setdata *pParam)
+bool CDarkHole::Create(_darkhole_create_setdata *pParam)
 {
   if (!CGameObject::Create(pParam))
   {
-    return 0;
+    return false;
   }
 
   m_dwObjSerial = s_dwSerialCounter++;
@@ -67,7 +67,7 @@ char CDarkHole::Create(_darkhole_create_setdata *pParam)
   m_dwNextHurryTime = now + 40000;
   m_bHurry = false;
   ++s_nLiveNum;
-  return 1;
+  return true;
 }
 
 bool CDarkHole::Destroy()

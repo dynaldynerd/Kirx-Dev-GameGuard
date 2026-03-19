@@ -6,10 +6,10 @@ struct _apex_send_trans
 {
   int m_nRet;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _apex_send_trans::size() const
+inline int _apex_send_trans::size() const
 {
   return 4;
 }

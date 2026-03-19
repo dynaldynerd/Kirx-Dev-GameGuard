@@ -37,16 +37,16 @@ CHolyStone::~CHolyStone()
 {
 }
 
-__int64 CHolyStone::GetAttackDP()
+int CHolyStone::GetAttackDP()
 {
-  return static_cast<unsigned int>(m_pRec->m_nAttack_DP);
+  return m_pRec->m_nAttack_DP;
 }
 
-__int64 CHolyStone::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CHolyStone::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
 if (nAttactPart == -1)
-    return static_cast<unsigned int>(m_nDefPart[rand() % 5]);
-  return static_cast<unsigned int>(m_nDefPart[nAttactPart]);
+    return m_nDefPart[rand() % 5];
+  return m_nDefPart[nAttactPart];
 }
 
 float CHolyStone::GetDefFacing(int nPart)
@@ -59,24 +59,28 @@ float CHolyStone::GetDefGap(int nPart)
 return m_pRec->m_fDefGap;
 }
 
-__int64 CHolyStone::GetDefSkill(bool bBackAttackDamage)
+int CHolyStone::GetDefSkill(bool bBackAttackDamage)
 {
-return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fDefSklUnit));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fDefSklUnit);
 }
 
-__int64 CHolyStone::GetFireTol()
+int CHolyStone::GetFireTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fFireTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fFireTol);
 }
 
-__int64 CHolyStone::GetLevel()
+int CHolyStone::GetLevel()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fLevel));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fLevel);
 }
 
-__int64 CHolyStone::GetMaxHP()
+int CHolyStone::GetMaxHP()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fMaxHP));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fMaxHP);
 }
 
 char *CHolyStone::GetObjName()
@@ -94,19 +98,21 @@ char *CHolyStone::GetObjName()
   return s_stoneObjectName;
 }
 
-__int64 CHolyStone::GetObjRace()
+int CHolyStone::GetObjRace()
 {
-  return m_byMasterRaceCode;
+  return static_cast<int>(m_byMasterRaceCode);
 }
 
-__int64 CHolyStone::GetSoilTol()
+int CHolyStone::GetSoilTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fSoilTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fSoilTol);
 }
 
-__int64 CHolyStone::GetWaterTol()
+int CHolyStone::GetWaterTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWaterTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fWaterTol);
 }
 
 float CHolyStone::GetWeaponAdjust()
@@ -119,9 +125,10 @@ float CHolyStone::GetWidth()
   return m_pRec->m_fWidth;
 }
 
-__int64 CHolyStone::GetWindTol()
+int CHolyStone::GetWindTol()
 {
-  return static_cast<unsigned int>(static_cast<int>(m_pRec->m_fWindTol));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pRec->m_fWindTol);
 }
 
 bool CHolyStone::IsBeAttackedAble(bool bFirst)
@@ -130,7 +137,7 @@ bool CHolyStone::IsBeAttackedAble(bool bFirst)
   return true;
 }
 
-char CHolyStone::IsBeDamagedAble(CCharacter *pAtter)
+bool CHolyStone::IsBeDamagedAble(CCharacter *pAtter)
 {
   if (pAtter->m_ObjID.m_byID != 0 && pAtter->m_ObjID.m_byID != 3)
     return false;
@@ -150,7 +157,11 @@ char CHolyStone::IsBeDamagedAble(CCharacter *pAtter)
     return false;
 
   float path[8]{};
-  return static_cast<char>(owner->m_pCurMap->m_Level.mBsp->CanYouGoThere(owner->m_fCurPos, m_fCurPos, reinterpret_cast<float (*)[3]>(path)));
+  return owner->m_pCurMap->m_Level.mBsp->CanYouGoThere(
+           owner->m_fCurPos,
+           m_fCurPos,
+           reinterpret_cast<float (*)[3]>(path))
+    != 0;
 }
 
 void CHolyStone::Loop()
@@ -390,10 +401,10 @@ void CHolyStone::SendMsg_FixPosition(int n)
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
-__int64 CHolyStone::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
+int CHolyStone::SetDamage(int nDam, CCharacter *pDst, int nDstLv)
 {
 if (g_HolySys.GetSceneCode() != 1)
-    return static_cast<unsigned int>(m_nHP);
+    return m_nHP;
 
   CCharacter *attacker = nullptr;
   if (pDst->m_ObjID.m_byID == 0)
@@ -402,9 +413,9 @@ if (g_HolySys.GetSceneCode() != 1)
     attacker = static_cast<CGuardTower *>(pDst)->m_pMasterTwr;
 
   if (attacker == nullptr)
-    return static_cast<unsigned int>(m_nHP);
+    return m_nHP;
   if (g_Main.IsReleaseServiceMode() && static_cast<CPlayer *>(attacker)->m_byUserDgr != 0)
-    return static_cast<unsigned int>(m_nHP);
+    return m_nHP;
 
   if (nDam > 1)
   {
@@ -415,10 +426,10 @@ if (g_HolySys.GetSceneCode() != 1)
   if (m_nHP == 0)
     Destroy(0, pDst);
 
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-__int64 CHolyStone::SetDamage(
+int CHolyStone::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -537,12 +548,12 @@ char CHolyStone::IsChangedHP(unsigned __int16 wAlterRate)
   return 1;
 }
 
-__int64 CHolyStone::GetHP()
+int CHolyStone::GetHP()
 {
-  return static_cast<unsigned int>(m_nHP);
+  return m_nHP;
 }
 
-char CHolyStone::SetHP(int nHP, bool bOver)
+bool CHolyStone::SetHP(int nHP, bool bOver)
 {
   int targetHP = nHP;
   if (targetHP < 0)

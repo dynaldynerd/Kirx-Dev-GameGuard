@@ -12,7 +12,7 @@ public:
   COreAmountMgr();
   ~COreAmountMgr();
   void Release();
-  bool LoadINI();
+  int LoadINI();
   bool IsINIFileChanged();
   bool ReLoad();
   void InitRemainOreAmount(unsigned int dwRemain, unsigned int dwInit);
@@ -33,7 +33,7 @@ public:
   void Loop();
   void LoopSubProcSendInform();
   bool CheatOreAmount(unsigned int dwTot, unsigned int dwRemain);
-  bool IsOreRemain();
+  int IsOreRemain();
 
   static COreAmountMgr *m_pInstance;
 

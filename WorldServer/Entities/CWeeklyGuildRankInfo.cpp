@@ -65,7 +65,7 @@ void CWeeklyGuildRankRecord::Clear()
   m_dGuildBattlePvpPoint = 0.0;
 }
 
-__int64 _weekly_guild_rank_result_zocl::size()
+int _weekly_guild_rank_result_zocl::size()
 {
   if (byCnt < 11u)
   {
@@ -190,7 +190,7 @@ void CWeeklyGuildRankInfo::ClearOwner()
   }
 }
 
-__int64 CWeeklyGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
+int CWeeklyGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
 {
   if (byRace >= 3 || !m_dwRecordCnt[byRace] || !m_ppkRaceStartPos[byRace])
   {
@@ -202,35 +202,36 @@ __int64 CWeeklyGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildS
   {
     if (records[j]->m_dwSerial == dwGuildSerial)
     {
-      return j;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(j);
     }
   }
 
   return -2;
 }
 
-char CWeeklyGuildRankInfo::CheckEmpty(_pvppoint_guild_rank_info *pkInfo)
+bool CWeeklyGuildRankInfo::CheckEmpty(_pvppoint_guild_rank_info *pkInfo)
 {
   char isEmpty = 1;
   for (int j = 0; j < pkInfo->wCount; ++j)
   {
     if (pkInfo->list[j].dKillPvpPoint != 0.0 && pkInfo->list[j].dGuildBattlePvpPoint != 0.0)
     {
-      return 0;
+      return false;
     }
     if (pkInfo->list[j].wRank != 1)
     {
       isEmpty = 0;
     }
   }
-  return isEmpty;
+  return (isEmpty) != 0;
 }
 
-char CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData)
+bool CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData)
 {
   if (!m_bInit || !pkInfo)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -240,17 +241,17 @@ char CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData
 
   if (!pkInfo->wCount)
   {
-    return 1;
+    return true;
   }
   if (pkInfo->wRaceCnt[3])
   {
-    return 0;
+    return false;
   }
 
   if (CheckEmpty(pkInfo))
   {
     *bNoData = true;
-    return 1;
+    return true;
   }
 
   unsigned __int16 offset = 0;
@@ -287,7 +288,7 @@ char CWeeklyGuildRankInfo::Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData
   }
 
   *bNoData = false;
-  return 1;
+  return true;
 }
 
 bool CWeeklyGuildRankInfo::LoadToday(_pvppoint_guild_rank_info *pkInfo)
@@ -300,7 +301,7 @@ bool CWeeklyGuildRankInfo::LoadPrev(_pvppoint_guild_rank_info *pkInfo)
   return Load(pkInfo, &m_NoDataPrev) != 0;
 }
 
-char CWeeklyGuildRankInfo::LoadOwner(_weeklyguildrank_owner_info *pkInfo)
+bool CWeeklyGuildRankInfo::LoadOwner(_weeklyguildrank_owner_info *pkInfo)
 {
   if (pkInfo && !pkInfo->wRaceCnt[3])
   {
@@ -328,12 +329,12 @@ char CWeeklyGuildRankInfo::LoadOwner(_weeklyguildrank_owner_info *pkInfo)
 
     CPvpUserAndGuildRankingSystem *system = CPvpUserAndGuildRankingSystem::Instance();
     system->Log("CWeeklyGuildRankInfo::LoadOwner() : Success! ");
-    return 1;
+    return true;
   }
 
   CPvpUserAndGuildRankingSystem *system = CPvpUserAndGuildRankingSystem::Instance();
   system->Log("CWeeklyGuildRankInfo::LoadOwner() : ( NULL == pkInfo || 0 < pkInfo->wRaceCnt[RACE_NUM] ) Fail!");
-  return 0;
+  return false;
 }
 
 bool CWeeklyGuildRankInfo::Update(_pvppoint_guild_rank_info *pkInfo)

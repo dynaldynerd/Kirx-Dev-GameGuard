@@ -13,9 +13,9 @@ public:
   void UpdateWinCnt(unsigned __int8 byRace);
   void UpdateRaceBossWinRate(unsigned __int8 byRace);
   void UpdateRaceBossWinRate();
-  char LoadINI();
-  char SaveINI();
-  char LoadBossCurrentWinRate();
+  bool LoadINI();
+  bool SaveINI();
+  bool LoadBossCurrentWinRate();
   bool LoadDB();
   unsigned __int8 LoadBossAccmulationWinRate(struct _qry_case_raceboss_accumulation_winrate *pData);
   void CompleteBossAccmulationWinRate(struct _qry_case_raceboss_accumulation_winrate *pData);

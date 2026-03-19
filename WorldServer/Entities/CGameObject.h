@@ -62,17 +62,17 @@ public:
   virtual float GetAttackRange();
   virtual __int64 GetAvoidRate();
   __int64 GetCurSecNum();
-  virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
+  virtual int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
   virtual float GetDefFacing(int nPart);
   virtual float GetDefGap(int nPart);
   virtual __int64 GetDefSkill(bool bBackAttackDamage);
   virtual __int64 GetFireTol();
   virtual __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
-  virtual __int64 GetHP();
+  virtual int GetHP();
   virtual __int64 GetLevel();
-  virtual __int64 GetMaxHP();
+  virtual int GetMaxHP();
   virtual char * GetObjName();
-  virtual __int64 GetObjRace();
+  virtual int GetObjRace();
   virtual __int64 GetSoilTol();
   bool GetStun();
   __int64 GetUseSectorRange();
@@ -147,20 +147,20 @@ public:
   char SetCurBspMap(CMapData *pMap);
   char SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
-  virtual __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
+  virtual int SetDamage(int nDam, CCharacter *pDst, int nDstLv);
   virtual char SetHP(int nHP, bool bOver);
   void SetMaxVersion();
   virtual void SetStun(bool bStun);
-  char UpdateSecList();
+  bool UpdateSecList();
   void _ResetCirclePlayer();
   */
   void CalcAbsPos();
   void CalcScrExtendPoint(CRect *prcWnd, CRect *prcExtend);
   void CalcScrNormalPoint(CRect *prcWnd);
-  __int64 CalcSecIndex();
-  __int64 GetUseSectorRange();
-  char Create(_object_create_setdata *pData);
-  char Destroy();
+  unsigned int CalcSecIndex();
+  int GetUseSectorRange();
+  bool Create(_object_create_setdata *pData);
+  bool Destroy();
   void CircleReport(unsigned __int8 *pbyType, char *szMsg, unsigned __int16 nMsgSize, bool bToOne);
   void CircleReport(
     unsigned __int8 *pbyType,
@@ -172,46 +172,46 @@ public:
   void OnLoop();
   virtual bool IsAttackableInTown();
   virtual void AlterSec();
-  virtual __int64 AttackableHeight();
+  virtual int AttackableHeight();
   virtual void BeTargeted(CCharacter *pSeacher);
-  virtual char IsRecvableContEffect();
+  virtual bool IsRecvableContEffect();
   virtual bool IsRewardExp();
   virtual bool Is_Battle_Mode();
   virtual void Loop();
   virtual void OutOfSec();
   virtual void RecvKillMessage(CCharacter *pDier);
-  __int64 CalcCirclePlayerNum(int nRange);
+  int CalcCirclePlayerNum(int nRange);
   char IsCircleObject(int nRange, CGameObject *pObject);
   virtual unsigned __int16 CalcCurHPRate();
-  __int64 RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
+  unsigned int RerangeSecIndex(unsigned int dwOld, unsigned int dwNew);
   void ResetSector(unsigned int dwOldSec, unsigned int dwNewSec);
   virtual bool IsInTown();
-  __int64 GetCurSecNum();
-  virtual __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
+  unsigned int GetCurSecNum();
+  virtual int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart);
   virtual float GetDefFacing(int nPart);
   virtual float GetDefGap(int nPart);
-  virtual __int64 GetDefSkill(bool bBackAttackDamage);
-  virtual __int64 GetFireTol();
-  virtual __int64 GetSoilTol();
-  virtual __int64 GetWaterTol();
-  virtual __int64 GetWindTol();
+  virtual int GetDefSkill(bool bBackAttackDamage);
+  virtual int GetFireTol();
+  virtual int GetSoilTol();
+  virtual int GetWaterTol();
+  virtual int GetWindTol();
   virtual float GetWeaponAdjust();
   virtual char *GetObjName();
-  virtual __int64 GetObjRace();
+  virtual int GetObjRace();
   virtual bool IsBeAttackedAble(bool bFirst);
-  virtual char IsBeDamagedAble(CCharacter *pAtter);
+  virtual bool IsBeDamagedAble(CCharacter *pAtter);
   virtual bool RobbedHP(CCharacter *pDst, int nDecHP);
   virtual bool FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond);
-  virtual __int64 GetAttackDP();
-  virtual __int64 GetAttackLevel();
+  virtual int GetAttackDP();
+  virtual int GetAttackLevel();
   virtual float GetAttackRange();
-  virtual __int64 GetAvoidRate();
-  virtual __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
-  virtual __int64 GetWeaponClass();
+  virtual int GetAvoidRate();
+  virtual int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
+  virtual int GetWeaponClass();
   virtual float GetWidth();
-  virtual __int64 GetHP();
-  virtual __int64 GetLevel();
-  virtual __int64 GetMaxHP();
+  virtual int GetHP();
+  virtual int GetLevel();
+  virtual int GetMaxHP();
   virtual void SendMsg_FixPosition(int n);
   virtual void SendMsg_RealFixPosition(bool bCircle);
   virtual void SendMsg_RealMovePoint(int n);
@@ -219,7 +219,7 @@ public:
   virtual void SendMsg_StunInform();
   virtual void SetAttackPart(int nAttactPart);
   virtual void SetStun(bool bStun);
-  virtual __int64 SetDamage(
+  virtual int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -228,9 +228,9 @@ public:
     unsigned int dwAttackSerial,
     bool bJadeReturn);
   void SetBreakTranspar(bool bBreak);
-  char SetCurPos(float *pPos);
+  bool SetCurPos(float *pPos);
   void SetCurSecNum(unsigned int dwNewSecNum);
-  char UpdateSecList();
+  bool UpdateSecList();
   virtual void SFContDelMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bSend, bool bAura = false);
   virtual void SFContInsertMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, bool bAura);
   virtual void SFContUpdateTimeMessage(unsigned __int8 byContCode, unsigned __int8 byListIndex, int nLeftTime);
@@ -267,7 +267,7 @@ public:
   virtual bool SF_TeleportToDestination(CCharacter *pDstObj, bool bStone);
   virtual bool SF_TransDestHP(CCharacter *pDstObj, float fEffectValue, unsigned __int8 *byRet);
   virtual bool SF_TransMonsterHP(CCharacter *pDstObj, float fEffectValue);
-  virtual char SetHP(int nHP, bool bOver);
+  virtual bool SetHP(int nHP, bool bOver);
   void SetMaxVersion();
   void _ResetCirclePlayer();
   void SendMsg_BreakStop();

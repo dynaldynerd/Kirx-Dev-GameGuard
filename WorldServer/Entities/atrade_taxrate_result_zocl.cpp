@@ -2,7 +2,8 @@
 
 #include "atrade_taxrate_result_zocl.h"
 
-__int64 _atrade_taxrate_result_zocl::size()
+int _atrade_taxrate_result_zocl::size()
 {
-  return 26LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(26LL);
 }

@@ -2,7 +2,8 @@
 
 #include "npclink_check_item_result_zocl.h"
 
-__int64 _npclink_check_item_result_zocl::size() const
+int _npclink_check_item_result_zocl::size() const
 {
-  return 5LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(5LL);
 }

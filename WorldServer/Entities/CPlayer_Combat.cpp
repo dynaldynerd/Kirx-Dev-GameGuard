@@ -3055,18 +3055,20 @@ float CPlayer::CalcDPRate()
   return dpRate;
 }
 
-__int64 CPlayer::GetAvoidRate()
+int CPlayer::GetAvoidRate()
 {
   if (m_fTalik_AvoidPoint <= 0.0f)
   {
-    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE)));
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE))));
   }
 
   const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - CalcDPRate()));
-  return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE) - static_cast<float>(talikPenalty)));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE) - static_cast<float>(talikPenalty))));
 }
 
-__int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
   m_nLastBeatenPart = nAttactPart;
 
@@ -3244,7 +3246,8 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
     }
   }
 
-  return static_cast<unsigned int>(static_cast<int>(defenseValue));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(defenseValue));
 }
 
 float CPlayer::GetDefFacing(int nPart)
@@ -3317,11 +3320,12 @@ float CPlayer::GetDefGap(int nPart)
   return record->m_fDefGap;
 }
 
-__int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
+int CPlayer::GetDefSkill(bool bBackAttackDamage)
 {
 if (!IsRidingUnit())
   {
-    return m_pmMst.GetMasteryPerMast(1u, 0u);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_pmMst.GetMasteryPerMast(1u, 0u));
   }
 
   int totalDefSkill = 0;
@@ -3337,10 +3341,11 @@ if (!IsRidingUnit())
     totalDefSkill += rightPart->m_nDefMastery;
   }
 
-  return static_cast<unsigned int>(totalDefSkill);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(totalDefSkill));
 }
 
-__int64 CPlayer::GetFireTol()
+int CPlayer::GetFireTol()
 {
   const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(EFF_PLUS_FIRE_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_FIRE_TOLERANCE));
@@ -3349,7 +3354,8 @@ __int64 CPlayer::GetFireTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
 char *CPlayer::GetObjName()
@@ -3367,12 +3373,13 @@ char *CPlayer::GetObjName()
   return s_playerObjectName;
 }
 
-__int64 CPlayer::GetObjRace()
+int CPlayer::GetObjRace()
 {
-  return static_cast<unsigned int>(m_Param.GetRaceCode());
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(m_Param.GetRaceCode()));
 }
 
-__int64 CPlayer::GetSoilTol()
+int CPlayer::GetSoilTol()
 {
   const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(EFF_PLUS_SOIL_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_SOIL_TOLERANCE));
@@ -3381,10 +3388,11 @@ __int64 CPlayer::GetSoilTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
-__int64 CPlayer::GetWaterTol()
+int CPlayer::GetWaterTol()
 {
   const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(EFF_PLUS_WATER_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WATER_TOLERANCE));
@@ -3393,7 +3401,8 @@ __int64 CPlayer::GetWaterTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
 float CPlayer::GetWeaponAdjust()
@@ -3422,9 +3431,10 @@ float CPlayer::GetWeaponAdjust()
   return weaponRecord->m_fAttGap;
 }
 
-__int64 CPlayer::GetWeaponClass()
+int CPlayer::GetWeaponClass()
 {
-  return m_pmWpn.byWpClass;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pmWpn.byWpClass);
 }
 
 float CPlayer::GetWidth()
@@ -3432,7 +3442,7 @@ float CPlayer::GetWidth()
   return static_cast<_player_fld *>(m_pRecordSet)->m_fWidth;
 }
 
-__int64 CPlayer::GetWindTol()
+int CPlayer::GetWindTol()
 {
   const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(EFF_PLUS_WIND_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WIND_TOLERANCE));
@@ -3441,49 +3451,50 @@ __int64 CPlayer::GetWindTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
-char CPlayer::IsBeDamagedAble(CCharacter *pAtter)
+bool CPlayer::IsBeDamagedAble(CCharacter *pAtter)
 {
   if (!pAtter)
   {
-    return 0;
+    return false;
   }
 
   if (pAtter->m_ObjID.m_byID != 0)
   {
-    return 1;
+    return true;
   }
 
   CPlayer *attacker = static_cast<CPlayer *>(pAtter);
   if (!attacker->m_bInGuildBattle && m_bInGuildBattle)
   {
-    return 0;
+    return false;
   }
   if (attacker->m_bInGuildBattle && !m_bInGuildBattle)
   {
-    return 0;
+    return false;
   }
   if (!attacker->m_bInGuildBattle && !m_bInGuildBattle)
   {
-    return 1;
+    return true;
   }
 
-  return attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx;
+  return (attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx) != 0;
 }
 
-char CPlayer::IsRecvableContEffect()
+bool CPlayer::IsRecvableContEffect()
 {
   if (IsRidingUnit())
   {
-    return 0;
+    return false;
   }
   if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
-    return 0;
+    return false;
   }
-  return m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE) ? 0 : 1;
+  return (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE) ? 0 : 1) != 0;
 }
 
 bool CPlayer::Is_Battle_Mode()

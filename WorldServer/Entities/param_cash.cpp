@@ -28,12 +28,12 @@ _param_cash_select::~_param_cash_select()
   // this is not a stub
 }
 
-__int64 _param_cash_select::size()
+int _param_cash_select::size()
 {
   return 44;
 }
 
-__int64 _param_cash_total_selling::size()
+int _param_cash_total_selling::size()
 {
   return 4;
 }
@@ -59,9 +59,10 @@ _param_cash_update::~_param_cash_update()
   // this is not a stub
 }
 
-__int64 _param_cash_update::size()
+int _param_cash_update::size()
 {
-  return 1392 - (static_cast<__int64>(20 - in_nNum10) << 6);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1392 - (static_cast<__int64>(20 - in_nNum10) << 6));
 }
 
 _param_cash_rollback::_param_cash_rollback(unsigned int dwAc, unsigned int dwAv, unsigned __int16 wSock)
@@ -75,9 +76,10 @@ _param_cash_rollback::~_param_cash_rollback()
   // this is not a stub
 }
 
-__int64 _param_cash_rollback::size()
+int _param_cash_rollback::size()
 {
-  return 1072 - 48LL * (20 - in_byNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1072 - 48LL * (20 - in_byNum));
 }
 
 _param_cashitem_dblog::_param_cashitem_dblog(unsigned int dwAv)
@@ -92,7 +94,8 @@ _param_cashitem_dblog::~_param_cashitem_dblog()
   // this is not a stub
 }
 
-__int64 _param_cashitem_dblog::size()
+int _param_cashitem_dblog::size()
 {
-  return 356 - 16LL * (20 - nBuyNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(356 - 16LL * (20 - nBuyNum));
 }

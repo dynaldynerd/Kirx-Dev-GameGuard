@@ -37,7 +37,7 @@ void CObjectSearchDlg::DoDataExchange(CDataExchange *pDX)
   DDX_Text(pDX, 1038, m_edStrCharName);
 }
 
-BOOL CObjectSearchDlg::OnInitDialog()
+int CObjectSearchDlg::OnInitDialog()
 {
   CDialog::OnInitDialog();
 
@@ -61,7 +61,7 @@ BOOL CObjectSearchDlg::OnInitDialog()
 
   m_szCharName[0] = '\0';
   UpdateData(FALSE);
-  return TRUE;
+  return 1;
 }
 
 void CObjectSearchDlg::OnSelchangeCOMBOObjectKind()

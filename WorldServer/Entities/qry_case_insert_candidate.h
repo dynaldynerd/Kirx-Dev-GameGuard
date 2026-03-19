@@ -17,7 +17,7 @@ struct  _qry_case_insert_candidate
   {
   }
 
-  unsigned int size() const
+  int size() const
   {
     return 12;
   }

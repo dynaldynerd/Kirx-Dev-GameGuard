@@ -15,7 +15,7 @@ public:
   CGameServerDoc();
   ~CGameServerDoc() override;
 
-  BOOL OnNewDocument() override;
+  int OnNewDocument() override;
   void Serialize(CArchive &ar) override;
 
   void CreateDisplayView(CWnd *pWnd);

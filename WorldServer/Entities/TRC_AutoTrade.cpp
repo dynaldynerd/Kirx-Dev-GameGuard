@@ -90,7 +90,7 @@ bool TRC_AutoTrade::Initialzie()
   return true;
 }
 
-__int64 TRC_AutoTrade::check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial)
+int TRC_AutoTrade::check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial)
 {
   if (!IsOwnerGuild(dwGuildSerial))
   {
@@ -173,11 +173,11 @@ void TRC_AutoTrade::set_suggested(
   this->PushDQSData();
 }
 
-void TRC_AutoTrade::ChangeTaxRate()
+int TRC_AutoTrade::ChangeTaxRate()
 {
   if (!m_bInit)
   {
-    return;
+    return 0;
   }
 
   _SYSTEMTIME systemTime{};
@@ -208,7 +208,7 @@ void TRC_AutoTrade::ChangeTaxRate()
   }
 }
 
-__int64 TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)
+int TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)
 {
   if (!m_Controller.checkLimitTaxRate(fNewTaxRate))
   {
@@ -441,7 +441,7 @@ void TRC_AutoTrade::set_owner(CGuild *pGuild)
   m_pOwnerGuild = pGuild;
 }
 
-char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
+bool TRC_AutoTrade::_db_load(unsigned __int8 byRace)
 {
   unsigned __int8 byCurrTax[32]{};
   unsigned __int8 byNextTax[36]{};
@@ -450,7 +450,7 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
   const int result = g_Main.m_pWorldDB->select_atrade_taxrate(byRace, pwszName, byCurrTax, byNextTax);
   if (result == 1)
   {
-    return 0;
+    return false;
   }
 
   if (byCurrTax[0] < 5u || byCurrTax[0] > 20)
@@ -472,7 +472,7 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
   std::strcpy(m_suggested.wszMatterDst, pwszName);
   g_Main.m_kEtcNotifyInfo.UpdateTaxRate(byRace, byCurrTax[0]);
   m_bInit = true;
-  return 1;
+  return true;
 }
 
 unsigned __int8 TRC_AutoTrade::_insert_info(char *pdata)

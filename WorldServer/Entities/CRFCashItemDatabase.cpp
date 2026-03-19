@@ -16,7 +16,7 @@ CRFCashItemDatabase::CRFCashItemDatabase()
 
 CRFCashItemDatabase::~CRFCashItemDatabase() = default;
 
-unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *rParam)
+int CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *rParam)
 {
   char buffer[280]{};
   sprintf_s(
@@ -67,7 +67,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *r
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -85,7 +86,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *r
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -102,7 +104,7 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAuth(_param_cash_select *r
   return 1;
 }
 
-unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rParam, int nIdx)
+int CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rParam, int nIdx)
 {
   char wszQuery[5124]{};
   auto *workMgr = CTSingleton<CCashDBWorkManager>::Instance();
@@ -159,7 +161,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rP
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return result;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(result);
         }
 
         unsigned __int8 result = 0;
@@ -177,7 +180,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rP
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -195,7 +199,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rP
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -212,7 +217,7 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineUse(_param_cash_update *rP
   return 1;
 }
 
-unsigned __int8 CRFCashItemDatabase::CallProc_RFONLINE_Cancel(_param_cash_rollback::__list *list)
+int CRFCashItemDatabase::CallProc_RFONLINE_Cancel(_param_cash_rollback::__list *list)
 {
   char buffer[280]{};
   sprintf_s(
@@ -267,7 +272,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFONLINE_Cancel(_param_cash_rollba
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return result;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(result);
         }
 
         unsigned __int8 result = 0;
@@ -285,7 +291,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFONLINE_Cancel(_param_cash_rollba
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -303,7 +310,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFONLINE_Cancel(_param_cash_rollba
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -350,7 +358,7 @@ bool CRFCashItemDatabase::CallProc_InsertCashItemLog(
   return ExecUpdateQuery(buffer, true);
 }
 
-unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAvg_Event(unsigned int *iAvgCashSelling)
+int CRFCashItemDatabase::CallProc_RFOnlineAvg_Event(unsigned int *iAvgCashSelling)
 {
   char buffer[256]{};
   sprintf_s(
@@ -360,13 +368,15 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAvg_Event(unsigned int *iA
   unsigned __int8 result = SQLExecDirect_RetErrCode(buffer);
   if (result)
   {
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   result = SQLFetch_RetErrCode(buffer);
   if (result)
   {
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   unsigned __int16 columnNumber[14]{};
@@ -374,7 +384,8 @@ unsigned __int8 CRFCashItemDatabase::CallProc_RFOnlineAvg_Event(unsigned int *iA
   result = SQLGetData_RetErrCode(buffer, columnNumber, SQL_C_ULONG, iAvgCashSelling);
   if (result)
   {
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   SelectCleanUp(buffer);

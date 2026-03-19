@@ -118,7 +118,7 @@ void SKILL::Init(
   m_BefTime = 0;
 }
 
-__int64 SKILL::GetDmg(float fDamRate)
+int SKILL::GetDmg(float fDamRate)
 {
   int stdDmg = static_cast<int>(static_cast<float>(m_StdDmg) * fDamRate);
   const int minStdDmg = static_cast<int>(static_cast<float>(stdDmg) * 0.89999998f);
@@ -142,15 +142,18 @@ __int64 SKILL::GetDmg(float fDamRate)
   const float roll = static_cast<float>(rand() % 100);
   if (static_cast<float>(m_MinProb) >= roll)
   {
-    return static_cast<unsigned int>(static_cast<int>(static_cast<float>(minDmg) + static_cast<float>(rand() % (stdDmg - minDmg))));
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(static_cast<int>(static_cast<float>(minDmg) + static_cast<float>(rand() % (stdDmg - minDmg)))));
   }
   if (static_cast<float>(m_MinProb + m_MaxProb) >= roll)
   {
-    return static_cast<unsigned int>(static_cast<int>(static_cast<float>(stdDmg) + static_cast<float>(rand() % (maxDmg - stdDmg))));
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(static_cast<int>(static_cast<float>(stdDmg) + static_cast<float>(rand() % (maxDmg - stdDmg)))));
   }
 
   m_IsCritical = 1;
-  return static_cast<unsigned int>(criticalDmg);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(criticalDmg));
 }
 
 CAttack::CAttack(CCharacter *pThis)
@@ -658,7 +661,7 @@ float CAttack::GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear
   return value * pPlayer->m_EP.GetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK);
 }
 
-__int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
+int CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
 {
   const int recordCount = static_cast<int>(s_pSkillData->GetRecordNum());
   for (int index = 0; index < recordCount; ++index)
@@ -669,23 +672,22 @@ __int64 CAttack::GetMeleeSkillIndex(int nMeleeTechCode)
       return index;
     }
   }
-  return -1LL;
+  return -1;
 }
 
-__int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
+int CAttack::_CalcGenAttPnt(bool bUseEffBullet)
 {
-  unsigned int maxAttack = 0;
+  int maxAttack = 0;
   int midAttack = 0;
   if (bUseEffBullet)
   {
-    maxAttack = static_cast<unsigned int>(
-      static_cast<int>(((m_pp->nMaxAFPlus * (m_pp->nMaxAFPlus + 125.0f)) / (m_pp->nMaxAFPlus + 50.0f)) + 0.5f));
+    maxAttack = static_cast<int>(
+      ((m_pp->nMaxAFPlus * (m_pp->nMaxAFPlus + 125.0f)) / (m_pp->nMaxAFPlus + 50.0f)) + 0.5f);
     midAttack = static_cast<int>(((m_pp->nMaxAFPlus + m_pp->nMinAFPlus) / 2.0f) + 0.5f);
   }
   else
   {
-    maxAttack = static_cast<unsigned int>(
-      static_cast<int>(((m_pp->nMaxAF * (m_pp->nMaxAF + 125.0f)) / (m_pp->nMaxAF + 50.0f)) + 0.5f));
+    maxAttack = static_cast<int>(((m_pp->nMaxAF * (m_pp->nMaxAF + 125.0f)) / (m_pp->nMaxAF + 50.0f)) + 0.5f);
     midAttack = static_cast<int>(((m_pp->nMaxAF + m_pp->nMinAF) / 2.0f) + 0.5f);
   }
 
@@ -752,41 +754,41 @@ __int64 CAttack::_CalcGenAttPnt(bool bUseEffBullet)
     {
       if ((midAttack - m_pp->nMinAFPlus) <= 0)
       {
-        return static_cast<unsigned int>(m_pp->nMinAFPlus);
+        return m_pp->nMinAFPlus;
       }
-      return static_cast<unsigned int>(m_pp->nMinAFPlus + rand() % (midAttack - m_pp->nMinAFPlus));
+      return m_pp->nMinAFPlus + rand() % (midAttack - m_pp->nMinAFPlus);
     }
 
     if ((midAttack - m_pp->nMinAF) <= 0)
     {
-      return static_cast<unsigned int>(m_pp->nMinAF);
+      return m_pp->nMinAF;
     }
-    return static_cast<unsigned int>(m_pp->nMinAF + rand() % (midAttack - m_pp->nMinAF));
+    return m_pp->nMinAF + rand() % (midAttack - m_pp->nMinAF);
   }
 
   if (bUseEffBullet)
   {
-    return static_cast<unsigned int>(m_pp->nMinAFPlus);
+    return m_pp->nMinAFPlus;
   }
-  return static_cast<unsigned int>(m_pp->nMinAF);
+  return m_pp->nMinAF;
 }
 
-__int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
+int CAttack::_CalcForceAttPnt(bool bUseEffBullet)
 {
   _force_fld *skillField = reinterpret_cast<_force_fld *>(m_pp->pFld);
   const float levelFactor = static_cast<float>(m_pp->nLevel) + ((7.0f - static_cast<float>(m_pp->nLevel)) * 0.5f);
   const float skillConst = skillField->m_fAttFormulaConstant;
 
-  unsigned int minAttack = 0;
+  int minAttack = 0;
   int maxAttack = 0;
   if (bUseEffBullet)
   {
-    minAttack = static_cast<unsigned int>(static_cast<int>(
+    minAttack = static_cast<int>(
       ((m_pp->nMinAFPlus
         * (fR_0 + ((levelFactor / 7.0f) * fRLf_0)
            + ((static_cast<float>(m_pp->nMastery) / 99.0f) * fRMf_0)))
        * skillConst)
-      + 0.5f));
+      + 0.5f);
     maxAttack = static_cast<int>(
       ((m_pp->nMaxAFPlus
         * (fR_0 + ((levelFactor / 7.0f) * fRLf_0)
@@ -796,12 +798,12 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
   }
   else
   {
-    minAttack = static_cast<unsigned int>(static_cast<int>(
+    minAttack = static_cast<int>(
       ((m_pp->nMinAF
         * (fR_0 + ((levelFactor / 7.0f) * fRLf_0)
            + ((static_cast<float>(m_pp->nMastery) / 99.0f) * fRMf_0)))
        * skillConst)
-      + 0.5f));
+      + 0.5f);
     maxAttack = static_cast<int>(
       ((m_pp->nMaxAF
         * (fR_0 + ((levelFactor / 7.0f) * fRLf_0)
@@ -810,8 +812,8 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
       + 0.5f);
   }
 
-  const unsigned int criticalAttack = static_cast<unsigned int>(
-    static_cast<int>((static_cast<double>((maxAttack + 125) / (maxAttack + 50) * maxAttack)) + 0.5));
+  const int criticalAttack = static_cast<int>(
+    (static_cast<double>((maxAttack + 125) / (maxAttack + 50) * maxAttack)) + 0.5);
 
   if (m_pp->nMaxAttackPnt > 0)
   {
@@ -822,8 +824,7 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
     return minAttack;
   }
 
-  const unsigned int midAttack = static_cast<unsigned int>(
-    static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f)));
+  const int midAttack = static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f));
 
   const int randValue = m_pAttChar->m_rtPer100.GetRand();
   int minSel = static_cast<int>(static_cast<float>(m_pp->nMinSel) - m_pAttChar->m_EP.GetEff_Plus(EFF_PLUS_CRITICAL_RATE));
@@ -856,21 +857,21 @@ __int64 CAttack::_CalcForceAttPnt(bool bUseEffBullet)
       m_bIsCrtAtt = true;
       return criticalAttack;
     }
-    if ((maxAttack - static_cast<int>(midAttack)) <= 0)
+    if ((maxAttack - midAttack) <= 0)
     {
       return midAttack;
     }
-    return rand() % (maxAttack - static_cast<int>(midAttack)) + midAttack;
+    return rand() % (maxAttack - midAttack) + midAttack;
   }
 
-  if ((static_cast<int>(midAttack) - static_cast<int>(minAttack)) <= 0)
+  if ((midAttack - minAttack) <= 0)
   {
     return minAttack;
   }
-  return rand() % (static_cast<int>(midAttack) - static_cast<int>(minAttack)) + minAttack;
+  return rand() % (midAttack - minAttack) + minAttack;
 }
 
-__int64 CAttack::MonsterCritical_Exception_Rate(CMonster *pCharacter, bool bBackAttack)
+int CAttack::MonsterCritical_Exception_Rate(CMonster *pCharacter, bool bBackAttack)
 {
   if (!pCharacter || pCharacter->m_ObjID.m_byID != 1)
   {
@@ -887,7 +888,7 @@ __int64 CAttack::MonsterCritical_Exception_Rate(CMonster *pCharacter, bool bBack
       criticalRate = 0.0f;
     }
   }
-  return static_cast<unsigned int>(static_cast<int>(criticalRate));
+  return static_cast<int>(criticalRate);
 }
 
 void CAttack::CalcAvgDamage()
@@ -1540,15 +1541,15 @@ bool CAttack::CheckGuildBattleLimit(CGameObject *pObject, bool *pbInGuildBattle)
   return attacker->m_byGuildBattleColorInx == targetPlayerChar->m_byGuildBattleColorInx;
 }
 
-bool CAttack::IsCharInSector(float *chkpos, float *src, float *dest, float angle, float radius)
+int CAttack::IsCharInSector(float *chkpos, float *src, float *dest, float angle, float radius)
 {
   if (*src == *dest && src[2] == dest[2])
   {
-    return false;
+    return 0;
   }
   if (*chkpos == *dest && chkpos[2] == dest[2])
   {
-    return true;
+    return 1;
   }
 
   float dirToCheck[3] = {
@@ -1561,7 +1562,7 @@ bool CAttack::IsCharInSector(float *chkpos, float *src, float *dest, float angle
     std::sqrt((dirToCheck[0] * dirToCheck[0]) + (dirToCheck[1] * dirToCheck[1]) + (dirToCheck[2] * dirToCheck[2]));
   if (distance > radius)
   {
-    return false;
+    return 0;
   }
 
   float dirToDest[3] = {
@@ -1576,6 +1577,6 @@ bool CAttack::IsCharInSector(float *chkpos, float *src, float *dest, float angle
   const float angleDiff = std::acos((dirToCheck[0] * dirToDest[0]) + (dirToCheck[1] * dirToDest[1])
                                     + (dirToCheck[2] * dirToDest[2]))
     * 360.0f / 6.283184051513672f;
-  return (angle / 2.0f) > angleDiff;
+  return (angle / 2.0f) > angleDiff ? 1 : 0;
 }
 

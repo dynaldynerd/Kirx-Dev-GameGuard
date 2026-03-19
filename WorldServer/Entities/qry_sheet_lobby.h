@@ -15,14 +15,15 @@ struct  _qry_sheet_lobby
 
   _qry_sheet_lobby();
   ~_qry_sheet_lobby();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
 inline _qry_sheet_lobby::_qry_sheet_lobby() = default;
 inline _qry_sheet_lobby::~_qry_sheet_lobby() = default;
 
-inline __int64 _qry_sheet_lobby::size() const
+inline int _qry_sheet_lobby::size() const
 {
-  return 74440LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(74440LL);
 }

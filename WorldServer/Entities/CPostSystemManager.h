@@ -27,9 +27,9 @@ public:
   void Loop();
   bool Load();
   bool InitLogger();
-  char UpdateDisappearOwnerRecord();
-  char InsertDefaultPSRecord();
-  char PostRegistryLoad();
+  bool UpdateDisappearOwnerRecord();
+  bool InsertDefaultPSRecord();
+  bool PostRegistryLoad();
   unsigned __int8 UpdateRegist(_qry_case_post_list_regi *pData);
   unsigned __int8 PostSend(_qry_case_post_send *pData);
   unsigned __int8 PostReceiverCheck(_qry_case_post_serial_check *pData);
@@ -38,7 +38,7 @@ public:
     _STORAGE_POS_INDIV *pItemInfo,
     unsigned int dwGold,
     _STORAGE_LIST::_db_con **pItem);
-  char PostSendRequest(
+  bool PostSendRequest(
     CPlayer *pOne,
     char *wszRecvName,
     char *wszTitle,

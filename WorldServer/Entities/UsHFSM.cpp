@@ -584,7 +584,7 @@ void SF_Timer::Set(unsigned int dwTimeDelay)
   m_dwLastCheckTime = 0;
 }
 
-bool SF_Timer::CheckTime(unsigned int dwLoopTime)
+int SF_Timer::CheckTime(unsigned int dwLoopTime)
 {
   if (m_dwGapCheckTime > dwLoopTime - m_dwLastCheckTime)
   {

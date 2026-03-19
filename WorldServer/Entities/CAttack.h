@@ -53,11 +53,11 @@ public:
   void AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBullet);
   void AttackForce(_attack_param *pParam, bool bUseEffBullet);
   float GetAttackFC(CPlayer *pPlayer, unsigned __int8 bySkill, bool bNear, bool bUnit);
-  static __int64 GetMeleeSkillIndex(int nMeleeTechCode);
+  static int GetMeleeSkillIndex(int nMeleeTechCode);
 
-  __int64 _CalcGenAttPnt(bool bUseEffBullet);
-  __int64 _CalcForceAttPnt(bool bUseEffBullet);
-  __int64 MonsterCritical_Exception_Rate(CMonster *pCharacter, bool bBackAttack);
+  int _CalcGenAttPnt(bool bUseEffBullet);
+  int _CalcForceAttPnt(bool bUseEffBullet);
+  int MonsterCritical_Exception_Rate(CMonster *pCharacter, bool bBackAttack);
   void CalcAvgDamage();
   void FlashDamageProc(
     int nLimDist,
@@ -80,7 +80,7 @@ public:
     int nEffAttPower,
     bool bUseEffBullet);
   bool CheckGuildBattleLimit(CGameObject *pObject, bool *pbInGuildBattle);
-  static bool IsCharInSector(float *chkpos, float *src, float *dest, float angle, float radius);
+  static int IsCharInSector(float *chkpos, float *src, float *dest, float angle, float radius);
 };
 
 extern float fR;

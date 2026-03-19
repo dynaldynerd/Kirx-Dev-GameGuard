@@ -8,6 +8,6 @@ struct  _server_notify_inform_zone
   unsigned __int16 wMsgCode;
   unsigned int dwPushIP;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)

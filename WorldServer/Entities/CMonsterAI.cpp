@@ -26,9 +26,9 @@ void CMonsterAI::Init()
   m_nCurPathFindFailCount = 0;
 }
 
-bool CMonsterAI::SetMyData(UsStateTBL *pStateTBL, void *pObject)
+int CMonsterAI::SetMyData(UsStateTBL *pStateTBL, void *pObject)
 {
-  return Us_HFSM::SetMyData(pStateTBL, pObject) != 0;
+  return Us_HFSM::SetMyData(pStateTBL, pObject);
 }
 
 SF_Timer *CMonsterAI::GetTimer(unsigned int nIndex)

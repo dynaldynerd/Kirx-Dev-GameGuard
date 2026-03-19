@@ -25,8 +25,8 @@ public:
     CMapData *pMap,
     unsigned __int16 *wMapLayer,
     unsigned __int8 *byRoomType);
-  char GetRestTime(unsigned int dwGuildSerial, int *tt);
-  __int64 GetRoomCountByType(unsigned __int8 byRace, unsigned __int8 byRoomType);
+  bool GetRestTime(unsigned int dwGuildSerial, int *tt);
+  int GetRoomCountByType(unsigned __int8 byRace, unsigned __int8 byRoomType);
   unsigned __int8 GetRoomType(unsigned int dwGuildSerial);
   char IsGuildRoomMemberIn(unsigned int dwGuildSerial, int n, unsigned int dwCharSerial);
   char IsRoomRented(unsigned int dwGuildSerial);

@@ -18,21 +18,21 @@ public:
   ~CGuildRanking();
 
   bool Init();
-  char Load();
-  char UpdateRankAndGrade();
-  char CheckAndCreateTodayGuildRankTable(char *szDate);
-  char LoadAllGuildData(struct _worlddb_guild_info *pkInfo);
-  char SetLoadAllGuildInfo(struct _worlddb_guild_info *pkInfo);
-  char LoadMemberInfo(
+  bool Load();
+  bool UpdateRankAndGrade();
+  bool CheckAndCreateTodayGuildRankTable(char *szDate);
+  bool LoadAllGuildData(struct _worlddb_guild_info *pkInfo);
+  bool SetLoadAllGuildInfo(struct _worlddb_guild_info *pkInfo);
+  bool LoadMemberInfo(
     unsigned int dwMasterSerial,
     unsigned int dwGuildSerial,
     struct _guild_member_info *pkMemberInfo,
     unsigned __int16 *pwMemberCnt);
-  char LoadGuildMoneyIOInfo(
+  bool LoadGuildMoneyIOInfo(
     unsigned int dwGuildSerial,
     struct _io_money_data *pkIOInfo,
     int *pnIOMonHisNum);
-  char CheckGuildCheckSum(
+  bool CheckGuildCheckSum(
     unsigned int dwSerial,
     char *wszGuildName,
     long double *dDalant,
@@ -48,7 +48,7 @@ public:
   void ClearApplyRankInGuildJobOffset();
   void ClearGuildSerial();
   void ClearGuildGrade();
-  unsigned int GetRankInGuildJobOffset();
+  int GetRankInGuildJobOffset();
   void ClearRefreshData();
   unsigned int GetNextGuildSerial();
 

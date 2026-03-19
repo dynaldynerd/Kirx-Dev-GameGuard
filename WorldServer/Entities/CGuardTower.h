@@ -34,35 +34,35 @@ public:
   CGuardTower();
   ~CGuardTower();
 
-  __int64 AttackableHeight();
-  __int64 GetAttackDP() override;
+  int AttackableHeight();
+  int GetAttackDP() override;
   float GetAttackRange() override;
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetDefSkill(bool bBackAttackDamage) override;
-  __int64 GetFireTol() override;
-  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
-  __int64 GetHP() override;
-  __int64 GetLevel() override;
-  __int64 GetMaxHP() override;
+  int GetDefSkill(bool bBackAttackDamage) override;
+  int GetFireTol() override;
+  int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
+  int GetHP() override;
+  int GetLevel() override;
+  int GetMaxHP() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
+  int GetObjRace() override;
+  int GetSoilTol() override;
+  int GetWaterTol() override;
   float GetWeaponAdjust() override;
-  __int64 GetWeaponClass() override;
+  int GetWeaponClass() override;
   float GetWidth() override;
-  __int64 GetWindTol() override;
+  int GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
-  char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool IsBeDamagedAble(CCharacter *pAtter) override;
   bool IsInTown();
   bool RobbedHP(CCharacter *pDst, int nDecHP) override;
   void Loop() override;
   void OutOfSec() override;
   void RecvKillMessage(CCharacter *pDier) override;
   void SendMsg_FixPosition(int n) override;
-  __int64 SetDamage(
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -92,7 +92,7 @@ public:
   unsigned int m_dwLastDestroyTime;
 
   bool Create(_tower_create_setdata *pData);
-  void Init(_object_id *pID);
+  bool Init(_object_id *pID);
   bool Destroy(unsigned __int8 byDesType, bool bSystemBack);
   void SendMsg_Destroy(unsigned __int8 byDesType);
   void SendMsg_Create();
@@ -103,8 +103,8 @@ public:
   CCharacter *SearchNearEnemy();
   void Attack(CCharacter *pTarget);
   static void OnLoop_Static();
-  static char IsHaveEmpty();
-  static __int64 GetNewSerial();
+  static bool IsHaveEmpty();
+  static unsigned int GetNewSerial();
 };
 
 CGuardTower *CreateSystemTower(

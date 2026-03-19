@@ -9,7 +9,7 @@
 #include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
-__int64 _total_guild_rank_result_zocl::size()
+int _total_guild_rank_result_zocl::size()
 {
   if (byCnt < 11)
   {
@@ -57,7 +57,7 @@ CTotalGuildRankInfo::~CTotalGuildRankInfo()
   }
 }
 
-__int64 CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
+int CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
 {
   if (byRace >= 3 || !m_dwRecordCnt[byRace] || !m_ppkRaceStartPos[byRace])
   {
@@ -69,26 +69,27 @@ __int64 CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSe
   {
     if (records[j]->m_dwSerial == dwGuildSerial)
     {
-      return j;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(j);
     }
   }
 
   return -2;
 }
 
-char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
+bool CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
 {
   if (!m_bInit || !pkInfo)
   {
-    return 0;
+    return false;
   }
   if (!pkInfo->wCount)
   {
-    return 1;
+    return true;
   }
   if (pkInfo->wRaceCnt[3])
   {
-    return 0;
+    return false;
   }
 
   unsigned __int16 offset = 0;
@@ -124,7 +125,7 @@ char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
   }
 
   m_bNoData = false;
-  return 1;
+  return true;
 }
 
 void CTotalGuildRankInfo::SetNoDataFlag()

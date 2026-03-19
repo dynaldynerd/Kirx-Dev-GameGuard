@@ -122,7 +122,7 @@ public:
   unsigned __int16 GetGoldBoxItemIndex(unsigned __int16 wIndex);
   _db_golden_box_item *GetGodBoxItemInfoPtr();
   void SetDBSerial(int nDBSerial);
-  char SynchINIANDDB();
+  bool SynchINIANDDB();
   unsigned __int8 GetLoopCount();
   unsigned __int16 Get_Box_Count(unsigned __int8 byIndex);
   void Set_Box_Count(unsigned __int8 byIndex);
@@ -145,7 +145,7 @@ public:
   unsigned __int16 Get_StarterBox_Count();
   char *GetStarterBoxCode(unsigned __int16 wIndex);
   bool StarterBox_InsertToInven(CPlayer *pOne, char *szItemCode);
-  char _insert_to_inven(CPlayer *pOne, unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
+  bool _insert_to_inven(CPlayer *pOne, unsigned __int8 byTableCode, unsigned __int16 wItemIndex);
   void Set_StarterBox_Count(unsigned int dwNum, bool bAdd);
 
   unsigned __int8 Get_Event_Status();

@@ -12,14 +12,15 @@ struct  _qry_sheet_insert
 
   _qry_sheet_insert();
   ~_qry_sheet_insert();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
 inline _qry_sheet_insert::_qry_sheet_insert() = default;
 inline _qry_sheet_insert::~_qry_sheet_insert() = default;
 
-inline __int64 _qry_sheet_insert::size() const
+inline int _qry_sheet_insert::size() const
 {
-  return 88LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(88LL);
 }

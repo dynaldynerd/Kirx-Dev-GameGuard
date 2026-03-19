@@ -288,14 +288,14 @@ void CReturnGateController::SendEnterResult(char iResult, CPlayer *pkObj)
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 
-char CReturnGateController::Enter(unsigned int uiGateInx, CPlayer *pkObj)
+bool CReturnGateController::Enter(unsigned int uiGateInx, CPlayer *pkObj)
 {
   const int result = ProcessEnter(uiGateInx, pkObj);
   if (!result)
   {
-    return 1;
+    return true;
   }
 
   SendEnterResult(static_cast<char>(result), pkObj);
-  return 0;
+  return false;
 }

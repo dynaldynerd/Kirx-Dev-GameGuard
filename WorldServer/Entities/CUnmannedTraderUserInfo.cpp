@@ -1798,19 +1798,19 @@ void CUnmannedTraderUserInfo::NotifyCloseItem(
   }
 }
 
-char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger)
+bool CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger)
 {
   (void)pkLogger;
 
   if (this->m_wInx >= MAX_PLAYER)
   {
-    return 1;
+    return true;
   }
 
   CPlayer *owner = &g_Player[this->m_wInx];
   if (owner->m_dwObjSerial != this->m_dwUserSerial)
   {
-    return 1;
+    return true;
   }
 
   const int raceCode = owner->m_Param.GetRaceCode();
@@ -1819,7 +1819,7 @@ char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogF
 
   if (currentTaxRate == byTax)
   {
-    return 0;
+    return false;
   }
 
   _unmannedtrader_taxrate_inform_zocl msg{};
@@ -1827,7 +1827,7 @@ char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogF
 
   unsigned __int8 type[2] = {30, 36};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&msg), sizeof(msg));
-  return 1;
+  return true;
 }
 
 void CUnmannedTraderUserInfo::CompleteRegist(

@@ -132,14 +132,14 @@ bool CGuildBattleController::Init()
   return stateListPool->Init();
 }
 
-char CGuildBattleController::Load()
+bool CGuildBattleController::Load()
 {
   auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
   const int curDay = GetCurDay();
   if (curDay < 0)
   {
     logger->Log("CGuildBattleController::Load(%d) ::GetCurDay() Fail!", curDay);
-    return 0;
+    return false;
   }
 
   unsigned int uiMapCnt = 0;
@@ -157,21 +157,21 @@ char CGuildBattleController::Load()
   if (!rankManager->Load())
   {
     logger->Log("CGuildBattleController::Load() CGuildBattleRankManager::Instance()->Load() Fail!");
-    return 0;
+    return false;
   }
 
   auto *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
   if (!scheduleManager->Load(curDay, uiMapCnt, iToday, iTodayDayID, iTomorrow, iTomorrowDayID))
   {
     logger->Log("CGuildBattleScheduleManager::Load() CGuildBattleScheduleManager::Instance()->Load() Fail!");
-    return 0;
+    return false;
   }
 
   auto *battleManager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
   if (!battleManager->Load(curDay, uiMapCnt, iToday, iTodayDayID, iTomorrow, iTomorrowDayID))
   {
     logger->Log("CGuildBattleController::Load() CNormalGuildBattleManager::Instance()->Load() Fail!");
-    return 0;
+    return false;
   }
 
   auto *reservedManager = GUILD_BATTLE::CGuildBattleReservedScheduleListManager::Instance();
@@ -179,14 +179,14 @@ char CGuildBattleController::Load()
   {
     logger->Log(
       "CGuildBattleController::Load() CGuildBattleReservedScheduleListManager::Instance()->Load() Fail!");
-    return 0;
+    return false;
   }
 
   auto *possibleList = GUILD_BATTLE::CPossibleBattleGuildListManager::Instance();
   if (!possibleList->Load())
   {
     logger->Log("CGuildBattleController::Load() CPossibleBattleGuildListManager::Instance()->Load() Fail!");
-    return 0;
+    return false;
   }
 
   if (!SaveINI())
@@ -195,10 +195,10 @@ char CGuildBattleController::Load()
     return 0;
   }
 
-  return 1;
+  return true;
 }
 
-char CGuildBattleController::LoadINI(
+bool CGuildBattleController::LoadINI(
   unsigned int *uiMapCnt,
   unsigned int *iToday,
   unsigned int *iTodayDayID,
@@ -219,10 +219,10 @@ char CGuildBattleController::LoadINI(
     *iTomorrow,
     *iTomorrowDayID,
     *uiMapCnt);
-  return 1;
+  return true;
 }
 
-char CGuildBattleController::SaveINI()
+bool CGuildBattleController::SaveINI()
 {
   auto *scheduleManager = GUILD_BATTLE::CGuildBattleScheduleManager::Instance();
   auto *fieldList = GUILD_BATTLE::CNormalGuildBattleFieldList::Instance();
@@ -236,7 +236,7 @@ char CGuildBattleController::SaveINI()
   char buffer[260]{};
   if (!WritePrivateProfileStringA("GuildBattle", "Today", _itoa(today, buffer, 10), "..\\SystemSave\\ServerState.ini"))
   {
-    return 0;
+    return false;
   }
   if (!WritePrivateProfileStringA(
         "GuildBattle",
@@ -244,7 +244,7 @@ char CGuildBattleController::SaveINI()
         _itoa(todayDayID, buffer, 10),
         "..\\SystemSave\\ServerState.ini"))
   {
-    return 0;
+    return false;
   }
   if (!WritePrivateProfileStringA(
         "GuildBattle",
@@ -252,7 +252,7 @@ char CGuildBattleController::SaveINI()
         _itoa(tomorrow, buffer, 10),
         "..\\SystemSave\\ServerState.ini"))
   {
-    return 0;
+    return false;
   }
   if (!WritePrivateProfileStringA(
         "GuildBattle",
@@ -260,7 +260,7 @@ char CGuildBattleController::SaveINI()
         _itoa(tomorrowDayID, buffer, 10),
         "..\\SystemSave\\ServerState.ini"))
   {
-    return 0;
+    return false;
   }
   if (!WritePrivateProfileStringA(
         "GuildBattle",
@@ -268,7 +268,7 @@ char CGuildBattleController::SaveINI()
         _ltoa(mapCnt, buffer, 10),
         "..\\SystemSave\\ServerState.ini"))
   {
-    return 0;
+    return false;
   }
 
   auto *logger = GUILD_BATTLE::CGuildBattleLogger::Instance();
@@ -279,7 +279,7 @@ char CGuildBattleController::SaveINI()
     tomorrow,
     tomorrowDayID,
     mapCnt);
-  return 1;
+  return true;
 }
 
 unsigned __int8 CGuildBattleController::IsAvailableSuggest(
@@ -752,7 +752,7 @@ bool CGuildBattleController::CheatCreateFieldObject(CPlayer *pkPlayer)
   return field && field->CreateFieldObject();
 }
 
-char CGuildBattleController::CheatDestroyFieldObject(CPlayer *pkPlayer)
+bool CGuildBattleController::CheatDestroyFieldObject(CPlayer *pkPlayer)
 {
   GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
   if (pkPlayer->m_pCurMap)
@@ -764,13 +764,13 @@ char CGuildBattleController::CheatDestroyFieldObject(CPlayer *pkPlayer)
   }
   if (!field)
   {
-    return 0;
+    return false;
   }
   field->DestroyFieldObject();
   return 1;
 }
 
-char CGuildBattleController::CheatDestroyStone(CPlayer *pkPlayer)
+bool CGuildBattleController::CheatDestroyStone(CPlayer *pkPlayer)
 {
   GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
   if (pkPlayer->m_pCurMap)
@@ -782,10 +782,10 @@ char CGuildBattleController::CheatDestroyStone(CPlayer *pkPlayer)
   }
   if (!field)
   {
-    return 0;
+    return false;
   }
   field->CheatDestroyStone();
-  return 1;
+  return true;
 }
 
 bool CGuildBattleController::CheatDropStone(CPlayer *pkPlayer)
@@ -906,7 +906,7 @@ int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
   return portalInx;
 }
 
-char CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
+bool CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
 {
   GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
   if (pkPlayer->m_pCurMap)
@@ -919,7 +919,7 @@ char CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
 
   if (!field)
   {
-    return 0;
+    return false;
   }
 
   _guild_battle_get_gravity_stone_result_zocl msg{};
@@ -938,10 +938,10 @@ char CGuildBattleController::CheatTakeStone(int iPortalInx, CPlayer *pkPlayer)
     type,
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
-  return 1;
+  return true;
 }
 
-char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
+bool CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
 {
   GUILD_BATTLE::CNormalGuildBattleField *field = nullptr;
   if (pkPlayer->m_pCurMap)
@@ -954,7 +954,7 @@ char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
 
   if (!field)
   {
-    return 0;
+    return false;
   }
 
   _guild_battle_get_gravity_stone_result_zocl msg{};
@@ -973,7 +973,7 @@ char CGuildBattleController::CheatGetStone(CPlayer *pkPlayer)
     type,
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
-  return 1;
+  return true;
 }
 
 CGravityStoneRegener *CGuildBattleController::GetRegener(int iInx)

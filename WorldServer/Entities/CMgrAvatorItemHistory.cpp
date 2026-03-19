@@ -49,12 +49,10 @@ void CMgrAvatorItemHistory::OnLoop()
   }
 }
 
-unsigned int CMgrAvatorItemHistory::GetTotalWaitSize()
+int CMgrAvatorItemHistory::GetTotalWaitSize()
 {
-  const unsigned int wait10K = m_listLogData_10K.size();
-  const unsigned int wait1K = m_listLogData_1K.size();
-  const unsigned int wait200 = m_listLogData_200.size();
-  return wait10K + wait1K + wait200;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData_10K.size() + m_listLogData_1K.size() + m_listLogData_200.size());
 }
 
 void CMgrAvatorItemHistory::lenditem_del_from_inven(

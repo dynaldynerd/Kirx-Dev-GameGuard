@@ -6,7 +6,8 @@ _guild_manage_request_clzo::_guild_manage_request_clzo()
   std::memset(this, 0, size());
 }
 
-__int64 _guild_manage_request_clzo::size()
+int _guild_manage_request_clzo::size()
 {
-  return 17LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(17LL);
 }

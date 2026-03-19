@@ -17,7 +17,7 @@ struct   _qry_case_amine_moveore
   unsigned __int8 byDOverlapNum;
 
   _qry_case_amine_moveore();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -26,7 +26,7 @@ inline _qry_case_amine_moveore::_qry_case_amine_moveore()
 {
 }
 
-inline __int64 _qry_case_amine_moveore::size() const
+inline int _qry_case_amine_moveore::size() const
 {
   return 19;
 }

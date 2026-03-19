@@ -141,6 +141,8 @@ struct _cash_lim_sale
 class  CashItemRemoteStore
 {
 public:
+  using CS_RCODE = int;
+
   struct _remain_num_of_good
   {
     char strCode[8];
@@ -158,10 +160,10 @@ public:
   bool GoodsList(unsigned __int16 wSock, char *pPacket);
   bool Buy(unsigned __int16 wSock, char *pPacket);
   bool CheatBuy(unsigned __int16 wSock, char *szItemCode, char nNum);
-  char CheatLoadCashAmount(unsigned __int16 wSock, int nNum);
-  char GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket);
+  bool CheatLoadCashAmount(unsigned __int16 wSock, int nNum);
+  bool GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket);
   void Loop_Cash_Event();
-  char Check_CashEvent_INI(unsigned __int8 byEventType);
+  bool Check_CashEvent_INI(unsigned __int8 byEventType);
   void Check_CashEvent_Status(unsigned __int8 byEventType);
   void Loop_ContEvent();
   void loop_cash_discount_event();
@@ -170,8 +172,8 @@ public:
   void Get_Conditional_Event_Name(unsigned __int8 byEventType, char *szEventName);
   unsigned __int8 Get_Conditional_Event_Status();
   void GetEvnetTime(_cash_event_time *pETime, int itime);
-  __int64 GetRemainNumOfGood(unsigned __int16 wStoreIndex);
-  __int64 GetRemainNumOfGood(char *strCode);
+  int GetRemainNumOfGood(unsigned __int16 wStoreIndex);
+  int GetRemainNumOfGood(char *strCode);
   void Inform_CashEvent(unsigned __int16 wIndex);
   void Inform_ConditionalEvent(unsigned __int16 wIndex);
   void Inform_ConditionalEvent_Status_All(unsigned __int8 byEventType, unsigned __int8 byStatus, char *pszMsg);
@@ -179,10 +181,10 @@ public:
   void inform_cashdiscount_event(unsigned __int16 widx);
   void inform_cashdiscount_status_all(unsigned __int8 byType, _cash_discount_ini_ *pIni);
   void force_endup_cash_discount_event();
-  char Sell(unsigned __int16 wSock, char *pPacket);
-  char start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT);
-  char start_cashevent(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT, unsigned __int8 byEventType);
-  char start_conevent(int iBegin_TT, int iEnd_TT, unsigned __int8 byEventType);
+  bool Sell(unsigned __int16 wSock, char *pPacket);
+  bool start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT);
+  bool start_cashevent(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT, unsigned __int8 byEventType);
+  bool start_conevent(int iBegin_TT, int iEnd_TT, unsigned __int8 byEventType);
   static const _CashShop_fld *FindCashRec(unsigned int nTbl, int nIdx);
   void Check_Grosssales(unsigned int dwTotalSellCash);
   void Check_Total_Selling();
@@ -190,14 +192,14 @@ public:
   void Set_LimitedSale_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   void Set_DB_LimitedSale_Event();
   void Set_FROMDB_LimitedSale_Event(_db_cash_limited_sale *Sheet);
-  char LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
+  bool LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex);
   unsigned __int16 BuyLimSale(unsigned __int8 byTableCode, unsigned int dwIndex);
-  char GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket);
-  char BuyByCash(unsigned __int16 wSock, char *pPacket);
-  char BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket);
-  __int64 CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum);
-  char UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne);
-  char IsUsableCoupon(
+  bool GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket);
+  bool BuyByCash(unsigned __int16 wSock, char *pPacket);
+  bool BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket);
+  int CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum);
+  bool UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne);
+  bool IsUsableCoupon(
     _request_csi_buy_clzo *pBuyList,
     _STORAGE_POS_INDIV pCoupon,
     CPlayer *pOne,
@@ -233,7 +235,7 @@ private:
   void Set_Conditional_Evnet_Status(unsigned __int8 byStatus);
   void load_cash_discount_event();
   void load_cde_ini(_cash_discount_ini_ *pIni, _FILETIME *pft);
-  char ChangeDiscountEventTime();
+  bool ChangeDiscountEventTime();
   void check_cash_discount_ini();
   void check_cash_discount_status();
   void update_ini(_cash_discount_ini_ *pNewIni);
@@ -241,30 +243,30 @@ private:
   void check_loaded_cde_status();
   unsigned __int8 get_cde_status();
   void set_cde_status(unsigned __int8 byStatus);
-  char is_cde_time();
-  char IsEventTime(unsigned __int8 byEventType);
+  bool is_cde_time();
+  bool IsEventTime(unsigned __int8 byEventType);
   unsigned __int8 GetSetDiscout(unsigned __int8 bySetKind);
   unsigned __int8 GetLimDiscout();
-  __int64 _check_buyitem(
+  CS_RCODE _check_buyitem(
     unsigned __int8 byRaceSex,
     const _request_csi_buy_clzo::__item *pCsItem,
     const _CashShop_fld *pFld);
   void _buybygold_set_cashitem_dblog_sheet(CPlayer *pOne, _param_cashitem_dblog *pSheet);
-  __int64 _buybygold_check_valid(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
-  __int64 _buybygold_check_coupon(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
-  __int64 _buybygold_buy_single_item(
+  CS_RCODE _buybygold_check_valid(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
+  CS_RCODE _buybygold_check_coupon(CPlayer *pOne, _request_csi_buy_clzo *pRecv, _param_cashitem_dblog *pSheet);
+  CS_RCODE _buybygold_buy_single_item(
     CPlayer *pOne,
     _request_csi_buy_clzo *pRecv,
     _request_csi_buy_clzo::__item *pSrc,
     _param_cashitem_dblog *pSheet,
     bool *bCouponUse,
     _result_csi_buy_zocl *Send);
-  __int64 _buybygold_buy_single_item_check_item(
+  CS_RCODE _buybygold_buy_single_item_check_item(
     CPlayer *pOne,
     _request_csi_buy_clzo::__item *pSrc,
     _param_cashitem_dblog *pSheet,
     _CashShop_fld **pCsFld);
-  __int64 _buybygold_buy_single_item_calc_price(
+  unsigned int _buybygold_buy_single_item_calc_price(
     CPlayer *pOne,
     _request_csi_buy_clzo *pRecv,
     _request_csi_buy_clzo::__item *pSrc,
@@ -273,20 +275,20 @@ private:
     bool *bCouponUseCheck,
     _result_csi_buy_zocl *Send,
     unsigned int *dwDiscount);
-  __int64 _buybygold_buy_single_item_calc_price_discount(_CashShop_fld *pCsFld, unsigned __int8 byOverlapNum);
-  __int64 _buybygold_buy_single_item_calc_price_one_n_one(
+  unsigned int _buybygold_buy_single_item_calc_price_discount(_CashShop_fld *pCsFld, unsigned __int8 byOverlapNum);
+  unsigned int _buybygold_buy_single_item_calc_price_one_n_one(
     unsigned __int8 bySetKind,
     int nCsPrice,
     unsigned __int8 byOverlapNum);
-  __int64 _buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum);
-  __int64 _buybygold_buy_single_item_calc_price_coupon(
+  unsigned int _buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum);
+  unsigned int _buybygold_buy_single_item_calc_price_coupon(
     CPlayer *pOne,
     _request_csi_buy_clzo *pRecv,
     unsigned __int8 byOverlapNum,
     int nCsPrice,
     bool *bCouponUseCheck,
     unsigned int *dwDiscount);
-  __int64 _buybygold_buy_single_item_proc_price(
+  CS_RCODE _buybygold_buy_single_item_proc_price(
     CPlayer *pOne,
     _request_csi_buy_clzo *pRecv,
     _request_csi_buy_clzo::__item *pSrc,
@@ -302,7 +304,7 @@ private:
     _STORAGE_LIST::_db_con *GiveItem,
     unsigned int dwPrice,
     unsigned int dwDiscountRate);
-  __int64 _buybygold_buy_single_item_give_item(
+  CS_RCODE _buybygold_buy_single_item_give_item(
     CPlayer *pOne,
     _request_csi_buy_clzo::__item *pSrc,
     _STORAGE_LIST::_db_con *GiveItem);
@@ -317,7 +319,7 @@ private:
     unsigned int dwDiscountRate,
     bool *bCouponUseCheck,
     bool *bCouponUse);
-  __int64 _buybygold_buy_single_item_additional_process(
+  CS_RCODE _buybygold_buy_single_item_additional_process(
     CPlayer *pOne,
     _request_csi_buy_clzo::__item *pSrc,
     _param_cashitem_dblog *pSheet,
@@ -332,7 +334,7 @@ private:
   bool SetNextDiscountEventTime();
   void Load_Cash_Event();
   unsigned __int8 Get_CashEvent_Status(unsigned __int8 byEventType);
-  char ChangeEventTime(unsigned __int8 byEventType);
+  bool ChangeEventTime(unsigned __int8 byEventType);
   void Set_LimitedSale_DCK(unsigned __int8 byEventType, unsigned __int8 byDCK);
   void Set_LimitedSale_Event();
   void Inform_CashEvent_Status_All(unsigned __int8 byEventType, unsigned __int8 byStatus, _cash_event_ini *pIni);

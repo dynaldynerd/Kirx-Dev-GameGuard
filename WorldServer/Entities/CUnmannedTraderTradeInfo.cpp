@@ -31,18 +31,18 @@ CUnmannedTraderTradeInfo::~CUnmannedTraderTradeInfo()
   m_ui64TotalCurrentIncome = 0;
 }
 
-char CUnmannedTraderTradeInfo::Init()
+bool CUnmannedTraderTradeInfo::Init()
 {
   m_pkTimer = new (std::nothrow) CMyTimer();
   if (!m_pkTimer)
   {
-    return 0;
+    return false;
   }
 
   m_pkTimer->BeginTimer(CUnmannedTraderEnvironmentValue::UNMANNEDTRADETRADEINFO_LOOP_DELAY);
   m_iOldDay = GetCurrentDay();
   LoadINI();
-  return 1;
+  return true;
 }
 
 void CUnmannedTraderTradeInfo::Loop()

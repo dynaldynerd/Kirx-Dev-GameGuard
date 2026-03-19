@@ -16,7 +16,7 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnInitDialog() override;
+  int OnInitDialog() override;
   void OnOK() override;
   void OnCancel() override;
 

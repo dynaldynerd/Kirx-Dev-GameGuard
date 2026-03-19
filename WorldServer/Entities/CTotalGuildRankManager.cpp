@@ -42,23 +42,26 @@ bool CTotalGuildRankManager::Init()
   return m_iOldDay != -1 && m_kInfo.Init();
 }
 
-bool CTotalGuildRankManager::Load()
+int CTotalGuildRankManager::Load()
 {
   _total_guild_rank_info info{};
   const int result = static_cast<int>(Load(0, &info));
   if (result < 0)
   {
-    return false;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(false);
   }
   if (!result)
   {
-    return m_kInfo.Load(&info);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_kInfo.Load(&info));
   }
   m_kInfo.SetNoDataFlag();
-  return true;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(true);
 }
 
-__int64 CTotalGuildRankManager::Load(unsigned __int8 byDayAfter, _total_guild_rank_info *pkInfo)
+int CTotalGuildRankManager::Load(unsigned __int8 byDayAfter, _total_guild_rank_info *pkInfo)
 {
   char dateStr[160]{};
   GetDateStrAfterDay(dateStr, 128, byDayAfter);

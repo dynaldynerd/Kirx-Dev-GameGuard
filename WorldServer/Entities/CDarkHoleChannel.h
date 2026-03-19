@@ -61,34 +61,34 @@ public:
   void CheckInnerEventDummy();
   void CheckRespawnMonster();
   void CheckSendNewMissionMsg();
-  char ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
+  bool ClearMember(CPlayer *pMember, bool bDisconnect, _dh_player_mgr::_pos *poutPlayerPos);
   _dh_player_mgr *GetPlayerInfo(unsigned int dwSerial);
   void ChangeMonsterApparition(unsigned int nTermMSec);
-  unsigned int GetMonsterNumInCurMissionArea(int nMonsterRecIndex);
+  int GetMonsterNumInCurMissionArea(int nMonsterRecIndex);
   bool GotoNextMission();
   void WaitNextMission();
   bool IsOpenPartyMember(CPlayer *pOpener);
   bool IsFill();
   int GetAllMemberNum();
-  unsigned int GetCurrentMemberNum();
+  int GetCurrentMemberNum();
   bool CanYouEnterHole(CPlayer *pEnter);
   bool GetEnterNewPos(_ENTER_DUNGEON_NEW_POS *pNewPos);
   bool IsReEnterable(unsigned int dwEnterSerial);
-  char PushMember(
+  bool PushMember(
     CPlayer *pMember,
     bool bReconnect,
     CMapData *pOldMap,
     unsigned __int16 wLastLayer,
     float *pfOldPos);
-  char CheckEvent(EM_DH_EVENT eventType, int nContentTable, int nContentIndex, int nCount, CGameObject *pObj);
+  bool CheckEvent(EM_DH_EVENT eventType, int nContentTable, int nContentIndex, int nCount, CGameObject *pObj);
   void AddMonster();
   void ChangeMonster();
   void ShareItemToMonster();
   unsigned int GetLeaderSerial();
   bool IsMoveNextMission(int nPortalIndex);
-  char IsAllMemberNearPosition(float *pfCenterPos, int nLen);
+  bool IsAllMemberNearPosition(float *pfCenterPos, int nLen);
   _dh_mission_setup *SearchMissionFromPos(float *pfStartPos);
-  char GotoNextMissionByPosition(float *pfStartPos);
+  bool GotoNextMissionByPosition(float *pfStartPos);
   void NextMissionOtherQuester(CPlayer *pLeader, _dh_mission_setup *pNextMission);
   void SendMsg_AskReEnter(CPlayer *pDst);
   void SendMsg_ChannelClose();
@@ -109,7 +109,7 @@ public:
   void SendMsg_RealAddLimTime(int nAddSec, char *pMsg);
   void SendMsg_PopMember(CPlayer *pPopMember, bool bDisconnect);
   void SendMsg_LeaderChange(CPlayer *pNewLeader);
-  char _Reward();
+  bool _Reward();
 };
 
 

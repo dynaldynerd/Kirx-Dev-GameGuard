@@ -27,7 +27,7 @@ void CUserDB::WriteLog_Level(unsigned __int8 byLv)
     nSize);
 }
 
-char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
+bool CUserDB::Update_Level(unsigned __int8 lv, long double exp)
 {
   if ( this->m_AvatorData.dbAvator.m_byMaxLevel )
   {
@@ -38,7 +38,7 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
         this->m_aszAvatorName,
         lv,
         this->m_AvatorData.dbAvator.m_byMaxLevel);
-      return 0;
+      return false;
     }
   }
   else if ( lv > 50u )
@@ -47,7 +47,7 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
       "%s : Update_Level(): pRecv->byLv (%d) => failed ",
       this->m_aszAvatorName,
       lv);
-    return 0;
+    return false;
   }
 
   if ( lv > this->m_AvatorData.dbAvator.m_byLevel || this->m_byUserDgr )
@@ -59,7 +59,7 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
       this->WriteLog_Level(lv);
     }
     this->m_bDataUpdate = 1;
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
@@ -67,13 +67,13 @@ char CUserDB::Update_Level(unsigned __int8 lv, long double exp)
     this->m_aszAvatorName,
     this->m_AvatorData.dbAvator.m_byLevel,
     lv);
-  return 0;
+  return false;
 }
 
-char CUserDB::Update_PlayTime(unsigned int dwTotalTimeMin)
+bool CUserDB::Update_PlayTime(unsigned int dwTotalTimeMin)
 {
   this->m_AvatorData.dbAvator.m_dwTotalPlayMin = dwTotalTimeMin;
-  return 1;
+  return true;
 }
 
 void CUserDB::TotalPlayMinCheck()

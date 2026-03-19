@@ -25,14 +25,14 @@ public:
   bool SplitKey(unsigned __int8 *strBase, unsigned __int8 *strKey, int nKeyLen);
   INI_Section *GetSection(unsigned int dwIndex);
   INI_Section *GetSection(const char *strSection);
-  unsigned __int64 GetSectionSize();
+  unsigned int GetSectionSize();
   INI_Key *GetKey(const char *strSection, const char *strKey);
   bool SaveKey(INI_Key *pKey);
   bool SaveSection(INI_Section *pSection);
-  BOOL DeleteKey(const char *lpSection, const char *lpKey);
-  bool DeleteKey(INI_Key *pKey);
-  BOOL DeleteSection(const char *lpSection);
-  bool DeleteSection(INI_Section *pSection);
+  int DeleteKey(const char *lpSection, const char *lpKey);
+  int DeleteKey(INI_Key *pKey);
+  int DeleteSection(const char *lpSection);
+  int DeleteSection(INI_Section *pSection);
   bool Merge_SumOfSets(CIniFile *rhs);
   bool Merge_Intersection(CIniFile *rhs);
 

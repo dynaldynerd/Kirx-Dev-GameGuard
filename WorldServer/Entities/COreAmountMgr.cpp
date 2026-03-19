@@ -56,7 +56,7 @@ void COreAmountMgr::Release()
   }
 }
 
-bool COreAmountMgr::LoadINI()
+int COreAmountMgr::LoadINI()
 {
   _FILETIME writeTime{};
   if (!GetLastWriteFileTime(".\\Initialize\\NewHolySystem.ini", &writeTime))
@@ -64,20 +64,20 @@ bool COreAmountMgr::LoadINI()
     g_Main.m_logLoadingError.Write(
       "COreAmountMgr::Init Not Exist %s File!",
       ".\\Initialize\\NewHolySystem.ini");
-    return false;
+    return 0;
   }
 
   m_ftWrite = writeTime;
   m_dwTotalOreSet = GetPrivateProfileIntA("OreTotalAmount", "Set", 0, ".\\Initialize\\NewHolySystem.ini");
   if (!m_dwTotalOreSet)
   {
-    return false;
+    return 0;
   }
 
   m_dwMinOreSet = GetPrivateProfileIntA("OreTotalAmount", "MinSet", 0, ".\\Initialize\\NewHolySystem.ini");
   if (!m_dwMinOreSet)
   {
-    return false;
+    return 0;
   }
 
   for (int dayIndex = 0; dayIndex < 7; ++dayIndex)
@@ -91,12 +91,12 @@ bool COreAmountMgr::LoadINI()
       m_fMultipleRate[dayIndex][timeIndex] = static_cast<float>(rate);
       if (m_fMultipleRate[dayIndex][timeIndex] == 0.0f)
       {
-        return false;
+        return 0;
       }
       m_fMultipleRate[dayIndex][timeIndex] = m_fMultipleRate[dayIndex][timeIndex] / 100.0f;
     }
   }
-  return true;
+  return 1;
 }
 
 bool COreAmountMgr::IsINIFileChanged()
@@ -405,7 +405,7 @@ bool COreAmountMgr::CheatOreAmount(unsigned int dwTot, unsigned int dwRemain)
   return true;
 }
 
-bool COreAmountMgr::IsOreRemain()
+int COreAmountMgr::IsOreRemain()
 {
   return m_dwRemainOreAmount != 0;
 }

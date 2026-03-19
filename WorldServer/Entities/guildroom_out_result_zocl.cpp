@@ -2,7 +2,8 @@
 
 #include "guildroom_out_result_zocl.h"
 
-__int64 _guildroom_out_result_zocl::size()
+int _guildroom_out_result_zocl::size()
 {
-  return 10LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(10LL);
 }

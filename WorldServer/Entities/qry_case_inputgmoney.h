@@ -14,12 +14,12 @@ struct _qry_case_inputgmoney
   long double out_totalgold;
   long double out_totaldalant;
 
-  __int64 size() const;
+  int size() const;
 };
 
 static_assert(sizeof(_qry_case_inputgmoney) == 64);
 
-inline __int64 _qry_case_inputgmoney::size() const
+inline int _qry_case_inputgmoney::size() const
 {
   return 64;
 }

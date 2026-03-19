@@ -56,13 +56,13 @@ bool CGuildRanking::Init()
   return true;
 }
 
-char CGuildRanking::Load()
+bool CGuildRanking::Load()
 {
   _worlddb_guild_info info{};
   if (!UpdateRankAndGrade())
   {
     m_pkLogger->Write("bool CGuildRanking::Load() : UpdateRankAndGrade(..) Fail!\r\n");
-    return 0;
+    return false;
   }
 
   info.wGuildCount = 0;
@@ -70,26 +70,26 @@ char CGuildRanking::Load()
   if (!LoadAllGuildData(&info))
   {
     m_pkLogger->Write("bool CGuildRanking::Load() : UpdateRankAndGrade(..) Fail!\r\n");
-    return 0;
+    return false;
   }
 
   if (!SetLoadAllGuildInfo(&info))
   {
     m_pkLogger->Write("bool CGuildRanking::Load() : SetLoadAllGuildInfo(..) Fail!\r\n");
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
-char CGuildRanking::UpdateRankAndGrade()
+bool CGuildRanking::UpdateRankAndGrade()
 {
   char today[32]{};
   GetTodayStr(today);
   return CheckAndCreateTodayGuildRankTable(today);
 }
 
-char CGuildRanking::CheckAndCreateTodayGuildRankTable(char *szDate)
+bool CGuildRanking::CheckAndCreateTodayGuildRankTable(char *szDate)
 {
   char buffer[56]{};
   g_Main.m_logLoadingError.Write("Guild Rank Table Make Start!!");
@@ -100,27 +100,27 @@ char CGuildRanking::CheckAndCreateTodayGuildRankTable(char *szDate)
     if (!g_Main.m_pWorldDB->Update_GuildRank(szDate))
     {
       MyMessageBox("DatabaseInit", "create guild-rank-table fail");
-      return 0;
+      return false;
     }
 
     if (!g_Main.m_pWorldDB->Update_GuildGrade())
     {
       MyMessageBox("DatabaseInit", "update guild-grade fail");
-      return 0;
+      return false;
     }
   }
 
   g_Main.m_logLoadingError.Write("Guild Rank Table Make Complete!!");
-  return 1;
+  return true;
 }
 
-char CGuildRanking::LoadAllGuildData(_worlddb_guild_info *pkInfo)
+bool CGuildRanking::LoadAllGuildData(_worlddb_guild_info *pkInfo)
 {
   std::memset(pkInfo, 0, sizeof(_worlddb_guild_info));
   if (!g_Main.m_pWorldDB->Select_AllGuildData(pkInfo))
   {
     MyMessageBox("DatabaseInit", "Select_AllGuildData() fail");
-    return 0;
+    return false;
   }
 
   g_Main.m_logLoadingError.Write("Guild List(%d) Load Complete!!", pkInfo->wGuildCount);
@@ -132,14 +132,14 @@ char CGuildRanking::LoadAllGuildData(_worlddb_guild_info *pkInfo)
           &pkInfo->GuildData[j].dDalant,
           &pkInfo->GuildData[j].dGold))
     {
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
+bool CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
 {
   unsigned __int16 memberCount = 0;
   _guild_member_info members[50];
@@ -175,7 +175,7 @@ char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
         "Error",
         "CGuildRanking::SetLoadAllGuildInfo(...) : \r\n%d > g_Main.check_min_max_guild_money(...) Fail!",
         pkInfo->GuildData[j].dwGuildSerial);
-      return 0;
+      return false;
     }
 
     CheckMaxGuildMoney(
@@ -215,10 +215,10 @@ char CGuildRanking::SetLoadAllGuildInfo(_worlddb_guild_info *pkInfo)
   }
 
   g_Main.m_logLoadingError.Write("Guild List(%d) Setting Complete!!", pkInfo->wGuildCount);
-  return 1;
+  return true;
 }
 
-char CGuildRanking::LoadMemberInfo(
+bool CGuildRanking::LoadMemberInfo(
   unsigned int dwMasterSerial,
   unsigned int dwGuildSerial,
   _guild_member_info *pkMemberInfo,
@@ -227,7 +227,7 @@ char CGuildRanking::LoadMemberInfo(
   _worlddb_guild_member_info memberInfo{};
   if (!g_Main.m_pWorldDB->Select_GuildMemberData(50u, dwGuildSerial, &memberInfo))
   {
-    return 0;
+    return false;
   }
 
   *pwMemberCnt = memberInfo.wMemberCount;
@@ -274,10 +274,10 @@ char CGuildRanking::LoadMemberInfo(
       dwGuildSerial,
       memberInfo.wMemberCount);
   }
-  return 1;
+  return true;
 }
 
-char CGuildRanking::LoadGuildMoneyIOInfo(
+bool CGuildRanking::LoadGuildMoneyIOInfo(
   unsigned int dwGuildSerial,
   _io_money_data *pkIOInfo,
   int *pnIOMonHisNum)
@@ -286,7 +286,7 @@ char CGuildRanking::LoadGuildMoneyIOInfo(
   std::memset(&ioData, 0, sizeof(ioData));
   if (!g_Main.m_pWorldDB->Select_GuildMoneyIOData(dwGuildSerial, &ioData))
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < ioData.wRecordCount; ++j)
@@ -302,10 +302,10 @@ char CGuildRanking::LoadGuildMoneyIOInfo(
   }
 
   *pnIOMonHisNum = ioData.wRecordCount;
-  return 1;
+  return true;
 }
 
-char CGuildRanking::CheckGuildCheckSum(
+bool CGuildRanking::CheckGuildCheckSum(
   unsigned int dwSerial,
   char *wszGuildName,
   long double *dDalant,
@@ -317,7 +317,7 @@ char CGuildRanking::CheckGuildCheckSum(
 
   if (!g_Main.m_bCheckSumActive)
   {
-    return 1;
+    return true;
   }
 
   sourceValue.Encode(*dDalant, *dGold);
@@ -325,7 +325,7 @@ char CGuildRanking::CheckGuildCheckSum(
   if (result < 0)
   {
     g_Main.m_logLoadingError.Write("Guild(%u, %s) CheckSum Load Fail!", dwSerial, wszGuildName);
-    return 0;
+    return false;
   }
 
   if (result == 0)
@@ -334,7 +334,7 @@ char CGuildRanking::CheckGuildCheckSum(
     if (result < 0)
     {
       g_Main.m_logLoadingError.Write("Guild(%u, %s) CheckSum Insert Fail!", dwSerial, wszGuildName);
-      return 0;
+      return false;
     }
   }
 
@@ -355,11 +355,11 @@ char CGuildRanking::CheckGuildCheckSum(
     *dGold = correctedGold;
     if (!g_Main.m_pWorldDB->UpdateGuildMoney(dwSerial, *dDalant, *dGold))
     {
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
 void CGuildRanking::CheckMaxGuildMoney(
@@ -469,9 +469,9 @@ void CGuildRanking::ClearGuildGrade()
   std::fill(m_vecAllGuildGrade.begin(), m_vecAllGuildGrade.end(), static_cast<unsigned __int8>(0));
 }
 
-unsigned int CGuildRanking::GetRankInGuildJobOffset()
+int CGuildRanking::GetRankInGuildJobOffset()
 {
-  return static_cast<unsigned int>(m_nRankInGuildJobOffset);
+  return m_nRankInGuildJobOffset;
 }
 
 void CGuildRanking::ClearRefreshData()

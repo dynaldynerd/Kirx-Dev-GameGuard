@@ -15,26 +15,26 @@ public:
   CTrap();
   ~CTrap();
 
-  __int64 GetAttackDP() override;
+  int GetAttackDP() override;
   float GetAttackRange() override;
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetDefSkill(bool bBackAttackDamage) override;
-  __int64 GetFireTol() override;
-  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
-  __int64 GetHP() override;
-  __int64 GetLevel() override;
-  __int64 GetMaxHP() override;
+  int GetDefSkill(bool bBackAttackDamage) override;
+  int GetFireTol() override;
+  int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
+  int GetHP() override;
+  int GetLevel() override;
+  int GetMaxHP() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 AttackableHeight();
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
+  int GetObjRace() override;
+  int AttackableHeight();
+  int GetSoilTol() override;
+  int GetWaterTol() override;
   float GetWeaponAdjust() override;
-  __int64 GetWeaponClass() override;
+  int GetWeaponClass() override;
   float GetWidth() override;
-  __int64 GetWindTol() override;
+  int GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
   bool IsInTown() override;
   void Loop() override;
@@ -52,8 +52,8 @@ public:
   void SendMsg_TrapCompleteInform();
   void SendMsg_AlterTranspar(bool bTranspar);
   bool Create(_trap_create_setdata *pData);
-  static char IsHaveEmpty();
-  static __int64 GetNewSerial();
+  static bool IsHaveEmpty();
+  unsigned int GetNewSerial();
 
   static int s_nLiveNum;
   static unsigned int s_dwSerialCnt;
@@ -71,10 +71,10 @@ public:
   unsigned int m_dwLastDestroyTime;
   int m_nTrapMaxAttackPnt;
 
-  void Init(_object_id *pID);
+  bool Init(_object_id *pID);
   void MasterNetClose(long double dPvPPoint);
   void MasterReStart(CPlayer *pMaster);
-  __int64 SetDamage(
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -82,7 +82,7 @@ public:
     int nAttackType,
     unsigned int dwAttackSerial,
     bool bJadeReturn) override;
-  __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
+  int SetDamage(int nDam, CCharacter *pDst, int nDstLv);
 
 private:
   void SendMsg_FixPositionImpl(int n);

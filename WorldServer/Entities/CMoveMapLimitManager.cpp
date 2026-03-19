@@ -57,7 +57,7 @@ bool CMoveMapLimitManager::Init()
   return true;
 }
 
-bool CMoveMapLimitManager::Request(
+unsigned __int8 CMoveMapLimitManager::Request(
   int iLimitType,
   int iRequetType,
   int iMapInx,
@@ -66,10 +66,12 @@ bool CMoveMapLimitManager::Request(
   char *pRequest)
 {
   CMoveMapLimitRightInfo *rightInfo = m_kRightInfo.Get(iUserInx);
-  return m_kLimitInfo.Request(iLimitType, iRequetType, iMapInx, dwStoreRecordIndex, iUserInx, pRequest, rightInfo);
+  return m_kLimitInfo.Request(iLimitType, iRequetType, iMapInx, dwStoreRecordIndex, iUserInx, pRequest, rightInfo)
+      ? 1
+      : 0;
 }
 
-bool CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
+unsigned __int8 CMoveMapLimitManager::RequestElanMapUserForceMoveHQ()
 {
   return Request(
     0,
@@ -87,16 +89,16 @@ void CMoveMapLimitManager::Load(CPlayer *pkPlayer)
   m_kLimitInfo.Load(pkPlayer, rightInfo);
 }
 
-char CMoveMapLimitManager::MoveLimitMapZoneRequest(int iUserInx, char *pRequest)
+bool CMoveMapLimitManager::MoveLimitMapZoneRequest(int iUserInx, char *pRequest)
 {
   CPlayer *player = &g_Player[iUserInx];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
-    return 1;
+    return true;
   }
 
   Request(0, 2, player->m_pCurMap->m_nMapCode, *reinterpret_cast<unsigned int *>(pRequest), iUserInx, pRequest);
-  return 1;
+  return true;
 }
 
 void CMoveMapLimitManager::LogIn(CPlayer *pkPlayer)

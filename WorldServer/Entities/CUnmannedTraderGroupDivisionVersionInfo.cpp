@@ -19,24 +19,24 @@ bool CUnmannedTraderGroupDivisionVersionInfo::IsEmpty()
   return this->m_iType < 0 || this->m_vecuiVersion.empty();
 }
 
-char CUnmannedTraderGroupDivisionVersionInfo::GetVersion(unsigned __int8 byClass, unsigned int *dwVer)
+bool CUnmannedTraderGroupDivisionVersionInfo::GetVersion(unsigned __int8 byClass, unsigned int *dwVer)
 {
   if (this->m_vecuiVersion.empty() || this->m_vecuiVersion.size() <= byClass)
   {
-    return 0;
+    return false;
   }
 
   *dwVer = this->m_vecuiVersion[byClass];
-  return 1;
+  return true;
 }
 
-char CUnmannedTraderGroupDivisionVersionInfo::IncreaseVersion(unsigned __int8 byClass)
+bool CUnmannedTraderGroupDivisionVersionInfo::IncreaseVersion(unsigned __int8 byClass)
 {
   if (this->m_vecuiVersion.empty() || this->m_vecuiVersion.size() <= byClass)
   {
-    return 0;
+    return false;
   }
 
   ++this->m_vecuiVersion[byClass];
-  return 1;
+  return true;
 }

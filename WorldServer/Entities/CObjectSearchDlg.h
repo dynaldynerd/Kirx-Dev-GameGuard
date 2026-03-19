@@ -19,7 +19,7 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnInitDialog() override;
+  int OnInitDialog() override;
 
   afx_msg void OnSelchangeCOMBOObjectKind();
   afx_msg void OnOK();

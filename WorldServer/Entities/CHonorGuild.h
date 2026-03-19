@@ -19,9 +19,9 @@ public:
   void LoopSubProcSendInform(unsigned __int8 byRace);
   void SendCurrHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace, unsigned __int8 byUI);
   void SendNextHonorGuildList(unsigned __int16 wIndex, unsigned __int8 byRace);
-  char LoadDB();
+  bool LoadDB();
   unsigned __int8 FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial);
-  char CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial);
+  bool CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial);
   unsigned __int8 UpdateNextHonorGuild(unsigned __int8 byRace);
   unsigned __int8 UpdateChangeHonorGuild(unsigned __int8 byRace);
   unsigned __int8 SetNextHonorGuild(unsigned __int8 byRace, _guild_honor_set_request_clzo *pRecv);

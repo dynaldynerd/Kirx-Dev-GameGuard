@@ -18,8 +18,8 @@ public:
   bool InsertCharacData(CRFWorldDatabase *pkDB);
   bool InsertTrunkData(CRFWorldDatabase *pkDB);
   bool Update(CRFWorldDatabase *pkDB);
-  __int64 Load(CRFWorldDatabase *pkDB, CCheckSumCharacAccountTrunkData *kSrcValue);
-  __int64 CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumCharacAccountTrunkData *kSrcValue);
+  int Load(CRFWorldDatabase *pkDB, CCheckSumCharacAccountTrunkData *kSrcValue);
+  int CheckDiff(CRFWorldDatabase *pkDB, char *wszName, CCheckSumCharacAccountTrunkData *kSrcValue);
 
   unsigned int m_dwSerial;
   unsigned int m_dwAccountSerial;

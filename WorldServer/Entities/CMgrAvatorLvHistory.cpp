@@ -125,12 +125,10 @@ void CMgrAvatorLvHistory::OnLoop()
   }
 }
 
-unsigned int CMgrAvatorLvHistory::GetTotalWaitSize()
+int CMgrAvatorLvHistory::GetTotalWaitSize()
 {
-  const unsigned int wait2K = m_listLogData_2K.size();
-  const unsigned int wait1K = m_listLogData_1K.size();
-  const unsigned int wait200 = m_listLogData_200.size();
-  return wait2K + wait1K + wait200;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData_2K.size() + m_listLogData_1K.size() + m_listLogData_200.size());
 }
 
 void CMgrAvatorLvHistory::WriteFile(char *pszFileName, char *pszLog)
