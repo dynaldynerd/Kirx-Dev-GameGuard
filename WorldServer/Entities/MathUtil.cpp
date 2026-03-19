@@ -61,10 +61,10 @@ float Get3DSqrt(float *Pos, float *Tar)
 
 float GetYAngle(float *Pos, float *Tar)
 {
-
     const float dx = *Tar - *Pos;
     const float dz = Tar[2] - Pos[2];
-    const float dist = std::sqrt((dx * dx) + (dz * dz));
+    // Yorozuya fix (non-IDA parity): SIMD-optimized 2D distance (x/z).
+    const float dist = SseLength2D(dx, dz);
     if (dist == 0.0f)
     {
         return 0.0f;
