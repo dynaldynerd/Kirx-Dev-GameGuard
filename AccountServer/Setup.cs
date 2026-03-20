@@ -188,7 +188,7 @@ namespace AccountServer
                     break;
                 case WorldPageIndex:
                     lblStepTitle.Text = "World Registration";
-                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see.";
+                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see. Installing RF_World from this step is optional.";
                     break;
                 default:
                     lblStepTitle.Text = "Security Seed";
@@ -321,6 +321,20 @@ namespace AccountServer
             }
 
             txtArgon2Salt.Text = SecuritySettings.CreateArgon2SaltBase64();
+        }
+
+        private void BtnInstallWorldDb_Click(object? sender, EventArgs e)
+        {
+            string worldDatabaseName = txtWorldDb.Text.Trim();
+            if (string.IsNullOrWhiteSpace(worldDatabaseName))
+            {
+                MessageBox.Show(this, "Enter the world DB name first.", "World Registration", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtWorldDb.Focus();
+                return;
+            }
+
+            using var dialog = new WorldDatabaseInstallForm(worldDatabaseName);
+            dialog.ShowDialog(this);
         }
 
         private bool ValidateCurrentPage(out string message)

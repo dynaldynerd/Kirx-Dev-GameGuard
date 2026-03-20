@@ -41,6 +41,8 @@ namespace AccountServer
         private TextBox txtWorldAddress = null!;
         private TextBox txtWorldDb = null!;
         private ComboBox cmbWorldType = null!;
+        private Button btnInstallWorldDb = null!;
+        private Label lblWorldInstallNote = null!;
         private GroupBox grpSecurity = null!;
         private Label lblArgon2Salt = null!;
         private TextBox txtArgon2Salt = null!;
@@ -86,6 +88,8 @@ namespace AccountServer
             lblProvider = new Label();
             pageWorld = new TabPage();
             grpWorld = new GroupBox();
+            btnInstallWorldDb = new Button();
+            lblWorldInstallNote = new Label();
             cmbWorldType = new ComboBox();
             txtWorldDb = new TextBox();
             txtWorldAddress = new TextBox();
@@ -347,6 +351,8 @@ namespace AccountServer
             // 
             // grpWorld
             // 
+            grpWorld.Controls.Add(btnInstallWorldDb);
+            grpWorld.Controls.Add(lblWorldInstallNote);
             grpWorld.Controls.Add(cmbWorldType);
             grpWorld.Controls.Add(txtWorldDb);
             grpWorld.Controls.Add(txtWorldAddress);
@@ -357,10 +363,28 @@ namespace AccountServer
             grpWorld.Controls.Add(lblWorldName);
             grpWorld.Location = new Point(13, 14);
             grpWorld.Name = "grpWorld";
-            grpWorld.Size = new Size(742, 158);
+            grpWorld.Size = new Size(742, 196);
             grpWorld.TabIndex = 0;
             grpWorld.TabStop = false;
             grpWorld.Text = "World Entry";
+            // 
+            // btnInstallWorldDb
+            // 
+            btnInstallWorldDb.Location = new Point(528, 83);
+            btnInstallWorldDb.Name = "btnInstallWorldDb";
+            btnInstallWorldDb.Size = new Size(184, 27);
+            btnInstallWorldDb.TabIndex = 8;
+            btnInstallWorldDb.Text = "Install DB (Optional)";
+            btnInstallWorldDb.UseVisualStyleBackColor = true;
+            btnInstallWorldDb.Click += BtnInstallWorldDb_Click;
+            // 
+            // lblWorldInstallNote
+            // 
+            lblWorldInstallNote.Location = new Point(120, 147);
+            lblWorldInstallNote.Name = "lblWorldInstallNote";
+            lblWorldInstallNote.Size = new Size(592, 34);
+            lblWorldInstallNote.TabIndex = 9;
+            lblWorldInstallNote.Text = "Optional: install the RF_World schema with a separate SQL Server connection. World registration still only stores the DB name.";
             // 
             // cmbWorldType
             // 
@@ -376,7 +400,7 @@ namespace AccountServer
             // 
             txtWorldDb.Location = new Point(120, 86);
             txtWorldDb.Name = "txtWorldDb";
-            txtWorldDb.Size = new Size(240, 23);
+            txtWorldDb.Size = new Size(392, 23);
             txtWorldDb.TabIndex = 6;
             // 
             // txtWorldAddress
