@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LoginServer.Data;
 using LoginServer.Data.Contexts;
 using LoginServer.Packets;
 using LoginServer.Security;
@@ -710,7 +711,6 @@ public sealed class ClientPacketRouter
         }
 
         var settings = AppSettings.Load();
-        string userConnStr = settings.Database.BuildConnectionString();
         string billingConnStr = settings.Database.BuildBillingConnectionString();
         byte retCode = 0;
         session.LoginCode = 0;
@@ -735,11 +735,28 @@ public sealed class ClientPacketRouter
             }
             else
             {
+                string? accountDbName = MainContext.Instance.AccountDbName;
+                if (string.IsNullOrWhiteSpace(accountDbName))
+                {
+                    await SendLoginResultAsync(connection, 24, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                string userConnStr = settings.Database.BuildConnectionString(accountDbName);
                 string? passwordHash = null;
                 byte[] salt;
                 try
                 {
-                    salt = Convert.FromBase64String(settings.Security.Argon2SaltBase64);
+                    string? saltBase64 = MainContext.Instance.AccountArgon2SaltBase64;
+                    if (string.IsNullOrWhiteSpace(saltBase64))
+                    {
+                        retCode = 24;
+                        salt = Array.Empty<byte>();
+                    }
+                    else
+                    {
+                        salt = Convert.FromBase64String(saltBase64);
+                    }
                 }
                 catch (FormatException)
                 {
@@ -754,9 +771,7 @@ public sealed class ClientPacketRouter
                 }
 
                 var idHmac = CryptoHelper.ComputeHmacSha256(Encoding.UTF8.GetBytes(session.AccountId), salt);
-                var userDbOptions = new DbContextOptionsBuilder<LoginDbContext>()
-                    .UseSqlServer(userConnStr)
-                    .Options;
+                var userDbOptions = DbContextOptionsFactory.Create<LoginDbContext>(settings.Database.Provider, userConnStr);
                 await using (var userCtx = new LoginDbContext(userDbOptions))
                 {
                     var account = await userCtx.Accounts
@@ -799,9 +814,7 @@ public sealed class ClientPacketRouter
                 {
                     // Billing check via EF (equivalent to RF_CheckAccountStatus proc)
                     int status = 1;
-                    var options = new DbContextOptionsBuilder<BillingDbContext>()
-                        .UseSqlServer(billingConnStr)
-                        .Options;
+                    var options = DbContextOptionsFactory.Create<BillingDbContext>(settings.Database.BillingProvider, billingConnStr);
 
                     await using (var billingCtx = new BillingDbContext(options))
                     {

@@ -17,6 +17,7 @@ public sealed class MainContext
     private readonly WorldData[] _worlds = new WorldData[40];
     private readonly ConcurrentDictionary<uint, ClientSession> _clients = new();
     private int _externalOpen;
+    private TaskCompletionSource<bool> _accountDbInfoReady = CreateAccountDbInfoReadySource();
 
     private MainContext()
     {
@@ -33,6 +34,7 @@ public sealed class MainContext
     }
     public string? AccountDbName { get; set; }
     public string? AccountDbIp { get; set; }
+    public string? AccountArgon2SaltBase64 { get; private set; }
     public int MaxConnections { get; set; }
     private int _curUserCount;
     public int CurrentUserCount => _curUserCount;
@@ -78,6 +80,10 @@ public sealed class MainContext
     public void SetAccountConnection(PublicConnection? connection)
     {
         AccountConnection = connection;
+        if (connection == null)
+        {
+            ClearAccountConnectionMetadata();
+        }
     }
 
     public void RegisterClientConnection(PublicConnection connection)
@@ -190,10 +196,53 @@ public sealed class MainContext
         session.ForcedClosed = true;
     }
 
-    public void RecordAccountDbInfo(string dbName, string dbIp)
+    public void BeginAwaitAccountDbInfo()
     {
-        AccountDbName = dbName;
-        AccountDbIp = dbIp;
+        lock (_lock)
+        {
+            AccountDbName = null;
+            AccountDbIp = null;
+            AccountArgon2SaltBase64 = null;
+            _accountDbInfoReady = CreateAccountDbInfoReadySource();
+        }
+    }
+
+    public Task WaitForAccountDbInfoAsync(CancellationToken cancellationToken)
+    {
+        Task waitTask;
+        lock (_lock)
+        {
+            waitTask = _accountDbInfoReady.Task;
+        }
+        return waitTask.WaitAsync(cancellationToken);
+    }
+
+    public void RecordAccountDbInfo(string dbName, string dbIp, string argon2SaltBase64)
+    {
+        lock (_lock)
+        {
+            AccountDbName = dbName;
+            AccountDbIp = dbIp;
+            AccountArgon2SaltBase64 = argon2SaltBase64;
+            _accountDbInfoReady.TrySetResult(true);
+        }
+    }
+
+    public void ClearAccountConnectionMetadata()
+    {
+        lock (_lock)
+        {
+            AccountDbName = null;
+            AccountDbIp = null;
+            AccountArgon2SaltBase64 = null;
+            _accountDbInfoReady.TrySetCanceled();
+            _accountDbInfoReady = CreateAccountDbInfoReadySource();
+        }
+    }
+
+    private static TaskCompletionSource<bool> CreateAccountDbInfoReadySource()
+    {
+        return new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }
 

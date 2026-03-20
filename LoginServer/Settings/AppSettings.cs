@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LoginServer.Data;
 
 namespace LoginServer.Settings;
 
@@ -27,11 +27,15 @@ public sealed class AppSettings
 
         var json = File.ReadAllText(path);
         var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions()) ?? new AppSettings();
+        settings.Database ??= new DatabaseSettings();
         settings.Security ??= new SecuritySettings();
-        if (!IsValidBase64(settings.Security.Argon2SaltBase64))
+        if (!Enum.IsDefined(typeof(LoginDatabaseProvider), settings.Database.Provider))
         {
-            settings.Security.Argon2SaltBase64 = GenerateSaltBase64();
-            settings.Save(path);
+            settings.Database.Provider = LoginDatabaseProvider.SqlServer;
+        }
+        if (!Enum.IsDefined(typeof(LoginDatabaseProvider), settings.Database.BillingProvider))
+        {
+            settings.Database.BillingProvider = LoginDatabaseProvider.SqlServer;
         }
         return settings;
     }
@@ -54,12 +58,13 @@ public sealed class AppSettings
         {
             Database = new DatabaseSettings
             {
+                Provider = LoginDatabaseProvider.SqlServer,
                 Host = "(local)",
                 Port = 1433,
-                Database = "RF_User",
                 User = string.Empty,
                 Password = string.Empty,
                 TrustedConnection = true,
+                BillingProvider = LoginDatabaseProvider.SqlServer,
                 BillingHost = "(local)",
                 BillingPort = 1433,
                 BillingDatabase = "Billing",
@@ -75,10 +80,7 @@ public sealed class AppSettings
                 MaxConnections = 5000,
                 UserLoadThresholds = new[] { 500, 1000, 1500 }
             },
-            Security = new SecuritySettings
-            {
-                Argon2SaltBase64 = GenerateSaltBase64()
-            }
+            Security = new SecuritySettings()
         };
     }
 
@@ -87,39 +89,19 @@ public sealed class AppSettings
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
-
-    private static string GenerateSaltBase64()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(16);
-        return Convert.ToBase64String(bytes);
-    }
-
-    private static bool IsValidBase64(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-        try
-        {
-            _ = Convert.FromBase64String(value);
-            return true;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
 }
 
 public sealed class DatabaseSettings
 {
+    public LoginDatabaseProvider Provider { get; set; } = LoginDatabaseProvider.SqlServer;
     public string Host { get; set; } = "(local)";
     public int Port { get; set; } = 1433;
-    public string Database { get; set; } = "RF_User";
+    [JsonIgnore]
+    public string Database { get; set; } = string.Empty;
     public string User { get; set; } = "";
     public string Password { get; set; } = "";
     public bool TrustedConnection { get; set; } = true;
+    public LoginDatabaseProvider BillingProvider { get; set; } = LoginDatabaseProvider.SqlServer;
     public string BillingHost { get; set; } = "(local)";
     public int BillingPort { get; set; } = 1433;
     public string BillingDatabase { get; set; } = "Billing";
@@ -127,22 +109,60 @@ public sealed class DatabaseSettings
     public string BillingPassword { get; set; } = "";
     public bool BillingTrustedConnection { get; set; } = true;
 
-    public string BuildConnectionString()
+    public string BuildConnectionString(string? basePath = null)
     {
-        if (TrustedConnection)
-        {
-            return $"Server={Host},{Port};Database={Database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
-        }
-        return $"Server={Host},{Port};Database={Database};User ID={User};Password={Password};TrustServerCertificate=True;Encrypt=False;";
+        return BuildConnectionString(Provider, Host, Port, Database, User, Password, TrustedConnection, basePath);
     }
 
-    public string BuildBillingConnectionString()
+    public string BuildConnectionString(string databaseName, string? basePath = null)
     {
-        if (BillingTrustedConnection)
+        return BuildConnectionString(Provider, Host, Port, databaseName, User, Password, TrustedConnection, basePath);
+    }
+
+    public string BuildBillingConnectionString(string? basePath = null)
+    {
+        return BuildConnectionString(
+            BillingProvider,
+            BillingHost,
+            BillingPort,
+            BillingDatabase,
+            BillingUser,
+            BillingPassword,
+            BillingTrustedConnection,
+            basePath);
+    }
+
+    public static string GetSqlitePath(string basePath, string databaseName)
+    {
+        return Path.Combine(basePath, "Settings", "db", $"{databaseName}.db");
+    }
+
+    private static string BuildConnectionString(
+        LoginDatabaseProvider provider,
+        string host,
+        int port,
+        string database,
+        string user,
+        string password,
+        bool trustedConnection,
+        string? basePath)
+    {
+        switch (provider)
         {
-            return $"Server={BillingHost},{BillingPort};Database={BillingDatabase};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            case LoginDatabaseProvider.Sqlite:
+            {
+                string sqliteBasePath = basePath ?? AppContext.BaseDirectory;
+                return $"Data Source={GetSqlitePath(sqliteBasePath, database)};";
+            }
+            case LoginDatabaseProvider.MariaDb:
+                return $"Server={host};Port={port};Database={database};User ID={user};Password={password};";
+            default:
+                if (trustedConnection)
+                {
+                    return $"Server={host},{port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+                }
+                return $"Server={host},{port};Database={database};User ID={user};Password={password};TrustServerCertificate=True;Encrypt=False;";
         }
-        return $"Server={BillingHost},{BillingPort};Database={BillingDatabase};User ID={BillingUser};Password={BillingPassword};TrustServerCertificate=True;Encrypt=False;";
     }
 }
 

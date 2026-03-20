@@ -218,11 +218,15 @@ public struct _account_db_info_result_aclo
     
     public byte[] szIP;
 
+    
+    public byte[] szArgon2SaltBase64;
+
     public _account_db_info_result_aclo()
     {
     this = default;
         szDBName = new byte[32];
         szIP = new byte[16];
+        szArgon2SaltBase64 = new byte[64];
     }
 
     public bool Load(byte[] payload)
@@ -230,12 +234,16 @@ public struct _account_db_info_result_aclo
         if (payload.Length < 48) return false;
         Buffer.BlockCopy(payload, 0, szDBName, 0, 32);
         Buffer.BlockCopy(payload, 32, szIP, 0, 16);
+        if (payload.Length >= 112)
+        {
+            Buffer.BlockCopy(payload, 48, szArgon2SaltBase64, 0, 64);
+        }
         return true;
     }
 
     public byte[] ToArray()
     {
-        var buffer = new byte[48];
+        var buffer = new byte[112];
         if (szDBName != null)
         {
             Buffer.BlockCopy(szDBName, 0, buffer, 0, Math.Min(32, szDBName.Length));
@@ -243,6 +251,10 @@ public struct _account_db_info_result_aclo
         if (szIP != null)
         {
             Buffer.BlockCopy(szIP, 0, buffer, 32, Math.Min(16, szIP.Length));
+        }
+        if (szArgon2SaltBase64 != null)
+        {
+            Buffer.BlockCopy(szArgon2SaltBase64, 0, buffer, 48, Math.Min(64, szArgon2SaltBase64.Length));
         }
         return buffer;
     }

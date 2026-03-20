@@ -478,8 +478,9 @@ public sealed class AccountPacketRouter
     {
         string dbName = PacketStringUtil.ToAscii(result.szDBName);
         string ip = PacketStringUtil.ToAscii(result.szIP);
-        MainContext.Instance.RecordAccountDbInfo(dbName, ip);
-        _log($"AccountDBInfoResult: dbName={dbName} ip={ip}");
+        string argon2SaltBase64 = PacketStringUtil.ToAscii(result.szArgon2SaltBase64);
+        MainContext.Instance.RecordAccountDbInfo(dbName, ip, argon2SaltBase64);
+        _log($"AccountDBInfoResult: dbName={dbName} ip={ip} saltReceived={!string.IsNullOrWhiteSpace(argon2SaltBase64)}");
         return Task.FromResult(true);
     }
 

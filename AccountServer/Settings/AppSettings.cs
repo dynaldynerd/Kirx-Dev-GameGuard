@@ -39,11 +39,6 @@ public sealed class AppSettings
         {
             settings.Database.Provider = DatabaseProvider.SqlServer;
         }
-        if (!IsValidBase64(settings.Security.Argon2SaltBase64))
-        {
-            settings.Security.Argon2SaltBase64 = GenerateSaltBase64();
-            settings.Save(path);
-        }
         return settings;
     }
 
@@ -91,10 +86,7 @@ public sealed class AppSettings
                 }
             },
             MaxActiveClients = -1,
-            Security = new SecuritySettings
-            {
-                Argon2SaltBase64 = GenerateSaltBase64()
-            },
+            Security = new SecuritySettings(),
             Listener = new ListenerSettings
             {
                 Host = "0.0.0.0",
@@ -110,29 +102,6 @@ public sealed class AppSettings
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
-
-    private static string GenerateSaltBase64()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(16);
-        return Convert.ToBase64String(bytes);
-    }
-
-    private static bool IsValidBase64(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-        try
-        {
-            _ = Convert.FromBase64String(value);
-            return true;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
 }
 
 public sealed class DatabaseSettings
@@ -217,6 +186,36 @@ public sealed class WorldEntry
 public sealed class SecuritySettings
 {
     public string Argon2SaltBase64 { get; set; } = "";
+
+    public bool HasValidArgon2Salt()
+    {
+        return TryDecodeArgon2Salt(Argon2SaltBase64, out var bytes) && bytes.Length >= 16;
+    }
+
+    public static string CreateArgon2SaltBase64()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+    }
+
+    public static bool TryDecodeArgon2Salt(string? value, out byte[] bytes)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            bytes = Array.Empty<byte>();
+            return false;
+        }
+
+        try
+        {
+            bytes = Convert.FromBase64String(value);
+            return true;
+        }
+        catch (FormatException)
+        {
+            bytes = Array.Empty<byte>();
+            return false;
+        }
+    }
 }
 
 public sealed class ListenerSettings

@@ -1,9 +1,9 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using AccountServer.Security;
 
 namespace AccountServer.Settings;
 
@@ -109,7 +109,6 @@ public partial class SettingsForm : Form
 
     private void LoadGeneralSettings()
     {
-        txtArgon2Salt.Text = _settings.Security.Argon2SaltBase64;
         txtListenHost.Text = _settings.Listener.Host;
 
         numLoginPort.Value = ClampNumeric(numLoginPort, _settings.Listener.LoginPort);
@@ -152,13 +151,6 @@ public partial class SettingsForm : Form
         }
 
         _userDb.ApplyTo(_settings.Database.User);
-        var saltText = txtArgon2Salt.Text.Trim();
-        if (!TryParseBase64(saltText, out var saltBytes) || saltBytes.Length < 16)
-        {
-            MessageBox.Show(this, "Argon2 salt must be valid Base64 and at least 16 bytes.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-        _settings.Security.Argon2SaltBase64 = saltText;
         _settings.GmFilter.Prefixes = _gmPrefixes.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
         _settings.WorldList.Worlds = _worlds.Select(CloneWorldEntry).ToList();
         _settings.MaxActiveClients = (int)numMaxActive.Value;
@@ -180,27 +172,6 @@ public partial class SettingsForm : Form
         bool sqlAuth = radAuthSql.Checked;
         txtDbUser.Enabled = sqlAuth;
         txtDbPass.Enabled = sqlAuth;
-    }
-
-    private void OnRegenerateSalt(object? sender, EventArgs e)
-    {
-        var r = MessageBox.Show("Change Salt?", "Are you sure you wanted to change salt? all user password will be gone and had to rehash if you replace this, make sure there's no user account before doing this", MessageBoxButtons.YesNo);
-        if(r == DialogResult.Yes)
-            txtArgon2Salt.Text = CryptoHelper.GenerateRandomBase64(16);
-    }
-
-    private static bool TryParseBase64(string value, out byte[] bytes)
-    {
-        try
-        {
-            bytes = Convert.FromBase64String(value);
-            return true;
-        }
-        catch (FormatException)
-        {
-            bytes = Array.Empty<byte>();
-            return false;
-        }
     }
 
     private void OnGmAdd(object? sender, EventArgs e)
@@ -280,6 +251,26 @@ public partial class SettingsForm : Form
     {
         DialogResult = DialogResult.Cancel;
         Close();
+    }
+
+    private void OnReinstall(object? sender, EventArgs e)
+    {
+        const string prompt =
+            "Reinstall AccountServer?\n\n" +
+            "This will reset Properties.Settings, delete the JSON settings file, restart the application, and force the setup wizard to appear again on the next launch.";
+        if (MessageBox.Show(this, prompt, "Reinstall AccountServer", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        Properties.Settings.Default.Reset();
+        Properties.Settings.Default.Save();
+        if (File.Exists(AppSettings.DefaultPath))
+        {
+            File.Delete(AppSettings.DefaultPath);
+        }
+        Application.Restart();
+        Application.Exit();
     }
 }
 

@@ -15,15 +15,11 @@ public partial class SettingsForm
     private TabPage tabWorldList = null!;
     private Panel panelGeneral = null!;
     private TableLayoutPanel tblGeneral = null!;
-    private Label lblArgon2Salt = null!;
     private Label lblMaxActive = null!;
     private Label lblListenHost = null!;
     private Label lblLoginPort = null!;
     private Label lblWorldPort = null!;
     private Label lblControlPort = null!;
-    private TableLayoutPanel tblSalt = null!;
-    private TextBox txtArgon2Salt = null!;
-    private Button btnSaltRegenerate = null!;
     private NumericUpDown numMaxActive = null!;
     private TextBox txtListenHost = null!;
     private NumericUpDown numLoginPort = null!;
@@ -58,13 +54,10 @@ public partial class SettingsForm
     private Label lblWorldList = null!;
     private Button btnWorldAdd = null!;
     private DataGridView gridWorlds = null!;
-    private DataGridViewTextBoxColumn colWorldName = null!;
-    private DataGridViewTextBoxColumn colWorldAddress = null!;
-    private DataGridViewTextBoxColumn colWorldDbName = null!;
-    private DataGridViewTextBoxColumn colWorldType = null!;
     private DataGridViewButtonColumn colWorldEdit = null!;
     private DataGridViewButtonColumn colWorldDelete = null!;
     private FlowLayoutPanel panelButtons = null!;
+    private Button btnReinstall = null!;
     private Button btnSave = null!;
     private Button btnCancel = null!;
 
@@ -83,10 +76,6 @@ public partial class SettingsForm
         tabGeneral = new TabPage();
         panelGeneral = new Panel();
         tblGeneral = new TableLayoutPanel();
-        lblArgon2Salt = new Label();
-        tblSalt = new TableLayoutPanel();
-        txtArgon2Salt = new TextBox();
-        btnSaltRegenerate = new Button();
         lblMaxActive = new Label();
         numMaxActive = new NumericUpDown();
         lblListenHost = new Label();
@@ -129,20 +118,16 @@ public partial class SettingsForm
         lblWorldList = new Label();
         btnWorldAdd = new Button();
         gridWorlds = new DataGridView();
-        colWorldName = new DataGridViewTextBoxColumn();
-        colWorldAddress = new DataGridViewTextBoxColumn();
-        colWorldDbName = new DataGridViewTextBoxColumn();
-        colWorldType = new DataGridViewTextBoxColumn();
         colWorldEdit = new DataGridViewButtonColumn();
         colWorldDelete = new DataGridViewButtonColumn();
         panelButtons = new FlowLayoutPanel();
+        btnReinstall = new Button();
         btnSave = new Button();
         btnCancel = new Button();
         tabMain.SuspendLayout();
         tabGeneral.SuspendLayout();
         panelGeneral.SuspendLayout();
         tblGeneral.SuspendLayout();
-        tblSalt.SuspendLayout();
         ((ISupportInitialize)numMaxActive).BeginInit();
         ((ISupportInitialize)numLoginPort).BeginInit();
         ((ISupportInitialize)numWorldPort).BeginInit();
@@ -201,75 +186,28 @@ public partial class SettingsForm
         tblGeneral.ColumnCount = 2;
         tblGeneral.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
         tblGeneral.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tblGeneral.Controls.Add(lblArgon2Salt, 0, 0);
-        tblGeneral.Controls.Add(tblSalt, 1, 0);
-        tblGeneral.Controls.Add(lblMaxActive, 0, 1);
-        tblGeneral.Controls.Add(numMaxActive, 1, 1);
-        tblGeneral.Controls.Add(lblListenHost, 0, 2);
-        tblGeneral.Controls.Add(txtListenHost, 1, 2);
-        tblGeneral.Controls.Add(lblLoginPort, 0, 3);
-        tblGeneral.Controls.Add(numLoginPort, 1, 3);
-        tblGeneral.Controls.Add(lblWorldPort, 0, 4);
-        tblGeneral.Controls.Add(numWorldPort, 1, 4);
-        tblGeneral.Controls.Add(lblControlPort, 0, 5);
-        tblGeneral.Controls.Add(numControlPort, 1, 5);
+        tblGeneral.Controls.Add(lblMaxActive, 0, 0);
+        tblGeneral.Controls.Add(numMaxActive, 1, 0);
+        tblGeneral.Controls.Add(lblListenHost, 0, 1);
+        tblGeneral.Controls.Add(txtListenHost, 1, 1);
+        tblGeneral.Controls.Add(lblLoginPort, 0, 2);
+        tblGeneral.Controls.Add(numLoginPort, 1, 2);
+        tblGeneral.Controls.Add(lblWorldPort, 0, 3);
+        tblGeneral.Controls.Add(numWorldPort, 1, 3);
+        tblGeneral.Controls.Add(lblControlPort, 0, 4);
+        tblGeneral.Controls.Add(numControlPort, 1, 4);
         tblGeneral.Dock = DockStyle.Top;
         tblGeneral.Location = new Point(0, 0);
         tblGeneral.Name = "tblGeneral";
         tblGeneral.Padding = new Padding(8);
-        tblGeneral.RowCount = 6;
         tblGeneral.RowStyles.Add(new RowStyle());
         tblGeneral.RowStyles.Add(new RowStyle());
         tblGeneral.RowStyles.Add(new RowStyle());
         tblGeneral.RowStyles.Add(new RowStyle());
         tblGeneral.RowStyles.Add(new RowStyle());
-        tblGeneral.RowStyles.Add(new RowStyle());
-        tblGeneral.Size = new Size(712, 198);
+        tblGeneral.RowCount = 5;
+        tblGeneral.Size = new Size(712, 161);
         tblGeneral.TabIndex = 0;
-        // 
-        // lblArgon2Salt
-        // 
-        lblArgon2Salt.AutoSize = true;
-        lblArgon2Salt.Location = new Point(11, 8);
-        lblArgon2Salt.Name = "lblArgon2Salt";
-        lblArgon2Salt.Size = new Size(115, 15);
-        lblArgon2Salt.TabIndex = 0;
-        lblArgon2Salt.Text = "Argon2 Salt (Base64)";
-        // 
-        // tblSalt
-        // 
-        tblSalt.AutoSize = true;
-        tblSalt.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        tblSalt.ColumnCount = 2;
-        tblSalt.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tblSalt.ColumnStyles.Add(new ColumnStyle());
-        tblSalt.Controls.Add(txtArgon2Salt, 0, 0);
-        tblSalt.Controls.Add(btnSaltRegenerate, 1, 0);
-        tblSalt.Dock = DockStyle.Fill;
-        tblSalt.Location = new Point(191, 11);
-        tblSalt.Name = "tblSalt";
-        tblSalt.RowCount = 1;
-        tblSalt.RowStyles.Add(new RowStyle());
-        tblSalt.Size = new Size(510, 31);
-        tblSalt.TabIndex = 1;
-        // 
-        // txtArgon2Salt
-        // 
-        txtArgon2Salt.Dock = DockStyle.Fill;
-        txtArgon2Salt.Location = new Point(3, 3);
-        txtArgon2Salt.Name = "txtArgon2Salt";
-        txtArgon2Salt.Size = new Size(422, 23);
-        txtArgon2Salt.TabIndex = 0;
-        // 
-        // btnSaltRegenerate
-        // 
-        btnSaltRegenerate.AutoSize = true;
-        btnSaltRegenerate.Location = new Point(431, 3);
-        btnSaltRegenerate.Name = "btnSaltRegenerate";
-        btnSaltRegenerate.Size = new Size(76, 25);
-        btnSaltRegenerate.TabIndex = 1;
-        btnSaltRegenerate.Text = "Regenerate";
-        btnSaltRegenerate.Click += OnRegenerateSalt;
         // 
         // lblMaxActive
         // 
@@ -412,14 +350,13 @@ public partial class SettingsForm
         tblDatabase.RowStyles.Add(new RowStyle());
         tblDatabase.RowStyles.Add(new RowStyle());
         tblDatabase.RowStyles.Add(new RowStyle());
-        tblDatabase.Size = new Size(712, 221);
+        tblDatabase.Size = new Size(712, 192);
         tblDatabase.TabIndex = 0;
-        // 
         // 
         // lblDbHost
         // 
         lblDbHost.AutoSize = true;
-        lblDbHost.Location = new Point(11, 37);
+        lblDbHost.Location = new Point(11, 8);
         lblDbHost.Name = "lblDbHost";
         lblDbHost.Size = new Size(32, 15);
         lblDbHost.TabIndex = 2;
@@ -428,7 +365,7 @@ public partial class SettingsForm
         // txtDbHost
         // 
         txtDbHost.Dock = DockStyle.Fill;
-        txtDbHost.Location = new Point(151, 40);
+        txtDbHost.Location = new Point(151, 11);
         txtDbHost.Name = "txtDbHost";
         txtDbHost.Size = new Size(550, 23);
         txtDbHost.TabIndex = 3;
@@ -436,7 +373,7 @@ public partial class SettingsForm
         // lblDbPort
         // 
         lblDbPort.AutoSize = true;
-        lblDbPort.Location = new Point(11, 66);
+        lblDbPort.Location = new Point(11, 37);
         lblDbPort.Name = "lblDbPort";
         lblDbPort.Size = new Size(29, 15);
         lblDbPort.TabIndex = 4;
@@ -445,7 +382,7 @@ public partial class SettingsForm
         // txtDbPort
         // 
         txtDbPort.Dock = DockStyle.Fill;
-        txtDbPort.Location = new Point(151, 69);
+        txtDbPort.Location = new Point(151, 40);
         txtDbPort.Name = "txtDbPort";
         txtDbPort.Size = new Size(550, 23);
         txtDbPort.TabIndex = 5;
@@ -453,7 +390,7 @@ public partial class SettingsForm
         // lblDbName
         // 
         lblDbName.AutoSize = true;
-        lblDbName.Location = new Point(11, 95);
+        lblDbName.Location = new Point(11, 66);
         lblDbName.Name = "lblDbName";
         lblDbName.Size = new Size(55, 15);
         lblDbName.TabIndex = 6;
@@ -462,7 +399,7 @@ public partial class SettingsForm
         // txtDbName
         // 
         txtDbName.Dock = DockStyle.Fill;
-        txtDbName.Location = new Point(151, 98);
+        txtDbName.Location = new Point(151, 69);
         txtDbName.Name = "txtDbName";
         txtDbName.Size = new Size(550, 23);
         txtDbName.TabIndex = 7;
@@ -470,7 +407,7 @@ public partial class SettingsForm
         // lblDbAuth
         // 
         lblDbAuth.AutoSize = true;
-        lblDbAuth.Location = new Point(11, 124);
+        lblDbAuth.Location = new Point(11, 95);
         lblDbAuth.Name = "lblDbAuth";
         lblDbAuth.Size = new Size(86, 15);
         lblDbAuth.TabIndex = 8;
@@ -482,7 +419,7 @@ public partial class SettingsForm
         panelAuth.Controls.Add(radAuthTrusted);
         panelAuth.Controls.Add(radAuthSql);
         panelAuth.Dock = DockStyle.Fill;
-        panelAuth.Location = new Point(151, 127);
+        panelAuth.Location = new Point(151, 98);
         panelAuth.Name = "panelAuth";
         panelAuth.Size = new Size(550, 25);
         panelAuth.TabIndex = 9;
@@ -510,7 +447,7 @@ public partial class SettingsForm
         // lblDbUser
         // 
         lblDbUser.AutoSize = true;
-        lblDbUser.Location = new Point(11, 155);
+        lblDbUser.Location = new Point(11, 126);
         lblDbUser.Name = "lblDbUser";
         lblDbUser.Size = new Size(30, 15);
         lblDbUser.TabIndex = 10;
@@ -519,7 +456,7 @@ public partial class SettingsForm
         // txtDbUser
         // 
         txtDbUser.Dock = DockStyle.Fill;
-        txtDbUser.Location = new Point(151, 158);
+        txtDbUser.Location = new Point(151, 129);
         txtDbUser.Name = "txtDbUser";
         txtDbUser.Size = new Size(550, 23);
         txtDbUser.TabIndex = 11;
@@ -527,7 +464,7 @@ public partial class SettingsForm
         // lblDbPass
         // 
         lblDbPass.AutoSize = true;
-        lblDbPass.Location = new Point(11, 184);
+        lblDbPass.Location = new Point(11, 155);
         lblDbPass.Name = "lblDbPass";
         lblDbPass.Size = new Size(57, 15);
         lblDbPass.TabIndex = 12;
@@ -536,7 +473,7 @@ public partial class SettingsForm
         // txtDbPass
         // 
         txtDbPass.Dock = DockStyle.Fill;
-        txtDbPass.Location = new Point(151, 187);
+        txtDbPass.Location = new Point(151, 158);
         txtDbPass.Name = "txtDbPass";
         txtDbPass.Size = new Size(550, 23);
         txtDbPass.TabIndex = 13;
@@ -702,8 +639,7 @@ public partial class SettingsForm
         // 
         gridWorlds.AllowUserToAddRows = false;
         gridWorlds.AllowUserToDeleteRows = false;
-        gridWorlds.AutoGenerateColumns = false;
-        gridWorlds.Columns.AddRange(new DataGridViewColumn[] { colWorldName, colWorldAddress, colWorldDbName, colWorldType, colWorldEdit, colWorldDelete });
+        gridWorlds.Columns.AddRange(new DataGridViewColumn[] { colWorldEdit, colWorldDelete });
         gridWorlds.Dock = DockStyle.Fill;
         gridWorlds.Location = new Point(3, 48);
         gridWorlds.MultiSelect = false;
@@ -715,58 +651,29 @@ public partial class SettingsForm
         gridWorlds.TabIndex = 1;
         gridWorlds.CellContentClick += OnWorldGridClick;
         // 
-        // colWorldName
-        // 
-        colWorldName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        colWorldName.DataPropertyName = "Name";
-        colWorldName.HeaderText = "Name";
-        colWorldName.Name = "colWorldName";
-        colWorldName.ReadOnly = true;
-        // 
-        // colWorldAddress
-        // 
-        colWorldAddress.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        colWorldAddress.DataPropertyName = "Address";
-        colWorldAddress.HeaderText = "Address";
-        colWorldAddress.Name = "colWorldAddress";
-        colWorldAddress.ReadOnly = true;
-        // 
-        // colWorldDbName
-        // 
-        colWorldDbName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        colWorldDbName.DataPropertyName = "DbName";
-        colWorldDbName.HeaderText = "DbName";
-        colWorldDbName.Name = "colWorldDbName";
-        colWorldDbName.ReadOnly = true;
-        // 
-        // colWorldType
-        // 
-        colWorldType.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-        colWorldType.DataPropertyName = "Type";
-        colWorldType.HeaderText = "Type";
-        colWorldType.Name = "colWorldType";
-        colWorldType.ReadOnly = true;
-        // 
         // colWorldEdit
         // 
         colWorldEdit.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
         colWorldEdit.HeaderText = "";
-        colWorldEdit.Name = "colEdit";
+        colWorldEdit.Name = "colWorldEdit";
         colWorldEdit.ReadOnly = true;
         colWorldEdit.Text = "Edit";
         colWorldEdit.UseColumnTextForButtonValue = true;
+        colWorldEdit.Width = 5;
         // 
         // colWorldDelete
         // 
         colWorldDelete.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
         colWorldDelete.HeaderText = "";
-        colWorldDelete.Name = "colDelete";
+        colWorldDelete.Name = "colWorldDelete";
         colWorldDelete.ReadOnly = true;
         colWorldDelete.Text = "Delete";
         colWorldDelete.UseColumnTextForButtonValue = true;
+        colWorldDelete.Width = 5;
         // 
         // panelButtons
         // 
+        panelButtons.Controls.Add(btnReinstall);
         panelButtons.Controls.Add(btnSave);
         panelButtons.Controls.Add(btnCancel);
         panelButtons.Dock = DockStyle.Bottom;
@@ -776,6 +683,17 @@ public partial class SettingsForm
         panelButtons.Padding = new Padding(10);
         panelButtons.Size = new Size(720, 48);
         panelButtons.TabIndex = 1;
+        // 
+        // btnReinstall
+        // 
+        btnReinstall.AutoSize = true;
+        btnReinstall.ForeColor = Color.DarkRed;
+        btnReinstall.Location = new Point(541, 13);
+        btnReinstall.Name = "btnReinstall";
+        btnReinstall.Size = new Size(75, 25);
+        btnReinstall.TabIndex = 2;
+        btnReinstall.Text = "Reinstall";
+        btnReinstall.Click += OnReinstall;
         // 
         // btnSave
         // 
@@ -790,7 +708,7 @@ public partial class SettingsForm
         // btnCancel
         // 
         btnCancel.AutoSize = true;
-        btnCancel.Location = new Point(541, 13);
+        btnCancel.Location = new Point(460, 13);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new Size(75, 25);
         btnCancel.TabIndex = 1;
@@ -816,8 +734,6 @@ public partial class SettingsForm
         panelGeneral.PerformLayout();
         tblGeneral.ResumeLayout(false);
         tblGeneral.PerformLayout();
-        tblSalt.ResumeLayout(false);
-        tblSalt.PerformLayout();
         ((ISupportInitialize)numMaxActive).EndInit();
         ((ISupportInitialize)numLoginPort).EndInit();
         ((ISupportInitialize)numWorldPort).EndInit();

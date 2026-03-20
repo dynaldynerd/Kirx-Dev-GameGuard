@@ -17,7 +17,7 @@ public partial class WorldEntryForm
     private TextBox txtName = null!;
     private TextBox txtAddress = null!;
     private TextBox txtDbName = null!;
-    private NumericUpDown numType = null!;
+    private ComboBox cmbType = null!;
     private Button btnOk = null!;
     private Button btnCancel = null!;
 
@@ -41,10 +41,9 @@ public partial class WorldEntryForm
         txtName = new TextBox();
         txtAddress = new TextBox();
         txtDbName = new TextBox();
-        numType = new NumericUpDown();
+        cmbType = new ComboBox();
         btnOk = new Button();
         btnCancel = new Button();
-        ((ISupportInitialize)numType).BeginInit();
         layoutMain.SuspendLayout();
         panelButtons.SuspendLayout();
         SuspendLayout();
@@ -62,7 +61,7 @@ public partial class WorldEntryForm
         layoutMain.Controls.Add(lblDbName, 0, 2);
         layoutMain.Controls.Add(txtDbName, 1, 2);
         layoutMain.Controls.Add(lblType, 0, 3);
-        layoutMain.Controls.Add(numType, 1, 3);
+        layoutMain.Controls.Add(cmbType, 1, 3);
         layoutMain.Dock = DockStyle.Top;
         layoutMain.Padding = new Padding(10);
         layoutMain.RowCount = 4;
@@ -121,11 +120,16 @@ public partial class WorldEntryForm
         txtDbName.Dock = DockStyle.Fill;
         txtDbName.Name = "txtDbName";
         // 
-        // numType
+        // cmbType
         // 
-        numType.Minimum = 0;
-        numType.Maximum = 65535;
-        numType.Name = "numType";
+        cmbType.Dock = DockStyle.Fill;
+        cmbType.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbType.Items.AddRange(new object[]
+        {
+            "0 - Regular/Normal Server",
+            "1 - Test Server"
+        });
+        cmbType.Name = "cmbType";
         // 
         // btnOk
         // 
@@ -156,7 +160,6 @@ public partial class WorldEntryForm
         Name = "WorldEntryForm";
         StartPosition = FormStartPosition.CenterParent;
         Text = "World Entry";
-        ((ISupportInitialize)numType).EndInit();
         layoutMain.ResumeLayout(false);
         layoutMain.PerformLayout();
         panelButtons.ResumeLayout(false);

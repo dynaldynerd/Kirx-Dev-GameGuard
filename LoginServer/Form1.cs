@@ -227,8 +227,24 @@ public partial class MainWindow : Form
         if (_cts == null || _isStopping) return;
         try
         {
+            MainContext.Instance.BeginAwaitAccountDbInfo();
             await Task.Delay(100).ConfigureAwait(false); // slight delay to ensure readiness
+            await SendAccountDbInfoRequestAsync(_cts.Token).ConfigureAwait(false);
             await SendWorldListRequestAsync(_cts.Token).ConfigureAwait(false);
+            using var dbInfoWaitCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+            dbInfoWaitCts.CancelAfter(TimeSpan.FromSeconds(5));
+            await MainContext.Instance.WaitForAccountDbInfoAsync(dbInfoWaitCts.Token).ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(MainContext.Instance.AccountDbName))
+            {
+                throw new InvalidOperationException("Account server did not provide an RF_User database name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(MainContext.Instance.AccountArgon2SaltBase64))
+            {
+                throw new InvalidOperationException("Account server did not provide an Argon2 salt.");
+            }
+
             await StartClientListenerAsync(_cts.Token).ConfigureAwait(false);
             UpdateStatus($"Status: Listening on {_settings.Network.ClientPort}, account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
         }
@@ -286,6 +302,32 @@ public partial class MainWindow : Form
         catch (Exception ex)
         {
             AppendLog($"World list request send failed: {ex.Message}");
+        }
+    }
+
+    private async Task SendAccountDbInfoRequestAsync(CancellationToken token)
+    {
+        var accountConn = MainContext.Instance.AccountConnection;
+        if (accountConn == null)
+        {
+            return;
+        }
+
+        var env = new PacketEnvelope
+        {
+            OpCode = 1,
+            SubCode = 15,
+            Payload = Array.Empty<byte>()
+        };
+        try
+        {
+            await accountConn.SendAsync(env, token).ConfigureAwait(false);
+            AppendLog("Sent account DB info request to account server.");
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Account DB info request send failed: {ex.Message}");
+            throw;
         }
     }
 

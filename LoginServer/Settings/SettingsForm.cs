@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Forms;
+using LoginServer.Data;
 using LoginServer.Settings;
 
 namespace LoginServer.Settings;
@@ -16,6 +17,7 @@ public partial class SettingsForm : Form
         _settings = settings;
         _userDb = new DatabaseSnapshot
         {
+            Provider = settings.Database.Provider,
             Host = settings.Database.Host,
             Port = settings.Database.Port,
             Database = settings.Database.Database,
@@ -25,6 +27,7 @@ public partial class SettingsForm : Form
         };
         _billingDb = new DatabaseSnapshot
         {
+            Provider = settings.Database.BillingProvider,
             Host = settings.Database.BillingHost,
             Port = settings.Database.BillingPort,
             Database = settings.Database.BillingDatabase,
@@ -46,7 +49,6 @@ public partial class SettingsForm : Form
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
         txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
-        txtArgon2Salt.Text = _settings.Security.Argon2SaltBase64;
         var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
         txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
         txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
@@ -62,10 +64,10 @@ public partial class SettingsForm : Form
 
         _settings.Database.Host = _userDb.Host;
         _settings.Database.Port = _userDb.Port;
-        _settings.Database.Database = _userDb.Database;
         _settings.Database.User = _userDb.User;
         _settings.Database.Password = _userDb.Password;
         _settings.Database.TrustedConnection = _userDb.Trusted;
+        _settings.Database.Provider = _userDb.Provider;
 
         _settings.Database.BillingHost = _billingDb.Host;
         _settings.Database.BillingPort = _billingDb.Port;
@@ -73,23 +75,7 @@ public partial class SettingsForm : Form
         _settings.Database.BillingUser = _billingDb.User;
         _settings.Database.BillingPassword = _billingDb.Password;
         _settings.Database.BillingTrustedConnection = _billingDb.Trusted;
-
-        var saltText = txtArgon2Salt.Text.Trim();
-        if (string.IsNullOrWhiteSpace(saltText))
-        {
-            MessageBox.Show(this, "Argon2 salt is required.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-        try
-        {
-            _ = Convert.FromBase64String(saltText);
-        }
-        catch (FormatException)
-        {
-            MessageBox.Show(this, "Argon2 salt must be valid Base64.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-        _settings.Security.Argon2SaltBase64 = saltText;
+        _settings.Database.BillingProvider = _billingDb.Provider;
 
         if (!int.TryParse(txtClientPort.Text, out var cPort) || cPort < 1 || cPort > 65535)
         {
@@ -126,10 +112,13 @@ public partial class SettingsForm : Form
 
     private void LoadDbProfileToControls()
     {
-        var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        bool isBillingProfile = cboDbProfile.SelectedIndex == 1;
+        var db = isBillingProfile ? _billingDb : _userDb;
+        cboDbProvider.SelectedIndex = GetProviderIndex(db.Provider);
         txtDbHost.Text = db.Host;
         txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
-        txtDbName.Text = db.Database;
+        txtDbName.Text = isBillingProfile ? db.Database : "(from AccountServer)";
+        txtDbName.ReadOnly = !isBillingProfile;
         txtDbUser.Text = db.User;
         txtDbPass.Text = db.Password;
         radAuthTrusted.Checked = db.Trusted;
@@ -139,16 +128,30 @@ public partial class SettingsForm : Form
 
     private bool SaveCurrentDbProfile()
     {
-        if (!int.TryParse(txtDbPort.Text, out var port) || port < 1 || port > 65535)
+        var provider = GetSelectedProvider();
+        int port = cboDbProfile.SelectedIndex == 1 ? _billingDb.Port : _userDb.Port;
+        if (provider != LoginDatabaseProvider.Sqlite &&
+            (!int.TryParse(txtDbPort.Text, out port) || port < 1 || port > 65535))
         {
             MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return false;
         }
+        if (provider == LoginDatabaseProvider.Sqlite &&
+            int.TryParse(txtDbPort.Text, out var sqlitePort) &&
+            sqlitePort >= 1 &&
+            sqlitePort <= 65535)
+        {
+            port = sqlitePort;
+        }
 
         var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        db.Provider = provider;
         db.Host = txtDbHost.Text.Trim();
         db.Port = port;
-        db.Database = txtDbName.Text.Trim();
+        if (cboDbProfile.SelectedIndex == 1)
+        {
+            db.Database = txtDbName.Text.Trim();
+        }
         db.User = txtDbUser.Text.Trim();
         db.Password = txtDbPass.Text;
         db.Trusted = radAuthTrusted.Checked;
@@ -170,11 +173,51 @@ public partial class SettingsForm : Form
         UpdateAuthFields();
     }
 
+    private void OnDbProviderChanged(object? sender, EventArgs e)
+    {
+        UpdateAuthFields();
+    }
+
     private void UpdateAuthFields()
     {
+        var provider = GetSelectedProvider();
+        bool isSqlite = provider == LoginDatabaseProvider.Sqlite;
+        bool isSqlServer = provider == LoginDatabaseProvider.SqlServer;
         bool sqlAuth = radAuthSql.Checked;
-        txtDbUser.Enabled = sqlAuth;
-        txtDbPass.Enabled = sqlAuth;
+
+        txtDbHost.Enabled = !isSqlite;
+        txtDbPort.Enabled = !isSqlite;
+        grpAuth.Enabled = !isSqlite;
+
+        if (!isSqlite && !isSqlServer && radAuthTrusted.Checked)
+        {
+            radAuthSql.Checked = true;
+        }
+
+        radAuthTrusted.Enabled = !isSqlite && isSqlServer;
+        radAuthSql.Enabled = !isSqlite;
+        txtDbUser.Enabled = !isSqlite && sqlAuth;
+        txtDbPass.Enabled = !isSqlite && sqlAuth;
+    }
+
+    private LoginDatabaseProvider GetSelectedProvider()
+    {
+        return cboDbProvider.SelectedIndex switch
+        {
+            1 => LoginDatabaseProvider.MariaDb,
+            2 => LoginDatabaseProvider.Sqlite,
+            _ => LoginDatabaseProvider.SqlServer
+        };
+    }
+
+    private static int GetProviderIndex(LoginDatabaseProvider provider)
+    {
+        return provider switch
+        {
+            LoginDatabaseProvider.MariaDb => 1,
+            LoginDatabaseProvider.Sqlite => 2,
+            _ => 0
+        };
     }
 
     private void OnSave(object? sender, EventArgs e)
@@ -197,6 +240,7 @@ public partial class SettingsForm : Form
 
 internal class DatabaseSnapshot
 {
+    public LoginDatabaseProvider Provider { get; set; } = LoginDatabaseProvider.SqlServer;
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; }
     public string Database { get; set; } = string.Empty;

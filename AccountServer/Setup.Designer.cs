@@ -1,429 +1,586 @@
+#nullable enable
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+
 namespace AccountServer
 {
     partial class Setup
     {
-        private System.ComponentModel.IContainer components = null;
+        private IContainer? components = null;
 
-        private System.Windows.Forms.TabControl tabSetup;
-        private System.Windows.Forms.TabPage tabDatabase;
-        private System.Windows.Forms.TabPage tabWorld;
-        private System.Windows.Forms.ComboBox cmbProvider;
-        private System.Windows.Forms.Label lblProvider;
-        private System.Windows.Forms.GroupBox grpUserDb;
-        private System.Windows.Forms.Label lblUserHost;
-        private System.Windows.Forms.Label lblUserPort;
-        private System.Windows.Forms.Label lblUserDb;
-        private System.Windows.Forms.Label lblUserUser;
-        private System.Windows.Forms.Label lblUserPass;
-        private System.Windows.Forms.TextBox txtUserHost;
-        private System.Windows.Forms.NumericUpDown numUserPort;
-        private System.Windows.Forms.TextBox txtUserDb;
-        private System.Windows.Forms.TextBox txtUserUser;
-        private System.Windows.Forms.TextBox txtUserPass;
-        private System.Windows.Forms.CheckBox chkUserTrusted;
-        private System.Windows.Forms.Button btnInstallUserDb;
-        private System.Windows.Forms.GroupBox grpWorld;
-        private System.Windows.Forms.Label lblWorldName;
-        private System.Windows.Forms.Label lblWorldAddress;
-        private System.Windows.Forms.Label lblWorldDb;
-        private System.Windows.Forms.Label lblWorldType;
-        private System.Windows.Forms.TextBox txtWorldName;
-        private System.Windows.Forms.TextBox txtWorldAddress;
-        private System.Windows.Forms.TextBox txtWorldDb;
-        private System.Windows.Forms.NumericUpDown numWorldType;
-        private System.Windows.Forms.Button btnSave;
-        private System.Windows.Forms.Button btnCancel;
+        private Label lblStepCount = null!;
+        private Label lblStepTitle = null!;
+        private Label lblStepDescription = null!;
+        private TabControl pageSetup = null!;
+        private TabPage pageDatabase = null!;
+        private TabPage pageWorld = null!;
+        private TabPage pageSecurity = null!;
+        private ComboBox cmbProvider = null!;
+        private Label lblProvider = null!;
+        private GroupBox grpUserDb = null!;
+        private Label lblUserHost = null!;
+        private Label lblUserPort = null!;
+        private Label lblUserDb = null!;
+        private Label lblUserUser = null!;
+        private Label lblUserPass = null!;
+        private TextBox txtUserHost = null!;
+        private NumericUpDown numUserPort = null!;
+        private TextBox txtUserDb = null!;
+        private TextBox txtUserUser = null!;
+        private TextBox txtUserPass = null!;
+        private CheckBox chkUserTrusted = null!;
+        private Button btnSaveSettings = null!;
+        private Button btnInstallUserDb = null!;
+        private GroupBox grpWorld = null!;
+        private Label lblWorldName = null!;
+        private Label lblWorldAddress = null!;
+        private Label lblWorldDb = null!;
+        private Label lblWorldType = null!;
+        private TextBox txtWorldName = null!;
+        private TextBox txtWorldAddress = null!;
+        private TextBox txtWorldDb = null!;
+        private ComboBox cmbWorldType = null!;
+        private GroupBox grpSecurity = null!;
+        private Label lblArgon2Salt = null!;
+        private TextBox txtArgon2Salt = null!;
+        private Button btnRegenerateSalt = null!;
+        private Label lblSecurityNote = null!;
+        private FlowLayoutPanel panelButtons = null!;
+        private Button btnFinish = null!;
+        private Button btnNext = null!;
+        private Button btnBack = null!;
+        private Button btnCancel = null!;
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing && components != null)
             {
                 components.Dispose();
             }
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
         private void InitializeComponent()
         {
-            this.tabSetup = new System.Windows.Forms.TabControl();
-            this.tabDatabase = new System.Windows.Forms.TabPage();
-            this.btnInstallUserDb = new System.Windows.Forms.Button();
-            this.grpUserDb = new System.Windows.Forms.GroupBox();
-            this.chkUserTrusted = new System.Windows.Forms.CheckBox();
-            this.txtUserPass = new System.Windows.Forms.TextBox();
-            this.txtUserUser = new System.Windows.Forms.TextBox();
-            this.txtUserDb = new System.Windows.Forms.TextBox();
-            this.numUserPort = new System.Windows.Forms.NumericUpDown();
-            this.txtUserHost = new System.Windows.Forms.TextBox();
-            this.lblUserPass = new System.Windows.Forms.Label();
-            this.lblUserUser = new System.Windows.Forms.Label();
-            this.lblUserDb = new System.Windows.Forms.Label();
-            this.lblUserPort = new System.Windows.Forms.Label();
-            this.lblUserHost = new System.Windows.Forms.Label();
-            this.cmbProvider = new System.Windows.Forms.ComboBox();
-            this.lblProvider = new System.Windows.Forms.Label();
-            this.tabWorld = new System.Windows.Forms.TabPage();
-            this.grpWorld = new System.Windows.Forms.GroupBox();
-            this.numWorldType = new System.Windows.Forms.NumericUpDown();
-            this.txtWorldDb = new System.Windows.Forms.TextBox();
-            this.txtWorldAddress = new System.Windows.Forms.TextBox();
-            this.txtWorldName = new System.Windows.Forms.TextBox();
-            this.lblWorldType = new System.Windows.Forms.Label();
-            this.lblWorldDb = new System.Windows.Forms.Label();
-            this.lblWorldAddress = new System.Windows.Forms.Label();
-            this.lblWorldName = new System.Windows.Forms.Label();
-            this.btnSave = new System.Windows.Forms.Button();
-            this.btnCancel = new System.Windows.Forms.Button();
-            this.tabSetup.SuspendLayout();
-            this.tabDatabase.SuspendLayout();
-            this.grpUserDb.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUserPort)).BeginInit();
-            this.tabWorld.SuspendLayout();
-            this.grpWorld.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numWorldType)).BeginInit();
-            this.SuspendLayout();
+            lblStepCount = new Label();
+            lblStepTitle = new Label();
+            lblStepDescription = new Label();
+            pageSetup = new TabControl();
+            pageDatabase = new TabPage();
+            btnSaveSettings = new Button();
+            btnInstallUserDb = new Button();
+            grpUserDb = new GroupBox();
+            chkUserTrusted = new CheckBox();
+            txtUserPass = new TextBox();
+            txtUserUser = new TextBox();
+            txtUserDb = new TextBox();
+            numUserPort = new NumericUpDown();
+            txtUserHost = new TextBox();
+            lblUserPass = new Label();
+            lblUserUser = new Label();
+            lblUserDb = new Label();
+            lblUserPort = new Label();
+            lblUserHost = new Label();
+            cmbProvider = new ComboBox();
+            lblProvider = new Label();
+            pageWorld = new TabPage();
+            grpWorld = new GroupBox();
+            cmbWorldType = new ComboBox();
+            txtWorldDb = new TextBox();
+            txtWorldAddress = new TextBox();
+            txtWorldName = new TextBox();
+            lblWorldType = new Label();
+            lblWorldDb = new Label();
+            lblWorldAddress = new Label();
+            lblWorldName = new Label();
+            pageSecurity = new TabPage();
+            grpSecurity = new GroupBox();
+            lblSecurityNote = new Label();
+            btnRegenerateSalt = new Button();
+            txtArgon2Salt = new TextBox();
+            lblArgon2Salt = new Label();
+            panelButtons = new FlowLayoutPanel();
+            btnFinish = new Button();
+            btnNext = new Button();
+            btnBack = new Button();
+            btnCancel = new Button();
+            pageSetup.SuspendLayout();
+            pageDatabase.SuspendLayout();
+            grpUserDb.SuspendLayout();
+            ((ISupportInitialize)numUserPort).BeginInit();
+            pageWorld.SuspendLayout();
+            grpWorld.SuspendLayout();
+            pageSecurity.SuspendLayout();
+            grpSecurity.SuspendLayout();
+            panelButtons.SuspendLayout();
+            SuspendLayout();
             // 
-            // tabSetup
+            // lblStepCount
             // 
-            this.tabSetup.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabSetup.Controls.Add(this.tabDatabase);
-            this.tabSetup.Controls.Add(this.tabWorld);
-            this.tabSetup.Location = new System.Drawing.Point(12, 12);
-            this.tabSetup.Name = "tabSetup";
-            this.tabSetup.SelectedIndex = 0;
-            this.tabSetup.Size = new System.Drawing.Size(776, 388);
-            this.tabSetup.TabIndex = 0;
+            lblStepCount.AutoSize = true;
+            lblStepCount.Location = new Point(12, 12);
+            lblStepCount.Name = "lblStepCount";
+            lblStepCount.Size = new Size(61, 15);
+            lblStepCount.TabIndex = 0;
+            lblStepCount.Text = "Step 1 of 3";
             // 
-            // tabDatabase
+            // lblStepTitle
             // 
-            this.tabDatabase.Controls.Add(this.btnInstallUserDb);
-            this.tabDatabase.Controls.Add(this.grpUserDb);
-            this.tabDatabase.Controls.Add(this.cmbProvider);
-            this.tabDatabase.Controls.Add(this.lblProvider);
-            this.tabDatabase.Location = new System.Drawing.Point(4, 24);
-            this.tabDatabase.Name = "tabDatabase";
-            this.tabDatabase.Padding = new System.Windows.Forms.Padding(10);
-            this.tabDatabase.Size = new System.Drawing.Size(768, 360);
-            this.tabDatabase.TabIndex = 0;
-            this.tabDatabase.Text = "Database";
-            this.tabDatabase.UseVisualStyleBackColor = true;
+            lblStepTitle.AutoSize = true;
+            lblStepTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblStepTitle.Location = new Point(12, 33);
+            lblStepTitle.Name = "lblStepTitle";
+            lblStepTitle.Size = new Size(132, 25);
+            lblStepTitle.TabIndex = 1;
+            lblStepTitle.Text = "Database Setup";
+            // 
+            // lblStepDescription
+            // 
+            lblStepDescription.AutoSize = true;
+            lblStepDescription.Location = new Point(12, 62);
+            lblStepDescription.MaximumSize = new Size(760, 0);
+            lblStepDescription.Name = "lblStepDescription";
+            lblStepDescription.Size = new Size(392, 15);
+            lblStepDescription.TabIndex = 2;
+            lblStepDescription.Text = "Choose the RF_User database provider and connection used by AccountServer.";
+            // 
+            // pageSetup
+            // 
+            pageSetup.Appearance = TabAppearance.FlatButtons;
+            pageSetup.Controls.Add(pageDatabase);
+            pageSetup.Controls.Add(pageWorld);
+            pageSetup.Controls.Add(pageSecurity);
+            pageSetup.ItemSize = new Size(1, 1);
+            pageSetup.Location = new Point(12, 92);
+            pageSetup.Multiline = true;
+            pageSetup.Name = "pageSetup";
+            pageSetup.Padding = new Point(0, 0);
+            pageSetup.SelectedIndex = 0;
+            pageSetup.Size = new Size(776, 346);
+            pageSetup.SizeMode = TabSizeMode.Fixed;
+            pageSetup.TabIndex = 3;
+            // 
+            // pageDatabase
+            // 
+            pageDatabase.Controls.Add(btnSaveSettings);
+            pageDatabase.Controls.Add(btnInstallUserDb);
+            pageDatabase.Controls.Add(grpUserDb);
+            pageDatabase.Controls.Add(cmbProvider);
+            pageDatabase.Controls.Add(lblProvider);
+            pageDatabase.Location = new Point(4, 5);
+            pageDatabase.Name = "pageDatabase";
+            pageDatabase.Padding = new Padding(10);
+            pageDatabase.Size = new Size(768, 337);
+            pageDatabase.TabIndex = 0;
+            pageDatabase.Text = "Database";
+            pageDatabase.UseVisualStyleBackColor = true;
+            // 
+            // btnSaveSettings
+            // 
+            btnSaveSettings.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSaveSettings.Location = new Point(470, 297);
+            btnSaveSettings.Name = "btnSaveSettings";
+            btnSaveSettings.Size = new Size(122, 27);
+            btnSaveSettings.TabIndex = 13;
+            btnSaveSettings.Text = "Save Setting";
+            btnSaveSettings.UseVisualStyleBackColor = true;
+            btnSaveSettings.Click += BtnSaveSettings_Click;
             // 
             // btnInstallUserDb
             // 
-            this.btnInstallUserDb.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnInstallUserDb.Location = new System.Drawing.Point(597, 321);
-            this.btnInstallUserDb.Name = "btnInstallUserDb";
-            this.btnInstallUserDb.Size = new System.Drawing.Size(158, 27);
-            this.btnInstallUserDb.TabIndex = 4;
-            this.btnInstallUserDb.Text = "Install User DB";
-            this.btnInstallUserDb.UseVisualStyleBackColor = true;
-            this.btnInstallUserDb.Click += new System.EventHandler(this.BtnInstallUserDb_Click);
+            btnInstallUserDb.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnInstallUserDb.Location = new Point(598, 297);
+            btnInstallUserDb.Name = "btnInstallUserDb";
+            btnInstallUserDb.Size = new Size(157, 27);
+            btnInstallUserDb.TabIndex = 14;
+            btnInstallUserDb.Text = "Install New DB";
+            btnInstallUserDb.UseVisualStyleBackColor = true;
+            btnInstallUserDb.Click += BtnInstallUserDb_Click;
             // 
             // grpUserDb
             // 
-            this.grpUserDb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right));
-            this.grpUserDb.Controls.Add(this.chkUserTrusted);
-            this.grpUserDb.Controls.Add(this.txtUserPass);
-            this.grpUserDb.Controls.Add(this.txtUserUser);
-            this.grpUserDb.Controls.Add(this.txtUserDb);
-            this.grpUserDb.Controls.Add(this.numUserPort);
-            this.grpUserDb.Controls.Add(this.txtUserHost);
-            this.grpUserDb.Controls.Add(this.lblUserPass);
-            this.grpUserDb.Controls.Add(this.lblUserUser);
-            this.grpUserDb.Controls.Add(this.lblUserDb);
-            this.grpUserDb.Controls.Add(this.lblUserPort);
-            this.grpUserDb.Controls.Add(this.lblUserHost);
-            this.grpUserDb.Location = new System.Drawing.Point(13, 49);
-            this.grpUserDb.Name = "grpUserDb";
-            this.grpUserDb.Size = new System.Drawing.Size(742, 260);
-            this.grpUserDb.TabIndex = 2;
-            this.grpUserDb.TabStop = false;
-            this.grpUserDb.Text = "User DB";
+            grpUserDb.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpUserDb.Controls.Add(chkUserTrusted);
+            grpUserDb.Controls.Add(txtUserPass);
+            grpUserDb.Controls.Add(txtUserUser);
+            grpUserDb.Controls.Add(txtUserDb);
+            grpUserDb.Controls.Add(numUserPort);
+            grpUserDb.Controls.Add(txtUserHost);
+            grpUserDb.Controls.Add(lblUserPass);
+            grpUserDb.Controls.Add(lblUserUser);
+            grpUserDb.Controls.Add(lblUserDb);
+            grpUserDb.Controls.Add(lblUserPort);
+            grpUserDb.Controls.Add(lblUserHost);
+            grpUserDb.Location = new Point(13, 49);
+            grpUserDb.Name = "grpUserDb";
+            grpUserDb.Size = new Size(742, 234);
+            grpUserDb.TabIndex = 2;
+            grpUserDb.TabStop = false;
+            grpUserDb.Text = "User DB";
             // 
             // chkUserTrusted
             // 
-            this.chkUserTrusted.AutoSize = true;
-            this.chkUserTrusted.Location = new System.Drawing.Point(120, 161);
-            this.chkUserTrusted.Name = "chkUserTrusted";
-            this.chkUserTrusted.Size = new System.Drawing.Size(124, 19);
-            this.chkUserTrusted.TabIndex = 10;
-            this.chkUserTrusted.Text = "Trusted Connection";
-            this.chkUserTrusted.UseVisualStyleBackColor = true;
-            this.chkUserTrusted.CheckedChanged += new System.EventHandler(this.TrustedChanged);
+            chkUserTrusted.AutoSize = true;
+            chkUserTrusted.Location = new Point(120, 131);
+            chkUserTrusted.Name = "chkUserTrusted";
+            chkUserTrusted.Size = new Size(124, 19);
+            chkUserTrusted.TabIndex = 9;
+            chkUserTrusted.Text = "Trusted Connection";
+            chkUserTrusted.UseVisualStyleBackColor = true;
+            chkUserTrusted.CheckedChanged += TrustedChanged;
             // 
             // txtUserPass
             // 
-            this.txtUserPass.Location = new System.Drawing.Point(120, 219);
-            this.txtUserPass.Name = "txtUserPass";
-            this.txtUserPass.PasswordChar = '*';
-            this.txtUserPass.Size = new System.Drawing.Size(220, 23);
-            this.txtUserPass.TabIndex = 9;
+            txtUserPass.Location = new Point(120, 189);
+            txtUserPass.Name = "txtUserPass";
+            txtUserPass.PasswordChar = '*';
+            txtUserPass.Size = new Size(220, 23);
+            txtUserPass.TabIndex = 12;
             // 
             // txtUserUser
             // 
-            this.txtUserUser.Location = new System.Drawing.Point(120, 189);
-            this.txtUserUser.Name = "txtUserUser";
-            this.txtUserUser.Size = new System.Drawing.Size(220, 23);
-            this.txtUserUser.TabIndex = 8;
+            txtUserUser.Location = new Point(120, 159);
+            txtUserUser.Name = "txtUserUser";
+            txtUserUser.Size = new Size(220, 23);
+            txtUserUser.TabIndex = 10;
             // 
             // txtUserDb
             // 
-            this.txtUserDb.Location = new System.Drawing.Point(120, 129);
-            this.txtUserDb.Name = "txtUserDb";
-            this.txtUserDb.Size = new System.Drawing.Size(220, 23);
-            this.txtUserDb.TabIndex = 7;
+            txtUserDb.Location = new Point(120, 98);
+            txtUserDb.Name = "txtUserDb";
+            txtUserDb.Size = new Size(220, 23);
+            txtUserDb.TabIndex = 8;
             // 
             // numUserPort
             // 
-            this.numUserPort.Location = new System.Drawing.Point(120, 98);
-            this.numUserPort.Maximum = new decimal(new int[] {
-            65535,
-            0,
-            0,
-            0});
-            this.numUserPort.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numUserPort.Name = "numUserPort";
-            this.numUserPort.Size = new System.Drawing.Size(120, 23);
-            this.numUserPort.TabIndex = 6;
-            this.numUserPort.Value = new decimal(new int[] {
-            1433,
-            0,
-            0,
-            0});
+            numUserPort.Location = new Point(120, 69);
+            numUserPort.Maximum = new decimal(new int[] { 65535, 0, 0, 0 });
+            numUserPort.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numUserPort.Name = "numUserPort";
+            numUserPort.Size = new Size(120, 23);
+            numUserPort.TabIndex = 7;
+            numUserPort.Value = new decimal(new int[] { 1433, 0, 0, 0 });
             // 
             // txtUserHost
             // 
-            this.txtUserHost.Location = new System.Drawing.Point(120, 69);
-            this.txtUserHost.Name = "txtUserHost";
-            this.txtUserHost.Size = new System.Drawing.Size(220, 23);
-            this.txtUserHost.TabIndex = 5;
+            txtUserHost.Location = new Point(120, 40);
+            txtUserHost.Name = "txtUserHost";
+            txtUserHost.Size = new Size(220, 23);
+            txtUserHost.TabIndex = 6;
             // 
             // lblUserPass
             // 
-            this.lblUserPass.AutoSize = true;
-            this.lblUserPass.Location = new System.Drawing.Point(16, 222);
-            this.lblUserPass.Name = "lblUserPass";
-            this.lblUserPass.Size = new System.Drawing.Size(57, 15);
-            this.lblUserPass.TabIndex = 4;
-            this.lblUserPass.Text = "Password";
+            lblUserPass.AutoSize = true;
+            lblUserPass.Location = new Point(16, 192);
+            lblUserPass.Name = "lblUserPass";
+            lblUserPass.Size = new Size(57, 15);
+            lblUserPass.TabIndex = 4;
+            lblUserPass.Text = "Password";
             // 
             // lblUserUser
             // 
-            this.lblUserUser.AutoSize = true;
-            this.lblUserUser.Location = new System.Drawing.Point(16, 192);
-            this.lblUserUser.Name = "lblUserUser";
-            this.lblUserUser.Size = new System.Drawing.Size(30, 15);
-            this.lblUserUser.TabIndex = 3;
-            this.lblUserUser.Text = "User";
+            lblUserUser.AutoSize = true;
+            lblUserUser.Location = new Point(16, 162);
+            lblUserUser.Name = "lblUserUser";
+            lblUserUser.Size = new Size(30, 15);
+            lblUserUser.TabIndex = 3;
+            lblUserUser.Text = "User";
             // 
             // lblUserDb
             // 
-            this.lblUserDb.AutoSize = true;
-            this.lblUserDb.Location = new System.Drawing.Point(16, 132);
-            this.lblUserDb.Name = "lblUserDb";
-            this.lblUserDb.Size = new System.Drawing.Size(55, 15);
-            this.lblUserDb.TabIndex = 2;
-            this.lblUserDb.Text = "Database";
+            lblUserDb.AutoSize = true;
+            lblUserDb.Location = new Point(16, 101);
+            lblUserDb.Name = "lblUserDb";
+            lblUserDb.Size = new Size(55, 15);
+            lblUserDb.TabIndex = 2;
+            lblUserDb.Text = "Database";
             // 
             // lblUserPort
             // 
-            this.lblUserPort.AutoSize = true;
-            this.lblUserPort.Location = new System.Drawing.Point(16, 100);
-            this.lblUserPort.Name = "lblUserPort";
-            this.lblUserPort.Size = new System.Drawing.Size(29, 15);
-            this.lblUserPort.TabIndex = 1;
-            this.lblUserPort.Text = "Port";
+            lblUserPort.AutoSize = true;
+            lblUserPort.Location = new Point(16, 72);
+            lblUserPort.Name = "lblUserPort";
+            lblUserPort.Size = new Size(29, 15);
+            lblUserPort.TabIndex = 1;
+            lblUserPort.Text = "Port";
             // 
             // lblUserHost
             // 
-            this.lblUserHost.AutoSize = true;
-            this.lblUserHost.Location = new System.Drawing.Point(16, 72);
-            this.lblUserHost.Name = "lblUserHost";
-            this.lblUserHost.Size = new System.Drawing.Size(32, 15);
-            this.lblUserHost.TabIndex = 0;
-            this.lblUserHost.Text = "Host";
+            lblUserHost.AutoSize = true;
+            lblUserHost.Location = new Point(16, 43);
+            lblUserHost.Name = "lblUserHost";
+            lblUserHost.Size = new Size(32, 15);
+            lblUserHost.TabIndex = 0;
+            lblUserHost.Text = "Host";
             // 
             // cmbProvider
             // 
-            this.cmbProvider.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbProvider.FormattingEnabled = true;
-            this.cmbProvider.Items.AddRange(new object[] {
-            "SQL Server",
-            "MariaDB",
-            "SQLite"});
-            this.cmbProvider.Location = new System.Drawing.Point(78, 15);
-            this.cmbProvider.Name = "cmbProvider";
-            this.cmbProvider.Size = new System.Drawing.Size(192, 23);
-            this.cmbProvider.TabIndex = 1;
-            this.cmbProvider.SelectedIndexChanged += new System.EventHandler(this.ProviderChanged);
+            cmbProvider.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbProvider.FormattingEnabled = true;
+            cmbProvider.Items.AddRange(new object[] { "SQL Server", "MariaDB", "SQLite" });
+            cmbProvider.Location = new Point(78, 15);
+            cmbProvider.Name = "cmbProvider";
+            cmbProvider.Size = new Size(192, 23);
+            cmbProvider.TabIndex = 1;
+            cmbProvider.SelectedIndexChanged += ProviderChanged;
             // 
             // lblProvider
             // 
-            this.lblProvider.AutoSize = true;
-            this.lblProvider.Location = new System.Drawing.Point(13, 18);
-            this.lblProvider.Name = "lblProvider";
-            this.lblProvider.Size = new System.Drawing.Size(52, 15);
-            this.lblProvider.TabIndex = 0;
-            this.lblProvider.Text = "Provider";
+            lblProvider.AutoSize = true;
+            lblProvider.Location = new Point(13, 18);
+            lblProvider.Name = "lblProvider";
+            lblProvider.Size = new Size(52, 15);
+            lblProvider.TabIndex = 0;
+            lblProvider.Text = "Provider";
             // 
-            // tabWorld
+            // pageWorld
             // 
-            this.tabWorld.Controls.Add(this.grpWorld);
-            this.tabWorld.Location = new System.Drawing.Point(4, 24);
-            this.tabWorld.Name = "tabWorld";
-            this.tabWorld.Padding = new System.Windows.Forms.Padding(10);
-            this.tabWorld.Size = new System.Drawing.Size(768, 360);
-            this.tabWorld.TabIndex = 1;
-            this.tabWorld.Text = "World";
-            this.tabWorld.UseVisualStyleBackColor = true;
+            pageWorld.Controls.Add(grpWorld);
+            pageWorld.Location = new Point(4, 5);
+            pageWorld.Name = "pageWorld";
+            pageWorld.Padding = new Padding(10);
+            pageWorld.Size = new Size(768, 337);
+            pageWorld.TabIndex = 1;
+            pageWorld.Text = "World";
+            pageWorld.UseVisualStyleBackColor = true;
             // 
             // grpWorld
             // 
-            this.grpWorld.Controls.Add(this.numWorldType);
-            this.grpWorld.Controls.Add(this.txtWorldDb);
-            this.grpWorld.Controls.Add(this.txtWorldAddress);
-            this.grpWorld.Controls.Add(this.txtWorldName);
-            this.grpWorld.Controls.Add(this.lblWorldType);
-            this.grpWorld.Controls.Add(this.lblWorldDb);
-            this.grpWorld.Controls.Add(this.lblWorldAddress);
-            this.grpWorld.Controls.Add(this.lblWorldName);
-            this.grpWorld.Location = new System.Drawing.Point(13, 14);
-            this.grpWorld.Name = "grpWorld";
-            this.grpWorld.Size = new System.Drawing.Size(742, 158);
-            this.grpWorld.TabIndex = 0;
-            this.grpWorld.TabStop = false;
-            this.grpWorld.Text = "World Entry";
+            grpWorld.Controls.Add(cmbWorldType);
+            grpWorld.Controls.Add(txtWorldDb);
+            grpWorld.Controls.Add(txtWorldAddress);
+            grpWorld.Controls.Add(txtWorldName);
+            grpWorld.Controls.Add(lblWorldType);
+            grpWorld.Controls.Add(lblWorldDb);
+            grpWorld.Controls.Add(lblWorldAddress);
+            grpWorld.Controls.Add(lblWorldName);
+            grpWorld.Location = new Point(13, 14);
+            grpWorld.Name = "grpWorld";
+            grpWorld.Size = new Size(742, 158);
+            grpWorld.TabIndex = 0;
+            grpWorld.TabStop = false;
+            grpWorld.Text = "World Entry";
             // 
-            // numWorldType
+            // cmbWorldType
             // 
-            this.numWorldType.Location = new System.Drawing.Point(120, 115);
-            this.numWorldType.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.numWorldType.Name = "numWorldType";
-            this.numWorldType.Size = new System.Drawing.Size(120, 23);
-            this.numWorldType.TabIndex = 7;
+            cmbWorldType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbWorldType.FormattingEnabled = true;
+            cmbWorldType.Items.AddRange(new object[] { "0 - Regular/Normal Server", "1 - Test Server" });
+            cmbWorldType.Location = new Point(120, 115);
+            cmbWorldType.Name = "cmbWorldType";
+            cmbWorldType.Size = new Size(240, 23);
+            cmbWorldType.TabIndex = 7;
             // 
             // txtWorldDb
             // 
-            this.txtWorldDb.Location = new System.Drawing.Point(120, 86);
-            this.txtWorldDb.Name = "txtWorldDb";
-            this.txtWorldDb.Size = new System.Drawing.Size(240, 23);
-            this.txtWorldDb.TabIndex = 6;
+            txtWorldDb.Location = new Point(120, 86);
+            txtWorldDb.Name = "txtWorldDb";
+            txtWorldDb.Size = new Size(240, 23);
+            txtWorldDb.TabIndex = 6;
             // 
             // txtWorldAddress
             // 
-            this.txtWorldAddress.Location = new System.Drawing.Point(120, 57);
-            this.txtWorldAddress.Name = "txtWorldAddress";
-            this.txtWorldAddress.Size = new System.Drawing.Size(240, 23);
-            this.txtWorldAddress.TabIndex = 5;
+            txtWorldAddress.Location = new Point(120, 57);
+            txtWorldAddress.Name = "txtWorldAddress";
+            txtWorldAddress.Size = new Size(240, 23);
+            txtWorldAddress.TabIndex = 5;
             // 
             // txtWorldName
             // 
-            this.txtWorldName.Location = new System.Drawing.Point(120, 28);
-            this.txtWorldName.Name = "txtWorldName";
-            this.txtWorldName.Size = new System.Drawing.Size(240, 23);
-            this.txtWorldName.TabIndex = 4;
+            txtWorldName.Location = new Point(120, 28);
+            txtWorldName.Name = "txtWorldName";
+            txtWorldName.Size = new Size(240, 23);
+            txtWorldName.TabIndex = 4;
             // 
             // lblWorldType
             // 
-            this.lblWorldType.AutoSize = true;
-            this.lblWorldType.Location = new System.Drawing.Point(16, 118);
-            this.lblWorldType.Name = "lblWorldType";
-            this.lblWorldType.Size = new System.Drawing.Size(31, 15);
-            this.lblWorldType.TabIndex = 3;
-            this.lblWorldType.Text = "Type";
+            lblWorldType.AutoSize = true;
+            lblWorldType.Location = new Point(16, 118);
+            lblWorldType.Name = "lblWorldType";
+            lblWorldType.Size = new Size(31, 15);
+            lblWorldType.TabIndex = 3;
+            lblWorldType.Text = "Type";
             // 
             // lblWorldDb
             // 
-            this.lblWorldDb.AutoSize = true;
-            this.lblWorldDb.Location = new System.Drawing.Point(16, 89);
-            this.lblWorldDb.Name = "lblWorldDb";
-            this.lblWorldDb.Size = new System.Drawing.Size(89, 15);
-            this.lblWorldDb.TabIndex = 2;
-            this.lblWorldDb.Text = "World DB Name";
+            lblWorldDb.AutoSize = true;
+            lblWorldDb.Location = new Point(16, 89);
+            lblWorldDb.Name = "lblWorldDb";
+            lblWorldDb.Size = new Size(89, 15);
+            lblWorldDb.TabIndex = 2;
+            lblWorldDb.Text = "World DB Name";
             // 
             // lblWorldAddress
             // 
-            this.lblWorldAddress.AutoSize = true;
-            this.lblWorldAddress.Location = new System.Drawing.Point(16, 60);
-            this.lblWorldAddress.Name = "lblWorldAddress";
-            this.lblWorldAddress.Size = new System.Drawing.Size(49, 15);
-            this.lblWorldAddress.TabIndex = 1;
-            this.lblWorldAddress.Text = "Address";
+            lblWorldAddress.AutoSize = true;
+            lblWorldAddress.Location = new Point(16, 60);
+            lblWorldAddress.Name = "lblWorldAddress";
+            lblWorldAddress.Size = new Size(49, 15);
+            lblWorldAddress.TabIndex = 1;
+            lblWorldAddress.Text = "Address";
             // 
             // lblWorldName
             // 
-            this.lblWorldName.AutoSize = true;
-            this.lblWorldName.Location = new System.Drawing.Point(16, 31);
-            this.lblWorldName.Name = "lblWorldName";
-            this.lblWorldName.Size = new System.Drawing.Size(39, 15);
-            this.lblWorldName.TabIndex = 0;
-            this.lblWorldName.Text = "Name";
+            lblWorldName.AutoSize = true;
+            lblWorldName.Location = new Point(16, 31);
+            lblWorldName.Name = "lblWorldName";
+            lblWorldName.Size = new Size(39, 15);
+            lblWorldName.TabIndex = 0;
+            lblWorldName.Text = "Name";
             // 
-            // btnSave
+            // pageSecurity
             // 
-            this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSave.Location = new System.Drawing.Point(632, 410);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(75, 27);
-            this.btnSave.TabIndex = 1;
-            this.btnSave.Text = "Save";
-            this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new System.EventHandler(this.BtnSave_Click);
+            pageSecurity.Controls.Add(grpSecurity);
+            pageSecurity.Location = new Point(4, 5);
+            pageSecurity.Name = "pageSecurity";
+            pageSecurity.Padding = new Padding(10);
+            pageSecurity.Size = new Size(768, 337);
+            pageSecurity.TabIndex = 2;
+            pageSecurity.Text = "Security";
+            pageSecurity.UseVisualStyleBackColor = true;
+            // 
+            // grpSecurity
+            // 
+            grpSecurity.Controls.Add(lblSecurityNote);
+            grpSecurity.Controls.Add(btnRegenerateSalt);
+            grpSecurity.Controls.Add(txtArgon2Salt);
+            grpSecurity.Controls.Add(lblArgon2Salt);
+            grpSecurity.Location = new Point(13, 14);
+            grpSecurity.Name = "grpSecurity";
+            grpSecurity.Size = new Size(742, 181);
+            grpSecurity.TabIndex = 0;
+            grpSecurity.TabStop = false;
+            grpSecurity.Text = "Security";
+            // 
+            // lblSecurityNote
+            // 
+            lblSecurityNote.Location = new Point(16, 79);
+            lblSecurityNote.Name = "lblSecurityNote";
+            lblSecurityNote.Size = new Size(696, 60);
+            lblSecurityNote.TabIndex = 3;
+            lblSecurityNote.Text = "This value is generated once during setup. AccountServer uses it for Argon2 password verification and as the seed for protected account ID storage. Changing it later will break existing account lookups.";
+            // 
+            // btnRegenerateSalt
+            // 
+            btnRegenerateSalt.Location = new Point(614, 38);
+            btnRegenerateSalt.Name = "btnRegenerateSalt";
+            btnRegenerateSalt.Size = new Size(98, 27);
+            btnRegenerateSalt.TabIndex = 2;
+            btnRegenerateSalt.Text = "Regenerate";
+            btnRegenerateSalt.UseVisualStyleBackColor = true;
+            btnRegenerateSalt.Click += BtnRegenerateSalt_Click;
+            // 
+            // txtArgon2Salt
+            // 
+            txtArgon2Salt.Location = new Point(16, 40);
+            txtArgon2Salt.Name = "txtArgon2Salt";
+            txtArgon2Salt.ReadOnly = true;
+            txtArgon2Salt.Size = new Size(592, 23);
+            txtArgon2Salt.TabIndex = 1;
+            // 
+            // lblArgon2Salt
+            // 
+            lblArgon2Salt.AutoSize = true;
+            lblArgon2Salt.Location = new Point(16, 22);
+            lblArgon2Salt.Name = "lblArgon2Salt";
+            lblArgon2Salt.Size = new Size(115, 15);
+            lblArgon2Salt.TabIndex = 0;
+            lblArgon2Salt.Text = "Argon2 Salt (Base64)";
+            // 
+            // panelButtons
+            // 
+            panelButtons.Controls.Add(btnFinish);
+            panelButtons.Controls.Add(btnNext);
+            panelButtons.Controls.Add(btnBack);
+            panelButtons.Controls.Add(btnCancel);
+            panelButtons.Dock = DockStyle.Bottom;
+            panelButtons.FlowDirection = FlowDirection.RightToLeft;
+            panelButtons.Location = new Point(0, 452);
+            panelButtons.Name = "panelButtons";
+            panelButtons.Padding = new Padding(10);
+            panelButtons.Size = new Size(800, 48);
+            panelButtons.TabIndex = 4;
+            // 
+            // btnFinish
+            // 
+            btnFinish.AutoSize = true;
+            btnFinish.Location = new Point(715, 13);
+            btnFinish.Name = "btnFinish";
+            btnFinish.Size = new Size(62, 25);
+            btnFinish.TabIndex = 0;
+            btnFinish.Text = "Finish";
+            btnFinish.UseVisualStyleBackColor = true;
+            btnFinish.Visible = false;
+            btnFinish.Click += BtnFinish_Click;
+            // 
+            // btnNext
+            // 
+            btnNext.AutoSize = true;
+            btnNext.Location = new Point(649, 13);
+            btnNext.Name = "btnNext";
+            btnNext.Size = new Size(60, 25);
+            btnNext.TabIndex = 1;
+            btnNext.Enabled = false;
+            btnNext.Text = "Next >";
+            btnNext.UseVisualStyleBackColor = true;
+            btnNext.Click += BtnNext_Click;
+            // 
+            // btnBack
+            // 
+            btnBack.AutoSize = true;
+            btnBack.Location = new Point(579, 13);
+            btnBack.Name = "btnBack";
+            btnBack.Size = new Size(64, 25);
+            btnBack.TabIndex = 2;
+            btnBack.Text = "< Back";
+            btnBack.UseVisualStyleBackColor = true;
+            btnBack.Click += BtnBack_Click;
             // 
             // btnCancel
             // 
-            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(713, 410);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 27);
-            this.btnCancel.TabIndex = 2;
-            this.btnCancel.Text = "Cancel";
-            this.btnCancel.UseVisualStyleBackColor = true;
+            btnCancel.AutoSize = true;
+            btnCancel.DialogResult = DialogResult.Cancel;
+            btnCancel.Location = new Point(498, 13);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(75, 25);
+            btnCancel.TabIndex = 3;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = true;
             // 
             // Setup
             // 
-            this.AcceptButton = this.btnSave;
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.tabSetup);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "Setup";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Account Server Setup";
-            this.tabSetup.ResumeLayout(false);
-            this.tabDatabase.ResumeLayout(false);
-            this.tabDatabase.PerformLayout();
-            this.grpUserDb.ResumeLayout(false);
-            this.grpUserDb.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUserPort)).EndInit();
-            this.tabWorld.ResumeLayout(false);
-            this.grpWorld.ResumeLayout(false);
-            this.grpWorld.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numWorldType)).EndInit();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            CancelButton = btnCancel;
+            ClientSize = new Size(800, 500);
+            Controls.Add(panelButtons);
+            Controls.Add(pageSetup);
+            Controls.Add(lblStepDescription);
+            Controls.Add(lblStepTitle);
+            Controls.Add(lblStepCount);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "Setup";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Account Server Setup";
+            pageSetup.ResumeLayout(false);
+            pageDatabase.ResumeLayout(false);
+            pageDatabase.PerformLayout();
+            grpUserDb.ResumeLayout(false);
+            grpUserDb.PerformLayout();
+            ((ISupportInitialize)numUserPort).EndInit();
+            pageWorld.ResumeLayout(false);
+            grpWorld.ResumeLayout(false);
+            grpWorld.PerformLayout();
+            pageSecurity.ResumeLayout(false);
+            grpSecurity.ResumeLayout(false);
+            grpSecurity.PerformLayout();
+            panelButtons.ResumeLayout(false);
+            panelButtons.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
-
-        #endregion
     }
 }

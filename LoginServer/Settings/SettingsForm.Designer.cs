@@ -28,14 +28,14 @@ partial class SettingsForm
         txtDbUser = new System.Windows.Forms.TextBox();
         lblDbName = new System.Windows.Forms.Label();
         txtDbName = new System.Windows.Forms.TextBox();
-        lblArgon2Salt = new System.Windows.Forms.Label();
-        txtArgon2Salt = new System.Windows.Forms.TextBox();
         lblDbPort = new System.Windows.Forms.Label();
         txtDbPort = new System.Windows.Forms.TextBox();
         lblDbHost = new System.Windows.Forms.Label();
         txtDbHost = new System.Windows.Forms.TextBox();
         lblDbProfile = new System.Windows.Forms.Label();
         cboDbProfile = new System.Windows.Forms.ComboBox();
+        lblDbProvider = new System.Windows.Forms.Label();
+        cboDbProvider = new System.Windows.Forms.ComboBox();
         tabConnection = new System.Windows.Forms.TabPage();
         lblLoadHighSep = new System.Windows.Forms.Label();
         txtLoadHigh = new System.Windows.Forms.TextBox();
@@ -80,14 +80,14 @@ partial class SettingsForm
         tabDatabase.Controls.Add(txtDbUser);
         tabDatabase.Controls.Add(lblDbName);
         tabDatabase.Controls.Add(txtDbName);
-        tabDatabase.Controls.Add(lblArgon2Salt);
-        tabDatabase.Controls.Add(txtArgon2Salt);
         tabDatabase.Controls.Add(lblDbPort);
         tabDatabase.Controls.Add(txtDbPort);
         tabDatabase.Controls.Add(lblDbHost);
         tabDatabase.Controls.Add(txtDbHost);
         tabDatabase.Controls.Add(lblDbProfile);
         tabDatabase.Controls.Add(cboDbProfile);
+        tabDatabase.Controls.Add(lblDbProvider);
+        tabDatabase.Controls.Add(cboDbProvider);
         tabDatabase.Location = new System.Drawing.Point(4, 24);
         tabDatabase.Margin = new System.Windows.Forms.Padding(2);
         tabDatabase.Name = "tabDatabase";
@@ -191,24 +191,6 @@ partial class SettingsForm
         txtDbName.Size = new System.Drawing.Size(110, 23);
         txtDbName.TabIndex = 6;
         // 
-        // lblArgon2Salt
-        // 
-        lblArgon2Salt.AutoSize = true;
-        lblArgon2Salt.Location = new System.Drawing.Point(221, 142);
-        lblArgon2Salt.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-        lblArgon2Salt.Name = "lblArgon2Salt";
-        lblArgon2Salt.Size = new System.Drawing.Size(115, 15);
-        lblArgon2Salt.TabIndex = 14;
-        lblArgon2Salt.Text = "Argon2 Salt (Base64)";
-        // 
-        // txtArgon2Salt
-        // 
-        txtArgon2Salt.Location = new System.Drawing.Point(221, 160);
-        txtArgon2Salt.Margin = new System.Windows.Forms.Padding(2);
-        txtArgon2Salt.Name = "txtArgon2Salt";
-        txtArgon2Salt.Size = new System.Drawing.Size(268, 23);
-        txtArgon2Salt.TabIndex = 13;
-        // 
         // lblDbPort
         // 
         lblDbPort.AutoSize = true;
@@ -262,9 +244,31 @@ partial class SettingsForm
         cboDbProfile.Location = new System.Drawing.Point(93, 16);
         cboDbProfile.Margin = new System.Windows.Forms.Padding(2);
         cboDbProfile.Name = "cboDbProfile";
-        cboDbProfile.Size = new System.Drawing.Size(150, 23);
+        cboDbProfile.Size = new System.Drawing.Size(110, 23);
         cboDbProfile.TabIndex = 0;
         cboDbProfile.SelectedIndexChanged += OnDbProfileChanged;
+        // 
+        // lblDbProvider
+        // 
+        lblDbProvider.AutoSize = true;
+        lblDbProvider.Location = new System.Drawing.Point(221, 19);
+        lblDbProvider.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblDbProvider.Name = "lblDbProvider";
+        lblDbProvider.Size = new System.Drawing.Size(52, 15);
+        lblDbProvider.TabIndex = 16;
+        lblDbProvider.Text = "Provider";
+        // 
+        // cboDbProvider
+        // 
+        cboDbProvider.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+        cboDbProvider.FormattingEnabled = true;
+        cboDbProvider.Items.AddRange(new object[] { "SQL Server", "MariaDB", "SQLite" });
+        cboDbProvider.Location = new System.Drawing.Point(298, 16);
+        cboDbProvider.Margin = new System.Windows.Forms.Padding(2);
+        cboDbProvider.Name = "cboDbProvider";
+        cboDbProvider.Size = new System.Drawing.Size(191, 23);
+        cboDbProvider.TabIndex = 15;
+        cboDbProvider.SelectedIndexChanged += OnDbProviderChanged;
         // 
         // tabConnection
         // 
@@ -472,15 +476,15 @@ partial class SettingsForm
     private System.Windows.Forms.TabPage tabDatabase;
     private System.Windows.Forms.TabPage tabConnection;
     private System.Windows.Forms.ComboBox cboDbProfile;
+    private System.Windows.Forms.ComboBox cboDbProvider;
     private System.Windows.Forms.Label lblDbProfile;
+    private System.Windows.Forms.Label lblDbProvider;
     private System.Windows.Forms.Label lblDbHost;
     private System.Windows.Forms.TextBox txtDbHost;
     private System.Windows.Forms.Label lblDbPort;
     private System.Windows.Forms.TextBox txtDbPort;
     private System.Windows.Forms.Label lblDbName;
     private System.Windows.Forms.TextBox txtDbName;
-    private System.Windows.Forms.Label lblArgon2Salt;
-    private System.Windows.Forms.TextBox txtArgon2Salt;
     private System.Windows.Forms.GroupBox grpAuth;
     private System.Windows.Forms.RadioButton radAuthTrusted;
     private System.Windows.Forms.RadioButton radAuthSql;

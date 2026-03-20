@@ -18,9 +18,14 @@ public partial class MainForm : Form
     private bool _running;
 
     public MainForm()
+        : this(AppSettings.Load())
+    {
+    }
+
+    public MainForm(AppSettings settings)
     {
         InitializeComponent();
-        _settings = AppSettings.Load();
+        _settings = settings;
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
         _loginHandler = CreateLoginHandler();
         _worldHandler = CreateWorldHandler();

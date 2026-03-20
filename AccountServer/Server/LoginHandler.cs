@@ -899,6 +899,7 @@ public sealed class LoginHandler : AccountHandlerBase
         var send = new _account_db_info_result_aclo();
         PacketStringUtil.FillFixed(send.szDBName, _settings.Database.User.Database);
         PacketStringUtil.FillFixed(send.szIP, _settings.Database.User.Host);
+        PacketStringUtil.FillFixed(send.szArgon2SaltBase64, _settings.Security.Argon2SaltBase64);
 
         var env = new PacketEnvelope
         {

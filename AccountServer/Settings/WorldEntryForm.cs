@@ -24,7 +24,7 @@ public partial class WorldEntryForm : Form
         txtName.Text = _entry.Name;
         txtAddress.Text = _entry.Address;
         txtDbName.Text = _entry.DbName;
-        numType.Value = Math.Clamp(_entry.Type, (int)numType.Minimum, (int)numType.Maximum);
+        cmbType.SelectedIndex = _entry.Type == 1 ? 1 : 0;
     }
 
     private void OnOk(object? sender, EventArgs e)
@@ -51,7 +51,7 @@ public partial class WorldEntryForm : Form
         _entry.Name = name;
         _entry.Address = address;
         _entry.DbName = dbName;
-        _entry.Type = (int)numType.Value;
+        _entry.Type = cmbType.SelectedIndex == 1 ? 1 : 0;
 
         DialogResult = DialogResult.OK;
         Close();
