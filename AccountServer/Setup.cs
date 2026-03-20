@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AccountServer.Security;
@@ -722,12 +723,13 @@ namespace AccountServer
             const string defaultDatabaseName = "RF_User";
             string targetDatabaseName = _settings.Database.User.Database.Trim();
             if (string.IsNullOrWhiteSpace(targetDatabaseName) ||
-                string.Equals(targetDatabaseName, defaultDatabaseName, StringComparison.Ordinal))
+                string.Equals(targetDatabaseName, defaultDatabaseName, StringComparison.OrdinalIgnoreCase))
             {
                 return script;
             }
 
-            return script.Replace(defaultDatabaseName, targetDatabaseName, StringComparison.Ordinal);
+            string pattern = $@"(?<![A-Za-z0-9_]){Regex.Escape(defaultDatabaseName)}(?![A-Za-z0-9_])";
+            return Regex.Replace(script, pattern, targetDatabaseName, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         }
 
         private static string EscapeMariaDbIdentifier(string identifier)
