@@ -8,6 +8,12 @@
 #include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
 
+namespace
+{
+char g_szEmptyString[] = "";
+char g_szNoneString[] = "None";
+}
+
 CNationSettingManager::CNationSettingManager()
 {
   m_pData = &CNationSettingDataNULL::ms_NULL;
@@ -15,11 +21,11 @@ CNationSettingManager::CNationSettingManager()
 
 CNationSettingManager::~CNationSettingManager()
 {
-  if (m_pData)
+  if (m_pData && m_pData != &CNationSettingDataNULL::ms_NULL)
   {
     delete m_pData;
-    m_pData = nullptr;
   }
+  m_pData = nullptr;
 }
 
 int CNationSettingManager::Init(int nationCode, const char *nationCodeStr, bool serviceMode)
@@ -56,11 +62,19 @@ CBilling *CNationSettingManager::CreateBilling()
 
 CashDbWorker *CNationSettingManager::CreateWorker()
 {
+  if (m_pData == nullptr)
+  {
+    return nullptr;
+  }
   return m_pData->CreateWorker();
 }
 
 int CNationSettingManager::GetCashItemPrice(_CashShop_str_fld *pFld)
 {
+  if (m_pData == nullptr)
+  {
+    return 0;
+  }
   return m_pData->GetCashItemPrice(pFld);
 }
 
@@ -79,11 +93,19 @@ const char *CNationSettingManager::GetItemName(_NameTxt_fld *pFld)
 
 char *CNationSettingManager::GetNoneString()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szNoneString;
+  }
   return m_pData->GetNoneString();
 }
 
 int CNationSettingManager::GetNationCode()
 {
+  if (m_pData == nullptr)
+  {
+    return -1;
+  }
   return m_pData->m_iNationCode;
 }
 
@@ -98,71 +120,126 @@ bool CNationSettingManager::IsApplyPcbangPrimium(const CPlayer *pUser)
 
 bool CNationSettingManager::IsCashDBUseExtRef()
 {
+  if (m_pData == nullptr)
+  {
+    return false;
+  }
   return m_pData->IsCashDBUseExtRef();
 }
 
 bool CNationSettingManager::IsCashDBInit()
 {
+  if (m_pData == nullptr)
+  {
+    return false;
+  }
   return m_pData->IsCashDBInit();
 }
 
 bool CNationSettingManager::IsCashDBDSNSetted()
 {
+  if (m_pData == nullptr)
+  {
+    return false;
+  }
   return m_pData->IsCashDBDSNSetted();
 }
 
 void CNationSettingManager::SetUnitPassiveValue(float *fUnitPv_DefFc)
 {
-  m_pData->SetUnitPassiveValue(fUnitPv_DefFc);
+  if (m_pData != nullptr)
+  {
+    m_pData->SetUnitPassiveValue(fUnitPv_DefFc);
+  }
 }
 
 unsigned __int16 CNationSettingManager::GetBillingForceCloseDelay()
 {
+  if (m_pData == nullptr)
+  {
+    return 0;
+  }
   return m_pData->m_wBillingForceCloseDelay;
 }
 
 char *CNationSettingManager::GetCashDBName()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szCashDBName;
 }
 
 char *CNationSettingManager::GetCashDBDBIP()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szCashDBIP;
 }
 
 char *CNationSettingManager::GetCashDBID()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szCashDBID;
 }
 
 char *CNationSettingManager::GetCashDBPW()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szCashDBPW;
 }
 
 unsigned __int16 CNationSettingManager::GetCashDBPort()
 {
+  if (m_pData == nullptr)
+  {
+    return 0;
+  }
   return m_pData->m_wCashDBPort;
 }
 
 char *CNationSettingManager::GetWorldDBID()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szWorldDBID;
 }
 
 char *CNationSettingManager::GetWorldDBPW()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szWorldDBPW;
 }
 
 char *CNationSettingManager::GetNationCodeStr()
 {
+  if (m_pData == nullptr)
+  {
+    return g_szEmptyString;
+  }
   return m_pData->m_szNationCodeStr;
 }
 
 CHEAT_COMMAND *CNationSettingManager::GetCheatTable()
 {
+  if (m_pData == nullptr || m_pData->m_vecCheatData.empty())
+  {
+    return nullptr;
+  }
   return &m_pData->m_vecCheatData[0];
 }
 
@@ -173,12 +250,18 @@ void CNationSettingManager::SetCashDBDSN(
   char *szPassword,
   unsigned __int16 dwPort)
 {
-  m_pData->SetCashDBDSN(szIP, szDBName, szAccount, szPassword, dwPort);
+  if (m_pData != nullptr)
+  {
+    m_pData->SetCashDBDSN(szIP, szDBName, szAccount, szPassword, dwPort);
+  }
 }
 
 void CNationSettingManager::SetCashDBInitState()
 {
-  m_pData->SetCashDBInitFlag();
+  if (m_pData != nullptr)
+  {
+    m_pData->SetCashDBInitFlag();
+  }
 }
 
 void CNationSettingManager::OnConnectSession(unsigned int n)
@@ -263,16 +346,26 @@ bool CNationSettingManager::RecvGameGuardData(unsigned int n, _MSG_HEADER *pHead
 
 void CNationSettingManager::SendCashDBDSNRequest()
 {
-  m_pData->SendCashDBDSNRequest();
+  if (m_pData != nullptr)
+  {
+    m_pData->SendCashDBDSNRequest();
+  }
 }
 
 void CNationSettingManager::NetClose(CPlayer *pOne)
 {
-  m_pData->NetClose(pOne);
+  if (m_pData != nullptr)
+  {
+    m_pData->NetClose(pOne);
+  }
 }
 
 void CNationSettingManager::Loop()
 {
+  if (m_pData == nullptr)
+  {
+    return;
+  }
   m_pData->Loop();
   INationGameGuardSystem *gameGuard = m_pData->GetGameGuardSystem();
   if (gameGuard)

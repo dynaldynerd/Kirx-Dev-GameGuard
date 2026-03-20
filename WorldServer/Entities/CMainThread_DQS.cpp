@@ -505,8 +505,8 @@ void CMainThread::OnDQSRun()
       {
         auto *inBattleCostQuery = reinterpret_cast<_qry_case_in_guildbattlecost *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_input_guild_money(
-          inBattleCostQuery->dwGuildIndex,
-          inBattleCostQuery->dwGuildIndex,
+          inBattleCostQuery->dwGuildSerial,
+          inBattleCostQuery->dwGuildSerial,
           inBattleCostQuery->dwAddDalant,
           inBattleCostQuery->dwAddGold,
           &inBattleCostQuery->out_totaldalant,
@@ -520,8 +520,8 @@ void CMainThread::OnDQSRun()
         auto *srcGuildOutBattleCostQuery =
           reinterpret_cast<_qry_case_src_guild_out_guildbattlecost *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_output_guild_money(
-          srcGuildOutBattleCostQuery->dwGuildIndex,
-          srcGuildOutBattleCostQuery->dwGuildIndex,
+          srcGuildOutBattleCostQuery->dwGuildSerial,
+          srcGuildOutBattleCostQuery->dwGuildSerial,
           srcGuildOutBattleCostQuery->dwSubDalant,
           srcGuildOutBattleCostQuery->dwSubGold,
           &srcGuildOutBattleCostQuery->out_totaldalant,
@@ -948,8 +948,8 @@ void CMainThread::OnDQSRun()
         auto *destGuildOutBattleCostQuery =
           reinterpret_cast<_qry_case_dest_guild_out_guildbattlecost *>(queryEntry->m_sData);
         queryEntry->m_byResult = db_output_guild_money(
-          destGuildOutBattleCostQuery->dwGuildIndex,
-          destGuildOutBattleCostQuery->dwGuildIndex,
+          destGuildOutBattleCostQuery->dwGuildSerial,
+          destGuildOutBattleCostQuery->dwGuildSerial,
           destGuildOutBattleCostQuery->dwSubDalant,
           destGuildOutBattleCostQuery->dwSubGold,
           &destGuildOutBattleCostQuery->out_totaldalant,

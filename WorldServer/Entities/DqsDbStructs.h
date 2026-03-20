@@ -762,8 +762,8 @@ struct  _qry_case_select_guild_master_lastconn
   unsigned int dwSerial;
   unsigned int dwGuildIndex;
   unsigned int dwGuildSerial;
-  unsigned long long dwLimitConnTime;
-  unsigned long long dwLastConnTime;
+  unsigned int dwLimitConnTime;
+  unsigned int dwLastConnTime;
 };
 
 struct  _qry_case_character_rename

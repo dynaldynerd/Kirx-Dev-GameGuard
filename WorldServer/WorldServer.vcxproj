@@ -473,6 +473,7 @@
     <ClInclude Include="Entities\CNuclearBomb.h" />
     <ClInclude Include="Entities\CNuclearBombMgr.h" />
     <ClInclude Include="Entities\CObjectList.h" />
+    <ClInclude Include="Entities\DatabaseSetupDlg.h" />
     <ClInclude Include="Entities\COpenDlg.h" />
     <ClInclude Include="Entities\CObjectSearchDlg.h" />
     <ClInclude Include="Entities\combine_ex_item_accept_request_clzo.h" />
@@ -1227,6 +1228,7 @@
     <ClCompile Include="Entities\CNuclearBomb.cpp" />
     <ClCompile Include="Entities\CNuclearBombMgr.cpp" />
     <ClCompile Include="Entities\CObjectList.cpp" />
+    <ClCompile Include="Entities\DatabaseSetupDlg.cpp" />
     <ClCompile Include="Entities\COpenDlg.cpp" />
     <ClCompile Include="Entities\CObjectSearchDlg.cpp" />
     <ClCompile Include="Entities\combine_ex_item_result_zocl.cpp" />

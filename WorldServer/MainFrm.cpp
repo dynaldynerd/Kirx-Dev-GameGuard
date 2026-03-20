@@ -5,6 +5,7 @@
 #include <iterator>
 #include <cstring>
 
+#include "Entities/DatabaseSetupDlg.h"
 #include "Entities/CGameServerDoc.h"
 #include "Entities/CMainThread.h"
 #include "Entities/CMapDisplay.h"
@@ -36,10 +37,12 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
   ON_WM_TIMER()
   ON_WM_DESTROY()
   ON_WM_PAINT()
+  ON_COMMAND(ID_SETTINGS_DATABASE, &CMainFrame::OnSettingsDatabase)
 END_MESSAGE_MAP()
 
 CMainFrame::CMainFrame() noexcept
   : m_bExitConfirm(false),
+    m_bAllowWindowClose(false),
     m_statusBar()
 {
   g_pFrame = this;
@@ -63,22 +66,28 @@ __int64 CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
   if (message == WM_CLOSE)
   {
-    int messageResult = IDYES;
-    if (!g_Main.IsExcuteService())
+    if (m_bAllowWindowClose)
     {
-      messageResult = ::MessageBoxA(m_hWnd, "Program Exit?", "Warning", MB_ICONQUESTION | MB_YESNO);
+      return CFrameWnd::WindowProc(message, wParam, lParam);
     }
 
-    if (messageResult == IDYES)
+    if (!m_bExitConfirm)
     {
-      m_bExitConfirm = true;
-      g_Main.gm_ServerClose();
-      g_MapDisplay.m_MapExtend.m_bExtendMode = false;
+      int messageResult = IDYES;
+      if (!g_Main.IsExcuteService())
+      {
+        messageResult = ::MessageBoxA(m_hWnd, "Program Exit?", "Warning", MB_ICONQUESTION | MB_YESNO);
+      }
+
+      if (messageResult == IDYES)
+      {
+        m_bExitConfirm = true;
+        g_Main.gm_ServerClose();
+        g_MapDisplay.m_MapExtend.m_bExtendMode = false;
+      }
     }
-    else if (messageResult == IDNO)
-    {
-      return 0;
-    }
+
+    return 0;
   }
 
   return CFrameWnd::WindowProc(message, wParam, lParam);
@@ -134,6 +143,12 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
+  if (nIDEvent == 0 && m_bExitConfirm && !m_bAllowWindowClose && !g_Main.m_bServerClosing)
+  {
+    FinalizeShutdown();
+    return;
+  }
+
   UpdateStatusBar();
   RefreshWindowTitle();
   CFrameWnd::OnTimer(nIDEvent);
@@ -149,6 +164,28 @@ void CMainFrame::OnPaint()
 {
   CPaintDC dc(this);
   (void)dc;
+}
+
+void CMainFrame::OnSettingsDatabase()
+{
+  CDatabaseSetupDlg dialog(this);
+  if (dialog.DoModal() == IDOK)
+  {
+    AfxMessageBox(L"Initialize\\Database.ini updated. Restart WorldServer for the changes to take effect.");
+  }
+}
+
+void CMainFrame::FinalizeShutdown()
+{
+  m_bAllowWindowClose = true;
+  KillTimer(0);
+
+  g_Main.m_bRuleThread = false;
+  g_Main.m_bDQSThread = false;
+  Sleep(3000);
+
+  g_MapDisplay.OffDisplay();
+  PostMessage(WM_CLOSE);
 }
 
 void CMainFrame::MakeModeName(CStringA &mode) const

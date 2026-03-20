@@ -5210,6 +5210,10 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
 {
   m_logLoadingError.Write("DataBase Setting Start!! (%s : %s)", pszDBIP, pszDBName);
   char trustedConnectionValue[16]{};
+  const char *defaultWorldDbId = CNationSettingManager::Instance()->GetWorldDBID();
+  const char *defaultWorldDbPassword = CNationSettingManager::Instance()->GetWorldDBPW();
+  char worldDbId[64]{};
+  char worldDbPassword[64]{};
   ReadOptionAndWriteDefault(
     ".\\Initialize\\Database.ini",
     "WorldDB",
@@ -5217,6 +5221,20 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     "0",
     trustedConnectionValue,
     sizeof(trustedConnectionValue));
+  ReadOptionAndWriteDefault(
+    ".\\Initialize\\Database.ini",
+    "WorldDB",
+    "ID",
+    defaultWorldDbId ? defaultWorldDbId : "sa",
+    worldDbId,
+    sizeof(worldDbId));
+  ReadOptionAndWriteDefault(
+    ".\\Initialize\\Database.ini",
+    "WorldDB",
+    "PWD",
+    defaultWorldDbPassword ? defaultWorldDbPassword : "",
+    worldDbPassword,
+    sizeof(worldDbPassword));
   const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
   std::strcpy(m_szWorldDBName, pszDBName);
   g_pFrame->SendMessage(12, 0, 0);
@@ -5232,9 +5250,9 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
       return false;
     }
     m_logLoadingError.Write("World DB ODBC Config Complete!!");
-    char *passWord = bTrustedConnection ? nullptr : CNationSettingManager::Instance()->GetWorldDBPW();
-    const char *worldDbId = bTrustedConnection ? nullptr : CNationSettingManager::Instance()->GetWorldDBID();
-    if (!m_pWorldDB->StartDataBase(m_szWorldDBName, worldDbId, passWord))
+    char *passWord = bTrustedConnection ? nullptr : worldDbPassword;
+    const char *configuredWorldDbId = bTrustedConnection ? nullptr : worldDbId;
+    if (!m_pWorldDB->StartDataBase(m_szWorldDBName, configuredWorldDbId, passWord))
     {
       MyMessageBox("DatabaseInit", "Connect World DB Failed!");
       return false;

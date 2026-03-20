@@ -1072,7 +1072,7 @@ int CRFWorldDatabase::Select_Supplement(
       {
         ret = SQLGetData(m_hStmtSelect, 1u, 8, pSupplement, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65529), &pSupplement->bLastAttBuff, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 3u, 4, &pSupplement->dwBufPotionEndTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_ULONG, &pSupplement->dwBufPotionEndTime, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 4u, 4, &pSupplement->dwRaceBuffClear, 0, &indicator);
         if (m_hStmtSelect)
         {

@@ -4,11 +4,20 @@
 
 #include "CGameServerDoc.h"
 #include "COpenDlg.h"
-#include "LicensePopupDlg.h"
+#include "DatabaseSetupDlg.h"
 #include "CMainThread.h"
 #include "CMapDisplay.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
+
+namespace
+{
+bool DatabaseIniExists()
+{
+  const DWORD attributes = GetFileAttributesA(".\\Initialize\\Database.ini");
+  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+}
 
 IMPLEMENT_DYNCREATE(CGameServerView, CFormView)
 
@@ -75,13 +84,11 @@ int CGameServerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
   CGameServerDoc *document = GetDocument();
 
-  if (!g_Main.m_bServiceKeyPass)
+  if (!DatabaseIniExists())
   {
-    LicensePopupDlg licenseDialog;
-    licenseDialog.DoModal();
-    if (!licenseDialog.m_bOk)
+    CDatabaseSetupDlg databaseSetupDialog;
+    if (databaseSetupDialog.DoModal() != IDOK)
     {
-      MyMessageBox("Error", " License Cancle");
       return -1;
     }
   }

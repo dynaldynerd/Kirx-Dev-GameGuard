@@ -593,8 +593,8 @@ public:
   int Select_GetCharSerialByNameRace(char *pwszName, unsigned __int8 byRace, unsigned int *pSerial);
   unsigned __int8 Select_GuildMasterLastConn(
     unsigned int dwSerial,
-    unsigned long long dwLimitConnTime,
-    unsigned long long *pdwLastConnTime);
+    unsigned int dwLimitConnTime,
+    unsigned int *pdwLastConnTime);
   bool Select_CharacterReName(char *pwszName, unsigned int *pSerial);
   bool Update_CharacterReName(char *pwszName, unsigned int dwSerial);
   bool Rebirth_Base(unsigned int dwCharacterSerial, char *pwszName);

@@ -19,15 +19,18 @@ protected:
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnDestroy();
     afx_msg void OnPaint();
+    afx_msg void OnSettingsDatabase();
 
     DECLARE_MESSAGE_MAP()
 
 private:
+    void FinalizeShutdown();
     void RefreshWindowTitle();
     void BuildAsciiTitleToken(const char *source, char *destination, size_t destinationSize) const;
     void MakeModeName(CStringA &mode) const;
     void UpdateStatusBar();
 
     bool m_bExitConfirm;
+    bool m_bAllowWindowClose;
     CStatusBar m_statusBar;
 };
