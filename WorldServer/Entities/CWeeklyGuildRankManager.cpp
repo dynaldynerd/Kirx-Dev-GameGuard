@@ -158,7 +158,7 @@ void CWeeklyGuildRankManager::GetTodayRankDate(char *szDate, int iBuffSize)
   sprintf_s(szDate, iBuffSize, "%04d%02d%02d", year, month, day);
 }
 
-__int64 CWeeklyGuildRankManager::UpdateTodayTable(char *szDate, _pvppoint_guild_rank_info *pkInfo)
+int CWeeklyGuildRankManager::UpdateTodayTable(char *szDate, _pvppoint_guild_rank_info *pkInfo)
 {
   char created = 0;
   char tableName[260]{};
@@ -182,7 +182,8 @@ __int64 CWeeklyGuildRankManager::UpdateTodayTable(char *szDate, _pvppoint_guild_
   {
     return -2;
   }
-  return created != 0;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(created != 0);
 }
 
 void CWeeklyGuildRankManager::OrderRank(_pvppoint_guild_rank_info *pkInfo)
@@ -215,11 +216,11 @@ void CWeeklyGuildRankManager::OrderRank(_pvppoint_guild_rank_info *pkInfo)
   }
 }
 
-char CWeeklyGuildRankManager::UpdateRankDBRecord(char *szDate, _pvppoint_guild_rank_info *pkInfo)
+bool CWeeklyGuildRankManager::UpdateRankDBRecord(char *szDate, _pvppoint_guild_rank_info *pkInfo)
 {
   if (!szDate || !pkInfo)
   {
-    return 0;
+    return false;
   }
 
   for (unsigned __int16 index = 0; index < pkInfo->wCount; ++index)
@@ -235,14 +236,14 @@ char CWeeklyGuildRankManager::UpdateRankDBRecord(char *szDate, _pvppoint_guild_r
         szDate,
         pkInfo->list[index].dwSerial,
         pkInfo->list[index].wRank);
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CWeeklyGuildRankManager::UpdateOwnerGuild(char *szDate)
+bool CWeeklyGuildRankManager::UpdateOwnerGuild(char *szDate)
 {
   char ok = 1;
   for (unsigned __int8 race = 0; race < 3; ++race)
@@ -256,10 +257,10 @@ char CWeeklyGuildRankManager::UpdateOwnerGuild(char *szDate)
       ok = 0;
     }
   }
-  return ok;
+  return (ok) != 0;
 }
 
-char CWeeklyGuildRankManager::SelectOwnerGuild(char *szDate, _weeklyguildrank_owner_info *pkInfo)
+bool CWeeklyGuildRankManager::SelectOwnerGuild(char *szDate, _weeklyguildrank_owner_info *pkInfo)
 {
   std::memset(pkInfo, 0, sizeof(_weeklyguildrank_owner_info));
   char ok = 1;
@@ -270,7 +271,7 @@ char CWeeklyGuildRankManager::SelectOwnerGuild(char *szDate, _weeklyguildrank_ow
       ok = 0;
     }
   }
-  return ok;
+  return (ok) != 0;
 }
 
 void CWeeklyGuildRankManager::SetSettlementAreaManageOwnerGuild()
@@ -329,7 +330,7 @@ void CWeeklyGuildRankManager::PushSettlementOwnerDBLog(char *pInfo)
     "CWeeklyGuildRankManager::PushSettlementOwnerDBLog()!");
 }
 
-char CWeeklyGuildRankManager::UpdateTodayRank(_pvppoint_guild_rank_info *pLoadData)
+bool CWeeklyGuildRankManager::UpdateTodayRank(_pvppoint_guild_rank_info *pLoadData)
 {
   char date[264]{};
   GetTodayRankDate(date, 255);
@@ -338,26 +339,26 @@ char CWeeklyGuildRankManager::UpdateTodayRank(_pvppoint_guild_rank_info *pLoadDa
   {
     g_Main.m_logDQS.Write(
       "CWeeklyGuildRankManager::UpdateTodayRank() UpdateTodayTable(...) Fail!");
-    return 0;
+    return false;
   }
 
   if (updated > 1)
   {
     g_Main.m_logDQS.Write(
       "CWeeklyGuildRankManager::UpdateTodayRank() UpdateTodayTable(...) No Data!");
-    return 0;
+    return false;
   }
 
   OrderRank(pLoadData);
   if (UpdateRankDBRecord(date, pLoadData))
   {
-    return 1;
+    return true;
   }
 
   g_Main.m_logDQS.Write(
     "CWeeklyGuildRankManager::UpdateTodayRank() : UpdateRankDBRecord( %s ) Fail!",
     date);
-  return 0;
+  return false;
 }
 
 bool CWeeklyGuildRankManager::UpdateWeeklyOwner(_weeklyguildrank_owner_info *pLoadData)
@@ -472,23 +473,23 @@ bool CWeeklyGuildRankManager::CreatePvpPointGuildRank(char *szDate)
   return false;
 }
 
-char CWeeklyGuildRankManager::InsertDefaultWeeklyPvpPointSumRecord()
+bool CWeeklyGuildRankManager::InsertDefaultWeeklyPvpPointSumRecord()
 {
   if (g_Main.m_pWorldDB->Insert_DefaultWeeklyGuildPvpPointSumRecord())
   {
-    return 1;
+    return true;
   }
 
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::InsertDefaultRecord() : g_Main.m_pWorldDB->Insert_DefaultRecordWeeklyGuildPvpPointSum() Fail!");
-  return 0;
+  return false;
 }
 
-char CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSerial, long double dPoint)
+bool CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSerial, long double dPoint)
 {
   if (dPoint <= 0.0 || dwGuildSerial == 0)
   {
-    return 0;
+    return false;
   }
 
   _qry_case_updateweeklyguildpvppointsum query{};
@@ -501,24 +502,24 @@ char CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum(unsigned int dwGuildSe
         reinterpret_cast<char *>(&query),
         static_cast<int>(query.size())))
   {
-    return 1;
+    return true;
   }
 
   CPvpUserAndGuildRankingSystem::Instance()->Log(
     "CWeeklyGuildRankManager::PushDQSIncWeeklyPvpPointSum( %u, %f ) Fail!",
     dwGuildSerial,
     static_cast<double>(dPoint));
-  return 0;
+  return false;
 }
 
-char CWeeklyGuildRankManager::Load()
+bool CWeeklyGuildRankManager::Load()
 {
   char szDate[288]{};
   _pvppoint_guild_rank_info pkInfo{};
 
   if (!InsertDefaultWeeklyPvpPointSumRecord())
   {
-    return 0;
+    return false;
   }
 
   const char *result = LoadPrevOwner() ? "Success" : "Fail";
@@ -531,36 +532,36 @@ char CWeeklyGuildRankManager::Load()
   const int updated = static_cast<int>(UpdateTodayTable(szDate, &pkInfo));
   if (updated < 0)
   {
-    return 0;
+    return false;
   }
 
   switch (updated)
   {
     case 2:
       m_kInfo.SetNoDataFlagToday();
-      return 1;
+      return true;
     case 0:
       if (IsEmptyRank(&pkInfo))
       {
         OrderRank(&pkInfo);
         if (!UpdateRankDBRecord(szDate, &pkInfo))
         {
-          return 0;
+          return false;
         }
       }
-      return m_kInfo.LoadToday(&pkInfo);
+      return (m_kInfo.LoadToday(&pkInfo)) != 0;
     case 1:
       OrderRank(&pkInfo);
       if (!UpdateRankDBRecord(szDate, &pkInfo))
       {
-        return 0;
+        return false;
       }
-      return m_kInfo.LoadToday(&pkInfo);
+      return (m_kInfo.LoadToday(&pkInfo)) != 0;
     default:
       break;
   }
 
-  return 0;
+  return false;
 }
 
 bool CWeeklyGuildRankManager::LoadPrevOwner()
@@ -668,16 +669,16 @@ void CWeeklyGuildRankManager::GetPrevRankDate(char *szDate, int iBuffSize)
     prevTime.GetDay());
 }
 
-char CWeeklyGuildRankManager::IsEmptyRank(_pvppoint_guild_rank_info *pkInfo)
+bool CWeeklyGuildRankManager::IsEmptyRank(_pvppoint_guild_rank_info *pkInfo)
 {
   for (unsigned __int16 j = 0; j < static_cast<unsigned __int16>(pkInfo->wCount); ++j)
   {
     if (!pkInfo->list[j].wRank)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void CWeeklyGuildRankManager::Send(unsigned int dwVer, unsigned __int8 byTabRace, CPlayer *pkPlayer)

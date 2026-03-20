@@ -388,7 +388,10 @@ void CPlayer::pc_MineComplete()
           }
         }
 
-        eAddMineOre(m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+        eAddMineOre(
+          static_cast<int>(m_Param.GetRaceCode()),
+          static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+          1);
         COreAmountMgr::Instance()->DecreaseOre(1u);
       }
     }
@@ -420,7 +423,7 @@ void CPlayer::SendMsg_CuttingCompleteResult(unsigned __int8 byRet)
 void CPlayer::pc_CuttingComplete(unsigned __int8 byNpcRace)
 {
 unsigned __int64 addGold = 0;
-  const unsigned int texRate = 10000 - eGetTexRate(this->m_Param.GetRaceCode());
+  const unsigned int texRate = 10000 - eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode()));
   bool hasResource = false;
 
   for (int resourceIndex = 0; resourceIndex < GetMaxResKind(); ++resourceIndex)
@@ -457,7 +460,7 @@ unsigned __int64 addGold = 0;
 
   if (!this->m_byUserDgr)
   {
-    eAddGold(this->m_Param.GetRaceCode(), static_cast<int>(addGold));
+    eAddGold(static_cast<int>(this->m_Param.GetRaceCode()), static_cast<int>(addGold));
   }
 
   if (this->m_pUserDB)
@@ -496,73 +499,96 @@ void CPlayer::pc_MineStart(
   {
     resultCode = 9;
   }
-  else if (byMineIndex >= m_pCurMap->m_nResDumNum)
-  {
-    resultCode = 1;
-  }
   else
   {
-    resDummy = &m_pCurMap->m_pResDummy[byMineIndex];
-    if (!resDummy || resDummy->m_byQualityGrade == 2)
+    // Yorozuya fix (non-IDA parity): block deprecated ore items by code.
+    static const char *const kDeprecatedOreCodes[] = {
+      "ioblu04",
+      "iored04",
+      "ioyel04",
+      "iogre04",
+      "iobla04",
+    };
+    for (const char *code : kDeprecatedOreCodes)
     {
-      resultCode = 28;
-    }
-    else if (resDummy->m_byQualityGrade == 2 || IsMiningByMinigTicket())
-    {
-      resDummySector = m_pCurMap->GetResDummySector(byMineIndex, m_fCurPos);
-      if (resDummySector == -1)
+      if (!std::strcmp(oreRecord->m_strCode, code))
       {
-        resultCode = 2;
+        resultCode = 9;
+        break;
+      }
+    }
+
+    if (!resultCode)
+    {
+      if (byMineIndex >= m_pCurMap->m_nResDumNum)
+      {
+        resultCode = 1;
       }
       else
       {
-        toolItem = &m_Param.m_dbEquip.m_pStorageList[6];
-        if (!toolItem->m_bLoad)
+        resDummy = &m_pCurMap->m_pResDummy[byMineIndex];
+        if (!resDummy || resDummy->m_byQualityGrade == 2)
         {
-          resultCode = 4;
+          resultCode = 28;
         }
-        else if (toolItem->m_bLock)
+        else if (resDummy->m_byQualityGrade == 2 || IsMiningByMinigTicket())
         {
-          resultCode = 12;
-        }
-        else
-        {
-          _WeaponItem_fld *toolRecord = reinterpret_cast<_WeaponItem_fld *>(
-            g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex));
-          if (!toolRecord || toolRecord->m_nType != 10)
+          resDummySector = m_pCurMap->GetResDummySector(byMineIndex, m_fCurPos);
+          if (resDummySector == -1)
           {
-            resultCode = 5;
+            resultCode = 2;
           }
           else
           {
-            batteryItem = m_Param.m_dbInven.GetPtrFromSerial(wBatterySerial);
-            if (!batteryItem)
+            toolItem = &m_Param.m_dbEquip.m_pStorageList[6];
+            if (!toolItem->m_bLoad)
             {
-              resultCode = 8;
+              resultCode = 4;
             }
-            else if (batteryItem->m_byTableCode != 16)
-            {
-              resultCode = 8;
-            }
-            else if (batteryItem->m_wItemIndex >= 6u && batteryItem->m_wItemIndex <= 9u)
-            {
-              resultCode = 8;
-            }
-            else if (batteryItem->m_bLock)
+            else if (toolItem->m_bLock)
             {
               resultCode = 12;
             }
-            else if (!COreAmountMgr::Instance()->IsOreRemain())
+            else
             {
-              resultCode = 27;
+              _WeaponItem_fld *toolRecord = reinterpret_cast<_WeaponItem_fld *>(
+                g_Main.m_tblItemData[6].GetRecord(toolItem->m_wItemIndex));
+              if (!toolRecord || toolRecord->m_nType != 10)
+              {
+                resultCode = 5;
+              }
+              else
+              {
+                batteryItem = m_Param.m_dbInven.GetPtrFromSerial(wBatterySerial);
+                if (!batteryItem)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_byTableCode != 16)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_wItemIndex >= 6u && batteryItem->m_wItemIndex <= 9u)
+                {
+                  resultCode = 8;
+                }
+                else if (batteryItem->m_bLock)
+                {
+                  resultCode = 12;
+                }
+                else if (!COreAmountMgr::Instance()->IsOreRemain())
+                {
+                  resultCode = 27;
+                }
+              }
             }
           }
         }
+        else
+        {
+          resultCode = 26;
+        }
       }
-    }
-    else
-    {
-      resultCode = 26;
     }
   }
 
@@ -620,7 +646,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
   unsigned int leftOreCount = 0;
   unsigned int consumedDalant = 0;
 
-  const int raceCode = m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(m_Param.GetRaceCode());
   const unsigned int texRate = eGetTexRate(raceCode) + 10000;
 
   const int maxResKind = GetMaxResKind();
@@ -710,7 +736,7 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
         const int dalantDrain = static_cast<int>(consumedDalant / static_cast<unsigned int>(managerDivisor));
         if (dalantDrain > 0)
         {
-          eAddDalant(m_Param.GetRaceCode(), -dalantDrain);
+          eAddDalant(static_cast<int>(m_Param.GetRaceCode()), -dalantDrain);
         }
       }
     }
@@ -718,7 +744,10 @@ void CPlayer::pc_OreCutting(unsigned __int16 wOreSerial, unsigned __int8 byProce
     const int level = m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(m_Param.GetRaceCode(), level, consumedDalant);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+        level,
+        consumedDalant);
     }
 
     if (m_pUserDB && CActionPointSystemMgr::Instance()->GetEventStatus(0) == 2)

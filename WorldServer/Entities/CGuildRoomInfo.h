@@ -41,9 +41,9 @@ public:
   unsigned __int8 GetRoomType();
   bool GetMapPos(float *pPos);
   int GetRestTime();
-  char IsMemberIn(int n, unsigned int dwCharSerial);
-  char SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts);
-  char SetRoom(int iGuildInx, unsigned int dwGuildSerial);
+  bool IsMemberIn(int n, unsigned int dwCharSerial);
+  bool SetRoom_Restore(int iGuildInx, unsigned int dwGuildSerial, tagTIMESTAMP_STRUCT *ts);
+  bool SetRoom(int iGuildInx, unsigned int dwGuildSerial);
   void SetRoomTime();
   void SetRoomTime_Restore(tagTIMESTAMP_STRUCT *ts);
   void SendDQS_RoomInsert();
@@ -54,7 +54,7 @@ public:
   void RoomTimer();
   int RoomIn(int n, unsigned int dwCharSerial);
   int RoomOut(int n, unsigned int dwCharSerial);
-  char SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx);
+  bool SetPlayerOut(int n, unsigned int dwCharSerial, int iMemberIdx);
 
   bool m_bRent;
   unsigned __int8 m_byRoomType;

@@ -668,11 +668,11 @@ struct  GuildCreateEventInfo
   void Init();
   void Loop();
   void ReadEventInfo();
-  char CheckEventDate();
-  char ApplyModifiedGuildEventInfo();
+  bool CheckEventDate();
+  bool ApplyModifiedGuildEventInfo();
   void SetConsumeDalantFree(bool bEnable);
-  __int64 GetEstConsumeDalant() const;
-  __int64 GetEmblemDalant() const;
+  unsigned int GetEstConsumeDalant() const;
+  unsigned int GetEmblemDalant() const;
 
   bool m_bStartedEvent;
   _event_info m_EventInfo;
@@ -847,7 +847,7 @@ public:
 
   CMainThread();
   void Release();
-  bool Init();
+  char Init();
   void AccountServerLogin();
   void gm_DisplaymodeChange();
   void gm_MapChange(CMapData *pMap);
@@ -978,35 +978,35 @@ public:
     unsigned int dwCharSerial,
     unsigned int dwGuildIndex);
   unsigned __int8 db_input_guild_money(
+    unsigned int dwPusherSerial,
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwAccountSerial,
-    unsigned int dwParam,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    const char *pszPurpose);
+    unsigned int dwAddDalant,
+    unsigned int dwAddGold,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    const char *pwszName);
   unsigned __int8 db_output_guild_money(
+    unsigned int dwPoperSerial,
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwAccountSerial,
-    unsigned int dwParam,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    const char *pszPurpose,
-    unsigned __int8 *pbyRetCode);
+    unsigned int dwSubDalant,
+    unsigned int dwSubGold,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    const char *pwszName,
+    unsigned __int8 *pbyProcRet);
   unsigned __int8 db_buy_emblem(
     unsigned int dwGuildSerial,
-    unsigned int dwCharSerial,
-    unsigned int dwGuildIndex,
+    int nEmblemDalant,
     unsigned int dwEmblemBack,
     unsigned int dwEmblemMark,
-    long double *dCurTotalDalant,
-    long double *dCurTotalGold,
-    unsigned __int8 *pbyDate,
-    char *pwszGuildName,
-    unsigned __int8 *pbyRetCode);
+    unsigned int dwSuggestorSerial,
+    long double *dTotalDalant,
+    long double *dTotalGold,
+    unsigned __int8 *byDate,
+    char *pwszName,
+    unsigned __int8 *pbyProcRet);
   unsigned __int8 db_disjoint_guild(unsigned int dwGuildSerial);
   unsigned __int8 db_char_set_alive(
     unsigned int dwSerial,
@@ -1095,7 +1095,7 @@ public:
   bool db_LoadGreetingMsg();
   void CreateSelectCharacterLogTable(unsigned __int8 byMonth);
   void _db_Load_BattleTournamentInfo();
-  char LoadLimitInfo();
+  bool LoadLimitInfo();
   unsigned __int8 _db_Load_GoldBoxItem(qry_case_select_golden_box_item *pDbGoldenboxitem, int *pnDBSerial);
   unsigned __int8 _db_Check_NpcData(unsigned int dwSerial, _AVATOR_DATA *pData);
   unsigned __int8 _db_load_raceboss(unsigned int dwSerial, _AVATOR_DATA *pData);
@@ -1307,7 +1307,7 @@ public:
   void pc_TaiwanBillingUserCertify(char *szAccount, unsigned __int8 byCertify);
   void ManageClientLimitRunRequest(const _manage_client_limit_run_request_acwr *request);
   void EndServer();
-  char _CheckTotalSales();
+  bool _CheckTotalSales();
   bool DatabaseInit(char *pszDBName, char *pszDBIP);
   bool CashDBInit(char *szIP, char *szDBName, char *szAccount, char *szPassword, unsigned int dwPort);
   char _GameDataBaseInit();
@@ -1331,15 +1331,15 @@ private:
   void CheckForceClose();
   void ServerStateMsgGotoWebAgent();
   void PingToAccount();
-  char LoadServerRateINIFile();
+  bool LoadServerRateINIFile();
   void SetServerRate();
-  bool LoadINI();
+  int LoadINI();
   int LoadWorldSystemINI();
   int LoadWorldInfoINI();
   void LoadItemConsumeINI();
   bool CheckDefine();
   bool check_dbsyn_data_size();
-  bool DataFileInit();
+  char DataFileInit();
   bool SetGlobalDataName();
   bool check_loaded_data();
   bool ObjectInit();
@@ -1424,7 +1424,7 @@ struct  RFEventBase
   virtual bool IsEnable();
   virtual bool SetEvent(const char *p, int size, bool bInit);
   virtual void Loop();
-  virtual unsigned __int8 DoEvent(CPlayer *pOne);
+  virtual int DoEvent(CPlayer *pOne);
   virtual bool IsDbUpdate(unsigned int nIdx);
   virtual _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator);
   virtual bool SetPlayerState(void *const p, int size);
@@ -1454,13 +1454,13 @@ struct  TimeLimitMgr
   static TimeLimitMgr *m_pTLStatusMgr;
   void Delete_All();
   unsigned __int16 GetPlayerData(unsigned __int16 wIndex, unsigned __int8 *psStatus, long double *pdPercent);
-  char SetConfig(
+  bool SetConfig(
     unsigned __int16 time1,
     unsigned __int16 time2,
     unsigned __int16 time3,
     unsigned __int16 time4,
     unsigned __int16 time5);
-  __int64 SumMinuteOne(_SYSTEMTIME *tm);
+  unsigned int SumMinuteOne(_SYSTEMTIME *tm);
   void LoadTLINIFile();
   void InitializeTLMgr();
   void Chack_Time();
@@ -1479,22 +1479,22 @@ struct  TimeLimitMgr
     unsigned int dwFatigue,
     unsigned int dwLastLogoutTime,
     bool bAgeLimit);
-  char CheckPlayerStatus(
+  bool CheckPlayerStatus(
     unsigned __int16 wIndex,
     unsigned int dwLastContSaveTime,
     unsigned __int8 *pbyStatus,
     unsigned int *pdwFatigue);
   void Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex);
   void Push_Data(Player_TL_Status *data, unsigned __int16 wIndex);
-  __int64 ClacLastLogoutTimeSec(unsigned int dwLastConnTime);
-  __int64 ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime);
+  unsigned int ClacLastLogoutTimeSec(unsigned int dwLastConnTime);
+  unsigned int ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime);
   unsigned __int16 GetEndPlayTime();
-  char UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus);
+  bool UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus);
   void ReSetPercent(unsigned __int16 wIndex);
-  __int64 SumMinuteBetweenSec(tm *tmLast);
+  unsigned int SumMinuteBetweenSec(tm *tmLast);
   Player_TL_Status *Find_Data(unsigned __int16 wIndex);
   Player_TL_Status *Find_Data(unsigned int dwSerial);
-  __int64 GetPlayFDegree();
+  unsigned int GetPlayFDegree();
 
   static unsigned int m_dwCnt;
   CMyTimer m_tmLoopTime;
@@ -1645,7 +1645,7 @@ struct _LINKKEY
   unsigned __int16 GetCode();
   unsigned __int16 GetIndex();
   void SetData(unsigned __int16 wCode, unsigned __int16 wIndex);
-  unsigned __int16 CovDBKey();
+  __int16 CovDBKey();
 };
 
 /* 1544 */
@@ -1686,7 +1686,7 @@ struct _EMBELLKEY
   bool IsFilled();
   void SetRelease();
   void LoadDBKey(_EMBELLKEY key);
-  __int64 CovDBKey();
+  int CovDBKey();
 };
 
 /* 1547 */
@@ -1727,7 +1727,7 @@ struct _FORCEKEY
   void SetStat(unsigned int pl_dwStat);
   unsigned __int8 GetIndex();
   unsigned int GetStat();
-  __int64 CovDBKey();
+  int CovDBKey();
 };
 
 /* 1550 */
@@ -2206,8 +2206,8 @@ struct _PCBANG_FAVOR_ITEM_DB_BASE
   unsigned __int64 lnUID[50];
 
   void Init();
-  char InsertItem(_STORAGE_LIST::_db_con *Item);
-  char IsDeleteItem(_STORAGE_LIST::_db_con *Item);
+  bool InsertItem(_STORAGE_LIST::_db_con *Item);
+  bool IsDeleteItem(_STORAGE_LIST::_db_con *Item);
 };
 
 /* 1591 */
@@ -2274,9 +2274,9 @@ struct  _SYNC_STATE
   bool bSelect;
   void Init();
   void re_lobby();
-  char chk_enter();
-  char chk_reged();
-  char chk_select();
+  bool chk_enter();
+  bool chk_reged();
+  bool chk_select();
 };
 
 /* 1596 */
@@ -2321,17 +2321,17 @@ class  AutominePersonal : public CCharacter
 public:
   AutominePersonal();
   ~AutominePersonal();
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetHP() override;
-  __int64 GetMaxHP() override;
-  __int64 GetObjRace() override;
+  int GetHP() override;
+  int GetMaxHP() override;
+  int GetObjRace() override;
   bool IsBeAttackedAble(bool bFirst) override;
-  char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool IsBeDamagedAble(CCharacter *pAtter) override;
   void Loop() override;
   void SendMsg_FixPosition(int n) override;
-  __int64 SetDamage(
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -2354,7 +2354,7 @@ public:
   CPlayer *get_owner();
   unsigned int get_ownerserial();
   CPlayer *GetOwner();
-  int insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial);
+  bool insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial);
   bool unregist_from_map(unsigned __int8 byDestroyType);
   bool extract_battery(unsigned __int8 bySlotIdx, _STORAGE_LIST::_db_con *pBattery);
   void set_selore(unsigned __int8 bySelOre);
@@ -2577,7 +2577,7 @@ struct  _dh_mission_mgr
   _if_change *GetMissionCont(_dh_mission_setup *pMsSetup);
   _if_change *SearchCurMissionCont();
   void OpenPortal(int nIndex);
-  __int64 GetLimMSecTime();
+  unsigned int GetLimMSecTime();
 };
 
 /* 1688 */
@@ -2660,7 +2660,7 @@ struct  SKILL
     unsigned int castdelay,
     unsigned int delay,
     int el);
-  __int64 GetDmg(float fDamRate);
+  int GetDmg(float fDamRate);
 };
 
 /* 1779 */
@@ -2754,7 +2754,7 @@ struct  _mon_active
   _mon_active();
   bool SetActive(_mon_active_fld *pActRec, _mon_block *pBlk, int nMonRecIndex);
   void SetZeroMonNum();
-  char SetCurMonNum(int nAlter);
+  bool SetCurMonNum(int nAlter);
   void SetBossSchedule(BossSchedule *pBossSchedule);
   BossSchedule *GetBossSchedule();
   void BossScheduleSave();
@@ -2775,7 +2775,7 @@ struct  _LAYER_SET
   _LAYER_SET();
   void CreateLayer(int nSecNum);
   void ActiveLayer(_MULTI_BLOCK *pMB);
-  char InertLayer();
+  bool InertLayer();
   bool IsActiveLayer();
 };
 
@@ -3252,7 +3252,7 @@ struct  SF_Timer
   unsigned int m_dwGapCheckTime;
 
   void Set(unsigned int dwTimeDelay);
-  bool CheckTime(unsigned int dwLoopTime);
+  int CheckTime(unsigned int dwLoopTime);
 };
 
 /* 1671 */

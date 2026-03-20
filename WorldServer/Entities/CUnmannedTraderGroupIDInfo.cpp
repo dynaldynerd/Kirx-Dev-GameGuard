@@ -145,7 +145,7 @@ bool CUnmannedTraderGroupIDInfo::GetGroupID(
   return false;
 }
 
-char CUnmannedTraderGroupIDInfo::IsExistGroupID(
+bool CUnmannedTraderGroupIDInfo::IsExistGroupID(
   unsigned __int8 byDivision,
   unsigned __int8 byClass,
   unsigned __int8 bySubClass,
@@ -154,7 +154,7 @@ char CUnmannedTraderGroupIDInfo::IsExistGroupID(
 {
   if (byDivision == 255)
   {
-    return 0;
+    return false;
   }
 
   unsigned int accListIndex = 0;
@@ -164,12 +164,12 @@ char CUnmannedTraderGroupIDInfo::IsExistGroupID(
     if (division->IsExistGroupID(byDivision, byClass, bySubClass, bySortType, &localListIndex))
     {
       *dwListIndex = localListIndex + accListIndex;
-      return 1;
+      return true;
     }
     accListIndex += static_cast<unsigned int>(division->GetMaxClassCnt());
   }
 
-  return 0;
+  return false;
 }
 
 CUnmannedTraderSortType *CUnmannedTraderGroupIDInfo::GetSortType(

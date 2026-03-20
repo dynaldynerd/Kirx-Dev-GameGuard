@@ -9,7 +9,7 @@ public:
   CCheckSum();
   ~CCheckSum();
 
-  char Init();
+  bool Init();
   unsigned int EncodeValue(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue);
   unsigned int DecodeValue(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue);
 };

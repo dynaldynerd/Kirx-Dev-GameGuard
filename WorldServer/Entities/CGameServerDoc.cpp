@@ -23,7 +23,7 @@ CGameServerDoc::~CGameServerDoc()
   // this is not a stub
 }
 
-BOOL CGameServerDoc::OnNewDocument()
+int CGameServerDoc::OnNewDocument()
 {
   return CDocument::OnNewDocument();
 }

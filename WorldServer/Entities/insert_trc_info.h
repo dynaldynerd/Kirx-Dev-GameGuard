@@ -14,11 +14,11 @@ struct _insert_trc_info
   unsigned int dwNext;
   unsigned __int8 byCurrTax;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline __int64 _insert_trc_info::size() const
+inline int _insert_trc_info::size() const
 {
   return 96;
 }

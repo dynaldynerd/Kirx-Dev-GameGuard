@@ -68,7 +68,7 @@ void LendItemSheet::Release()
   _heapFixRow.Release();
 }
 
-__int64 LendItemSheet::CheckTime()
+int LendItemSheet::CheckTime()
 {
   if (_heapFixRow.empty())
   {
@@ -144,5 +144,6 @@ __int64 LendItemSheet::CheckTime()
     }
   }
 
-  return result;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(result);
 }

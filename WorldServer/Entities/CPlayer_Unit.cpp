@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CPlayer.h"
 #include "CQuestMgr.h"
@@ -512,7 +512,7 @@ void CPlayer::CheckUnitCutTime()
     return;
   }
 
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   for (int index = 0; index < 4; ++index)
   {
     _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];
@@ -634,7 +634,13 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
   _STORAGE_LIST::_db_con *pInvenItem = this->m_Param.m_dbInven.GetPtrFromSerial(wItemSerial);
   _STORAGE_LIST::_db_con *pWeapon = this->m_Param.m_dbEquip.m_pStorageList + 6;
 
-  if (!pInvenItem || pInvenItem->m_byTableCode != 27)
+  // Yorozuya fix implementation (non-IDA): prevent jumping into siege kit while moving.
+  if (m_bMove)
+  {
+    byRetCode = 11;
+  }
+
+  if (!byRetCode && (!pInvenItem || pInvenItem->m_byTableCode != 27))
   {
     byRetCode = 1;
   }
@@ -672,7 +678,10 @@ void CPlayer::pc_TransformSiegeModeRequest(unsigned __int16 wItemSerial)
       {
         byRetCode = 6;
       }
-      else if (!IsItemEquipCivil(pInvenItem->m_byTableCode, pInvenItem->m_wItemIndex, this->m_Param.GetRaceSexCode()))
+      else if (!IsItemEquipCivil(
+                 pInvenItem->m_byTableCode,
+                 pInvenItem->m_wItemIndex,
+                 static_cast<unsigned __int8>(this->m_Param.GetRaceSexCode())))
       {
         byRetCode = 7;
       }
@@ -1737,10 +1746,13 @@ void CPlayer::pc_UnitDeliveryRequest(
 {
   unsigned __int8 resultCode = 0;
   _UNIT_DB_BASE::_LIST *unitData = &m_Param.m_UnitDB.m_List[bySlotIndex];
-  const int raceCode = m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(m_Param.GetRaceCode());
   unsigned int consumeDalant = 0;
   CParkingUnit *parkingUnit = nullptr;
   unsigned __int8 transDistCode = 0;
+  // Yorozuya fix (non-IDA parity): ignore packet position and use current player position.
+  float deliveryPos[3]{};
+  std::memcpy(deliveryPos, m_fCurPos, sizeof(deliveryPos));
 
   if (!unitData->dwGauge)
   {
@@ -1807,7 +1819,7 @@ void CPlayer::pc_UnitDeliveryRequest(
 
       if (!resultCode)
       {
-        if (GetSqrt(m_fCurPos, pfNewPos) > 40.0f)
+        if (GetSqrt(m_fCurPos, deliveryPos) > 40.0f)
         {
           resultCode = 24;
         }
@@ -1834,7 +1846,7 @@ void CPlayer::pc_UnitDeliveryRequest(
     createData.byCreateType = 0;
     createData.m_pMap = m_pCurMap;
     createData.m_nLayerIndex = m_wMapLayerIndex;
-    std::memcpy(createData.m_fStartPos, pfNewPos, sizeof(createData.m_fStartPos));
+    std::memcpy(createData.m_fStartPos, deliveryPos, sizeof(createData.m_fStartPos));
     createData.byTransDistCode = transDistCode;
 
     unsigned int maxGauge = 10000u;

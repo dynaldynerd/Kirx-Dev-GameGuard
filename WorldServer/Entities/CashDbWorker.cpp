@@ -633,12 +633,12 @@ bool CashDbWorker::_init_loggers()
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog\\PartiallyPaid", nullptr);
 
   char buffer[256]{};
-  unsigned int logTime = GetKorLocalTime();
+  unsigned int logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\PartiallyPaid\\%u.his", logTime);
   _kLogger[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   std::memset(buffer, 0, sizeof(buffer));
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\SystemLog\\PartiallyPaid\\%u.sys", logTime);
   _kLogger[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
   return true;

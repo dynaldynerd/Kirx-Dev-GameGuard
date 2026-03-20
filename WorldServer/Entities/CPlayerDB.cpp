@@ -81,12 +81,12 @@ CPlayerDB::~CPlayerDB()
   }
 }
 
-int CPlayerDB::GetRaceCode()
+__int64 CPlayerDB::GetRaceCode()
 {
   return static_cast<int>(this->m_dbChar.m_byRaceSexCode) >> 1;
 }
 
-int CPlayerDB::GetRaceSexCode()
+__int64 CPlayerDB::GetRaceSexCode()
 {
   return this->m_dbChar.m_byRaceSexCode;
 }
@@ -180,9 +180,10 @@ void CPlayerDB::SetClassInGuild(unsigned __int8 byClassInGuild)
   m_byClassInGuild = byClassInGuild;
 }
 
-unsigned int CPlayerDB::GetLevel()
+int CPlayerDB::GetLevel()
 {
-  return this->m_dbChar.m_byLevel;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_byLevel);
 }
 
 void CPlayerDB::SetLevel(unsigned __int8 nLv)
@@ -190,9 +191,10 @@ void CPlayerDB::SetLevel(unsigned __int8 nLv)
   this->m_dbChar.m_byLevel = nLv;
 }
 
-unsigned int CPlayerDB::GetMaxLevel()
+int CPlayerDB::GetMaxLevel()
 {
-  return this->m_dbChar.m_byMaxLevel;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_byMaxLevel);
 }
 
 bool CPlayerDB::IsClassChangeableLv()
@@ -259,9 +261,10 @@ _class_fld *CPlayerDB::GetPtrBaseClass()
   return this->m_pClassData;
 }
 
-unsigned int CPlayerDB::GetHP()
+int CPlayerDB::GetHP()
 {
-  return this->m_dbChar.m_dwHP;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_dwHP);
 }
 
 void CPlayerDB::SetHP(unsigned int dwHP)
@@ -269,9 +272,10 @@ void CPlayerDB::SetHP(unsigned int dwHP)
   this->m_dbChar.m_dwHP = dwHP;
 }
 
-unsigned int CPlayerDB::GetFP()
+int CPlayerDB::GetFP()
 {
-  return this->m_dbChar.m_dwFP;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_dwFP);
 }
 
 void CPlayerDB::SetFP(unsigned int dwFP)
@@ -279,9 +283,10 @@ void CPlayerDB::SetFP(unsigned int dwFP)
   this->m_dbChar.m_dwFP = dwFP;
 }
 
-unsigned int CPlayerDB::GetSP()
+int CPlayerDB::GetSP()
 {
-  return this->m_dbChar.m_dwSP;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_dwSP);
 }
 
 void CPlayerDB::SetSP(unsigned int dwSP)
@@ -289,9 +294,10 @@ void CPlayerDB::SetSP(unsigned int dwSP)
   this->m_dbChar.m_dwSP = dwSP;
 }
 
-unsigned int CPlayerDB::GetDP()
+int CPlayerDB::GetDP()
 {
-  return this->m_dbChar.m_dwDP;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dbChar.m_dwDP);
 }
 
 void CPlayerDB::SetDP(unsigned int dwDP)
@@ -374,12 +380,12 @@ void CPlayerDB::SetBagNum(unsigned __int8 byNum)
   this->m_dbChar.m_byUseBagNum = byNum;
 }
 
-int CPlayerDB::GetUseSlot()
+unsigned __int8 CPlayerDB::GetUseSlot()
 {
   return 20 * static_cast<unsigned int>(this->m_dbChar.m_byUseBagNum);
 }
 
-__int64 CPlayerDB::GetHaveUnitNum()
+int CPlayerDB::GetHaveUnitNum()
 {
   unsigned int count = 0;
   for (int index = 0; index < 4; ++index)
@@ -389,10 +395,11 @@ __int64 CPlayerDB::GetHaveUnitNum()
       ++count;
     }
   }
-  return count;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(count);
 }
 
-__int64 CPlayerDB::GetInvenItemCountFromCode(char *pszItemCode)
+int CPlayerDB::GetInvenItemCountFromCode(char *pszItemCode)
 {
   unsigned int totalCount = 0;
   for (int index = 0; index < this->m_dbInven.m_nUsedNum; ++index)
@@ -409,10 +416,11 @@ __int64 CPlayerDB::GetInvenItemCountFromCode(char *pszItemCode)
       totalCount += static_cast<unsigned int>(this->m_dbInven.m_pStorageList[index].m_dwDur);
     }
   }
-  return totalCount;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(totalCount);
 }
 
-char CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
+bool CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
 {
   int remainCount = nCount;
   while (true)
@@ -436,7 +444,7 @@ char CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
 
     if (!item)
     {
-      return 0;
+      return false;
     }
 
     if (item->m_dwDur < static_cast<unsigned int>(remainCount))
@@ -469,7 +477,7 @@ char CPlayerDB::DeleteItemCountFromCode(char *pszItemCode, int nCount)
     {
       CPlayer::s_MgrItemHistory.consume_del_item(this->m_pThis->m_ObjID.m_wIndex, item, this->m_pThis->m_szItemHistoryFileName);
     }
-    return 1;
+    return true;
   }
 }
 
@@ -512,7 +520,7 @@ void CPlayerDB::SetHaveBoxOfAMP(bool bFlag)
   }
 }
 
-char CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
+unsigned __int8 CPlayerDB::CalcCharGrade(unsigned __int8 byLv, unsigned __int16 wRankRate)
 {
   unsigned __int16 rankRate = wRankRate;
   if (wRankRate >= 10000)
@@ -559,7 +567,7 @@ void CPlayerDB::InitResBuffer()
   }
 }
 
-char CPlayerDB::GetResBufferNum()
+unsigned __int8 CPlayerDB::GetResBufferNum()
 {
   char count = 0;
   for (int index = 0; index < GetMaxResKind(); ++index)
@@ -706,7 +714,7 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
   m_dPvpPointLeak = 0.0;
 }
 
-char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
+bool CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
 {
   std::strcpy(this->m_dbChar.m_wszCharID, pData->dbAvator.m_wszAvatorName);
   W2M(this->m_dbChar.m_wszCharID, this->m_aszName, 17);
@@ -747,7 +755,7 @@ char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
   this->m_pClassData = reinterpret_cast<_class_fld *>(g_Main.m_tblClass.GetRecord(pData->dbAvator.m_szClassCode));
   if (!this->m_pClassData)
   {
-    return 0;
+    return false;
   }
 
   this->m_nMakeTrapMaxNum = this->m_pClassData->m_nMakeTrapMaxNum;
@@ -757,7 +765,7 @@ char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
       g_Main.m_tblClass.GetRecord(pData->dbAvator.m_zClassHistory[index]));
     if (!record)
     {
-      return 0;
+      return false;
     }
 
     this->m_pClassHistory[index] = record;
@@ -792,15 +800,15 @@ char CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
           this->m_pGuild = nullptr;
         }
         this->m_byClassInGuild = pData->dbAvator.m_byClassInGuild;
-        return 1;
+        return true;
       }
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
+bool CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
 {
   __time32_t now{};
   _time32(&now);
@@ -1277,7 +1285,7 @@ char CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
   }
 
   this->m_dPvpPointLeak = pData->dbSupplement.dPvpPointLeak;
-  return 1;
+  return true;
 }
 
 _SFCONT_DB_BASE::_SFCONT_DB_BASE()
@@ -1446,7 +1454,7 @@ void CPlayerDB::AppointSerialStorageItem()
   }
 }
 
-char CPlayerDB::PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit)
+bool CPlayerDB::PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit)
 {
   if (bInit)
   {
@@ -1454,12 +1462,12 @@ char CPlayerDB::PushLink(int nLinkIndex, unsigned __int16 wSerial, bool bInit)
     {
       if (this->m_QLink[index].byLinkIndex != 255 && this->m_QLink[index].wSerial == wSerial)
       {
-        return 0;
+        return false;
       }
     }
   }
 
   this->m_QLink[nLinkIndex].byLinkIndex = static_cast<unsigned __int8>(nLinkIndex);
   this->m_QLink[nLinkIndex].wSerial = wSerial;
-  return 1;
+  return true;
 }

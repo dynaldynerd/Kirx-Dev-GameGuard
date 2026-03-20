@@ -37,7 +37,7 @@ struct _lt_qry_case_unmandtrader_select_list
   unsigned int dwCnt;
   __list list[10];
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

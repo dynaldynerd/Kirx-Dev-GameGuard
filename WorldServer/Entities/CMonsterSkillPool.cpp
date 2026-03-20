@@ -27,7 +27,7 @@ void CMonsterSkillPool::Init()
   }
 }
 
-__int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
+int CMonsterSkillPool::Set(CMonster *pMyMonster)
 {
   Init();
   if (!pMyMonster)
@@ -160,7 +160,7 @@ __int64 CMonsterSkillPool::Set(CMonster *pMyMonster)
   return 1;
 }
 
-__int64 CMonsterSkillPool::InsertSkill(CMonsterSkill *skill)
+int CMonsterSkillPool::InsertSkill(CMonsterSkill *skill)
 {
   if (m_nSize >= 16)
   {

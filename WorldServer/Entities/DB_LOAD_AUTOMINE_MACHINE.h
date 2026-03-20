@@ -24,6 +24,6 @@ struct _DB_LOAD_AUTOMINE_MACHINE
   _AUTOMINE_SLOT slot[80];
 
   _DB_LOAD_AUTOMINE_MACHINE();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)

@@ -61,9 +61,9 @@ _ItemUpgrade_fld *CItemUpgradeTable::GetRecordFromRes(unsigned int dwResIndex)
   return nullptr;
 }
 
-unsigned int CItemUpgradeTable::GetSize()
+int CItemUpgradeTable::GetSize()
 {
-  return static_cast<unsigned int>(m_nResNum);
+  return m_nResNum;
 }
 
 bool CItemUpgradeTable::Indexing(CRecordData *resTable, char *errCode)

@@ -81,11 +81,34 @@ bool CCheckSumCharacAccountTrunkData::Update(CRFWorldDatabase *pkDB)
     return false;
   }
 
-  return pkDB->Update_NpcData(m_dwSerial, m_dwValues)
-      && pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues);
+  if (!pkDB->Update_NpcData(m_dwSerial, m_dwValues))
+  {
+    if (!InsertCharacData(pkDB))
+    {
+      return false;
+    }
+    if (!pkDB->Update_NpcData(m_dwSerial, m_dwValues))
+    {
+      return false;
+    }
+  }
+
+  if (!pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues))
+  {
+    if (!InsertTrunkData(pkDB))
+    {
+      return false;
+    }
+    if (!pkDB->Update_AnimusData(m_dwAccountSerial, m_byRace, m_dValues))
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
-__int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumCharacAccountTrunkData *kSrcValue)
+int CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumCharacAccountTrunkData *kSrcValue)
 {
   if (!m_dwSerial || m_dwSerial == static_cast<unsigned int>(-1) || m_dwAccountSerial == static_cast<unsigned int>(-1)
       || !pkDB)
@@ -93,7 +116,7 @@ __int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumC
     return 0;
   }
 
-  unsigned int resultFlag = 0;
+  int resultFlag = 0;
   unsigned __int8 ret = pkDB->Select_NpcData(m_dwSerial, m_dwValues);
   if (ret == 1)
   {
@@ -127,7 +150,7 @@ __int64 CCheckSumCharacAccountTrunkData::Load(CRFWorldDatabase *pkDB, CCheckSumC
   return resultFlag;
 }
 
-__int64 CCheckSumCharacAccountTrunkData::CheckDiff(
+int CCheckSumCharacAccountTrunkData::CheckDiff(
   CRFWorldDatabase *pkDB,
   char *wszName,
   CCheckSumCharacAccountTrunkData *kSrcValue)

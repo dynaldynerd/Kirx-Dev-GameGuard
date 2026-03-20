@@ -24,9 +24,10 @@ _pt_result_fcandidacy_list_zocl::_pt_result_fcandidacy_list_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned __int16 _pt_result_fcandidacy_list_zocl::size() const
+int _pt_result_fcandidacy_list_zocl::size() const
 {
-  return static_cast<unsigned __int16>(1 + static_cast<unsigned int>(byCnt) * sizeof(__candi_info));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned __int16>(1 + static_cast<unsigned int>(byCnt) * sizeof(__candi_info)));
 }
 
 CandidateRegister::CandidateRegister()
@@ -42,7 +43,7 @@ CandidateRegister::~CandidateRegister() = default;
 bool CandidateRegister::Initialize()
 {
   char logPath[256]{};
-  const unsigned int localTime = GetKorLocalTime();
+  const unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(
     logPath,
     sizeof(logPath),
@@ -77,7 +78,7 @@ int CandidateRegister::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
     case _eRequestCandidateList:
       if (m_bInitCandidate)
       {
-        const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+        const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
         return _SendList(pOne->m_ObjID.m_wIndex, raceCode);
       }
       return 2;
@@ -94,7 +95,7 @@ int CandidateRegister::Doit(Cmd eCmd, CPlayer *pOne, char *pdata)
   }
 }
 
-unsigned int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
+int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
 {
   if (pOne->m_Param.m_byPvPGrade < 3)
   {
@@ -102,7 +103,7 @@ unsigned int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
   }
 
   const unsigned int avatorSerial = pOne->m_Param.GetCharSerial();
-  const int raceCode = pOne->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
   if (CandidateMgr::Instance()->IsRegistedAvator_1(static_cast<unsigned __int8>(raceCode), avatorSerial))
   {
     return 3;
@@ -118,7 +119,7 @@ unsigned int CandidateRegister::_CheckPlayerInfo(CPlayer *pOne)
 
 bool CandidateRegister::_AddToPacket(CPlayer *pOne, unsigned int dwWinCnt)
 {
-  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   const int currentCount = m_kSend[raceCode].byCnt;
   if (currentCount >= CandidateMgr::Instance()->GetMaxNum())
   {
@@ -185,7 +186,7 @@ if (!_bEnable)
     return static_cast<int>(result);
   }
 
-  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   if (!CandidateMgr::Instance()->Regist(pOne))
   {
     return 18;
@@ -214,7 +215,10 @@ if (!_bEnable)
   const int level = pOne->m_Param.GetLevel();
   if (level == 30 || level == 40 || level == 50 || level == 60)
   {
-    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(pOne->m_Param.GetRaceCode(), level, 10000000u);
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+      static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode()),
+      level,
+      10000000u);
   }
 
   return 0;

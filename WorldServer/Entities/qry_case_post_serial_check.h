@@ -28,7 +28,7 @@ struct _qry_case_post_serial_check
     std::memset(this, 0, sizeof(*this));
   }
 
-  __int64 size() const
+  int size() const
   {
     return 484LL;
   }

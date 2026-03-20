@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "TimeItem.h"
 
@@ -45,7 +45,7 @@ bool TimeItem::Init()
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog", nullptr);
 
   char buffer[256]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, sizeof(buffer), "%s\\TimeItem_%u.log", "..\\ZoneServerLog\\SystemLog", now);
   _kLogger.SetWriteLogFile(buffer, 1, 0, 1, 1);
 

@@ -6,7 +6,7 @@ struct _qry_case_check_invalid_character
 {
   unsigned __int8 byProc;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }
@@ -18,7 +18,7 @@ struct _qry_case_update_vote_time
 {
   unsigned int dwSerial;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

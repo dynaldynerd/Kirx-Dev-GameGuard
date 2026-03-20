@@ -9,7 +9,7 @@ struct  _qry_case_make_storage
   unsigned int dwAvatorSerial;
 
   _qry_case_make_storage();
-  __int64 size() const;
+  int size() const;
 };
 
 inline _qry_case_make_storage::_qry_case_make_storage()
@@ -17,7 +17,7 @@ inline _qry_case_make_storage::_qry_case_make_storage()
 {
 }
 
-inline __int64 _qry_case_make_storage::size() const
+inline int _qry_case_make_storage::size() const
 {
   return 12;
 }

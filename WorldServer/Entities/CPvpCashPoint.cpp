@@ -76,7 +76,7 @@ int CPvpCashPoint::GetMyClassVal(char *pClass)
   return pvpCash->GetMyClassVal(pClass);
 }
 
-double CPvpCashPoint::CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass, unsigned __int8 nParty)
+long double CPvpCashPoint::CalPvpCashPoint(int nDstLv, int nSrcLv, char *pSrcClass, unsigned __int8 nParty)
 {
   if (!nParty)
   {

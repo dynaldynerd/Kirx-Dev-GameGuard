@@ -56,7 +56,7 @@ public:
   __int64 *GetStartTimePtr();
   __int64 GetStartTime();
   __int64 GetResultTime();
-  __int64 GetLeftSec();
+  unsigned int GetLeftSec();
   unsigned __int8 GetSellTurm();
   unsigned int GetPrice();
   unsigned int GetTax();

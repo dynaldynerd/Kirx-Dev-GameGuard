@@ -2,7 +2,8 @@
 
 #include "qry_case_disjointguild.h"
 
-__int64 _qry_case_disjointguild::size()
+int _qry_case_disjointguild::size()
 {
-  return 8LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(8LL);
 }

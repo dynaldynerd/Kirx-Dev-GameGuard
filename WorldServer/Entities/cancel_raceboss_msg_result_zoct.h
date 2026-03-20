@@ -9,11 +9,11 @@ struct  _cancel_raceboss_msg_result_zoct
   unsigned __int8 byRaceCode;
   int nID;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline unsigned __int16 _cancel_raceboss_msg_result_zoct::size() const
+inline int _cancel_raceboss_msg_result_zoct::size() const
 {
   return 6;
 }

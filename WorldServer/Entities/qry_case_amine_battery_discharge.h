@@ -12,7 +12,7 @@ struct   _qry_case_amine_battery_discharge
   unsigned int dwBattery;
 
   _qry_case_amine_battery_discharge();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -21,7 +21,7 @@ inline _qry_case_amine_battery_discharge::_qry_case_amine_battery_discharge()
 {
 }
 
-inline __int64 _qry_case_amine_battery_discharge::size() const
+inline int _qry_case_amine_battery_discharge::size() const
 {
   return 11;
 }

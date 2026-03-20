@@ -662,7 +662,7 @@ bool CMapOperation::IsExistStdMapID(int iMapID)
   return false;
 }
 
-char CMapOperation::IsInRegion(char *pszRegionCode, CGameObject *pObj)
+bool CMapOperation::IsInRegion(char *pszRegionCode, CGameObject *pObj)
 {
   for (int j = 0; j < m_nRegionNum; ++j)
   {
@@ -672,12 +672,12 @@ char CMapOperation::IsInRegion(char *pszRegionCode, CGameObject *pObj)
       CExtDummy *dummy = &region->pMap->m_Dummy;
       if (dummy->IsInBBox(region->wDummyLineIndex, pObj->m_fCurPos))
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
 CMapData *CMapOperation::GetMap(const char *szMapCode)

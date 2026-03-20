@@ -98,9 +98,9 @@ public:
 
 private:
   bool InitLogger();
-  char InsertStateRecord();
-  char UpdateClearDanglingOwnerRecord();
-  char InsertDefalutRecord();
+  bool InsertStateRecord();
+  bool UpdateClearDanglingOwnerRecord();
+  bool InsertDefalutRecord();
   unsigned __int8 GetEmptyRecordSerial(unsigned int *dwSerial, bool *pbRecordInserted);
   unsigned __int8 CheckDBItemState(
     unsigned __int8 byType,

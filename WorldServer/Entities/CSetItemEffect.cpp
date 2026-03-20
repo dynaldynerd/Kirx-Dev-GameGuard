@@ -38,7 +38,7 @@ void CSetItemEffect::Init_Data(unsigned __int8 byIdx)
   }
 }
 
-__int64 CSetItemEffect::SetOnEffect(
+int CSetItemEffect::SetOnEffect(
   _AVATOR_DATA *pData,
   unsigned int dwSetItem,
   unsigned __int8 bySetItemNum,
@@ -115,7 +115,7 @@ __int64 CSetItemEffect::SetOnEffect(
   return 0;
 }
 
-__int64 CSetItemEffect::SetOffEffect(
+int CSetItemEffect::SetOffEffect(
   unsigned int dwSetItem,
   unsigned __int8 bySetItemNum,
   unsigned __int8 bySetEffectNum)
@@ -145,7 +145,7 @@ unsigned __int8 CSetItemEffect::Check_EquipItem(_AVATOR_DATA *pData, _SetItemEff
   return static_cast<unsigned __int8>(baseCount + otherCount);
 }
 
-char CSetItemEffect::Check_Base_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *pSetFld)
+unsigned __int8 CSetItemEffect::Check_Base_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *pSetFld)
 {
   char matchCount = 0;
   char itemCode[32]{};
@@ -218,7 +218,7 @@ char CSetItemEffect::Check_Base_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *
   return matchCount;
 }
 
-char CSetItemEffect::Check_Other_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *pSetFld)
+unsigned __int8 CSetItemEffect::Check_Other_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld *pSetFld)
 {
   char matchCount = 0;
   char itemCode[32]{};
@@ -273,20 +273,20 @@ char CSetItemEffect::Check_Other_EquipItem(_AVATOR_DATA *pData, _SetItemEff_fld 
   return matchCount;
 }
 
-char CSetItemEffect::IsSetOn(unsigned int dwSetItem)
+bool CSetItemEffect::IsSetOn(unsigned int dwSetItem)
 {
   for (int j = 0; j < 6; ++j)
   {
     if (m_setCount[j].m_bCheckSetEffect && m_setCount[j].m_dwSetItem == dwSetItem)
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CSetItemEffect::IsSetOnComplete(unsigned int dwSetItem, unsigned __int8 bySetItemNum, unsigned __int8 bySetEffectNum)
+bool CSetItemEffect::IsSetOnComplete(unsigned int dwSetItem, unsigned __int8 bySetItemNum, unsigned __int8 bySetEffectNum)
 {
   for (int j = 0; j < 6; ++j)
   {
@@ -295,22 +295,22 @@ char CSetItemEffect::IsSetOnComplete(unsigned int dwSetItem, unsigned __int8 byS
         && m_setCount[j].m_bySetItemNum == bySetItemNum
         && m_setCount[j].m_bySetEffectNum == bySetEffectNum)
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CSetItemEffect::Attach_Set(unsigned int dwSetItem, unsigned __int8 bySetItemNum, unsigned __int8 bySetEffectNum)
+bool CSetItemEffect::Attach_Set(unsigned int dwSetItem, unsigned __int8 bySetItemNum, unsigned __int8 bySetEffectNum)
 {
   if (m_byTotalSetCount > 6u)
   {
-    return 0;
+    return false;
   }
   if (IsSetOnComplete(dwSetItem, bySetItemNum, bySetEffectNum))
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 6; ++j)
@@ -322,22 +322,22 @@ char CSetItemEffect::Attach_Set(unsigned int dwSetItem, unsigned __int8 bySetIte
       m_setCount[j].m_bySetItemNum = bySetItemNum;
       m_setCount[j].m_bySetEffectNum = bySetEffectNum;
       ++m_byTotalSetCount;
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CSetItemEffect::Detach_Set(unsigned int dwSetItem)
+bool CSetItemEffect::Detach_Set(unsigned int dwSetItem)
 {
   if (!m_byTotalSetCount)
   {
-    return 0;
+    return false;
   }
   if (!IsSetOn(dwSetItem))
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 6; ++j)
@@ -346,11 +346,11 @@ char CSetItemEffect::Detach_Set(unsigned int dwSetItem)
     {
       Init_Data(static_cast<unsigned __int8>(j));
       --m_byTotalSetCount;
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 bool CSetItemEffect::Reset_Set(unsigned int dwSetItem, unsigned __int8 bySetItemNum, unsigned __int8 bySetEffectNum)
@@ -413,11 +413,12 @@ unsigned __int8 CSetItemEffect::GetResetItemNum()
   return 0;
 }
 
-__int64 CSetItemEffect::GetResetIdx()
+unsigned int CSetItemEffect::GetResetIdx()
 {
   if (m_resetInfo.m_bCheckSetEffect)
   {
-    return m_resetInfo.m_dwSetItem;
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(m_resetInfo.m_dwSetItem);
   }
 
   return 0;

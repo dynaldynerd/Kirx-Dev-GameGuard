@@ -202,7 +202,7 @@ void InitCheatCommand(CHEAT_COMMAND *pCmdList, unsigned __int8 *byCommandSizeLis
     byCommandSizeList[j] = static_cast<unsigned __int8>(std::strlen(command->pwszCommand));
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char buffer[144]{};
   sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\Cheat%u.log", korLocalTime);
   s_logCheat.SetWriteLogFile(buffer, 1, 0, 1, 1);
@@ -216,13 +216,13 @@ static const char aA_48[] = "<unknown>";
 static const char aA_49[] = "<unknown>";
 static const char aA_50[] = "<unknown>";
 static const char aCheatHelpSynta_0[] = "Cheat Help : Syntax = timeset ";
-static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset Ãƒâ€¡Ãƒâ€¡";
-static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset Ãƒâ€¡ÃƒÂ Ãƒâ‚¬";
+static const char aCheatHelpSynta_1[] = "Cheat Help : Syntax = tlinfoset ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã¢â‚¬Â¡";
+static const char aCheatHelpSynta_2[] = "Cheat Help : Syntax = %actpset ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â ÃƒÆ’Ã¢â€šÂ¬";
 static const char aCheatHelpSynta_3[] = "Cheat Help : Syntax = %eventset ";
 static const char aOne_3[] = "<unknown>";
-static const char aCoacE[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
-static const char aCoacCodeDBoxAc[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ [Code_%d Box] Ãƒâ‚¬Ãƒâ€¡ Ãƒâ‚¬ÃƒÅ“";
-static const char aCoacE_0[] = "Ãƒâ€¡ÃƒÂ¶Ãƒâ‚¬ÃƒÂ§ ÃƒË†";
+static const char aCoacE[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ ÃƒÆ’Ã‹â€ ";
+static const char aCoacCodeDBoxAc[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ [Code_%d Box] ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã¢â‚¬Â¡ ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã…â€œ";
+static const char aCoacE_0[] = "ÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã‚Â¶ÃƒÆ’Ã¢â€šÂ¬ÃƒÆ’Ã‚Â§ ÃƒÆ’Ã‹â€ ";
 static const char aE_2[] = "<unknown>";
 static const char aAi_8[] = "<unknown>";
 static const char aAo_6[] = "<unknown>";
@@ -405,7 +405,7 @@ static bool ParsePercentCheatValue(float *outPercent)
     return false;
   }
 
-  float percent = atof(s_pwszDstCheat[0]);
+  float percent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if (percent <= 0.0f)
   {
     return false;
@@ -1281,7 +1281,7 @@ bool __fastcall ct_defense_item_grace(CPlayer *pOne)
   {
     equipPartCode = 1;
   }
-  else if ( !std::strcmp("Ã¥Â°Â©", s_pwszDstCheat[0]) )
+  else if ( !std::strcmp("ÃƒÂ¥Ã‚Â°Ã‚Â©", s_pwszDstCheat[0]) )
   {
     equipPartCode = 2;
   }
@@ -1479,13 +1479,13 @@ bool __fastcall ct_loot_upgrade_item(CPlayer *pOne)
   {
     std::strcpy(Destination, "irtal12");
   }
-  else if ( !std::strcmp(Str1, "ÃšÂº") )
+  else if ( !std::strcmp(Str1, "ÃƒÅ¡Ã‚Âº") )
   {
     std::strcpy(Destination, "irtal13");
   }
   else
   {
-    if ( std::strcmp(Str1, "ÃˆÂ°") )
+    if ( std::strcmp(Str1, "ÃƒË†Ã‚Â°") )
       return 0;
     std::strcpy(Destination, "irtal14");
   }
@@ -1508,67 +1508,356 @@ bool __fastcall ct_resurrect_player(CPlayer *pOne)
   return pOne->pc_Resurrect(0);
 }
 
+namespace
+{
+  const char *GetGuildBattlePhaseName(int phase)
+  {
+    switch (phase)
+    {
+      case 0:
+        return "notify";
+      case 1:
+        return "askjoin";
+      case 2:
+        return "countdown";
+      case 3:
+        return "start";
+      case 4:
+        return "divide";
+      case 5:
+        return "return";
+      case 6:
+        return "fin";
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_WAIT:
+        return "wait";
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_READY:
+        return "ready";
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_NONE:
+        return "none";
+      default:
+        return "unknown";
+    }
+  }
+
+  bool AdvanceGuildBattlePhaseCheat(CPlayer *pOne, int targetPhase)
+  {
+    char buffer[160]{};
+    if (!pOne || !pOne->m_Param.m_pGuild)
+    {
+      return false;
+    }
+
+    if (targetPhase < 0 || targetPhase > 3)
+    {
+      sprintf_s(buffer, sizeof(buffer), "Invalid guild battle phase : %d (0 notify, 1 askjoin, 2 countdown, 3 start)", targetPhase);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+    GUILD_BATTLE::CNormalGuildBattle *battle = manager->GetBattleByGuildSerial(pOne->m_Param.m_pGuild->m_dwSerial);
+    if (!battle || battle->IsEmpty() || !battle->m_pkStateList)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("No active guild battle found for current guild"), 0xFFu, 0LL);
+      return false;
+    }
+
+    GUILD_BATTLE::CGuildBattleSchedule *schedule = GUILD_BATTLE::CGuildBattleSchedulePool::Instance()->GetRef(battle->GetID());
+    if (!schedule)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("Guild battle schedule not found"), 0xFFu, 0LL);
+      return false;
+    }
+
+    if (schedule->GetState() == GUILD_BATTLE::CGuildBattleSchedule::GS_NONE
+      || schedule->GetState() == GUILD_BATTLE::CGuildBattleSchedule::GS_DONE)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("Guild battle schedule is not active"), 0xFFu, 0LL);
+      return false;
+    }
+
+    if (battle->m_pkStateList->m_iState == GUILD_BATTLE::CGuildBattleStateList::STATE_WAIT)
+    {
+      battle->SetReadyState();
+    }
+
+    const int currentState = battle->m_pkStateList->m_iState;
+    if (currentState > targetPhase)
+    {
+      sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "Cannot rewind guild battle phase from %s(%d) to %s(%d)",
+        GetGuildBattlePhaseName(currentState),
+        currentState,
+        GetGuildBattlePhaseName(targetPhase),
+        targetPhase);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    if (schedule->IsWait())
+    {
+      schedule->SetProcState();
+    }
+
+    int guard = 0;
+    while (battle->m_pkStateList->m_iState < targetPhase && guard < 4)
+    {
+      const int processResult = schedule->Process();
+      if (!processResult)
+      {
+        sprintf_s(buffer, sizeof(buffer), "Guild battle phase advance failed at %s(%d)", GetGuildBattlePhaseName(battle->m_pkStateList->m_iState), battle->m_pkStateList->m_iState);
+        pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+        return false;
+      }
+
+      battle->Process();
+      if (battle->IsProc())
+      {
+        battle->Process();
+      }
+
+      ++guard;
+    }
+
+    const int finalState = battle->m_pkStateList->m_iState;
+    if (finalState != targetPhase)
+    {
+      sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "Guild battle phase now %s(%d), expected %s(%d)",
+        GetGuildBattlePhaseName(finalState),
+        finalState,
+        GetGuildBattlePhaseName(targetPhase),
+        targetPhase);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    sprintf_s(buffer, sizeof(buffer), "Guild battle phase -> %s(%d)", GetGuildBattlePhaseName(finalState), finalState);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+    return true;
+  }
+
+  const char *GetGuildBattleScheduleStateName(unsigned int scheduleState)
+  {
+    switch (scheduleState)
+    {
+      case GUILD_BATTLE::CGuildBattleSchedule::GS_NONE:
+        return "none";
+      case GUILD_BATTLE::CGuildBattleSchedule::GS_WAIT:
+        return "wait";
+      case GUILD_BATTLE::CGuildBattleSchedule::GS_PROC:
+        return "proc";
+      case GUILD_BATTLE::CGuildBattleSchedule::GS_DONE:
+        return "done";
+      default:
+        return "unknown";
+    }
+  }
+
+  const char *GetGuildBattleRoundStateName(int roundState)
+  {
+    switch (roundState)
+    {
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_NONE:
+        return "none";
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_WAIT:
+        return "wait";
+      case GUILD_BATTLE::CGuildBattleStateList::STATE_READY:
+        return "ready";
+      case 0:
+        return "start";
+      case 1:
+        return "process";
+      case 2:
+        return "round_end";
+      default:
+        return "unknown";
+    }
+  }
+
+  bool ReportGuildBattlePhaseCheat(CPlayer *pOne)
+  {
+    char buffer[192]{};
+    if (!pOne || !pOne->m_Param.m_pGuild)
+    {
+      return false;
+    }
+
+    GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+    GUILD_BATTLE::CNormalGuildBattle *battle = manager->GetBattleByGuildSerial(pOne->m_Param.m_pGuild->m_dwSerial);
+    if (!battle || battle->IsEmpty() || !battle->m_pkStateList)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("No active guild battle found for current guild"), 0xFFu, 0LL);
+      return false;
+    }
+
+    GUILD_BATTLE::CGuildBattleSchedule *schedule = GUILD_BATTLE::CGuildBattleSchedulePool::Instance()->GetRef(battle->GetID());
+    if (!schedule)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("Guild battle schedule not found"), 0xFFu, 0LL);
+      return false;
+    }
+
+    const int phase = battle->m_pkStateList->m_iState;
+    ATL::CTime nextTime{};
+    schedule->GetTime(&nextTime);
+    sprintf_s(
+      buffer,
+      sizeof(buffer),
+      "Guild battle phase : %s(%d), schedule : %s(%u), next : %02d:%02d:%02d",
+      GetGuildBattlePhaseName(phase),
+      phase,
+      GetGuildBattleScheduleStateName(schedule->GetState()),
+      schedule->GetState(),
+      nextTime.GetHour(),
+      nextTime.GetMinute(),
+      nextTime.GetSecond());
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+    return true;
+  }
+
+  bool ReportGuildBattleRoundCheat(CPlayer *pOne)
+  {
+    char buffer[224]{};
+    if (!pOne || !pOne->m_Param.m_pGuild)
+    {
+      return false;
+    }
+
+    GUILD_BATTLE::CNormalGuildBattleManager *manager = GUILD_BATTLE::CNormalGuildBattleManager::Instance();
+    GUILD_BATTLE::CNormalGuildBattle *battle = manager->GetBattleByGuildSerial(pOne->m_Param.m_pGuild->m_dwSerial);
+    if (!battle || battle->IsEmpty() || !battle->m_pkStateList)
+    {
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, const_cast<char *>("No active guild battle found for current guild"), 0xFFu, 0LL);
+      return false;
+    }
+
+    if (!battle->m_pkStateList->IsInBattle())
+    {
+      sprintf_s(
+        buffer,
+        sizeof(buffer),
+        "Guild battle not in in-battle state yet : %s(%d)",
+        GetGuildBattlePhaseName(battle->m_pkStateList->m_iState),
+        battle->m_pkStateList->m_iState);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    GUILD_BATTLE::CNormalGuildBattleStateRoundList *roundStateList = &battle->m_pkStateList->INBATTLE.m_kRountStateList;
+    const int roundState = roundStateList->m_iState;
+    const bool isRegenState = roundStateList->IsInBattleRegenState();
+    sprintf_s(
+      buffer,
+      sizeof(buffer),
+      "Guild battle round : %s(%d), regen_state : %s, cur_phase : %s(%d)",
+      GetGuildBattleRoundStateName(roundState),
+      roundState,
+      isRegenState ? "true" : "false",
+      GetGuildBattlePhaseName(battle->m_pkStateList->m_iState),
+      battle->m_pkStateList->m_iState);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+    return true;
+  }
+
+  bool AddGuildScheduleCheat(CPlayer *pOne)
+  {
+    char buffer[136]{};
+    if (!pOne || s_nWordCount != 5)
+    {
+      return false;
+    }
+
+    CGuild *sourceGuild = GetGuildPtrFromName(g_Guild, 500, s_pwszDstCheat[0]);
+    if (!sourceGuild)
+    {
+      sprintf_s(buffer, sizeof(buffer), "Invalid Src Guild : %s", s_pwszDstCheat[0]);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    CGuild *destGuild = GetGuildPtrFromName(g_Guild, 500, s_pwszDstCheat[1]);
+    if (!destGuild)
+    {
+      sprintf_s(buffer, sizeof(buffer), "Invalid Dest Guild : %s", s_pwszDstCheat[1]);
+      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+      return false;
+    }
+
+    const int requestedHour = atoi(s_pwszDstCheat[2]);
+    const unsigned int dwStartTime = requestedHour - 1;
+    if (static_cast<int>(dwStartTime) <= 0 || (dwStartTime & 0x80000000) != 0)
+    {
+      return false;
+    }
+
+    const int battleType = atoi(s_pwszDstCheat[3]);
+    const unsigned int dwMapInx = atoi(s_pwszDstCheat[4]);
+    CGuildBattleController *controller = CGuildBattleController::Instance();
+    const unsigned __int8 addResult =
+      controller->Add(sourceGuild, destGuild, dwStartTime, static_cast<unsigned __int8>(battleType), dwMapInx);
+
+    sprintf_s(buffer, sizeof(buffer), "Add GuildBattle Schedule : %u", addResult);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, buffer, 0xFFu, 0LL);
+    return addResult == 0;
+  }
+}
+
 bool __fastcall ct_add_guild_schedule(CPlayer *pOne)
 {
-  char Buffer[136]; // [rsp+50h] [rbp-C8h] BYREF
-  CGuild *pSrcGuild; // [rsp+D8h] [rbp-40h]
-  CGuild *pDestGuild; // [rsp+E0h] [rbp-38h]
-  unsigned int dwStartTime; // [rsp+E8h] [rbp-30h]
-  int battleType; // [rsp+ECh] [rbp-2Ch]
-  unsigned int dwMapInx; // [rsp+F0h] [rbp-28h]
-  unsigned __int8 addResult; // [rsp+F4h] [rbp-24h]
+  return AddGuildScheduleCheat(pOne);
+}
 
-  if ( !pOne )
-    return 0;
-  if ( s_nWordCount != 5 )
-    return 0;
-  pSrcGuild = GetGuildPtrFromName(g_Guild, 500, s_pwszDstCheat[0]);
-  if ( pSrcGuild )
+bool __fastcall ct_add_guild_schedule_today(CPlayer *pOne)
+{
+  if (!pOne)
   {
-    pDestGuild = GetGuildPtrFromName(g_Guild, 500, s_pwszDstCheat[1]);
-    if ( pDestGuild )
-    {
-      dwStartTime = atoi(s_pwszDstCheat[2]) - 1;
-      if ( (int)dwStartTime > 0 )
-      {
-        battleType = atoi(s_pwszDstCheat[3]);
-        dwMapInx = atoi(s_pwszDstCheat[4]);
-        if ( (dwStartTime & 0x80000000) == 0 )
-        {
-          CGuildBattleController *controller = CGuildBattleController::Instance();
-          addResult = controller->Add(
-            pSrcGuild,
-            pDestGuild,
-            dwStartTime,
-            static_cast<unsigned __int8>(battleType),
-            dwMapInx);
-          sprintf_s(Buffer, sizeof(Buffer), "Add GuildBattle Schedule : %u", addResult);
-          pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-          return addResult == 0;
-        }
-        else
-        {
-          return 0;
-        }
-      }
-      else
-      {
-        return 0;
-      }
-    }
-    else
-    {
-      sprintf_s(Buffer, sizeof(Buffer), "Invalid Dest Guild : %s", s_pwszDstCheat[1]);
-      pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-      return 0;
-    }
+    return false;
   }
-  else
+
+  pOne->SendData_ChatTrans(
+    0,
+    0xFFFFFFFF,
+    0xFFu,
+    0,
+    const_cast<char *>("adgusc today disabled while restoring guild battle parity"),
+    0xFFu,
+    0LL);
+  return false;
+}
+
+bool __fastcall ct_set_guildbattle_phase(CPlayer *pOne)
+{
+  if (!pOne || s_nWordCount != 1)
   {
-    sprintf_s(Buffer, sizeof(Buffer), "Invalid Src Guild : %s", s_pwszDstCheat[0]);
-    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, Buffer, 0xFFu, 0LL);
-    return 0;
+    return false;
   }
+
+  return AdvanceGuildBattlePhaseCheat(pOne, atoi(s_pwszDstCheat[0]));
+}
+
+bool __fastcall ct_cur_guildbattle_phase(CPlayer *pOne)
+{
+  if (!pOne || s_nWordCount != 0)
+  {
+    return false;
+  }
+
+  return ReportGuildBattlePhaseCheat(pOne);
+}
+
+bool __fastcall ct_cur_guildbattle_round(CPlayer *pOne)
+{
+  if (!pOne || s_nWordCount != 0)
+  {
+    return false;
+  }
+
+  return ReportGuildBattleRoundCheat(pOne);
 }
 
 bool __fastcall ct_set_guildbattle_color(CPlayer *pOne)
@@ -1782,7 +2071,7 @@ bool __fastcall ct_recv_reserved_schedulelist(CPlayer *pOne)
   dwGuildSerial = -1;
   if ( pOne->m_Param.m_pGuild )
     dwGuildSerial = pOne->m_Param.m_pGuild->m_dwSerial;
-  uiMapID = pOne->m_Param.GetRaceCode();
+  uiMapID = static_cast<unsigned int>(pOne->m_Param.GetRaceCode());
   n = pOne->m_ObjID.m_wIndex;
 
   GUILD_BATTLE::CGuildBattleReservedScheduleListManager *listManager =
@@ -1837,7 +2126,7 @@ bool __fastcall ct_recv_current_battle_info(CPlayer *pOne)
 
   if ( !pOne )
     return 0;
-  uiMapID = pOne->m_Param.GetRaceCode();
+  uiMapID = static_cast<unsigned int>(pOne->m_Param.GetRaceCode());
   n = pOne->m_ObjID.m_wIndex;
 
   GUILD_BATTLE::CCurrentGuildBattleInfoManager *infoManager =
@@ -2052,7 +2341,7 @@ bool __fastcall ct_amp_full(CPlayer *pOne)
       updatePacket.byChangedNum = 1;
       updatePacket.change[0].wItemIndex = storageItem.m_wItemIndex;
       updatePacket.change[0].wItemSerial = storageItem.m_wSerial;
-      updatePacket.change[0].dwDur = storageItem.m_dwDur;
+      updatePacket.change[0].dwDur = static_cast<unsigned int>(storageItem.m_dwDur);
       pbyType[0] = 14;
       pbyType[1] = 55;
       const unsigned __int16 packetSize =
@@ -2151,10 +2440,10 @@ bool __fastcall ct_PcBandPrimium(CPlayer *pOne)
 {
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  const float sharedRate = atof(s_pwszDstCheat[0]);
+  const float sharedRate = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( sharedRate <= 0.0 || sharedRate > 2.0 )
     return 0;
-  const float itemDropRate = atof(s_pwszDstCheat[1]);
+  const float itemDropRate = static_cast<float>(atof(s_pwszDstCheat[1]));
   if ( itemDropRate <= 0.0 || itemDropRate > 2.0 )
     return 0;
   PCBANG_PRIMIUM_FAVOR::MINING_SPEED = sharedRate;
@@ -2226,7 +2515,7 @@ bool __fastcall ct_HolySystem(CPlayer *pOne)
   }
   if ( !std::strcmp("end", s_pwszDstCheat[0]) )
     return g_HolySys.ct_StopBattle();
-  if ( std::strcmp("Ã…Â°", s_pwszDstCheat[0]) )
+  if ( std::strcmp("Ãƒâ€¦Ã‚Â°", s_pwszDstCheat[0]) )
   {
     if ( s_nWordCount >= 1 && !std::strcmp("state", s_pwszDstCheat[0]) )
       return g_HolySys.ct_State(pOne);
@@ -3486,7 +3775,7 @@ bool __fastcall ct_Win_RaceWar(CPlayer *pOne)
 
   if ( !pOne || !pOne->m_bOper )
     return 0;
-  RaceCode = pOne->m_Param.GetRaceCode();
+  RaceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
   g_HolySys.m_SaveData.m_nHolyMasterRace = RaceCode;
   return 1;
 }
@@ -3615,10 +3904,10 @@ bool __fastcall ct_set_hp(CPlayer *pOne)
     return 0;
   if ( s_nWordCount < 1 )
     return 0;
-  hpPercent = atof(s_pwszDstCheat[0]);
+  hpPercent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( hpPercent <= 0.0 || hpPercent > 100.0 )
     return 0;
-  probability = hpPercent / 100.0;
+  probability = static_cast<float>(hpPercent / 100.0);
   pOne->dev_set_hp(probability);
   return 1;
 }
@@ -3834,17 +4123,68 @@ bool __fastcall ct_ReqChangeHonorGuild(CPlayer *pOne)
 
 bool ct_debug(CPlayer* pOne)
 {
-    if (pOne->m_TargetObject.pObject != NULL)
-    {
-        if (!pOne)
-            return 0;
-        sprintf_s(wszRespon, sizeof(wszRespon),
-            "serial: %d",
-            pOne->m_TargetObject.pObject->m_dwObjSerial);
-        
-        pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+  if (!pOne)
+  {
+    return 0;
+  }
 
-    }
+  const unsigned __int8 race = static_cast<unsigned __int8>(pOne->m_Param.GetRaceCode());
+  if (race >= 3u)
+  {
+    sprintf_s(wszRespon, sizeof(wszRespon), "Honor next: invalid race %u", race);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+    return 1;
+  }
+
+  CHonorGuild *honorGuild = CHonorGuild::Instance();
+  _guild_honor_list_result_zocl *nextList = honorGuild->m_pNextHonorGuild[race];
+  if (!nextList)
+  {
+    sprintf_s(wszRespon, sizeof(wszRespon), "Honor next: race=%u next list is null", race);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+    return 1;
+  }
+
+  sprintf_s(
+    wszRespon,
+    sizeof(wszRespon),
+    "Honor next: race=%u bNext=%u byListNum=%u byUI=%u",
+    race,
+    honorGuild->m_bNext[race] ? 1 : 0,
+    nextList->byListNum,
+    nextList->byUI);
+  pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+
+  if (!nextList->byListNum)
+  {
+    char emptyMessage[] = "Honor next: empty list (DB may persist sentinel GuildSerial=-1)";
+    pOne->SendData_ChatTrans(
+      0,
+      0xFFFFFFFF,
+      0xFFu,
+      0,
+      emptyMessage,
+      0xFFu,
+      0LL);
+    return 1;
+  }
+
+  for (unsigned __int8 index = 0; index < nextList->byListNum && index < 5u; ++index)
+  {
+    const _guild_honor_list_result_zocl::__list &entry = nextList->GuildList[index];
+    sprintf_s(
+      wszRespon,
+      sizeof(wszRespon),
+      "Honor next[%u]: serial=%u tax=%u guild=%s master=%s",
+      index,
+      entry.dwGuildSerial,
+      entry.byTaxRate,
+      entry.wszGuildName,
+      entry.wszMasterName);
+    pOne->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, 0, wszRespon, 0xFFu, 0LL);
+  }
+
+  return 1;
 }
 
 bool __fastcall ct_goto_char(CPlayer *pOne)
@@ -4045,7 +4385,7 @@ bool __fastcall ct_set_exp_rate(CPlayer *pOne)
     return 0;
   if ( s_nWordCount != 1 )
     return 0;
-  expPercent = atof(s_pwszDstCheat[0]);
+  expPercent = static_cast<float>(atof(s_pwszDstCheat[0]));
   if ( expPercent < 0.0 || expPercent >= 100.0 )
     return 0;
   lv = pOne->m_Param.GetLevel();

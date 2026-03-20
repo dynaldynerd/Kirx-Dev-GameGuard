@@ -16,7 +16,7 @@ public:
 
   static void IOThread(void *pv);
   void OnLoop();
-  unsigned int GetTotalWaitSize();
+  int GetTotalWaitSize();
   void WriteFile(const char *pszFileName, const char *pszLog);
   void GetNewFileName(unsigned int dwGuildSerial, char *pszFileName);
   void load_guild(CGuild *pGuild, char *pszFileName);

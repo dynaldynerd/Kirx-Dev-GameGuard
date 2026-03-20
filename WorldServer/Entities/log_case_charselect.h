@@ -15,7 +15,7 @@ struct _log_case_charselect
   unsigned __int8 byMin;
   unsigned __int8 bySec;
 
-  __int64 size() const
+  int size() const
   {
     return 52;
   }

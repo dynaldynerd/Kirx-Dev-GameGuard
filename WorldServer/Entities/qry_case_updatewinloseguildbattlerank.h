@@ -9,7 +9,7 @@ struct _qry_case_updatewinloseguildbattlerank
   unsigned __int8 byLoseRace;
   unsigned int dwLoseGuildSerial;
 
-  __int64 size() const
+  int size() const
   {
     return 16;
   }

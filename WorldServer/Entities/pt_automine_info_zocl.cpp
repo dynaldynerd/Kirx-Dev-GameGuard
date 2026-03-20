@@ -7,9 +7,10 @@ _DB_LOAD_AUTOMINE_MACHINE::_DB_LOAD_AUTOMINE_MACHINE()
   std::memset(this, 0, sizeof(_DB_LOAD_AUTOMINE_MACHINE));
 }
 
-__int64 _DB_LOAD_AUTOMINE_MACHINE::size()
+int _DB_LOAD_AUTOMINE_MACHINE::size()
 {
-  return 977 - 12LL * (80 - this->bySlotCnt);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(977 - 12LL * (80 - this->bySlotCnt));
 }
 
 _pt_automine_info_zocl::_pt_automine_info_zocl()

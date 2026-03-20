@@ -28,20 +28,20 @@ public:
   bool initialize();
   bool CreateDBTable();
   AutominePersonal *get_machine(unsigned int nIdx);
-  char db_load_inven(unsigned int dwSerial, _PERSONALAMINE_INVEN_DB_BASE *pCon);
-  char make_storagebox(int n, const _personal_amine_make_storage_clzo *request);
-  char install(int n, const _personal_automine_install_clzo *request);
-  char uninstall(int n, const _personal_automine_uninstall_clzo *request);
-  char uninstall(int n);
-  char selectore(unsigned int n, const _personal_automine_selore_clzo *request);
-  char insert_battery(unsigned int n, const _personal_automine_battery_insert_clzo *request);
-  char extract_battery(unsigned int n, const _personal_automine_battery_extract_clzo *request);
-  char extract_battery(unsigned int n);
-  char pop_ore(unsigned int n, const _personal_automine_popore_clzo *request);
-  char Open_InvenUI(int n, const _personal_amine_infoui_open_clzo *request);
-  char Open_InfoUI(unsigned int n, const _personal_amine_infoui_open_clzo *request);
+  bool db_load_inven(unsigned int dwSerial, _PERSONALAMINE_INVEN_DB_BASE *pCon);
+  bool make_storagebox(int n, const _personal_amine_make_storage_clzo *request);
+  bool install(int n, const _personal_automine_install_clzo *request);
+  bool uninstall(int n, const _personal_automine_uninstall_clzo *request);
+  bool uninstall(int n);
+  bool selectore(unsigned int n, const _personal_automine_selore_clzo *request);
+  bool insert_battery(unsigned int n, const _personal_automine_battery_insert_clzo *request);
+  bool extract_battery(unsigned int n, const _personal_automine_battery_extract_clzo *request);
+  bool extract_battery(unsigned int n);
+  bool pop_ore(unsigned int n, const _personal_automine_popore_clzo *request);
+  bool Open_InvenUI(int n, const _personal_amine_infoui_open_clzo *request);
+  bool Open_InfoUI(unsigned int n, const _personal_amine_infoui_open_clzo *request);
   bool Is_MineRun(int n);
-  unsigned __int8 request_query(const _qry_case_make_storage *query);
+  int request_query(const _qry_case_make_storage *query);
   void result_query(unsigned __int8 byRet, const _qry_case_make_storage *query);
   void pop_dqs_makestorage(unsigned __int8 byRet, const _qry_case_make_storage *query);
   void push_dqs_makestorage(int n, unsigned int dwAvatorSerial, unsigned int dwTotGold);
@@ -50,7 +50,7 @@ public:
 private:
   bool init_objects();
   bool check_dummy(CMapData *pMap, unsigned __int8 byCurDummyIndex, float *pfCurPos);
-  char check_machine(int n, unsigned int dwSerial, AutominePersonal *pMachine, _STORAGE_LIST::_db_con *pcitem);
+  bool check_machine(int n, unsigned int dwSerial, AutominePersonal *pMachine, _STORAGE_LIST::_db_con *pcitem);
   _STORAGE_LIST::_db_con *get_localitem(CPlayer *pOne, unsigned __int16 wItemSerial);
 
   CLogFile m_logService;

@@ -30,24 +30,7 @@ DfAIMgr::DfAIMgr()
 
 EMOTYPE EmotionType[5] = {};
 
-namespace
-{
-bool IsAnimusTarget(const CCharacter *character)
-{
-  return character && character->m_ObjID.m_byID == 3;
-}
-
-const char *GetMonsterCodeSafe(const CMonster *monster)
-{
-  if (!monster || !monster->m_pMonRec)
-  {
-    return "<null>";
-  }
-  return monster->m_pMonRec->m_strCode;
-}
-} // namespace
-
-__int64(__fastcall *DfAIMgr::ms_CheckMotiveFunction[4])(
+int(__fastcall *DfAIMgr::ms_CheckMotiveFunction[4])(
   CMonsterSkill *pSkill,
   int nMotiveValue,
   CMonsterAI *pAI,
@@ -58,7 +41,7 @@ __int64(__fastcall *DfAIMgr::ms_CheckMotiveFunction[4])(
   DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN,
   DfAIMgr::CheckSPF_MON_MOTIVE_ATTACK_MODE_PASSAGE};
 
-bool DfAIMgr::OnUsStateTBLInit()
+int DfAIMgr::OnUsStateTBLInit()
 {
 
   unsigned int stateIndex = 0;
@@ -849,13 +832,15 @@ if (!pHFS)
       ai->m_pAsistMonster = static_cast<CMonster *>(lpParam);
       CMonster *parentMon = ai->m_pAsistMonster;
       CCharacter *target = parentMon->GetAttackTarget();
-      if (IsAnimusTarget(target))
+      if (target && target->m_ObjID.m_byID == 3)
       {
+        const char *monCode = mon->m_pMonRec ? mon->m_pMonRec->m_strCode : "<null>";
+        const char *parentCode = (parentMon && parentMon->m_pMonRec) ? parentMon->m_pMonRec->m_strCode : "<null>";
         AnimusDebugLog(
           "AssistChange: mon=%s(%u) adoptAssistMon=%s(%u) targetAnimus=%u",
-          GetMonsterCodeSafe(mon),
+          monCode,
           mon->m_dwObjSerial,
-          GetMonsterCodeSafe(parentMon),
+          parentCode,
           parentMon->m_dwObjSerial,
           target->m_dwObjSerial);
       }
@@ -892,11 +877,11 @@ if (!pHFS)
   }
 }
 
-bool DfAIMgr::CheckEmotionBad(CMonster *pMon, CMonsterAI *pAI, int nDamage)
+int DfAIMgr::CheckEmotionBad(CMonster *pMon, CMonsterAI *pAI, int nDamage)
 {
 if (!pMon || !pAI)
   {
-    return false;
+    return 0;
   }
 
   if (!pMon->m_pRecordSet)
@@ -986,16 +971,17 @@ int DfAIMgr::CheckGen(CMonsterAI *pAI, CMonster *pMon)
   return 0;
 }
 
-__int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
+int DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
 {
 
   if (!pAI || !pMon)
   {
-    return 0LL;
+    return 0;
   }
 
   const CCharacter *curTarget = pMon->GetAttackTarget();
-  const bool targetIsAnimus = IsAnimusTarget(curTarget);
+  const bool targetIsAnimus = curTarget && curTarget->m_ObjID.m_byID == 3;
+  const char *monCode = pMon->m_pMonRec ? pMon->m_pMonRec->m_strCode : "<null>";
 
   for (int index = 0; index < 16; ++index)
   {
@@ -1020,7 +1006,7 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
               {
                 AnimusDebugLog(
                   "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld skippedByProb skillProb=%lld roll=%d",
-                  GetMonsterCodeSafe(pMon),
+                  monCode,
                   pMon->m_dwObjSerial,
                   index,
                   skill->GetType(),
@@ -1060,23 +1046,24 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
                         {
                           AnimusDebugLog(
                             "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld castSuccess target=%u",
-                            GetMonsterCodeSafe(pMon),
+                            monCode,
                             pMon->m_dwObjSerial,
                             index,
                             skill->GetType(),
                             skill->GetUseType(),
                             target->m_dwObjSerial);
                         }
-                        return 1LL;
+                        // narrowing cast for thunk return parity
+                        return static_cast<int>(1LL);
                       }
                       if (targetIsAnimus)
                       {
-                        AnimusDebugLog(
-                          "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld castFailed target=%u",
-                          GetMonsterCodeSafe(pMon),
-                          pMon->m_dwObjSerial,
-                          index,
-                          skill->GetType(),
+                          AnimusDebugLog(
+                            "CheckSPF: mon=%s(%u) idx=%d type=%lld useType=%lld castFailed target=%u",
+                            monCode,
+                            pMon->m_dwObjSerial,
+                            index,
+                            skill->GetType(),
                           skill->GetUseType(),
                           target->m_dwObjSerial);
                       }
@@ -1090,7 +1077,7 @@ __int64 DfAIMgr::CheckSPF(CMonsterAI *pAI, CMonster *pMon)
       }
     }
   }
-  return 0LL;
+  return 0;
 }
 
 int DfAIMgr::CheckSPFDelayTime(CMonsterAI *pAI, int nAttackType, unsigned int dwLoopTime)
@@ -1113,20 +1100,23 @@ if (!pAI)
   return timer->CheckTime( now);
 }
 
-__int64 DfAIMgr::CheckAlienation(CMonster *pMon)
+int DfAIMgr::CheckAlienation(CMonster *pMon)
 {
 
   if (!pMon)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
   if (pMon->IsRoateMonster() || pMon->m_MonHierarcy.GetParent())
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
   if (!pMon->m_pMonRec->m_nMobAlienation)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const unsigned int dist =
@@ -1134,7 +1124,8 @@ __int64 DfAIMgr::CheckAlienation(CMonster *pMon)
   CMonster *nearMon = CMonsterHelper::SearchNearMonsterByDistance(pMon, dist);
   if (!nearMon)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float angle = GetYAngle(pMon->m_fCurPos, nearMon->m_fCurPos) + 32768.0f;
@@ -1142,8 +1133,8 @@ __int64 DfAIMgr::CheckAlienation(CMonster *pMon)
   float targetPos[3];
   float src[3];
 
-  targetPos[0] = pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(static_cast<int>(dist)));
-  targetPos[2] = pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(static_cast<int>(dist)));
+  targetPos[0] = static_cast<float>(pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(static_cast<int>(dist))));
+  targetPos[2] = static_cast<float>(pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(static_cast<int>(dist))));
   targetPos[1] = pMon->m_fCurPos[1];
 
   if (!pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, targetPos, &src))
@@ -1153,10 +1144,11 @@ __int64 DfAIMgr::CheckAlienation(CMonster *pMon)
   }
 
   DfAIMgr::ChangeTargetPos(pMon, targetPos);
-  return 1LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1LL);
 }
 
-__int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int bAttackState)
+int DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int bAttackState)
 {
 
   if (pMon->IsRoateMonster() && !bAttackState)
@@ -1177,7 +1169,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
       {
         CMonsterHelper::TransPort(pMon, pMon->m_fCreatePos);
       }
-      return 1LL;
+      return 1;
     }
   }
 
@@ -1197,9 +1189,9 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
         float midPos[3];
 
         tarPos[0] =
-          pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          static_cast<float>(pMon->m_fCurPos[0] - (std::sin(rad) * static_cast<float>(50 - rand() % 100 + dist)));
         tarPos[2] =
-          pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(50 - rand() % 100 + dist));
+          static_cast<float>(pMon->m_fCurPos[2] - (std::cos(rad) * static_cast<float>(50 - rand() % 100 + dist)));
         tarPos[1] = pMon->m_fCurPos[1];
 
         if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(pMon->m_fCurPos, tarPos, &midPos))
@@ -1208,14 +1200,14 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
           const float loopTime = pMon->GeEmotionImpStdTime();
           pAI->SetLoopTime( 3, static_cast<int>(loopTime));
           DfAIMgr::ChangeTargetPos(pMon, pMon->m_MonHierarcy.GetParent()->m_fCurPos);
-          return 1LL;
+          return 1;
         }
       }
       else if (dist > 300 && bAttackState)
       {
         pMon->m_MonHierarcy.GetParent()->m_MonHierarcy.PopChildMon(pMon);
         pMon->Command_ChildMonDestroy( 15000);
-        return 1LL;
+        return 1;
       }
     }
     else if (!bAttackState)
@@ -1287,7 +1279,7 @@ __int64 DfAIMgr::CheckMonArea_N_ChangeState(CMonsterAI *pAI, CMonster *pMon, int
     pAI->SetLoopTime( 3, static_cast<int>(loopTime));
     DfAIMgr::ChangeTargetPos(pMon, pMon->m_fCreatePos);
   }
-  return 1LL;
+  return 1;
 }
 
 void DfAIMgr::SearchPatrollPath(CMonsterAI *pAI, CMonster *pMon)
@@ -1299,7 +1291,7 @@ static float vTargetPos_0[3];
   }
 }
 
-char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *pTarget)
+bool DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *pTarget)
 {
   unsigned __int8 canGoState = 0;
   float canGoScratch[3]{};
@@ -1308,12 +1300,12 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
   {
     if (pMon->m_bMove)
     {
-      return 1;
+      return true;
     }
     pathFinder = pAI->GetPathFinder();
     if (!pathFinder->GetPathSize())
     {
-      return 1;
+      return true;
     }
   }
 
@@ -1323,14 +1315,14 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
   {
     if (!CMonsterHelper::SearchTargetMovePos_MovingTarget(pMon, pTarget, &vTargetPos))
     {
-      return 0;
+      return false;
     }
   }
   else if (!CMonsterHelper::SearchTargetMovePos_StopTarget(pMon, pTarget, &vTargetPos))
   {
     CPathMgr *resetFinder = pAI->GetPathFinder();
     resetFinder->Init();
-    return 0;
+    return false;
   }
 
   if (pMon->m_pCurMap->m_Level.mBsp->CanYouGoThere(
@@ -1341,7 +1333,7 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
     DfAIMgr::ChangeTargetPos(pMon, vTargetPos);
     CPathMgr *resetFinder = pAI->GetPathFinder();
     resetFinder->Init();
-    return 1;
+    return true;
   }
 
   float pPos[3];
@@ -1350,7 +1342,7 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
   if (pathSize >= 2 && (searchFinder = pAI->GetPathFinder(), searchFinder->PopNextPath(pPos)))
   {
     DfAIMgr::ChangeTargetPos(pMon, pPos);
-    return 1;
+    return true;
   }
 
   float *tarPos = pTarget->m_fCurPos;
@@ -1360,10 +1352,10 @@ char DfAIMgr::SearchCharacterPath(CMonsterAI *pAI, CMonster *pMon, CCharacter *p
   if (pathSize >= 1 && (retryFinder = pAI->GetPathFinder(), retryFinder->PopNextPath(pTarPos)))
   {
     DfAIMgr::ChangeTargetPos(pMon, pTarPos);
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 void DfAIMgr::ChangeTargetPos(CMonster *pMon, float *pTarPos)
@@ -1412,17 +1404,17 @@ CCharacter *DfAIMgr::GetWisdomTarget(int nDstCaseType, CMonsterAI *pAI, CMonster
   return nullptr;
 }
 
-__int64 DfAIMgr::UseSkill_Target(CMonster *pMon, CCharacter *pTarget, CMonsterSkill *pSkill)
+int DfAIMgr::UseSkill_Target(CMonster *pMon, CCharacter *pTarget, CMonsterSkill *pSkill)
 {
 
   if (!pMon || !pTarget || !pSkill)
   {
-    return 0LL;
+    return 0;
   }
 
   if (!pSkill->GetType())
   {
-    return 0LL;
+    return 0;
   }
 
   if (pSkill->GetUseType())
@@ -1432,25 +1424,25 @@ __int64 DfAIMgr::UseSkill_Target(CMonster *pMon, CCharacter *pTarget, CMonsterSk
     {
       if (pMon->AssistSF(pTarget, pSkill))
       {
-        return 1LL;
+        return 1;
       }
     }
     else if (useType == 3)
     {
       if (pMon->AssistSF( pTarget, pSkill))
       {
-        return 1LL;
+        return 1;
       }
     }
   }
   else if (pMon->Attack(pTarget, pSkill))
   {
-    return 1LL;
+    return 1;
   }
-  return 0LL;
+  return 0;
 }
 
-__int64 DfAIMgr::CheckSPF_MON_MOTIVE_ATTACK_MODE_PASSAGE(
+int DfAIMgr::CheckSPF_MON_MOTIVE_ATTACK_MODE_PASSAGE(
   CMonsterSkill *pSkill,
   int nMotiveValue,
   CMonsterAI *pAI,
@@ -1460,21 +1452,24 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_ATTACK_MODE_PASSAGE(
 
   if (!pMon || !pAI || !pSkill || !ppTar)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const unsigned int loopTime = GetLoopTime();
   const unsigned int battleModeTime = pAI->GetBattleModeTime();
   if (loopTime - battleModeTime <= static_cast<unsigned int>(1000 * nMotiveValue))
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const int dstCaseType = static_cast<int>(pSkill->GetDstCaseType());
   CCharacter *target = DfAIMgr::GetWisdomTarget(dstCaseType, pAI, pMon);
   if (!target)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   float dist = Get3DSqrt(pMon->m_fCurPos, target->m_fCurPos);
@@ -1490,20 +1485,23 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_ATTACK_MODE_PASSAGE(
   const int beforeTime = static_cast<int>(pSkill->GetBeforeTime());
   if ((now - static_cast<float>(beforeTime)) < delay)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float attackDist = pSkill->GetAttackDist();
   if (attackDist < dist)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   *ppTar = target;
-  return 1LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1LL);
 }
 
-__int64 DfAIMgr::CheckSPF_MON_MOTIVE_MY_HP_DOWN(
+int DfAIMgr::CheckSPF_MON_MOTIVE_MY_HP_DOWN(
   CMonsterSkill *pSkill,
   int nMotiveValue,
   CMonsterAI *pAI,
@@ -1513,7 +1511,8 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_MY_HP_DOWN(
 
   if (!pMon || !pAI || !pSkill || !ppTar)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float delay = pMon->GetSkillDelayTime( pSkill);
@@ -1521,7 +1520,8 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_MY_HP_DOWN(
   const int beforeTime = static_cast<int>(pSkill->GetBeforeTime());
   if (delay > (now - static_cast<float>(beforeTime)))
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float hp = static_cast<float>(pMon->GetHP());
@@ -1529,21 +1529,24 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_MY_HP_DOWN(
   const float hpPercent = (hp / static_cast<float>(maxHp)) * 100.0f;
   if (static_cast<float>(nMotiveValue) <= hpPercent)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const int dstCaseType = static_cast<int>(pSkill->GetDstCaseType());
   CCharacter *target = DfAIMgr::GetWisdomTarget(dstCaseType, pAI, pMon);
   if (!target)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   *ppTar = target;
-  return 1LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1LL);
 }
 
-__int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
+int DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
   CMonsterSkill *pSkill,
   int nMotiveValue,
   CMonsterAI *pAI,
@@ -1553,7 +1556,8 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
 
   if (!pMon || !pAI || !pSkill || !ppTar)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float delay = pMon->GetSkillDelayTime( pSkill);
@@ -1561,7 +1565,8 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
   const int beforeTime = static_cast<int>(pSkill->GetBeforeTime());
   if (delay > (now - static_cast<float>(beforeTime)))
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   CMonster *assistMon = pAI->m_pAsistMonster;
@@ -1576,7 +1581,8 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
       {
         if (assistMon->GetMaxHP() <= 0)
         {
-          return 0LL;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(0LL);
         }
         const float hp = static_cast<float>(assistMon->GetHP());
         const int maxHp = assistMon->GetMaxHP();
@@ -1584,16 +1590,19 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
         if (static_cast<float>(nMotiveValue) > hpPercent)
         {
           *ppTar = assistMon;
-          return 1LL;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(1LL);
         }
       }
     }
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   if (assistMon->GetMaxHP() <= 0)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float hp = static_cast<float>(assistMon->GetHP());
@@ -1604,13 +1613,15 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_OTHER_HP_DOWN(
       && (pSkill->GetDstCaseType(),
           (*ppTar = DfAIMgr::GetWisdomTarget(static_cast<int>(pSkill->GetDstCaseType()), pAI, pMon)) != nullptr))
     {
-      return 1LL;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(1LL);
     }
 
-  return 0LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(0LL);
 }
 
-__int64 DfAIMgr::CheckSPF_MON_MOTIVE_DF(
+int DfAIMgr::CheckSPF_MON_MOTIVE_DF(
   CMonsterSkill *pSkill,
   int nMotiveValue,
   CMonsterAI *pAI,
@@ -1619,14 +1630,16 @@ __int64 DfAIMgr::CheckSPF_MON_MOTIVE_DF(
 {
 if (!pMon || !pAI || !pSkill || !ppTar)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const int dstCaseType = static_cast<int>(pSkill->GetDstCaseType());
   CCharacter *target = DfAIMgr::GetWisdomTarget(dstCaseType, pAI, pMon);
   if (!target)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   float dist = Get3DSqrt(pMon->m_fCurPos, target->m_fCurPos);
@@ -1642,15 +1655,18 @@ if (!pMon || !pAI || !pSkill || !ppTar)
   const int beforeTime = static_cast<int>(pSkill->GetBeforeTime());
   if ((now - static_cast<float>(beforeTime)) < delay)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   const float attackDist = pSkill->GetAttackDist();
   if (attackDist < dist)
   {
-    return 0LL;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(0LL);
   }
 
   *ppTar = target;
-  return 1LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1LL);
 }

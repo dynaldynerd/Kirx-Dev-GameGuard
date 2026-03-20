@@ -39,7 +39,7 @@ struct _qry_case_unmandtrader_buy_get_info
   unsigned __int8 byPadding1;
   __list List[10];
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

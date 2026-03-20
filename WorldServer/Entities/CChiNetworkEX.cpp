@@ -43,7 +43,7 @@ void CChiNetworkEX::Destory()
   }
 }
 
-__int64 CChiNetworkEX::Initialize()
+int CChiNetworkEX::Initialize()
 {
   if (!LoadINIFile())
   {
@@ -60,7 +60,7 @@ __int64 CChiNetworkEX::Initialize()
   return 0;
 }
 
-__int64 CChiNetworkEX::LoadINIFile()
+int CChiNetworkEX::LoadINIFile()
 {
   if (!GetPrivateProfileStringA("Apex_Setting", "Server", "127.0.0.1", m_ip, static_cast<DWORD>(sizeof(m_ip)), ".\\Initialize\\Apex.ini"))
   {
@@ -77,7 +77,7 @@ __int64 CChiNetworkEX::LoadINIFile()
   return 1;
 }
 
-__int64 CChiNetworkEX::Send(
+int CChiNetworkEX::Send(
   unsigned __int8 *pbyType,
   unsigned int dwSID,
   char *szMsg,

@@ -24,7 +24,7 @@ class  CMonster : public CCharacter
 public:
   CMonster();
   ~CMonster();
-  __int64 AttackableHeight() override;
+  int AttackableHeight() override;
   void BeTargeted(CCharacter *pSeacher) override;
 
   bool m_bOper;
@@ -66,8 +66,8 @@ public:
   CMonsterAI m_AI;
   CLuaSignalReActor m_LuaSignalReActor;
 
-  void Init(_object_id *pID);
-  char Create(_monster_create_setdata *pData);
+  bool Init(_object_id *pID);
+  bool Create(_monster_create_setdata *pData);
   bool Destroy(unsigned __int8 byDestroyCode, CPlayer *pAttObj);
   float GetYAngle();
   unsigned __int8 GetYAngleByte();
@@ -78,48 +78,48 @@ public:
   float GetVisualAngle();
   bool IsViewArea(CCharacter *pTarget);
   bool GetViewAngleCap(int nCapKind, int *nOutValue);
-  __int64 GetMob_AsistType();
-  __int64 GetMob_SubRace();
+  int GetMob_AsistType();
+  int GetMob_SubRace();
   unsigned int GetAggroShortTime();
   unsigned int GetAggroResetTime();
   static unsigned int GetNewMonSerial();
-  __int64 GetMonsterGrade();
+  int GetMonsterGrade();
   unsigned __int8 GetMoveType();
   unsigned __int8 GetCombatState();
   unsigned __int8 GetEmotionState();
-  char CheckMonsterStateData();
+  bool CheckMonsterStateData();
   float GetMoveSpeed();
   void SetMoveType(unsigned __int8 bMoveType);
   void SetCombatState(unsigned __int8 byCombatState);
   void SetEmotionState(unsigned __int8 byEmotionState);
   unsigned __int16 GetMonStateInfo();
-  __int64 GetAttackPart();
-  __int64 GetAttackDP();
+  int GetAttackPart();
+  int GetAttackDP();
   float GetAttackRange();
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetDefSkill(bool bBackAttackDamage) override;
-  __int64 GetFireTol() override;
-  __int64 GetHP() override;
-  __int64 GetLevel() override;
-  __int64 GetMaxHP() override;
+  int GetDefSkill(bool bBackAttackDamage) override;
+  int GetFireTol() override;
+  int GetHP() override;
+  int GetLevel() override;
+  int GetMaxHP() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
+  int GetObjRace() override;
+  int GetSoilTol() override;
+  int GetWaterTol() override;
   float GetWeaponAdjust() override;
-  __int64 GetWeaponClass() override;
+  int GetWeaponClass() override;
   float GetWidth() override;
-  __int64 GetWindTol() override;
-  __int64 GetCritical_Exception_Rate();
-  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
+  int GetWindTol() override;
+  int GetCritical_Exception_Rate();
+  int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack);
   int IsValidPlayer();
   bool IsAttackableInTown() override;
   bool IsBeAttackedAble(bool bFirst) override;
-  char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool IsBeDamagedAble(CCharacter *pAtter) override;
   bool RobbedHP(CCharacter *pDst, int nDecHP) override;
-  char IsRecvableContEffect() override;
+  bool IsRecvableContEffect() override;
   bool FixTargetWhile(CCharacter *pkTarget, unsigned int dwMiliSecond) override;
   bool IsRewardExp() override;
   bool SF_AllContHelpForceRemove_Once(CCharacter *pDstObj) override;
@@ -129,14 +129,14 @@ public:
   bool SF_LateContHelpForceRemove_Once(CCharacter *pDstObj) override;
   bool SF_LateContHelpSkillRemove_Once(CCharacter *pDstObj) override;
   void UpdateSFCont();
-  char CheckRespawnProcess();
+  bool CheckRespawnProcess();
   void CheckMonsterRotate();
   void CheckAutoRecoverHP();
-  char CheckDelayDestroy();
+  bool CheckDelayDestroy();
   void AutoRecover();
   float GetBonusInAreaAggro();
-  __int64 GetMyDMGSFContCount();
-  __int64 GetMaxDMGSFContCount();
+  int GetMyDMGSFContCount();
+  int GetMaxDMGSFContCount();
   unsigned __int8 InsertSFContEffect(
     unsigned __int8 byContCode,
     unsigned __int8 byEffectCode,
@@ -150,22 +150,22 @@ public:
   bool ConvertTargetPlayer(CPlayer *pTar);
   bool IsMovable();
   CPlayer *SearchNearPlayer();
-  __int64 AttackObject(int nDamage, CGameObject *pOri);
+  int AttackObject(int nDamage, CGameObject *pOri);
   void ChangeApparition(bool bApparition, unsigned int dwAfterKillTerm);
   void SendMsg_Change_MonsterTarget(CCharacter *pChar);
   bool CheckEventEmotionPresentation(unsigned __int8 byCheckType, CCharacter *pTarget);
-  __int64 GetOffensiveType();
-  __int64 GetHelpMeCase();
-  bool IsPreAttackAbleMon();
+  int GetOffensiveType();
+  int GetHelpMeCase();
+  int IsPreAttackAbleMon();
   float GeEmotionImpStdTime();
   float GetSkillDelayTime(CMonsterSkill *pSkill);
   int AssistSF(CCharacter *pDst, CMonsterSkill *pskill);
   int _AssistSF_Cont_Dmg(CCharacter *pDst, CMonsterSkill *pskill);
   int _AssistSF_Cont_Support(CCharacter *pDst, CMonsterSkill *pskill);
   int _AssistSF_Cont_Temp(CCharacter *pDst, CMonsterSkill *pskill);
-  __int64 Attack(CCharacter *pDst, CMonsterSkill *pskill);
+  int Attack(CCharacter *pDst, CMonsterSkill *pskill);
   void make_gen_attack_param(CCharacter *pDst, _attack_param *pAP);
-  char make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, int nEffectType, _attack_param *pAP);
+  bool make_skill_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, int nEffectType, _attack_param *pAP);
   void make_force_attack_param(CCharacter *pDst, CMonsterSkill *pSkill, _attack_param *pAP);
   void SendMsg_Attack_Gen(CMonsterAttack *pAT);
   void SendMsg_Attack_Skill(CMonsterAttack *pAT);
@@ -199,21 +199,21 @@ public:
   void ClearEmotionPresentation();
   void CheckEmotionPresentation();
   void CheckLootItem(CPlayer *pOwner);
-  char AddEventItem(_event_loot_item *pItem);
-  char _LootItem_Std(CPlayer *pOwner);
-  char _LootItem_Rwp(CPlayer *pOwner);
-  char _LootItem_EventSet(CPlayer *pOwner);
-  char _LootItem_Qst(CPlayer *pOwner);
+  bool AddEventItem(_event_loot_item *pItem);
+  bool _LootItem_Std(CPlayer *pOwner);
+  bool _LootItem_Rwp(CPlayer *pOwner);
+  bool _LootItem_EventSet(CPlayer *pOwner);
+  bool _LootItem_Qst(CPlayer *pOwner);
   bool IsBossMonster();
   void _BossBirthWriteLog();
   void _BossDieWriteLog_Start(unsigned __int8 byDestroyCode, CPlayer *pAttObj);
   void _BossDieWriteLog_End();
   void SetDefPart(_monster_fld *pMonRec);
-  __int64 CreateAI(int nType);
+  int CreateAI(int nType);
   void Command_ChildMonDestroy(unsigned int dwTime);
   void Loop() override;
   void OutOfSec() override;
-  __int64 SetDamage(
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -221,7 +221,7 @@ public:
     int nAttackType,
     unsigned int dwAttackSerial,
     bool bJadeReturn) override;
-  char SetHP(int nHP, bool bOver) override;
+  bool SetHP(int nHP, bool bOver) override;
   void SetStun(bool bStun) override;
   CLuaSignalReActor *GetSignalReActor();
 

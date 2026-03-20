@@ -31,7 +31,7 @@ namespace lua_tinker
 	void	init_u64(lua_State *L);
 
 	// string-buffer excution
-	void	dofile(lua_State *L, const char *filename);
+	bool	dofile(lua_State *L, const char *filename);
 	void	dostring(lua_State *L, const char* buff);
 	void	dobuffer(lua_State *L, const char* buff, size_t sz);
 	

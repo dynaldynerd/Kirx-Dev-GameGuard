@@ -44,7 +44,7 @@ TRC_AutoTrade::TRC_AutoTrade()
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
-  this->m_byCurDay = systemTime.wDay;
+  this->m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
   this->m_wCurMonth = systemTime.wMonth;
   this->m_wCurYear = systemTime.wYear;
 }
@@ -67,7 +67,7 @@ TRC_AutoTrade::TRC_AutoTrade(unsigned char byRace)
 {
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
-  this->m_byCurDay = systemTime.wDay;
+  this->m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
   this->m_wCurMonth = systemTime.wMonth;
   this->m_wCurYear = systemTime.wYear;
 }
@@ -78,11 +78,11 @@ bool TRC_AutoTrade::Initialzie()
   CreateDirectoryA("..\\ZoneServerLog\\SystemLog\\Concession", nullptr);
 
   char buffer[144]{};
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "..\\ZoneServerLog\\ServiceLog\\ATradeTax\\atrade_earn_%d_%u.log", this->m_byRace, korLocalTime);
   this->m_serviceLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
-  const unsigned int korLocalTime2 = GetKorLocalTime();
+  const unsigned int korLocalTime2 = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "..\\ZoneServerLog\\SystemLog\\Concession\\system_TRC_%d_%u.log", this->m_byRace, korLocalTime2);
   this->m_sysLog.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
@@ -90,7 +90,7 @@ bool TRC_AutoTrade::Initialzie()
   return true;
 }
 
-__int64 TRC_AutoTrade::check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial)
+int TRC_AutoTrade::check(unsigned int dwAvatorSerial, unsigned int dwGuildSerial)
 {
   if (!IsOwnerGuild(dwGuildSerial))
   {
@@ -168,16 +168,16 @@ void TRC_AutoTrade::set_suggested(
 
   this->m_suggested.dwNext = dwNext;
   this->m_bChangeTaxRate = true;
-  this->m_suggested.dwSuggestedTime = GetKorLocalTime();
+  this->m_suggested.dwSuggestedTime = static_cast<unsigned int>(GetKorLocalTime());
   this->m_serviceLog.Write("[Suggest Change Tax Rate]:[SUBPATRIARCH:%s] - %d(%%)", wszMatterDst, dwNext);
   this->PushDQSData();
 }
 
-void TRC_AutoTrade::ChangeTaxRate()
+int TRC_AutoTrade::ChangeTaxRate()
 {
   if (!m_bInit)
   {
-    return;
+    return 0;
   }
 
   _SYSTEMTIME systemTime{};
@@ -189,7 +189,7 @@ void TRC_AutoTrade::ChangeTaxRate()
       ChangeTaxRate(static_cast<float>(static_cast<int>(m_suggested.dwNext)) / 100.0f);
     }
 
-    m_byCurDay = systemTime.wDay;
+    m_byCurDay = static_cast<unsigned char>(systemTime.wDay);
     m_wCurMonth = systemTime.wMonth;
     m_wCurYear = systemTime.wYear;
     his_income_money();
@@ -206,9 +206,10 @@ void TRC_AutoTrade::ChangeTaxRate()
 
     CHonorGuild::Instance()->ChangeHonorGuild(m_byRace);
   }
+  return 0;
 }
 
-__int64 TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)
+int TRC_AutoTrade::ChangeTaxRate(float fNewTaxRate)
 {
   if (!m_Controller.checkLimitTaxRate(fNewTaxRate))
   {
@@ -441,7 +442,7 @@ void TRC_AutoTrade::set_owner(CGuild *pGuild)
   m_pOwnerGuild = pGuild;
 }
 
-char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
+bool TRC_AutoTrade::_db_load(unsigned __int8 byRace)
 {
   unsigned __int8 byCurrTax[32]{};
   unsigned __int8 byNextTax[36]{};
@@ -450,7 +451,7 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
   const int result = g_Main.m_pWorldDB->select_atrade_taxrate(byRace, pwszName, byCurrTax, byNextTax);
   if (result == 1)
   {
-    return 0;
+    return false;
   }
 
   if (byCurrTax[0] < 5u || byCurrTax[0] > 20)
@@ -472,7 +473,7 @@ char TRC_AutoTrade::_db_load(unsigned __int8 byRace)
   std::strcpy(m_suggested.wszMatterDst, pwszName);
   g_Main.m_kEtcNotifyInfo.UpdateTaxRate(byRace, byCurrTax[0]);
   m_bInit = true;
-  return 1;
+  return true;
 }
 
 unsigned __int8 TRC_AutoTrade::_insert_info(char *pdata)

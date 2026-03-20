@@ -19,7 +19,7 @@ struct _event_participant_classrefine
   unsigned __int8 nCurRefineCnt;
 
   bool IsChanged();
-  __int64 size();
+  int size();
 };
 
 #ifndef _FILETIME_
@@ -40,8 +40,8 @@ public:
   void Loop();
   bool CheckRefineEventData();
   void ResetRefineData();
-  unsigned __int8 CanDoEvent(CPlayer *pOne);
-  unsigned __int8 DoEvent(CPlayer *pOne) override;
+  int CanDoEvent(CPlayer *pOne);
+  int DoEvent(CPlayer *pOne) override;
   bool SetEvent(const char *p, int size, bool bInit) override;
   bool IsDbUpdate(unsigned int nIdx) override;
   _event_participant_classrefine *GetPlayerState(unsigned int nIdx, unsigned int nAvator) override;

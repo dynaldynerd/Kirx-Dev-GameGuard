@@ -13,27 +13,27 @@ public:
   CAnimus();
   ~CAnimus();
 
-  __int64 AttackableHeight();
-  __int64 GetAttackDP() override;
+  int AttackableHeight();
+  int GetAttackDP() override;
   float GetAttackRange() override;
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetDefSkill(bool bBackAttackDamage) override;
-  __int64 GetFireTol() override;
-  __int64 GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
-  __int64 GetHP() override;
-  __int64 GetLevel() override;
-  int GetMaxLevel();
-  __int64 GetMaxHP() override;
+  int GetDefSkill(bool bBackAttackDamage) override;
+  int GetFireTol() override;
+  int GetGenAttackProb(CCharacter *pDst, int nPart, bool bBackAttack) override;
+  int GetHP() override;
+  int GetLevel() override;
+  unsigned __int8 GetMaxLevel();
+  int GetMaxHP() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
+  int GetObjRace() override;
+  int GetSoilTol() override;
+  int GetWaterTol() override;
   float GetWeaponAdjust() override;
-  __int64 GetWeaponClass() override;
+  int GetWeaponClass() override;
   float GetWidth() override;
-  __int64 GetWindTol() override;
+  int GetWindTol() override;
   bool IsInTown();
   bool IsBeAttackedAble(bool bFirst) override;
   void Loop() override;
@@ -51,7 +51,7 @@ public:
   void AlterExp_MasterReport(__int64 nAlterExp);
   void RecvKillMessage(CCharacter *pDier) override;
   bool RobbedHP(CCharacter *pDst, int nDecHP);
-  __int64 SetDamage(
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -63,18 +63,18 @@ public:
   void CheckPosInTown();
   void ChangeMode(unsigned int mode);
   void ChangeMode_MasterCommand(unsigned int nMode);
-  char ChangeTarget_MasterCommand(CCharacter *pTarget);
+  bool ChangeTarget_MasterCommand(CCharacter *pTarget);
   void Return_MasterRequest(unsigned __int8 byReturnType);
   void TransPoToMaster();
   void GetTarget();
-  char GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int8 byMoveMode);
+  bool GetMoveTarget(CCharacter *target, float fMoveSpeed, unsigned __int8 byMoveMode);
   void Action();
-  char Attack(int skill);
-  char Heal(unsigned int skill);
-  char IsValidTarget();
+  bool Attack(int skill);
+  bool Heal(unsigned int skill);
+  bool IsValidTarget();
   CCharacter *SearchNearEnemy();
   CCharacter *SearchNearPlayerAttack();
-  __int64 GetAttackPart();
+  int GetAttackPart();
   void CalcAttExp(CAttack *pAT);
   void make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex);
   void AlterExp(__int64 nAddExp);
@@ -113,8 +113,8 @@ public:
   SKILL m_Skill[2];
 
   static bool SetStaticMember();
-  void Init(_object_id *pID);
-  char Create(_animus_create_setdata *pData);
+  bool Init(_object_id *pID);
+  bool Create(_animus_create_setdata *pData);
   bool Destroy();
   void SendMsg_Destroy();
   void MasterAttack_MasterInform(CCharacter *pDst);

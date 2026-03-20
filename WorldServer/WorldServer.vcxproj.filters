@@ -3069,9 +3069,6 @@
     <ClCompile Include="Entities\chat_steal_message_gm_zocl.cpp">
       <Filter>Source Files\Packets\ZoneClient</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\CHEAT_COMMAND.cpp">
-      <Filter>Source Files\Core</Filter>
-    </ClCompile>
     <ClCompile Include="Entities\CheatCommands.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>

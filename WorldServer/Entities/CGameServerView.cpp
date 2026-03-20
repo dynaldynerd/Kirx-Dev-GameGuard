@@ -50,7 +50,7 @@ void CGameServerView::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, 1023, m_btLogFile);
 }
 
-BOOL CGameServerView::PreCreateWindow(CREATESTRUCT &cs)
+int CGameServerView::PreCreateWindow(CREATESTRUCT &cs)
 {
   return CFormView::PreCreateWindow(cs);
 }

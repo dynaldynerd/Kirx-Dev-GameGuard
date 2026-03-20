@@ -45,9 +45,9 @@ public:
   virtual void CrashThread();
   virtual unsigned char WorkProcess(_SYN_DATA *pSynData);
   virtual void CompleteProcess(_SYN_DATA *pSynData);
-  char RegisterSyncData(int nCaseCode, unsigned int dwDataSize);
+  bool RegisterSyncData(int nCaseCode, unsigned int dwDataSize);
   _SYN_DATA *PushData(_SYN_HEADER *pHeader, char *pQryData, unsigned int nQrySize);
-  char StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum);
+  bool StartThread(_THREAD_CONFIG *pConfig, unsigned int dwSynDataNum);
   void RunOnThread();
   void RunOnLoop();
   void ProcessOnThread();

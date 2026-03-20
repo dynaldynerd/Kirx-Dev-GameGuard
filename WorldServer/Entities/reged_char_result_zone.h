@@ -13,7 +13,7 @@ struct   _reged_char_result_zone
   _REGED_AVATOR_DB RegedList[3];
 
   _reged_char_result_zone();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)
 
@@ -22,11 +22,12 @@ inline _reged_char_result_zone::_reged_char_result_zone()
 {
 }
 
-inline __int64 _reged_char_result_zone::size()
+inline int _reged_char_result_zone::size()
 {
   if (byCharNum > 3u)
   {
     byCharNum = 0;
   }
-  return 221 - 69LL * (3 - byCharNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(221 - 69LL * (3 - byCharNum));
 }

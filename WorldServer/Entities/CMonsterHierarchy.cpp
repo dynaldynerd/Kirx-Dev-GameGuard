@@ -51,11 +51,11 @@ unsigned __int8 CMonsterHierarchy::ChildKindCount()
   return m_byChildMonSetNum;
 }
 
-__int64 CMonsterHierarchy::GetChildCount(unsigned int nKindIndex)
+unsigned int CMonsterHierarchy::GetChildCount(unsigned int nKindIndex)
 {
   if (nKindIndex > 2)
   {
-    return 0;
+    return 0u;
   }
   return m_dwMonCount[nKindIndex];
 }
@@ -84,7 +84,7 @@ CMonster *CMonsterHierarchy::GetChild(int nKind, unsigned int nIndex)
   return m_pChildMon[nKind][nIndex];
 }
 
-__int64 CMonsterHierarchy::SearchChildMon(CMonster *pMon)
+int CMonsterHierarchy::SearchChildMon(CMonster *pMon)
 {
   if (pMon)
   {
@@ -103,7 +103,7 @@ __int64 CMonsterHierarchy::SearchChildMon(CMonster *pMon)
   return 0;
 }
 
-__int64 CMonsterHierarchy::PushChildMon(unsigned int nKind, CMonster *pMon)
+int CMonsterHierarchy::PushChildMon(unsigned int nKind, CMonster *pMon)
 {
   if (SearchChildMon(pMon))
   {
@@ -127,7 +127,7 @@ __int64 CMonsterHierarchy::PushChildMon(unsigned int nKind, CMonster *pMon)
   return 0;
 }
 
-__int64 CMonsterHierarchy::PopChildMon(CMonster *pMon)
+int CMonsterHierarchy::PopChildMon(CMonster *pMon)
 {
   if (pMon)
   {
@@ -166,7 +166,7 @@ void CMonsterHierarchy::PopChildMonAll()
   }
 }
 
-__int64 CMonsterHierarchy::SetParent(CMonster *pMon)
+int CMonsterHierarchy::SetParent(CMonster *pMon)
 {
   m_pParentMon = pMon;
   return 1;
@@ -185,7 +185,8 @@ void CMonsterHierarchy::OnChildRegenLoop()
     return;
   }
 
-  if (m_pParentMon || GetLoopTime() - m_dwChildRecallTime <= monsterRecord->m_nGuardRecallTimeMS)
+  if (m_pParentMon
+    || GetLoopTime() - m_dwChildRecallTime <= static_cast<unsigned int>(monsterRecord->m_nGuardRecallTimeMS))
   {
     return;
   }

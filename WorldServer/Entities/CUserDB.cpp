@@ -38,6 +38,19 @@
 #include "log_change_class_after_init_class.h"
 #include "log_case_charselect.h"
 #include "qry_logout.h"
+
+bool CUserDB::IsValidBaseShape(unsigned int baseShape)
+{
+  for (int i = 2; i < 8; ++i)
+  {
+    const unsigned int nibble = (baseShape << (i * 4)) >> 28;
+    if (nibble == 0xF)
+    {
+      return false;
+    }
+  }
+  return true;
+}
 #include "exit_alter_param.h"
 #include "RFEvent_ClassRefine.h"
 #include "CNetIndexList.h"
@@ -70,7 +83,7 @@ CUserDB::CUserDB()
   m_bCreateTrunkFree = false;
   if (!CUserDB::s_logAvatorDB.m_bInit)
   {
-    const unsigned int localTime = GetKorLocalTime();
+    const unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
     char buffer[80]{};
     sprintf_s(buffer, "..\\ZoneServerLog\\Systemlog\\AvatorDBError%d.log", localTime);
     CUserDB::s_logAvatorDB.SetWriteLogFile(buffer, 1, false, true, true);
@@ -163,19 +176,19 @@ bool CUserDB::Update_Map(unsigned __int8 map, float *pos)
   return true;
 }
 
-char CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
+bool CUserDB::Update_Bind(char *pszMapCode, char *pDummyCode, bool bUpdate)
 {
   if (std::strlen(pszMapCode) > 11)
   {
-    return 0;
+    return false;
   }
   if (std::strlen(pDummyCode) > 11)
   {
-    return 0;
+    return false;
   }
   std::strcpy(m_AvatorData.dbAvator.m_szBindMapCode, pszMapCode);
   std::strcpy(m_AvatorData.dbAvator.m_szBindDummy, pDummyCode);
-return 1;
+return true;
 }
 
 void CUserDB::Update_PvpPointLeak(long double dValue)
@@ -212,7 +225,7 @@ if (byStatIndex < 80)
   return false;
 }
 
-char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData)
+bool CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData)
 {
   if (bySlotIndex < 30)
   {
@@ -223,24 +236,24 @@ char CUserDB::Update_QuestInsert(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
         pSlotData,
         sizeof(m_AvatorData.dbQuest.m_List[bySlotIndex]));
       m_bDataUpdate = true;
-      return 1;
+      return true;
     }
 
     g_Main.m_logSystemError.Write(
       "%s : Update_QuestInsert(EXIST) : slot : %d",
       m_aszAvatorName,
       bySlotIndex);
-    return 0;
+    return false;
   }
 
   g_Main.m_logSystemError.Write(
     "%s : Update_QuestInsert(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
-  return 0;
+  return false;
 }
 
-char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
+bool CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
 {
   if (bySlotIndex < 30)
   {
@@ -250,22 +263,22 @@ char CUserDB::Update_QuestDelete(unsigned __int8 bySlotIndex)
         "%s : Update_QuestDelete(EXIST) : slot : %d",
         m_aszAvatorName,
         bySlotIndex);
-      return 0;
+      return false;
     }
 
     m_AvatorData.dbQuest.m_List[bySlotIndex].Init();
     m_bDataUpdate = true;
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
     "%s : Update_QuestDelete(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
-  return 0;
+  return false;
 }
 
-char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate)
+bool CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_LIST *pSlotData, bool bUpdate)
 {
   if (bySlotIndex < 30)
   {
@@ -275,7 +288,7 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
         "%s : Update_QuestUpdate(NOTHING) : slot : %d",
         m_aszAvatorName,
         bySlotIndex);
-      return 0;
+      return false;
     }
 
     std::memcpy(
@@ -286,24 +299,24 @@ char CUserDB::Update_QuestUpdate(unsigned __int8 bySlotIndex, _QUEST_DB_BASE::_L
     {
       m_bDataUpdate = true;
     }
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
     "%s : Update_QuestUpdate(SlotIndex OVER) : slot : %d",
     m_aszAvatorName,
     bySlotIndex);
-  return 0;
+  return false;
 }
 
-char CUserDB::Update_CuttingEmpty()
+bool CUserDB::Update_CuttingEmpty()
 {
   m_AvatorData.dbCutting.Init();
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist)
+bool CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST *plist)
 {
   if (resnum > 20u)
   {
@@ -311,7 +324,7 @@ char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST
       "%s : Update_CuttingPush(CODE) byResNum (%d) => failed ",
       m_aszAvatorName,
       resnum);
-    return 0;
+    return false;
   }
 
   for (unsigned __int8 index = 0; index < resnum; ++index)
@@ -323,7 +336,7 @@ char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST
         m_aszAvatorName,
         index,
         plist[index].Key.wItemIndex);
-      return 0;
+      return false;
     }
   }
 
@@ -331,10 +344,10 @@ char CUserDB::Update_CuttingPush(unsigned __int8 resnum, _CUTTING_DB_BASE::_LIST
   m_AvatorData.dbCutting.m_byLeftNum = resnum;
   std::memcpy(m_AvatorData.dbCutting.m_List, plist, sizeof(_CUTTING_DB_BASE::_LIST) * resnum);
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt)
+bool CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int16 wLeftAmt)
 {
   if (wResItemIndex >= GetMaxResKind())
   {
@@ -342,7 +355,7 @@ char CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int
       "%s : Update_CuttingTrans(CODE) wResItemIndex (%d) => failed ",
       m_aszAvatorName,
       wResItemIndex);
-    return 0;
+    return false;
   }
 
   bool found = false;
@@ -364,14 +377,14 @@ char CUserDB::Update_CuttingTrans(unsigned __int16 wResItemIndex, unsigned __int
   if (!found)
   {
     g_Main.m_logSystemError.Write("%s:Update_TransRes(Idx:%d)", m_aszAvatorName, wResItemIndex);
-    return 0;
+    return false;
   }
 
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
+bool CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_NPC_QUEST_HISTORY *pHisData)
 {
   if (byIndex < 70)
   {
@@ -379,17 +392,17 @@ char CUserDB::Update_NPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_N
       &m_AvatorData.dbQuest.m_History[byIndex],
       pHisData,
       sizeof(m_AvatorData.dbQuest.m_History[byIndex]));
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
     "%s : Update_NPCQuestHistory(Index OVER) : %d",
     m_aszAvatorName,
     byIndex);
-  return 0;
+  return false;
 }
 
-char CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData)
+bool CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY *pHisData)
 {
   if (byIndex >= g_Main.m_dwStartNPCQuestCnt[m_AvatorData.dbAvator.m_byRaceSexCode / 2])
   {
@@ -397,7 +410,7 @@ char CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BAS
       "%s : Update_NPCQuestHistory(Index OVER) : %d",
       m_aszAvatorName,
       byIndex);
-    return 0;
+    return false;
   }
 
   std::strcpy(m_AvatorData.dbQuest.m_StartHistory[byIndex].szQuestCode, pHisData->szQuestCode);
@@ -405,7 +418,7 @@ char CUserDB::Update_StartNPCQuestHistory(unsigned __int8 byIndex, _QUEST_DB_BAS
   GetLocalTime(&m_AvatorData.dbQuest.m_StartHistory[byIndex].tmStartTime);
   m_AvatorData.dbQuest.m_StartHistory[byIndex].nEndTime = pHisData->nEndTime;
   ++m_AvatorData.dbQuest.dwListCnt;
-  return 1;
+  return true;
 }
 
 void CUserDB::Update_MaxLevel(unsigned __int8 byMaxLevel)
@@ -616,11 +629,11 @@ bool CUserDB::Update_AlterPvPPoint(long double dNewPoint)
   return true;
 }
 
-char CUserDB::Update_AlterPvPCashBag(long double dNewPoint)
+bool CUserDB::Update_AlterPvPCashBag(long double dNewPoint)
 {
   m_AvatorData.dbAvator.m_dPvPCashBag = dNewPoint;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 bool CUserDB::Update_ItemAdd(
@@ -807,7 +820,7 @@ bool CUserDB::Update_ItemDelete(unsigned __int8 storage, unsigned __int8 slot, b
   return false;
 }
 
-char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool /*bUpdate*/)
+bool CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsigned __int64 amount, bool /*bUpdate*/)
 {
   if (!IsStorageRange(storage, slot))
   {
@@ -816,7 +829,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
       m_aszAvatorName,
       storage,
       slot);
-    return 0;
+    return false;
   }
 
   if (storage)
@@ -829,7 +842,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(EMBELL, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         m_AvatorData.dbEquip.m_EmbellishList[slot].wAmount = static_cast<unsigned __int16>(amount);
         break;
@@ -840,7 +853,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(FORCE, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         key->SetStat(static_cast<unsigned int>(amount));
         break;
@@ -851,7 +864,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(ANIMUS, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         m_AvatorData.dbAnimus.m_List[slot].dwExp = amount;
         break;
@@ -862,7 +875,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(TRUNK, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         m_AvatorData.dbTrunk.m_List[slot].dwDur = amount;
         break;
@@ -873,7 +886,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(TRUNK, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         m_AvatorData.dbPersonalAmineInven.m_List[slot].dwDur = static_cast<unsigned int>(amount);
         break;
@@ -884,7 +897,7 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
         if (!key->IsFilled())
         {
           g_Main.m_logSystemError.Write("%s:Update_ItemDur(EXT_TRUNK, Idx:%d)", m_aszAvatorName, slot);
-          return 0;
+          return false;
         }
         m_AvatorData.dbTrunk.m_ExtList[slot].dwDur = amount;
         break;
@@ -899,13 +912,13 @@ char CUserDB::Update_ItemDur(unsigned __int8 storage, unsigned __int8 slot, unsi
     if (!key->IsFilled())
     {
       g_Main.m_logSystemError.Write("%s:Update_ItemDur(INVEN, Idx:%d)", m_aszAvatorName, slot);
-      return 0;
+      return false;
     }
     m_AvatorData.dbInven.m_List[slot].dwDur = amount;
   }
 
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 bool CUserDB::Update_Money(unsigned int dalant, unsigned int gold)
@@ -1167,13 +1180,14 @@ void _EMBELLKEY::LoadDBKey(_EMBELLKEY key)
   *this = key;
 }
 
-__int64 _EMBELLKEY::CovDBKey()
+int _EMBELLKEY::CovDBKey()
 {
   const unsigned int packed =
     static_cast<unsigned int>(bySlotIndex)
     | (static_cast<unsigned int>(byTableCode) << 8)
     | (static_cast<unsigned int>(wItemIndex) << 16);
-  return static_cast<__int64>(packed);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<__int64>(packed));
 }
 
 bool _FORCEKEY::IsFilled()
@@ -1207,9 +1221,10 @@ unsigned int _FORCEKEY::GetStat()
   return dwKey & 0xFFFFFFu;
 }
 
-__int64 _FORCEKEY::CovDBKey()
+int _FORCEKEY::CovDBKey()
 {
-  return static_cast<__int64>(dwKey);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<__int64>(dwKey));
 }
 
 void _EQUIP_DB_BASE::_EMBELLISH_LIST::Init()
@@ -1279,7 +1294,7 @@ void _LINKKEY::SetData(unsigned __int16 wCode, unsigned __int16 wIndex)
   wEffectCode = static_cast<unsigned __int16>(wIndex | (wCode << 12));
 }
 
-unsigned __int16 _LINKKEY::CovDBKey()
+__int16 _LINKKEY::CovDBKey()
 {
   return wEffectCode;
 }
@@ -1451,22 +1466,22 @@ void CUserDB::SetNewDBPostData(
   }
 }
 
-char CUserDB::Update_DelPost(unsigned int dwSerial, unsigned int nIndex)
+bool CUserDB::Update_DelPost(unsigned int dwSerial, unsigned int nIndex)
 {
   if (nIndex >= 50)
   {
-    return 0;
+    return false;
   }
 
   if (m_AvatorData.dbPostData.dbPost.m_PostList[nIndex].bNew)
   {
-    return 1;
+    return true;
   }
 
   _DELPOST_DB_BASE *delPost = &m_AvatorData.dbPostData.dbDelPost;
   if (delPost->m_nCum >= delPost->m_nMax)
   {
-    return 0;
+    return false;
   }
 
   delPost->m_List[delPost->m_nCum].dwDelSerial = dwSerial;
@@ -1474,7 +1489,7 @@ char CUserDB::Update_DelPost(unsigned int dwSerial, unsigned int nIndex)
   ++delPost->m_nCum;
   delPost->m_bUpdate = 1;
   m_bDataUpdate = 1;
-  return 1;
+  return true;
 }
 
 bool CUserDB::IsReturnPostUpdate()
@@ -1532,29 +1547,29 @@ void _PCBANG_FAVOR_ITEM_DB_BASE::Init()
   }
 }
 
-char _PCBANG_FAVOR_ITEM_DB_BASE::InsertItem(_STORAGE_LIST::_db_con *Item)
+bool _PCBANG_FAVOR_ITEM_DB_BASE::InsertItem(_STORAGE_LIST::_db_con *Item)
 {
   for (int index = 0; index < 50; ++index)
   {
     if (lnUID[index] == static_cast<unsigned __int64>(-1))
     {
       lnUID[index] = Item->m_lnUID;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char _PCBANG_FAVOR_ITEM_DB_BASE::IsDeleteItem(_STORAGE_LIST::_db_con *Item)
+bool _PCBANG_FAVOR_ITEM_DB_BASE::IsDeleteItem(_STORAGE_LIST::_db_con *Item)
 {
   for (int index = 0; index < 50; ++index)
   {
     if (lnUID[index] != static_cast<unsigned __int64>(-1) && lnUID[index] == Item->m_lnUID)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 bool _INVEN_DB_BASE::_LIST::Set(const _STORAGE_LIST::_db_con *pItem)
@@ -1963,34 +1978,34 @@ void _SYNC_STATE::re_lobby()
   bReged = false;
 }
 
-char _SYNC_STATE::chk_enter()
+bool _SYNC_STATE::chk_enter()
 {
   if (bEnter)
   {
-    return 0;
+    return false;
   }
   bEnter = true;
-  return 1;
+  return true;
 }
 
-char _SYNC_STATE::chk_reged()
+bool _SYNC_STATE::chk_reged()
 {
   if (bReged)
   {
-    return 0;
+    return false;
   }
   bReged = true;
-  return 1;
+  return true;
 }
 
-char _SYNC_STATE::chk_select()
+bool _SYNC_STATE::chk_select()
 {
   if (bSelect)
   {
-    return 0;
+    return false;
   }
   bSelect = true;
-  return 1;
+  return true;
 }
 
 _worlddb_sf_delay_info::_eff_list::_eff_list()
@@ -2371,33 +2386,56 @@ bool CUserDB::Insert_Char_Request(
   }
 
   bool invalidName = false;
-  for (char *cursor = pwszCharName; ; ++cursor)
-  {
-    if (*cursor == 32 || *cursor == 39)
-    {
-      invalidName = true;
-      break;
-    }
-    if (!*cursor)
-    {
-      break;
-    }
-  }
-  if (!invalidName && *pwszCharName == 42)
-  {
-    invalidName = true;
-  }
-  for (int k = 0; !invalidName && k < 3; ++k)
-  {
-    if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
-    {
-      invalidName = true;
-      break;
-    }
-  }
 
-  if (!invalidName)
+  do
   {
+    // Yorozuya fix (non-IDA parity): reject empty character names.
+    if (!pwszCharName || !*pwszCharName)
+    {
+      invalidName = true;
+      break;
+    }
+    // Yorozuya fix (non-IDA parity): reject invalid base shape (0xF nibble).
+    if (!IsValidBaseShape(dwBaseShape))
+    {
+      invalidName = true;
+      break;
+    }
+
+    for (char *cursor = pwszCharName; ; ++cursor)
+    {
+      if (*cursor == 32 || *cursor == 39)
+      {
+        invalidName = true;
+        break;
+      }
+      if (!*cursor)
+      {
+        break;
+      }
+    }
+    if (invalidName)
+    {
+      break;
+    }
+    if (*pwszCharName == 42)
+    {
+      invalidName = true;
+      break;
+    }
+    for (int k = 0; k < 3; ++k)
+    {
+      if (!std::strcmp(pwszCharName, wszNonMakeName_0[k]))
+      {
+        invalidName = true;
+        break;
+      }
+    }
+    if (invalidName)
+    {
+      break;
+    }
+
     CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
     if ((m_byUserDgr != 2 && std::strlen(pwszCharName) >= nGMCmpLen
          && !strncmp(pwszCharName, wszGMCmp, nGMCmpLen))
@@ -2406,6 +2444,7 @@ bool CUserDB::Insert_Char_Request(
       invalidName = true;
     }
   }
+  while (false);
   if (invalidName)
   {
     Insert_Char_Complete(47, nullptr);
@@ -2970,7 +3009,7 @@ void CUserDB::Alive_Char_Complete(
   g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, type, reinterpret_cast<char *>(&msg), 74);
 }
 
-char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
+bool CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
 {
   m_AvatorData.dbAvator.m_dwHP = pCon->dwHP;
   m_AvatorData.dbAvator.m_dwFP = pCon->dwFP;
@@ -2988,17 +3027,17 @@ char CUserDB::Update_Param(_EXIT_ALTER_PARAM *pCon)
     m_AvatorData.dbAvator.m_fStartPos[2] = pCon->fStartPos[2];
   }
 
-  return 1;
+  return true;
 }
 
-char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
+bool CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
 {
   int maxLevel = pData->dbAvator.m_byMaxLevel ? pData->dbAvator.m_byMaxLevel : 50;
   if (pData->dbAvator.m_byLevel <= maxLevel)
   {
     if (pData->dbAvator.m_byRaceSexCode < 5u)
     {
-      return 1;
+      return true;
     }
 
     static const char kDataValidCheckRace[] = "D_DataValidCheck (Serial:%d) Race:%d";
@@ -3006,7 +3045,7 @@ char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
       kDataValidCheckRace,
       pData->dbAvator.m_dwRecordNum,
       pData->dbAvator.m_byRaceSexCode);
-    return 0;
+    return false;
   }
 
   static const char kDataValidCheckLevel[] = "D_DataValidCheck (Serial:%d) Level:%d Max:%d";
@@ -3015,7 +3054,7 @@ char CUserDB::CheckDQSLoadCharacterData(_AVATOR_DATA *pData)
     pData->dbAvator.m_dwRecordNum,
     pData->dbAvator.m_byLevel,
     maxLevel);
-  return 0;
+  return false;
 }
 
 void CUserDB::ReRangeClientIndex(_AVATOR_DATA *pData)
@@ -3182,7 +3221,7 @@ bool _INVENKEY::operator==(const _INVENKEY &rhs) const
 }
 
 
-bool _INVENKEY::IsOverlapItem() const
+int _INVENKEY::IsOverlapItem() const
 {
   return IsOverLapItem(byTableCode) != 0;
 }
@@ -3247,22 +3286,22 @@ void _NOT_ARRANGED_AVATOR_DB::Init()
   dwSerial = static_cast<unsigned int>(-1);
 }
 
-char CUserDB::Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName)
+bool CUserDB::Update_AddBuddy(unsigned __int8 bySlotIndex, unsigned int dwAdderSerial, char *pwszAdderName)
 {
   m_AvatorData.dbBuddy.m_List[bySlotIndex].dwSerial = dwAdderSerial;
   std::strcpy(m_AvatorData.dbBuddy.m_List[bySlotIndex].wszName, pwszAdderName);
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
+bool CUserDB::Update_DelBuddy(unsigned __int8 bySlotIndex)
 {
   m_AvatorData.dbBuddy.m_List[bySlotIndex].Init();
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime)
+bool CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16 wBattleTime)
 {
   _SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
@@ -3280,17 +3319,17 @@ char CUserDB::Update_UserGetScaner(unsigned __int16 wScanerCnt, unsigned __int16
     wBattleTime);
   m_AvatorData.dbSupplement.dwScanerGetDate = static_cast<unsigned int>(atoi(buffer));
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_UserPlayTime(unsigned int dwAccPlayTime)
+bool CUserDB::Update_UserPlayTime(unsigned int dwAccPlayTime)
 {
   m_AvatorData.dbSupplement.dwAccumPlayTime += dwAccPlayTime;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_RaceVoteInfoInit()
+bool CUserDB::Update_RaceVoteInfoInit()
 {
   m_AvatorData.dbSupplement.VoteEnable = 1;
   m_AvatorData.dbSupplement.dwAccumPlayTime = 0;
@@ -3299,28 +3338,28 @@ char CUserDB::Update_RaceVoteInfoInit()
   m_AvatorData.dbSupplement.dwScanerGetDate = 0;
   m_AvatorData.dbSupplement.dwLastResetDate = g_Main.m_dwServerResetToken;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_UserVoteData()
+bool CUserDB::Update_UserVoteData()
 {
   m_AvatorData.dbSupplement.VoteEnable = 0;
   m_AvatorData.dbSupplement.byVoted = 1;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_AutoTradeAllClear()
+bool CUserDB::Update_AutoTradeAllClear()
 {
   m_AvatorData.dbTrade.Clear();
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex)
+bool CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLinkCode, unsigned __int16 wIndex)
 {
   if (bySlot >= 50)
   {
-    return 0;
+    return false;
   }
 
   if (byLinkCode == 255)
@@ -3331,16 +3370,16 @@ char CUserDB::Update_LinkBoardSlot(unsigned __int8 bySlot, unsigned __int8 byLin
   {
     m_AvatorData.dbLink.m_LinkList[bySlot].Key.SetData(byLinkCode, wIndex);
   }
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_LinkBoardLock(unsigned __int8 byLBLock)
+bool CUserDB::Update_LinkBoardLock(unsigned __int8 byLBLock)
 {
   m_AvatorData.dbLink.m_byLinkBoardLock = byLBLock;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos)
+bool CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, unsigned __int8 clientpos)
 {
   bool outOfRange = false;
   if (!storage)
@@ -3361,7 +3400,7 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
   }
   else
   {
-    return 0;
+    return false;
   }
 
   if (outOfRange)
@@ -3371,7 +3410,7 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
       m_aszAvatorName,
       storage,
       slot);
-    return 0;
+    return false;
   }
 
   if (!storage)
@@ -3380,10 +3419,10 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
     if (!key->IsFilled())
     {
       g_Main.m_logSystemError.Write("%s:Update_ItemSlot(INVEN, Idx:%d)", m_aszAvatorName, slot);
-      return 0;
+      return false;
     }
     key->bySlotIndex = clientpos;
-    return 1;
+    return true;
   }
 
   if (storage == 2)
@@ -3392,10 +3431,10 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
     if (!key->IsFilled())
     {
       g_Main.m_logSystemError.Write("%s:Update_ItemSlot(EMBELL, Idx:%d)", m_aszAvatorName, slot);
-      return 0;
+      return false;
     }
     key->bySlotIndex = clientpos;
-    return 1;
+    return true;
   }
 
   if (storage == 5)
@@ -3404,10 +3443,10 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
     if (!key->IsFilled())
     {
       g_Main.m_logSystemError.Write("%s:Update_ItemSlot(TRUNK, Idx:%d)", m_aszAvatorName, slot);
-      return 0;
+      return false;
     }
     key->bySlotIndex = clientpos;
-    return 1;
+    return true;
   }
 
   if (storage == 6)
@@ -3416,23 +3455,23 @@ char CUserDB::Update_ItemSlot(unsigned __int8 storage, unsigned __int8 slot, uns
     if (!key->IsFilled())
     {
       g_Main.m_logSystemError.Write("%s:Update_ItemSlot(TRUNK, Idx:%d)", m_aszAvatorName, slot);
-      return 0;
+      return false;
     }
     key->bySlotIndex = clientpos;
-    return 1;
+    return true;
   }
 
   _INVENKEY *key = &m_AvatorData.dbTrunk.m_ExtList[slot].Key;
   if (!key->IsFilled())
   {
     g_Main.m_logSystemError.Write("%s:Update_ItemSlot(EXT_TRUNK, Idx:%d)", m_aszAvatorName, slot);
-    return 0;
+    return false;
   }
   key->bySlotIndex = clientpos;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_WindowInfo(
+bool CUserDB::Update_WindowInfo(
   unsigned int *pdwSkill,
   unsigned int *pdwForce,
   unsigned int *pdwChar,
@@ -3446,10 +3485,10 @@ char CUserDB::Update_WindowInfo(
   std::memcpy(m_AvatorData.dbLink.m_dwAnimus, pdwAnimus, sizeof(m_AvatorData.dbLink.m_dwAnimus));
   m_AvatorData.dbLink.m_dwInven = dwInven;
   std::memcpy(m_AvatorData.dbLink.m_dwInvenBag, pdwInvenBag, sizeof(m_AvatorData.dbLink.m_dwInvenBag));
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_Macro(char *pBuf)
+bool CUserDB::Update_Macro(char *pBuf)
 {
   const auto *request = reinterpret_cast<const _player_macro_update_request_clzo *>(pBuf);
   _AIOC_A_MACRODATA *macro = &m_AvatorData.dbMacro;
@@ -3483,7 +3522,7 @@ char CUserDB::Update_Macro(char *pBuf)
           m_dwSerial,
           m_aszAvatorName,
           chat);
-        return 1;
+        return true;
       }
 
       std::memset(macro->mcr_Chat[belt].Chat[slot], 0, 81);
@@ -3492,7 +3531,7 @@ char CUserDB::Update_Macro(char *pBuf)
   }
 
   m_bDataUpdate = 1;
-  return 1;
+  return true;
 }
 
 void CUserDB::Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
@@ -3500,7 +3539,7 @@ void CUserDB::Update_BossCryMsg(unsigned __int8 bySlot, char *pwszCryMsg)
   std::strcpy(m_AvatorData.dbBossCry.m_List[bySlot].wszCryMsg, pwszCryMsg);
 }
 
-char CUserDB::Update_BagNum(unsigned __int8 bagnum)
+bool CUserDB::Update_BagNum(unsigned __int8 bagnum)
 {
   if (bagnum > 5u)
   {
@@ -3508,14 +3547,14 @@ char CUserDB::Update_BagNum(unsigned __int8 bagnum)
       "%s : Update_BagNum(CODE) byBagNum (%d) => failed ",
       m_aszAvatorName,
       bagnum);
-    return 0;
+    return false;
   }
 
   if (m_AvatorData.dbAvator.m_byBagNum < bagnum)
   {
     m_AvatorData.dbAvator.m_byBagNum = bagnum;
     m_bDataUpdate = true;
-    return 1;
+    return true;
   }
 
   g_Main.m_logSystemError.Write(
@@ -3523,7 +3562,7 @@ char CUserDB::Update_BagNum(unsigned __int8 bagnum)
     m_aszAvatorName,
     m_AvatorData.dbAvator.m_byBagNum,
     bagnum);
-  return 0;
+  return false;
 }
 
 void CUserDB::CalcRadarDelay()
@@ -3551,35 +3590,35 @@ void CUserDB::SetRadarDelay(unsigned int dwDelay)
 }
 
 
-char CUserDB::Update_LossExp(long double dLossExp)
+bool CUserDB::Update_LossExp(long double dLossExp)
 {
   m_AvatorData.dbAvator.m_dLossExp = dLossExp;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 
-char CUserDB::Update_Exp(long double exp)
+bool CUserDB::Update_Exp(long double exp)
 {
   m_AvatorData.dbAvator.m_dExp = exp;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 
-char CUserDB::Update_UserFatigue(unsigned int dwFatigue)
+bool CUserDB::Update_UserFatigue(unsigned int dwFatigue)
 {
   m_AvatorData.dbTimeLimitInfo.dwFatigue = dwFatigue;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 
-char CUserDB::Update_UserTLStatus(unsigned __int8 byStatus)
+bool CUserDB::Update_UserTLStatus(unsigned __int8 byStatus)
 {
   m_AvatorData.dbTimeLimitInfo.byTLStatus = byStatus;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 unsigned int CUserDB::GetActPoint(unsigned __int8 byCode)
@@ -3609,7 +3648,7 @@ void CUserDB::SetActPoint(unsigned __int8 byCode, unsigned int dwLeftPoint)
   Update_User_Action_Point(byCode, dwPoint);
 }
 
-char CUserDB::Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint)
+bool CUserDB::Update_User_Action_Point(unsigned __int8 byActionCode, unsigned int dwPoint)
 {
   unsigned int clampedPoint = dwPoint;
   if (byActionCode == 2)
@@ -3626,10 +3665,10 @@ char CUserDB::Update_User_Action_Point(unsigned __int8 byActionCode, unsigned in
 
   m_AvatorData.dbSupplement.dwActionPoint[byActionCode] = clampedPoint;
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::InitClass(char *pszClassCode)
+bool CUserDB::InitClass(char *pszClassCode)
 {
   unsigned __int8 nextHistory = 0;
   int j = 2;
@@ -3649,10 +3688,10 @@ char CUserDB::InitClass(char *pszClassCode)
     m_AvatorData.dbAvator.m_zClassHistory[j] = -1;
   }
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex)
+bool CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNum, unsigned __int16 wHistoryClassIndex)
 {
   if (byHistoryRecordNum >= 3u)
   {
@@ -3660,7 +3699,7 @@ char CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNu
       "%s : Update_Class(): byHistoryRecordNum (%d) => failed ",
       m_aszAvatorName,
       byHistoryRecordNum);
-    return 0;
+    return false;
   }
 
   std::strcpy(m_AvatorData.dbAvator.m_szClassCode, pszClassCode);
@@ -3670,7 +3709,7 @@ char CUserDB::Update_Class(char *pszClassCode, unsigned __int8 byHistoryRecordNu
     m_AvatorData.dbAvator.m_byLastClassGrade = byHistoryRecordNum + 1;
   }
   m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 void CUserDB::WriteLog_ChangeClassAfterInitClass(unsigned __int8 byType, char *szPrevClass)
@@ -3769,7 +3808,7 @@ void CUserDB::SendMsg_Inform_UILock()
 }
 
 
-char CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
+bool CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
 {
   _AVATOR_DATA snapshot{};
   snapshot = _AVATOR_DATA();
@@ -3790,7 +3829,7 @@ char CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
   this->m_AvatorData.dbAvator.m_dwStartPlayTime = snapshot.dbAvator.m_dwStartPlayTime;
   this->m_bNoneUpdateData = true;
   this->m_bDataUpdate = true;
-  return 1;
+  return true;
 }
 
 
@@ -4051,7 +4090,7 @@ void CUserDB::Select_Char_Complete(
 
     std::strcpy(m_wszAvatorName, pLoadData->dbAvator.m_wszAvatorName);
     W2M(pLoadData->dbAvator.m_wszAvatorName, m_aszAvatorName, 17);
-    m_byNameLen = std::strlen(m_wszAvatorName);
+    m_byNameLen = static_cast<unsigned char>(std::strlen(m_wszAvatorName));
     m_tmrCheckPlayMin.TermTimeRun();
     m_dwSerial = pLoadData->dbAvator.m_dwRecordNum;
     slotIndex = pLoadData->dbAvator.m_bySlotIndex;
@@ -4153,24 +4192,24 @@ void CUserDB::WriteLog_CharSelect()
   g_Main.PushDQSData(m_dwAccountSerial, &m_idWorld, 10, logData.szID, size);
 }
 
-char CUserDB::Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN)
+bool CUserDB::Update_CombineExResult_Push(_ITEMCOMBINE_DB_BASE *pItemCombineDB_IN)
 {
   std::memcpy(&m_AvatorData.dbItemCombineEx, pItemCombineDB_IN, sizeof(m_AvatorData.dbItemCombineEx));
   m_bDataUpdate = 1;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_CombineExResult_Pop()
+bool CUserDB::Update_CombineExResult_Pop()
 {
   m_AvatorData.dbItemCombineEx.Init();
   m_bDataUpdate = 1;
-  return 1;
+  return true;
 }
 
-char CUserDB::Update_TakeLastCriTicket(unsigned int dwCriTicket)
+bool CUserDB::Update_TakeLastCriTicket(unsigned int dwCriTicket)
 {
   m_AvatorData.dbAvator.m_dwTakeLastCriTicket = dwCriTicket;
   m_bDataUpdate = 1;
-  return 1;
+  return true;
 }
 

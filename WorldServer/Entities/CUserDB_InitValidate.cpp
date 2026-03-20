@@ -130,7 +130,7 @@ bool CUserDB::FirstSettingData()
   return 1;
 }
 
-char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
+bool CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
 {
   int recordCount; // eax
   unsigned int tableCode; // ecx
@@ -637,5 +637,5 @@ char CUserDB::DataValidCheckRevise(_AVATOR_DATA *pData, bool *pDataUpdated)
       masteryDelayEntry->byEffectCode = -1;
     }
   }
-  return 1;
+  return true;
 }

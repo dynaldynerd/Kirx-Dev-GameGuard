@@ -102,7 +102,7 @@ void CRusiaBillingMgr::Release()
   }
 }
 
-__int64 CRusiaBillingMgr::Init()
+int CRusiaBillingMgr::Init()
 {
   CoInitialize(nullptr);
   if (g_RFAcc.Init())
@@ -116,7 +116,7 @@ __int64 CRusiaBillingMgr::Init()
   return 0;
 }
 
-__int64 CRusiaBillingMgr::Free()
+int CRusiaBillingMgr::Free()
 {
   CoInitialize(nullptr);
   if (g_RFAcc.Free())
@@ -130,7 +130,7 @@ __int64 CRusiaBillingMgr::Free()
   return 0;
 }
 
-bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection)
+int CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatabase, unsigned __int16 wPort, bool bTrustedConnection)
 {
   char buffer[272]{};
 
@@ -188,7 +188,7 @@ bool CRusiaBillingMgr::ConfigUserODBC(char *szDSN, char *szServer, char *szDatab
   return false;
 }
 
-bool CRusiaBillingMgr::LoadINIFile()
+int CRusiaBillingMgr::LoadINIFile()
 {
   char buffer[304]{};
   char fileName[288]{};
@@ -337,7 +337,7 @@ void CRusiaBillingMgr::DeleteMem()
   // this is not a stub
 }
 
-__int64 CRusiaBillingMgr::CallFunc_RFOnline_Auth(_param_cash_select *rParam)
+int CRusiaBillingMgr::CallFunc_RFOnline_Auth(_param_cash_select *rParam)
 {
   CoInitialize(nullptr);
   rParam->out_dwCashAmount = static_cast<int>(g_RFAcc.CheckBalance(rParam->in_szAcc));
@@ -345,7 +345,7 @@ __int64 CRusiaBillingMgr::CallFunc_RFOnline_Auth(_param_cash_select *rParam)
   return 0;
 }
 
-__int64 CRusiaBillingMgr::CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx)
+int CRusiaBillingMgr::CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx)
 {
   CoInitialize(nullptr);
   const int inDiscount = static_cast<int>(rParam->in_item[static_cast<__int64>(nIdx)].in_nDiscount);
@@ -374,7 +374,7 @@ __int64 CRusiaBillingMgr::CallFunc_Item_Buy(_param_cash_update *rParam, int nIdx
   return 1;
 }
 
-__int64 CRusiaBillingMgr::CallFunc_Item_Cancel(_param_cash_rollback::__list *list, char *szUserID)
+int CRusiaBillingMgr::CallFunc_Item_Cancel(_param_cash_rollback::__list *list, char *szUserID)
 {
   CoInitialize(nullptr);
   if (g_RFAcc.Cancel(list->in_lnUID))

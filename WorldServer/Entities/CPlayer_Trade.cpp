@@ -31,6 +31,7 @@
 #include "CHolyStoneSystem.h"
 #include "CPotionMgr.h"
 #include "guild_honor_set_request_clzo.h"
+#include "WorldServerUtil.h"
 #include "CMgrGuildHistory.h"
 #include "CMgrAvatorItemHistory.h"
 #include "CPostSystemManager.h"
@@ -187,13 +188,14 @@ void CPlayer::SendMsg_EconomyHistoryInform()
 
 void CPlayer::SendMsg_EconomyRateInform(char bStart)
 {
-_economy_rate_inform_zocl msg{};
+  _economy_rate_inform_zocl msg{};
 
   msg.bStart = bStart;
-  msg.fPayExgRate = static_cast<float>(eGetRate(this->m_Param.GetRaceCode()));
-  msg.fTexRate = eGetTex(this->m_Param.GetRaceCode());
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
+  msg.fPayExgRate = static_cast<float>(eGetRate(raceCode));
+  msg.fTexRate = eGetTex(raceCode);
   msg.wMgrValue = static_cast<unsigned __int16>(eGetMgrValue());
-  msg.fOreSellRate = eGetOreRate(this->m_Param.GetRaceCode());
+  msg.fOreSellRate = eGetOreRate(raceCode);
 
   if (!bStart)
   {
@@ -696,9 +698,6 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     codeB[index] = static_cast<unsigned int>(rand() + (rand() << 16));
   }
 
-  unsigned int *keyA = CalcCodeKey(codeA);
-  unsigned int *keyB = CalcCodeKey(codeB);
-
   auto setTradeStart = [](_DTRADE_PARAM &trade, unsigned __int16 dstIndex, unsigned int dstSerial, unsigned __int8 emptyCount, const unsigned int *key)
   {
     trade.bDTradeMode = true;
@@ -717,12 +716,15 @@ void CPlayer::pc_DTradeAnswerRequest(_CLID *pidAsker)
     std::memcpy(trade.dwKey, key, sizeof(trade.dwKey));
   };
 
+  unsigned int *keyA = CalcCodeKey(codeA);
   setTradeStart(
     this->m_pmTrd,
     asker->m_ObjID.m_wIndex,
     asker->m_dwObjSerial,
     static_cast<unsigned __int8>(this->m_Param.m_dbInven.GetNumEmptyCon()),
     keyA);
+
+  unsigned int *keyB = CalcCodeKey(codeB);
   setTradeStart(
     asker->m_pmTrd,
     this->m_ObjID.m_wIndex,
@@ -1147,40 +1149,6 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   _STORAGE_LIST::_db_con tradeItems[2][15] = {};
   int tradedItemCount[2] = {0, 0};
   CPlayer *players[2] = {this, nullptr};
-  auto getEffectiveEmptyInventorySlots = [] (CPlayer *player, int *emptySlotCount)
-  {
-    *emptySlotCount = player->m_Param.m_dbInven.GetNumEmptyCon();
-
-    for (int tradeSlot = 0; tradeSlot < 15; ++tradeSlot)
-    {
-      _DTRADE_ITEM *tradeItem = &player->m_pmTrd.DItemNode[tradeSlot];
-      if (!tradeItem->bLoad || tradeItem->byStorageCode != 0)
-      {
-        continue;
-      }
-
-      _STORAGE_LIST::_db_con *sourceItem = player->m_Param.m_dbInven.GetPtrFromSerial(
-        static_cast<unsigned __int16>(tradeItem->dwSerial));
-      if (!sourceItem)
-      {
-        return false;
-      }
-
-      if (IsOverLapItem(sourceItem->m_byTableCode))
-      {
-        if (sourceItem->m_dwDur == tradeItem->byAmount)
-        {
-          ++(*emptySlotCount);
-        }
-      }
-      else
-      {
-        ++(*emptySlotCount);
-      }
-    }
-
-    return true;
-  };
 
   auto closeTrade = [&]() {
     this->m_pmTrd.Init();
@@ -1216,25 +1184,14 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
   {
     resultCode = 13;
   }
-  else if (this->m_pmTrd.bySellItemNum > tradeDst->m_pmTrd.byEmptyInvenNum)
-  {
-    resultCode = 100;
-  }
   else
   {
     players[1] = tradeDst;
 
-    // Yorozuya trade fix (non-IDA): recompute effective inventory space at
-    // commit time instead of trusting the cached trade-start empty-slot count.
-    int thisEffectiveEmptyInven = 0;
-    int dstEffectiveEmptyInven = 0;
-    if (!getEffectiveEmptyInventorySlots(this, &thisEffectiveEmptyInven)
-        || !getEffectiveEmptyInventorySlots(tradeDst, &dstEffectiveEmptyInven))
-    {
-      resultCode = 4;
-    }
-    else if (this->m_pmTrd.bySellItemNum > dstEffectiveEmptyInven
-             || tradeDst->m_pmTrd.bySellItemNum > thisEffectiveEmptyInven)
+    const unsigned __int8 srcEmptySlots = this->m_Param.m_dbInven.GetNumEmptyCon();
+    const unsigned __int8 dstEmptySlots = tradeDst->m_Param.m_dbInven.GetNumEmptyCon();
+    if (this->m_pmTrd.bySellItemNum > dstEmptySlots
+        || tradeDst->m_pmTrd.bySellItemNum > srcEmptySlots)
     {
       resultCode = 100;
     }
@@ -1254,6 +1211,54 @@ void CPlayer::pc_DTradeOKRequest(unsigned int *pdwKey)
       {
         resultCode = 5;
         break;
+      }
+    }
+
+    if (!resultCode)
+    {
+      auto isTradeExchangeable = [](CPlayer *player) -> bool {
+        for (int tradeSlot = 0; tradeSlot < 15; ++tradeSlot)
+        {
+          _DTRADE_ITEM *tradeItem = &player->m_pmTrd.DItemNode[tradeSlot];
+          if (!tradeItem->bLoad)
+          {
+            continue;
+          }
+
+          if (tradeItem->byStorageCode >= 8u)
+          {
+            return false;
+          }
+
+          _STORAGE_LIST *storage = player->m_Param.m_pStoragePtr[tradeItem->byStorageCode];
+          if (!storage)
+          {
+            return false;
+          }
+
+          _STORAGE_LIST::_db_con *item =
+            storage->GetPtrFromSerial(static_cast<unsigned __int16>(tradeItem->dwSerial));
+          if (!item)
+          {
+            return false;
+          }
+
+          if (item->m_byTableCode >= 37u)
+          {
+            return false;
+          }
+
+          if (!IsExchangeItem(item->m_byTableCode, item->m_wItemIndex))
+          {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      if (!isTradeExchangeable(this) || !isTradeExchangeable(tradeDst))
+      {
+        resultCode = 10;
       }
     }
 

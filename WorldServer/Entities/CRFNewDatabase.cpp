@@ -59,7 +59,7 @@ void CRFNewDatabase::CheckLogFileHour()
   if (prevHour != localHour)
   {
     char path[512]{};
-    const unsigned int korLocalTime = GetKorLocalTime();
+    const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       path,
       "%sDBLog\\DBProcess_%s_%d_U.log",
@@ -72,7 +72,7 @@ void CRFNewDatabase::CheckLogFileHour()
     }
 
     std::memset(path, 0, sizeof(path));
-    const unsigned int korLocalTimeA = GetKorLocalTime();
+    const unsigned int korLocalTimeA = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       path,
       "%sDBLog\\DBProcess_%s_%d_A.log",
@@ -85,7 +85,7 @@ void CRFNewDatabase::CheckLogFileHour()
     }
 
     std::memset(path, 0, sizeof(path));
-    const unsigned int korLocalTimeErrorW = GetKorLocalTime();
+    const unsigned int korLocalTimeErrorW = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       path,
       "%sDBLog\\DBError_%s_%d_U.log",
@@ -98,7 +98,7 @@ void CRFNewDatabase::CheckLogFileHour()
     }
 
     std::memset(path, 0, sizeof(path));
-    const unsigned int korLocalTimeErrorA = GetKorLocalTime();
+    const unsigned int korLocalTimeErrorA = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(
       path,
       "%sDBLog\\DBError_%s_%d_A.log",
@@ -133,8 +133,16 @@ bool CRFNewDatabase::ConfigUserODBC(
   offset = static_cast<unsigned __int16>(sprintf_s(buffer, "DSN=%s%c", szDSN, 0));
   offset = static_cast<unsigned __int16>(
     offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DESCRIPTION=%s%c", szDatabase, 0));
-  offset = static_cast<unsigned __int16>(
-    offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=%s,%u%c", szServer, wPort, 0));
+  if (bTrustedConnection)
+  {
+    offset = static_cast<unsigned __int16>(
+      offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=(local)%c", 0));
+  }
+  else
+  {
+    offset = static_cast<unsigned __int16>(
+      offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "SERVER=%s,%u%c", szServer, wPort, 0));
+  }
   offset = static_cast<unsigned __int16>(
     offset + sprintf_s(&buffer[offset], sizeof(buffer) - offset, "DATABASE=%s%c", szDatabase, 0));
   if (bTrustedConnection)
@@ -726,7 +734,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
   CreateDirectoryA(path, nullptr);
 
   char buffer[544]{};
-  const unsigned int date = GetKorLocalTime();
+  const unsigned int date = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "%sDBLog\\DBProcess_%s_%u_U.log", m_szLogUpperPath, szOdbcName, date);
   if (!m_ProcessLogW.m_bInit)
   {
@@ -734,7 +742,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
   }
 
   std::memset(buffer, 0, sizeof(buffer));
-  const unsigned int dateA = GetKorLocalTime();
+  const unsigned int dateA = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "%sDBLog\\DBProcess_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateA);
   if (!m_ProcessLogA.m_bInit)
   {
@@ -742,7 +750,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
   }
 
   std::memset(buffer, 0, sizeof(buffer));
-  const unsigned int dateErrorW = GetKorLocalTime();
+  const unsigned int dateErrorW = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "%sDBLog\\DBError_%s_%u_U.log", m_szLogUpperPath, szOdbcName, dateErrorW);
   if (!m_ErrorLogW.m_bInit)
   {
@@ -750,7 +758,7 @@ void CRFNewDatabase::SetLogFile(const char *szUpperLogPath, const char *szOdbcNa
   }
 
   std::memset(buffer, 0, sizeof(buffer));
-  const unsigned int dateErrorA = GetKorLocalTime();
+  const unsigned int dateErrorA = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, "%sDBLog\\DBError_%s_%u_A.log", m_szLogUpperPath, szOdbcName, dateErrorA);
   if (!m_ErrorLogA.m_bInit)
   {

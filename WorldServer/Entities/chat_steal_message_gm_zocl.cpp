@@ -4,7 +4,8 @@
 
 _chat_steal_message_gm_zocl::_chat_steal_message_gm_zocl() : bySize(0) {}
 
-__int64 _chat_steal_message_gm_zocl::size() const
+int _chat_steal_message_gm_zocl::size() const
 {
-  return 282LL - (255 - bySize);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(282LL - (255 - bySize));
 }

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CUnmannedTraderController.h"
 
@@ -237,7 +237,7 @@ bool CUnmannedTraderController::InitLogger()
     return false;
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char path[128]{};
   sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\UnmannedTrader\\UnmannedTrader%u.log", korLocalTime);
   this->m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
@@ -309,7 +309,7 @@ unsigned __int8 CUnmannedTraderController::SelectSearchList(
     return 0;
   }
 
-  if (pData->byPage >= pageCount)
+  if (static_cast<unsigned int>(pData->byPage) >= pageCount)
   {
     *byProcRet = 63;
     return 0;
@@ -421,7 +421,7 @@ unsigned __int8 CUnmannedTraderController::CheckDBItemState(
   return 0;
 }
 
-char CUnmannedTraderController::InsertStateRecord()
+bool CUnmannedTraderController::InsertStateRecord()
 {
   unsigned int stateCount = 0;
   char result = g_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfoCnt(&stateCount);
@@ -434,7 +434,7 @@ char CUnmannedTraderController::InsertStateRecord()
       Log(
         "CUnmannedTraderController::InsertStateRecord()\r\n\t\tnew _unmannedtrader_stade_id_info[%u] NULL!\r\n",
         stateCount);
-      return 0;
+      return false;
     }
 
     result = g_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfo(stateInfo, stateCount);
@@ -456,7 +456,7 @@ char CUnmannedTraderController::InsertStateRecord()
 
       if (matched && stateCount == 14)
       {
-        return 1;
+        return true;
       }
 
       if (g_Main.m_pWorldDB->Truncate_UnmannedTraderItemStateRecord())
@@ -465,72 +465,73 @@ char CUnmannedTraderController::InsertStateRecord()
         unsigned int maxStateCnt = CUnmannedTraderItemState::GetMaxStateCnt();
         if (g_Main.m_pWorldDB->Insert_UnmannedTraderItemStateRecord(maxStateCnt, stateList))
         {
-          return 1;
+          return true;
         }
 
         Log(
           "CUnmannedTraderController::InsertStateRecord()\r\n"
           "\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderItemStateRecord( %u, wszStateName ) Fail!\r\n",
           CUnmannedTraderItemState::GetMaxStateCnt());
-        return 0;
+        return false;
       }
 
       Log(
         "CUnmannedTraderController::InsertStateRecord()\r\n"
         "\t\tg_Main.m_pWorldDB->Truncate_UnmannedTraderItemStateRecord() Fail!\r\n");
-      return 0;
+      return false;
     }
 
     Log(
       "CUnmannedTraderController::InsertStateRecord()\r\n"
       "\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfo() Fail!\r\n");
     operator delete(stateInfo);
-    return 0;
+    return false;
   }
 
   Log(
     "CUnmannedTraderController::InsertStateRecord()\r\n"
     "\t\tg_Main.m_pWorldDB->Select_UnmannedTraderItemStateInfoCnt() Fail!\r\n");
-  return 0;
+  return false;
 }
 
-char CUnmannedTraderController::UpdateClearDanglingOwnerRecord()
+bool CUnmannedTraderController::UpdateClearDanglingOwnerRecord()
 {
   if (g_Main.m_pWorldDB->Update_UnmannedTraderClearDanglingOwnerRecord())
   {
-    return 1;
+    return true;
   }
 
   Log(
     "CUnmannedTraderController::UpdateClearDanglingOwnerRecord()\r\n"
     "\t\tg_Main.m_pWorldDB->Update_UnmannedTraderClearDanglingOwnerRecord() Fail!\r\n");
-  return 0;
+  return false;
 }
 
-char CUnmannedTraderController::InsertDefalutRecord()
+bool CUnmannedTraderController::InsertDefalutRecord()
 {
   int emptyCount = g_Main.m_pWorldDB->Select_UnmannedTraderSingleItemEmptyRecordCnt();
   if (emptyCount >= 0)
   {
-    if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt <= emptyCount
+    if (CUnmannedTraderEnvironmentValue::Unmanned_Trader_Min_Limit_Empty_Record_Cnt
+      <= static_cast<unsigned int>(emptyCount)
       || g_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord(
         CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt))
     {
-      return 1;
+      return true;
     }
 
     Log(
       "CUnmannedTraderController::InsertDefalutRecord()\r\n"
       "\t\tg_Main.m_pWorldDB->Insert_UnmannedTraderSingleDefaultRecord( %u ) Fail!\r\n",
       CUnmannedTraderEnvironmentValue::Unmanned_Trader_Default_Empty_Record_Cnt);
-    return 0;
+    return false;
   }
 
   Log(
     "CUnmannedTraderController::InsertDefalutRecord()\r\n"
     "\t\tiCnt(%d) = g_Main.m_pWorldDB->Select_UnmannedTraderItemEmptyRecordCnt()!\r\n",
     emptyCount);
-  return 0;
+  return false;
 }
 
 void CUnmannedTraderController::Log(const char *fmt, ...)

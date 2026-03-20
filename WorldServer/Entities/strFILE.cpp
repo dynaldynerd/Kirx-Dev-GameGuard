@@ -120,7 +120,7 @@ bool strFILE::word(long double *pdoutVal)
   return true;
 }
 
-unsigned int strFILE::read_line_count()
+int strFILE::read_line_count()
 {
   int lineCount = 0;
   char *readCursor = m_pLoadStr;
@@ -130,5 +130,6 @@ unsigned int strFILE::read_line_count()
       ++lineCount;
     ++readCursor;
   }
-  return static_cast<unsigned int>(lineCount + 1);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(lineCount + 1));
 }

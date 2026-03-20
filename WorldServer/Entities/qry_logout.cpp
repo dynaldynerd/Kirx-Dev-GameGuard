@@ -17,7 +17,7 @@ void _qry_case_lobby_logout::init()
   }
 }
 
-__int64 _qry_case_lobby_logout::size()
+int _qry_case_lobby_logout::size()
 {
   return 196;
 }
@@ -26,7 +26,7 @@ _qry_sheet_logout::_qry_sheet_logout() = default;
 
 _qry_sheet_logout::~_qry_sheet_logout() = default;
 
-__int64 _qry_sheet_logout::size()
+int _qry_sheet_logout::size()
 {
   return 74444;
 }

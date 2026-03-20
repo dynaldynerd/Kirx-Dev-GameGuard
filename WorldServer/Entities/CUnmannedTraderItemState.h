@@ -17,13 +17,13 @@ public:
   CUnmannedTraderItemState();
   ~CUnmannedTraderItemState();
   void Clear();
-  char Set(unsigned __int8 byState);
+  bool Set(unsigned __int8 byState);
   unsigned int GetState() const;
 
-  static __int64 GetMaxStateCnt();
+  static unsigned int GetMaxStateCnt();
   static wchar_t **GetStateStrList();
   static wchar_t *GetStateStrW(unsigned int uiInx);
-  static char PushUpdateState(
+  static bool PushUpdateState(
     unsigned __int8 byType,
     unsigned int dwRegistSerial,
     unsigned __int8 byState,

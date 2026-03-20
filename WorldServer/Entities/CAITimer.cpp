@@ -30,7 +30,7 @@ void CAITimer::Set(unsigned int delay)
   m_BefTime = timeGetTime();
 }
 
-__int64 CAITimer::Check()
+int CAITimer::Check()
 {
   if (m_Delay)
   {

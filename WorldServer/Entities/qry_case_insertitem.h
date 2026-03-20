@@ -12,10 +12,10 @@ struct _qry_case_insertitem
   unsigned int dwRemainTime;
   unsigned __int64 lnUID;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_insertitem::size() const
+inline int _qry_case_insertitem::size() const
 {
   return 32;
 }

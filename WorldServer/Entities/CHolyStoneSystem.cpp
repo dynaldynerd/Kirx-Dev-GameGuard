@@ -576,19 +576,19 @@ bool CHolyStoneSystem::AuthMiningTicket(unsigned int dwKey)
   return authKey.___u0.uiData == dwKey;
 }
 
-char CHolyStoneSystem::ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
+bool CHolyStoneSystem::ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime)
 {
   if (m_SaveData.m_nSceneCode < 2 || m_SaveData.m_nSceneCode >= 6)
   {
-    return 0;
+    return false;
   }
 
   m_SaveData.m_nHolyMasterRace = nRace;
   SetScene(m_SaveData.m_byNumOfTime, nKeeperState, nPassTime, 1);
-  return 1;
+  return true;
 }
 
-char CHolyStoneSystem::ct_State(CPlayer *pOne)
+bool CHolyStoneSystem::ct_State(CPlayer *pOne)
 {
   unsigned int remainMinute = 0;
   bool showStage1 = false;
@@ -697,18 +697,18 @@ char CHolyStoneSystem::ct_State(CPlayer *pOne)
     pOne->SendData_ChatTrans(0, -1, static_cast<unsigned __int8>(-1), false, chat, static_cast<unsigned __int8>(-1), nullptr);
   }
 
-  return 1;
+  return true;
 }
 
-char CHolyStoneSystem::ct_StopBattle()
+bool CHolyStoneSystem::ct_StopBattle()
 {
   if (m_SaveData.m_nSceneCode != 1)
   {
-    return 0;
+    return false;
   }
 
   m_dwCheckTime[1] = GetLoopTime();
-  return 1;
+  return true;
 }
 
 char *CHolyStoneSystem::GetHolyMentalString()
@@ -811,7 +811,7 @@ unsigned int CHolyStoneSystem::GetStartBattleTickTime()
   ATL::CTime now = ATL::CTime::GetCurrentTime();
   ATL::CTimeSpan span = now - startTime;
 
-  const int totalHours = (span.GetDays() * 24) + span.GetHours();
+  const int totalHours = static_cast<int>((span.GetDays() * 24) + span.GetHours());
   const int totalMinutes = (totalHours * 60) + span.GetMinutes();
   return GetLoopTime() - 60000 * totalMinutes;
 }
@@ -1020,7 +1020,7 @@ unsigned __int8 CHolyStoneSystem::GetKeeperDestroyRace()
   return m_byKeeperDestroyRace;
 }
 
-char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode)
+bool CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode)
 {
   if (byCreateCode == 4)
   {
@@ -1028,10 +1028,10 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetLevel() >= 25)
       {
-        const int raceCode = pOne->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
         if (raceCode == GetHolyMasterRace() && !pOne->m_byUserDgr)
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1039,7 +1039,7 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetRaceCode() == GetHolyMasterRace())
       {
-        return 1;
+        return true;
       }
     }
   }
@@ -1049,10 +1049,10 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetLevel() >= 25)
       {
-        const int raceCode = pOne->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(pOne->m_Param.GetRaceCode());
         if (raceCode == GetKeeperDestroyRace() && !pOne->m_byUserDgr)
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1060,12 +1060,12 @@ char CHolyStoneSystem::IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCrea
     {
       if (pOne->m_Param.GetRaceCode() == GetKeeperDestroyRace())
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CHolyStoneSystem::UnAllRegisterPerAutoMine()
@@ -1687,8 +1687,8 @@ void CHolyStoneSystem::GiveHSKQuest()
           for (int k = 0; k < 8 && partyMembers[k]; ++k)
           {
             CPlayer *member = &g_Player[partyMembers[k]->m_wZoneIndex];
-            const int memberRace = member->m_Param.GetRaceCode();
-            const int playerRace = player->m_Param.GetRaceCode();
+            const int memberRace = static_cast<int>(member->m_Param.GetRaceCode());
+            const int playerRace = static_cast<int>(player->m_Param.GetRaceCode());
             if (memberRace == playerRace && member->m_byHSKQuestCode == 100)
             {
               const unsigned __int8 byNumOfTime = GetNumOfTime();
@@ -1726,7 +1726,7 @@ void CHolyStoneSystem::SendHolyStoneHPToRaceBoss()
     if (player->m_bLive)
     {
       const unsigned int serial = player->m_Param.GetCharSerial();
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -1747,7 +1747,7 @@ void CHolyStoneSystem::SendHolyStoneHP(CPlayer *pkPlayer)
   }
 
   const unsigned int serial = pkPlayer->m_Param.GetCharSerial();
-  const unsigned __int8 raceCode = pkPlayer->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pkPlayer->m_Param.GetRaceCode());
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
   if (!ranking->IsCurrentRaceBossGroup(raceCode, serial))
   {
@@ -1784,7 +1784,7 @@ void CHolyStoneSystem::SendNotifyHolyStoneDestroyedToRaceBoss()
     if (player->m_bLive && player->m_bOper)
     {
       const unsigned int serial = player->m_Param.GetCharSerial();
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (CPvpUserAndGuildRankingSystem::Instance()->IsCurrentRaceBossGroup(race, serial))
       {
         g_Network.m_pProcess[0]->LoadSendMsg(
@@ -1815,7 +1815,7 @@ void CHolyStoneSystem::WriteLogPer10Min_Combat()
       continue;
     }
 
-    const int race = player->m_Param.GetRaceCode();
+    const int race = static_cast<int>(player->m_Param.GetRaceCode());
     if (race < 0 || race >= 3)
     {
       continue;
@@ -1955,27 +1955,27 @@ void CHolyStoneSystem::ReceiveDestroyKeeper(CCharacter *pCharacter)
   }
 }
 
-char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode)
+bool CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode)
 {
   if (GetSceneCode() != 1)
   {
-    return 0;
+    return false;
   }
 
   CHolyScheduleData::__HolyScheduleNode *scheduleNode = m_ScheculeData.GetIndex(GetNumOfTime());
   if (!scheduleNode)
   {
-    return 0;
+    return false;
   }
 
   if (GetHolyMasterRace() != -1)
   {
-    return 0;
+    return false;
   }
 
   WriteLogPer10Min_Combat();
 
-  const int attackerRace = pAtter->m_Param.GetRaceCode();
+  const int attackerRace = static_cast<int>(pAtter->m_Param.GetRaceCode());
   SetHolyMasterRace(attackerRace);
   SetDestroyStoneRace(byDestroyStoneRaceCode);
   CRaceBuffManager::Instance()->RequestHolyQuestRaceBuff(2);
@@ -2075,11 +2075,11 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
   SendMsg_ExitStone();
   RecoverPvpCash();
 
-  CRaceBossWinRate::Instance()->UpdateWinCnt(pAtter->m_Param.GetRaceCode());
+  CRaceBossWinRate::Instance()->UpdateWinCnt(static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode()));
 
   _race_battle_log_info qryData{};
   qryData.byNth = static_cast<unsigned __int8>(m_SaveData.m_byNumOfTime);
-  qryData.dwEndTime = GetKorLocalTime();
+  qryData.dwEndTime = static_cast<unsigned int>(GetKorLocalTime());
   qryData.byWinRace = static_cast<unsigned __int8>(pAtter->m_Param.GetRaceCode());
   qryData.byLoseRace = byDestroyStoneRaceCode;
   qryData.dwBossSerilal0 = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(0, 0);
@@ -2103,7 +2103,7 @@ char CHolyStoneSystem::CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestro
       report.size());
   }
 
-  return 1;
+  return true;
 }
 
 void CHolyStoneSystem::PeneltyLoseRace(unsigned __int8 byDestroyedRace)
@@ -2147,7 +2147,7 @@ void CHolyStoneSystem::PeneltyFailRace(unsigned __int8 byFailRace)
     CPlayer *player = &g_Player[j];
     if (player->m_bLive && player->m_bOper && player->m_byHSKQuestCode != 100)
     {
-      const int race = player->m_Param.GetRaceCode();
+      const int race = static_cast<int>(player->m_Param.GetRaceCode());
       if (race == byFailRace)
       {
         const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();

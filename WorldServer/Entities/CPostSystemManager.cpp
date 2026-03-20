@@ -80,7 +80,7 @@ bool CPostSystemManager::InitLogger()
   }
 
   char path[128]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(path, sizeof(path), "..\\ZoneServerLog\\Systemlog\\PostSystem\\PostSystem%u.log", now);
   m_pkLogger->SetWriteLogFile(path, 1, 0, 1, 1);
   return true;
@@ -218,42 +218,42 @@ bool CPostSystemManager::Load()
   return false;
 }
 
-char CPostSystemManager::UpdateDisappearOwnerRecord()
+bool CPostSystemManager::UpdateDisappearOwnerRecord()
 {
   if (g_Main.m_pWorldDB->Update_DisappearOwnerRecord())
   {
-    return 1;
+    return true;
   }
 
   Log(
     "CPostSystemManager::UpdateDisappearOwner\r\n\t\tg_Main.m_pWorldDB->Update_DisappearOwnerRecord() Fail!\r\n");
-  return 0;
+  return false;
 }
 
-char CPostSystemManager::InsertDefaultPSRecord()
+bool CPostSystemManager::InsertDefaultPSRecord()
 {
   const int emptyCount = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord();
   if (emptyCount >= 0)
   {
     if (emptyCount >= 5000 || g_Main.m_pWorldDB->Insert_PSDefaultRecord(5000))
     {
-      return 1;
+      return true;
     }
 
     Log(
       "CPostSystemManager::InsertDefaultPSRecord\r\n\t\tg_Main.m_pWorldDB->Insert_PSDefaultRecord( %d ) Fail!\r\n",
       5000);
-    return 0;
+    return false;
   }
 
   Log(
     "CPostSystemManager::InsertDefaultPSRecord\r\n"
     "\t\tnCount(%d) = g_Main.m_pWorldDB->Select_PostStorageEmptyRecord() Fail!\r\n",
     emptyCount);
-  return 0;
+  return false;
 }
 
-char CPostSystemManager::PostRegistryLoad()
+bool CPostSystemManager::PostRegistryLoad()
 {
   CPostData temp[500]{};
   const unsigned __int8 result = g_Main.m_pWorldDB->Select_PostRegistryData(500, temp);
@@ -261,9 +261,9 @@ char CPostSystemManager::PostRegistryLoad()
   {
     if (result == 2)
     {
-      return 1;
+      return true;
     }
-    return 0;
+    return false;
   }
 
   memcpy_s(m_PostData, sizeof(CPostData) * 500, temp, sizeof(CPostData) * 500);
@@ -278,7 +278,7 @@ char CPostSystemManager::PostRegistryLoad()
     }
   }
 
-  return 1;
+  return true;
 }
 
 
@@ -514,8 +514,16 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   {
     return 2;
   }
-  if (!IsOverLapItem((*pItem)->m_byTableCode)
-      || pItemInfo->byNum <= (*pItem)->m_dwDur)
+  const bool isOverlap = IsOverLapItem((*pItem)->m_byTableCode);
+  // Yorozuya fix (non-IDA parity): validate overlap count range (1..99).
+  if (isOverlap)
+  {
+    if (pItemInfo->byNum == 0 || pItemInfo->byNum > 99)
+    {
+      return 5;
+    }
+  }
+  if (!isOverlap || pItemInfo->byNum <= (*pItem)->m_dwDur)
   {
     return 0;
   }
@@ -523,7 +531,7 @@ unsigned __int8 CPostSystemManager::CheckRegister(
   return 5;
 }
 
-char CPostSystemManager::PostSendRequest(
+bool CPostSystemManager::PostSendRequest(
   CPlayer *pOne,
   char *wszRecvName,
   char *wszTitle,
@@ -536,7 +544,7 @@ char CPostSystemManager::PostSendRequest(
   if (!pOne->m_bPostLoad)
   {
     pOne->SendMsg_PostSendReply(8u);
-    return 0;
+    return false;
   }
 
   unsigned __int8 errCode = CheckRegister(pOne, pItemInfo, dwGold, &item);
@@ -618,7 +626,7 @@ char CPostSystemManager::PostSendRequest(
       else if (!pOne->Emb_DelStorage(0, itemCopy.m_byStorageIndex, false, true, "CPostSystemManager::PostSendRequest()"))
       {
         pOne->SendMsg_PostSendReply(8u);
-        return 0;
+        return false;
       }
     }
 
@@ -691,7 +699,7 @@ char CPostSystemManager::PostSendRequest(
   {
     pOne->pc_UpdateDataForPostSend();
   }
-  return 1;
+  return true;
 }
 
 

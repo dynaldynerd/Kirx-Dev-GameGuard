@@ -428,7 +428,10 @@ unsigned __int8 CUnmannedTraderUserInfo::RegistItem(
   const int level = owner->m_Param.GetLevel();
   if (level == 30 || level == 40 || level == 50 || level == 60)
   {
-    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(owner->m_Param.GetRaceCode(), level, dwTax);
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+      static_cast<unsigned __int8>(owner->m_Param.GetRaceCode()),
+      level,
+      dwTax);
   }
 
   _qry_case_unmandtrader_registsingleitem queryData{};
@@ -511,7 +514,10 @@ void CUnmannedTraderUserInfo::ModifyPrice(
   const int level = g_Player[this->m_wInx].m_Param.GetLevel();
   if (level == 30 || level == 40 || level == 50 || level == 60)
   {
-    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(g_Player[this->m_wInx].m_Param.GetRaceCode(), level, taxDalant);
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+      static_cast<unsigned __int8>(g_Player[this->m_wInx].m_Param.GetRaceCode()),
+      level,
+      taxDalant);
   }
 
   this->m_kRequestState.SetRequest(static_cast<CUnmannedTraderRequestLimiter::REQUEST_TYPE>(1));
@@ -859,7 +865,10 @@ void CUnmannedTraderUserInfo::ReRegist(
     const int level = g_Player[this->m_wInx].m_Param.GetLevel();
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(g_Player[this->m_wInx].m_Param.GetRaceCode(), level, totalTax);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(g_Player[this->m_wInx].m_Param.GetRaceCode()),
+        level,
+        totalTax);
     }
   }
 
@@ -1798,28 +1807,28 @@ void CUnmannedTraderUserInfo::NotifyCloseItem(
   }
 }
 
-char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger)
+bool CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogFile *pkLogger)
 {
   (void)pkLogger;
 
   if (this->m_wInx >= MAX_PLAYER)
   {
-    return 1;
+    return true;
   }
 
   CPlayer *owner = &g_Player[this->m_wInx];
   if (owner->m_dwObjSerial != this->m_dwUserSerial)
   {
-    return 1;
+    return true;
   }
 
-  const int raceCode = owner->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(owner->m_Param.GetRaceCode());
   const unsigned __int8 currentTaxRate =
     static_cast<unsigned __int8>(CUnmannedTraderTaxRateManager::Instance()->GetTaxRate(raceCode) * 100.0f);
 
   if (currentTaxRate == byTax)
   {
-    return 0;
+    return false;
   }
 
   _unmannedtrader_taxrate_inform_zocl msg{};
@@ -1827,7 +1836,7 @@ char CUnmannedTraderUserInfo::CheckIsUpdatedTaxRate(unsigned __int8 byTax, CLogF
 
   unsigned __int8 type[2] = {30, 36};
   g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, type, reinterpret_cast<char *>(&msg), sizeof(msg));
-  return 1;
+  return true;
 }
 
 void CUnmannedTraderUserInfo::CompleteRegist(
@@ -1926,13 +1935,13 @@ void CUnmannedTraderUserInfo::CompleteRegist(
     {
       const unsigned int totalTax = 75 * taxDalant / 100;
       const unsigned int halfTax = totalTax / 2;
-      const int race = owner->m_Param.GetRaceCode();
+      const int race = static_cast<int>(owner->m_Param.GetRaceCode());
       CUnmannedTraderTaxRateManager::Instance()->SetPatriarchTaxMoney(race, halfTax);
       CHonorGuild::Instance()->SetGuildMaintainMoney(race, totalTax, owner->m_dwObjSerial);
     }
     else
     {
-      const int ownerRace = owner->m_Param.GetRaceCode();
+      const int ownerRace = static_cast<int>(owner->m_Param.GetRaceCode());
       const int holyMasterRace = g_HolySys.GetHolyMasterRace();
       unsigned int totalTax = 0;
       if (ownerRace == holyMasterRace)
@@ -2202,7 +2211,7 @@ void CUnmannedTraderUserInfo::CompleteTimeOutClear(unsigned int dwRegistSerial, 
         regItem,
         owner->m_szItemHistoryFileName);
 
-      const int race = owner->m_Param.GetRaceCode();
+      const int race = static_cast<int>(owner->m_Param.GetRaceCode());
       const unsigned __int8 taxRate =
         static_cast<unsigned __int8>(CUnmannedTraderTaxRateManager::Instance()->GetTaxRate(race) * 100.0f);
       const unsigned int price = it->GetPrice();
@@ -2432,13 +2441,13 @@ void CUnmannedTraderUserInfo::CompleteReRegist(
           {
             const unsigned int totalTax = 75 * taxDalant / 100;
             const unsigned int halfTax = totalTax / 2;
-            const int race = owner->m_Param.GetRaceCode();
+            const int race = static_cast<int>(owner->m_Param.GetRaceCode());
             CUnmannedTraderTaxRateManager::Instance()->SetPatriarchTaxMoney(race, halfTax);
             CHonorGuild::Instance()->SetGuildMaintainMoney(race, totalTax, owner->m_dwObjSerial);
           }
           else
           {
-            const int ownerRace = owner->m_Param.GetRaceCode();
+            const int ownerRace = static_cast<int>(owner->m_Param.GetRaceCode());
             const int holyMasterRace = g_HolySys.GetHolyMasterRace();
             unsigned int totalTax = 0;
             if (ownerRace == holyMasterRace)
@@ -2735,7 +2744,10 @@ auto it = Find(dwRegistSerial);
   const int level = pkSellPlayer->m_Param.GetLevel();
   if (level == 30 || level == 40 || level == 50 || level == 60)
   {
-    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(pkSellPlayer->m_Param.GetRaceCode(), level, dwTax);
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+      static_cast<unsigned __int8>(pkSellPlayer->m_Param.GetRaceCode()),
+      level,
+      dwTax);
   }
 
   const unsigned int leftGold = pkSellPlayer->m_Param.GetGold();

@@ -29,7 +29,7 @@ void RFEventBase::Loop()
   // this is not a stub
 }
 
-unsigned __int8 RFEventBase::DoEvent(CPlayer * /*pOne*/)
+int RFEventBase::DoEvent(CPlayer * /*pOne*/)
 {
   // this is not a stub
   return 0;

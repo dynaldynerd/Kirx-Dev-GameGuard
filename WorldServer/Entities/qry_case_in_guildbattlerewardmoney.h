@@ -12,7 +12,7 @@ struct _qry_case_in_guildbattlerewardmoney
   long double out_totalgold;
   long double out_totaldalant;
 
-  __int64 size() const
+  int size() const
   {
     return 40;
   }

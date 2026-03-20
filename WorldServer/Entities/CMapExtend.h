@@ -29,7 +29,7 @@ public:
   void DrawRect();
   void StartScreenPoint(CPoint *pt, CMapData *pMap, CRect *rcWnd);
   void MoveScreenPoint(CPoint *pt);
-  bool EndScreenPoint(CSize *szMap);
+  int EndScreenPoint(CSize *szMap);
   void ConvertToMap(CSize *szMap);
   CSize *GetExtendSize();
   void ScrollMapLeft(int nInterval);

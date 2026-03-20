@@ -53,12 +53,12 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
 static float fPos[3];
 static float fTarPos[3];
 
-char CPlayer::dev_after_effect()
+bool CPlayer::dev_after_effect()
 {
   _skill_fld *record = static_cast<_skill_fld *>(g_Main.m_tblEffectData[3].GetRecord("17"));
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   int unusedFlag = 1;
@@ -76,10 +76,10 @@ char CPlayer::dev_after_effect()
   {
     this->m_bAfterEffect = 1;
   }
-return 1;
+return true;
 }
 
-char CPlayer::dev_all_kill()
+bool CPlayer::dev_all_kill()
 {
   _sec_info *secInfo = this->m_pCurMap->GetSecInfo();
   const int curSecNum = this->GetCurSecNum();
@@ -114,14 +114,14 @@ char CPlayer::dev_all_kill()
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_animus_recall_time_free(bool bFree)
+bool CPlayer::dev_animus_recall_time_free(bool bFree)
 {
   if (this->m_bFreeRecallWaitTime == bFree)
   {
-    return 0;
+    return false;
   }
 
   this->m_bFreeRecallWaitTime = bFree;
@@ -134,33 +134,33 @@ char CPlayer::dev_animus_recall_time_free(bool bFree)
     pbyType,
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_avator_copy(char *pwszDstName)
+bool CPlayer::dev_avator_copy(char *pwszDstName)
 {
   if (!this->m_pUserDB)
   {
-    return 0;
+    return false;
   }
 
   CUserDB *dstUser = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszDstName);
   if (!dstUser)
   {
-    return 0;
+    return false;
   }
 
   CPlayer *dstPlayer = &g_Player[dstUser->m_idWorld.wIndex];
   if (!dstPlayer->m_bLive)
   {
-    return 0;
+    return false;
   }
 
-  const int dstRaceSex = dstPlayer->m_Param.GetRaceSexCode();
-  const int srcRaceSex = this->m_Param.GetRaceSexCode();
+  const int dstRaceSex = static_cast<int>(dstPlayer->m_Param.GetRaceSexCode());
+  const int srcRaceSex = static_cast<int>(this->m_Param.GetRaceSexCode());
   if (dstRaceSex != srcRaceSex)
   {
-    return 0;
+    return false;
   }
 
   this->m_pUserDB->Update_CopyAll(&dstUser->m_AvatorData);
@@ -175,7 +175,7 @@ char CPlayer::dev_avator_copy(char *pwszDstName)
     dstUser->m_dwSerial,
     this->m_szLvHistoryFileName);
   g_Network.Close(0, this->m_ObjID.m_wIndex, false, nullptr);
-  return 1;
+  return true;
 }
 
 bool CPlayer::dev_change_class(char *pszClassCode)
@@ -183,7 +183,7 @@ bool CPlayer::dev_change_class(char *pszClassCode)
   return this->m_pUserDB && this->m_pUserDB->Setting_Class(pszClassCode);
 }
 
-char CPlayer::dev_cont_effect_del()
+bool CPlayer::dev_cont_effect_del()
 {
   for (unsigned __int8 cont = 0; cont < 2; ++cont)
   {
@@ -199,10 +199,10 @@ char CPlayer::dev_cont_effect_del()
       }
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_cont_effect_time(unsigned int dwSec)
+bool CPlayer::dev_cont_effect_time(unsigned int dwSec)
 {
 
     if ( dwSec )
@@ -216,10 +216,10 @@ char CPlayer::dev_cont_effect_time(unsigned int dwSec)
     {
       this->m_nContEffectSec = -1;
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_dalant(unsigned int dwDalant)
+bool CPlayer::dev_dalant(unsigned int dwDalant)
 {
   unsigned int dalant = dwDalant;
   if (dwDalant == static_cast<unsigned int>(-1))
@@ -247,10 +247,10 @@ char CPlayer::dev_dalant(unsigned int dwDalant)
     newDalant,
     newGold,
     this->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_die()
+bool CPlayer::dev_die()
 {
   this->m_nLastBeatenPart = 0;
   if (this->IsRidingUnit())
@@ -263,10 +263,10 @@ char CPlayer::dev_die()
     const int hp = static_cast<int>(this->m_Param.GetHP());
     this->SetDamage(hp, nullptr, 0, false, -1, 0, true);
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode)
+bool CPlayer::dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode)
 {
   _STORAGE_LIST::_db_con items[100];
   unsigned __int8 itemCount = 0;
@@ -274,7 +274,7 @@ char CPlayer::dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode)
   const int tableCode = GetItemTableCode(pszItemCode);
   if (tableCode == -1 || tableCode != 18)
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0;; ++j)
@@ -314,17 +314,17 @@ char CPlayer::dev_drop_item(char *pszItemCode, int nNum, char *pszUpTalCode)
     items,
     itemCount,
     this->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_free_sf_by_class()
+bool CPlayer::dev_free_sf_by_class()
 {
 
     this->m_bFreeSFByClass = 1;
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_full_animus_gauge()
+bool CPlayer::dev_full_animus_gauge()
 {
   for (int j = 0; j < 4; ++j)
   {
@@ -338,7 +338,7 @@ char CPlayer::dev_full_animus_gauge()
     _animus_fld *animusFld = GetAnimusFldFromExp(animusClass, animus->m_dwDur);
     if (!animusFld)
     {
-      return 0;
+      return false;
     }
 
     unsigned int *levelPtr = &animus->m_dwLv;
@@ -370,7 +370,7 @@ char CPlayer::dev_full_animus_gauge()
       reinterpret_cast<char *>(&msgFp),
       static_cast<unsigned __int16>(sizeof(msgFp)));
   }
-  return 1;
+  return true;
 }
 
 bool CPlayer::dev_full_force()
@@ -423,7 +423,7 @@ bool CPlayer::dev_full_force()
   return count != 0;
 }
 
-char CPlayer::dev_full_point()
+bool CPlayer::dev_full_point()
 {
   const int maxHp = this->GetMaxHP();
   this->SetHP(maxHp, false);
@@ -432,10 +432,10 @@ char CPlayer::dev_full_point()
   const int maxSp = this->GetMaxSP();
   this->SetSP(maxSp, false);
   this->SendMsg_Recover();
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_gold(unsigned int dwGold)
+bool CPlayer::dev_gold(unsigned int dwGold)
 {
   unsigned int gold = dwGold;
   if (dwGold == static_cast<unsigned int>(-1))
@@ -463,32 +463,32 @@ char CPlayer::dev_gold(unsigned int dwGold)
     newDalant,
     newGold,
     this->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_goto_monster(CMonster *pMon)
+bool CPlayer::dev_goto_monster(CMonster *pMon)
 {
   if ( !pMon || !pMon->m_bLive || !pMon->m_bOper )
-      return 0;
+      return false;
     this->OutOfMap( pMon->m_pCurMap, pMon->m_wMapLayerIndex, 3u, pMon->m_fCurPos);
     float *targetPos = pMon->m_fCurPos;
     const unsigned __int8 mapCode = this->m_Param.GetMapCode();
     this->SendMsg_GotoRecallResult(0, mapCode, targetPos, 4u);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_goto_npc(CMerchant *pNpc)
+bool CPlayer::dev_goto_npc(CMerchant *pNpc)
 {
   if ( !pNpc || !pNpc->m_bLive || pNpc->m_bCorpse )
-      return 0;
+      return false;
     this->OutOfMap( pNpc->m_pCurMap, pNpc->m_wMapLayerIndex, 3u, pNpc->m_fCurPos);
     float *targetPos = pNpc->m_fCurPos;
     const unsigned __int8 mapCode = this->m_Param.GetMapCode();
     this->SendMsg_GotoRecallResult(0, mapCode, targetPos, 4u);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_half_inven_amount(unsigned __int64 dwAmount)
+bool CPlayer::dev_half_inven_amount(unsigned __int64 dwAmount)
 {
   for (int j = 0;; ++j)
   {
@@ -525,10 +525,10 @@ char CPlayer::dev_half_inven_amount(unsigned __int64 dwAmount)
       this->m_pUserDB->Update_ItemDur(0, j, amount, true);
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_half_point()
+bool CPlayer::dev_half_point()
 {
   const int hp = this->GetHP();
   this->SetHP(hp / 2, true);
@@ -539,16 +539,16 @@ char CPlayer::dev_half_point()
   const int dp = this->GetDP();
   this->SetDP(dp / 2, true);
   this->SendMsg_Recover();
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_init_monster()
+bool CPlayer::dev_init_monster()
 {
   g_Main.gm_MonsterInit(static_cast<CMonster *>(this->m_TargetObject.pObject));
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_inven_empty()
+bool CPlayer::dev_inven_empty()
 {
   _STORAGE_LIST::_db_con items[100];
   unsigned __int8 count = 0;
@@ -583,22 +583,22 @@ char CPlayer::dev_inven_empty()
     items,
     count,
     this->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_item_make_no_use_matrial(bool noUsingMatrial)
+bool CPlayer::dev_item_make_no_use_matrial(bool noUsingMatrial)
 {
   if (this->m_bCheat_makeitem_no_use_matrial == noUsingMatrial)
   {
-    return 0;
+    return false;
   }
 
   this->m_bCheat_makeitem_no_use_matrial = noUsingMatrial;
   this->SendMsg_MakeItemCheatSendButtonEnable(this->m_bCheat_makeitem_no_use_matrial);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_loot_bag()
+bool CPlayer::dev_loot_bag()
 {
     int itemIndex; // [rsp+30h] [rbp-28h]
     char *itemEquipCivil; // [rsp+38h] [rbp-20h]
@@ -609,27 +609,27 @@ char CPlayer::dev_loot_bag()
       if ( itemIndex >= recordCount )
         break;
       itemEquipCivil = GetItemEquipCivil(12, itemIndex);
-      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
       if ( itemEquipCivil[raceSexCode] == '1' )
       {
         itemRecord = g_Main.m_tblItemData[12].GetRecord( itemIndex);
         loot_item(this, itemRecord->m_strCode, 4, 0LL, 0);
-        return 1;
+        return true;
       }
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_loot_free(bool bFree)
+bool CPlayer::dev_loot_free(bool bFree)
 {
 
     if ( this->m_bLootFree == bFree )
-      return 0;
+      return false;
     this->m_bLootFree = bFree;
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
+bool CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
 {
     char Buffer[32]; // [rsp+38h] [rbp-50h] BYREF
     _EditData_fld *editRecord; // [rsp+58h] [rbp-30h]
@@ -638,7 +638,7 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
     sprintf_s(Buffer, "%s_%d", this->m_Param.m_pClassData->m_strCode, byLv);
     editRecord = static_cast<_EditData_fld *>(g_Main.m_tblEditData.GetRecord(Buffer));
     if ( !editRecord )
-      return 0;
+      return false;
     for ( nodeIndex = 0; nodeIndex < 30; ++nodeIndex )
     {
       if (editRecord->m_Node[nodeIndex].m_nEditItemcount > 0)
@@ -648,7 +648,7 @@ char CPlayer::dev_loot_fullitem(unsigned __int8 byLv)
           0LL,
           0);
     }
-    return 1;
+    return true;
 }
 
 bool CPlayer::dev_loot_item(char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum)
@@ -656,7 +656,7 @@ bool CPlayer::dev_loot_item(char *pszItemCode, int nNum, char *pszUpTalCode, int
   return loot_item(this, pszItemCode, nNum, pszUpTalCode, nUpNum);
 }
 
-char CPlayer::dev_loot_material()
+bool CPlayer::dev_loot_material()
 {
   int recordIndex = 0;
   _STORAGE_LIST::_db_con materialItem{};
@@ -683,7 +683,7 @@ char CPlayer::dev_loot_material()
           this->m_wMapLayerIndex,
           this->m_fCurPos,
           1))
-      return 1;
+      return true;
   }
   for (recordIndex = 0; ; ++recordIndex)
   {
@@ -706,7 +706,7 @@ char CPlayer::dev_loot_material()
           this->m_wMapLayerIndex,
           this->m_fCurPos,
           1))
-      return 1;
+      return true;
   }
   for (recordIndex = 0; ; ++recordIndex)
   {
@@ -729,12 +729,12 @@ char CPlayer::dev_loot_material()
           this->m_wMapLayerIndex,
           this->m_fCurPos,
           1))
-      return 1;
+      return true;
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_loot_mine()
+bool CPlayer::dev_loot_mine()
 {
   for (int recordIndex = 0; ; ++recordIndex)
   {
@@ -745,7 +745,7 @@ char CPlayer::dev_loot_mine()
     if (weaponRecord && weaponRecord->m_bExist && weaponRecord->m_nType == 10)
     {
       char *equipCivil = GetItemEquipCivil(6, recordIndex);
-      const int raceSexCode = this->m_Param.GetRaceSexCode();
+      const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
       if (equipCivil[raceSexCode] == '1')
         loot_item(this, weaponRecord->m_strCode, 1, 0LL, 0);
     }
@@ -761,16 +761,16 @@ char CPlayer::dev_loot_mine()
       char *equipCivil = GetItemEquipCivil(16, recordIndex);
       if (equipCivil)
       {
-        const int raceSexCode = this->m_Param.GetRaceSexCode();
+        const int raceSexCode = static_cast<int>(this->m_Param.GetRaceSexCode());
         if (equipCivil[raceSexCode] == '1')
           loot_item(this, batteryRecord->m_strCode, 1, 0LL, 0);
       }
     }
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_loot_tower()
+bool CPlayer::dev_loot_tower()
 {
   const int recordNum = g_Main.m_tblItemData[25].GetRecordNum();
   for (int n = 0; n < recordNum; ++n)
@@ -799,7 +799,7 @@ char CPlayer::dev_loot_tower()
           this->m_fCurPos,
           1))
     {
-      return 1;
+      return true;
     }
 
     for (int j = 0; j < 3 && loot_item(this, record->m_Material[j].strMaterialCode, 1, nullptr, 0); ++j)
@@ -807,14 +807,14 @@ char CPlayer::dev_loot_tower()
     }
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_lv(int nLv)
+bool CPlayer::dev_lv(int nLv)
 {
   if (nLv <= 0)
   {
-    return 0;
+    return false;
   }
 
   const int currentLevel = static_cast<int>(this->m_Param.GetLevel());
@@ -869,19 +869,19 @@ char CPlayer::dev_lv(int nLv)
   {
     this->m_pUserDB->Update_MaxLevel(static_cast<unsigned __int8>(newMaxLevel));
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_make_succ(bool bSucc)
+bool CPlayer::dev_make_succ(bool bSucc)
 {
 
     if ( this->m_bCheat_100SuccMake == bSucc )
-      return 0;
+      return false;
     this->m_bCheat_100SuccMake = bSucc;
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_max_level_ext(unsigned __int8 byMaxLevel)
+bool CPlayer::dev_max_level_ext(unsigned __int8 byMaxLevel)
 {
   this->m_Param.SetMaxLevel( byMaxLevel);
     if ( this->m_pUserDB )
@@ -897,30 +897,30 @@ char CPlayer::dev_max_level_ext(unsigned __int8 byMaxLevel)
       else
         this->SetLevelD( 50);
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_never_die(bool bSet)
+bool CPlayer::dev_never_die(bool bSet)
 {
 
     if ( this->m_bNeverDie == bSet )
-      return 0;
+      return false;
     this->m_bNeverDie = bSet;
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_quest_complete()
+bool CPlayer::dev_quest_complete()
 {
     int slotIndex; // [rsp+20h] [rbp-28h]
     _QUEST_DB_BASE::_LIST *questSlot; // [rsp+28h] [rbp-20h]
     int objectiveIndex; // [rsp+30h] [rbp-18h]
     _Quest_fld *questRecord; // [rsp+38h] [rbp-10h]
   if ( !this->m_pUserDB )
-      return 0;
+      return false;
     for ( slotIndex = 0; ; ++slotIndex )
     {
       if ( slotIndex >= 30 )
-        return 0;
+        return false;
       questSlot = &this->m_Param.m_QuestDB.m_List[slotIndex];
       if ( questSlot->byQuestType != 255 )
         break;
@@ -935,10 +935,10 @@ char CPlayer::dev_quest_complete()
       this->SendMsg_SelectQuestReward( slotIndex);
     else
       this->Emb_CompleteQuest( slotIndex, 255, 255);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_quest_complete_other(char *pwszCharName)
+bool CPlayer::dev_quest_complete_other(char *pwszCharName)
 {
     CUserDB *targetUserDb; // [rsp+20h] [rbp-38h]
     CPlayer *targetPlayer; // [rsp+28h] [rbp-30h]
@@ -948,14 +948,14 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
     _Quest_fld *questRecord; // [rsp+48h] [rbp-10h]
   targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
     if ( !targetUserDb )
-      return 0;
+      return false;
     targetPlayer = &g_Player[targetUserDb->m_idWorld.wIndex];
     if ( !targetPlayer )
-      return 0;
+      return false;
     for ( slotIndex = 0; ; ++slotIndex )
     {
       if ( slotIndex >= 30 )
-        return 0;
+        return false;
       questSlot = &targetPlayer->m_Param.m_QuestDB.m_List[slotIndex];
       if ( questSlot->byQuestType != 255 )
         break;
@@ -970,14 +970,14 @@ char CPlayer::dev_quest_complete_other(char *pwszCharName)
       targetPlayer->SendMsg_SelectQuestReward( slotIndex);
     else
       targetPlayer->Emb_CompleteQuest( slotIndex, 255, 255);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_set_animus_exp(unsigned __int64 dwExpPoint)
+bool CPlayer::dev_set_animus_exp(unsigned __int64 dwExpPoint)
 {
   if (!this->m_pUserDB)
   {
-    return 0;
+    return false;
   }
 
   unsigned __int8 pbyType[2]{22, 11};
@@ -1002,18 +1002,18 @@ char CPlayer::dev_set_animus_exp(unsigned __int64 dwExpPoint)
       static_cast<unsigned __int16>(sizeof(msg)));
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_set_animus_lv(int nAnimusLv)
+bool CPlayer::dev_set_animus_lv(int nAnimusLv)
 {
   if (!this->m_pUserDB)
   {
-    return 0;
+    return false;
   }
   if (nAnimusLv > this->m_Param.GetMaxLevel() || nAnimusLv == 0)
   {
-    return 0;
+    return false;
   }
 
   unsigned __int8 typeExp[2]{22, 11};
@@ -1043,7 +1043,7 @@ char CPlayer::dev_set_animus_lv(int nAnimusLv)
       animusFldFromLv = GetAnimusFldFromLv(animus.m_wItemIndex, nAnimusLv);
       if (!prevAnimusFld || !animusFldFromLv)
       {
-        return 0;
+        return false;
       }
 
       animus.m_dwDur = prevAnimusFld->m_nForLvUpExp + 1;
@@ -1082,23 +1082,23 @@ char CPlayer::dev_set_animus_lv(int nAnimusLv)
       static_cast<unsigned __int16>(sizeof(msgFp)));
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_set_hp(float prob)
+bool CPlayer::dev_set_hp(float prob)
 {
   if (this->IsRidingUnit())
   {
     if (!this->m_pUsingUnit)
     {
-      return 0;
+      return false;
     }
 
     const unsigned __int8 byFrame = this->m_pUsingUnit->byFrame;
     _UnitFrame_fld *record = static_cast<_UnitFrame_fld *>(g_Main.m_tblUnitFrame.GetRecord(byFrame));
     if (!record)
     {
-      return 0;
+      return false;
     }
 
     const int maxGauge = record->m_nUnit_HP;
@@ -1131,51 +1131,51 @@ char CPlayer::dev_set_hp(float prob)
     this->SetHP(newHp, false);
     this->SendMsg_SetHPInform();
   }
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_SetGuildGrade(unsigned __int8 byGrade)
+bool CPlayer::dev_SetGuildGrade(unsigned __int8 byGrade)
 {
     CGuild *guild; // [rsp+20h] [rbp-18h]
   if ( !this->m_Param.m_pGuild )
-      return 0;
+      return false;
     guild = this->m_Param.m_pGuild;
     if ( !byGrade || byGrade > 8u )
-      return 0;
+      return false;
     guild->UpdateGrade(byGrade);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_SetGuildGradeByGuildSerial(unsigned int dwGuildSerial, unsigned __int8 byGrade)
+bool CPlayer::dev_SetGuildGradeByGuildSerial(unsigned int dwGuildSerial, unsigned __int8 byGrade)
 {
     CGuild *guildFromSerial; // [rsp+20h] [rbp-18h]
   guildFromSerial = GetGuildDataFromSerial(g_Guild, 500, dwGuildSerial);
     if ( !guildFromSerial )
-      return 0;
+      return false;
     if ( !byGrade || byGrade > 8u )
-      return 0;
+      return false;
     if ( !dwGuildSerial )
-      return 0;
+      return false;
     guildFromSerial->UpdateGrade(byGrade);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_SetGuildGradeByName(char *uszGuildName, unsigned __int8 byGrade)
+bool CPlayer::dev_SetGuildGradeByName(char *uszGuildName, unsigned __int8 byGrade)
 {
     CGuild *guildFromName; // [rsp+20h] [rbp-18h]
   guildFromName = GetGuildPtrFromName(g_Guild, 500, uszGuildName);
     if ( !guildFromName )
-      return 0;
+      return false;
     if ( !byGrade || byGrade > 8u )
-      return 0;
+      return false;
     if ( !uszGuildName )
-      return 0;
+      return false;
     guildFromName->UpdateGrade(byGrade);
-    return 1;
+    return true;
 }
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
-char CPlayer::dev_trap_attack_grade(int nPoint)
+bool CPlayer::dev_trap_attack_grade(int nPoint)
 {
   this->m_nTrapMaxAttackPnt = nPoint;
     for ( int trapIndex = 0; trapIndex < 20; ++trapIndex )
@@ -1183,11 +1183,11 @@ char CPlayer::dev_trap_attack_grade(int nPoint)
       if (this->m_pmTrp.m_Item[trapIndex].isLoad())
         this->m_pmTrp.m_Item[trapIndex].pItem->m_nTrapMaxAttackPnt = nPoint;
     }
-    return 1;
+    return true;
 }
 #endif
 
-char CPlayer::dev_up_all(int nCum)
+bool CPlayer::dev_up_all(int nCum)
 {
     unsigned int statIndex; // [rsp+20h] [rbp-78h]
     unsigned int skillCountByMastery[12]; // [rsp+38h] [rbp-60h] BYREF
@@ -1197,7 +1197,7 @@ char CPlayer::dev_up_all(int nCum)
     unsigned int newMasteryCum; // [rsp+80h] [rbp-18h]
     float masteryShare; // [rsp+84h] [rbp-14h]
   if ( nCum < 0 )
-      return 0;
+      return false;
     for ( statIndex = 0; (int)statIndex < 2; ++statIndex )
     {
       this->Emb_UpdateStat( statIndex, nCum, 0);
@@ -1258,10 +1258,10 @@ char CPlayer::dev_up_all(int nCum)
       this->SendMsg_StatInform( statIndex + 52, nCum, 0);
     }
     this->ReCalcMaxHFSP( 1, 0);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_all_pt(int nLv)
+bool CPlayer::dev_up_all_pt(int nLv)
 {
     unsigned int newStatValue; // [rsp+20h] [rbp-88h]
     unsigned int statIndex; // [rsp+24h] [rbp-84h]
@@ -1275,9 +1275,9 @@ char CPlayer::dev_up_all_pt(int nLv)
     float forceOffsetSquared; // [rsp+8Ch] [rbp-1Ch]
     float raceOffsetSquared; // [rsp+90h] [rbp-18h]
   if ( nLv <= 0 || nLv > 99 )
-      return 0;
-    baseOffsetSquared = pow(1000.0, 2);
-    const float baseLevelSquared = pow((float)nLv, 2);
+      return false;
+    baseOffsetSquared = static_cast<float>(pow(1000.0, 2));
+    const float baseLevelSquared = static_cast<float>(pow((float)nLv, 2));
     const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0));
     newStatValue = (int)pow((float)(baseRoot + -1000.0) / 2.0, 2);
     for ( statIndex = 0; (int)statIndex < 2; ++statIndex )
@@ -1289,16 +1289,16 @@ char CPlayer::dev_up_all_pt(int nLv)
     this->Emb_UpdateStat( 2u, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(1u, 0, newStatValue);
     this->SendMsg_StatInform( 2u, newStatValue, 0);
-    forceOffsetSquared = pow(100.0, 2);
-    const float forceLevelSquared = pow((float)nLv, 2);
-    const float forceRoot = sqrt(forceOffsetSquared + (float)((float)(4.0 * forceLevelSquared) * 100.0)) + -100.0;
+    forceOffsetSquared = static_cast<float>(pow(100.0, 2));
+    const float forceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float forceRoot = static_cast<float>(sqrt(forceOffsetSquared + (float)((float)(4.0 * forceLevelSquared) * 100.0)) + -100.0);
     newStatValue = (int)pow(forceRoot / 2.0, 2);
     this->Emb_UpdateStat( 3u, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(2u, 0, newStatValue);
     this->SendMsg_StatInform( 3u, newStatValue, 0);
-    const float skillLevelSquared = pow((float)nLv, 2);
-    const float skillLevelPow4 = pow(skillLevelSquared, 2);
-    newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
+    const float skillLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float skillLevelPow4 = static_cast<float>(pow(skillLevelSquared, 2));
+    static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0f) - 1) + 0.0099999998f));
     memset(skillCountByMastery, 0, 32);
     skillRecord = 0LL;
     for ( skillIndex = 0; skillIndex < 48; ++skillIndex )
@@ -1331,9 +1331,9 @@ char CPlayer::dev_up_all_pt(int nLv)
         this->SendMsg_StatInform( statIndex + 4, newMasteryCum, 0);
       }
     }
-    const float forceItemLevelSquared = pow((float)nLv, 2);
-    const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
-    newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
+    const float forceItemLevelSquared = static_cast<float>(pow((float)nLv, 2));
+    const float forceItemLevelPow4 = static_cast<float>(pow(forceItemLevelSquared, 2));
+    static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0f) - 1) + 0.0099999998f));
     for ( statIndex = 0; (int)statIndex < 24; ++statIndex )
     {
       this->Emb_UpdateStat( statIndex + 52, newStatValue, 0);
@@ -1362,29 +1362,29 @@ char CPlayer::dev_up_all_pt(int nLv)
     }
     else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
     {
-      raceOffsetSquared = pow(1000.0, 2);
-      const float raceLevelSquared = pow((float)nLv, 2);
-      const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+      raceOffsetSquared = static_cast<float>(pow(1000.0, 2));
+      const float raceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+      const float raceRoot = static_cast<float>(sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0);
       newStatValue = (int)pow(raceRoot / 2.0, 2);
     }
     this->Emb_UpdateStat( 79, newStatValue, 0);
     this->m_pmMst.UpdateCumPerMast(6u, 0, newStatValue);
     this->SendMsg_StatInform( 79, newStatValue, 0);
     this->ReCalcMaxHFSP( 1, 0);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_cashbag(long double dPoint)
+bool CPlayer::dev_up_cashbag(long double dPoint)
 {
   if (this->GetLevel() < 39)
-      return 0;
+      return false;
     if ( this->m_Param.m_pClassData->m_nGrade < 1 )
-      return 0;
+      return false;
     this->AlterPvPCashBag( dPoint, pm_kill);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_forceitem(int nCum)
+bool CPlayer::dev_up_forceitem(int nCum)
 {
     int slotIndex; // [rsp+30h] [rbp-18h]
     _STORAGE_LIST::_db_con *forceItem; // [rsp+38h] [rbp-10h]
@@ -1392,9 +1392,9 @@ char CPlayer::dev_up_forceitem(int nCum)
 
     clampedCum = nCum;
   if ( nCum < 0 )
-      return 0;
+      return false;
     if ( !this->m_pUserDB )
-      return 0;
+      return false;
     if ( nCum > 16777215 )
       clampedCum = 16777215;
     for ( slotIndex = 0; slotIndex < 88; ++slotIndex )
@@ -1410,17 +1410,17 @@ char CPlayer::dev_up_forceitem(int nCum)
         }
       }
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_forcemastery(unsigned int nCum)
+bool CPlayer::dev_up_forcemastery(unsigned int nCum)
 {
   for ( int forceMasteryIndex = 0; forceMasteryIndex < 24; ++forceMasteryIndex )
       this->Emb_UpdateStat( forceMasteryIndex + 52, nCum, 0);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int nLv)
+bool CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int nLv)
 {
     unsigned int newStatValue; // [rsp+20h] [rbp-38h]
     unsigned int statIndex; // [rsp+24h] [rbp-34h]
@@ -1436,16 +1436,16 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
   if ( nMasteryCode == 3 )
     {
       if ( (int)nMasteryIndex >= 8 )
-        return 0;
+        return false;
     }
     else if ( !_STAT_DB_BASE::IsRangePerMastery(nMasteryCode, nMasteryIndex) )
     {
-      return 0;
+      return false;
     }
     if ( nLv > 99 )
-      return 0;
+      return false;
     if ( nLv < 1 )
-      return 0;
+      return false;
     newStatValue = 0;
     if ( nMasteryCode )
     {
@@ -1453,32 +1453,32 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
       {
         case 1:
         {
-          weaponOffsetSquared = pow(1000.0, 2);
-          const float weaponLevelSquared = pow((float)nLv, 2);
-          const float weaponRoot = sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0;
+          weaponOffsetSquared = static_cast<float>(pow(1000.0, 2));
+          const float weaponLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float weaponRoot = static_cast<float>(sqrt(weaponOffsetSquared + (float)((float)(4.0 * weaponLevelSquared) * 1000.0)) + -1000.0);
           newStatValue = (int)pow(weaponRoot / 2.0, 2);
           break;
         }
         case 2:
         {
-          classOffsetSquared = pow(1000.0, 2);
-          const float classLevelSquared = pow((float)nLv, 2);
-          const float classRoot = sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0;
+          classOffsetSquared = static_cast<float>(pow(1000.0, 2));
+          const float classLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float classRoot = static_cast<float>(sqrt(classOffsetSquared + (float)((float)(4.0 * classLevelSquared) * 1000.0)) + -1000.0);
           newStatValue = (int)pow(classRoot / 2.0, 2);
           break;
         }
         case 4:
         {
-          const float forceItemLevelSquared = pow((float)nLv, 2);
-          const float forceItemLevelPow4 = pow(forceItemLevelSquared, 2);
-          newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0) - 1) + 0.0099999998);
+          const float forceItemLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float forceItemLevelPow4 = static_cast<float>(pow(forceItemLevelSquared, 2));
+          static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(forceItemLevelPow4 / 14.0f) - 1) + 0.0099999998f));
           break;
         }
         case 3:
         {
-          const float skillLevelSquared = pow((float)nLv, 2);
-          const float skillLevelPow4 = pow(skillLevelSquared, 2);
-          newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0) - 1) + 0.0099999998);
+          const float skillLevelSquared = static_cast<float>(pow((float)nLv, 2));
+          const float skillLevelPow4 = static_cast<float>(pow(skillLevelSquared, 2));
+          static_cast<float>(newStatValue = (int)(float)((float)(CalcRoundUp(skillLevelPow4 / 10.0f) - 1) + 0.0099999998f));
           break;
         }
         case 5:
@@ -1501,9 +1501,9 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
           }
           else if ( (unsigned int)this->m_Param.GetRaceCode() == 2 )
           {
-            raceOffsetSquared = pow(1000.0, 2);
-            const float raceLevelSquared = pow((float)nLv, 2);
-            const float raceRoot = sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0;
+            raceOffsetSquared = static_cast<float>(pow(1000.0, 2));
+            const float raceLevelSquared = static_cast<float>(pow((float)nLv, 2));
+            const float raceRoot = static_cast<float>(sqrt(raceOffsetSquared + (float)((float)(4.0 * raceLevelSquared) * 1000.0)) + -1000.0);
             newStatValue = (int)pow(raceRoot / 2.0, 2);
           }
           break;
@@ -1512,13 +1512,13 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
     }
     else
     {
-      baseOffsetSquared = pow(1000.0, 2);
-      const float baseLevelSquared = pow((float)nLv, 2);
-      const float baseRoot = sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0)) + -1000.0;
+      baseOffsetSquared = static_cast<float>(pow(1000.0, 2));
+      const float baseLevelSquared = static_cast<float>(pow((float)nLv, 2));
+      const float baseRoot = static_cast<float>(sqrt(baseOffsetSquared + (float)((float)(4.0 * baseLevelSquared) * 1000.0)) + -1000.0);
       newStatValue = (int)pow(baseRoot / 2.0, 2);
     }
     if ( !newStatValue )
-      return 0;
+      return false;
     if ( nMasteryCode == 3 )
     {
       masterySkillGroupOffset = 196LL * (int)nMasteryIndex;
@@ -1541,26 +1541,26 @@ char CPlayer::dev_up_mastery(int nMasteryCode, unsigned int nMasteryIndex, int n
       this->Emb_UpdateStat( statIndex, newStatValue, 0);
       this->SendMsg_StatInform( statIndex, newStatValue, 0);
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_up_pvp(long double dPoint)
+bool CPlayer::dev_up_pvp(long double dPoint)
 {
   this->AlterPvPPoint(dPoint, cheat, -1);
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_up_skill(char *pszSkillCode, unsigned int nCum)
+bool CPlayer::dev_up_skill(char *pszSkillCode, unsigned int nCum)
 {
     _base_fld *skillRecord; // [rsp+20h] [rbp-18h]
   skillRecord = g_Main.m_tblEffectData[0].GetRecord( pszSkillCode);
     if ( !skillRecord )
-      return 0;
+      return false;
     this->Emb_UpdateStat( skillRecord->m_dwIndex + 4, nCum, 0);
-    return 1;
+    return true;
 }
 
-char CPlayer::dev_view_boss()
+bool CPlayer::dev_view_boss()
 {
   const unsigned __int64 stateWithBossFlag = this->m_dwLastState | 0x10000uLL;
 
@@ -1574,10 +1574,10 @@ char CPlayer::dev_view_boss()
     pbyType,
     reinterpret_cast<char *>(&msg),
     static_cast<unsigned __int16>(sizeof(msg)));
-  return 1;
+  return true;
 }
 
-char CPlayer::dev_view_method(char *pwszDstName)
+bool CPlayer::dev_view_method(char *pwszDstName)
 {
   CPlayer *target = nullptr;
   if (pwszDstName)
@@ -1604,12 +1604,12 @@ char CPlayer::dev_view_method(char *pwszDstName)
 
   if (!target)
   {
-    return 0;
+    return false;
   }
 
   CLogFile log;
   const int currentSec = GetCurrentSec();
-  const unsigned int korTime = GetKorLocalTime();
+  const unsigned int korTime = static_cast<unsigned int>(GetKorLocalTime());
   const char *charNameA = target->m_Param.GetCharNameA();
 
   char buffer[152]{};
@@ -1671,10 +1671,10 @@ char CPlayer::dev_view_method(char *pwszDstName)
     log.Write("%d\t : %f", index, have);
   }
 
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_all_item_muzi(unsigned int nLv)
+bool CPlayer::mgr_all_item_muzi(unsigned int nLv)
 {
     int slotIndex; // [rsp+30h] [rbp-28h]
     _STORAGE_LIST::_db_con *item; // [rsp+38h] [rbp-20h]
@@ -1682,7 +1682,7 @@ char CPlayer::mgr_all_item_muzi(unsigned int nLv)
     unsigned int upgradeState; // [rsp+44h] [rbp-14h]
     signed int upgradeStep; // [rsp+48h] [rbp-10h]
   if ( nLv >= 8 )
-      return 0;
+      return false;
     for ( slotIndex = 0; ; ++slotIndex )
     {
       const unsigned __int8 bagNum = this->m_Param.GetBagNum();
@@ -1709,17 +1709,17 @@ char CPlayer::mgr_all_item_muzi(unsigned int nLv)
         }
       }
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_change_degree(unsigned __int8 nDegree)
+bool CPlayer::mgr_change_degree(unsigned __int8 nDegree)
 {
     this->m_byUserDgr = nDegree;
     this->m_pUserDB->m_byUserDgr = nDegree;
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nLv)
+bool CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nLv)
 {
     int slotIndex; // [rsp+30h] [rbp-28h]
     _STORAGE_LIST::_db_con *item; // [rsp+38h] [rbp-20h]
@@ -1727,7 +1727,7 @@ char CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nL
     unsigned int upgradeState; // [rsp+44h] [rbp-14h]
     signed int upgradeStep; // [rsp+48h] [rbp-10h]
   if ( nLv >= 8 )
-      return 0;
+      return false;
     item = 0LL;
     for ( slotIndex = 0; ; ++slotIndex )
     {
@@ -1766,10 +1766,10 @@ char CPlayer::mgr_defense_item_grace(unsigned __int8 byItemCode, unsigned int nL
         }
       }
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_destroy_system_tower()
+bool CPlayer::mgr_destroy_system_tower()
 {
     _pnt_rect pRect; // [rsp+28h] [rbp-1E0h] BYREF
     int secY; // [rsp+44h] [rbp-1C4h]
@@ -1821,25 +1821,25 @@ char CPlayer::mgr_destroy_system_tower()
                     ".\\Script\\SystemGuardTower.ini");
                 }
                 systemTower->Destroy(0, true);
-                return 1;
+                return true;
               }
             }
           }
         }
       }
     }
-    return 0;
+    return false;
 }
 
-char CPlayer::mgr_dungeon_pass()
+bool CPlayer::mgr_dungeon_pass()
 {
   if (this->m_pCurMap->m_pMapSet->m_nMapType != 1)
   {
-    return 0;
+    return false;
   }
   if (this->m_bMapLoading)
   {
-    return 0;
+    return false;
   }
   if (this->m_pDHChannel)
   {
@@ -1849,7 +1849,7 @@ char CPlayer::mgr_dungeon_pass()
     }
     this->m_pDHChannel->m_MissionMgr.OpenPortal(-1);
   }
-  return 1;
+  return true;
 }
 
 bool CPlayer::mgr_exit_keeper()
@@ -1864,38 +1864,38 @@ bool CPlayer::mgr_exit_stone()
   return 0;
 }
 
-char CPlayer::mgr_free_ride_ship()
+bool CPlayer::mgr_free_ride_ship()
 {
   CMapData *pIntoMap = g_MapOper.GetMap("Transport01");
   if (!pIntoMap)
   {
-    return 0;
+    return false;
   }
   if (!pIntoMap->IsMapIn(fPos))
   {
-    return 0;
+    return false;
   }
 
-  const unsigned __int16 raceCode = this->m_Param.GetRaceCode();
+  const unsigned __int16 raceCode = static_cast<unsigned short>(this->m_Param.GetRaceCode());
   this->OutOfMap(pIntoMap, raceCode, 4u, fPos);
   const unsigned __int8 mapCode = this->m_Param.GetMapCode();
   this->SendMsg_GotoRecallResult(0, mapCode, fPos, 4u);
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_goto_mine()
+bool CPlayer::mgr_goto_mine()
 {
   CMapData *pIntoMap = g_MapOper.GetMap("resources");
   if (!pIntoMap)
   {
-    return 0;
+    return false;
   }
   this->OutOfMap(pIntoMap, 0, 4u, fTarPos);
   this->SendMsg_GotoRecallResult(0, pIntoMap->m_pMapSet->m_dwIndex, fTarPos, 4u);
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
+bool CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
 {
     CTransportShip *transportShip; // [rsp+30h] [rbp-58h]
     _portal_dummy *sourcePortal; // [rsp+38h] [rbp-50h]
@@ -1903,34 +1903,34 @@ char CPlayer::mgr_goto_shipport(int nRaceCode, int nPort)
     _portal_dummy *destinationPortal; // [rsp+48h] [rbp-40h]
     float newPos[12]; // [rsp+58h] [rbp-30h] BYREF
   if ( nRaceCode >= 3 )
-      return 0;
+      return false;
     if ( this->GetCurSecNum() == -1 || this->m_bMapLoading )
-      return 0;
+      return false;
     transportShip = &g_TransportShip[nRaceCode];
     sourcePortal = transportShip->m_pLinkShipMap->GetPortal( 3 * nPort + nRaceCode);
     if ( !sourcePortal )
-      return 0;
+      return false;
     if ( !sourcePortal->m_pPortalRec )
-      return 0;
+      return false;
     destinationMap = g_MapOper.GetMap( sourcePortal->m_pPortalRec->m_strLinkMapCode);
     if ( !destinationMap )
-      return 0;
+      return false;
     destinationPortal = destinationMap->GetPortal( sourcePortal->m_pPortalRec->m_strLinkPortalCode);
     if ( !destinationPortal )
-      return 0;
+      return false;
     if ( !destinationMap->GetRandPosInDummy( destinationPortal->m_pDumPos, newPos, 1) )
       std::memcpy(newPos, destinationPortal->m_pDumPos->m_fCenterPos, 12);
     this->OutOfMap( destinationMap, 0, 4u, newPos);
     const unsigned __int8 mapCode = this->m_Param.GetMapCode();
     this->SendMsg_GotoRecallResult( 0, mapCode, newPos, 4u);
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_goto_stone(unsigned __int8 byRaceCode)
+bool CPlayer::mgr_goto_stone(unsigned __int8 byRaceCode)
 {
     __holy_stone_data *holyStoneData; // [rsp+30h] [rbp-18h]
   if ( byRaceCode >= 3u )
-      return 0;
+      return false;
     holyStoneData = &g_HolySys.m_HolyStoneData[byRaceCode];
     this->OutOfMap( holyStoneData->pCreateMap, 0, 4u, holyStoneData->CreateDummy.m_fCenterPos);
     this->SendMsg_GotoRecallResult(
@@ -1938,24 +1938,24 @@ char CPlayer::mgr_goto_stone(unsigned __int8 byRaceCode)
       holyStoneData->pCreateMap->m_pMapSet->m_dwIndex,
       holyStoneData->CreateDummy.m_fCenterPos,
       4u);
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
+bool CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
 {
   if (this->m_pmTrd.bDTradeMode)
   {
-    return 0;
+    return false;
   }
   if (this->GetCurSecNum() == -1 || this->m_bMapLoading)
   {
-    return 0;
+    return false;
   }
 
   CMapData *pIntoMap = g_MapOper.GetStartMap(nRaceCode);
   if (!pIntoMap)
   {
-    return 0;
+    return false;
   }
 
   float *startPos = nullptr;
@@ -1964,7 +1964,7 @@ char CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
   CMapItemStoreList *storeList = manager->GetMapItemStoreListBySerial(mapSerial);
   if (!storeList)
   {
-    return 0;
+    return false;
   }
 
   const size_t nameLen = std::strlen(pszNPCName);
@@ -1983,35 +1983,35 @@ char CPlayer::mgr_goto_store(unsigned __int8 nRaceCode, char *pszNPCName)
 
   if (!startPos)
   {
-    return 0;
+    return false;
   }
 
   this->OutOfMap(pIntoMap, 0, 4u, startPos);
   const unsigned __int8 mapCode = this->m_Param.GetMapCode();
   this->SendMsg_GotoRecallResult(0, mapCode, startPos, 4u);
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_gotoCoordinates(char *pszMapCode, float fX, float fY, float fZ)
+bool CPlayer::mgr_gotoCoordinates(char *pszMapCode, float fX, float fY, float fZ)
 {
     CMapData *destinationMap; // [rsp+30h] [rbp-48h]
     float targetPos[12]; // [rsp+48h] [rbp-30h] BYREF
   destinationMap = g_MapOper.GetMap( pszMapCode);
     if ( !destinationMap )
-      return 0;
+      return false;
     if ( destinationMap->m_pMapSet->m_nMapType )
-      return 0;
+      return false;
     targetPos[0] = fX;
     targetPos[1] = fY;
     targetPos[2] = fZ;
     if ( !destinationMap->IsMapIn( targetPos) )
-      return 0;
+      return false;
     this->OutOfMap( destinationMap, 0, 4u, targetPos);
     this->SendMsg_GotoRecallResult( 0, destinationMap->m_pMapSet->m_dwIndex, targetPos, 4u);
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float fX, float fY, float fZ)
+bool CPlayer::mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float fX, float fY, float fZ)
 {
     CPlayer *targetPlayer; // [rsp+30h] [rbp-48h]
     CMapData *destinationMap; // [rsp+38h] [rbp-40h]
@@ -2024,33 +2024,33 @@ char CPlayer::mgr_gotoDstCoordinates(char *pwszDstName, char *pszMapCode, float 
     else
     {
       if ( !this->m_TargetObject.pObject )
-        return 0;
+        return false;
       if ( !this->m_TargetObject.pObject->m_bLive )
-        return 0;
+        return false;
       if ( this->m_TargetObject.pObject->m_ObjID.m_byKind || this->m_TargetObject.pObject->m_ObjID.m_byID )
-        return 0;
+        return false;
       if ( this->m_TargetObject.byKind != this->m_TargetObject.pObject->m_ObjID.m_byKind
         || this->m_TargetObject.byID != this->m_TargetObject.pObject->m_ObjID.m_byID )
       {
-        return 0;
+        return false;
       }
       targetPlayer = (CPlayer *)this->m_TargetObject.pObject;
     }
     if ( !targetPlayer )
-      return 0;
+      return false;
     destinationMap = g_MapOper.GetMap( pszMapCode);
     if ( !destinationMap )
-      return 0;
+      return false;
     if ( destinationMap->m_pMapSet->m_nMapType )
-      return 0;
+      return false;
     targetPos[0] = fX;
     targetPos[1] = fY;
     targetPos[2] = fZ;
     if ( !destinationMap->IsMapIn( targetPos) )
-      return 0;
+      return false;
     targetPlayer->OutOfMap( destinationMap, 0, 4u, targetPos);
     targetPlayer->SendMsg_GotoRecallResult( 0, destinationMap->m_pMapSet->m_dwIndex, targetPos, 4u);
-    return 1;
+    return true;
 }
 
 bool CPlayer::mgr_holykeeper_start(int nRace)
@@ -2065,11 +2065,11 @@ bool CPlayer::mgr_holystone_start(int nNumOfTime)
     return 0;
 }
 
-char CPlayer::mgr_item_telekinesis()
+bool CPlayer::mgr_item_telekinesis()
 {
   if (!this->m_pUserDB)
   {
-    return 0;
+    return false;
   }
 
   char result = 0;
@@ -2123,7 +2123,7 @@ char CPlayer::mgr_item_telekinesis()
               dh_event_take,
               item.m_byTableCode,
               item.m_wItemIndex,
-              item.m_dwDur,
+              static_cast<int>(item.m_dwDur),
               itemBox);
           }
 
@@ -2223,10 +2223,10 @@ char CPlayer::mgr_item_telekinesis()
     }
   }
 
-  return result;
+  return (result) != 0;
 }
 
-char CPlayer::mgr_kick(char *pwszCharName)
+bool CPlayer::mgr_kick(char *pwszCharName)
 {
     CUserDB *targetUserDb; // [rsp+30h] [rbp-18h]
   if ( pwszCharName )
@@ -2235,11 +2235,11 @@ char CPlayer::mgr_kick(char *pwszCharName)
       if ( targetUserDb )
       {
         targetUserDb->ForceCloseCommand( 0, 0, 1, "Kick By GM");
-        return 1;
+        return true;
       }
       else
       {
-        return 0;
+        return false;
       }
     }
     else if ( this->m_TargetObject.pObject )
@@ -2248,7 +2248,7 @@ char CPlayer::mgr_kick(char *pwszCharName)
       {
         if ( this->m_TargetObject.pObject->m_ObjID.m_byKind || this->m_TargetObject.pObject->m_ObjID.m_byID )
         {
-          return 0;
+          return false;
         }
         else if ( this->m_TargetObject.byKind == this->m_TargetObject.pObject->m_ObjID.m_byKind
                && this->m_TargetObject.byID == this->m_TargetObject.pObject->m_ObjID.m_byID )
@@ -2259,25 +2259,25 @@ char CPlayer::mgr_kick(char *pwszCharName)
           {
             targetUser->ForceCloseCommand(0, 0, true, "Kick By GM");
           }
-          return 1;
+          return true;
         }
         else
         {
-          return 0;
+          return false;
         }
       }
       else
       {
-        return 0;
+        return false;
       }
     }
     else
     {
-      return 0;
+      return false;
     }
 }
 
-char CPlayer::mgr_make_system_tower(char *pszTowerCode)
+bool CPlayer::mgr_make_system_tower(char *pszTowerCode)
 {
     char wszTran[136]; // [rsp+40h] [rbp-398h] BYREF
     _GuardTowerItem_fld *towerRecord; // [rsp+C8h] [rbp-310h]
@@ -2292,9 +2292,9 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
   M2W(pszTowerCode, wszTran, 128);
     towerRecord = static_cast<_GuardTowerItem_fld *>(g_Main.m_tblItemData[25].GetRecord(pszTowerCode));
     if ( !towerRecord )
-      return 0;
+      return false;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
-      return 0;
+      return false;
     raceIndex = -1;
     for ( iniSlotIndex = 0; iniSlotIndex < 3; ++iniSlotIndex )
     {
@@ -2305,7 +2305,7 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
       }
     }
     if ( raceIndex == -1 )
-      return 0;
+      return false;
     appNameByRace[0] = "BELLATO";
     appNameByRace[1] = "CORA";
     appNameByRace[2] = "ACCRETIA";
@@ -2330,9 +2330,9 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
       }
     }
     if ( nIniIndex == -1 )
-      return 0;
+      return false;
     if ( !CreateSystemTower(this->m_pCurMap, this->m_wMapLayerIndex, this->m_fCurPos, towerRecord->m_dwIndex, raceIndex, nIniIndex) )
-      return 0;
+      return false;
     sprintf_s(KeyName, "Map%d", nIniIndex);
     WritePrivateProfileStringA(
       appNameByRace[raceIndex],
@@ -2350,48 +2350,48 @@ char CPlayer::mgr_make_system_tower(char *pszTowerCode)
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, String, ".\\Script\\SystemGuardTower.ini");
     sprintf_s(KeyName, "Code%d", nIniIndex);
     WritePrivateProfileStringA(appNameByRace[raceIndex], KeyName, towerRecord->m_strCode, ".\\Script\\SystemGuardTower.ini");
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_matchless(bool bMatchless)
+bool CPlayer::mgr_matchless(bool bMatchless)
 {
 
     if ( this->m_bCheat_Matchless == bMatchless )
-      return 0;
+      return false;
     this->m_bCheat_Matchless = bMatchless;
-    return 1;
+    return true;
 }
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
-char CPlayer::mgr_MaxAttackPoint(int nMax)
+bool CPlayer::mgr_MaxAttackPoint(int nMax)
 {
 
     if ( this->m_nMaxAttackPnt == nMax )
-      return 0;
+      return false;
     this->m_nMaxAttackPnt = nMax;
-    return 1;
+    return true;
 }
 #endif
 
-char CPlayer::mgr_pass_sch_one_step()
+bool CPlayer::mgr_pass_sch_one_step()
 {
   g_WorldSch.PassOneStep();
-  return 1;
+  return true;
 }
 
-char CPlayer::mgr_recall_guild_player(char *wszDestCharName)
+bool CPlayer::mgr_recall_guild_player(char *wszDestCharName)
 {
     CPlayer *targetPlayer; // [rsp+30h] [rbp-28h]
     CPlayer *guildMemberPlayer; // [rsp+38h] [rbp-20h]
     int memberIndex; // [rsp+40h] [rbp-18h]
     _guild_member_info *memberInfo; // [rsp+48h] [rbp-10h]
   if ( !wszDestCharName )
-      return 0;
+      return false;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
-      return 0;
+      return false;
     targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
     if ( !targetPlayer )
-      return 0;
+      return false;
     if ( targetPlayer->m_Param.m_pGuild )
     {
       guildMemberPlayer = 0LL;
@@ -2412,11 +2412,11 @@ char CPlayer::mgr_recall_guild_player(char *wszDestCharName)
           }
         }
       }
-      return 1;
+      return true;
     }
     else if ( this->m_dwObjSerial == targetPlayer->m_dwObjSerial )
     {
-      return 0;
+      return false;
     }
     else
     {
@@ -2426,18 +2426,18 @@ char CPlayer::mgr_recall_guild_player(char *wszDestCharName)
         this->m_wMapLayerIndex,
         this->m_fCurPos,
         200);
-      return 1;
+      return true;
     }
 }
 
-char CPlayer::mgr_recall_mon(char *pszMonCode, int nCreateNum)
+bool CPlayer::mgr_recall_mon(char *pszMonCode, int nCreateNum)
 {
     int createIndex; // [rsp+54h] [rbp-14h]
     int createCount; // [rsp+80h] [rbp+18h]
 
     createCount = nCreateNum;
   if ( this->m_pCurMap->m_pMapSet->m_nMapType == 1 )
-      return 0;
+      return false;
     if ( nCreateNum > 100 )
       createCount = 100;
     for ( createIndex = 0;
@@ -2446,22 +2446,22 @@ char CPlayer::mgr_recall_mon(char *pszMonCode, int nCreateNum)
           ++createIndex )
     {
     }
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_recall_party_player(char *wszDestCharName)
+bool CPlayer::mgr_recall_party_player(char *wszDestCharName)
 {
     CPlayer *targetPlayer; // [rsp+30h] [rbp-28h]
     CPartyPlayer **partyMembers; // [rsp+38h] [rbp-20h]
     CPlayer *partyMemberPlayer; // [rsp+40h] [rbp-18h]
     int memberIndex; // [rsp+48h] [rbp-10h]
   if ( !wszDestCharName )
-      return 0;
+      return false;
     if ( this->m_pCurMap->m_pMapSet->m_nMapType )
-      return 0;
+      return false;
     targetPlayer = GetPtrPlayerFromName(g_Player, MAX_PLAYER, wszDestCharName);
     if ( !targetPlayer )
-      return 0;
+      return false;
     if ( targetPlayer->m_pPartyMgr->IsPartyMode() )
     {
       partyMembers = targetPlayer->m_pPartyMgr->GetPtrPartyMember();
@@ -2478,16 +2478,16 @@ char CPlayer::mgr_recall_party_player(char *wszDestCharName)
               this->m_fCurPos,
               120);
         }
-        return 1;
+        return true;
       }
       else
       {
-        return 0;
+        return false;
       }
     }
     else if ( this->m_dwObjSerial == targetPlayer->m_dwObjSerial )
     {
-      return 0;
+      return false;
     }
     else
     {
@@ -2497,26 +2497,25 @@ char CPlayer::mgr_recall_party_player(char *wszDestCharName)
         this->m_wMapLayerIndex,
         this->m_fCurPos,
         120);
-      return 1;
+      return true;
     }
 }
 
-char CPlayer::mgr_recall_player(char *pwszCharName)
+bool CPlayer::mgr_recall_player(char *pwszCharName)
 {
     const char *sourceCharacterName; // rax
     CUserDB *targetUserDb; // [rsp+20h] [rbp-18h]
     CPlayer *targetPlayer; // [rsp+28h] [rbp-10h]
-  if ( this->m_pCurMap->m_pMapSet->m_nMapType )
-      return 0;
+  // non-IDA: allow recall regardless of current map type.
     targetUserDb = SearchAvatorWithName(g_UserDB, MAX_PLAYER, pwszCharName);
     if ( !targetUserDb )
-      return 0;
+      return false;
     targetPlayer = &g_Player[targetUserDb->m_idWorld.wIndex];
     if ( !targetPlayer->m_bLive )
-      return 0;
+      return false;
     sourceCharacterName = this->m_Param.GetCharNameW();
     targetPlayer->pc_GotoAvatorRequest( sourceCharacterName);
-    return 1;
+    return true;
 }
 
 bool CPlayer::mgr_resurrect_player(char *pwszCharName)
@@ -2531,21 +2530,21 @@ bool CPlayer::mgr_resurrect_player(char *pwszCharName)
 }
 
 #if 0 // duplicate implementation exists in CPlayer.cpp
-char CPlayer::mgr_set_animus_attack_point(int nPoint)
+bool CPlayer::mgr_set_animus_attack_point(int nPoint)
 {
 
     if ( !this->m_pUserDB )
-      return 0;
+      return false;
     if ( this->m_nAnimusAttackPnt == nPoint )
-      return 0;
+      return false;
     this->m_nAnimusAttackPnt = nPoint;
     if ( this->m_pRecalledAnimusChar )
       this->m_pRecalledAnimusChar->m_nMaxAttackPnt = nPoint;
-    return 1;
+    return true;
 }
 #endif
 
-char CPlayer::mgr_TrunkInit()
+bool CPlayer::mgr_TrunkInit()
 {
     int trunkSlotIndex; // [rsp+30h] [rbp-18h]
     int extTrunkSlotIndex; // [rsp+34h] [rbp-14h]
@@ -2557,7 +2556,7 @@ char CPlayer::mgr_TrunkInit()
       if ( this->m_Param.m_pStoragePtr[5]->m_pStorageList[trunkSlotIndex].m_bLoad
         && !this->Emb_DelStorage( 5u, trunkSlotIndex, 0, 0, "CPlayer::mgr_TrunkInit()") )
       {
-        return 0;
+        return false;
       }
     }
     this->m_Param.m_byTrunkSlotNum = 0;
@@ -2574,10 +2573,10 @@ char CPlayer::mgr_TrunkInit()
     this->m_Param.m_byExtTrunkSlotNum = 0;
     this->m_Param.m_dbExtTrunk.SetUseListNum(0);
     this->m_pUserDB->Update_ExtTrunkSlotNum(this->m_Param.GetExtTrunkSlotNum());
-    return 1;
+    return true;
 }
 
-char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char byBlockType)
+bool CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char byBlockType)
 {
     const char *gmCharacterName; // rax
     CUserDB *targetUserDb; // [rsp+40h] [rbp-168h]
@@ -2604,17 +2603,17 @@ char CPlayer::mgr_user_ban(char *uszCharName, int iPeriod, char *uszReason, char
       strncpy(gmName, gmCharacterName, 31);
       std::memcpy(messageType, "2n", 2);
       g_Network.m_pProcess[1]->LoadSendMsg( 0, messageType, &blockType, 87);
-      return 1;
+      return true;
     }
     else
     {
       sprintf_s(chatMessage, sizeof(chatMessage), "%s is not connected", uszCharName);
       this->SendData_ChatTrans( 0, 0xFFFFFFFF, 0xFFu, 0, chatMessage, 0xFFu, 0LL);
-      return 0;
+      return false;
     }
 }
 
-char CPlayer::mgr_whisper(char *pwszMsg)
+bool CPlayer::mgr_whisper(char *pwszMsg)
 {
     int playerIndex; // [rsp+40h] [rbp-18h]
     char *senderName; // [rsp+48h] [rbp-10h]
@@ -2623,7 +2622,7 @@ char CPlayer::mgr_whisper(char *pwszMsg)
       if ( g_UserDB[playerIndex].m_bActive && g_UserDB[playerIndex].m_byUserDgr >= 2u )
       {
         senderName = this->m_Param.GetCharNameW();
-        const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+        const unsigned __int8 raceCode = static_cast<unsigned char>(this->m_Param.GetRaceCode());
         g_Player[playerIndex].SendData_ChatTrans(
           
           5u,
@@ -2635,7 +2634,7 @@ char CPlayer::mgr_whisper(char *pwszMsg)
           senderName);
       }
     }
-    return 1;
+    return true;
 }
 
 char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode, int nUpNum)

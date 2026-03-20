@@ -50,12 +50,12 @@ public:
   void Clear();
   void ClearRank();
   void ClearOwner();
-  __int64 Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
-  char CheckEmpty(_pvppoint_guild_rank_info *pkInfo);
-  char Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData);
+  int Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
+  bool CheckEmpty(_pvppoint_guild_rank_info *pkInfo);
+  bool Load(_pvppoint_guild_rank_info *pkInfo, bool *bNoData);
   bool LoadToday(_pvppoint_guild_rank_info *pkInfo);
   bool LoadPrev(_pvppoint_guild_rank_info *pkInfo);
-  char LoadOwner(_weeklyguildrank_owner_info *pkInfo);
+  bool LoadOwner(_weeklyguildrank_owner_info *pkInfo);
   bool Update(_pvppoint_guild_rank_info *pkInfo);
   bool UpdateOwner(_weeklyguildrank_owner_info *pkInfo);
   CGuild *GetOwnerGuild(unsigned __int8 byRace, unsigned __int8 byNth);

@@ -185,7 +185,7 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
 
   if (pParam->pAttacker)
   {
-    m_byEventRaceCode = pParam->pAttacker->m_Param.GetRaceCode();
+    m_byEventRaceCode = static_cast<unsigned char>(pParam->pAttacker->m_Param.GetRaceCode());
     if (pParam->pAttacker->m_pPartyMgr && pParam->pAttacker->m_pPartyMgr->IsPartyMode())
     {
       m_dwEventPartyBoss = pParam->pAttacker->m_pPartyMgr->m_pPartyBoss->m_id.dwSerial;
@@ -226,7 +226,7 @@ bool CItemBox::Create(_itembox_create_setdata *pParam, bool bHide)
       {
         std::strcpy(m_szThrowerID, throwerPlayer->m_pUserDB->m_szAccountID);
       }
-      m_byThrowerRaceCode = throwerPlayer->m_Param.GetRaceCode();
+      m_byThrowerRaceCode = static_cast<unsigned char>(throwerPlayer->m_Param.GetRaceCode());
       m_byThrowerDegree = throwerPlayer->m_byUserDgr;
       if (m_szThrowerItemHistoryFileName)
       {

@@ -13,7 +13,7 @@ public:
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
-  BOOL OnInitDialog() override;
+  int OnInitDialog() override;
 
   DECLARE_MESSAGE_MAP()
 };

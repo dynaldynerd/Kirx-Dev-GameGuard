@@ -46,7 +46,7 @@ void _talk_crystal_matrial_combine_node::Init()
   }
 }
 
-char _talk_crystal_matrial_combine_node::Set(
+bool _talk_crystal_matrial_combine_node::Set(
   int nMixIndex,
   int nNeedItemNum,
   unsigned __int8 byTableCode,
@@ -62,21 +62,21 @@ char _talk_crystal_matrial_combine_node::Set(
   void *src = MakeLoot(m_byTableCode, m_wItemIndex);
   if (!src)
   {
-    return 0;
+    return false;
   }
 
   std::memcpy(&m_MakeItem, src, sizeof(m_MakeItem));
-  return 1;
+  return true;
 }
 
-char _talk_crystal_matrial_combine_node::Push(
+bool _talk_crystal_matrial_combine_node::Push(
   _STORAGE_LIST::_db_con *pItem,
   unsigned __int8 byUseCount,
   unsigned __int8 byClientIndex)
 {
   if (m_nMatrialCount >= 24)
   {
-    return 0;
+    return false;
   }
 
   m_matrialList[m_nMatrialCount].m_pMatrial = pItem;
@@ -84,7 +84,7 @@ char _talk_crystal_matrial_combine_node::Push(
   m_matrialList[m_nMatrialCount].m_byClientIndex = byClientIndex;
   m_nMatrialOverlapCount += byUseCount;
   ++m_nMatrialCount;
-  return 1;
+  return true;
 }
 
 void _talk_crystal_matrial_combine_node::Consume(int nConsumeCount)
@@ -344,7 +344,7 @@ unsigned __int8 CTalkCrystalCombineManager::CombineProcess()
   return 3;
 }
 
-char CTalkCrystalCombineManager::Doit(
+bool CTalkCrystalCombineManager::Doit(
   CPlayer *pPlayer,
   unsigned __int8 byExchangeNum,
   _talik_crystal_exchange_clzo::_list *pList)
@@ -362,7 +362,7 @@ char CTalkCrystalCombineManager::Doit(
     send.byErrorCode = errCode;
     const unsigned __int16 nLen = send.size();
     g_Network.m_pProcess[0]->LoadSendMsg(pPlayer->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&send), nLen);
-    return 0;
+    return false;
   }
 
   int makeNodeCount = 0;
@@ -436,7 +436,7 @@ char CTalkCrystalCombineManager::Doit(
 
   const unsigned __int16 nLen = send.size();
   g_Network.m_pProcess[0]->LoadSendMsg(pPlayer->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&send), nLen);
-  return 1;
+  return true;
 }
 
 _talk_crystal_matrial_combine_node *CTalkCrystalCombineManager::MakeMixNode(

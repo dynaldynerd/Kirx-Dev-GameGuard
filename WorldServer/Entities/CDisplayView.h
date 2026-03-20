@@ -12,7 +12,7 @@ public:
   void SetExtendMode(int bExtend);
 
 protected:
-  virtual BOOL OnInitDialog() override;
+  virtual int OnInitDialog() override;
   void DoDataExchange(CDataExchange *pDX) override;
 
   afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -26,7 +26,7 @@ protected:
   afx_msg void OnMouseMove(UINT nFlags, CPoint point);
   afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
   afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-  afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+  afx_msg int OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 
   DECLARE_MESSAGE_MAP()
 

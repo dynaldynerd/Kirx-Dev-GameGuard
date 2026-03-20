@@ -7,7 +7,7 @@ struct _qry_case_updateweeklyguildpvppointsum
   unsigned int dwGuildSerial;
   long double dPvpPoint;
 
-  __int64 size() const
+  int size() const
   {
     return 16;
   }

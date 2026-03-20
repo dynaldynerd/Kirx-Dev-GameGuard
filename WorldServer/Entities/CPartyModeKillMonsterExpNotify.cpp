@@ -49,22 +49,22 @@ CPartyModeKillMonsterExpNotify::CPartyModeKillMonsterExpNotify()
 
 CPartyModeKillMonsterExpNotify::~CPartyModeKillMonsterExpNotify() = default;
 
-char CPartyModeKillMonsterExpNotify::Add(CPlayer *pkMember, float fExp)
+bool CPartyModeKillMonsterExpNotify::Add(CPlayer *pkMember, float fExp)
 {
   if (!pkMember || !pkMember->m_pPartyMgr || !pkMember->m_pPartyMgr->IsPartyMode())
   {
-    return 0;
+    return false;
   }
 
   if (m_byMemberCnt < 8u)
   {
     m_kInfo[m_byMemberCnt].SetGetExp(pkMember, fExp);
     ++m_byMemberCnt;
-    return 1;
+    return true;
   }
 
   m_byMemberCnt = 8;
-  return 0;
+  return false;
 }
 
 void CPartyModeKillMonsterExpNotify::Notify()

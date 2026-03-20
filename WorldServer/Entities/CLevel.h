@@ -35,7 +35,7 @@ public:
   float GetFirstYpos(float *fCenterPos, float *fMin, float *fMax);
   void LoadLevel(const char *szFileName);
   void ReleaseLevel();
-  __int64 IsLoadedBsp();
+  int IsLoadedBsp();
   unsigned int GetEnvironment();
   void SetEnvironment(int nEnv);
   void ReLoadAllMaterial();

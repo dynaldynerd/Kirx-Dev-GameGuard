@@ -156,7 +156,7 @@ void CHonorGuild::SendNextHonorGuildList(unsigned __int16 wIndex, unsigned __int
   }
 }
 
-char CHonorGuild::LoadDB()
+bool CHonorGuild::LoadDB()
 {
   for (int j = 0; j < 3; ++j)
   {
@@ -164,14 +164,14 @@ char CHonorGuild::LoadDB()
     if (result != 2 && result)
     {
       CAsyncLogger::Instance()->FormatLog(8, "Faild Current CHonorGuild::LoadDB(RACE:%d)", j);
-      return 0;
+      return false;
     }
 
     result = g_Main.m_pWorldDB->Select_HonorGuild(j, m_pNextHonorGuild[j], true);
     if (result == 1)
     {
       CAsyncLogger::Instance()->FormatLog(8, "Faild Next CHonorGuild::LoadDB(RACE:%d)", j);
-      return 0;
+      return false;
     }
 
     if (m_pNextHonorGuild[j]->byListNum)
@@ -185,7 +185,7 @@ char CHonorGuild::LoadDB()
       if (result == 1)
       {
         CAsyncLogger::Instance()->FormatLog(8, "Faild Load ClearHonorGuild(RACE:%d)", j);
-        return 0;
+        return false;
       }
 
       if (dwSerial[0] == -1)
@@ -197,7 +197,7 @@ char CHonorGuild::LoadDB()
   }
 
   CAsyncLogger::Instance()->FormatLog(8, "Success CHonorGuild::LoadDB()");
-  return 1;
+  return true;
 }
 
 unsigned __int8 CHonorGuild::FindHonorGuildRank(unsigned __int8 byRace, unsigned int dwGuildSerial)
@@ -217,16 +217,16 @@ unsigned __int8 CHonorGuild::FindHonorGuildRank(unsigned __int8 byRace, unsigned
   return static_cast<unsigned __int8>(-1);
 }
 
-char CHonorGuild::CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial)
+bool CHonorGuild::CheckHonorGuild(unsigned __int8 byRace, unsigned int dwSerial)
 {
   for (int j = 0; j < m_pCurrHonorGuild[byRace]->byListNum; ++j)
   {
     if (m_pCurrHonorGuild[byRace]->GuildList[j].dwGuildSerial == dwSerial)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 unsigned __int8 CHonorGuild::UpdateNextHonorGuild(unsigned __int8 byRace)

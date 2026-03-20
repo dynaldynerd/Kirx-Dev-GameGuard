@@ -10,11 +10,11 @@ struct  _moveout_user_result_zone
   unsigned __int16 wPort;
   unsigned int dwZoneMasterKey;
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline unsigned __int16 _moveout_user_result_zone::size() const
+inline int _moveout_user_result_zone::size() const
 {
   return 11;
 }

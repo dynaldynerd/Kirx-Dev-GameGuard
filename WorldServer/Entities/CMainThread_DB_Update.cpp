@@ -677,7 +677,7 @@ char CMainThread::_db_Update_Base(
   sprintf_s(source, sizeof(source), "Slot=%d,", pNewData->dbAvator.m_bySlotIndex);
   std::strcat(buffer, source);
 
-  unsigned int localTime = GetKorLocalTime();
+  unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(source, sizeof(source), "LastConnTime=%u WHERE Serial=%d", localTime, dwSerial);
   std::strcat(buffer, source);
 
@@ -2278,7 +2278,7 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
     sprintf_s(buffer, 128, "TLStatus = %u,", pNewData->dbTimeLimitInfo.byTLStatus);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
-  unsigned int localTime = GetKorLocalTime();
+  unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 128, "LastLogoutTime=%u,", localTime);
   strcat_s(pSzQuery, nBufferSize, buffer);
 
@@ -2464,6 +2464,25 @@ char CMainThread::_db_Update_CryMsg(
   char *buffer = pSzQuery;
   sprintf_s(pSzQuery, kDbQuerySize, "UPDATE tbl_CryMsg SET ");
   size_t initialLength = std::strlen(buffer);
+  for (int index = 0; index < 10; ++index)
+  {
+    char *newMsg = pNewData->dbBossCry.m_List[index].wszCryMsg;
+    if (!IsSQLValidString(newMsg))
+    {
+      newMsg[0] = '\0';
+    }
+  }
+  if (pOldData)
+  {
+    for (int index = 0; index < 10; ++index)
+    {
+      char *oldMsg = pOldData->dbBossCry.m_List[index].wszCryMsg;
+      if (!IsSQLValidString(oldMsg))
+      {
+        oldMsg[0] = '\0';
+      }
+    }
+  }
 
   for (int index = 0; index < 10; ++index)
   {

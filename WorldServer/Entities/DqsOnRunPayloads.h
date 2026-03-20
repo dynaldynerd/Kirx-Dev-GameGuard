@@ -74,20 +74,6 @@ struct  _qry_case_insertguild_local
   unsigned int tmp_Esterserial;
 };
 
-struct _qry_case_inputgmoney_local
-{
-  unsigned int in_pusherserial;
-  char in_w_pushername[17];
-  unsigned int tmp_guildindex;
-  unsigned int in_guildserial;
-  unsigned int dwAddGold;
-  unsigned int dwAddDalant;
-  unsigned __int8 in_date[4];
-  long double out_totalgold;
-  long double out_totaldalant;
-  unsigned __int8 byProcRet;
-};
-
 struct qry_case_golden_box_item
 {
   int nDBSerial;

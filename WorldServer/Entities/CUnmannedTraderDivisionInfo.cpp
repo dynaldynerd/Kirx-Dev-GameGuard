@@ -202,9 +202,9 @@ unsigned int CUnmannedTraderDivisionInfo::GetID()
   return this->m_dwID;
 }
 
-unsigned long long CUnmannedTraderDivisionInfo::GetSize()
+unsigned int CUnmannedTraderDivisionInfo::GetSize()
 {
-  return this->m_vecClass.size();
+  return static_cast<unsigned int>(this->m_vecClass.size());
 }
 
 bool CUnmannedTraderDivisionInfo::IsExistSortTypeID(unsigned int dwID)
@@ -249,9 +249,10 @@ bool CUnmannedTraderDivisionInfo::IsValidID(unsigned int dwID)
   return true;
 }
 
-unsigned __int64 CUnmannedTraderDivisionInfo::GetMaxClassCnt()
+unsigned int CUnmannedTraderDivisionInfo::GetMaxClassCnt()
 {
-  return this->m_vecClass.size();
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(this->m_vecClass.size());
 }
 
 bool CUnmannedTraderDivisionInfo::GetGroupID(
@@ -277,7 +278,7 @@ bool CUnmannedTraderDivisionInfo::GetGroupID(
   return false;
 }
 
-char CUnmannedTraderDivisionInfo::IsExistGroupID(
+bool CUnmannedTraderDivisionInfo::IsExistGroupID(
   unsigned __int8 byDivision,
   unsigned __int8 byClass,
   unsigned __int8 bySubClass,
@@ -287,15 +288,15 @@ char CUnmannedTraderDivisionInfo::IsExistGroupID(
   *dwListIndex = 0;
   if (this->m_dwID != byDivision)
   {
-    return 0;
+    return false;
   }
   if (bySortType == 255)
   {
-    return this->m_vecSortType.empty() ? 1 : 0;
+    return (this->m_vecSortType.empty() ? 1 : 0) != 0;
   }
   if (!IsExistSortTypeID(bySortType))
   {
-    return 0;
+    return false;
   }
 
   unsigned int classIndex = 0;
@@ -304,12 +305,12 @@ char CUnmannedTraderDivisionInfo::IsExistGroupID(
     if (info && info->IsExistGroupID(byClass, bySubClass))
     {
       *dwListIndex = classIndex;
-      return 1;
+      return true;
     }
     ++classIndex;
   }
 
-  return 0;
+  return false;
 }
 
 CUnmannedTraderSortType *CUnmannedTraderDivisionInfo::GetSortType(unsigned __int8 bySortType)

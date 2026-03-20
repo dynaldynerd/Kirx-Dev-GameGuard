@@ -17,6 +17,8 @@
 #include "lt_qry_case_unmandtrader_select_list.h"
 
 CLogTypeDBTaskManager *CLogTypeDBTaskManager::ms_Instance;
+std::atomic<bool> CLogTypeDBTaskManager::s_bDBProcDestroy = false;
+std::mutex CLogTypeDBTaskManager::s_mtxDestroy;
 
 CLogTypeDBTask::CLogTypeDBTask()
   : m_dwInx(255),
@@ -378,10 +380,17 @@ CLogTypeDBTaskManager::CLogTypeDBTaskManager()
     m_kPool(),
     m_pkLogger(nullptr)
 {
+  // Yorozuya fix (non-IDA parity): reset stop flag for ProcThread.
+  s_bDBProcDestroy = false;
 }
 
 CLogTypeDBTaskManager::~CLogTypeDBTaskManager()
 {
+  // Yorozuya fix (non-IDA parity): signal DB thread to stop before teardown.
+  {
+    std::unique_lock<std::mutex> lock(s_mtxDestroy);
+    s_bDBProcDestroy = true;
+  }
   CleanUp();
 }
 
@@ -441,7 +450,7 @@ bool CLogTypeDBTaskManager::InitLogger()
     return false;
   }
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   char dest[128]{};
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\Systemlog\\LogTypeDBTaskError%u.log", korLocalTime);
   m_pkLogger->SetWriteLogFile(dest, 1, 0, 1, 1);
@@ -495,12 +504,20 @@ void CLogTypeDBTaskManager::ProcThread(CLogTypeDBTaskManager *pParam)
 {
   CLogTypeDBTaskManager *manager = pParam;
   int loopCount = 0;
-  while (manager->GetDBProc())
+  while (manager->GetDBProc() && !s_bDBProcDestroy.load())
   {
-    manager->DBProcess();
+    {
+      std::unique_lock<std::mutex> lock(s_mtxDestroy);
+      if (s_bDBProcDestroy.load())
+      {
+        break;
+      }
+      manager->DBProcess();
+    }
     if (++loopCount > 100)
     {
       Sleep(1u);
+      loopCount = 0;
     }
   }
   _endthread();
@@ -666,6 +683,13 @@ bool CLogTypeDBTaskManager::IsInitialized()
 
 void CLogTypeDBTaskManager::CleanUp()
 {
+  // Yorozuya fix (non-IDA parity): stop DB thread before tearing down resources.
+  {
+    std::unique_lock<std::mutex> lock(s_mtxDestroy);
+    s_bDBProcDestroy = true;
+  }
+  m_bDBProc = false;
+
   if (m_pkWorldDB)
   {
     delete m_pkWorldDB;
@@ -677,6 +701,4 @@ void CLogTypeDBTaskManager::CleanUp()
     delete m_pkLogger;
     m_pkLogger = nullptr;
   }
-
-  m_bDBProc = false;
 }

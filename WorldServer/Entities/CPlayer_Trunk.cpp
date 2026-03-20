@@ -197,6 +197,36 @@ bool GetTrunkSlotRaceBySerial(
   return false;
 }
 
+bool CheckTrunkItemRace(CPlayer *player, unsigned __int16 wItemSerial, unsigned __int8 byStorageCode)
+{
+  if (!player)
+  {
+    return false;
+  }
+
+  if (byStorageCode == 5)
+  {
+    const unsigned __int8 race = player->m_Param.GetTrunkSlotRace(wItemSerial);
+    if (race == static_cast<unsigned __int8>(-1))
+    {
+      return false;
+    }
+    return race == player->m_Param.GetRaceCode();
+  }
+
+  if (byStorageCode == 7)
+  {
+    const unsigned __int8 race = player->m_Param.GetExtTrunkSlotRace(wItemSerial);
+    if (race == static_cast<unsigned __int8>(-1))
+    {
+      return false;
+    }
+    return race == player->m_Param.GetRaceCode();
+  }
+
+  return true;
+}
+
 bool IsEconomyFeeLevel(int level)
 {
   return level == 30 || level == 40 || level == 50 || level == 60;
@@ -277,7 +307,10 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwSub);
     }
   }
 
@@ -415,7 +448,10 @@ void CPlayer::pc_TrunkExtendRequest()
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwSub);
     }
   }
 
@@ -481,6 +517,11 @@ void CPlayer::pc_TrunkAlterItemSlotRequest(
     return;
   }
 
+  if ((byStorageIndex == 5 || byStorageIndex == 7) && !CheckTrunkItemRace(this, item->m_wSerial, byStorageIndex))
+  {
+    return;
+  }
+
   item->m_byClientIndex = byClientSlotIndex;
   UpdateStorageClientSlotInUserDB(this, byStorageIndex, item->m_byStorageIndex, byClientSlotIndex);
 }
@@ -540,6 +581,12 @@ void CPlayer::pc_TrunkResDivision(
       else if (pTargetOre->m_bLock)
       {
         byErrCode = 11;
+      }
+      else if ((byStorageIndex == 5 || byStorageIndex == 7)
+               && (!CheckTrunkItemRace(this, wStartSerial, byStorageIndex)
+                   || !CheckTrunkItemRace(this, wTarSerial, byStorageIndex)))
+      {
+        byErrCode = 17;
       }
       else if (!IsOverLapItem(pStartOre->m_byTableCode) || !IsOverLapItem(pTargetOre->m_byTableCode))
       {
@@ -616,6 +663,12 @@ void CPlayer::pc_TrunkPotionDivision(
       else if (pTargetPotion->m_bLock)
       {
         byRetCode = static_cast<char>(-11);
+      }
+      else if ((byStorageIndex == 5 || byStorageIndex == 7)
+               && (!CheckTrunkItemRace(this, wStartSerial, byStorageIndex)
+                   || !CheckTrunkItemRace(this, wTarSerial, byStorageIndex)))
+      {
+        byRetCode = 17;
       }
       else if (pStartPotion->m_byTableCode != 13 || pTargetPotion->m_byTableCode != 13)
       {
@@ -746,14 +799,17 @@ void CPlayer::pc_TrunkIoMoveRequest(
           if (byStartStorageIndex == 5 || byStartStorageIndex == 7)
           {
             dwConsumDalant = static_cast<unsigned int>(
-              GetItemStoragePrice(pFixingItem->m_byTableCode, pFixingItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+              static_cast<int>(GetItemStoragePrice(
+                pFixingItem->m_byTableCode,
+                pFixingItem->m_wItemIndex,
+                static_cast<int>(this->m_Param.GetRaceCode()))));
             if (IsOverLapItem(pFixingItem->m_byTableCode))
             {
               dwConsumDalant *= static_cast<unsigned int>(pFixingItem->m_dwDur);
             }
 
             const unsigned __int64 taxAdjusted =
-              static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+              static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
               * static_cast<unsigned __int64>(dwConsumDalant);
             dwConsumDalant = static_cast<unsigned int>(taxAdjusted / 10000);
           }
@@ -764,20 +820,10 @@ void CPlayer::pc_TrunkIoMoveRequest(
           }
           else
           {
-            const int raceCode = this->m_Param.GetRaceCode();
-            if (byStartStorageIndex == 5)
+            if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+                && !CheckTrunkItemRace(this, wItemSerial, byStartStorageIndex))
             {
-              if (this->m_Param.GetTrunkSlotRace(wItemSerial) != raceCode)
-              {
-                byRetCode = 17;
-              }
-            }
-            else if (byStartStorageIndex == 7)
-            {
-              if (this->m_Param.GetExtTrunkSlotRace(wItemSerial) != raceCode)
-              {
-                byRetCode = 17;
-              }
+              byRetCode = 17;
             }
           }
         }
@@ -822,7 +868,10 @@ void CPlayer::pc_TrunkIoMoveRequest(
       const int level = this->m_Param.GetLevel();
       if (IsEconomyFeeLevel(level))
       {
-        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwConsumDalant);
+        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+          static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+          level,
+          dwConsumDalant);
       }
     }
   }
@@ -913,7 +962,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
           else if (!IsItemEquipCivil(
                      pStartItem->m_byTableCode,
                      pStartItem->m_wItemIndex,
-                     this->m_Param.GetRaceSexCode()))
+                     static_cast<unsigned char>(this->m_Param.GetRaceSexCode())))
           {
             byRetCode = 44;
           }
@@ -949,7 +998,7 @@ void CPlayer::pc_TrunkIoSwapRequest(
           else if (!IsItemEquipCivil(
                      pTargetItem->m_byTableCode,
                      pTargetItem->m_wItemIndex,
-                     this->m_Param.GetRaceSexCode()))
+                     static_cast<unsigned char>(this->m_Param.GetRaceSexCode())))
           {
             byRetCode = 44;
           }
@@ -973,14 +1022,17 @@ void CPlayer::pc_TrunkIoSwapRequest(
           if (pFeeItem)
           {
             dwConsumDalant = static_cast<unsigned int>(
-              GetItemStoragePrice(pFeeItem->m_byTableCode, pFeeItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+              static_cast<int>(GetItemStoragePrice(
+                pFeeItem->m_byTableCode,
+                pFeeItem->m_wItemIndex,
+                static_cast<int>(this->m_Param.GetRaceCode()))));
             if (IsOverLapItem(pFeeItem->m_byTableCode))
             {
               dwConsumDalant *= static_cast<unsigned int>(pFeeItem->m_dwDur);
             }
 
             const unsigned __int64 taxAdjusted =
-              static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+              static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
               * static_cast<unsigned __int64>(dwConsumDalant);
             dwConsumDalant = static_cast<unsigned int>(taxAdjusted / 10000);
           }
@@ -989,19 +1041,15 @@ void CPlayer::pc_TrunkIoSwapRequest(
           {
             byRetCode = 6;
           }
-          else if (byStartStorageIndex == 5)
+          else if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+                   && !CheckTrunkItemRace(this, wStartItemSerial, byStartStorageIndex))
           {
-            if (this->m_Param.GetTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
-            {
-              byRetCode = 17;
-            }
+            byRetCode = 17;
           }
-          else if (byStartStorageIndex == 7)
+          else if ((byTarStorageIndex == 5 || byTarStorageIndex == 7)
+                   && !CheckTrunkItemRace(this, wTarItemSerial, byTarStorageIndex))
           {
-            if (this->m_Param.GetExtTrunkSlotRace(wStartItemSerial) != this->m_Param.GetRaceCode())
-            {
-              byRetCode = 17;
-            }
+            byRetCode = 17;
           }
         }
       }
@@ -1087,7 +1135,10 @@ void CPlayer::pc_TrunkIoSwapRequest(
     const int level = this->m_Param.GetLevel();
     if (IsEconomyFeeLevel(level))
     {
-      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwConsumDalant);
+      CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+        level,
+        dwConsumDalant);
     }
   }
 
@@ -1172,17 +1223,31 @@ void CPlayer::pc_TrunkIoMergeRequest(
       }
       else
       {
+        if ((byStartStorageIndex == 5 || byStartStorageIndex == 7)
+            && !CheckTrunkItemRace(this, wStartItemSerial, byStartStorageIndex))
+        {
+          byRetCode = 17;
+        }
+        else if ((byTarStorageIndex == 5 || byTarStorageIndex == 7)
+                 && !CheckTrunkItemRace(this, wTarItemSerial, byTarStorageIndex))
+        {
+          byRetCode = 17;
+        }
+
         if ((byStartStorageIndex == 5 && byTarStorageIndex != 7) || (byStartStorageIndex == 7 && byTarStorageIndex != 5))
         {
           dwSub = static_cast<unsigned int>(
-            GetItemStoragePrice(pStartItem->m_byTableCode, pStartItem->m_wItemIndex, this->m_Param.GetRaceCode()));
+            static_cast<int>(GetItemStoragePrice(
+              pStartItem->m_byTableCode,
+              pStartItem->m_wItemIndex,
+              static_cast<int>(this->m_Param.GetRaceCode()))));
           if (IsOverLapItem(pStartItem->m_byTableCode))
           {
             dwSub *= wMoveAmount;
           }
 
           const unsigned __int64 taxAdjusted =
-            static_cast<unsigned __int64>(eGetTexRate(this->m_Param.GetRaceCode()) + 10000)
+            static_cast<unsigned __int64>(eGetTexRate(static_cast<int>(this->m_Param.GetRaceCode())) + 10000)
             * static_cast<unsigned __int64>(dwSub);
           dwSub = static_cast<unsigned int>(taxAdjusted / 10000);
         }
@@ -1210,7 +1275,10 @@ void CPlayer::pc_TrunkIoMergeRequest(
       const int level = this->m_Param.GetLevel();
       if (IsEconomyFeeLevel(level))
       {
-        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(this->m_Param.GetRaceCode(), level, dwSub);
+        CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+          static_cast<unsigned __int8>(this->m_Param.GetRaceCode()),
+          level,
+          dwSub);
       }
     }
   }

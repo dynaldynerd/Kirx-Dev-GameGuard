@@ -166,10 +166,11 @@ void CMapTab::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, 1005, m_trMap);
 }
 
-BOOL CMapTab::OnSetActive()
+int CMapTab::OnSetActive()
 {
   g_Main.m_GameMsg.PackingMsg(1007, 0, 0, 0);
-  return CPropertyPage::OnSetActive();
+  const int result = static_cast<int>(CPropertyPage::OnSetActive());
+  return result;
 }
 
 void CMapTab::UpdateTab()
@@ -286,16 +287,17 @@ void CServerTab::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, 1000, m_trServer);
 }
 
-BOOL CServerTab::OnInitDialog()
+int CServerTab::OnInitDialog()
 {
   CPropertyPage::OnInitDialog();
   return TRUE;
 }
 
-BOOL CServerTab::OnSetActive()
+int CServerTab::OnSetActive()
 {
   g_Main.m_GameMsg.PackingMsg(1005, 0, 0, 0);
-  return CPropertyPage::OnSetActive();
+  const int result = static_cast<int>(CPropertyPage::OnSetActive());
+  return result;
 }
 
 void CServerTab::UpdateServerTab()
@@ -359,18 +361,20 @@ void CIPXTab::DoDataExchange(CDataExchange *pDX)
   DDX_Text(pDX, 1030, m_edCoraNum);
 }
 
-BOOL CIPXTab::OnSetActive()
+int CIPXTab::OnSetActive()
 {
   m_bUpdate = true;
   SetTimer(0, 1000, nullptr);
-  return CPropertyPage::OnSetActive();
+  const int result = static_cast<int>(CPropertyPage::OnSetActive());
+  return result;
 }
 
-BOOL CIPXTab::OnKillActive()
+int CIPXTab::OnKillActive()
 {
   KillTimer(0);
   m_bUpdate = false;
-  return CPropertyPage::OnKillActive();
+  const int result = static_cast<int>(CPropertyPage::OnKillActive());
+  return result;
 }
 
 void CIPXTab::OnTimer(UINT_PTR nIDEvent)
@@ -441,18 +445,20 @@ void CTCPTab::DoDataExchange(CDataExchange *pDX)
   DDX_Text(pDX, 1041, m_edSaveFail);
 }
 
-BOOL CTCPTab::OnSetActive()
+int CTCPTab::OnSetActive()
 {
   m_bUpdate = true;
   SetTimer(0, 1000, nullptr);
-  return CPropertyPage::OnSetActive();
+  const int result = static_cast<int>(CPropertyPage::OnSetActive());
+  return result;
 }
 
-BOOL CTCPTab::OnKillActive()
+int CTCPTab::OnKillActive()
 {
   KillTimer(0);
   m_bUpdate = false;
-  return CPropertyPage::OnKillActive();
+  const int result = static_cast<int>(CPropertyPage::OnKillActive());
+  return result;
 }
 
 void CTCPTab::OnTimer(UINT_PTR nIDEvent)
@@ -513,22 +519,24 @@ void CObjectTab::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, 1025, m_trObject);
 }
 
-BOOL CObjectTab::OnSetActive()
+int CObjectTab::OnSetActive()
 {
   m_btAuto.SetWindowText(_T("Auto"));
   m_bAutoUpdate = false;
   g_Main.m_GameMsg.PackingMsg(1006, 0, 0, 0);
-  return CPropertyPage::OnSetActive();
+  const int result = static_cast<int>(CPropertyPage::OnSetActive());
+  return result;
 }
 
-BOOL CObjectTab::OnKillActive()
+int CObjectTab::OnKillActive()
 {
   if (m_bAutoUpdate)
   {
     KillTimer(0);
     m_bAutoUpdate = false;
   }
-  return CPropertyPage::OnKillActive();
+  const int result = static_cast<int>(CPropertyPage::OnKillActive());
+  return result;
 }
 
 void CObjectTab::OnTimer(UINT_PTR nIDEvent)

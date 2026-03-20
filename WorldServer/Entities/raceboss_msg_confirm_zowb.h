@@ -11,11 +11,11 @@ struct  _raceboss_msg_confirm_zowb
   char wszMasterName[17];
   char wszMsg[255];
 
-  unsigned __int16 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline unsigned __int16 _raceboss_msg_confirm_zowb::size() const
+inline int _raceboss_msg_confirm_zowb::size() const
 {
   return 281;
 }

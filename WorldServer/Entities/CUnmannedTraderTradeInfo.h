@@ -10,7 +10,7 @@ public:
   CUnmannedTraderTradeInfo();
   ~CUnmannedTraderTradeInfo();
 
-  char Init();
+  bool Init();
   void Loop();
   void LoadINI();
   void SaveINI();

@@ -11,11 +11,11 @@ struct  _sel_char_result_zone
   unsigned int dwDalant;
   unsigned int dwGold;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline __int64 _sel_char_result_zone::size() const
+inline int _sel_char_result_zone::size() const
 {
   return 14;
 }

@@ -24,7 +24,7 @@ struct _qry_case_lobby_logout
 
   _qry_case_lobby_logout();
   void init();
-  __int64 size();
+  int size();
 };
 
 struct _qry_sheet_logout
@@ -39,6 +39,6 @@ struct _qry_sheet_logout
 
   _qry_sheet_logout();
   ~_qry_sheet_logout();
-  __int64 size();
+  int size();
 };
 #pragma pack(pop)

@@ -12,7 +12,7 @@ struct  _qry_case_amine_workstate
   bool bWorking;
 
   _qry_case_amine_workstate();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -21,7 +21,7 @@ inline _qry_case_amine_workstate::_qry_case_amine_workstate()
 {
 }
 
-inline __int64 _qry_case_amine_workstate::size() const
+inline int _qry_case_amine_workstate::size() const
 {
   return 8;
 }

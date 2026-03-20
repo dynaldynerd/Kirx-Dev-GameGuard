@@ -15,7 +15,7 @@ struct  _qry_case_request_refund
     unsigned __int16 wIdx,
     unsigned int dwS,
     unsigned __int64 dwRef);
-  __int64 size() const;
+  int size() const;
 };
 
 inline _qry_case_request_refund::_qry_case_request_refund()
@@ -35,7 +35,7 @@ inline _qry_case_request_refund::_qry_case_request_refund(
 {
 }
 
-inline __int64 _qry_case_request_refund::size() const
+inline int _qry_case_request_refund::size() const
 {
   return 16;
 }

@@ -194,7 +194,7 @@ bool CItemStoreManager::InitLogger()
   if (this->m_pkLogger)
   {
     char Buffer[144];
-    unsigned int KorLocalTime = GetKorLocalTime();
+    unsigned int KorLocalTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(Buffer, sizeof(Buffer), "..\\ZoneServerLog\\Systemlog\\ItemStoreSystem\\ItemStoreSystem%u.log", KorLocalTime);
     this->m_pkLogger->SetWriteLogFile(Buffer, 1, 0, 1, 1);
     return true;
@@ -449,11 +449,11 @@ void _qry_case_all_store_limit_item::__list::init()
   }
 }
 
-char _qry_case_all_store_limit_item::Init(unsigned int dwStoreNum)
+bool _qry_case_all_store_limit_item::Init(unsigned int dwStoreNum)
 {
   if (!dwStoreNum)
   {
-    return 0;
+    return false;
   }
 
   if (pStoreList)
@@ -464,13 +464,13 @@ char _qry_case_all_store_limit_item::Init(unsigned int dwStoreNum)
   pStoreList = new (std::nothrow) __list[dwStoreNum];
   if (!pStoreList)
   {
-    return 0;
+    return false;
   }
 
   dwMax = dwStoreNum;
   dwCount = 0;
   DataInit();
-  return 1;
+  return true;
 }
 
 void _qry_case_all_store_limit_item::DataInit()
@@ -519,7 +519,7 @@ char CItemStoreManager::SelectTotalRecordNum(unsigned int *pdwTotalNum)
   return 0;
 }
 
-char CItemStoreManager::InsertNotEnoughLimitItemRecord(int nNum)
+bool CItemStoreManager::InsertNotEnoughLimitItemRecord(int nNum)
 {
   unsigned int serial[4]{};
   for (int j = 0; j < nNum; ++j)
@@ -528,11 +528,11 @@ char CItemStoreManager::InsertNotEnoughLimitItemRecord(int nNum)
     {
       Log(
         "CItemStoreManager::InsertNotEnoughLimitItemRecord\r\n\t\tg_Main.m_pWorldDB->Insert_LimitItemRecord() Fail!\r\n");
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
 char CItemStoreManager::SelectStoreLimitItem()

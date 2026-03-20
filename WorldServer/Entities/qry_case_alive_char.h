@@ -14,15 +14,16 @@ struct  _qry_case_alive_char
 
   _qry_case_alive_char();
   ~_qry_case_alive_char();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
 inline _qry_case_alive_char::_qry_case_alive_char() = default;
 inline _qry_case_alive_char::~_qry_case_alive_char() = default;
 
-inline __int64 _qry_case_alive_char::size() const
+inline int _qry_case_alive_char::size() const
 {
-  return 296LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(296LL);
 }
 

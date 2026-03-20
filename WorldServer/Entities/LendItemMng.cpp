@@ -46,7 +46,7 @@ bool LendItemMng::Initialize()
   }
 
   char logPath[126]{};
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(logPath, "..\\ZoneServerLog\\SystemLog\\PartiallyPaid\\LendLog%u.log", now);
   _kLogSys.SetWriteLogFile(logPath, 1, 0, 1, 1);
   return true;

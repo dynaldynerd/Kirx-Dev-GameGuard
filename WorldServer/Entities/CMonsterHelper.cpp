@@ -38,7 +38,7 @@ void _NEAR_DATA::Init()
   bCanYouGoThere = 0;
 }
 
-bool CMonsterHelper::CheckPreAttackRangeTargetAbleCharacter(CMonster *pMon, CGameObject *pTarget)
+int CMonsterHelper::CheckPreAttackRangeTargetAbleCharacter(CMonster *pMon, CGameObject *pTarget)
 {
   const float dist = Get3DSqrt(pMon->m_fCurPos, pTarget->m_fCurPos);
   const float baseRate = (90.0f - dist) * 0.001f + pMon->m_pMonRec->m_fOffensiveRate;
@@ -48,7 +48,7 @@ bool CMonsterHelper::CheckPreAttackRangeTargetAbleCharacter(CMonster *pMon, CGam
     successRate = 1.0f;
   }
   const float threshold = (1.0f - successRate) * 100.0f;
-  return threshold <= static_cast<float>(rand() % 100);
+  return (threshold <= static_cast<float>(rand() % 100)) ? 1 : 0;
 }
 
 float CMonsterHelper::GetAngle(float *mon, float *plr)
@@ -128,7 +128,7 @@ void CMonsterHelper::HierarcyHelpCast(CMonster *pMon)
   }
 }
 
-bool CMonsterHelper::IsInSector(float *chkpos, float *src, float *dest, float angle, float radius, float *pfDist)
+int CMonsterHelper::IsInSector(float *chkpos, float *src, float *dest, float angle, float radius, float *pfDist)
 {
   float destPos[3];
   std::memcpy(destPos, dest, sizeof(destPos));
@@ -150,7 +150,7 @@ bool CMonsterHelper::IsInSector(float *chkpos, float *src, float *dest, float an
   }
   if (dist > radius)
   {
-    return false;
+    return 0;
   }
 
   float lookDir[3]{
@@ -162,7 +162,7 @@ bool CMonsterHelper::IsInSector(float *chkpos, float *src, float *dest, float an
   Normalize(lookDir);
   const float dot = (targetDir[0] * lookDir[0]) + (targetDir[1] * lookDir[1]) + (targetDir[2] * lookDir[2]);
   const float degAngle = static_cast<float>(std::acos(dot)) * 360.0f / 6.283184f;
-  return (angle / 2.0f) > degAngle;
+  return ((angle / 2.0f) > degAngle) ? 1 : 0;
 }
 
 CMonster *CMonsterHelper::SearchNearMonsterByDistance(CMonster *pMon, int dwDist)
@@ -492,11 +492,11 @@ CPlayer *CMonsterHelper::SearchNearPlayer(CMonster *pMon, int nType)
   return reinterpret_cast<CPlayer *>(selected);
 }
 
-bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
+int CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
 {
   if (mon->IsRoateMonster())
   {
-    return false;
+    return 0;
   }
   if (!mon->m_bMove)
   {
@@ -505,7 +505,7 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
     {
       if (attempt >= 5)
       {
-        return false;
+        return 0;
       }
 
       if (!parent && mon->m_pDumPosition)
@@ -527,7 +527,7 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
         }
         if (moveDistance <= 2.0f)
         {
-          return false;
+          return 0;
         }
 
         const double angle = 6.283185307 * angleValue / 65535.0;
@@ -557,21 +557,21 @@ bool CMonsterHelper::SearchPatrolMovePos(CMonster *mon, float (*NewTar)[3])
             reinterpret_cast<float *const>(NewTar),
             &scratch))
       {
-        return true;
+        return 1;
       }
 
       if (attempt >= 4)
       {
         scratch[1] = mon->m_fCurPos[1];
         std::memcpy(NewTar, scratch, sizeof(float[3]));
-        return true;
+        return 1;
       }
     }
   }
-  return false;
+  return 0;
 }
 
-bool CMonsterHelper::SearchTargetMovePos_MovingTarget(
+int CMonsterHelper::SearchTargetMovePos_MovingTarget(
   CMonster *pMon,
   CCharacter *pTargetCharacter,
   float (*tarPos)[3])
@@ -580,7 +580,7 @@ bool CMonsterHelper::SearchTargetMovePos_MovingTarget(
   const double dist = GetSqrt(pTargetCharacter->m_fCurPos, pMon->m_fCurPos);
   if (range >= dist && range >= 1.0f)
   {
-    return false;
+    return 0;
   }
 
   CMonsterHelper::GetDirection(
@@ -588,17 +588,17 @@ bool CMonsterHelper::SearchTargetMovePos_MovingTarget(
     reinterpret_cast<float (*)[3]>(pTargetCharacter->m_fTarPos),
     tarPos,
     50.0f);
-  return true;
+  return 1;
 }
 
-bool CMonsterHelper::SearchTargetMovePos_StopTarget(
+int CMonsterHelper::SearchTargetMovePos_StopTarget(
   CMonster *pMon,
   CCharacter *pTargetCharacter,
   float (*tarPos)[3])
 {
   if (!pTargetCharacter || !pMon)
   {
-    return false;
+    return 0;
   }
 
   float dist = pMon->GetAttackRange();
@@ -606,7 +606,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
   const double space = Get3DSqrt(pTargetCharacter->m_fCurPos, pMon->m_fCurPos);
   if (dist >= space && dist >= 1.0f)
   {
-    return false;
+    return 0;
   }
 
   const float angle = CMonsterHelper::GetAngle(pMon->m_fCurPos, pTargetCharacter->m_fCurPos);
@@ -632,7 +632,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
   {
     if (!pTargetCharacter->InsertSlot(pMon, nearSlot))
     {
-      return false;
+      return 0;
     }
     const float slotAngle = 2.0f * 3.1415926535f * static_cast<float>(nearSlot + 1) / slots;
     std::memcpy(tarPos, pTargetCharacter->m_fCurPos, sizeof(float[3]));
@@ -654,7 +654,7 @@ bool CMonsterHelper::SearchTargetMovePos_StopTarget(
       (*tarPos)[2] = (*tarPos)[2] + static_cast<float>(fallbackDz);
     }
   }
-  return true;
+  return 1;
 }
 
 void CMonsterHelper::TransPort(CMonster *mon, float *tarPos)

@@ -57,14 +57,14 @@ void CUnmannedTraderItemState::Clear()
   this->m_eState = STATE::NONE;
 }
 
-char CUnmannedTraderItemState::Set(unsigned __int8 byState)
+bool CUnmannedTraderItemState::Set(unsigned __int8 byState)
 {
   if (byState >= 14)
   {
-    return 0;
+    return false;
   }
   this->m_eState = static_cast<STATE>(byState);
-  return 1;
+  return true;
 }
 
 unsigned int CUnmannedTraderItemState::GetState() const
@@ -72,7 +72,7 @@ unsigned int CUnmannedTraderItemState::GetState() const
   return static_cast<unsigned int>(m_eState);
 }
 
-__int64 CUnmannedTraderItemState::GetMaxStateCnt()
+unsigned int CUnmannedTraderItemState::GetMaxStateCnt()
 {
   return 14;
 }
@@ -91,7 +91,7 @@ wchar_t *CUnmannedTraderItemState::GetStateStrW(unsigned int uiInx)
   return CUnmannedTraderItemState::ms_wszStateName[14];
 }
 
-char CUnmannedTraderItemState::PushUpdateState(
+bool CUnmannedTraderItemState::PushUpdateState(
   unsigned __int8 byType,
   unsigned int dwRegistSerial,
   unsigned __int8 byState,
@@ -102,7 +102,7 @@ char CUnmannedTraderItemState::PushUpdateState(
 {
   if (CUnmannedTraderItemState::GetMaxStateCnt() <= byState)
   {
-    return 0;
+    return false;
   }
 
   _qry_case_unmandtrader_updateitemstate qry{};
@@ -116,5 +116,5 @@ char CUnmannedTraderItemState::PushUpdateState(
 
   const int size = static_cast<int>(qry.size());
   g_Main.PushDQSData(-1, nullptr, 59, reinterpret_cast<char *>(&qry), size);
-  return 1;
+  return true;
 }

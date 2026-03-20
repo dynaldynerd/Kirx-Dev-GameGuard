@@ -36,11 +36,11 @@ CGuildList::~CGuildList()
   }
 }
 
-char CGuildList::Init()
+bool CGuildList::Init()
 {
   if (m_bInit)
   {
-    return 1;
+    return true;
   }
 
   for (int j = 0; j < 3; ++j)
@@ -49,12 +49,12 @@ char CGuildList::Init()
     m_pGuildList[j] = pages;
     if (!m_pGuildList[j])
     {
-      return 0;
+      return false;
     }
   }
 
   m_bInit = true;
-  return 1;
+  return true;
 }
 
 void CGuildList::SendList(unsigned __int16 wIndex, unsigned __int8 byRace, unsigned __int8 byPage)

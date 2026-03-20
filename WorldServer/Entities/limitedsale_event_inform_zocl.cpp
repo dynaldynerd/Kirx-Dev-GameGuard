@@ -2,7 +2,8 @@
 
 #include "limitedsale_event_inform_zocl.h"
 
-__int64 _limitedsale_event_inform_zocl::size()
+int _limitedsale_event_inform_zocl::size()
 {
-  return 7LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(7LL);
 }

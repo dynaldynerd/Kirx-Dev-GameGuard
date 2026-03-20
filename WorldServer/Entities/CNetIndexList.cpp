@@ -148,11 +148,11 @@ bool CNetIndexList::PushNode_Front(unsigned int index)
   return true;
 }
 
-bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
+char CNetIndexList::PopNode_Front(unsigned int *outIndex)
 {
   if (this == nullptr || outIndex == nullptr)
   {
-    return false;
+    return 0;
   }
 
   this->m_csList.Lock();
@@ -160,7 +160,7 @@ bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
   if (node == nullptr)
   {
     this->m_csList.Unlock();
-    return false;
+    return 0;
   }
 
   *outIndex = node->m_dwIndex;
@@ -168,7 +168,7 @@ bool CNetIndexList::PopNode_Front(unsigned int *outIndex)
   --this->m_dwCount;
   ++this->m_dwBufCount;
   this->m_csList.Unlock();
-  return true;
+  return 1;
 }
 
 bool CNetIndexList::PopNode_Back(unsigned int *outIndex)
@@ -300,12 +300,13 @@ bool CNetIndexList::IsInList(unsigned int index)
   return false;
 }
 
-unsigned int CNetIndexList::size()
+int CNetIndexList::size()
 {
   if (this == nullptr)
   {
     return 0;
   }
-  return this->m_dwCount;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(this->m_dwCount);
 }
 

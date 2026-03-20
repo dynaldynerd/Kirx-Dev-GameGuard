@@ -26,7 +26,7 @@ public:
   void KickFreeMember();
   void KickOldMember(unsigned __int8 byKickDirectCode);
   __mgr_member *GetEmptyNewMember();
-  char RenewOldMember(CPlayer *pMember);
+  bool RenewOldMember(CPlayer *pMember);
   void EnterMember(CPlayer *pEnter);
   void ReEnterMember(CPlayer *pExiter);
   void ExitMember(CPlayer *pExiter, bool bLogoff);
@@ -45,7 +45,7 @@ public:
   void ApplyTicketReserver();
   int GetLeftTicketIncludeReserNum(char *pszTarMapCode, int nAdd);
   bool IsMemberBeforeLogoff(unsigned int dwPlayerSerial);
-  char IsOldMember(CPlayer *pMember);
+  bool IsOldMember(CPlayer *pMember);
   void GetStartPosInShip(float *pfPos);
 
   struct  __mgr_member

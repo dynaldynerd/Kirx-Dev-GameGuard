@@ -44,11 +44,11 @@ public:
   unsigned int FindRank(unsigned __int8 byRaceCode, unsigned int dwAvatorSerial);
   const _PVP_RANK_DATA *GetCurrentPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 GetBossType(unsigned __int8 byRaceCode, unsigned int dwSerial);
-  char IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
+  bool IsRaceViceBoss(unsigned __int8 byRace, unsigned int dwSerial);
   void SetUpdateRaceBossSerial(unsigned __int8 byRace, unsigned __int8 byNth, unsigned int dwSerial);
   void FlipPvPRankTop();
   void IncreaseVesion();
-  char LoadPvpRank(char *szDate);
+  bool LoadPvpRank(char *szDate);
   void PvpRankDataPacking(CLogFile *pkLogger);
   _PVP_RANK_DATA *GetTomorrowPvpRankData(unsigned __int8 byRace, unsigned __int8 byNth);
   unsigned __int8 UpdateRaceRankStep1(char *szData);
@@ -131,10 +131,10 @@ public:
   bool Init();
   void Loop();
   void SetLogger(CLogFile *pkLogger);
-  char Load();
+  bool Load();
   void GetRankDateStr(char *szDate, unsigned __int64 tDateStrSize);
   void GetTommorrowStr(char *szTommorrow);
-  char CheckAndCreateTodayPvpRankTable(char *szDate);
+  bool CheckAndCreateTodayPvpRankTable(char *szDate);
   void CheckTomorrowPvpRankDate();
   void LoadINI(unsigned int *piHour, unsigned int *piMin);
   bool SetRankingStartTime(int iHour, int iMin);

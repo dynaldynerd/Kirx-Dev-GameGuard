@@ -8,5 +8,5 @@ struct  _log_sheet_lv
   unsigned __int8 byLv;
   unsigned int dwTotalPlayMin;
 
-  __int64 size();
+  int size();
 };

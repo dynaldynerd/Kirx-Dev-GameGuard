@@ -29,9 +29,9 @@ CCheckSum::~CCheckSum()
   // this is not a stub
 }
 
-char CCheckSum::Init()
+bool CCheckSum::Init()
 {
-  return 1;
+  return true;
 }
 
 unsigned int CCheckSum::EncodeValue(unsigned __int8 byIndex, unsigned int dwSerial, unsigned int dwValue)

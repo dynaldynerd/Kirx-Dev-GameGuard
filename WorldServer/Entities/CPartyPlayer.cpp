@@ -142,7 +142,7 @@ CPartyPlayer *CPartyPlayer::GetPtrFromSerial(unsigned int worldSerial)
   return nullptr;
 }
 
-unsigned int CPartyPlayer::GetPopPartyMember()
+int CPartyPlayer::GetPopPartyMember()
 {
   if (!IsPartyMode())
   {
@@ -154,7 +154,8 @@ unsigned int CPartyPlayer::GetPopPartyMember()
   {
     ++count;
   }
-  return count;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(count);
 }
 
 bool CPartyPlayer::FoundParty(CPartyPlayer *participant)

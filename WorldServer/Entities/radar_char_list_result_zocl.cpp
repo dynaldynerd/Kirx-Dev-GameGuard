@@ -8,11 +8,12 @@ _radar_char_list_result_zocl::_radar_char_list_result_zocl()
   byListNum = 0;
 }
 
-__int64 _radar_char_list_result_zocl::size()
+int _radar_char_list_result_zocl::size()
 {
   if (byListNum > 50)
   {
     byListNum = 0;
   }
-  return 452 - 9LL * (50 - byListNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(452 - 9LL * (50 - byListNum));
 }

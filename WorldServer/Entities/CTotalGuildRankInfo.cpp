@@ -9,7 +9,7 @@
 #include "Packet/ZoneClientPacket.h"
 #include "WorldServerUtil.h"
 
-__int64 _total_guild_rank_result_zocl::size()
+int _total_guild_rank_result_zocl::size()
 {
   if (byCnt < 11)
   {
@@ -57,7 +57,7 @@ CTotalGuildRankInfo::~CTotalGuildRankInfo()
   }
 }
 
-__int64 CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
+int CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSerial)
 {
   if (byRace >= 3 || !m_dwRecordCnt[byRace] || !m_ppkRaceStartPos[byRace])
   {
@@ -69,26 +69,27 @@ __int64 CTotalGuildRankInfo::Find(unsigned __int8 byRace, unsigned int dwGuildSe
   {
     if (records[j]->m_dwSerial == dwGuildSerial)
     {
-      return j;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(j);
     }
   }
 
   return -2;
 }
 
-char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
+bool CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
 {
   if (!m_bInit || !pkInfo)
   {
-    return 0;
+    return false;
   }
   if (!pkInfo->wCount)
   {
-    return 1;
+    return true;
   }
   if (pkInfo->wRaceCnt[3])
   {
-    return 0;
+    return false;
   }
 
   unsigned __int16 offset = 0;
@@ -116,7 +117,7 @@ char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
     m_pkSendList[m].byCnt = m_dwRecordCnt[m] <= 10 ? m_dwRecordCnt[m] : 10;
     for (int n = 0; n < m_pkSendList[m].byCnt; ++n)
     {
-      m_pkSendList[m].list[n].byRank = m_ppkRaceStartPos[m][n]->m_wRank;
+      m_pkSendList[m].list[n].byRank = static_cast<unsigned char>(m_ppkRaceStartPos[m][n]->m_wRank);
       std::strcpy(m_pkSendList[m].list[n].wszGuildName, m_ppkRaceStartPos[m][n]->m_wszGuildName);
       m_pkSendList[m].list[n].byGrade = m_ppkRaceStartPos[m][n]->m_byGrade;
       std::strcpy(m_pkSendList[m].list[n].wszMasterName, m_ppkRaceStartPos[m][n]->m_wszMasterName);
@@ -124,7 +125,7 @@ char CTotalGuildRankInfo::Load(_total_guild_rank_info *pkInfo)
   }
 
   m_bNoData = false;
-  return 1;
+  return true;
 }
 
 void CTotalGuildRankInfo::SetNoDataFlag()
@@ -192,7 +193,7 @@ void CTotalGuildRankInfo::Send(
       }
       else
       {
-        m_pkSendList[byTabRace].list[10].byRank = m_ppkRaceStartPos[bySelfRace][found]->m_wRank;
+        m_pkSendList[byTabRace].list[10].byRank = static_cast<unsigned char>(m_ppkRaceStartPos[bySelfRace][found]->m_wRank);
         std::strcpy(
           m_pkSendList[byTabRace].list[10].wszGuildName,
           m_ppkRaceStartPos[bySelfRace][found]->m_wszGuildName);

@@ -26,11 +26,11 @@ CCircleZone::CCircleZone()
 
 CCircleZone::~CCircleZone() = default;
 
-char CCircleZone::Create(CMapData *pkMap, unsigned __int8 byColor)
+bool CCircleZone::Create(CMapData *pkMap, unsigned __int8 byColor)
 {
   if (m_eState == CZ_NONE || !pkMap)
   {
-    return 0;
+    return false;
   }
 
   _object_create_setdata data;
@@ -40,12 +40,12 @@ char CCircleZone::Create(CMapData *pkMap, unsigned __int8 byColor)
   data.m_pRecordSet = nullptr;
   if (!CGameObject::Create(&data))
   {
-    return 0;
+    return false;
   }
 
   m_dwObjSerial = ms_dwSerialCnt++;
   m_byColor = byColor;
-  return 1;
+  return true;
 }
 
 void CCircleZone::Destroy()

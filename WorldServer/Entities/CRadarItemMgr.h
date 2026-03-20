@@ -39,7 +39,7 @@ public:
   bool IsUpdate();
   unsigned int GetStartTime();
   void SetUseRadar(char (*strRadarCode)[64], CPlayer *pMaster, unsigned int dwDurTime, unsigned int dwDelayTime);
-  char RadarProc(_RadarItem_fld *pRadarFld);
+  bool RadarProc(_RadarItem_fld *pRadarFld);
   void ResetFlags();
   void ResetUpdate();
   unsigned int CalcDelay();

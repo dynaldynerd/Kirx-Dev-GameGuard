@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 
 #include "CCouponMgr.h"
 
@@ -190,7 +190,7 @@ void CCouponMgr::ReceivePrimiumCoupon(unsigned __int16 wIdx)
   }
 }
 
-char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
+bool CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
 {
   if (nMin)
   {
@@ -224,7 +224,7 @@ char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
 
     SendMsg_InPcBangTime(wIdx);
     SendMsg_CouponEnsure(wIdx, m_byRemainTime);
-    return 1;
+    return true;
   }
 
   m_dwContTime = 0;
@@ -235,7 +235,7 @@ char CCouponMgr::SetCheetContTime(unsigned __int16 wIdx, int nMin)
   SendMsg_InPcBangTime(wIdx);
   SendMsg_CouponEnsure(wIdx, m_byRemainTime);
   SendMsg_RemainCouponInform(wIdx, static_cast<unsigned __int8>(5u - m_byReceiveCoupon));
-  return 1;
+  return true;
 }
 
 void CCouponMgr::InitCuponInfo()
@@ -302,7 +302,7 @@ void CCouponMgr::SendMsg_CouponLendResult(unsigned __int16 wIdx, _STORAGE_LIST::
   _add_lend_item_result_zocl msg{};
   msg.byTblCode = pCoupon->m_byTableCode;
   msg.wItemIdx = pCoupon->m_wItemIndex;
-  msg.dwDur = pCoupon->m_dwDur;
+  msg.dwDur = static_cast<unsigned int>(pCoupon->m_dwDur);
   msg.dwUp = pCoupon->m_dwLv;
   msg.dwItemSerial = pCoupon->m_wSerial;
   msg.byCsMethod = pCoupon->m_byCsMethod;
@@ -381,7 +381,7 @@ void CCouponMgr::LogOut(bool bForceClose)
     {
       m_pkInfo->bForcedClose = bForceClose;
       m_pkInfo->dwContPlayTime = m_dwContTime;
-      m_pkInfo->dwLastConnTime = GetKorLocalTime();
+      m_pkInfo->dwLastConnTime = static_cast<unsigned int>(GetKorLocalTime());
       m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
       m_pkInfo->byEnsureTime = m_byRemainTime;
     }

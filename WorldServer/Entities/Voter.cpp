@@ -142,7 +142,7 @@ int Voter::_SendVotePaper(CPlayer *player)
     return 0;
   }
 
-  const int raceCode = player->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
   if (_kCandidateInfo[raceCode].byCnt < 2u)
   {
     PatriarchElectProcessor::Instance()->SendMsg_ResultCode(player->m_id.wIndex, 8u);
@@ -194,7 +194,7 @@ int Voter::_Vote(CPlayer *player, char *payload)
 {
   const bool isValidPlayerAndUser = (player != nullptr && player->m_pUserDB != nullptr);
   bool abstention = false;
-  const unsigned __int8 raceCode = player->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(player->m_Param.GetRaceCode());
 
   if (_kCandidateInfo[raceCode].byCnt < 2u)
   {
@@ -203,9 +203,38 @@ int Voter::_Vote(CPlayer *player, char *payload)
 
   if (isValidPlayerAndUser)
   {
+    if (!player->m_bOper)
+    {
+      return 11;
+    }
     if (player->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote)
     {
       return 10;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime < g_Main.m_dwCheatSetPlayTime)
+    {
+      return 11;
+    }
+    if (!player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt < g_Main.m_dwCheatSetScanerCnt)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbAvator.m_byLevel < g_Main.m_dwCheatSetLevel)
+    {
+      return 11;
+    }
+    if (player->m_pUserDB->m_AvatorData.dbAvator.m_byLastClassGrade < 2u)
+    {
+      return 11;
+    }
+
+    if (CandidateMgr::Instance()->IsRegistedAvator_2(raceCode, player->m_Param.GetCharSerial()))
+    {
+      return 11;
     }
 
     const unsigned __int8 voteScore = (player->m_Param.m_byPvPGrade < 4u) ? 1u : 2u;
@@ -338,7 +367,7 @@ void Voter::_SendVotePaperAll()
       continue;
     }
 
-    const int raceCode = online->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(online->m_Param.GetRaceCode());
     if (_kCandidateInfo[raceCode].byCnt >= 2u)
     {
       if (!online->m_pUserDB->m_AvatorData.dbAvator.m_bOverlapVote

@@ -115,9 +115,9 @@ void CAsyncLogBufferList::WriteFile(const char *pszFileName, unsigned long nLen,
   CloseHandle(hFile);
 }
 
-int CAsyncLogBufferList::GetBufferSize()
+unsigned int CAsyncLogBufferList::GetBufferSize()
 {
-  return static_cast<int>(m_uiMaxBufferSize) - 3;
+  return m_uiMaxBufferSize - 3;
 }
 
 int CAsyncLogBufferList::GetEmptySize()

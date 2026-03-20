@@ -13,7 +13,7 @@ bool _event_participant_classrefine::IsChanged()
   return bChange;
 }
 
-__int64 _event_participant_classrefine::size()
+int _event_participant_classrefine::size()
 {
   return 20;
 }
@@ -128,7 +128,7 @@ void RFEvent_ClassRefine::ResetRefineData()
   }
 }
 
-unsigned __int8 RFEvent_ClassRefine::CanDoEvent(CPlayer *pOne)
+int RFEvent_ClassRefine::CanDoEvent(CPlayer *pOne)
 {
   if (!_kEvent.bEnable)
   {
@@ -161,18 +161,20 @@ unsigned __int8 RFEvent_ClassRefine::CanDoEvent(CPlayer *pOne)
   return 7;
 }
 
-unsigned __int8 RFEvent_ClassRefine::DoEvent(CPlayer *pOne)
+int RFEvent_ClassRefine::DoEvent(CPlayer *pOne)
 {
   unsigned __int8 result = CanDoEvent(pOne);
   if (result)
   {
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   result = pOne->pc_InitClass();
   if (result)
   {
-    return result;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(result);
   }
 
   const unsigned __int16 playerIndex = pOne->m_ObjID.m_wIndex;

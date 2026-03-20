@@ -19,7 +19,7 @@ bool CRFWorldDatabase::Insert_Buddy(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *pBuddyData)
+unsigned __int8 CRFWorldDatabase::Select_Buddy(unsigned int dwSerial, _worlddb_buddy_info *pBuddyData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -102,7 +102,7 @@ bool CRFWorldDatabase::Insert_BossCryRecord(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_info *pCryMsg)
+unsigned __int8 CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_info *pCryMsg)
 {
   char buffer[544]{};
   char source[260]{};
@@ -188,7 +188,7 @@ char CRFWorldDatabase::Select_BossCryMsg(unsigned int dwSerial, _worlddb_crymsg_
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
   return 1;
 }
-char CRFWorldDatabase::Select_CharacterGeneralInfo(
+unsigned __int8 CRFWorldDatabase::Select_CharacterGeneralInfo(
   unsigned int dwCharacterSerial,
   _worlddb_character_general_info *pCharacterData)
 {
@@ -212,9 +212,9 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         colIndex = 1;
-        ret = SQLGetData(m_hStmtSelect, colIndex, 65518, pCharacterData, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwFP, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwSP, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, colIndex, static_cast<SQLSMALLINT>(65518), pCharacterData, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwFP, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwSP, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dExp, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dLoseExp, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 5, &pCharacterData->byMaxLevel, 0, &indicator);
@@ -227,19 +227,19 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 7, pCharacterData->fStartPos, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 7, &pCharacterData->fStartPos[1], 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 7, &pCharacterData->fStartPos[2], 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwTotalPlayMin, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwTotalPlayMin, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 1, pCharacterData->szLeftResList, 160, &indicator);
         for (int j = 0; j < 7; ++j)
         {
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pCharacterData->lEK[j], 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 5, &pCharacterData->wED[j], 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &pCharacterData->lnUID_E[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &pCharacterData->lnUID_E[j], 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pCharacterData->dwET[j], 0, &indicator);
         }
         for (int j = 0; j < 88; ++j)
         {
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pCharacterData->lF[j], 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &pCharacterData->lnUID_F[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &pCharacterData->lnUID_F[j], 0, &indicator);
         }
         for (int j = 0; j < 2; ++j)
         {
@@ -263,28 +263,28 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
         for (int j = 0; j < 4; ++j)
         {
           animusExp = 0;
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65508, &pCharacterData->byAK[j], 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &animusExp, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65508), &pCharacterData->byAK[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &animusExp, 0, &indicator);
           pCharacterData->dwAD[j] = animusExp;
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pCharacterData->dwAP[j], 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &pCharacterData->lnUID_A[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &pCharacterData->lnUID_A[j], 0, &indicator);
         }
         for (int j = 0; j < 3; ++j)
         {
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 5, &pCharacterData->zClassHistory[j], 0, &indicator);
         }
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwClassInitCnt, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65508, &pCharacterData->byLastClassGrade, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwClassInitCnt, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65508), &pCharacterData->byLastClassGrade, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dPvPPoint, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 8, &pCharacterData->dPvPCashBag, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 1, pCharacterData->szBindMapCode, 12, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++colIndex, 1, pCharacterData->szBindDummy, 12, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwGuildSerial, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65508, &pCharacterData->byGuildGrade, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwDP, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwRadarDelayTime, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwTakeLastMentalTicket, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++colIndex, 65518, &pCharacterData->dwTakeLastCriTicket, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwGuildSerial, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65508), &pCharacterData->byGuildGrade, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwDP, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwRadarDelayTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwTakeLastMentalTicket, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65518), &pCharacterData->dwTakeLastCriTicket, 0, &indicator);
 
         if (m_hStmtSelect)
         {
@@ -329,7 +329,7 @@ char CRFWorldDatabase::Select_CharacterGeneralInfo(
   return 0;
 }
 
-char CRFWorldDatabase::Select_Inven(
+unsigned __int8 CRFWorldDatabase::Select_Inven(
   unsigned int dwCharacterSerial,
   unsigned __int16 wBagCount,
   _worlddb_inven_info *pInvenData)
@@ -359,9 +359,9 @@ char CRFWorldDatabase::Select_Inven(
           {
             break;
           }
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &pInvenData->invenKey[j].dwD, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &pInvenData->invenKey[j].dwD, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pInvenData->invenKey[j].dwU, 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65511, &pInvenData->invenKey[j].lnUID, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65511), &pInvenData->invenKey[j].lnUID, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++colIndex, 4, &pInvenData->invenKey[j].dwT, 0, &indicator);
         }
         if (m_hStmtSelect)
@@ -407,7 +407,7 @@ char CRFWorldDatabase::Select_Inven(
   return 1;
 }
 
-char CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array *questData)
+unsigned __int8 CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array *questData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -429,7 +429,7 @@ char CRFWorldDatabase::Select_Quest(unsigned int dwSerial, _worlddb_quest_array 
       {
         for (int j = 0; j < 30; ++j)
         {
-          ret = SQLGetData(m_hStmtSelect, ++colIndex, 65530, &questData->questList[j], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++colIndex, static_cast<SQLSMALLINT>(65530), &questData->questList[j], 0, &indicator);
           if (ret && ret != SQL_SUCCESS_WITH_INFO)
           {
             break;
@@ -509,7 +509,7 @@ char CRFWorldDatabase::Select_CharacterSerial(char *pwszCharacterName, unsigned 
       ret = SQLFetch(m_hStmtSelect);
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
-        ret = SQLGetData(m_hStmtSelect, 1u, 65518, pSerial, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), pSerial, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -556,7 +556,7 @@ char CRFWorldDatabase::Select_CharacterSerial(char *pwszCharacterName, unsigned 
   return 0;
 }
 
-__int64 CRFWorldDatabase::Select_Punishment(
+int CRFWorldDatabase::Select_Punishment(
   unsigned int dwSerial,
   unsigned int *pdwElectSerial,
   unsigned int *pdwPunishment)
@@ -598,13 +598,14 @@ __int64 CRFWorldDatabase::Select_Punishment(
           {
             SQLCloseCursor(m_hStmtSelect);
           }
-          return result;
+          // narrowing cast for thunk return parity
+          return static_cast<int>(result);
         }
 
-        ret = SQLGetData(m_hStmtSelect, 1u, 65530, targetValue, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65530), targetValue, 0, &indicator);
         if (targetValue[0] <= 2u)
         {
-          ret = SQLGetData(m_hStmtSelect, 2u, 65518, &pdwPunishment[targetValue[0]], 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65518), &pdwPunishment[targetValue[0]], 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, 3u, 4, &pdwElectSerial[targetValue[0]], 0, &indicator);
         }
       }
@@ -625,7 +626,8 @@ __int64 CRFWorldDatabase::Select_Punishment(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -642,7 +644,7 @@ __int64 CRFWorldDatabase::Select_Punishment(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PatriarchVoted(
+int CRFWorldDatabase::Select_PatriarchVoted(
   unsigned __int8 byRace,
   unsigned int dwSerial,
   bool *bOverlapVote)
@@ -698,7 +700,8 @@ sprintf_s(
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -717,7 +720,8 @@ sprintf_s(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -735,7 +739,7 @@ sprintf_s(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_PatriarchRefundCount(
+int CRFWorldDatabase::Select_PatriarchRefundCount(
   unsigned __int8 byRaceCode,
   unsigned int dwAvatorSerial,
   unsigned int *pdwCnt)
@@ -761,7 +765,7 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
       ret = SQLFetch(m_hStmtSelect);
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
-        ret = SQLGetData(m_hStmtSelect, 1u, 65530, pdwCnt, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65530), pdwCnt, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_bSaveDBLog)
@@ -790,7 +794,8 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return result;
+        // narrowing cast for thunk return parity
+        return static_cast<int>(result);
       }
 
       unsigned __int8 result = 0;
@@ -808,7 +813,8 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -825,7 +831,7 @@ __int64 CRFWorldDatabase::Select_PatriarchRefundCount(
   return 1;
 }
 
-char CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay)
+unsigned __int8 CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_delay_info *pSFDelay)
 {
   char buffer[260]{};
   unsigned __int8 chunk[1048]{};
@@ -849,7 +855,7 @@ char CRFWorldDatabase::Select_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_del
         char *writePtr = reinterpret_cast<char *>(pSFDelay);
         while (true)
         {
-          ret = SQLGetData(m_hStmtSelect, 1u, 65534, chunk, 1024, &indicator);
+          ret = SQLGetData(m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65534), chunk, 1024, &indicator);
           if (ret == SQL_NO_DATA)
           {
             break;
@@ -920,7 +926,7 @@ bool CRFWorldDatabase::Insert_SFDelayInfo(unsigned int dwSerial, _worlddb_sf_del
   return ExecUpdateBinaryQuery(buffer, reinterpret_cast<char *>(pSFDelay), 130, false);
 }
 
-char CRFWorldDatabase::Select_Start_NpcQuest_History_Count(unsigned int dwSerial, unsigned int *pdwCount)
+unsigned __int8 CRFWorldDatabase::Select_Start_NpcQuest_History_Count(unsigned int dwSerial, unsigned int *pdwCount)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1015,8 +1021,8 @@ unsigned __int8 CRFWorldDatabase::Select_Start_NpcQuest_History(
           break;
         }
         ret = SQLGetData(m_hStmtSelect, 1u, 1, &pNpcQHis->List[j], 64, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 2u, 65530, &pNpcQHis->List[j].byLevel, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 3u, 65509, &pNpcQHis->List[j].nEndTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65530), &pNpcQHis->List[j].byLevel, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 3u, static_cast<SQLSMALLINT>(65509), &pNpcQHis->List[j].nEndTime, 0, &indicator);
       }
       if (m_hStmtSelect)
       {
@@ -1043,7 +1049,7 @@ unsigned __int8 CRFWorldDatabase::Select_Start_NpcQuest_History(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement(
+int CRFWorldDatabase::Select_Supplement(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1065,7 +1071,7 @@ __int64 CRFWorldDatabase::Select_Supplement(
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         ret = SQLGetData(m_hStmtSelect, 1u, 8, pSupplement, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 2u, 65529, &pSupplement->bLastAttBuff, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65529), &pSupplement->bLastAttBuff, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 3u, 4, &pSupplement->dwBufPotionEndTime, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 4u, 4, &pSupplement->dwRaceBuffClear, 0, &indicator);
         if (m_hStmtSelect)
@@ -1094,7 +1100,8 @@ __int64 CRFWorldDatabase::Select_Supplement(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1111,7 +1118,7 @@ __int64 CRFWorldDatabase::Select_Supplement(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement_Ex(
+int CRFWorldDatabase::Select_Supplement_Ex(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1139,9 +1146,9 @@ __int64 CRFWorldDatabase::Select_Supplement_Ex(
       {
         ret = SQLGetData(m_hStmtSelect, 1u, 4, &pSupplement->dwAccumPlayTime, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 2u, 4, &pSupplement->dwLastResetDate, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 3u, 65530, &pSupplement->byVoted, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 4u, 65530, &pSupplement->VoteEnable, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 5u, 65509, &pSupplement->dwScanerCnt, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 3u, static_cast<SQLSMALLINT>(65530), &pSupplement->byVoted, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 4u, static_cast<SQLSMALLINT>(65530), &pSupplement->VoteEnable, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 5u, static_cast<SQLSMALLINT>(65509), &pSupplement->dwScanerCnt, 0, &indicator);
         if (m_hStmtSelect)
         {
           SQLCloseCursor(m_hStmtSelect);
@@ -1168,7 +1175,8 @@ __int64 CRFWorldDatabase::Select_Supplement_Ex(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1185,7 +1193,7 @@ __int64 CRFWorldDatabase::Select_Supplement_Ex(
   return 1;
 }
 
-__int64 CRFWorldDatabase::Select_Supplement_ActPoint(
+int CRFWorldDatabase::Select_Supplement_ActPoint(
   unsigned int dwSerial,
   _worlddb_character_supplement_info *pSupplement)
 {
@@ -1236,7 +1244,8 @@ __int64 CRFWorldDatabase::Select_Supplement_ActPoint(
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      // narrowing cast for thunk return parity
+      return static_cast<int>(result);
     }
 
     if (ret == SQL_NO_DATA)
@@ -1302,28 +1311,28 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
         ret = SQLGetData(
           m_hStmtSelect,
           1u,
-          65530,
+          static_cast<SQLSMALLINT>(65530),
           &pTradeData->list[pTradeData->dwCnt],
           0,
           &indicator);
         ret = SQLGetData(
           m_hStmtSelect,
           2u,
-          65518,
+          static_cast<SQLSMALLINT>(65518),
           &pTradeData->list[pTradeData->dwCnt].dwRegistSerial,
           0,
           &indicator);
         ret = SQLGetData(
           m_hStmtSelect,
           3u,
-          65530,
+          static_cast<SQLSMALLINT>(65530),
           &pTradeData->list[pTradeData->dwCnt].byInvenIndex,
           0,
           &indicator);
         ret = SQLGetData(
           m_hStmtSelect,
           4u,
-          65518,
+          static_cast<SQLSMALLINT>(65518),
           &pTradeData->list[pTradeData->dwCnt].dwPrice,
           0,
           &indicator);
@@ -1331,7 +1340,7 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
         ret = SQLGetData(
           m_hStmtSelect,
           6u,
-          65530,
+          static_cast<SQLSMALLINT>(65530),
           &pTradeData->list[pTradeData->dwCnt].bySellTurm,
           0,
           &indicator);
@@ -1420,7 +1429,7 @@ unsigned __int8 CRFWorldDatabase::Select_Trade(
   return 1;
 }
 
-char CRFWorldDatabase::Select_AccountTrunk(
+unsigned __int8 CRFWorldDatabase::Select_AccountTrunk(
   unsigned int dwAccountSerial,
   unsigned __int8 byRace,
   _worlddb_trunk_info *pTrunkData)
@@ -1446,9 +1455,9 @@ char CRFWorldDatabase::Select_AccountTrunk(
         ret = SQLGetData(m_hStmtSelect, ++column, 1, pTrunkData, 13, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++column, 8, &pTrunkData->dDalant, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++column, 8, &pTrunkData->dGold, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++column, 65530, &pTrunkData->byHintIndex, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->byHintIndex, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, ++column, 1, pTrunkData->wszHintAnswer, 17, &indicator);
-        ret = SQLGetData(m_hStmtSelect, ++column, 65530, &pTrunkData->bySlotNum, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->bySlotNum, 0, &indicator);
         for (int j = 0; j < 100; ++j)
         {
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->trunkKey[j], 0, &indicator);
@@ -1456,10 +1465,10 @@ char CRFWorldDatabase::Select_AccountTrunk(
           {
             break;
           }
-          ret = SQLGetData(m_hStmtSelect, ++column, 65511, &pTrunkData->trunkKey[j].dwD, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65511), &pTrunkData->trunkKey[j].dwD, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->trunkKey[j].dwU, 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++column, 65530, &pTrunkData->trunkKey[j].byRace, 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++column, 65511, &pTrunkData->trunkKey[j].lnUID, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->trunkKey[j].byRace, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65511), &pTrunkData->trunkKey[j].lnUID, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->trunkKey[j].dwT, 0, &indicator);
         }
         if (m_hStmtSelect)
@@ -1512,7 +1521,7 @@ bool CRFWorldDatabase::Insert_AccountTrunk(unsigned int dwAccountSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _worlddb_trunk_info *pTrunkData)
+unsigned __int8 CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _worlddb_trunk_info *pTrunkData)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1532,7 +1541,7 @@ char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _
       ret = SQLFetch(m_hStmtSelect);
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
-        ret = SQLGetData(m_hStmtSelect, ++column, 65530, &pTrunkData->byExtSlotNum, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->byExtSlotNum, 0, &indicator);
         for (int j = 0; j < 40; ++j)
         {
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->ExttrunkKey[j], 0, &indicator);
@@ -1540,10 +1549,10 @@ char CRFWorldDatabase::Select_AccountTrunkExtend(unsigned int dwAccountSerial, _
           {
             break;
           }
-          ret = SQLGetData(m_hStmtSelect, ++column, 65511, &pTrunkData->ExttrunkKey[j].dwD, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65511), &pTrunkData->ExttrunkKey[j].dwD, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->ExttrunkKey[j].dwU, 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++column, 65530, &pTrunkData->ExttrunkKey[j].byRace, 0, &indicator);
-          ret = SQLGetData(m_hStmtSelect, ++column, 65511, &pTrunkData->ExttrunkKey[j].lnUID, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->ExttrunkKey[j].byRace, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65511), &pTrunkData->ExttrunkKey[j].lnUID, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->ExttrunkKey[j].dwT, 0, &indicator);
         }
         if (m_hStmtSelect)
@@ -1596,7 +1605,7 @@ bool CRFWorldDatabase::Insert_AccountTrunkExtend(unsigned int dwAccountSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_userinterface_info *pUserinterfaceInfo)
+unsigned __int8 CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_userinterface_info *pUserinterfaceInfo)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;
@@ -1681,7 +1690,7 @@ char CRFWorldDatabase::Select_UserInterface(unsigned int dwSerial, _worlddb_user
             break;
           }
         }
-        ret = SQLGetData(m_hStmtSelect, ++column, 65508, &pUserinterfaceInfo->byLinkBoardLock, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65508), &pUserinterfaceInfo->byLinkBoardLock, 0, &indicator);
         if (m_hStmtSelect)
         {
           SQLCloseCursor(m_hStmtSelect);
@@ -1732,7 +1741,7 @@ bool CRFWorldDatabase::Insert_UserInterface(unsigned int dwSerial)
   return ExecUpdateQuery(buffer, 1);
 }
 
-char CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit_info_array *pUnitInfo)
+unsigned __int8 CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _worlddb_unit_info_array *pUnitInfo)
 {
   char buffer[260]{};
   SQLLEN indicator = 0;

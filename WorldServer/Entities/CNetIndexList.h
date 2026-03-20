@@ -22,14 +22,14 @@ public:
   bool SetList(unsigned int maxBufNum);
   bool PushNode_Back(unsigned int index);
   bool PushNode_Front(unsigned int index);
-  bool PopNode_Front(unsigned int *outIndex);
+  char PopNode_Front(unsigned int *outIndex);
   bool PopNode_Back(unsigned int *outIndex);
   bool CopyFront(unsigned int *outIndex);
   int CopyIndexList(unsigned int *pdwList, int nMax);
   _index_node *FindNode(unsigned int index);
   void ResetList();
   bool IsInList(unsigned int index);
-  unsigned int size();
+  int size();
 
   _index_node m_Head;
   _index_node m_Tail;

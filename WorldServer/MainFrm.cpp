@@ -47,19 +47,19 @@ CMainFrame::CMainFrame() noexcept
 
 CMainFrame::~CMainFrame() = default;
 
-BOOL CMainFrame::PreCreateWindow(CREATESTRUCT &cs)
+int CMainFrame::PreCreateWindow(CREATESTRUCT &cs)
 {
   if (!CFrameWnd::PreCreateWindow(cs))
   {
-    return FALSE;
+    return 0;
   }
 
   cs.style &= 0xFF30FFFFu;
   cs.style |= 0xA0000u;
-  return TRUE;
+  return 1;
 }
 
-LRESULT CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+__int64 CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
   if (message == WM_CLOSE)
   {

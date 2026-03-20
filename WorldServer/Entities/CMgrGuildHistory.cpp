@@ -50,7 +50,7 @@ CMgrGuildHistory::CMgrGuildHistory()
   sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\Guild", returnedString);
   CreateDirectoryA(m_szStdPath, nullptr);
 
-  const unsigned int korLocalTime = GetKorLocalTime();
+  const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(m_szStdPath, sizeof(m_szStdPath), "%s\\%u", m_szStdPath, korLocalTime);
   CreateDirectoryA(m_szStdPath, nullptr);
 
@@ -113,9 +113,10 @@ void CMgrGuildHistory::OnLoop()
   }
 }
 
-unsigned int CMgrGuildHistory::GetTotalWaitSize()
+int CMgrGuildHistory::GetTotalWaitSize()
 {
-  return m_listLogData.size();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData.size());
 }
 
 void CMgrGuildHistory::WriteFile(const char *pszFileName, const char *pszLog)

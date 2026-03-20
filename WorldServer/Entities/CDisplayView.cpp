@@ -58,10 +58,10 @@ void CDisplayView::SetExtendMode(int /*bExtend*/)
   SetScrollPos(SB_HORZ, 0, TRUE);
 }
 
-BOOL CDisplayView::OnInitDialog()
+int CDisplayView::OnInitDialog()
 {
   CDialog::OnInitDialog();
-  return TRUE;
+  return 1;
 }
 
 int CDisplayView::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -292,7 +292,7 @@ void CDisplayView::OnRButtonDown(UINT nFlags, CPoint point)
   CDialog::OnRButtonDown(nFlags, point);
 }
 
-BOOL CDisplayView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+int CDisplayView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
   if (!g_Main.IsExcuteService() && g_MapDisplay.m_bDisplayMode)
   {

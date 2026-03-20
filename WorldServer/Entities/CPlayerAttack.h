@@ -12,7 +12,7 @@ public:
   CPlayer *m_pAttPlayer;
 
   CPlayerAttack(CPlayer *pThis);
-  __int64 _CalcSkillAttPnt(bool bUseEffBullet);
+  int _CalcSkillAttPnt(bool bUseEffBullet);
   void AttackSkill(_attack_param *pParam, bool bUseEffBullet);
   void AttackUnit(_attack_param *pParam);
   void WPActiveAttackSkill(_attack_param *pParam);

@@ -14,5 +14,5 @@ struct  _qry_case_contsave
 
   _qry_case_contsave();
   ~_qry_case_contsave();
-  __int64 size();
+  int size();
 };

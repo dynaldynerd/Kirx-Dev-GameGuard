@@ -201,7 +201,7 @@ void CTransportShip::KickOldMember(unsigned __int8 byKickDirectCode)
           && member->pPtr->m_pCurMap == m_pLinkShipMap)
       {
         SendMsg_KickForSail(member->pPtr->m_ObjID.m_wIndex);
-        const int raceCode = member->pPtr->m_Param.GetRaceCode();
+        const int raceCode = static_cast<int>(member->pPtr->m_Param.GetRaceCode());
         const int portalIndex = GetOutPortalIndex(raceCode, byKickDirectCode);
         CheckTicket_Kick(member->pPtr, portalIndex);
       }
@@ -268,7 +268,7 @@ void CTransportShip::ReEnterMember(CPlayer *pExiter)
   }
 }
 
-char CTransportShip::RenewOldMember(CPlayer *pMember)
+bool CTransportShip::RenewOldMember(CPlayer *pMember)
 {
   for (int index = 0; index < MAX_PLAYER; ++index)
   {
@@ -281,16 +281,16 @@ char CTransportShip::RenewOldMember(CPlayer *pMember)
     __mgr_member *emptyNewMember = GetEmptyNewMember();
     if (!emptyNewMember)
     {
-      return 0;
+      return false;
     }
 
     emptyNewMember->pPtr = pMember;
     emptyNewMember->dwSerial = pMember->m_dwObjSerial;
     oldMember->init();
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 void CTransportShip::ExitMember(CPlayer *pExiter, bool bLogoff)
@@ -352,7 +352,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
         pExiter->m_szItemHistoryFileName);
       SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 1, itemCopy.m_wSerial);
 
-      const int raceCode = pExiter->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(pExiter->m_Param.GetRaceCode());
       const int outPortalIndex = GetOutPortalIndex(raceCode, m_byDirect);
       CheckTicket_Pass(pExiter, outPortalIndex);
 
@@ -371,7 +371,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
 
     SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 65535);
     const unsigned __int8 kickDirect = (m_byDirect == 0);
-    const int raceCode = pExiter->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(pExiter->m_Param.GetRaceCode());
     const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);
     CheckTicket_Kick(pExiter, portalIndex);
     return true;
@@ -379,7 +379,7 @@ bool CTransportShip::Ticketting(CPlayer *pExiter)
 
   SendMsg_TicketCheck(pExiter->m_ObjID.m_wIndex, 0, 65535);
   const unsigned __int8 kickDirect = (m_byDirect == 0);
-  const int raceCode = pExiter->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(pExiter->m_Param.GetRaceCode());
   const int portalIndex = GetOutPortalIndex(raceCode, kickDirect);
   CheckTicket_Kick(pExiter, portalIndex);
   return true;
@@ -607,18 +607,18 @@ bool CTransportShip::IsMemberBeforeLogoff(unsigned int dwPlayerSerial)
   return this->m_listLogoffMember.IsInList(dwPlayerSerial);
 }
 
-char CTransportShip::IsOldMember(CPlayer *pMember)
+bool CTransportShip::IsOldMember(CPlayer *pMember)
 {
   for (int j = 0; j < MAX_PLAYER; ++j)
   {
     __mgr_member *member = &m_OldMember[j];
     if (member->is_fill() && member->pPtr == pMember && member->dwSerial == pMember->m_dwObjSerial)
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
 void CTransportShip::GetStartPosInShip(float *pfPos)

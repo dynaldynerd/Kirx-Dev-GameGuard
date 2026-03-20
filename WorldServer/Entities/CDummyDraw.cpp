@@ -134,7 +134,7 @@ void CDummyDraw::SetDummyRange(
   }
 }
 
-char CDummyDraw::CalcAbsExt(CRect *prcArea)
+bool CDummyDraw::CalcAbsExt(CRect *prcArea)
 {
   memcpy(m_fReAbs, m_fPosAbs, sizeof(m_fReAbs));
 
@@ -172,10 +172,10 @@ char CDummyDraw::CalcAbsExt(CRect *prcArea)
   {
     if (inside)
     {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void CDummyDraw::CalcScrExt(CRect *prcArea, CRect *prcWnd)
@@ -192,7 +192,7 @@ void CDummyDraw::CalcScrExt(CRect *prcArea, CRect *prcWnd)
   }
 }
 
-__int64 CDummyDraw::Draw(CSurface *pSF, CRect *prcArea)
+HRESULT CDummyDraw::Draw(CSurface *pSF, CRect *prcArea)
 {
   if (!m_pMap)
   {

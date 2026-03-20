@@ -27,18 +27,18 @@ void CBattleTournamentInfo::SetLoad(bool bLoad)
   m_bLoad = bLoad;
 }
 
-char CBattleTournamentInfo::SetWinnerInfo(unsigned int dwSerial, char *pwszCharName, unsigned __int8 byGrade)
+bool CBattleTournamentInfo::SetWinnerInfo(unsigned int dwSerial, char *pwszCharName, unsigned __int8 byGrade)
 {
   if (m_nCurNum >= 48)
   {
-    return 0;
+    return false;
   }
 
   m_WinnerInfo[m_nCurNum].dwSerial = dwSerial;
   m_WinnerInfo[m_nCurNum].byGrade = byGrade;
   strcpy_s(m_WinnerInfo[m_nCurNum].wszCharName, sizeof(m_WinnerInfo[m_nCurNum].wszCharName), pwszCharName);
   ++m_nCurNum;
-  return 1;
+  return true;
 }
 
 unsigned __int8 CBattleTournamentInfo::GetWinnerGrade(unsigned int dwSerial, char *pwszCharName)

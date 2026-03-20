@@ -7,11 +7,12 @@ _guild_alter_member_state_inform_zocl::_guild_alter_member_state_inform_zocl()
   byAlterMemberNum = 0;
 }
 
-__int64 _guild_alter_member_state_inform_zocl::size()
+int _guild_alter_member_state_inform_zocl::size()
 {
   if (byAlterMemberNum > 50)
   {
     byAlterMemberNum = 0;
   }
-  return 451 - 9LL * (50 - byAlterMemberNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(451 - 9LL * (50 - byAlterMemberNum));
 }

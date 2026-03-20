@@ -20,7 +20,7 @@ void LicensePopupDlg::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, 1032, m_EditCtrl);
 }
 
-BOOL LicensePopupDlg::OnInitDialog()
+int LicensePopupDlg::OnInitDialog()
 {
   CDialog::OnInitDialog();
 

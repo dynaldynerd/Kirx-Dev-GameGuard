@@ -162,11 +162,11 @@ void CEquipItemSFAgent::_requireSlot::Init()
   std::memset(this, 0, sizeof(CEquipItemSFAgent::_requireSlot));
 }
 
-char CEquipItemSFAgent::GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld)
+bool CEquipItemSFAgent::GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld)
 {
   if (!pSlot || !pSkillFld)
   {
-    return 0;
+    return false;
   }
 
   if (pSkillFld->m_strFixWeapon[12] == '1')
@@ -174,7 +174,7 @@ char CEquipItemSFAgent::GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkill
     pSlot->m_SlotIndex[7] = true;
   }
 
-  return 1;
+  return true;
 }
 
 unsigned __int8 CEquipItemSFAgent::IsEnableSkill(_skill_fld *pSkill)

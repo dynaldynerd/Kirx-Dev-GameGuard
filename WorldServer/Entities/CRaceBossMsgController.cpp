@@ -710,7 +710,7 @@ bool RACE_BOSS_MSG::CMsgList::SaveMsgList(CNetIndexList *kInxList)
   return true;
 }
 
-char CRaceBossMsgController::Send(
+bool CRaceBossMsgController::Send(
   unsigned __int8 ucRace,
   unsigned int dwSerial,
   const char *wszName,
@@ -719,12 +719,12 @@ char CRaceBossMsgController::Send(
 {
   if (!g_Main.m_bConnectedWebAgentServer)
   {
-    return 0;
+    return false;
   }
   if (!dwSerial)
   {
     SendWebRaceBossSMSErrorResult(2, dwWebSendDBID);
-    return 0;
+    return false;
   }
 
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
@@ -735,28 +735,28 @@ char CRaceBossMsgController::Send(
     if (ret)
     {
       SendWebRaceBossSMSErrorResult(static_cast<char>(ret), dwWebSendDBID);
-      return 0;
+      return false;
     }
 
     SendComfirmWeb(ucRace, msg);
     SendConfirmCtrl(ucRace, msg);
-    return 1;
+    return true;
   }
 
   SendWebRaceBossSMSErrorResult(3, dwWebSendDBID);
-  return 0;
+  return false;
 }
 
-char CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
+bool CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
 {
   if (!pkSender)
   {
-    return 0;
+    return false;
   }
 
   if (g_Main.m_bConnectedWebAgentServer)
   {
-    const unsigned __int8 raceCode = pkSender->m_Param.GetRaceCode();
+    const unsigned __int8 raceCode = static_cast<unsigned char>(pkSender->m_Param.GetRaceCode());
     const unsigned int serial = pkSender->m_Param.GetCharSerial();
     CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
     if (ranking->GetCurrentRaceBossSerial(raceCode, 0) == serial)
@@ -767,21 +767,21 @@ char CRaceBossMsgController::Send(CPlayer *pkSender, const char *pwszMsg)
       if (ret)
       {
         SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, static_cast<char>(ret));
-        return 0;
+        return false;
       }
 
       SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 0);
       SendComfirmWeb(raceCode, msg);
       SendConfirmCtrl(raceCode, msg);
-      return 1;
+      return true;
     }
 
     SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 3);
-    return 0;
+    return false;
   }
 
   SendMsgRequestResult(pkSender->m_ObjID.m_wIndex, 1);
-  return 0;
+  return false;
 }
 
 void CRaceBossMsgController::SendMsgRequestResult(unsigned __int16 usInx, char ucRet)
@@ -1047,26 +1047,26 @@ void CRaceBossMsgController::SaveCurTime()
   }
 }
 
-char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID)
+bool CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID)
 {
   RACE_BOSS_MSG::CMsg *pkMsg = nullptr;
   if (m_kManager.Cancel(ucRace, dwMsgID, &pkMsg))
   {
-    return 0;
+    return false;
   }
 
   const unsigned int serial = pkMsg->GetSerial();
   SendCancleInfomSender(serial);
   SendCancelWeb(ucRace, pkMsg);
   m_kManager.CleanUpCancel(ucRace, pkMsg);
-  return 1;
+  return true;
 }
 
-char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager)
+bool CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID, CPlayer *pkManager)
 {
   if (pkManager->m_byUserDgr != 2 || pkManager->m_bySubDgr == 3)
   {
-    return 0;
+    return false;
   }
 
   RACE_BOSS_MSG::CMsg *pkMsg = nullptr;
@@ -1074,7 +1074,7 @@ char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID
   if (result)
   {
     SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, result, -1, nullptr);
-    return 0;
+    return false;
   }
 
   const unsigned int serial = pkMsg->GetSerial();
@@ -1083,7 +1083,7 @@ char CRaceBossMsgController::Cancel(unsigned __int8 ucRace, unsigned int dwMsgID
   SendCancleInfomManager(pkManager->m_ObjID.m_wIndex, 0, dwMsgID, bossName);
   SendCancelWeb(ucRace, pkMsg);
   m_kManager.CleanUpCancel(ucRace, pkMsg);
-  return 1;
+  return true;
 }
 
 void CRaceBossMsgController::SendCancleInfomSender(unsigned int dwSerial)

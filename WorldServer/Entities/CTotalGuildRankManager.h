@@ -16,8 +16,8 @@ public:
   static CTotalGuildRankManager *Instance();
   static void Destroy();
   bool Init();
-  bool Load();
-  __int64 Load(unsigned __int8 byDayAfter, _total_guild_rank_info *pkInfo);
+  int Load();
+  int Load(unsigned __int8 byDayAfter, _total_guild_rank_info *pkInfo);
   void Loop();
   void Send(unsigned int dwVer, unsigned __int8 byTabRace, CPlayer *pkPlayer);
   void OrderRank(_total_guild_rank_info *pkInfo);

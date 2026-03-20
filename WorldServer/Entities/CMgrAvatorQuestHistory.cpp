@@ -87,14 +87,15 @@ void CMgrAvatorQuestHistory::OnLoop()
   }
 }
 
-unsigned int CMgrAvatorQuestHistory::GetTotalWaitSize()
+int CMgrAvatorQuestHistory::GetTotalWaitSize()
 {
-  return m_listLogData.size();
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_listLogData.size());
 }
 
 void CMgrAvatorQuestHistory::WriteFile(char *pszFileName, char *pszLog)
 {
-  const unsigned int size = std::strlen(pszLog);
+  const unsigned int size = static_cast<unsigned int>(std::strlen(pszLog));
   unsigned int outIndex[4]{};
   if (size < 0x12C && m_listLogDataEmpty.PopNode_Front(outIndex))
   {

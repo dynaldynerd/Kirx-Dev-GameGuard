@@ -525,7 +525,7 @@ bool CRFWorldDatabase::Update_Post(char *szPostQuery)
   return ExecUpdateQuery( szPostQuery, true);
 }
 
-char CRFWorldDatabase::Select_PostStorageRecordCheck()
+bool CRFWorldDatabase::Select_PostStorageRecordCheck()
 {
   unsigned int targetValue[11]{};
   char buffer[144]{};
@@ -556,7 +556,7 @@ char CRFWorldDatabase::Select_PostStorageRecordCheck()
           {
             FmtLog("%s Success", buffer);
           }
-          return 1;
+          return true;
         }
 
         ErrorMsgLog( ret, buffer, "SQLGetData", m_hStmtSelect);
@@ -565,7 +565,7 @@ char CRFWorldDatabase::Select_PostStorageRecordCheck()
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return 0;
+        return false;
       }
 
       if (ret != SQL_NO_DATA)
@@ -577,7 +577,7 @@ char CRFWorldDatabase::Select_PostStorageRecordCheck()
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
 
     if (ret != SQL_NO_DATA)
@@ -585,11 +585,11 @@ char CRFWorldDatabase::Select_PostStorageRecordCheck()
       ErrorMsgLog( ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction( ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
 bool CRFWorldDatabase::Insert_PostStorageRecord()
@@ -600,7 +600,7 @@ bool CRFWorldDatabase::Insert_PostStorageRecord()
   return ExecUpdateQuery( buffer, true);
 }
 
-char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStorageSerial)
+bool CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStorageSerial)
 {
   unsigned int targetValue[11]{};
   char buffer[272]{};
@@ -632,7 +632,7 @@ char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
           {
             FmtLog("%s Success", buffer);
           }
-          return 1;
+          return true;
         }
 
         ErrorMsgLog( ret, buffer, "SQLGetData", m_hStmtSelect);
@@ -641,7 +641,7 @@ char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
         {
           SQLCloseCursor(m_hStmtSelect);
         }
-        return 0;
+        return false;
       }
 
       if (ret != SQL_NO_DATA)
@@ -653,7 +653,7 @@ char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return 0;
+      return false;
     }
 
     if (ret != SQL_NO_DATA)
@@ -661,11 +661,11 @@ char CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
       ErrorMsgLog( ret, buffer, "SQLExecDirect", m_hStmtSelect);
       ErrorAction( ret, m_hStmtSelect);
     }
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 
 bool CRFWorldDatabase::Update_PostStorageSendToRecver(

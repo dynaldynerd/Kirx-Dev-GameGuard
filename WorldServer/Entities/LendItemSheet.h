@@ -27,7 +27,7 @@ public:
   bool InsertLink(unsigned __int8 byStorageCode, _STORAGE_LIST::_db_con *pkItem);
   bool DeleteLink(unsigned __int8 byStorageCode, _STORAGE_LIST::_db_con *pkItem);
   void Release();
-  __int64 CheckTime();
+  int CheckTime();
 
   CPlayer *_pkOwner = nullptr;
   ListHeap<Cell> _heapFixRow;

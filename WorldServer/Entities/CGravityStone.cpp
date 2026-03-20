@@ -88,31 +88,31 @@ bool CGravityStone::IsInTown()
   return m_pkOwner && m_pkOwner->IsInTown();
 }
 
-char CGravityStone::CheckTakeTimeLimit()
+bool CGravityStone::CheckTakeTimeLimit()
 {
   if (!m_pkOwner || !m_dwTakeLimitTime)
   {
-    return 0;
+    return false;
   }
 
   if (m_dwTakeLimitTime > GetLoopTime())
   {
-    return 0;
+    return false;
   }
 
   Clear();
-  return 1;
+  return true;
 }
 
-char CGravityStone::Regen(_object_create_setdata *pParam)
+bool CGravityStone::Regen(_object_create_setdata *pParam)
 {
   if (!Create(pParam))
   {
-    return 0;
+    return false;
   }
   m_dwObjSerial = ms_dwSerialCnt++;
   SendMsg_Create();
-  return 1;
+  return true;
 }
 
 unsigned __int8 CGravityStone::Drop(CPlayer *pkPlayer)

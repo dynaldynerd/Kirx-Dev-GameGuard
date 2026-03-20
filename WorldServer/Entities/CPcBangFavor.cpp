@@ -28,7 +28,7 @@ CPcBangFavor *CPcBangFavor::Instance()
   return ms_pInstance;
 }
 
-bool CPcBangFavor::Initialzie()
+int CPcBangFavor::Initialzie()
 {
   char returnedString[40]{};
   std::memset(returnedString, 0, 10);
@@ -40,30 +40,30 @@ bool CPcBangFavor::Initialzie()
     10,
     ".\\Initialize\\WorldSystem.ini");
   m_bEnable = std::strcmp(returnedString, "FALSE") != 0;
-  return true;
+  return 1;
 }
 
-bool CPcBangFavor::LoadPcBangData()
+int CPcBangFavor::LoadPcBangData()
 {
   char pszErrMsg[144] = {};
   if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", 676, pszErrMsg))
   {
-    return true;
+    return 1;
   }
   MyMessageBox("DatafileInit", pszErrMsg);
-  return false;
+  return 0;
 }
 
-bool CPcBangFavor::IsEnable()
+int CPcBangFavor::IsEnable()
 {
   return m_bEnable != 0;
 }
 
-int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
+unsigned int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
 {
   if (!m_bEnable || !pData || !pOne)
   {
-    return -1;
+    return static_cast<unsigned int>(-1);
   }
 
   char codeBuffer[32]{};
@@ -73,7 +73,7 @@ int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
   _base_fld *record = g_Main.m_tblClass.GetRecord(pData->dbAvator.m_szClassCode);
   if (!record)
   {
-    return -1;
+    return static_cast<unsigned int>(-1);
   }
 
   std::strcpy(classCode, record->m_strCode);
@@ -96,12 +96,12 @@ int CPcBangFavor::ClassCodePasing(_AVATOR_DATA *pData, CPlayer *pOne)
   _PcRoom_fld *pcRoomRecord = static_cast<_PcRoom_fld *>(m_tblPcRoomData.GetRecord(codeBuffer));
   if (!pcRoomRecord)
   {
-    return -1;
+    return static_cast<unsigned int>(-1);
   }
 
   pOne->m_dwPcBangGiveItemListIndex = pcRoomRecord->m_dwIndex;
   pOne->SendMsg_PcRoomCharClass(pcRoomRecord->m_dwIndex);
-  return static_cast<int>(pcRoomRecord->m_dwIndex);
+  return pcRoomRecord->m_dwIndex;
 }
 
 bool CPcBangFavor::PcBangGiveItem(

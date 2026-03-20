@@ -626,8 +626,8 @@ void CPlayer::pc_PartyJoinInvitation(unsigned __int16 wDstIndex)
     return;
   }
 
-  const int sourceRaceCode = m_Param.GetRaceCode();
-  const int targetRaceCode = targetPlayer->m_Param.GetRaceCode();
+  const int sourceRaceCode = static_cast<int>(m_Param.GetRaceCode());
+  const int targetRaceCode = static_cast<int>(targetPlayer->m_Param.GetRaceCode());
   if (sourceRaceCode != targetRaceCode)
   {
     return;
@@ -686,8 +686,8 @@ void CPlayer::pc_PartyJoinInvitationAnswer(_CLID *pidBoss)
     return;
   }
 
-  const int sourceRaceCode = m_Param.GetRaceCode();
-  const int bossRaceCode = partyBoss->m_Param.GetRaceCode();
+  const int sourceRaceCode = static_cast<int>(m_Param.GetRaceCode());
+  const int bossRaceCode = static_cast<int>(partyBoss->m_Param.GetRaceCode());
   if (sourceRaceCode != bossRaceCode)
   {
     return;
@@ -756,8 +756,8 @@ void CPlayer::pc_PartyJoinApplication(unsigned __int16 wBossIndex)
     return;
   }
 
-  const int sourceRaceCode = m_Param.GetRaceCode();
-  const int bossRaceCode = partyBoss->m_Param.GetRaceCode();
+  const int sourceRaceCode = static_cast<int>(m_Param.GetRaceCode());
+  const int bossRaceCode = static_cast<int>(partyBoss->m_Param.GetRaceCode());
   if (sourceRaceCode != bossRaceCode || m_pPartyMgr->IsPartyMode() || !partyBoss->m_pPartyMgr->IsPartyBoss())
   {
     return;
@@ -815,8 +815,8 @@ void CPlayer::pc_PartyJoinApplicationAnswer(_CLID *pidApplicant)
     return;
   }
 
-  const int sourceRaceCode = m_Param.GetRaceCode();
-  const int applicantRaceCode = applicant->m_Param.GetRaceCode();
+  const int sourceRaceCode = static_cast<int>(m_Param.GetRaceCode());
+  const int applicantRaceCode = static_cast<int>(applicant->m_Param.GetRaceCode());
   if (sourceRaceCode != applicantRaceCode)
   {
     return;
@@ -1107,7 +1107,10 @@ void CPlayer::pc_AwayPartyJoinInvitationAnswer(_CLID *pidBoss, unsigned __int8 b
     if (level == 30 || level == 40 || level == 50 || level == 60)
     {
       CMoneySupplyMgr *moneySupplyMgr = CMoneySupplyMgr::Instance();
-      moneySupplyMgr->UpdateFeeMoneyData(m_Param.GetRaceCode(), level, g_Main.m_dwAwayPartyMoney);
+      moneySupplyMgr->UpdateFeeMoneyData(
+        static_cast<unsigned __int8>(m_Param.GetRaceCode()),
+        level,
+        g_Main.m_dwAwayPartyMoney);
     }
   }
 }
@@ -1332,7 +1335,10 @@ void CPlayer::pc_BuddyAddAnswer(bool bAccept, unsigned __int16 wAskerIndex, unsi
     notifyAsker->m_ObjID.m_wIndex,
     notifyAsker->m_dwObjSerial,
     notifyAsker->m_Param.GetCharNameA());
-  SendMsg_BuddyPosInform(notifyAsker->m_dwObjSerial, notifyAsker->m_wRegionMapIndex, notifyAsker->m_wRegionIndex);
+  SendMsg_BuddyPosInform(
+    notifyAsker->m_dwObjSerial,
+    static_cast<unsigned __int8>(notifyAsker->m_wRegionMapIndex),
+    static_cast<unsigned __int8>(notifyAsker->m_wRegionIndex));
 
   notifyAsker->SendMsg_BuddyAddAnswerResult(
     retCode,
@@ -1341,7 +1347,10 @@ void CPlayer::pc_BuddyAddAnswer(bool bAccept, unsigned __int16 wAskerIndex, unsi
     m_ObjID.m_wIndex,
     m_dwObjSerial,
     m_Param.GetCharNameA());
-  notifyAsker->SendMsg_BuddyPosInform(m_dwObjSerial, m_wRegionMapIndex, m_wRegionIndex);
+  notifyAsker->SendMsg_BuddyPosInform(
+    m_dwObjSerial,
+    static_cast<unsigned __int8>(m_wRegionMapIndex),
+    static_cast<unsigned __int8>(m_wRegionIndex));
   notifyAsker->m_pmBuddy.PopLastApplyTemp(m_dwObjSerial);
 }
 
@@ -2133,7 +2142,7 @@ void CPlayer::pc_SetGroupTargetObjectRequest(CGameObject *pTar, unsigned int dwS
 
   if (byGroupType == 2)
   {
-    const int raceCode = this->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
     const unsigned int raceBossSerial = CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
       static_cast<unsigned __int8>(raceCode),
       0);
@@ -2453,7 +2462,7 @@ void CPlayer::SendMsg_CastVoteResult(char byRetCode)
   if (byRetCode == 0)
   {
     packet.nVoteSerial = this->m_nVoteSerial;
-    const int raceCode = this->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
     for (int index = 0; index < 3; ++index)
     {
       packet.wPoint[index] = static_cast<unsigned __int16>(g_VoteSys[raceCode].m_dwPoint[index]);
@@ -2668,7 +2677,7 @@ void CPlayer::pc_RequestChangeTaxRate(unsigned __int8 byTaxRate)
     {
       CUnmannedTraderTaxRateManager *taxRateManager = CUnmannedTraderTaxRateManager::Instance();
       const unsigned int suggestedTime = taxRateManager->GetSuggestedTime(raceCode);
-      const unsigned int now = GetKorLocalTime();
+      const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
       if (now - suggestedTime < 60)
       {
         errorCode = 2;
@@ -2710,6 +2719,19 @@ void CPlayer::pc_ChangeModeType(unsigned __int8 nModeType, unsigned __int8 nStan
 
 void CPlayer::pc_GestureRequest(unsigned __int8 byGestureType)
 {
+  // Yorozuya fix (non-IDA parity): block gestures while mining, in siege mode, or riding a unit.
+  if (IsMineMode())
+  {
+    return;
+  }
+  if (IsActingSiegeMode() || IsSiegeMode())
+  {
+    return;
+  }
+  if (IsRidingUnit())
+  {
+    return;
+  }
   this->SendMsg_GestureInform(byGestureType);
 }
 
@@ -2718,11 +2740,11 @@ void CPlayer::pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont)
   unsigned __int8 result = 0;
   int raceCode = 0;
   if (!g_Main.IsReleaseServiceMode()
-    || ((raceCode = this->m_Param.GetRaceCode()),
-        CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
-          static_cast<unsigned __int8>(raceCode),
-          0)
-          == this->m_dwObjSerial))
+      || ((raceCode = static_cast<int>(this->m_Param.GetRaceCode())),
+          CPvpUserAndGuildRankingSystem::Instance()->GetCurrentRaceBossSerial(
+            static_cast<unsigned __int8>(raceCode),
+            0)
+            == this->m_dwObjSerial))
   {
     if (g_VoteSys[raceCode].m_bActive)
     {
@@ -2736,7 +2758,7 @@ void CPlayer::pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont)
 
   if (!result)
   {
-    raceCode = this->m_Param.GetRaceCode();
+    raceCode = static_cast<int>(this->m_Param.GetRaceCode());
     if (!g_VoteSys[raceCode].StartVote(pwszCont, byLimGrade, static_cast<unsigned __int8>(raceCode)))
     {
       result = 7;
@@ -2754,7 +2776,7 @@ void CPlayer::SetVote(int nSerial)
 void CPlayer::pc_CastVoteRequest(int nVoteSerial, unsigned __int8 byCode)
 {
   unsigned __int8 result = 0;
-  const int raceCode = this->m_Param.GetRaceCode();
+  const int raceCode = static_cast<int>(this->m_Param.GetRaceCode());
   if (g_VoteSys[raceCode].m_bActive)
   {
     if (g_VoteSys[raceCode].m_nSerial == nVoteSerial)
@@ -2796,7 +2818,7 @@ void CPlayer::SendMsg_GM_Greeting(char *wszGMName, char *wszMsg)
 
   _announ_message_receipt_udp msg{};
   msg.byMessageType = 15;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
+  msg.bySenderRace = static_cast<unsigned char>(this->m_Param.GetRaceCode());
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszGMName);
   msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
@@ -2817,7 +2839,7 @@ void CPlayer::SendMsg_RACE_Greeting(char *wszBossName, char *wszMsg)
 
   _announ_message_receipt_udp msg{};
   msg.byMessageType = 16;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
+  msg.bySenderRace = static_cast<unsigned char>(this->m_Param.GetRaceCode());
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszBossName);
   msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
@@ -2838,7 +2860,7 @@ void CPlayer::SendMsg_GUILD_Greeting(char *wszName, char *wszMsg)
 
   _announ_message_receipt_udp msg{};
   msg.byMessageType = 17;
-  msg.bySenderRace = this->m_Param.GetRaceCode();
+  msg.bySenderRace = static_cast<unsigned char>(this->m_Param.GetRaceCode());
   msg.dwSenderSerial = this->m_dwObjSerial;
   strcpy_s(msg.wszSenderName, sizeof(msg.wszSenderName), wszName);
   msg.bySize = static_cast<unsigned __int8>(std::strlen(wszMsg));
@@ -2880,7 +2902,7 @@ void CPlayer::CheckPosInTown()
       || std::abs(this->m_fCurPos[0] - this->m_fBeforeTownCheckPos[0]) > 50.0f
       || std::abs(this->m_fCurPos[2] - this->m_fBeforeTownCheckPos[1]) > 50.0f)
   {
-    const unsigned __int8 raceCode = this->m_Param.GetRaceCode();
+    const unsigned __int8 raceCode = static_cast<unsigned char>(this->m_Param.GetRaceCode());
     const unsigned __int8 raceTown = this->m_pCurMap->GetRaceTown(this->m_fCurPos, raceCode);
     if (this->m_byPosRaceTown != raceTown || !this->m_pBeforeTownCheckMap)
     {

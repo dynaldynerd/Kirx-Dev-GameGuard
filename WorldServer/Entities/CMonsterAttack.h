@@ -17,5 +17,5 @@ public:
   void AttackMonsterGen(_attack_param *pParam, bool bMustMiss);
   void AttackMonsterSkill(_attack_param *pParam);
   void AttackMonsterForce(_attack_param *pParam);
-  __int64 _CalcMonSkillAttPnt();
+  int _CalcMonSkillAttPnt();
 };

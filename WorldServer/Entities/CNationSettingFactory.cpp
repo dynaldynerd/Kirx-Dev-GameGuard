@@ -93,11 +93,13 @@ bool CNationSettingFactory::RegistCheatTableUnion(CNationSettingData *pkData)
     return false;
   if (!RegistCheat(pkData, "pass dungeon", ct_pass_dungeon, 20, 7))
     return false;
-  if (!RegistCheat(pkData, "trhi", ct_tracing_hide, 28, 7))
+  static const char kTracingHideShort[] = "\xBE\xC8\xBA\xB8\xBF\xA9";
+  if (!RegistCheat(pkData, kTracingHideShort, ct_tracing_hide, 28, 7))
     return false;
   if (!RegistCheat(pkData, "transparent", ct_tracing_hide, 28, 7))
     return false;
-  if (!RegistCheat(pkData, "trsh", ct_tracing_show, 28, 7))
+  static const char kTracingShowShort[] = "\xC0\xDF\xBA\xB8\xBF\xA9";
+  if (!RegistCheat(pkData, kTracingShowShort, ct_tracing_show, 28, 7))
     return false;
   if (!RegistCheat(pkData, "no transparent", ct_tracing_show, 28, 7))
     return false;
@@ -304,6 +306,12 @@ bool CNationSettingFactory::RegistCheatTableUnion(CNationSettingData *pkData)
   if (!RegistCheat(pkData, "resurrect", ct_resurrect_player, 28, 7))
     return false;
   if (!RegistCheat(pkData, "adgusc", ct_add_guild_schedule, 8, 7))
+    return false;
+  if (!RegistCheat(pkData, "adgusc phase", ct_set_guildbattle_phase, 8, 7))
+    return false;
+  if (!RegistCheat(pkData, "adgusc curphase", ct_cur_guildbattle_phase, 8, 7))
+    return false;
+  if (!RegistCheat(pkData, "adgusc curround", ct_cur_guildbattle_round, 8, 7))
     return false;
   if (!RegistCheat(pkData, "seguco", ct_set_guildbattle_color, 8, 7))
     return false;

@@ -9,7 +9,7 @@ struct _ccrfg_detect_alret
 
   _ccrfg_detect_alret() : byValue(0) {}
 
-  unsigned __int16 size() const
+  int size() const
   {
     return 1;
   }

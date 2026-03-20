@@ -17,7 +17,7 @@ CPvpPointLimiter::~CPvpPointLimiter()
 {
 }
 
-char CPvpPointLimiter::Set(long double dOriginalPvpPoint, _PVPPOINT_LIMIT_DB_BASE *pkInfo)
+bool CPvpPointLimiter::Set(long double dOriginalPvpPoint, _PVPPOINT_LIMIT_DB_BASE *pkInfo)
 {
   tm lastTime{};
   if (tm *localLast = localtime_2(&pkInfo->tUpdatedate))
@@ -33,18 +33,18 @@ char CPvpPointLimiter::Set(long double dOriginalPvpPoint, _PVPPOINT_LIMIT_DB_BAS
   if (pkInfo->byLimitRate == 3 && localNow && lastTime.tm_year == localNow->tm_year && lastTime.tm_mon == localNow->tm_mon
       && lastTime.tm_mday == localNow->tm_mday)
   {
-    return 0;
+    return false;
   }
 
   Update(updateTime, dOriginalPvpPoint, 0.0);
-  return 1;
+  return true;
 }
 
-char CPvpPointLimiter::TakePvpPoint(long double *dPvpPoint, CPlayer *pkSelf, CPlayer *pkDest)
+bool CPvpPointLimiter::TakePvpPoint(long double *dPvpPoint, CPlayer *pkSelf, CPlayer *pkDest)
 {
   if (!m_pkInfo)
   {
-    return 0;
+    return false;
   }
 
   if (m_pkInfo->dLimitPoint < 0.0)
@@ -76,7 +76,7 @@ char CPvpPointLimiter::TakePvpPoint(long double *dPvpPoint, CPlayer *pkSelf, CPl
       pkDest->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
     }
 
-    return 0;
+    return false;
   }
 
   const double leftLimit = static_cast<double>(m_pkInfo->dLimitPoint - m_pkInfo->dUsePoint);
@@ -124,7 +124,7 @@ char CPvpPointLimiter::TakePvpPoint(long double *dPvpPoint, CPlayer *pkSelf, CPl
     pkDest->SendData_ChatTrans(0, 0xFFFFFFFF, 0xFFu, false, buffer, 0xFFu, nullptr);
   }
 
-  return 1;
+  return true;
 }
 
 void CPvpPointLimiter::CheatUpdate(long double dOriginalPvpPoint)

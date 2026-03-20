@@ -182,7 +182,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoBySerial(
   return 1;
 }
 
-char CRFWorldDatabase::Select_CharacterBaseInfo(
+unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfo(
   unsigned int dwCharacterSerial,
   _worlddb_character_base_info *pCharacterData)
 {
@@ -470,7 +470,7 @@ char CRFWorldDatabase::Select_Equal_Name(char *pwszCharacterName)
   return 0;
 }
 
-char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterName)
+bool CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterName)
 {
   char buffer[260]{};
   sprintf_s(buffer, "select deletename from tbl_base where deletename = '%s' and dck = 1 and arrange = 0 ", pwszCharacterName);
@@ -495,7 +495,7 @@ char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterNam
         {
           FmtLog("%s Success", buffer);
         }
-        return 0;
+        return false;
       }
 
       char result = 1;
@@ -509,20 +509,20 @@ char CRFWorldDatabase::Select_Equal_DeleteName_NoArranged(char *pwszCharacterNam
       {
         SQLCloseCursor(m_hStmtSelect);
       }
-      return result;
+      return (result) != 0;
     }
 
     if (ret == SQL_NO_DATA)
     {
-      return 1;
+      return true;
     }
 
     ErrorMsgLog(ret, buffer, "_SQLExecDirect", m_hStmtSelect);
     ErrorAction(ret, m_hStmtSelect);
-    return 0;
+    return false;
   }
 
   ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
-  return 0;
+  return false;
 }
 

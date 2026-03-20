@@ -18,15 +18,15 @@ public:
   void Loop();
   bool Init();
   void Load(CPlayer *pkPlayer);
-  char MoveLimitMapZoneRequest(int iUserInx, char *pRequest);
-  bool Request(
+  bool MoveLimitMapZoneRequest(int iUserInx, char *pRequest);
+  unsigned __int8 Request(
     int iLimitType,
     int iRequetType,
     int iMapInx,
     unsigned int dwStoreRecordIndex,
     int iUserInx,
     char *pRequest);
-  bool RequestElanMapUserForceMoveHQ();
+  unsigned __int8 RequestElanMapUserForceMoveHQ();
   void LogIn(CPlayer *pkPlayer);
   void LogOut(CPlayer *pkPlayer);
   void CreateComplete(CPlayer *pkPlayer);

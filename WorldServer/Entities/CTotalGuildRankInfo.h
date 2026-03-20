@@ -27,8 +27,8 @@ public:
   ~CTotalGuildRankInfo();
   bool Init();
   void Clear();
-  __int64 Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
-  char Load(_total_guild_rank_info *pkInfo);
+  int Find(unsigned __int8 byRace, unsigned int dwGuildSerial);
+  bool Load(_total_guild_rank_info *pkInfo);
   void SetNoDataFlag();
   void Send(
     unsigned int dwVer,

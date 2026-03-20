@@ -29,7 +29,7 @@ public:
   bool LoadMaps();
   bool LoadRegion();
   bool IsExistStdMapID(int iMapID);
-  char IsInRegion(char *pszRegionCode, CGameObject *pObj);
+  bool IsInRegion(char *pszRegionCode, CGameObject *pObj);
   void CheckMapPortalLink();
 
   static const char *ms_szSettlementMapName[3][2];

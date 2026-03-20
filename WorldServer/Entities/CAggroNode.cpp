@@ -222,9 +222,9 @@ void CAggroNode::SetAggro(
                                   + static_cast<float>(m_nAggroData) * fAdd);
 }
 
-bool CAggroNode::IsLive()
+int CAggroNode::IsLive()
 {
-
-  return m_dwObjectSerial != static_cast<unsigned int>(-1) && m_pCharacter && m_pCharacter->m_bLive
-         && !m_pCharacter->m_bCorpse;
+  const bool isLive = m_dwObjectSerial != static_cast<unsigned int>(-1) && m_pCharacter && m_pCharacter->m_bLive
+                   && !m_pCharacter->m_bCorpse;
+  return isLive ? 1 : 0;
 }

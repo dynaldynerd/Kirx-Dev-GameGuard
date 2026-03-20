@@ -10,14 +10,14 @@ struct _pvp_order_view_inform_zocl;
 class CPvpOrderView
 {
 public:
-  char Init();
+  bool Init();
   void SetOrderViewAttackState();
   void SetOrderViewDamagedState();
   void Loop(unsigned __int16 wIndex);
   long double GetPvpCash();
   long double GetPvpTempCash();
   void SetPvpCash(long double dAlter);
-  char SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne);
+  bool SetPvpOrderView(long double dPvpPoint, _PVP_ORDER_VIEW_DB_BASE *pkInfo, CPlayer *pOne);
   void UpdatePvpCash(double dPvpCash);
   void Update_PvpTempCash(unsigned __int16 wIndex, double dTempPvpCash);
   void Update_ContLoseCash(unsigned __int8 byCnt);

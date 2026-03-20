@@ -335,13 +335,13 @@ void CCharacter::SetNextGenAttTime(unsigned int dwNextTime)
   m_dwNextGenAttackTime = dwNextTime;
 }
 
-__int64 CCharacter::GetSlot(CCharacter *p)
+int CCharacter::GetSlot(CCharacter *p)
 {
   for (int i = 0; i < 5; ++i)
   {
     if (m_AroundSlot[i] == p)
     {
-      return static_cast<unsigned int>(i);
+      return i;
     }
   }
   return -1;
@@ -399,14 +399,14 @@ void CCharacter::SFContInit()
   SendMsg_LastEffectChangeInform();
 }
 
-char CCharacter::RemoveAllContinousEffect()
+bool CCharacter::RemoveAllContinousEffect()
 {
-  char removed = 0;
+  bool removed = false;
   for (unsigned int effectCodeType = 0; effectCodeType < 2; ++effectCodeType)
   {
     if (RemoveAllContinousEffectGroup(effectCodeType))
     {
-      removed = 1;
+      removed = true;
     }
   }
   return removed;
@@ -625,9 +625,10 @@ void CCharacter::RemoveSFContHelpByEffect(int nContParamCode, int nContParamInde
   }
 }
 
-unsigned int CCharacter::CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex)
+unsigned __int16 CCharacter::CalcEffectBit(unsigned __int16 wEffectCode, unsigned __int16 wEffectIndex)
 {
-  return static_cast<unsigned int>(wEffectIndex | (wEffectCode << 12));
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned __int16>(wEffectIndex | (wEffectCode << 12));
 }
 
 void CCharacter::Move(float fSpeed)
@@ -701,7 +702,7 @@ void CCharacter::MoveBreak(float fSpeed)
   }
 }
 
-__int64 CCharacter::RemoveSlot(CCharacter *p)
+int CCharacter::RemoveSlot(CCharacter *p)
 {
   for (int j = 0; j < 5; ++j)
   {
@@ -715,7 +716,7 @@ __int64 CCharacter::RemoveSlot(CCharacter *p)
   return 0;
 }
 
-__int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target)
+int CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, float *target)
 {
   unsigned int index = pos;
   if (pos > 4)
@@ -747,7 +748,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
       float scratch[3]{};
       if (m_pCurMap->m_Level.mBsp->CanYouGoThere(cur, checkPos, &scratch))
       {
-        return static_cast<unsigned int>(nextIndex);
+        return nextIndex;
       }
     }
 
@@ -761,7 +762,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
       float scratch[3]{};
       if (m_pCurMap->m_Level.mBsp->CanYouGoThere(cur, checkPos, &scratch))
       {
-        return static_cast<unsigned int>(prevIndex);
+        return prevIndex;
       }
     }
 
@@ -771,7 +772,7 @@ __int64 CCharacter::GetNearEmptySlot(unsigned int pos, float dist, float *cur, f
   return -1;
 }
 
-__int64 CCharacter::InsertSlot(CCharacter *p, int pos)
+int CCharacter::InsertSlot(CCharacter *p, int pos)
 {
   if (m_AroundSlot[pos] == p)
   {
@@ -794,7 +795,7 @@ void CCharacter::BreakStealth()
   }
 }
 
-__int64 CCharacter::GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint)
+int CCharacter::GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint)
 {
   const float damagePoint = static_cast<float>(nDamPoint);
   const float fireTol = static_cast<float>(GetFireTol()) / 100.0f;
@@ -806,25 +807,21 @@ __int64 CCharacter::GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint)
 
   if (!byAttTolType)
   {
-    return static_cast<unsigned int>(
-      static_cast<int>(((damagePoint * -fireTol) * lowRate) - ((damagePoint * waterTol) * highRate)
-                       + ((damagePoint * soilTol) * highRate)));
+    return static_cast<int>(((damagePoint * -fireTol) * lowRate) - ((damagePoint * waterTol) * highRate)
+                            + ((damagePoint * soilTol) * highRate));
   }
 
   switch (byAttTolType)
   {
     case 1:
-      return static_cast<unsigned int>(
-        static_cast<int>(((damagePoint * fireTol) * highRate) - ((damagePoint * waterTol) * lowRate)
-                         - ((damagePoint * windTol) * highRate)));
+      return static_cast<int>(((damagePoint * fireTol) * highRate) - ((damagePoint * waterTol) * lowRate)
+                              - ((damagePoint * windTol) * highRate));
     case 2:
-      return static_cast<unsigned int>(
-        static_cast<int>(((damagePoint * -fireTol) * highRate) - ((damagePoint * soilTol) * lowRate)
-                         + ((damagePoint * windTol) * highRate)));
+      return static_cast<int>(((damagePoint * -fireTol) * highRate) - ((damagePoint * soilTol) * lowRate)
+                              + ((damagePoint * windTol) * highRate));
     case 3:
-      return static_cast<unsigned int>(
-        static_cast<int>(((damagePoint * waterTol) * highRate) - ((damagePoint * soilTol) * highRate)
-                         - ((damagePoint * windTol) * lowRate)));
+      return static_cast<int>(((damagePoint * waterTol) * highRate) - ((damagePoint * soilTol) * highRate)
+                              - ((damagePoint * windTol) * lowRate));
     default:
       break;
   }
@@ -832,7 +829,7 @@ __int64 CCharacter::GetTotalTol(unsigned __int8 byAttTolType, int nDamPoint)
   return 0;
 }
 
-__int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack)
+int CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, CCharacter *pDst, bool bBackAttack)
 {
   float defFc = 0.0f;
   const int totalTol = static_cast<int>(GetTotalTol(static_cast<unsigned __int8>(nTolType), nAttPnt));
@@ -917,13 +914,13 @@ __int64 CCharacter::GetAttackDamPoint(int nAttPnt, int nAttPart, int nTolType, C
   {
     if (pDst->GetLevel() >= 30)
     {
-      return static_cast<unsigned int>(rand() % 300 + 1);
+      return rand() % 300 + 1;
     }
   }
-return static_cast<unsigned int>(damage);
+  return damage;
 }
 
-__int64 CCharacter::GetAttackRandomPart()
+int CCharacter::GetAttackRandomPart()
 {
   if (!m_ObjID.m_byID)
   {
@@ -945,7 +942,7 @@ __int64 CCharacter::GetAttackRandomPart()
   {
     if (roll < threshold[j])
     {
-      return static_cast<unsigned int>(j);
+      return j;
     }
   }
   return -1;
@@ -1027,7 +1024,7 @@ int _CheckCumulativeSF(
   return 0;
 }
 
-__int64 CCharacter::FindEffectDst(
+int CCharacter::FindEffectDst(
   int nEffectCode,
   int nAreaType,
   int nLv,
@@ -1036,7 +1033,7 @@ __int64 CCharacter::FindEffectDst(
   char *psActableDst,
   CCharacter **ppDsts)
 {
-  unsigned int count = 0;
+  int count = 0;
   ppDsts[count++] = pOriDst;
   if (!nAreaType)
   {
@@ -1046,23 +1043,28 @@ __int64 CCharacter::FindEffectDst(
   switch (nAreaType)
   {
     case 1:
-      return static_cast<unsigned int>(
-        _GetAreaEffectMember(pOriDst, bBenefit, s_nLimitRadius_0[nLv], pOriDst->m_fCurPos, psActableDst, &ppDsts[count]))
-             + count;
+      return _GetAreaEffectMember(
+               pOriDst,
+               bBenefit,
+               s_nLimitRadius_0[nLv],
+               pOriDst->m_fCurPos,
+               psActableDst,
+               &ppDsts[count])
+           + count;
     case 2:
-      return static_cast<unsigned int>(_GetPartyEffectMember(pOriDst, false, &ppDsts[count])) + count;
+      return _GetPartyEffectMember(pOriDst, false, &ppDsts[count]) + count;
     case 3:
-      return static_cast<unsigned int>(_GetPartyEffectMember(pOriDst, true, &ppDsts[count])) + count;
+      return _GetPartyEffectMember(pOriDst, true, &ppDsts[count]) + count;
     case 10:
-      return static_cast<unsigned int>(_GetFlashEffectMember(
-                                          pOriDst,
-                                          bBenefit,
-                                          s_nLimitRadius_0[nLv],
-                                          s_nLimitAngle_0,
-                                          pOriDst,
-                                          psActableDst,
-                                          &ppDsts[count]))
-             + count;
+      return _GetFlashEffectMember(
+               pOriDst,
+               bBenefit,
+               s_nLimitRadius_0[nLv],
+               s_nLimitAngle_0,
+               pOriDst,
+               psActableDst,
+               &ppDsts[count])
+           + count;
     default:
       break;
   }
@@ -1070,7 +1072,7 @@ __int64 CCharacter::FindEffectDst(
   return count;
 }
 
-__int64 CCharacter::FindPotionEffectDst(
+int CCharacter::FindPotionEffectDst(
   int nAreaType,
   int nEffectAreaVal,
   bool bBenefit,
@@ -1079,7 +1081,7 @@ __int64 CCharacter::FindPotionEffectDst(
   CCharacter **ppDsts,
   bool *pbPath)
 {
-  unsigned int count = 0;
+  int count = 0;
   ppDsts[count++] = pOriDst;
 
   switch (nAreaType)
@@ -1087,13 +1089,18 @@ __int64 CCharacter::FindPotionEffectDst(
     case 0:
       return count;
     case 1:
-      return static_cast<unsigned int>(
-        _GetAreaEffectMember(pOriDst, bBenefit, nEffectAreaVal, pOriDst->m_fCurPos, psActableDst, &ppDsts[count]))
-             + count;
+      return _GetAreaEffectMember(
+               pOriDst,
+               bBenefit,
+               nEffectAreaVal,
+               pOriDst->m_fCurPos,
+               psActableDst,
+               &ppDsts[count])
+           + count;
     case 2:
-      return static_cast<unsigned int>(_GetPartyEffectMember(pOriDst, false, &ppDsts[count])) + count;
+      return _GetPartyEffectMember(pOriDst, false, &ppDsts[count]) + count;
     case 3:
-      return static_cast<unsigned int>(_GetPartyEffectMember(pOriDst, true, &ppDsts[count])) + count;
+      return _GetPartyEffectMember(pOriDst, true, &ppDsts[count]) + count;
     case 4:
       if (pOriDst == this)
       {
@@ -1103,15 +1110,15 @@ __int64 CCharacter::FindPotionEffectDst(
       pbPath[count] = true;
       return count + 1;
     case 10:
-      return static_cast<unsigned int>(_GetFlashEffectMember(
-                                          pOriDst,
-                                          bBenefit,
-                                          nEffectAreaVal,
-                                          s_nLimitAngle_1,
-                                          pOriDst,
-                                          psActableDst,
-                                          &ppDsts[count]))
-             + count;
+      return _GetFlashEffectMember(
+               pOriDst,
+               bBenefit,
+               nEffectAreaVal,
+               s_nLimitAngle_1,
+               pOriDst,
+               psActableDst,
+               &ppDsts[count])
+           + count;
     default:
       break;
   }
@@ -1119,7 +1126,7 @@ __int64 CCharacter::FindPotionEffectDst(
   return count;
 }
 
-__int64 CCharacter::_GetAreaEffectMember(
+int CCharacter::_GetAreaEffectMember(
   CCharacter *pOriDst,
   bool bBenefit,
   int nLimitRadius,
@@ -1157,7 +1164,7 @@ __int64 CCharacter::_GetAreaEffectMember(
         }
         if (count >= 29)
         {
-          return static_cast<unsigned int>(count);
+          return count;
         }
         if (pDst->m_bCorpse)
         {
@@ -1229,16 +1236,16 @@ __int64 CCharacter::_GetAreaEffectMember(
     }
   }
 
-  return static_cast<unsigned int>(count);
+  return count;
 }
 
-__int64 CCharacter::_GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts)
+int CCharacter::_GetPartyEffectMember(CCharacter *pOriDst, bool bCircle, CCharacter **ppDsts)
 {
 // this is not a stub
   return 0;
 }
 
-__int64 CCharacter::_GetFlashEffectMember(
+int CCharacter::_GetFlashEffectMember(
   CCharacter *pOriDst,
   bool bBenefit,
   int nLimitRadius,
@@ -1252,7 +1259,7 @@ __int64 CCharacter::_GetFlashEffectMember(
     return 0;
   }
 
-  unsigned int count = 0;
+  int count = 0;
   ppDsts[count++] = pOriTar;
   if (pOriTar->GetCurSecNum() == static_cast<unsigned int>(-1))
   {
@@ -1281,7 +1288,7 @@ __int64 CCharacter::_GetFlashEffectMember(
         {
           continue;
         }
-        if (static_cast<int>(count) >= 29)
+        if (count >= 29)
         {
           return count;
         }
@@ -1341,7 +1348,7 @@ __int64 CCharacter::_GetFlashEffectMember(
   return count;
 }
 
-char CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex)
+bool CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 wEffectIndex)
 {
   auto hasFlagAt = [](_base_fld *record, size_t recordIndex, size_t byteOffset) -> bool
   {
@@ -1358,9 +1365,9 @@ char CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 
     _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(wEffectIndex);
     if (record && !hasFlagAt(record, 13, 32))
     {
-      return 1;
+      return true;
     }
-    return 0;
+    return false;
   }
 
   if (uiEffectCodeType == 1)
@@ -1368,9 +1375,9 @@ char CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 
     _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(wEffectIndex);
     if (hasFlagAt(record, 12, 48))
     {
-      return 1;
+      return true;
     }
-    return 0;
+    return false;
   }
 
   if (uiEffectCodeType == 2)
@@ -1378,25 +1385,25 @@ char CCharacter::IsDamageEffect(unsigned int uiEffectCodeType, unsigned __int16 
     _base_fld *record = g_Main.m_tblEffectData[2].GetRecord(wEffectIndex);
     if (hasFlagAt(record, 13, 32))
     {
-      return 1;
+      return true;
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
+bool CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
 {
   if (psActableDst[0] == '1')
   {
     if (pDst == this)
     {
-      return 1;
+      return true;
     }
   }
   else if (pDst == this)
   {
-    return 0;
+    return false;
   }
 
   if (psActableDst[1] == '1')
@@ -1405,7 +1412,7 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
     {
       if (pDst->GetObjRace() == GetObjRace())
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1415,14 +1422,14 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
       {
         if (!pDst->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx == pDst->m_byGuildBattleColorInx)
         {
-          return 1;
+          return true;
         }
       }
       else if (!pDst->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
       {
         if (pDst->GetObjRace() == GetObjRace())
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1434,7 +1441,7 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
     {
       if (pDst->GetObjRace() != GetObjRace() && pDst->m_ObjID.m_byID != 1)
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1444,22 +1451,22 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
       {
         if (!pDst->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx != pDst->m_byGuildBattleColorInx)
         {
-          return 1;
+          return true;
         }
       }
       else if (!pDst->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
       {
         if (srcPlayer->IsChaosMode())
         {
-          return 1;
+          return true;
         }
         if (pDst->IsPunished(1u, false))
         {
-          return 1;
+          return true;
         }
         if (pDst->GetObjRace() != GetObjRace())
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1471,7 +1478,7 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
     {
       if (pDst->m_ObjID.m_byID == 1)
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1479,19 +1486,19 @@ char CCharacter::IsPotionEffectableDst(char *psActableDst, CPlayer *pDst)
       CPlayer *srcPlayer = static_cast<CPlayer *>(this);
       if (!srcPlayer->m_bInGuildBattle && pDst->m_ObjID.m_byID == 1)
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
+bool CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
 {
   if (psActableDst[0] == '1' && pDst == this)
   {
-    return 1;
+    return true;
   }
 
   if (psActableDst[1] == '1')
@@ -1500,7 +1507,7 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
     {
       if (pDst->GetObjRace() == GetObjRace())
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1511,14 +1518,14 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
       {
         if (!dstPlayer->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx == dstPlayer->m_byGuildBattleColorInx)
         {
-          return 1;
+          return true;
         }
       }
       else if (!dstPlayer->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
       {
         if (pDst->GetObjRace() == GetObjRace())
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1530,7 +1537,7 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
     {
       if (pDst->GetObjRace() != GetObjRace() && pDst->m_ObjID.m_byID != 1)
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1541,22 +1548,22 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
       {
         if (!dstPlayer->m_bTakeGravityStone && srcPlayer->m_byGuildBattleColorInx != dstPlayer->m_byGuildBattleColorInx)
         {
-          return 1;
+          return true;
         }
       }
       else if (!dstPlayer->m_bInGuildBattle && !srcPlayer->m_bInGuildBattle)
       {
         if (srcPlayer->IsChaosMode())
         {
-          return 1;
+          return true;
         }
         if (dstPlayer->IsPunished(1u, false))
         {
-          return 1;
+          return true;
         }
         if (pDst->GetObjRace() != GetObjRace())
         {
-          return 1;
+          return true;
         }
       }
     }
@@ -1568,7 +1575,7 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
     {
       if (pDst->m_ObjID.m_byID == 1)
       {
-        return 1;
+        return true;
       }
     }
     else
@@ -1576,15 +1583,15 @@ char CCharacter::IsEffectableDst(char *psActableDst, CCharacter *pDst)
       CPlayer *srcPlayer = static_cast<CPlayer *>(this);
       if (!srcPlayer->m_bInGuildBattle && pDst->m_ObjID.m_byID == 1)
       {
-        return 1;
+        return true;
       }
     }
   }
 
-  return 0;
+  return false;
 }
 
-char CCharacter::AssistSkill(
+bool CCharacter::AssistSkill(
   CCharacter *pDstChar,
   int nEffectCode,
   _skill_fld *pSkillFld,
@@ -1697,7 +1704,7 @@ char CCharacter::AssistSkill(
 
   *pbyErrorCode = 0;
   *pbUpMty = false;
-  char anySuccess = 0;
+  bool anySuccess = false;
   for (int j = 0; j < g_tmpEffectedNum; ++j)
   {
     g_tmpEffectedList[j].pMem = targets[j];
@@ -1705,7 +1712,7 @@ char CCharacter::AssistSkill(
     g_tmpEffectedList[j].wEffectValue = targets[j]->m_wEffectTempValue;
     if (!retCodes[j])
     {
-      anySuccess = 1;
+      anySuccess = true;
     }
     if (upFlags[j])
     {
@@ -1726,7 +1733,7 @@ char CCharacter::AssistSkill(
   return anySuccess;
 }
 
-char CCharacter::AssistForce(
+bool CCharacter::AssistForce(
   CCharacter *pDstChar,
   _force_fld *pForceFld,
   int nForceLv,
@@ -1837,7 +1844,7 @@ char CCharacter::AssistForce(
 
   *pbyErrorCode = 0;
   *pbUpMty = false;
-  char anySuccess = 0;
+  bool anySuccess = false;
   for (int j = 0; j < g_tmpEffectedNum; ++j)
   {
     g_tmpEffectedList[j].pMem = targets[j];
@@ -1845,7 +1852,7 @@ char CCharacter::AssistForce(
     g_tmpEffectedList[j].wEffectValue = targets[j]->m_wEffectTempValue;
     if (!retCodes[j])
     {
-      anySuccess = 1;
+      anySuccess = true;
     }
     if (upFlags[j])
     {

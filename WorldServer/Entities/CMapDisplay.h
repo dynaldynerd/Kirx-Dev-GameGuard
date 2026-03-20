@@ -19,25 +19,25 @@ public:
   CMapDisplay();
   ~CMapDisplay() override;
 
-  char OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex);
-  char ChangeMap(CMapData *pMap);
-  char ChangeLayer(unsigned __int16 wLayerIndex);
+  bool OnDisplay(CMapData *pMap, unsigned __int16 wLayerIndex);
+  bool ChangeMap(CMapData *pMap);
+  bool ChangeLayer(unsigned __int16 wLayerIndex);
   void DrawDisplay();
   void DrawMap();
   void DrawCollisionLine();
   void DrawDummy();
   void DrawObject();
-  __int64 _DrawObject(CGameObject *pObj, CSurface *pSF);
-  __int64 DrawSelectMonsterLookAtPos(CMonster *pMon);
+  HRESULT _DrawObject(CGameObject *pObj, CSurface *pSF);
+  HRESULT DrawSelectMonsterLookAtPos(CMonster *pMon);
   void DrawTextA();
   void InitDummy(CRect *prcWnd);
   void InitCollLine(CRect *prcWnd);
   CGameObject *SelectObject(CPoint *pt);
 
-  int InitSurface(CMapData *pMap);
-  int CreateObjSurface();
+  HRESULT InitSurface(CMapData *pMap);
+  HRESULT CreateObjSurface();
 
-  char OffDisplay();
+  bool OffDisplay();
   HRESULT ReleaseDisplay();
 
   CSurface *m_pSFMap;

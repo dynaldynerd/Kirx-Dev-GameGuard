@@ -259,9 +259,10 @@ unsigned int CRecordData::FileSize(const char *fileName)
   return static_cast<unsigned int>(end - begin);
 }
 
-unsigned int CRecordData::GetRecordNum() const
+int CRecordData::GetRecordNum() const
 {
-  return static_cast<unsigned int>(m_Header.m_nRecordNum);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(m_Header.m_nRecordNum));
 }
 
 _base_fld *CRecordData::GetRecord(int index)

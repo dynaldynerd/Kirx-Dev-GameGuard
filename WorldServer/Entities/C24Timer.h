@@ -12,6 +12,6 @@ public:
   ~C24Timer();
 
   void Init();
-  __int64 Get24TimeFromTickTime(unsigned int dwTickTime);
+  unsigned int Get24TimeFromTickTime(unsigned int dwTickTime);
 };
 

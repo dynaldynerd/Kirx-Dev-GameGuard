@@ -528,7 +528,7 @@ public:
 private:
   bool _InitMineOre();
   void _Mining();
-  unsigned int _Convert_GoldToGage(int nGold);
+  int _Convert_GoldToGage(int nGold);
 };
 
 class AutoMineMachineMng

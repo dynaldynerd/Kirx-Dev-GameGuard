@@ -108,20 +108,20 @@ void CMainThread::_db_Load_BattleTournamentInfo()
   }
 }
 
-char CMainThread::LoadLimitInfo()
+bool CMainThread::LoadLimitInfo()
 {
   unsigned __int8 data[130]{};
   unsigned __int8 ret = this->m_pWorldDB->Select_LimitInfo(data, sizeof(data));
   if (ret == 1)
   {
-    return 0;
+    return false;
   }
 
   unsigned __int8 hash[44]{};
   CCryptor *cryptor = CTSingleton<CCryptor>::Instance();
   if (!cryptor->MakeHash(g_cbHashVerify, 32, hash, 32))
   {
-    return 0;
+    return false;
   }
 
   if (!std::memcmp(data, hash, 32))
@@ -135,7 +135,7 @@ char CMainThread::LoadLimitInfo()
       sec);
   }
 
-  return 1;
+  return true;
 }
 
 unsigned __int8 CMainThread::_db_Load_GoldBoxItem(qry_case_select_golden_box_item *pDbGoldenboxitem, int *pnDBSerial)

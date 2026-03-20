@@ -8,7 +8,7 @@ struct _qry_case_addpvppoint
   unsigned int dwPoint;
   unsigned int dwCashBag;
 
-  __int64 size() const
+  int size() const
   {
     return 12;
   }

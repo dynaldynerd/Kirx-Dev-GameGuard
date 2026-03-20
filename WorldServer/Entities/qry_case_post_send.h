@@ -31,8 +31,8 @@ struct _qry_case_post_send
   __list List[15];
 
   _qry_case_post_send();
-  __int64 size() const;
-  char pushdata(
+  int size() const;
+  bool pushdata(
     unsigned int dwIndex,
     unsigned __int8 byErr,
     unsigned int dwReceiverSerial,
@@ -53,12 +53,13 @@ inline _qry_case_post_send::_qry_case_post_send()
   std::memset(this, 0, sizeof(*this));
 }
 
-inline __int64 _qry_case_post_send::size() const
+inline int _qry_case_post_send::size() const
 {
-  return 4688LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(4688LL);
 }
 
-inline char _qry_case_post_send::pushdata(
+inline bool _qry_case_post_send::pushdata(
   unsigned int dwIndex,
   unsigned __int8 byErr,
   unsigned int dwReceiverSerial,
@@ -75,7 +76,7 @@ inline char _qry_case_post_send::pushdata(
 {
   if (dwCount >= 15)
   {
-    return 0;
+    return false;
   }
 
   List[dwCount].dwIndex = dwIndex;
@@ -92,6 +93,6 @@ inline char _qry_case_post_send::pushdata(
   strcpy_s(List[dwCount].wszTitle, 21, wszTitle);
   strcpy_s(List[dwCount].wszContent, 201, wszContent);
   ++dwCount;
-  return 1;
+  return true;
 }
 

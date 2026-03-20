@@ -9,11 +9,12 @@ struct _enter_world_result_zone
   unsigned __int8 byUserGrade;
   unsigned __int8 bySvrType;
 
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
-inline __int64 _enter_world_result_zone::size() const
+inline int _enter_world_result_zone::size() const
 {
-  return 3LL;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(3LL);
 }

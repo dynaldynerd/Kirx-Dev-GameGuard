@@ -12,10 +12,10 @@ struct _qry_case_unmandtrader_updateitemstate
   unsigned __int8 byItemTableCode;
   unsigned __int16 wItemTableIndex;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_unmandtrader_updateitemstate::size() const
+inline int _qry_case_unmandtrader_updateitemstate::size() const
 {
   return 20;
 }

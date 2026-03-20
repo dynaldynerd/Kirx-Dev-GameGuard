@@ -138,7 +138,7 @@ void CRadarItemMgr::SetUseRadar(
   m_nMonNum = 0;
 }
 
-char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
+bool CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
 {
   ResetFlags();
   m_RadarResult.nSize = 0;
@@ -147,16 +147,16 @@ char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
   {
     m_bPlayerEnd = true;
     m_bMonEnd = true;
-    return 0;
+    return false;
   }
 
   if (m_bPlayerEnd && m_bMonEnd)
   {
-    return 0;
+    return false;
   }
 
   CPartyPlayer *partyMgr = m_pMaster->m_pPartyMgr;
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
 
   if (pRadarFld->m_strEffSort[0] == '1')
   {
@@ -197,7 +197,7 @@ char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
 
       CPlayer *targetPlayer = &g_Player[j];
       const unsigned int targetSerial = targetPlayer->m_Param.GetCharSerial();
-      const unsigned __int8 targetRace = targetPlayer->m_Param.GetRaceCode();
+      const unsigned __int8 targetRace = static_cast<unsigned char>(targetPlayer->m_Param.GetRaceCode());
       CMapData *targetMap = targetPlayer->m_pCurMap;
       if (!targetPlayer->m_bLive || targetMap != m_pDestMap)
       {
@@ -293,7 +293,7 @@ char CRadarItemMgr::RadarProc(_RadarItem_fld *pRadarFld)
     }
   }
 
-  return 1;
+  return true;
 }
 
 void CRadarItemMgr::ResetFlags()

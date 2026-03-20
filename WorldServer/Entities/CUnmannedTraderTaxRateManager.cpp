@@ -99,18 +99,18 @@ bool CUnmannedTraderTaxRateManager::Init(CLogFile *pkLogger)
   return true;
 }
 
-char CUnmannedTraderTaxRateManager::Load()
+bool CUnmannedTraderTaxRateManager::Load()
 {
   if (this->m_vecTRC.empty())
   {
-    return 0;
+    return false;
   }
 
   for (int j = 0; j < 3; ++j)
   {
     if (!this->m_vecTRC[j])
     {
-      return 0;
+      return false;
     }
 
     CWeeklyGuildRankManager *rankMgr = CWeeklyGuildRankManager::Instance();
@@ -118,11 +118,11 @@ char CUnmannedTraderTaxRateManager::Load()
     this->m_vecTRC[j]->set_owner(ownerGuild);
     if (!this->m_vecTRC[j]->_db_load(j))
     {
-      return 0;
+      return false;
     }
   }
 
-  return 1;
+  return true;
 }
 
 void CUnmannedTraderTaxRateManager::CompleteCreate(unsigned __int16 wInx)
@@ -234,24 +234,24 @@ unsigned int CUnmannedTraderTaxRateManager::GetTax(
   return autoTrade->CalcPrice(dwGuildSerial, dwPrice);
 }
 
-char CUnmannedTraderTaxRateManager::CheatChangeTaxRate(
+bool CUnmannedTraderTaxRateManager::CheatChangeTaxRate(
   unsigned __int8 byRace,
   int dwNewTaxRate,
   char *pCheaterName)
 {
   if (m_vecTRC.empty() || m_vecTRC.size() <= byRace)
   {
-    return 0;
+    return false;
   }
 
   const float newTaxRate = static_cast<float>(dwNewTaxRate) / 100.0f;
   if (m_vecTRC[byRace]->ChangeTaxRate(newTaxRate))
   {
-    return 0;
+    return false;
   }
 
   m_vecTRC[byRace]->history_used_cheet_changetaxrate(dwNewTaxRate, pCheaterName);
-  return 1;
+  return true;
 }
 
 void CUnmannedTraderTaxRateManager::SetGuildMaintainMoney(

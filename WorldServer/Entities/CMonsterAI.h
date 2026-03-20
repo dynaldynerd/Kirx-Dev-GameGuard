@@ -16,7 +16,7 @@ public:
   CMonsterAI();
   virtual ~CMonsterAI();
   void Init();
-  bool SetMyData(UsStateTBL *pStateTBL, void *pObject);
+  int SetMyData(UsStateTBL *pStateTBL, void *pObject);
   SF_Timer *GetTimer(unsigned int nIndex);
   CPathMgr *GetPathFinder();
   unsigned int GetBattleModeTime();

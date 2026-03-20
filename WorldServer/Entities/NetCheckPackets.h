@@ -6,7 +6,7 @@ struct _check_query
 {
   char sDum;
 
-  unsigned __int64 size() const;
+  int size() const;
 };
 
 struct _check_answer
@@ -28,7 +28,7 @@ struct _check_speed_hack_ans
 {
   unsigned int dwKey[4];
 
-  unsigned __int64 size() const;
+  int size() const;
 };
 
 unsigned int *CalcCodeKey(unsigned int *pdwCode);

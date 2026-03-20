@@ -17,7 +17,7 @@ struct _qry_case_unmandtrader_update_reprice
   unsigned int dwRegistSerial;
   unsigned int dwNewPrice;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

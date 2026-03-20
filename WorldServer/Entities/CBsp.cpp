@@ -373,7 +373,7 @@ int CBsp::IsInViewFrustum(unsigned __int16 matId)
   {
     return 1;
   }
-  return IsBBoxInFrustum(mMatGroup[index].BBMin, mMatGroup[index].BBMax);
+  return static_cast<int>(IsBBoxInFrustum(mMatGroup[index].BBMin, mMatGroup[index].BBMax));
 }
 
 void CBsp::PrepareShadowRender(
@@ -3406,9 +3406,9 @@ void CBsp::CalcEntitiesMainColor()
                 }
                 else
                 {
-                    mapList[idx].mMapColor = GetLightFromPoint(mapList[idx].Pos, 30);
+                    mapList[idx].mMapColor = static_cast<unsigned int>(GetLightFromPoint(mapList[idx].Pos, 30));
                     if (mapList[idx].mMapColor == -8355712)
-                        mapList[idx].mMapColor = GetLightFromPoint(mapList[idx].Pos, 60);
+                        mapList[idx].mMapColor = static_cast<unsigned int>(GetLightFromPoint(mapList[idx].Pos, 60));
                 }
             }
             ++i;
@@ -3511,7 +3511,7 @@ void CBsp::OnlyStoreCollisionStructure(_BSP_READ_M_GROUP *pRM, char (*pBV)[3], s
                 baseIndex = baseWordIndex;
 
             mCFace[faceIdx].Attr = 0;
-            mCFace[faceIdx].VNum = pRF[faceIdx].v_num;
+            mCFace[faceIdx].VNum = static_cast<unsigned char>(pRF[faceIdx].v_num);
             mCFace[faceIdx].VStartId = static_v_cnt;
             mCFace[faceIdx].MatGIndex = i;
 
@@ -3898,14 +3898,14 @@ void CBsp::ReadDynamicDataFillVertexBuffer(FILE *Stream)
             for (unsigned int j = 0; j < group.face_num; ++j)
             {
                 unsigned int faceIdx = faceId[group.face_start_id + j];
-                for (unsigned int k = 0; k < face[faceIdx].v_num - 2; ++k)
+                for (unsigned int k = 0; k < static_cast<unsigned int>(face[faceIdx].v_num - 2); ++k)
                 {
                     static_indexbp[static_v_index_cnt++] = static_cast<unsigned short>(static_v_cnt);
                     static_indexbp[static_v_index_cnt++] = static_cast<unsigned short>(static_v_cnt + k + 1);
                     static_indexbp[static_v_index_cnt++] = static_cast<unsigned short>(static_v_cnt + k + 2);
                 }
 
-                mCFace[faceIdx].VNum = face[faceIdx].v_num;
+                mCFace[faceIdx].VNum = static_cast<unsigned char>(face[faceIdx].v_num);
                 mCFace[faceIdx].VStartId = static_v_cnt + all_static_v_cnt;
                 mCFace[faceIdx].MatGIndex = static_cast<unsigned short>(i);
 
@@ -4390,7 +4390,7 @@ void CBsp::LoadSoundEntities(_READ_SOUND_ENTITY_LIST *a2, _READ_SOUND_ENTITIES_L
             dst[j - 1] = v;
         } while (a2[i].name[j - 1]);
 
-        mSoundEntityList[idx].ID = IM_LoadWave(path, 1u);
+        mSoundEntityList[idx].ID = static_cast<unsigned short>(IM_LoadWave(path, 1u));
         mTotalWaveSize += GetFileSize(path);
         ++i;
         ++idx;

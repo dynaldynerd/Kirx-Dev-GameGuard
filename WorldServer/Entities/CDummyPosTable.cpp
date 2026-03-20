@@ -142,8 +142,16 @@ bool CDummyPosTable::FindDummy(char *pszTextFileName, char *pszDummyCode, _dummy
             if (strcmp(token, destination) == 0)
             {
                 pDummyPos->m_wLineIndex = static_cast<unsigned short>(lineIndex);
-                _strlwr_s(token, sizeof(token));
-                strcpy_s(pDummyPos->m_szCode, token);
+                char *duplicatedCode = _strdup(token + 1);
+                if (!duplicatedCode)
+                {
+                    fclose(Stream);
+                    return false;
+                }
+
+                char *lowerCode = _strlwr(duplicatedCode);
+                strcpy_s(pDummyPos->m_szCode, lowerCode);
+                free(duplicatedCode);
                 for (int j = 0; j < 3; ++j)
                 {
                     int value = 0;

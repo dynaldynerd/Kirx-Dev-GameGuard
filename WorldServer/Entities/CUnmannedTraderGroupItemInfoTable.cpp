@@ -114,11 +114,11 @@ CUnmannedTraderSortType *CUnmannedTraderGroupItemInfoTable::GetSortType(
   return this->m_kGroupIDInfo.GetSortType(byDivision, bySortType);
 }
 
-char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex)
+bool CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableCode, unsigned __int16 wItemTableIndex)
 {
   if (byTableCode == 0xFF || wItemTableIndex == 65535)
   {
-    return 0;
+    return false;
   }
 
   if (byTableCode >= 37)
@@ -128,7 +128,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableC
       "\t\titem_tbl_num <= byTableCode!\r\n",
       byTableCode,
       wItemTableIndex);
-    return 0;
+    return false;
   }
 
   _base_fld *record = g_Main.m_tblItemData[byTableCode].GetRecord(wItemTableIndex);
@@ -139,7 +139,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableC
       "\t\tg_Main.m_tblItemData[byTableCode].GetRecord( wItemTableIndex ) NULL!\r\n",
       byTableCode,
       wItemTableIndex);
-    return 0;
+    return false;
   }
 
   unsigned __int8 byDivision[32]{};
@@ -154,7 +154,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableC
       byTableCode,
       wItemTableIndex,
       record->m_strCode);
-    return 0;
+    return false;
   }
 
   if (!m_kVerInfo.IncreaseVersion(byDivision[0], byClass[0]))
@@ -166,13 +166,13 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byTableC
       wItemTableIndex,
       byDivision[0],
       byClass[0]);
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
-char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
+bool CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
   unsigned __int8 byTableCode,
   unsigned __int16 wItemTableIndex,
   unsigned __int8 byRegistDivision,
@@ -180,7 +180,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
 {
   if (byTableCode == 0xFF || wItemTableIndex == 65535)
   {
-    return 0;
+    return false;
   }
 
   if (byTableCode >= 37)
@@ -192,7 +192,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
       wItemTableIndex,
       byRegistDivision,
       byRegistClass);
-    return 0;
+    return false;
   }
 
   _base_fld *record = g_Main.m_tblItemData[byTableCode].GetRecord(wItemTableIndex);
@@ -205,7 +205,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
       wItemTableIndex,
       byRegistDivision,
       byRegistClass);
-    return 0;
+    return false;
   }
 
   unsigned __int8 byDivision[32]{};
@@ -222,7 +222,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
       byRegistDivision,
       byRegistClass,
       record->m_strCode);
-    return 0;
+    return false;
   }
 
   if (byRegistDivision != byDivision[0] || byRegistClass != byClass[0])
@@ -238,7 +238,7 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
       byDivision[0],
       byRegistClass,
       byClass[0]);
-    return 0;
+    return false;
   }
 
   if (!m_kVerInfo.IncreaseVersion(byDivision[0], byClass[0]))
@@ -252,17 +252,17 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(
       byRegistClass,
       byDivision[0],
       byClass[0]);
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 
-char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byDivision, unsigned __int8 byClass)
+bool CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byDivision, unsigned __int8 byClass)
 {
   if (m_kVerInfo.IncreaseVersion(byDivision, byClass))
   {
-    return 1;
+    return true;
   }
 
   Log(
@@ -270,5 +270,5 @@ char CUnmannedTraderGroupItemInfoTable::IncreaseVersion(unsigned __int8 byDivisi
     "\t\tm_kVerInfo.IncreaseVersion( byDivision(%u), byClass(%u) ) Fail!\r\n",
     byDivision,
     byClass);
-  return 0;
+  return false;
 }

@@ -83,9 +83,9 @@ public:
   bool SetScene(unsigned __int8 byNumOfTime, int nSceneCode, unsigned int nPassTime, int nChangeReason);
   void SetTermTimeDefault(unsigned __int8 byNumOfTime);
   bool AuthMiningTicket(unsigned int dwKey);
-  char ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime);
-  char ct_State(CPlayer *pOne);
-  char ct_StopBattle();
+  bool ct_KeeperStart(int nKeeperState, int nRace, unsigned int nPassTime);
+  bool ct_State(CPlayer *pOne);
+  bool ct_StopBattle();
   char *GetHolyMentalString();
   CMapData *GetMapData();
   _portal_dummy *GetPortalDummy(unsigned __int8 byRace);
@@ -110,7 +110,7 @@ public:
   unsigned int GetDestroyerGuildSerial();
   void SetHolyMasterRace(int nMaster);
   void SetDestroyStoneRace(int nRace);
-  char IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode);
+  bool IsItemLootAuthority(CPlayer *pOne, unsigned __int8 byCreateCode);
   void ReleaseLastAttBuff();
   void CreateHolyStone();
   void DestroyHolyStone();
@@ -156,7 +156,7 @@ public:
   void WriteLogPer10Min_Combat();
   void SetEffectToDestroyerGuildMember();
   void RecoverPvpCash();
-  char CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode);
+  bool CheckHolyMaster(CPlayer *pAtter, unsigned __int8 byDestroyStoneRaceCode);
   void ReceiveDestroyKeeper(CCharacter *pCharacter);
   void PushStoreQuestCash(
     unsigned int dwAvatorSerial,

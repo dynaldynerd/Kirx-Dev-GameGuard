@@ -37,7 +37,7 @@ CNuclearBomb::CNuclearBomb()
 
 CNuclearBomb::~CNuclearBomb() = default;
 
-__int64 CNuclearBomb::GetGenAttackProb(CCharacter * /*pDst*/, int /*nPart*/, bool /*bBackAttack*/)
+int CNuclearBomb::GetGenAttackProb(CCharacter * /*pDst*/, int /*nPart*/, bool /*bBackAttack*/)
 {
   return 100;
 }
@@ -177,9 +177,9 @@ unsigned __int8 CNuclearBomb::GetBombStatus()
   return m_byBombState;
 }
 
-__int64 CNuclearBomb::GetDamagedObjNum()
+int CNuclearBomb::GetDamagedObjNum()
 {
-  return static_cast<unsigned int>(m_nDamagedObjNum);
+  return m_nDamagedObjNum;
 }
 
 void CNuclearBomb::SetBombStatus()
@@ -226,14 +226,14 @@ void CNuclearBomb::SetControlSerial(unsigned __int16 wControlSerial)
   m_wControlSerial = wControlSerial;
 }
 
-__int64 CNuclearBomb::GetMasterRace()
+unsigned __int8 CNuclearBomb::GetMasterRace()
 {
-  return static_cast<unsigned int>(m_pMaster->m_Param.GetRaceCode());
+  return static_cast<unsigned __int8>(m_pMaster->m_Param.GetRaceCode());
 }
 
 unsigned __int8 CNuclearBomb::GetMasterClass()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   const unsigned int charSerial = m_pMaster->m_Param.GetCharSerial();
   CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
   const unsigned __int8 bossType = ranking->GetBossType(raceCode, charSerial);
@@ -423,7 +423,7 @@ void CNuclearBomb::SendMsg_Attack(int StartNum, int Obj_Num)
 
 void CNuclearBomb::SendMsg_InformAttack()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
@@ -446,7 +446,7 @@ void CNuclearBomb::SendMsg_InformAttack()
 
 void CNuclearBomb::SendMsg_MasterDie()
 {
-  const unsigned __int8 raceCode = m_pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(m_pMaster->m_Param.GetRaceCode());
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
   {
     CPlayer *targetPlayer = &g_Player[clientIndex];
@@ -497,7 +497,7 @@ void CNuclearBomb::RecvKillMessage(CCharacter *pDier)
   }
 }
 
-__int64 CNuclearBomb::GetNewSerial()
+unsigned int CNuclearBomb::GetNewSerial()
 {
   return ++s_dwSerialCnt;
 }

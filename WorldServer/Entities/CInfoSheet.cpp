@@ -50,7 +50,7 @@ int CInfoSheet::GetActiveIndex()
 {
   if (GetSafeHwnd() != nullptr)
   {
-    return CPropertySheet::GetActiveIndex();
+    m_nActiveIndex = static_cast<int>(CPropertySheet::GetActiveIndex());
   }
   return m_nActiveIndex;
 }

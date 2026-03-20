@@ -19,7 +19,7 @@ struct _qry_case_unmandtrader_cancelitem
   unsigned int dwD;
   unsigned int dwU;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

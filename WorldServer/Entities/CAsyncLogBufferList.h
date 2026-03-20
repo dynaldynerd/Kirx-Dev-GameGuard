@@ -17,7 +17,7 @@ public:
   void ProcWrite();
   static void WriteFile(const char *pszFileName, unsigned long nLen, const char *pszData);
 
-  int GetBufferSize();
+  unsigned int GetBufferSize();
   int GetEmptySize();
   int GetProcCount();
 

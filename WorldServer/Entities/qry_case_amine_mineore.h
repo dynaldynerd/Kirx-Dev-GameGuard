@@ -15,7 +15,7 @@ struct   _qry_case_amine_mineore
   unsigned int dwGage;
 
   _qry_case_amine_mineore();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -24,7 +24,7 @@ inline _qry_case_amine_mineore::_qry_case_amine_mineore()
 {
 }
 
-inline __int64 _qry_case_amine_mineore::size() const
+inline int _qry_case_amine_mineore::size() const
 {
   return 17;
 }

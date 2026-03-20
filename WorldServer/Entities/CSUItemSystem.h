@@ -14,7 +14,7 @@ public:
   static CSUItemSystem *Instance();
   bool SUItemSystem_Init();
   bool SUItemSystem_CheckData();
-  char SUItemSystem_UnInit();
+  bool SUItemSystem_UnInit();
   CSUItemSystem *GetCRecordData_SetItem();
   CSetItemType *GetCSetItemType();
   int GetSetItemTableInfo(int dwSetItemEff, char *pStrCode, int nBufSize);

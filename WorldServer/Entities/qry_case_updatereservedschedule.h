@@ -8,10 +8,10 @@ struct _qry_case_updatereservedschedule
   unsigned int dwSLID;
   unsigned __int8 byLoadDataStartPosition;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_updatereservedschedule::size() const
+inline int _qry_case_updatereservedschedule::size() const
 {
   return 12;
 }

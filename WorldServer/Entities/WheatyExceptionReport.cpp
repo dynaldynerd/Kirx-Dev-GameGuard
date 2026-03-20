@@ -133,7 +133,7 @@ int WheatyExceptionReport::printf(const char *format, ...)
   return writeSize;
 }
 
-bool WheatyExceptionReport::GetDisplayInfo(int nDeviceIndex, char *lpszDeviceInfo, char *lpszMonitorInfo)
+int WheatyExceptionReport::GetDisplayInfo(int nDeviceIndex, char *lpszDeviceInfo, char *lpszMonitorInfo)
 {
   (void)nDeviceIndex;
   (void)lpszDeviceInfo;
@@ -221,7 +221,7 @@ char *WheatyExceptionReport::FormatOutputValue(
   return pszCurrBuffer;
 }
 
-char WheatyExceptionReport::FormatSymbolValue(
+bool WheatyExceptionReport::FormatSymbolValue(
   SYMBOL_INFO *pSym,
   STACKFRAME64 *sf,
   char *pszBuffer,
@@ -239,7 +239,7 @@ char WheatyExceptionReport::FormatSymbolValue(
 
   if (pSym->Tag == 5)
   {
-    return 0;
+    return false;
   }
 
   AppendFormat(buffer, pszBuffer, cbBuffer, "'%s'", pSym->Name);
@@ -252,7 +252,7 @@ char WheatyExceptionReport::FormatSymbolValue(
   {
     if ((pSym->Flags & 8) != 0)
     {
-      return 0;
+      return false;
     }
     address = reinterpret_cast<void *>(pSym->Address);
   }
@@ -273,10 +273,10 @@ char WheatyExceptionReport::FormatSymbolValue(
     buffer = FormatOutputValue(buffer, pszBuffer, cbBuffer, basicType, pSym->Size, address);
   }
 
-  return 1;
+  return true;
 }
 
-BOOL CALLBACK WheatyExceptionReport::EnumerateSymbolsCallback(
+int WheatyExceptionReport::EnumerateSymbolsCallback(
   SYMBOL_INFO *pSymInfo,
   ULONG SymbolSize,
   void *UserContext)

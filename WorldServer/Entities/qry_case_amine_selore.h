@@ -12,7 +12,7 @@ struct  _qry_case_amine_selore
   unsigned __int8 byOreIdx;
 
   _qry_case_amine_selore();
-  __int64 size() const;
+  int size() const;
 };
 #pragma pack(pop)
 
@@ -21,7 +21,7 @@ inline _qry_case_amine_selore::_qry_case_amine_selore()
 {
 }
 
-inline __int64 _qry_case_amine_selore::size() const
+inline int _qry_case_amine_selore::size() const
 {
   return 8;
 }

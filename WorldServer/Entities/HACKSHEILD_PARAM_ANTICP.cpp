@@ -242,7 +242,7 @@ void HACKSHEILD_PARAM_ANTICP::Kick(unsigned __int8 byReason, unsigned int dwRet)
   }
 }
 
-char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int nIndex)
+bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int nIndex)
 {
   Init();
 
@@ -266,24 +266,24 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int 
   {
     Kick(2u, ret);
     Init();
-    return 1;
+    return true;
   }
 
   m_nSocketIndex = static_cast<int>(nIndex);
   m_byVerifyState = 1;
-  return 1;
+  return true;
 }
 
-char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg)
+bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg)
 {
   if (tSize != 342)
   {
-    return 0;
+    return false;
   }
 
   if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
   {
-    return 0;
+    return false;
   }
 
   if (m_byVerifyState == 1)
@@ -309,11 +309,11 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __i
         static_cast<unsigned __int16>(sizeof(msg)));
       m_byVerifyState = 2;
     }
-    return 1;
+    return true;
   }
 
   Kick(2u, -1);
-  return 1;
+  return true;
 }
 
 bool HACKSHEILD_PARAM_ANTICP::IsLogPass()
@@ -321,16 +321,16 @@ bool HACKSHEILD_PARAM_ANTICP::IsLogPass()
   return m_byVerifyState >= 2;
 }
 
-char HACKSHEILD_PARAM_ANTICP::OnCheckSession_FirstVerify(int n)
+bool HACKSHEILD_PARAM_ANTICP::OnCheckSession_FirstVerify(int n)
 {
   if (IsLogPass())
   {
-    return 1;
+    return true;
   }
 
   m_nSocketIndex = n;
   Kick(4u, 0);
-  return 0;
+  return false;
 }
 
 void HACKSHEILD_PARAM_ANTICP::OnConnect(int nIndex)
@@ -385,16 +385,16 @@ bool HACKSHEILD_PARAM_ANTICP::OnRecvSession(
   return false;
 }
 
-char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg)
+bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg)
 {
   if (tSize != 74)
   {
-    return 0;
+    return false;
   }
 
   if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
   {
-    return 0;
+    return false;
   }
 
   if (m_byVerifyState == 3)
@@ -409,9 +409,9 @@ char HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 
     {
       m_byVerifyState = 4;
     }
-    return 1;
+    return true;
   }
 
   Kick(3u, -1);
-  return 1;
+  return true;
 }

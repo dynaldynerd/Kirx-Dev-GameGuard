@@ -426,20 +426,20 @@ void CMonsterAttack::AttackMonsterForce(_attack_param *pParam)
   }
 }
 
-__int64 CMonsterAttack::_CalcMonSkillAttPnt()
+int CMonsterAttack::_CalcMonSkillAttPnt()
 {
   _skill_fld *skillField = reinterpret_cast<_skill_fld *>(m_pp->pFld);
   const float levelFactor = static_cast<float>(m_pp->nLevel) + ((7.0f - static_cast<float>(m_pp->nLevel)) * 0.5f);
   const float skillConst = skillField->m_fAttFormulaConstant;
   const int levelConst = skillField->m_nAttConstant[m_pp->nLevel - 1];
 
-  unsigned int minAttack = static_cast<unsigned int>(
-    static_cast<int>((((levelConst / 788.0f)
-                       * (static_cast<float>(m_pp->nMinAF)
-                          * (fR + ((levelFactor / 7.0f) * fRLf)
-                             + ((static_cast<float>(m_pp->nMastery) / 99.0f) * fRMf)))
-                       * skillConst)
-                      + 0.5f)));
+  int minAttack = static_cast<int>(
+    (((levelConst / 788.0f)
+      * (static_cast<float>(m_pp->nMinAF)
+         * (fR + ((levelFactor / 7.0f) * fRLf)
+            + ((static_cast<float>(m_pp->nMastery) / 99.0f) * fRMf)))
+      * skillConst)
+     + 0.5f));
   int maxAttack = static_cast<int>(
     (((levelConst / 788.0f)
       * (static_cast<float>(m_pp->nMaxAF)
@@ -463,8 +463,8 @@ __int64 CMonsterAttack::_CalcMonSkillAttPnt()
     maxAttack = 1;
   }
 
-  const unsigned int criticalAttack = static_cast<unsigned int>(
-    static_cast<int>(((static_cast<double>((maxAttack + 125) / (maxAttack + 50) * maxAttack)) + 0.5)));
+  const int criticalAttack =
+    static_cast<int>((static_cast<double>((maxAttack + 125) / (maxAttack + 50) * maxAttack)) + 0.5);
 
   if (m_pp->nMaxAttackPnt > 0)
   {
@@ -475,8 +475,7 @@ __int64 CMonsterAttack::_CalcMonSkillAttPnt()
     return minAttack;
   }
 
-  const unsigned int midAttack = static_cast<unsigned int>(
-    static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f)));
+  const int midAttack = static_cast<int>(((static_cast<float>(maxAttack + minAttack) / 2.0f) + 0.5f));
 
   const int randValue = m_pAttChar->m_rtPer100.GetRand();
 

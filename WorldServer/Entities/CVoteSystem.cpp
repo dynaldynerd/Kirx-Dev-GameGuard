@@ -23,13 +23,14 @@ _starting_vote_inform_zocl::_starting_vote_inform_zocl()
   wContentSize = 0;
 }
 
-__int64 _starting_vote_inform_zocl::size()
+int _starting_vote_inform_zocl::size()
 {
   if (wContentSize > 1280)
   {
     wContentSize = 0;
   }
-  return 1289LL - (1280 - wContentSize);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1289LL - (1280 - wContentSize));
 }
 
 _started_vote_inform_zocl::_started_vote_inform_zocl()
@@ -37,13 +38,14 @@ _started_vote_inform_zocl::_started_vote_inform_zocl()
   wContentSize = 0;
 }
 
-__int64 _started_vote_inform_zocl::size()
+int _started_vote_inform_zocl::size()
 {
   if (wContentSize > 1280)
   {
     wContentSize = 0;
   }
-  return 1297LL - (1280 - wContentSize);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(1297LL - (1280 - wContentSize));
 }
 
 CVoteSystem::CVoteSystem() : m_bActive(false), m_byRaceCode(static_cast<unsigned __int8>(-1)), m_nSerial(0)
@@ -54,11 +56,11 @@ CVoteSystem::CVoteSystem() : m_bActive(false), m_byRaceCode(static_cast<unsigned
 
 CVoteSystem::~CVoteSystem() = default;
 
-char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsigned __int8 byRaceCode)
+bool CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsigned __int8 byRaceCode)
 {
   if (m_bActive)
   {
-    return 0;
+    return false;
   }
 
   ++m_nSerial;
@@ -77,7 +79,7 @@ char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
   std::strcpy(started.wszContent, pwszContent);
-  started.wContentSize = std::strlen(pwszContent) + 1;
+  started.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -95,12 +97,12 @@ char CVoteSystem::StartVote(char *pwszContent, unsigned __int8 byLimGrade, unsig
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
   std::strcpy(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
+  m_SendStarted.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
   m_SendStarted.wLeftSec = 300;
-  return 1;
+  return true;
 }
 
-char CVoteSystem::StartVote(
+bool CVoteSystem::StartVote(
   unsigned __int8 byRaceCode,
   unsigned __int8 byPunishType,
   char *pwszContent,
@@ -109,7 +111,7 @@ char CVoteSystem::StartVote(
 {
   if (m_bActive)
   {
-    return 0;
+    return false;
   }
 
   ++m_nSerial;
@@ -131,7 +133,7 @@ char CVoteSystem::StartVote(
   started.byLimGrade = m_byLimGrade;
   started.wLeftSec = 300;
   std::strcpy(started.wszContent, pwszContent);
-  started.wContentSize = std::strlen(pwszContent) + 1;
+  started.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
 
   unsigned __int8 type[16]{};
   type[0] = 26;
@@ -140,7 +142,7 @@ char CVoteSystem::StartVote(
   m_SendStarted.nVoteSerial = m_nSerial;
   m_SendStarted.byLimGrade = m_byLimGrade;
   std::strcpy(m_SendStarted.wszContent, pwszContent);
-  m_SendStarted.wContentSize = std::strlen(pwszContent) + 1;
+  m_SendStarted.wContentSize = static_cast<unsigned short>(std::strlen(pwszContent) + 1);
   m_SendStarted.wLeftSec = 300;
 
   for (int index = 0; index < MAX_PLAYER; ++index)
@@ -150,7 +152,7 @@ char CVoteSystem::StartVote(
         static_cast<unsigned int>(player->m_Param.GetRaceCode()) == m_byRaceCode)
     {
       const unsigned int charSerial = player->m_Param.GetCharSerial();
-      const int raceCode = player->m_Param.GetRaceCode();
+      const int raceCode = static_cast<int>(player->m_Param.GetRaceCode());
       CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
       if (ranking->GetBossType(raceCode, charSerial) == 255)
       {
@@ -165,7 +167,7 @@ char CVoteSystem::StartVote(
     }
   }
 
-  return 1;
+  return true;
 }
 
 void CVoteSystem::CompleteSelectCharSerial(const _qry_case_select_charserial *query)
@@ -195,20 +197,20 @@ void CVoteSystem::CompleteSelectCharSerial(const _qry_case_select_charserial *qu
   }
 }
 
-char CVoteSystem::ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint)
+bool CVoteSystem::ActVote(unsigned int dwAvatorSerial, unsigned __int8 byPoint)
 {
   if (!m_bActive)
   {
-    return 0;
+    return false;
   }
   if (m_listVote.IsInList(dwAvatorSerial))
   {
-    return 0;
+    return false;
   }
 
   m_listVote.PushNode_Back(dwAvatorSerial);
   ++m_dwPoint[byPoint];
-  return 1;
+  return true;
 }
 
 void CVoteSystem::Loop()
@@ -266,11 +268,11 @@ void CVoteSystem::Loop()
   }
 }
 
-char CVoteSystem::StopVote()
+bool CVoteSystem::StopVote()
 {
   if (!m_bActive)
   {
-    return 0;
+    return false;
   }
 
   m_bActive = false;
@@ -305,7 +307,7 @@ char CVoteSystem::StopVote()
     ProcessPunishment();
   }
 
-  return 1;
+  return true;
 }
 
 void CVoteSystem::SendMsg_StartedVoteInform(unsigned int n, unsigned int dwAvatorSerial, bool bPunish)

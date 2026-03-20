@@ -9,7 +9,7 @@ public:
   virtual ~CFPS();
 
   void CalcFPS();
-  __int64 GetFPS();
+  unsigned int GetFPS();
 
 private:
   unsigned int m_dwFrames;

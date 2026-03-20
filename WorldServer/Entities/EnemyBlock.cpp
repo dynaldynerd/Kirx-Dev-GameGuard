@@ -63,7 +63,7 @@ void _mon_active::SetZeroMonNum()
     this->m_dwCumMonNum = 0;
 }
 
-char _mon_active::SetCurMonNum(int nAlter)
+bool _mon_active::SetCurMonNum(int nAlter)
 {
     this->m_zCurMonNum = static_cast<signed __int16>(this->m_zCurMonNum + nAlter);
     if (nAlter > 0)
@@ -71,7 +71,7 @@ char _mon_active::SetCurMonNum(int nAlter)
         this->m_dwCumMonNum += static_cast<unsigned int>(nAlter);
     }
     BossScheduleSave();
-    return 1;
+    return true;
 }
 
 void _mon_active::SetBossSchedule(BossSchedule *pBossSchedule)
@@ -127,10 +127,10 @@ void _LAYER_SET::ActiveLayer(_MULTI_BLOCK *pMB)
     this->m_dwStartActiveTime = timeGetTime();
 }
 
-char _LAYER_SET::InertLayer()
+bool _LAYER_SET::InertLayer()
 {
     this->m_pMB = nullptr;
-    return 1;
+    return true;
 }
 
 bool _LAYER_SET::IsActiveLayer()

@@ -8,7 +8,7 @@ struct _qry_case_update_macro_data
   _AIOC_A_MACRODATA NewData;
   _AIOC_A_MACRODATA OldData;
 
-  __int64 size() const
+  int size() const
   {
     return sizeof(*this);
   }

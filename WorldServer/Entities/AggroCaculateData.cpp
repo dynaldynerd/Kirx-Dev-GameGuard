@@ -49,20 +49,20 @@ int AggroCaculateData::GetSpecialData(unsigned __int8 byAttackType, unsigned __i
   return 0;
 }
 
-bool AggroCaculateData::PushSpecialData(unsigned __int8 byAttackType, unsigned __int16 wIndex, int nValue)
+int AggroCaculateData::PushSpecialData(unsigned __int8 byAttackType, unsigned __int16 wIndex, int nValue)
 {
   if (m_nTotalCount >= 50)
   {
-    return false;
+    return 0;
   }
   m_SpecialData[m_nTotalCount].m_byAttackType = byAttackType;
   m_SpecialData[m_nTotalCount].m_wIndex = wIndex;
   m_SpecialData[m_nTotalCount].m_nValue = nValue;
   ++m_nTotalCount;
-  return true;
+  return 1;
 }
 
-bool AggroCaculateData::Load(const char *fileName)
+int AggroCaculateData::Load(const char *fileName)
 {
   Init();
 
@@ -89,14 +89,14 @@ bool AggroCaculateData::Load(const char *fileName)
   {
     if (m_DefaultData[j] <= 0 || m_DefaultData[j] > 1000)
     {
-      return false;
+      return 0;
     }
   }
 
   int specialCount = GetPrivateProfileIntA("Special", "SFCount", -1, fileName);
   if (specialCount <= 0 || specialCount >= 50)
   {
-    return false;
+    return 0;
   }
 
   for (int j = 0; j < specialCount; ++j)
@@ -107,7 +107,7 @@ bool AggroCaculateData::Load(const char *fileName)
     GetPrivateProfileStringA("Special", key, "-1", returnedString, static_cast<DWORD>(sizeof(returnedString)), fileName);
     if (std::strncmp(returnedString, "-1", 2) == 0)
     {
-      return false;
+      return 0;
     }
 
     char token0[64]{};
@@ -116,7 +116,7 @@ bool AggroCaculateData::Load(const char *fileName)
     char *tokens[3] = {token0, token1, token2};
     if (ParsingCommandA(returnedString, 3, tokens, 64) != 3)
     {
-      return false;
+      return 0;
     }
 
     const int attackType = std::atoi(token1);
@@ -127,11 +127,11 @@ bool AggroCaculateData::Load(const char *fileName)
       _base_fld *record = g_Main.m_tblEffectData[1].GetRecord(token0);
       if (!record)
       {
-        return false;
+        return 0;
       }
       if (!PushSpecialData(1, static_cast<unsigned __int16>(record->m_dwIndex), value))
       {
-        return false;
+        return 0;
       }
     }
     else if (attackType == 2)
@@ -139,11 +139,11 @@ bool AggroCaculateData::Load(const char *fileName)
       _base_fld *record = g_Main.m_tblEffectData[2].GetRecord(token0);
       if (!record)
       {
-        return false;
+        return 0;
       }
       if (!PushSpecialData(2, static_cast<unsigned __int16>(record->m_dwIndex), value))
       {
-        return false;
+        return 0;
       }
     }
     else
@@ -151,15 +151,15 @@ bool AggroCaculateData::Load(const char *fileName)
       _base_fld *record = g_Main.m_tblEffectData[0].GetRecord(token0);
       if (!record)
       {
-        return false;
+        return 0;
       }
       if (!PushSpecialData(0, static_cast<unsigned __int16>(record->m_dwIndex), value))
       {
-        return false;
+        return 0;
       }
     }
   }
 
   m_bLoad = 1;
-  return m_bLoad != 0;
+  return m_bLoad != 0 ? 1 : 0;
 }

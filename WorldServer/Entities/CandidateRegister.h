@@ -17,7 +17,7 @@ public:
   bool m_bInitCandidate;
 
 private:
-  unsigned int _CheckPlayerInfo(CPlayer *pOne);
+  int _CheckPlayerInfo(CPlayer *pOne);
   bool _AddToPacket(CPlayer *pOne, unsigned int dwWinCnt);
   void _SortCandidacyByPvpPoint(unsigned __int8 byRace);
   int _SendList(unsigned __int16 wSock, unsigned __int8 byRace);

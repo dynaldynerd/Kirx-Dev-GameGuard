@@ -213,7 +213,7 @@ unsigned __int8 CNuclearBombMgr::GetBossType(unsigned __int8 byRace, unsigned in
 
 bool CNuclearBombMgr::IsPatriarch(CPlayer *pOne)
 {
-  const unsigned __int8 raceCode = pOne->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pOne->m_Param.GetRaceCode());
   const unsigned int charSerial = pOne->m_Param.GetCharSerial();
   return GetBossType(raceCode, charSerial) < 3u;
 }
@@ -238,7 +238,7 @@ bool CNuclearBombMgr::CreateMissile(
   unsigned int informTime,
   unsigned int startTime)
 {
-  const unsigned __int8 raceCode = pMaster->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(pMaster->m_Param.GetRaceCode());
   const unsigned int charSerial = pMaster->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
 
@@ -259,27 +259,27 @@ bool CNuclearBombMgr::CreateMissile(
   return m_Missile[raceCode][bossType].Create(&createData);
 }
 
-char CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
+bool CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
 {
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
-    return 0;
+    return false;
   }
 
-  const unsigned __int8 raceCode = player->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(player->m_Param.GetRaceCode());
   const unsigned int charSerial = player->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
   if (!IsPatriarch(player))
   {
     SendMsg_Result(n, 5u);
-    return 1;
+    return true;
   }
 
   if (std::strcmp(player->m_pCurMap->m_pMapSet->m_strCode, "resources") != 0)
   {
     SendMsg_Result(n, 9u);
-    return 1;
+    return true;
   }
 
   _STORAGE_LIST::_db_con *equip = &player->m_Param.m_dbEquip.m_pStorageList[6];
@@ -292,20 +292,20 @@ char CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
   if (!equip || !equip->m_bLoad || !record || std::strcmp(record->m_strCode, m_szStickCode) != 0)
   {
     SendMsg_Result(n, 7u);
-    return 1;
+    return true;
   }
 
   CNuclearBomb *missile = &m_Missile[raceCode][bossType];
   if (missile->GetUse())
   {
     SendMsg_Result(n, 6u);
-    return 1;
+    return true;
   }
 
   if (player->GetStealth(true))
   {
     SendMsg_Result(n, 10u);
-    return 1;
+    return true;
   }
 
   const unsigned __int16 controlSerial = *reinterpret_cast<unsigned __int16 *>(pMsg);
@@ -313,38 +313,38 @@ char CNuclearBombMgr::Request_EnableNuclearControl(int n, char *pMsg)
   if (!item)
   {
     SendMsg_Result(n, 11u);
-    return 0;
+    return false;
   }
 
   missile->SetNuclearIndex(item->m_wItemIndex);
   missile->SetControlSerial(controlSerial);
   SendMsg_Result(n, 0u);
-  return 1;
+  return true;
 }
 
-char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
+bool CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
 {
   CPlayer *master = &g_Player[n];
   if (!master->m_bOper || master->m_bCorpse)
   {
     SendMsg_Result(n, 12u);
-    return 1;
+    return true;
   }
 
   CMapData *map = g_MapOper.GetMap(master->m_pCurMap->m_pMapSet->m_strCode);
   if (!map || std::strcmp(map->m_pMapSet->m_strCode, "resources") != 0)
   {
     SendMsg_Result(n, 9u);
-    return 1;
+    return true;
   }
 
   if (!CreateMissile(master, pMsg, m_dwWarnTime, m_dwAttInformTime, m_dwAttStartTime))
   {
     SendMsg_Result(n, 11u);
-    return 1;
+    return true;
   }
 
-  const unsigned __int8 raceCode = master->m_Param.GetRaceCode();
+  const unsigned __int8 raceCode = static_cast<unsigned char>(master->m_Param.GetRaceCode());
   const unsigned int charSerial = master->m_Param.GetCharSerial();
   const unsigned __int8 bossType = GetBossType(raceCode, charSerial);
   for (unsigned int clientIndex = 0; clientIndex < MAX_PLAYER; ++clientIndex)
@@ -401,7 +401,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
   _STORAGE_LIST::_db_con *item = master->m_Param.m_dbInven.GetPtrFromSerial(controlSerial);
   if (!item)
   {
-    return 0;
+    return false;
   }
 
   if (IsOverLapItem(item->m_byTableCode))
@@ -418,7 +418,7 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
           "CNuclearaBombMgr::Request_SelectDropPosition"))
     {
       SendMsg_Result(n, 11u);
-      return 1;
+      return true;
     }
 
     CPlayer::s_MgrItemHistory.consume_del_item(
@@ -429,6 +429,6 @@ char CNuclearBombMgr::Request_SelectDropPosition(int n, float *pMsg)
 
   SendMsg_Result(n, 2u);
   master->SendMsg_GestureInform(14);
-  return 1;
+  return true;
 }
 

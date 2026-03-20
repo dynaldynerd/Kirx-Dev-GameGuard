@@ -91,10 +91,10 @@ bool CSUItemSystem::SUItemSystem_CheckData()
   return true;
 }
 
-char CSUItemSystem::SUItemSystem_UnInit()
+bool CSUItemSystem::SUItemSystem_UnInit()
 {
   Class_Init();
-  return 1;
+  return true;
 }
 
 CSUItemSystem *CSUItemSystem::GetCRecordData_SetItem()

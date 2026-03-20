@@ -57,9 +57,10 @@ _personal_automine_uninstall_zocl::_personal_automine_uninstall_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_uninstall_zocl::size() const
+int _personal_automine_uninstall_zocl::size() const
 {
-  return 24U - 6U * (2U - static_cast<unsigned int>(byCnt));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(24U - 6U * (2U - static_cast<unsigned int>(byCnt)));
 }
 
 _personal_automine_uninstall_circle_zocl::_personal_automine_uninstall_circle_zocl()
@@ -67,7 +68,7 @@ _personal_automine_uninstall_circle_zocl::_personal_automine_uninstall_circle_zo
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_uninstall_circle_zocl::size() const
+int _personal_automine_uninstall_circle_zocl::size() const
 {
   return 5;
 }
@@ -77,7 +78,7 @@ _personal_automine_current_state_zocl::_personal_automine_current_state_zocl()
   std::memset(this, 0, sizeof(*this));
 }
 
-unsigned int _personal_automine_current_state_zocl::size() const
+int _personal_automine_current_state_zocl::size() const
 {
   return 7;
 }
@@ -299,7 +300,7 @@ bool AutominePersonal::regist_to_map(
     m_pItem->m_byStorageIndex,
     m_pItem->m_byTableCode,
     m_pItem->m_wItemIndex,
-    m_pItem->m_dwDur,
+    static_cast<unsigned int>(m_pItem->m_dwDur),
     m_pOwner->m_szItemHistoryFileName);
   return true;
 }
@@ -338,24 +339,24 @@ CPlayer *AutominePersonal::GetOwner()
   return m_pOwner;
 }
 
-int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial)
+bool AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16 wItemSerial)
 {
   if (bySlotIdx >= 2)
   {
     m_logSysErr.Write("insert_battery(%d, n)::excess of max solt index", bySlotIdx);
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con *item = m_pOwner->m_Param.m_pStoragePtr[0]->GetPtrFromSerial(wItemSerial);
   if (item == nullptr)
   {
     m_logSysErr.Write("Is not exist battery.");
-    return 0;
+    return false;
   }
 
   if (m_pBatterySlot[bySlotIdx].insert(item) != 0)
   {
-    return 0;
+    return false;
   }
 
   m_byUseBattery = bySlotIdx;
@@ -363,7 +364,7 @@ int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16
   {
     m_logSysErr.Write("insert_battery() - Emb_DelStorage Fail");
     m_pBatterySlot[bySlotIdx].clear();
-    return 0;
+    return false;
   }
 
   if (!m_bStart)
@@ -380,9 +381,9 @@ int AutominePersonal::insert_battery(unsigned __int8 bySlotIdx, unsigned __int16
     bySlotIdx,
     item->m_byTableCode,
     item->m_wItemIndex,
-    item->m_dwDur,
+    static_cast<unsigned int>(item->m_dwDur),
     m_pOwner->m_szItemHistoryFileName);
-  return 1;
+  return true;
 }
 
 AutominePersonal::AutominePersonal()
@@ -432,7 +433,7 @@ bool AutominePersonal::initialize(unsigned __int16 wIndex)
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\SystemLog\\Concession\\AminePersonal.log");
   m_logProcess.SetWriteLogFile(dest, 1, 0, 1, 1);
 
-  const unsigned int now = GetKorLocalTime();
+  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(dest, sizeof(dest), "..\\ZoneServerLog\\SystemLog\\log_AminePersonal_%u.log", now);
   m_logSysErr.SetWriteLogFile(dest, 1, 0, 1, 1);
 
@@ -640,7 +641,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
             static_cast<unsigned __int8>(-1),
             battery.m_byTableCode,
             battery.m_wItemIndex,
-            battery.m_dwDur,
+            static_cast<unsigned int>(battery.m_dwDur),
             m_pOwner->m_szItemHistoryFileName);
         }
         else
@@ -648,14 +649,14 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
           _STORAGE_LIST::_db_con *added = m_pOwner->Emb_AddStorage(0, &battery, false, true);
           if (added)
           {
-            uninstallPacket.battery[uninstallPacket.byCnt].dwDur = battery.m_dwDur;
+            uninstallPacket.battery[uninstallPacket.byCnt].dwDur = static_cast<unsigned int>(battery.m_dwDur);
             uninstallPacket.battery[uninstallPacket.byCnt++].wSerial = battery.m_wSerial;
             CPlayer::s_MgrItemHistory.personal_amine_itemlog(
               "MOVE_TO_INVEN",
               added->m_byStorageIndex,
               added->m_byTableCode,
               added->m_wItemIndex,
-              added->m_dwDur,
+              static_cast<unsigned int>(added->m_dwDur),
               m_pOwner->m_szItemHistoryFileName);
           }
           else
@@ -688,7 +689,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   circlePacket.dwObjSerial = m_dwObjSerial;
   circlePacket.byActType = byDestroyType;
   unsigned __int8 circleType[2] = {14, 65};
-  CircleReport(circleType, reinterpret_cast<char *>(&circlePacket), static_cast<unsigned __int16>(circlePacket.size()), 0);
+  CircleReport(circleType,reinterpret_cast<char *>(&circlePacket),static_cast<unsigned __int16>(circlePacket.size()),0,false);
 
   m_pBatterySlot[0].clear();
   m_pBatterySlot[1].clear();
@@ -704,7 +705,7 @@ bool AutominePersonal::unregist_from_map(unsigned __int8 byDestroyType)
   return CGameObject::Destroy();
 }
 
-__int64 AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int AutominePersonal::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
 if (m_pItem == nullptr)
   {
@@ -717,7 +718,8 @@ if (m_pItem == nullptr)
     return 1;
   }
 
-  return static_cast<unsigned int>(record->m_nDefFc);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(record->m_nDefFc);
 }
 
 float AutominePersonal::GetDefFacing(int nPart)
@@ -752,27 +754,28 @@ if (m_pItem == nullptr)
   return record->m_fDefGap;
 }
 
-__int64 AutominePersonal::GetHP()
+int AutominePersonal::GetHP()
 {
   if (m_pItem == nullptr)
   {
     return 0;
   }
-  return static_cast<unsigned int>(m_pItem->m_dwDur);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pItem->m_dwDur);
 }
 
-__int64 AutominePersonal::GetMaxHP()
+int AutominePersonal::GetMaxHP()
 {
-  return static_cast<unsigned int>(m_nMaxHP);
+  return m_nMaxHP;
 }
 
-__int64 AutominePersonal::GetObjRace()
+int AutominePersonal::GetObjRace()
 {
   if (m_pOwner == nullptr)
   {
     return 255;
   }
-  return static_cast<unsigned int>(m_pOwner->m_Param.GetRaceCode());
+  return static_cast<int>(m_pOwner->m_Param.GetRaceCode());
 }
 
 bool AutominePersonal::IsBeAttackedAble(bool bFirst)
@@ -781,10 +784,10 @@ bool AutominePersonal::IsBeAttackedAble(bool bFirst)
   return true;
 }
 
-char AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
+bool AutominePersonal::IsBeDamagedAble(CCharacter *pAtter)
 {
 // this is not a stub
-  return 1;
+  return true;
 }
 
 void AutominePersonal::Loop()
@@ -943,7 +946,7 @@ void AutominePersonal::SendMsg_FixPosition(int n)
     packet.size());
 }
 
-__int64 AutominePersonal::SetDamage(
+int AutominePersonal::SetDamage(
   int nDam,
   CCharacter *pDst,
   int nDstLv,
@@ -952,7 +955,7 @@ __int64 AutominePersonal::SetDamage(
   unsigned int dwAttackSerial,
   bool bJadeReturn)
 {
-if (m_pItem == nullptr)
+  if (m_pItem == nullptr)
   {
     return 0;
   }
@@ -1029,11 +1032,10 @@ void AutominePersonal::set_delaysec(unsigned __int8 dwDS)
 
 void AutominePersonal::send_attacked()
 {
-  const float hp = static_cast<float>(GetHP());
-  const float maxHp = static_cast<float>(GetMaxHP());
+  // Yorozuya fix (non-IDA parity): broadcast automine HP-rate to nearby clients.
   _personal_automine_alter_dur_zocl alterDurPacket{};
   alterDurPacket.dwObjSerial = m_dwObjSerial;
-  alterDurPacket.wHPRate = static_cast<unsigned __int16>(static_cast<int>((hp / maxHp) * 10000.0f));
+  alterDurPacket.wHPRate = static_cast<unsigned __int16>(CalcCurHPRate());
 
   unsigned __int8 circleType[2] = {14, 60};
   CircleReport(
@@ -1061,24 +1063,21 @@ unsigned __int8 AutominePersonal::sub_battery(unsigned int dwUsed)
   }
 
   unsigned __int8 dischargedSlot = static_cast<unsigned __int8>(-1);
-  unsigned int remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(dwUsed);
-  if (!m_pBatterySlot[m_byUseBattery].get_dur())
-  {
-    dischargedSlot = m_byUseBattery;
-    m_pBatterySlot[dischargedSlot].clear();
+  unsigned int remainUsage = 0;
 
-    m_byUseBattery = s_conver_index[m_byUseBattery];
-    if (remainUsage)
+  // Yorozuya fix (non-IDA parity): log battery discharge before clearing and
+  // handle spillover discharge on the next slot.
+  do
+  {
+    const unsigned __int8 startSlot = m_byUseBattery;
+    remainUsage = m_pBatterySlot[startSlot].sub_dur(dwUsed);
+    if (m_pBatterySlot[startSlot].get_dur())
     {
-      remainUsage = m_pBatterySlot[m_byUseBattery].sub_dur(remainUsage);
-      if (remainUsage)
-      {
-        m_pBatterySlot[m_byUseBattery].clear();
-        m_byUseBattery = static_cast<unsigned __int8>(-1);
-      }
+      break;
     }
 
-    _STORAGE_LIST::_db_con *dischargedBattery = m_pBatterySlot[dischargedSlot].get_battery();
+    dischargedSlot = startSlot;
+    _STORAGE_LIST::_db_con *dischargedBattery = m_pBatterySlot[startSlot].get_battery();
     CPlayer::s_MgrItemHistory.personal_amine_itemlog(
       "BATTERY_DISCHARGE",
       dischargedSlot,
@@ -1086,7 +1085,32 @@ unsigned __int8 AutominePersonal::sub_battery(unsigned int dwUsed)
       dischargedBattery->m_wItemIndex,
       static_cast<unsigned int>(dischargedBattery->m_dwDur),
       m_pOwner->m_szItemHistoryFileName);
-  }
+    m_pBatterySlot[startSlot].clear();
+
+    const unsigned __int8 nextSlot = s_conver_index[startSlot];
+    m_byUseBattery = nextSlot;
+    if (!remainUsage)
+    {
+      break;
+    }
+
+    remainUsage = m_pBatterySlot[nextSlot].sub_dur(remainUsage);
+    if (!remainUsage)
+    {
+      break;
+    }
+
+    _STORAGE_LIST::_db_con *nextBattery = m_pBatterySlot[nextSlot].get_battery();
+    CPlayer::s_MgrItemHistory.personal_amine_itemlog(
+      "BATTERY_DISCHARGE",
+      nextSlot,
+      nextBattery->m_byTableCode,
+      nextBattery->m_wItemIndex,
+      static_cast<unsigned int>(nextBattery->m_dwDur),
+      m_pOwner->m_szItemHistoryFileName);
+    m_pBatterySlot[nextSlot].clear();
+    m_byUseBattery = static_cast<unsigned __int8>(-1);
+  } while (false);
 
   return dischargedSlot;
 }
@@ -1163,7 +1187,10 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
       inventoryItem->m_byStorageIndex,
       inventoryItem->m_wItemIndex,
       newDur);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+    eAddMineOre(
+      static_cast<int>(m_pOwner->m_Param.GetRaceCode()),
+      static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+      1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;
@@ -1189,7 +1216,10 @@ bool AutominePersonal::do_automine(unsigned int dwTime)
     ++m_byFilledSlotCnt;
     send_current_state();
     make_minepacket(newOre.m_wItemIndex, newOre.m_wSerial, newOre.m_byStorageIndex, newOre.m_wItemIndex, 1u);
-    eAddMineOre(m_pOwner->m_Param.GetRaceCode(), static_cast<unsigned __int8>(oreRecord->m_nOre_Level), 1);
+    eAddMineOre(
+      static_cast<int>(m_pOwner->m_Param.GetRaceCode()),
+      static_cast<unsigned __int8>(oreRecord->m_nOre_Level),
+      1);
     COreAmountMgr::Instance()->DecreaseOre(1u);
 
     minedOre = true;

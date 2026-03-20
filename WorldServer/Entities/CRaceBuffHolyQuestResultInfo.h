@@ -9,7 +9,7 @@ public:
   ~CRaceBuffHolyQuestResultInfo();
 
   bool Load();
-  char Save();
+  bool Save();
   bool LoadINI();
   bool SaveINI();
   bool SaveINISubProcSaveNum(const char *szItem, unsigned int value);

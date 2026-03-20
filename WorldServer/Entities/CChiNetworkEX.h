@@ -14,9 +14,9 @@ public:
 
   static CChiNetworkEX *Instance();
   static void Destory();
-  __int64 Initialize();
-  __int64 LoadINIFile();
-  __int64 Send(
+  int Initialize();
+  int LoadINIFile();
+  int Send(
     unsigned __int8 *pbyType,
     unsigned int dwSID,
     char *szMsg,

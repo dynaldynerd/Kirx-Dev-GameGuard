@@ -172,7 +172,7 @@ bool TimeLimitJade::DeleteUseList(_STORAGE_LIST::_db_con *pkItem, bool bItemDel)
   return false;
 }
 
-__int64 TimeLimitJade::CheckStartTime()
+int TimeLimitJade::CheckStartTime()
 {
   if (_heapWaitRow.empty())
   {
@@ -238,7 +238,7 @@ __int64 TimeLimitJade::CheckStartTime()
   return 0;
 }
 
-__int64 TimeLimitJade::CheckEndTime()
+int TimeLimitJade::CheckEndTime()
 {
   if (_heapUseRow.empty())
   {

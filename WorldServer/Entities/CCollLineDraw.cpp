@@ -54,11 +54,11 @@ void CCollLineDraw::DeletePen()
   }
 }
 
-char CCollLineDraw::InitLine(CMapData *pMap, CRect *prcWnd)
+bool CCollLineDraw::InitLine(CMapData *pMap, CRect *prcWnd)
 {
   if (m_pMap)
   {
-    return 0;
+    return false;
   }
 
   m_pMap = pMap;
@@ -71,7 +71,7 @@ char CCollLineDraw::InitLine(CMapData *pMap, CRect *prcWnd)
       pMap->m_pMapSet->m_strCode,
       m_nPointNum,
       15000);
-    return 0;
+    return false;
   }
 
   if (!m_Point)
@@ -79,7 +79,7 @@ char CCollLineDraw::InitLine(CMapData *pMap, CRect *prcWnd)
     const size_t pointCount = static_cast<size_t>(m_nPointNum);
     if (pointCount > (SIZE_MAX / sizeof(_coll_point)))
     {
-      return 0;
+      return false;
     }
     m_Point = static_cast<_coll_point *>(operator new[](pointCount * sizeof(_coll_point)));
   }
@@ -94,10 +94,10 @@ char CCollLineDraw::InitLine(CMapData *pMap, CRect *prcWnd)
 
   m_nLineNum = pMap->m_Level.mBsp->mCFLineNum;
   m_pLine = pMap->m_Level.mBsp->mCFLine;
-  return 1;
+  return true;
 }
 
-char CCollLineDraw::DrawEx(int nLineIndex, HDC *pDC, CRect *prcArea)
+bool CCollLineDraw::DrawEx(int nLineIndex, HDC *pDC, CRect *prcArea)
 {
   const int startVertex = m_pLine[nLineIndex].start_v;
   const int endVertex = m_pLine[nLineIndex].end_v;
@@ -119,21 +119,21 @@ char CCollLineDraw::DrawEx(int nLineIndex, HDC *pDC, CRect *prcArea)
 
   MoveToEx(*pDC, static_cast<int>(m_Point[startVertex].m_fScrExt[0]), static_cast<int>(m_Point[startVertex].m_fScrExt[1]), nullptr);
   LineTo(*pDC, static_cast<int>(m_Point[endVertex].m_fScrExt[0]), static_cast<int>(m_Point[endVertex].m_fScrExt[1]));
-  return 1;
+  return true;
 }
 
-char CCollLineDraw::Draw(CSurface *pSF, CRect *prcArea)
+bool CCollLineDraw::Draw(CSurface *pSF, CRect *prcArea)
 {
   if (!m_pMap)
   {
-    return 0;
+    return false;
   }
 
   HDC hdc = nullptr;
   LPDIRECTDRAWSURFACE7 surface = pSF->GetDDrawSurface();
   if (surface->GetDC(&hdc) != DD_OK)
   {
-    return 0;
+    return false;
   }
 
   SelectObject(hdc, s_hPen);
@@ -153,6 +153,6 @@ char CCollLineDraw::Draw(CSurface *pSF, CRect *prcArea)
   }
 
   surface->ReleaseDC(hdc);
-  return 1;
+  return true;
 }
 

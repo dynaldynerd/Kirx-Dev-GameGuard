@@ -158,20 +158,20 @@ bool CashItemRemoteStore::Buy(unsigned __int16 wSock, char *pPacket)
   return BuyByCash(wSock, pPacket) != 0;
 }
 
-char CashItemRemoteStore::Sell(unsigned __int16 wSock, char *pPacket)
+bool CashItemRemoteStore::Sell(unsigned __int16 wSock, char *pPacket)
 {
   (void)wSock;
   (void)pPacket;
   // this is not a stub
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT)
+bool CashItemRemoteStore::start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int iEnd_TT)
 {
   if (m_cde.m_ini.m_bUseCashDiscount && is_cde_time())
   {
     m_cde.m_cde_log.Write("Cheat-Command was disregarded. Other Event is on");
-    return 0;
+    return false;
   }
 
   __time32_t now[8]{};
@@ -203,10 +203,10 @@ char CashItemRemoteStore::start_cde(int iBegin_TT, int iB30_TT, int iB5_TT, int 
   m_cde.m_ini.m_byMinute[1] = endTm.tm_min;
   set_cde_status(1);
   log_about_cash_event("Loaded From Cheat-Args <When Server Running>", &m_cde.m_ini);
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::start_cashevent(
+bool CashItemRemoteStore::start_cashevent(
   int iBegin_TT,
   int iB30_TT,
   int iB5_TT,
@@ -259,10 +259,10 @@ char CashItemRemoteStore::start_cashevent(
     Inform_CashEvent_Status_All(byEventType, 5, &m_cash_event[byEventType].m_ini);
   }
   Set_CashEvent_Status(byEventType, 1);
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::start_conevent(int iBegin_TT, int iEnd_TT, unsigned __int8 byEventType)
+bool CashItemRemoteStore::start_conevent(int iBegin_TT, int iEnd_TT, unsigned __int8 byEventType)
 {
   __time32_t now[8]{};
   _time32(now);
@@ -293,7 +293,7 @@ char CashItemRemoteStore::start_conevent(int iBegin_TT, int iEnd_TT, unsigned __
   m_con_event.m_bConEvent = true;
   m_con_event.m_ini.m_byEventKind = byEventType;
   Set_Conditional_Evnet_Status(1);
-  return 1;
+  return true;
 }
 
 bool CashItemRemoteStore::CheatBuy(unsigned __int16 wSock, char *szItemCode, char nNum)
@@ -328,17 +328,17 @@ bool CashItemRemoteStore::CheatBuy(unsigned __int16 wSock, char *szItemCode, cha
   return Buy(wSock, reinterpret_cast<char *>(&packet));
 }
 
-char CashItemRemoteStore::CheatLoadCashAmount(unsigned __int16 wSock, int nNum)
+bool CashItemRemoteStore::CheatLoadCashAmount(unsigned __int16 wSock, int nNum)
 {
   if (_kRecGoods.GetRecordNum() <= nNum)
   {
-    return 0;
+    return false;
   }
 
   CPlayer *player = &g_Player[wSock];
   if (!player->m_bOper)
   {
-    return 0;
+    return false;
   }
 
   _param_cash_select query(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
@@ -346,26 +346,26 @@ char CashItemRemoteStore::CheatLoadCashAmount(unsigned __int16 wSock, int nNum)
   const unsigned __int64 querySize = static_cast<unsigned __int64>(query.size());
   CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
   cashWorkManager->PushTask(0, reinterpret_cast<unsigned __int8 *>(&query), querySize);
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket)
+bool CashItemRemoteStore::GoodsListBuyByCash(unsigned __int16 wSock, char *pPacket)
 {
   (void)pPacket;
 
   if (wSock >= MAX_PLAYER)
   {
-    return 0;
+    return false;
   }
 
   CPlayer *player = &g_Player[wSock];
   if (!player->m_bLive)
   {
-    return 1;
+    return true;
   }
   if (!player->m_bOper)
   {
-    return 1;
+    return true;
   }
 
   _param_cash_select query(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
@@ -399,41 +399,41 @@ char CashItemRemoteStore::GoodsListBuyByCash(unsigned __int16 wSock, char *pPack
   const unsigned __int64 querySize = static_cast<unsigned __int64>(query.size());
   CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
   cashWorkManager->PushTask(0, reinterpret_cast<unsigned __int8 *>(&query), querySize);
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
+bool CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
 {
   CPlayer *player = &g_Player[wSock];
   if (!player->m_bOper || !player->m_bLive)
   {
-    return 1;
+    return true;
   }
 
   if (player->m_Param.m_dbInven.GetIndexEmptyCon() == 255)
   {
     ICsSendInterface::SendMsg_Error(wSock, 16);
-    return 1;
+    return true;
   }
 
   _request_csi_buy_clzo *request = reinterpret_cast<_request_csi_buy_clzo *>(pPacket);
   if (request->nNum > player->m_Param.m_dbInven.GetNumEmptyCon())
   {
     ICsSendInterface::SendMsg_Error(wSock, 16);
-    return 1;
+    return true;
   }
 
   if (request->nNum > 20)
   {
     ICsSendInterface::SendMsg_Error(wSock, 4);
     _kLoggers[0].Write("CashItemRemoteStore::Buy() Buy Item Number Error, Num(%d)", request->nNum);
-    return 1;
+    return true;
   }
 
   if (request->byCouponNum >= 3)
   {
     ICsSendInterface::SendMsg_Error(wSock, 19);
-    return 1;
+    return true;
   }
 
   for (int j = 0; j < request->byCouponNum; ++j)
@@ -441,7 +441,7 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
     if (request->CouponItem[j].byStorageCode >= 8)
     {
       ICsSendInterface::SendMsg_Error(wSock, 19);
-      return 1;
+      return true;
     }
   }
 
@@ -458,7 +458,7 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
   if (totalRequiredSlots > player->m_Param.m_dbInven.GetNumEmptyCon())
   {
     ICsSendInterface::SendMsg_Error(wSock, 16);
-    return 1;
+    return true;
   }
 
   _param_cash_update buyList(player->m_pUserDB->m_dwAccountSerial, player->m_Param.GetCharSerial(), wSock);
@@ -490,7 +490,7 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
     if (srcItem->byTblCode >= 37)
     {
       ICsSendInterface::SendMsg_Error(wSock, 11);
-      return 1;
+      return true;
     }
 
     const unsigned __int8 raceSexCode = static_cast<unsigned __int8>(player->m_Param.GetRaceSexCode());
@@ -498,28 +498,28 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
     if (dstItem->byRet)
     {
       ICsSendInterface::SendMsg_Error(wSock, dstItem->byRet);
-      return 1;
+      return true;
     }
 
     if (srcItem->byEventType == 1 && !adjustDiscount)
     {
       ICsSendInterface::SendMsg_Error(wSock, 18);
-      return 1;
+      return true;
     }
     if (srcItem->byEventType == 2 && !setDiscountEvent)
     {
       ICsSendInterface::SendMsg_Error(wSock, 18);
-      return 1;
+      return true;
     }
     if (srcItem->byEventType == 3 && !oneNOneEvent)
     {
       ICsSendInterface::SendMsg_Error(wSock, 18);
-      return 1;
+      return true;
     }
     if (srcItem->byEventType == 5 && !limitedSaleEvent)
     {
       ICsSendInterface::SendMsg_Error(wSock, 22);
-      return 1;
+      return true;
     }
 
     const unsigned __int8 emptySlots = static_cast<unsigned __int8>(player->m_Param.m_dbInven.GetNumEmptyCon());
@@ -528,13 +528,13 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
       if (emptySlots < 3)
       {
         ICsSendInterface::SendMsg_Error(wSock, 16);
-        return 1;
+        return true;
       }
     }
     else if (srcItem->byEventType == 3 && emptySlots < 2)
     {
       ICsSendInterface::SendMsg_Error(wSock, 16);
-      return 1;
+      return true;
     }
 
     dstItem->in_byTblCode = srcItem->byTblCode;
@@ -582,13 +582,13 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
     if (adjustDiscount || oneNOneEvent)
     {
       ICsSendInterface::SendMsg_Error(wSock, 20);
-      return 1;
+      return true;
     }
 
     if (CheckCouponType(request->CouponItem, player, request->byCouponNum) <= 0)
     {
       ICsSendInterface::SendMsg_Error(wSock, 19);
-      return 1;
+      return true;
     }
 
     for (int index = 0; index < request->byCouponNum; ++index)
@@ -596,7 +596,7 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
       if (!UseDiscountCoupon(&buyList, request->CouponItem[index], player))
       {
         ICsSendInterface::SendMsg_Error(wSock, 19);
-        return 1;
+        return true;
       }
       buyList.in_CouponItem[index] = request->CouponItem[index];
     }
@@ -612,15 +612,15 @@ char CashItemRemoteStore::BuyByCash(unsigned __int16 wSock, char *pPacket)
   const unsigned __int64 querySize = static_cast<unsigned __int64>(buyList.size());
   CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
   cashWorkManager->PushTask(1, reinterpret_cast<unsigned __int8 *>(&buyList), querySize);
-  return 1;
+  return true;
 }
 
-char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket)
+bool CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clzo *pPacket)
 {
   CPlayer *player = &g_Player[wSock];
   if (!player->m_bOper || !player->m_bLive)
   {
-    return 1;
+    return true;
   }
 
   _request_csi_buy_clzo *request = pPacket;
@@ -631,7 +631,7 @@ char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clz
   if (errorCode)
   {
     ICsSendInterface::SendMsg_Error(wSock, static_cast<int>(errorCode));
-    return 1;
+    return true;
   }
 
   _result_csi_buy_zocl sendResult{};
@@ -647,15 +647,15 @@ char CashItemRemoteStore::BuyByGold(unsigned __int16 wSock, _request_csi_buy_clz
     if (singleBuyError)
     {
       ICsSendInterface::SendMsg_Error(wSock, static_cast<int>(singleBuyError));
-      return 1;
+      return true;
     }
   }
 
   _buybygold_complete(player, &sendResult, request, lastSrcItem, &dblogSheet, couponUsed);
-  return 1;
+  return true;
 }
 
-__int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum)
+int CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlayer *pOne, unsigned __int8 byCouponNum)
 {
   char couponItemPart[32]{};
   char discountType[16]{};
@@ -695,7 +695,8 @@ __int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlaye
 
   if (validCount < 2)
   {
-    return validCount;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(validCount);
   }
 
   if ((couponItemPart[0] == couponItemPart[1] && couponItemPart[1] == couponItemPart[2])
@@ -709,30 +710,31 @@ __int64 CashItemRemoteStore::CheckCouponType(_STORAGE_POS_INDIV *pCoupon, CPlaye
       && (discountType[0] == discountType[1]
           || static_cast<unsigned __int8>(discountType[2]) != static_cast<unsigned __int8>(-1)))
   {
-    return validCount;
+    // narrowing cast for thunk return parity
+    return static_cast<int>(validCount);
   }
   return 0;
 }
 
-char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne)
+bool CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORAGE_POS_INDIV pCoupon, CPlayer *pOne)
 {
   _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon.byStorageCode];
   if (!storage)
   {
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pCoupon.wItemSerial);
   if (!couponItem)
   {
-    return 0;
+    return false;
   }
 
   _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
     g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   int totalPrice = 0;
@@ -753,12 +755,12 @@ char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORA
       pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nDiscount += static_cast<unsigned __int16>(applyValue);
       pBuyList->in_item[static_cast<unsigned __int64>(index)].in_nEventType = 4;
     }
-    return 1;
+    return true;
   }
 
   if (tenScaledValue >= totalPrice)
   {
-    return 0;
+    return false;
   }
 
   for (int index = 0; index < pBuyList->in_nNum10; ++index)
@@ -775,13 +777,13 @@ char CashItemRemoteStore::UseDiscountCoupon(_param_cash_update *pBuyList, _STORA
         couponItem,
         pBuyList->in_item[static_cast<unsigned __int64>(index)].in_strItemCode,
         pOne->m_szItemHistoryFileName);
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-char CashItemRemoteStore::IsUsableCoupon(
+bool CashItemRemoteStore::IsUsableCoupon(
   _request_csi_buy_clzo *pBuyList,
   _STORAGE_POS_INDIV pCoupon,
   CPlayer *pOne,
@@ -790,20 +792,20 @@ char CashItemRemoteStore::IsUsableCoupon(
   _STORAGE_LIST *storage = pOne->m_Param.m_pStoragePtr[pCoupon.byStorageCode];
   if (!storage)
   {
-    return 0;
+    return false;
   }
 
   _STORAGE_LIST::_db_con *couponItem = storage->GetPtrFromSerial(pCoupon.wItemSerial);
   if (!couponItem)
   {
-    return 0;
+    return false;
   }
 
   _CouponItem_fld *record = static_cast<_CouponItem_fld *>(
     g_Main.m_tblItemData[couponItem->m_byTableCode].GetRecord(couponItem->m_wItemIndex));
   if (!record)
   {
-    return 0;
+    return false;
   }
 
   int totalPrice = 0;
@@ -817,11 +819,11 @@ char CashItemRemoteStore::IsUsableCoupon(
   const int tenScaledValue = 10 * applyValue;
   if (applyType)
   {
-    return 1;
+    return true;
   }
   if (tenScaledValue >= totalPrice)
   {
-    return 0;
+    return false;
   }
 
   for (int index = 0; index < pBuyList->nNum; ++index)
@@ -830,13 +832,13 @@ char CashItemRemoteStore::IsUsableCoupon(
     if (itemPrice > tenScaledValue && !bCheck[index])
     {
       bCheck[index] = true;
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
-__int64 CashItemRemoteStore::_check_buyitem(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_check_buyitem(
   unsigned __int8 byRaceSex,
   const _request_csi_buy_clzo::__item *pCsItem,
   const _CashShop_fld *pFld)
@@ -913,7 +915,7 @@ void CashItemRemoteStore::_buybygold_set_cashitem_dblog_sheet(CPlayer *pOne, _pa
   pSheet->in_bLimited_Sale = IsEventTime(2) != 0;
 }
 
-__int64 CashItemRemoteStore::_buybygold_check_valid(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_check_valid(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   _param_cashitem_dblog *pSheet)
@@ -942,12 +944,12 @@ __int64 CashItemRemoteStore::_buybygold_check_valid(
   const __int64 couponError = _buybygold_check_coupon(pOne, pRecv, pSheet);
   if (couponError)
   {
-    return couponError;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(couponError);
   }
   return 0;
 }
 
-__int64 CashItemRemoteStore::_buybygold_check_coupon(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_check_coupon(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   _param_cashitem_dblog *pSheet)
@@ -977,7 +979,7 @@ __int64 CashItemRemoteStore::_buybygold_check_coupon(
   return 0;
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   _request_csi_buy_clzo::__item *pSrc,
@@ -989,7 +991,7 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item(
   __int64 errorCode = _buybygold_buy_single_item_check_item(pOne, pSrc, pSheet, &cashField);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   unsigned int pushedPrice = 0;
@@ -1007,7 +1009,7 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item(
     &discountRate);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   _STORAGE_LIST::_db_con giveItem;
@@ -1015,13 +1017,13 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item(
   if (errorCode)
   {
     pOne->AddGold(static_cast<int>(pushedPrice), true);
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   errorCode = _buybygold_buy_single_item_additional_process(pOne, pSrc, pSheet, Send);
   if (errorCode)
   {
-    return errorCode;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(errorCode);
   }
 
   _buybygold_buy_single_item_proc_complete(
@@ -1038,7 +1040,7 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item(
   return 0;
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_check_item(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item_check_item(
   CPlayer *pOne,
   _request_csi_buy_clzo::__item *pSrc,
   _param_cashitem_dblog *pSheet,
@@ -1085,12 +1087,12 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_check_item(
   const __int64 itemError = _check_buyitem(raceSexCode, pSrc, *pCsFld);
   if (itemError)
   {
-    return itemError;
+    return static_cast<CashItemRemoteStore::CS_RCODE>(itemError);
   }
   return 0;
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price(
+unsigned int CashItemRemoteStore::_buybygold_buy_single_item_calc_price(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   _request_csi_buy_clzo::__item *pSrc,
@@ -1115,20 +1117,24 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price(
   }
   if (pSheet->in_bAdjustDiscount && pSrc->byEventType == 1)
   {
-    return _buybygold_buy_single_item_calc_price_discount(pCsFld, pSrc->byOverlapNum);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(_buybygold_buy_single_item_calc_price_discount(pCsFld, pSrc->byOverlapNum));
   }
   if (pSheet->in_bSetDiscount && pRecv->bySetKind && pRecv->bySetKind <= 4)
   {
-    return _buybygold_buy_single_item_calc_price_one_n_one(pRecv->bySetKind, pCsFld->m_nCsPrice, pSrc->byOverlapNum);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(_buybygold_buy_single_item_calc_price_one_n_one(pRecv->bySetKind, pCsFld->m_nCsPrice, pSrc->byOverlapNum));
   }
   if ((!pSheet->in_bOneN_One || pSrc->byEventType != 3) && pSheet->in_bLimited_Sale && pSrc->byEventType == 5)
   {
-    return _buybygold_buy_single_item_calc_price_limitsale(pCsFld->m_nCsPrice, pSrc->byOverlapNum);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(_buybygold_buy_single_item_calc_price_limitsale(pCsFld->m_nCsPrice, pSrc->byOverlapNum));
   }
-  return basePrice;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(basePrice);
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_discount(
+unsigned int CashItemRemoteStore::_buybygold_buy_single_item_calc_price_discount(
   _CashShop_fld *pCsFld,
   unsigned __int8 byOverlapNum)
 {
@@ -1140,10 +1146,11 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_discount(
 
   const int discountPrice =
     10 * static_cast<int>((static_cast<double>((static_cast<unsigned int>(discountRate) * pCsFld->m_nCsPrice) / 100) * 0.1) + 0.5);
-  return byOverlapNum * static_cast<unsigned int>(pCsFld->m_nCsPrice - discountPrice);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(byOverlapNum * static_cast<unsigned int>(pCsFld->m_nCsPrice - discountPrice));
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_one_n_one(
+unsigned int CashItemRemoteStore::_buybygold_buy_single_item_calc_price_one_n_one(
   unsigned __int8 bySetKind,
   int nCsPrice,
   unsigned __int8 byOverlapNum)
@@ -1151,16 +1158,18 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_one_n_one(
   const unsigned __int8 setDiscount = GetSetDiscout(bySetKind - 1);
   const int discountPrice =
     10 * static_cast<int>((static_cast<double>((static_cast<unsigned int>(setDiscount) * nCsPrice) / 100) * 0.1) + 0.5);
-  return byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice));
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum)
+unsigned int CashItemRemoteStore::_buybygold_buy_single_item_calc_price_limitsale(int nCsPrice, unsigned __int8 byOverlapNum)
 {
   const int discountPrice = 10 * static_cast<int>((static_cast<double>((GetLimDiscout() * nCsPrice) / 100) * 0.1) + 0.5);
-  return byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice);
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(byOverlapNum * static_cast<unsigned int>(nCsPrice - discountPrice));
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_coupon(
+unsigned int CashItemRemoteStore::_buybygold_buy_single_item_calc_price_coupon(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   unsigned __int8 byOverlapNum,
@@ -1212,12 +1221,14 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_calc_price_coupon(
 
   if (totalDiscountPrice)
   {
-    return byOverlapNum * static_cast<unsigned int>(nCsPrice - totalDiscountPrice);
+    // narrowing cast for thunk return parity
+    return static_cast<unsigned int>(byOverlapNum * static_cast<unsigned int>(nCsPrice - totalDiscountPrice));
   }
-  return basePrice;
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(basePrice);
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_proc_price(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item_proc_price(
   CPlayer *pOne,
   _request_csi_buy_clzo *pRecv,
   _request_csi_buy_clzo::__item *pSrc,
@@ -1274,7 +1285,7 @@ void CashItemRemoteStore::_buybygold_buy_single_item_setbuydblog(
   pSheet->data[pSheet->nBuyNum++].iCashDiscount = static_cast<int>(dwDiscountRate);
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_give_item(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item_give_item(
   CPlayer *pOne,
   _request_csi_buy_clzo::__item *pSrc,
   _STORAGE_LIST::_db_con *GiveItem)
@@ -1348,7 +1359,7 @@ void CashItemRemoteStore::_buybygold_buy_single_item_proc_complete(
   }
 }
 
-__int64 CashItemRemoteStore::_buybygold_buy_single_item_additional_process(
+CashItemRemoteStore::CS_RCODE CashItemRemoteStore::_buybygold_buy_single_item_additional_process(
   CPlayer *pOne,
   _request_csi_buy_clzo::__item *pSrc,
   _param_cashitem_dblog *pSheet,
@@ -1395,19 +1406,19 @@ __int64 CashItemRemoteStore::_buybygold_buy_single_item_additional_process(
   return 0;
 }
 
-char CashItemRemoteStore::GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket)
+bool CashItemRemoteStore::GoodsListBuyByGold(unsigned __int16 wSock, char *pPacket)
 {
   (void)pPacket;
 
   if (wSock >= MAX_PLAYER)
   {
-    return 0;
+    return false;
   }
 
   CPlayer *player = &g_Player[wSock];
   if (!player->m_bLive || !player->m_bOper)
   {
-    return 1;
+    return true;
   }
 
   _result_csi_goods_list_zocl msg{};
@@ -1443,7 +1454,7 @@ char CashItemRemoteStore::GoodsListBuyByGold(unsigned __int16 wSock, char *pPack
   type[1] = 2;
 
   g_Network.m_pProcess[0]->LoadSendMsg(wSock, type, reinterpret_cast<char *>(&msg), msg.size());
-  return 1;
+  return true;
 }
 
 unsigned __int8 CashItemRemoteStore::Get_CashEvent_Status(unsigned __int8 byEventType)
@@ -1451,11 +1462,11 @@ unsigned __int8 CashItemRemoteStore::Get_CashEvent_Status(unsigned __int8 byEven
   return m_cash_event[byEventType].m_event_status;
 }
 
-char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
+bool CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
 {
   if (!m_cash_event[byEventType].m_ini.m_bRepeat)
   {
-    return 0;
+    return false;
   }
 
   std::tm tmValue{};
@@ -1471,7 +1482,7 @@ char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
   {
     m_cash_event[byEventType].m_ini.m_bRepeat = 0;
     m_cash_event[byEventType].m_event_log.Write("ChangeEventTime() : Fail When Calculate Event Begin Time");
-    return 0;
+    return false;
   }
 
   m_cash_event[byEventType].m_ini.m_wYear[0] = tmValue.tm_year + 1900;
@@ -1493,7 +1504,7 @@ char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
   {
     m_cash_event[byEventType].m_ini.m_bRepeat = 0;
     m_cash_event[byEventType].m_event_log.Write("ChangeEventTime() : Fail When Calculate Event End Time");
-    return 0;
+    return false;
   }
 
   m_cash_event[byEventType].m_ini.m_wYear[1] = tmValue.tm_year + 1900;
@@ -1501,7 +1512,7 @@ char CashItemRemoteStore::ChangeEventTime(unsigned __int8 byEventType)
   m_cash_event[byEventType].m_ini.m_byDay[1] = tmValue.tm_mday;
   m_cash_event[byEventType].m_ini.m_byHour[1] = tmValue.tm_hour;
   m_cash_event[byEventType].m_ini.m_byMinute[1] = tmValue.tm_min;
-  return 1;
+  return true;
 }
 
 void CashItemRemoteStore::Set_LimitedSale_DCK(unsigned __int8 /*byEventType*/, unsigned __int8 byDCK)
@@ -1705,7 +1716,7 @@ const _CashShop_fld *CashItemRemoteStore::FindCashRec(unsigned int nTbl, int nId
   return it->second;
 }
 
-__int64 CashItemRemoteStore::GetRemainNumOfGood(unsigned __int16 wStoreIndex)
+int CashItemRemoteStore::GetRemainNumOfGood(unsigned __int16 wStoreIndex)
 {
   if (!_pkRemainInfo)
   {
@@ -1716,12 +1727,13 @@ __int64 CashItemRemoteStore::GetRemainNumOfGood(unsigned __int16 wStoreIndex)
   const int recordNum = _kRecGoods.GetRecordNum();
   if (storeIndex < recordNum)
   {
-    return static_cast<unsigned int>(_pkRemainInfo[wStoreIndex].nRemainNum);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<int>(static_cast<unsigned int>(_pkRemainInfo[wStoreIndex].nRemainNum)));
   }
   return 0;
 }
 
-__int64 CashItemRemoteStore::GetRemainNumOfGood(char *strCode)
+int CashItemRemoteStore::GetRemainNumOfGood(char *strCode)
 {
   if (!_pkRemainInfo)
   {
@@ -1842,24 +1854,24 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
 
   char buffer[260];
   std::memset(buffer, 0, 256);
-  unsigned int logTime = GetKorLocalTime();
+  unsigned int logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\Shop_%u.sys", logDir, logTime);
   _kLoggers[0].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\Shop_%u.prc", logDir, logTime);
   _kLoggers[1].SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\DiscountRate_%u.log", logDir, logTime);
   m_cde.m_cde_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
   for (int j = 0; j < 3; ++j)
   {
     std::memset(buffer, 0, 256);
-    logTime = GetKorLocalTime();
+    logTime = static_cast<unsigned int>(GetKorLocalTime());
     sprintf_s(buffer, 256, "%s\\CashEvent_%dType_%u.log", logDir, j, logTime);
     m_cash_event[j].m_event_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
     m_cash_event[j].m_event_log.Write("Event State");
@@ -1873,7 +1885,7 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
   }
 
   std::memset(buffer, 0, 256);
-  logTime = GetKorLocalTime();
+  logTime = static_cast<unsigned int>(GetKorLocalTime());
   sprintf_s(buffer, 256, "%s\\ConditionalEvent_%u.log", logDir, logTime);
   m_con_event.m_conevent_log.SetWriteLogFile(buffer, 1, 0, 1, 1);
 
@@ -2141,7 +2153,7 @@ void CashItemRemoteStore::Get_Conditional_Event_Name(unsigned __int8 byEventType
   }
 }
 
-char CashItemRemoteStore::Check_CashEvent_INI(unsigned __int8 byEventType)
+bool CashItemRemoteStore::Check_CashEvent_INI(unsigned __int8 byEventType)
 {
   _cash_event_ini newIni{};
   _FILETIME newFileTime{};
@@ -2151,7 +2163,7 @@ char CashItemRemoteStore::Check_CashEvent_INI(unsigned __int8 byEventType)
   if (newFileTime.dwHighDateTime == m_cash_event[byEventType].m_event_ini_file_time.dwHighDateTime
       && newFileTime.dwLowDateTime == m_cash_event[byEventType].m_event_ini_file_time.dwLowDateTime)
   {
-    return 0;
+    return false;
   }
 
   m_cash_event[byEventType].m_event_ini_file_time = newFileTime;
@@ -2218,7 +2230,7 @@ char CashItemRemoteStore::Check_CashEvent_INI(unsigned __int8 byEventType)
 
   Set_CashEvent_Status(byEventType, status);
   Update_INI(&newIni, byEventType);
-  return 1;
+  return true;
 }
 
 void CashItemRemoteStore::Update_INI(_cash_event_ini *pNewIni, unsigned __int8 byEventType)
@@ -2934,11 +2946,11 @@ void CashItemRemoteStore::log_about_cash_event(const char *szLoadInfo, _cash_dis
   m_cde.m_cde_log.Write("\t##End <Information about loaded Cash Discount-Rate Event>");
 }
 
-char CashItemRemoteStore::ChangeDiscountEventTime()
+bool CashItemRemoteStore::ChangeDiscountEventTime()
 {
   if (!m_cde.m_ini.m_bRepeat)
   {
-    return 0;
+    return false;
   }
 
   std::tm tmValue{};
@@ -2954,7 +2966,7 @@ char CashItemRemoteStore::ChangeDiscountEventTime()
   {
     m_cde.m_ini.m_bRepeat = 0;
     m_cde.m_cde_log.Write("ChangeDiscountEventTime() : Fail When Calculate Discount Event Begin Time");
-    return 0;
+    return false;
   }
   m_cde.m_ini.m_wYear[0] = tmValue.tm_year + 1900;
   m_cde.m_ini.m_byMonth[0] = tmValue.tm_mon + 1;
@@ -2975,14 +2987,14 @@ char CashItemRemoteStore::ChangeDiscountEventTime()
   {
     m_cde.m_ini.m_bRepeat = 0;
     m_cde.m_cde_log.Write("ChangeDiscountEventTime() : Fail When Calculate Discount Event End Time");
-    return 0;
+    return false;
   }
   m_cde.m_ini.m_wYear[1] = tmValue.tm_year + 1900;
   m_cde.m_ini.m_byMonth[1] = tmValue.tm_mon + 1;
   m_cde.m_ini.m_byDay[1] = tmValue.tm_mday;
   m_cde.m_ini.m_byHour[1] = tmValue.tm_hour;
   m_cde.m_ini.m_byMinute[1] = tmValue.tm_min;
-  return 1;
+  return true;
 }
 
 void CashItemRemoteStore::check_cash_discount_ini()
@@ -3281,11 +3293,11 @@ void CashItemRemoteStore::set_cde_status(unsigned __int8 byStatus)
   m_cde.m_cde_status = byStatus;
 }
 
-char CashItemRemoteStore::is_cde_time()
+bool CashItemRemoteStore::is_cde_time()
 {
   if (!m_con_event.m_bConEvent && !m_cde.m_ini.m_bUseCashDiscount)
   {
-    return 0;
+    return false;
   }
 
   __time32_t now[4]{};
@@ -3297,22 +3309,22 @@ char CashItemRemoteStore::is_cde_time()
         && now[0] > m_con_event.m_eventtime.m_EventTime[0]
         && now[0] < m_con_event.m_eventtime.m_EventTime[1])
     {
-      return 1;
+      return true;
     }
   }
   else if (now[0] > m_cde.m_ini.m_cdeTime[0] && now[0] < m_cde.m_ini.m_cdeTime[1])
   {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
-char CashItemRemoteStore::IsEventTime(unsigned __int8 byEventType)
+bool CashItemRemoteStore::IsEventTime(unsigned __int8 byEventType)
 {
   if (!m_con_event.m_bConEvent && !m_cash_event[byEventType].m_ini.m_bUseCashEvent)
   {
-    return 0;
+    return false;
   }
 
   __time32_t now[4]{};
@@ -3324,17 +3336,17 @@ char CashItemRemoteStore::IsEventTime(unsigned __int8 byEventType)
         && now[0] > m_con_event.m_eventtime.m_EventTime[0]
         && now[0] < m_con_event.m_eventtime.m_EventTime[1])
     {
-      return 1;
+      return true;
     }
   }
   else if (
     now[0] > m_cash_event[byEventType].m_ini.m_EventTime[0]
     && now[0] < m_cash_event[byEventType].m_ini.m_EventTime[1])
   {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 unsigned __int8 CashItemRemoteStore::GetSetDiscout(unsigned __int8 bySetKind)
@@ -4102,7 +4114,7 @@ unsigned __int16 CashItemRemoteStore::BuyLimSale(unsigned __int8 byTableCode, un
   return 0;
 }
 
-char CashItemRemoteStore::LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex)
+bool CashItemRemoteStore::LimitedSale_check_count(unsigned __int8 byTableCode, unsigned int dwIndex)
 {
   const unsigned __int16 remainCount = BuyLimSale(byTableCode, dwIndex);
   for (unsigned int j = 0; j < MAX_PLAYER; ++j)
@@ -4113,7 +4125,7 @@ char CashItemRemoteStore::LimitedSale_check_count(unsigned __int8 byTableCode, u
       ICsSendInterface::SendMsg_LimitedsaleEventInform(player->m_ObjID.m_wIndex, byTableCode, dwIndex, remainCount);
     }
   }
-  return 1;
+  return true;
 }
 
 void CashItemRemoteStore::Check_Loaded_Event_Status(unsigned __int8 byEventType)

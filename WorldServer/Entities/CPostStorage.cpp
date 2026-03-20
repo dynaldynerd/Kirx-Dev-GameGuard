@@ -42,7 +42,7 @@ CPostData *CPostStorage::GetPostDataFromInx(unsigned int nIndex)
   return &m_PostData[nIndex];
 }
 
-unsigned int CPostStorage::AddPostTitleData(
+int CPostStorage::AddPostTitleData(
   unsigned int nIndex,
   unsigned int dwSerial,
   unsigned __int8 byState,
@@ -76,14 +76,15 @@ unsigned int CPostStorage::AddPostTitleData(
         true);
       m_PostData[j].m_bUpdateIndex = true;
       m_PostData[j].SetPostItemSerial(lnUID);
-      return static_cast<unsigned int>(++m_nSize);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(++m_nSize));
     }
   }
 
   return -1;
 }
 
-char CPostStorage::AddPostTitleDataByStorageIndex(
+bool CPostStorage::AddPostTitleDataByStorageIndex(
   unsigned int nStorageIndex,
   int nNumber,
   unsigned int dwSerial,
@@ -111,7 +112,7 @@ char CPostStorage::AddPostTitleDataByStorageIndex(
       false);
     m_PostData[nStorageIndex].SetPostItemSerial(lnUID);
     ++m_nSize;
-    return 1;
+    return true;
   }
 
   CPostSystemManager *manager = CPostSystemManager::Instace();
@@ -119,10 +120,10 @@ char CPostStorage::AddPostTitleDataByStorageIndex(
     "CPostStorage::AddPostTitleDataByStorageIndex() : Invalid nStorageIndex(%d) : StorageSize(%d)",
     nStorageIndex,
     m_nSize);
-  return 0;
+  return false;
 }
 
-unsigned int CPostStorage::AddNewPost(
+int CPostStorage::AddNewPost(
   unsigned int dwSenderSerial,
   char *wszSendName,
   char *wszRecvName,
@@ -163,7 +164,8 @@ unsigned int CPostStorage::AddNewPost(
       m_PostData[j].SetPostItemSerial(lnUID);
       m_PostData[j].SetPostContent(wszContent);
       *nNumber = m_nSize++;
-      return static_cast<unsigned int>(j);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(j));
     }
   }
 
@@ -196,14 +198,15 @@ bool CPostStorage::IsContentLoad(unsigned int dwIndex)
   return dwIndex >= 50 || m_PostData[dwIndex].m_bContentLoad;
 }
 
-unsigned int CPostStorage::SetPostContent(unsigned int dwSerial, char *wszContent)
+int CPostStorage::SetPostContent(unsigned int dwSerial, char *wszContent)
 {
   for (int j = 0; j < 50; ++j)
   {
     if (m_PostData[j].m_dwPSSerial == dwSerial)
     {
       m_PostData[j].SetPostContent(wszContent);
-      return static_cast<unsigned int>(j);
+      // narrowing cast for thunk return parity
+      return static_cast<int>(static_cast<unsigned int>(j));
     }
   }
   return -1;

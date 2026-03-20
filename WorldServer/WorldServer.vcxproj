@@ -1096,7 +1096,6 @@
     <ClCompile Include="Entities\CHackShieldExSystem.cpp" />
     <ClCompile Include="Entities\CHashMapPtrPool.cpp" />
     <ClCompile Include="Entities\chat_steal_message_gm_zocl.cpp" />
-    <ClCompile Include="Entities\CHEAT_COMMAND.cpp" />
     <ClCompile Include="Entities\CheatCommands.cpp" />
     <ClCompile Include="Entities\CHolyKeeper.cpp" />
     <ClCompile Include="Entities\CHolyScheduleData.cpp" />
@@ -1467,9 +1466,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ClCompile Update="Entities\CHEAT_COMMAND.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Update="Entities\quest_check_result.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>

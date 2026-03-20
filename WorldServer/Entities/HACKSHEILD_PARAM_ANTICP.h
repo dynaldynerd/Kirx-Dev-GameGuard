@@ -18,7 +18,7 @@ public:
   void CheckClient();
   void Kick(unsigned __int8 byReason, unsigned int dwRet);
   bool IsLogPass();
-  char OnCheckSession_FirstVerify(int n);
+  bool OnCheckSession_FirstVerify(int n);
   void OnConnect(int nIndex);
   void OnDisConnect();
   void OnLoop();
@@ -28,9 +28,9 @@ public:
     unsigned __int8 byProtocol,
     unsigned __int64 tSize,
     char *pMsg);
-  char OnRecvSession_ServerCheckSum_Request(unsigned int nIndex);
-  char OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg);
-  char OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg);
+  bool OnRecvSession_ServerCheckSum_Request(unsigned int nIndex);
+  bool OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg);
+  bool OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg);
 
   int m_nSocketIndex;
   unsigned int m_dwLastSyncQryTime;

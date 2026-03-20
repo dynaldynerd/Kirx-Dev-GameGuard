@@ -9,10 +9,10 @@ struct _qry_case_updateclearguildbattleDayInfo
   unsigned int dwStartSID;
   unsigned int dwEndSID;
 
-  __int64 size() const;
+  int size() const;
 };
 
-inline __int64 _qry_case_updateclearguildbattleDayInfo::size() const
+inline int _qry_case_updateclearguildbattleDayInfo::size() const
 {
   return 16;
 }

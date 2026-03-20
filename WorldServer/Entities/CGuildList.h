@@ -24,7 +24,7 @@ class  CGuildList
 public:
   CGuildList();
   virtual ~CGuildList();
-  char Init();
+  bool Init();
   void SendList(unsigned __int16 wIndex, unsigned __int8 byRace, unsigned __int8 byPage);
   void AddList(unsigned __int8 byRace, unsigned __int8 byGrade, char *pwszGuildName, char *pwszMasterName);
   void SetGrade(unsigned __int8 byRace, char *pwszGuildName, unsigned __int8 byGrade);

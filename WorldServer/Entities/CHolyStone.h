@@ -27,23 +27,23 @@ public:
   CHolyStone();
   ~CHolyStone();
 
-  __int64 GetAttackDP() override;
-  __int64 GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
+  int GetAttackDP() override;
+  int GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart) override;
   float GetDefFacing(int nPart) override;
   float GetDefGap(int nPart) override;
-  __int64 GetDefSkill(bool bBackAttackDamage) override;
-  __int64 GetFireTol() override;
-  __int64 GetLevel() override;
-  __int64 GetMaxHP() override;
+  int GetDefSkill(bool bBackAttackDamage) override;
+  int GetFireTol() override;
+  int GetLevel() override;
+  int GetMaxHP() override;
   char *GetObjName() override;
-  __int64 GetObjRace() override;
-  __int64 GetSoilTol() override;
-  __int64 GetWaterTol() override;
+  int GetObjRace() override;
+  int GetSoilTol() override;
+  int GetWaterTol() override;
   float GetWeaponAdjust() override;
   float GetWidth() override;
-  __int64 GetWindTol() override;
+  int GetWindTol() override;
   bool IsBeAttackedAble(bool bFirst) override;
-  char IsBeDamagedAble(CCharacter *pAtter) override;
+  bool IsBeDamagedAble(CCharacter *pAtter) override;
   void Loop() override;
   void AutoRecover();
   unsigned __int16 GetAddCountWithPlayer();
@@ -61,9 +61,9 @@ public:
   void SendMsg_StoneAlterOper();
   unsigned __int16 CalcCurHPRate() override;
   char IsChangedHP(unsigned __int16 wAlterRate);
-  __int64 GetHP();
-  char SetHP(int nHP, bool bOver = false);
-  __int64 SetDamage(
+  int GetHP();
+  bool SetHP(int nHP, bool bOver = false);
+  int SetDamage(
     int nDam,
     CCharacter *pDst,
     int nDstLv,
@@ -71,7 +71,7 @@ public:
     int nAttackType,
     unsigned int dwAttackSerial,
     bool bJadeReturn) override;
-  __int64 SetDamage(int nDam, CCharacter *pDst, int nDstLv);
+  int SetDamage(int nDam, CCharacter *pDst, int nDstLv);
 
   static int s_nLiveNum;
   static unsigned int s_dwSerialCnt;

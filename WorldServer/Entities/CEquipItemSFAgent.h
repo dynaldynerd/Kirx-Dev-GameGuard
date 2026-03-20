@@ -30,7 +30,7 @@ public:
   void Init(CPlayer *pMaster);
   void AllEndContSF();
   void EndContSF(_sf_continous *pSF_Cont);
-  char GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld);
+  bool GetRequireSFSlot(_requireSlot *pSlot, _skill_fld *pSkillFld);
   void SetSFCont(unsigned int nEquipTblIndex, _sf_continous *pSF);
   void StartContSF(_sf_continous *pSF_Cont);
   unsigned __int8 IsEnableSkill(_skill_fld *pSkill);

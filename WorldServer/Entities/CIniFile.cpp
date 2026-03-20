@@ -243,9 +243,10 @@ INI_Section *CIniFile::GetSection(const char *strSection)
   return nullptr;
 }
 
-unsigned __int64 CIniFile::GetSectionSize()
+unsigned int CIniFile::GetSectionSize()
 {
-  return m_SectionList.size();
+  // narrowing cast for thunk return parity
+  return static_cast<unsigned int>(m_SectionList.size());
 }
 
 INI_Key *CIniFile::GetKey(const char *strSection, const char *strKey)
@@ -284,25 +285,25 @@ bool CIniFile::SaveSection(INI_Section *pSection)
   return true;
 }
 
-BOOL CIniFile::DeleteKey(const char *lpSection, const char *lpKey)
+int CIniFile::DeleteKey(const char *lpSection, const char *lpKey)
 {
   return WritePrivateProfileStringA(lpSection, lpKey, nullptr, m_strPath);
 }
 
-bool CIniFile::DeleteKey(INI_Key *pKey)
+int CIniFile::DeleteKey(INI_Key *pKey)
 {
   if (!pKey)
   {
-    return false;
+    return 0;
   }
   INI_Section *parent = pKey->m_pParentSection;
   if (!parent)
   {
-    return false;
+    return 0;
   }
   if (!DeleteKey(parent->m_strSection, pKey->m_strKey))
   {
-    return false;
+    return 0;
   }
   auto &keys = parent->m_KeyList;
   auto it = std::find(keys.begin(), keys.end(), pKey);
@@ -311,32 +312,32 @@ bool CIniFile::DeleteKey(INI_Key *pKey)
     keys.erase(it);
   }
   delete pKey;
-  return true;
+  return 1;
 }
 
-BOOL CIniFile::DeleteSection(const char *lpSection)
+int CIniFile::DeleteSection(const char *lpSection)
 {
   return WritePrivateProfileStringA(lpSection, nullptr, kIniDeleteSectionEmpty, m_strPath);
 }
 
-bool CIniFile::DeleteSection(INI_Section *pSection)
+int CIniFile::DeleteSection(INI_Section *pSection)
 {
   if (!pSection)
   {
-    return false;
+    return 0;
   }
   for (INI_Key *key : pSection->m_KeyList)
   {
     if (!DeleteKey(pSection->m_strSection, key->m_strKey))
     {
-      return false;
+      return 0;
     }
     delete key;
   }
   pSection->m_KeyList.clear();
   if (!DeleteSection(pSection->m_strSection))
   {
-    return false;
+    return 0;
   }
   auto it = std::find(m_SectionList.begin(), m_SectionList.end(), pSection);
   if (it != m_SectionList.end())
@@ -344,7 +345,7 @@ bool CIniFile::DeleteSection(INI_Section *pSection)
     m_SectionList.erase(it);
   }
   delete pSection;
-  return true;
+  return 1;
 }
 
 bool CIniFile::Merge_SumOfSets(CIniFile *rhs)

@@ -78,6 +78,26 @@
 #include "PCBANG_PRIMIUM_FAVOR.h"
 #include "economy_history_data.h"
 #include "DqsDbStructs.h"
+
+namespace
+{
+bool CanSendPlayerViewMessage(CPlayer *sourcePlayer, CPlayer *targetPlayer)
+{
+  if (sourcePlayer->m_bObserver && !targetPlayer->m_byUserDgr)
+  {
+    return false;
+  }
+
+  // Yorozuya fix implementation (non-IDA): hide stealth/invisible players unless the
+  // viewer has the detect effect.
+  if (sourcePlayer->GetStealth(true) && targetPlayer->m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_22) <= 0.0f)
+  {
+    return false;
+  }
+
+  return true;
+}
+}
 #include "EconomySystemFunctions.h"
 #include "TimeItem.h"
 #include "trans_ship_renew_ticket_result_zocl.h"
@@ -280,7 +300,7 @@ void CPlayer::SendMsg_ForceResult(unsigned __int8 byErrCode, const _CHRID *targe
   toSelf.byErrCode = byErrCode;
   if (pForceItem)
   {
-    toSelf.dwItemCum = pForceItem->m_dwDur;
+    toSelf.dwItemCum = static_cast<unsigned int>(pForceItem->m_dwDur);
   }
 
   unsigned __int8 selfType[2] = {17, 2};
@@ -431,7 +451,7 @@ void CPlayer::skill_process_for_aura(int nSkillIndex)
 
     CPlayer *targetPlayer = static_cast<CPlayer *>(target);
     const unsigned int targetSerial = targetPlayer->m_Param.GetCharSerial();
-    const int raceCode = targetPlayer->m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(targetPlayer->m_Param.GetRaceCode());
     const unsigned __int8 bossType =
       CPvpUserAndGuildRankingSystem::Instance()->GetBossType(static_cast<unsigned __int8>(raceCode), targetSerial);
     if (bossType != 4 && bossType != 8)
@@ -552,6 +572,12 @@ unsigned __int8 CPlayer::skill_process(
     return 27;
   }
 
+  // Yorozuya fix (non-IDA parity): block skill usage in siege mode.
+  if (IsSiegeMode())
+  {
+    return 14;
+  }
+
   unsigned __int8 masteryIndex = static_cast<unsigned __int8>(-1);
   if (nEffectCode)
   {
@@ -608,6 +634,73 @@ unsigned __int8 CPlayer::skill_process(
   {
     return 2;
   }
+  if (!(nEffectCode == 2 && skillField->m_nTempEffectType == 36 && skillField->m_nEffectClass == 6))
+  {
+    // Yorozuya fix implementation (non-IDA): enforce skill cast radius for buff/debuff (with Y distance check).
+    float availableDist = static_cast<float>(m_pmWpn.wGaAttRange);
+    availableDist += static_cast<float>(skillField->m_nBonusDistance);
+    availableDist += target->GetWidth() / 2.0f;
+    if (m_pmWpn.byWpType == 7)
+    {
+      availableDist += m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
+    }
+    else
+    {
+      availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
+    }
+    availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 6);
+
+    float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+    if (dist > availableDist)
+    {
+      dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        return static_cast<unsigned __int8>(-3);
+      }
+    }
+
+    const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+    const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+    if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+    {
+      return static_cast<unsigned __int8>(-3);
+    }
+  }
+
+  // Yorozuya fix (non-IDA parity): extra skill delay tracking for skill_process.
+  if (!m_bSFDelayNotCheck)
+  {
+    const DWORD now = GetTickCount();
+    if (nEffectCode == 2)
+    {
+      EnsureClassSkillDelayStorage();
+      if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+      {
+        const unsigned int skillIndex = static_cast<unsigned int>(skillField->m_dwIndex);
+        if (skillIndex < m_dwClassSkillDelayCount)
+        {
+          if (!IsAttackDelayReady(now, m_pdwClassSkillAttackDelayEnd[skillIndex]))
+          {
+            return 9;
+          }
+        }
+      }
+    }
+    else
+    {
+      const int skillClass = static_cast<int>(skillField->m_nClass);
+      const int skillLevel = static_cast<int>(skillField->m_nLv);
+      if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+      {
+        if (!IsAttackDelayReady(now, m_dwSkillAttackDelayEnd[skillClass][skillLevel]))
+        {
+          return 9;
+        }
+      }
+    }
+  }
+
   if (!IsEffectableDst(skillField->m_strActableDst, target))
   {
     return 5;
@@ -797,6 +890,38 @@ unsigned __int8 CPlayer::skill_process(
     DeleteUseConsumeItem(consumeItems, consumeCount, overlap);
     const float addDelay = m_EP.GetEff_Plus(EFF_PLUS_SKILL_ACT_DELAY);
     _ATTACK_DELAY_CHECKER::SetDelay(&m_AttDelayChker, static_cast<unsigned int>(skillField->m_fActDelay + addDelay));
+
+    // Yorozuya fix (non-IDA parity): extra skill delay tracking for skill_process.
+    if (!m_bSFDelayNotCheck)
+    {
+      const DWORD now = GetTickCount();
+      int delay = static_cast<int>(skillField->m_fActDelay + addDelay);
+      if (delay < 0)
+      {
+        delay = 0;
+      }
+      const unsigned int delayMs = AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+      if (nEffectCode == 2)
+      {
+        if (m_pdwClassSkillAttackDelayEnd && m_dwClassSkillDelayCount > 0)
+        {
+          const unsigned int skillIndex = static_cast<unsigned int>(skillField->m_dwIndex);
+          if (skillIndex < m_dwClassSkillDelayCount)
+          {
+            m_pdwClassSkillAttackDelayEnd[skillIndex] = now + delayMs;
+          }
+        }
+      }
+      else
+      {
+        const int skillClass = static_cast<int>(skillField->m_nClass);
+        const int skillLevel = static_cast<int>(skillField->m_nLv);
+        if (skillClass >= 0 && skillClass < 4 && skillLevel >= 0 && skillLevel < 4)
+        {
+          m_dwSkillAttackDelayEnd[skillClass][skillLevel] = now + delayMs;
+        }
+      }
+    }
   }
 
   return errorCode;
@@ -866,6 +991,11 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
   {
     byErrCode = 14;
   }
+  // Yorozuya fix (non-IDA parity): block force request in siege mode.
+  else if (IsSiegeMode())
+  {
+    byErrCode = 14;
+  }
   else if (m_byMoveType == 2)
   {
     byErrCode = 28;
@@ -912,6 +1042,15 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
     }
   }
 
+  // Yorozuya fix (non-IDA parity): enforce fixed-weapon compatibility.
+  if (!byErrCode && std::strchr(forceFld->m_strFixWeapon, '1') != nullptr)
+  {
+    if (m_pmWpn.GetAttackToolType() != 1 || forceFld->m_strFixWeapon[m_pmWpn.byWpType] != '1')
+    {
+      byErrCode = 8;
+    }
+  }
+
   if (!byErrCode && !m_bSFDelayNotCheck
       && !_ATTACK_DELAY_CHECKER::IsDelay(&m_AttDelayChker, 1u, forceFld->m_dwIndex, forceFld->m_nMastIndex))
   {
@@ -929,7 +1068,57 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(forceFld->m_strActableDst, target))
+    else
+    {
+      // Yorozuya fix implementation (non-IDA): enforce force cast radius for buff/debuff.
+      float availableDist = static_cast<float>(forceFld->m_nActDistance + 40);
+      availableDist += target->GetWidth() / 2.0f;
+      availableDist += m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_8);
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
+        {
+          byErrCode = 8;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 8;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra force attack delay tracking.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const int forceClass = static_cast<int>(forceFld->m_nClass);
+        const int forceLevel = static_cast<int>(forceFld->m_nLv);
+        if (forceClass >= 0 && forceClass < 6 && forceLevel >= 0 && forceLevel < 4)
+        {
+          const DWORD now = GetTickCount();
+          if (!IsAttackDelayReady(now, m_dwForceAttackDelayEnd[forceClass][forceLevel]))
+          {
+            byErrCode = 9;
+          }
+          else
+          {
+            int delay = static_cast<int>(forceFld->m_fActDelay + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_13));
+            if (delay < 0)
+            {
+              delay = 0;
+            }
+            m_dwForceAttackDelayEnd[forceClass][forceLevel] = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+          }
+        }
+      }
+    }
+    if (!byErrCode && !IsEffectableDst(forceFld->m_strActableDst, target))
     {
       byErrCode = 5;
     }
@@ -984,7 +1173,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
 
   if (!byErrCode)
   {
-    forceLevel = GetSFLevel(forceFld->m_nLv, forceItem->m_dwDur);
+    forceLevel = static_cast<int>(GetSFLevel(forceFld->m_nLv, static_cast<unsigned int>(forceItem->m_dwDur)));
     const bool hadStealth = GetStealth(true);
     bool upMastery = false;
     unsigned __int8 assistErr = 0;
@@ -1043,7 +1232,7 @@ void CPlayer::pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, uns
                   * static_cast<float>(effHave - 1.0f));
           }
 
-          const unsigned int oldDur = forceItem->m_dwDur;
+          const unsigned int oldDur = static_cast<unsigned int>(forceItem->m_dwDur);
           unsigned int newDur = oldDur;
           if (alter > 0)
           {
@@ -1159,30 +1348,93 @@ void CPlayer::pc_ThrowSkillRequest(unsigned __int16 wBulletSerial, _CHRID *pidDs
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(skillFld->m_strActableDst, target))
+    else
     {
-      byErrCode = 5;
-    }
-    else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-    {
-      byErrCode = 8;
-    }
-    else if (skillFld->m_nContEffectType != -1)
-    {
-      if (!target->IsRecvableContEffect())
+      // Yorozuya fix (non-IDA parity): enforce throw-skill target range (with Y distance check).
+      float availableDist = (target->GetWidth() / 2.0f) + static_cast<float>(m_pmWpn.wGaAttRange);
+      if (m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
       {
-        byErrCode = 13;
+        availableDist += m_EP.GetEff_Plus(EFF_PLUS_ATTACK_RANGE);
       }
-      else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+      else
       {
-        const bool inGuildRoom = m_Param.m_pGuild
-          && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-            m_Param.m_pGuild->m_dwSerial,
-            m_ObjID.m_wIndex,
-            m_pUserDB->m_dwSerial);
-        if (IsInTown() || target->IsInTown() || inGuildRoom)
+        availableDist += m_EP.GetEff_Plus(m_pmWpn.byWpClass + 4);
+      }
+
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
+      {
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
         {
-          byErrCode = 18;
+          byErrCode = 5;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 5;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra normal-attack delay tracking for throw skills.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const DWORD now = GetTickCount();
+        if (!IsAttackDelayReady(now, m_dwNormalAttackDelayEnd))
+        {
+          byErrCode = 9;
+        }
+        else
+        {
+          const int addDelay = static_cast<int>(CalcEquipAttackDelay());
+          const int level = static_cast<int>(GetLevel());
+          int attackDelay = static_cast<int>(m_pmWpn.GetAttackDelay(level, addDelay));
+          if (m_pmWpn.byWpType != 11 && !m_pmWpn.byWpClass)
+          {
+            attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_9));
+          }
+          if (m_pmWpn.byWpType == 7 || m_pmWpn.byWpType == 11)
+          {
+            attackDelay = static_cast<int>(static_cast<float>(attackDelay) + m_EP.GetEff_Plus(EFF_PLUS_UNKNOWN_11));
+          }
+          if (attackDelay < 0)
+          {
+            attackDelay = 0;
+          }
+          m_dwNormalAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(attackDelay));
+        }
+      }
+
+      if (!byErrCode && !IsEffectableDst(skillFld->m_strActableDst, target))
+      {
+        byErrCode = 5;
+      }
+      else if (!byErrCode && skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
+      {
+        byErrCode = 8;
+      }
+      else if (!byErrCode && skillFld->m_nContEffectType != -1)
+      {
+        if (!target->IsRecvableContEffect())
+        {
+          byErrCode = 13;
+        }
+        else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+        {
+          const bool inGuildRoom = m_Param.m_pGuild
+            && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+              m_Param.m_pGuild->m_dwSerial,
+              m_ObjID.m_wIndex,
+              m_pUserDB->m_dwSerial);
+          if (IsInTown() || target->IsInTown() || inGuildRoom)
+          {
+            byErrCode = 18;
+          }
         }
       }
     }
@@ -1318,30 +1570,74 @@ void CPlayer::pc_ThrowUnitRequest(_CHRID *pidDst, unsigned __int16 *pConsumeSeri
     {
       byErrCode = 2;
     }
-    else if (!IsEffectableDst(skillFld->m_strActableDst, target))
+    else
     {
-      byErrCode = 5;
-    }
-    else if (skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
-    {
-      byErrCode = 8;
-    }
-    else if (skillFld->m_nContEffectType != -1)
-    {
-      if (!target->IsRecvableContEffect())
+      // Yorozuya fix (non-IDA parity): enforce unit throw range (with Y distance check).
+      float availableDist = (target->GetWidth() / 2.0f) + weaponRecord->m_fAttackRange;
+      float dist = GetSqrt(target->m_fCurPos, m_fCurPos);
+      if (dist > availableDist)
       {
-        byErrCode = 13;
-      }
-      else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
-      {
-        const bool inGuildRoom = m_Param.m_pGuild
-          && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
-            m_Param.m_pGuild->m_dwSerial,
-            m_ObjID.m_wIndex,
-            m_pUserDB->m_dwSerial);
-        if (IsInTown() || target->IsInTown() || inGuildRoom)
+        dist = GetSqrt(target->m_fOldPos, m_fCurPos);
+        if (dist > availableDist)
         {
-          byErrCode = 18;
+          byErrCode = 5;
+        }
+      }
+
+      if (!byErrCode)
+      {
+        const float yDiffCur = std::fabs(target->m_fCurPos[1] - m_fCurPos[1]);
+        const float yDiffOld = std::fabs(target->m_fOldPos[1] - m_fCurPos[1]);
+        if (yDiffCur > 200.0f && yDiffOld > 200.0f)
+        {
+          byErrCode = 5;
+        }
+      }
+
+      // Yorozuya fix (non-IDA parity): extra unit-attack delay tracking.
+      if (!byErrCode && !m_bSFDelayNotCheck)
+      {
+        const DWORD now = GetTickCount();
+        if (!IsAttackDelayReady(now, m_dwUnitAttackDelayEnd))
+        {
+          byErrCode = 9;
+        }
+        else
+        {
+          int delay = static_cast<int>(weaponRecord->m_nAttackDel);
+          if (delay < 0)
+          {
+            delay = 0;
+          }
+          m_dwUnitAttackDelayEnd = now + AdjustAttackDelayMs(static_cast<unsigned int>(delay));
+        }
+      }
+
+      if (!byErrCode && !IsEffectableDst(skillFld->m_strActableDst, target))
+      {
+        byErrCode = 5;
+      }
+      else if (!byErrCode && skillFld->m_nTempEffectType == -1 && skillFld->m_nContEffectType == -1)
+      {
+        byErrCode = 8;
+      }
+      else if (!byErrCode && skillFld->m_nContEffectType != -1)
+      {
+        if (!target->IsRecvableContEffect())
+        {
+          byErrCode = 13;
+        }
+        else if (skillFld->m_nContEffectType == 0 && !IsAttackableInTown() && !target->IsAttackableInTown())
+        {
+          const bool inGuildRoom = m_Param.m_pGuild
+            && CGuildRoomSystem::GetInstance()->IsGuildRoomMemberIn(
+              m_Param.m_pGuild->m_dwSerial,
+              m_ObjID.m_wIndex,
+              m_pUserDB->m_dwSerial);
+          if (IsInTown() || target->IsInTown() || inGuildRoom)
+          {
+            byErrCode = 18;
+          }
         }
       }
     }
@@ -2693,7 +2989,8 @@ void CPlayer::SendMsg_Notify_Gravity_Stone_Owner_Die()
 void CPlayer::SendMsg_FixPosition(int n)
 {
 
-  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  CPlayer *targetPlayer = &g_Player[n];
+  if (!CanSendPlayerViewMessage(this, targetPlayer))
   {
     return;
   }
@@ -2702,7 +2999,7 @@ void CPlayer::SendMsg_FixPosition(int n)
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
   msg.wEquipVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceCode = m_Param.GetRaceSexCode();
+  msg.byRaceCode = static_cast<char>(m_Param.GetRaceSexCode());
   FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
   msg.dwStateFlag = GetStateFlag();
@@ -2710,12 +3007,28 @@ void CPlayer::SendMsg_FixPosition(int n)
 
   unsigned __int8 type[2] = {4, 9};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+
+  // Yorozuya fix (non-IDA parity): refresh full shape-all for the target viewer.
+  if (!m_bLive)
+  {
+    SendMsg_OtherShapeError(targetPlayer, 0);
+    return;
+  }
+
+  unsigned __int8 shapeType[2] = {3, 31};
+  const unsigned __int16 shapeLen = static_cast<unsigned __int16>(m_bufShapeAll.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetPlayer->m_ObjID.m_wIndex,
+    shapeType,
+    reinterpret_cast<char *>(&m_bufShapeAll),
+    shapeLen);
 }
 
 void CPlayer::SendMsg_RealMovePoint(int n)
 {
 
-  if (m_bObserver && !g_Player[n].m_byUserDgr)
+  CPlayer *targetPlayer = &g_Player[n];
+  if (!CanSendPlayerViewMessage(this, targetPlayer))
   {
     return;
   }
@@ -2724,7 +3037,7 @@ void CPlayer::SendMsg_RealMovePoint(int n)
   msg.wIndex = m_ObjID.m_wIndex;
   msg.dwSerial = m_dwObjSerial;
   msg.dwEquipVer = static_cast<unsigned __int16>(GetVisualVer());
-  msg.byRaceCode = m_Param.GetRaceSexCode();
+  msg.byRaceCode = static_cast<char>(m_Param.GetRaceSexCode());
   FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.zTar[0] = static_cast<__int16>(static_cast<int>(m_fTarPos[0]));
   msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
@@ -2736,6 +3049,21 @@ void CPlayer::SendMsg_RealMovePoint(int n)
 
   unsigned __int8 type[2] = {4, 21};
   g_Network.m_pProcess[0]->LoadSendMsg(n, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+
+  // Yorozuya fix (non-IDA parity): refresh full shape-all for the target viewer.
+  if (!m_bLive)
+  {
+    SendMsg_OtherShapeError(targetPlayer, 0);
+    return;
+  }
+
+  unsigned __int8 shapeType[2] = {3, 31};
+  const unsigned __int16 shapeLen = static_cast<unsigned __int16>(m_bufShapeAll.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    targetPlayer->m_ObjID.m_wIndex,
+    shapeType,
+    reinterpret_cast<char *>(&m_bufShapeAll),
+    shapeLen);
 }
 
 float CPlayer::CalcDPRate()
@@ -2754,18 +3082,20 @@ float CPlayer::CalcDPRate()
   return dpRate;
 }
 
-__int64 CPlayer::GetAvoidRate()
+int CPlayer::GetAvoidRate()
 {
   if (m_fTalik_AvoidPoint <= 0.0f)
   {
-    return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE)));
+    // narrowing cast for thunk return parity
+    return static_cast<int>(static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE))));
   }
 
   const int talikPenalty = static_cast<int>(m_fTalik_AvoidPoint * (1.0f - CalcDPRate()));
-  return static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE) - static_cast<float>(talikPenalty)));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(static_cast<int>(m_EP.GetEff_Plus(EFF_PLUS_AVOID_RATE) - static_cast<float>(talikPenalty))));
 }
 
-__int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
+int CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
 {
   m_nLastBeatenPart = nAttactPart;
 
@@ -2909,7 +3239,7 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
   if (!m_bInGuildBattle)
   {
     const unsigned int charSerial = m_Param.GetCharSerial();
-    const int raceCode = m_Param.GetRaceCode();
+    const int raceCode = static_cast<int>(m_Param.GetRaceCode());
     const unsigned __int8 bossType = CPvpUserAndGuildRankingSystem::Instance()->GetBossType(raceCode, charSerial);
     if (!bossType)
     {
@@ -2943,7 +3273,8 @@ __int64 CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertP
     }
   }
 
-  return static_cast<unsigned int>(static_cast<int>(defenseValue));
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(defenseValue));
 }
 
 float CPlayer::GetDefFacing(int nPart)
@@ -3016,11 +3347,12 @@ float CPlayer::GetDefGap(int nPart)
   return record->m_fDefGap;
 }
 
-__int64 CPlayer::GetDefSkill(bool bBackAttackDamage)
+int CPlayer::GetDefSkill(bool bBackAttackDamage)
 {
 if (!IsRidingUnit())
   {
-    return m_pmMst.GetMasteryPerMast(1u, 0u);
+    // narrowing cast for thunk return parity
+    return static_cast<int>(m_pmMst.GetMasteryPerMast(1u, 0u));
   }
 
   int totalDefSkill = 0;
@@ -3036,10 +3368,11 @@ if (!IsRidingUnit())
     totalDefSkill += rightPart->m_nDefMastery;
   }
 
-  return static_cast<unsigned int>(totalDefSkill);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(totalDefSkill));
 }
 
-__int64 CPlayer::GetFireTol()
+int CPlayer::GetFireTol()
 {
   const float total = static_cast<float>(m_nTolValue[0]) + m_EP.GetEff_Plus(EFF_PLUS_FIRE_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_FIRE_TOLERANCE));
@@ -3048,7 +3381,8 @@ __int64 CPlayer::GetFireTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
 char *CPlayer::GetObjName()
@@ -3066,12 +3400,13 @@ char *CPlayer::GetObjName()
   return s_playerObjectName;
 }
 
-__int64 CPlayer::GetObjRace()
+int CPlayer::GetObjRace()
 {
-  return static_cast<unsigned int>(m_Param.GetRaceCode());
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<int>(m_Param.GetRaceCode()));
 }
 
-__int64 CPlayer::GetSoilTol()
+int CPlayer::GetSoilTol()
 {
   const float total = static_cast<float>(m_nTolValue[2]) + m_EP.GetEff_Plus(EFF_PLUS_SOIL_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_SOIL_TOLERANCE));
@@ -3080,10 +3415,11 @@ __int64 CPlayer::GetSoilTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
-__int64 CPlayer::GetWaterTol()
+int CPlayer::GetWaterTol()
 {
   const float total = static_cast<float>(m_nTolValue[1]) + m_EP.GetEff_Plus(EFF_PLUS_WATER_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WATER_TOLERANCE));
@@ -3092,7 +3428,8 @@ __int64 CPlayer::GetWaterTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
 float CPlayer::GetWeaponAdjust()
@@ -3121,9 +3458,10 @@ float CPlayer::GetWeaponAdjust()
   return weaponRecord->m_fAttGap;
 }
 
-__int64 CPlayer::GetWeaponClass()
+int CPlayer::GetWeaponClass()
 {
-  return m_pmWpn.byWpClass;
+  // narrowing cast for thunk return parity
+  return static_cast<int>(m_pmWpn.byWpClass);
 }
 
 float CPlayer::GetWidth()
@@ -3131,7 +3469,7 @@ float CPlayer::GetWidth()
   return static_cast<_player_fld *>(m_pRecordSet)->m_fWidth;
 }
 
-__int64 CPlayer::GetWindTol()
+int CPlayer::GetWindTol()
 {
   const float total = static_cast<float>(m_nTolValue[3]) + m_EP.GetEff_Plus(EFF_PLUS_WIND_TOLERANCE);
   int value = static_cast<int>(total * m_EP.GetEff_Rate(EFF_RATE_WIND_TOLERANCE));
@@ -3140,49 +3478,50 @@ __int64 CPlayer::GetWindTol()
   {
     value = -value;
   }
-  return static_cast<unsigned int>(value);
+  // narrowing cast for thunk return parity
+  return static_cast<int>(static_cast<unsigned int>(value));
 }
 
-char CPlayer::IsBeDamagedAble(CCharacter *pAtter)
+bool CPlayer::IsBeDamagedAble(CCharacter *pAtter)
 {
   if (!pAtter)
   {
-    return 0;
+    return false;
   }
 
   if (pAtter->m_ObjID.m_byID != 0)
   {
-    return 1;
+    return true;
   }
 
   CPlayer *attacker = static_cast<CPlayer *>(pAtter);
   if (!attacker->m_bInGuildBattle && m_bInGuildBattle)
   {
-    return 0;
+    return false;
   }
   if (attacker->m_bInGuildBattle && !m_bInGuildBattle)
   {
-    return 0;
+    return false;
   }
   if (!attacker->m_bInGuildBattle && !m_bInGuildBattle)
   {
-    return 1;
+    return true;
   }
 
-  return attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx;
+  return (attacker->m_byGuildBattleColorInx != m_byGuildBattleColorInx) != 0;
 }
 
-char CPlayer::IsRecvableContEffect()
+bool CPlayer::IsRecvableContEffect()
 {
   if (IsRidingUnit())
   {
-    return 0;
+    return false;
   }
   if (m_EP.GetEff_State(EFF_STATE_INSUPERABLE))
   {
-    return 0;
+    return false;
   }
-  return m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE) ? 0 : 1;
+  return (m_EP.GetEff_State(EFF_STATE_INSUPERABLE_MOVE) ? 0 : 1) != 0;
 }
 
 bool CPlayer::Is_Battle_Mode()
@@ -3266,7 +3605,7 @@ void CPlayer::RecvKillMessage(CCharacter *pDier)
   }
 
   CPlayer *deadPlayer = static_cast<CPlayer *>(pDier);
-  char *raceCode = cvt_string(deadPlayer->m_Param.GetRaceCode());
+  char *raceCode = cvt_string(static_cast<int>(deadPlayer->m_Param.GetRaceCode()));
   if (!Emb_CreateQuestEvent(quest_happen_type_pk, raceCode))
   {
     Emb_CheckActForQuest(2, raceCode, 1u, false);

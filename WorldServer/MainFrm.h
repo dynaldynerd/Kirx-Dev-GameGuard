@@ -10,8 +10,8 @@ public:
     CMainFrame() noexcept;
     virtual ~CMainFrame();
 
-    virtual BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam) override;
+    virtual int PreCreateWindow(CREATESTRUCT& cs) override;
+    virtual __int64 WindowProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

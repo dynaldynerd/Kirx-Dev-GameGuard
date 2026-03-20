@@ -37,7 +37,7 @@ public:
   };
 
   void OnLoop();
-  unsigned int GetTotalWaitSize();
+  int GetTotalWaitSize();
   void close(int n, char *pCloseCode, char *pszFileName);
   void die(int n, char *pszDstName, char *pszDeathName, char *pszFileName);
   void down_exp(

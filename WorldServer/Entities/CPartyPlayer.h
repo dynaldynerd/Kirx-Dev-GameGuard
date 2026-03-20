@@ -31,7 +31,7 @@ public:
   CPartyPlayer *GetPtrFromSerial(unsigned int worldSerial);
   CPlayer *GetLootAuthor();
   void SetNextLootAuthor();
-  unsigned int GetPopPartyMember();
+  int GetPopPartyMember();
   bool FoundParty(CPartyPlayer *participant);
   bool InsertPartyMember(CPartyPlayer *joiner);
   bool SetLockMode(bool lock);

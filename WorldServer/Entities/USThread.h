@@ -59,7 +59,7 @@ namespace US
     bool IsRunning();
     void Terminate(DWORD dwWaitTime);
     void SetStartEvent();
-    virtual __int64 WorkProc();
+    virtual int WorkProc();
     virtual void Loop();
     static unsigned int __stdcall WorkerThread(void *pParam);
 
@@ -180,7 +180,7 @@ namespace US
   }
 
   template <typename TParam>
-  __int64 CWinThread<TParam>::WorkProc()
+  int CWinThread<TParam>::WorkProc()
   {
     while (IsRunning())
     {

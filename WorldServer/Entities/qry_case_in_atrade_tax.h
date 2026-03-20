@@ -14,7 +14,7 @@ struct  _qry_case_in_atrade_tax
   unsigned __int8 byDate[4];
 
   _qry_case_in_atrade_tax();
-  __int64 size() const;
+  int size() const;
 };
 
 inline _qry_case_in_atrade_tax::_qry_case_in_atrade_tax()
@@ -25,7 +25,7 @@ inline _qry_case_in_atrade_tax::_qry_case_in_atrade_tax()
   byDate[3] = GetCurrentMin();
 }
 
-inline __int64 _qry_case_in_atrade_tax::size() const
+inline int _qry_case_in_atrade_tax::size() const
 {
   return 40;
 }

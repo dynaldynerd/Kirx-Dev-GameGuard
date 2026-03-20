@@ -44,13 +44,13 @@ public:
     float fDiscountRate,
     unsigned __int8 byRace);
   float CalcBuyPrice(unsigned __int8 byTableCode, unsigned __int16 wItemIndex, unsigned __int8 *pbyMoneyUnit);
-  unsigned int CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit);
+  int CalcSellPrice(int nGoodIndex, unsigned __int8 *pbyMoneyUnit);
   void SetZeroTradeMoney();
-  unsigned int GetLastTradeDalant();
-  unsigned int GetLastTradeGold();
-  unsigned int GetLastTradePoint();
-  unsigned int GetLastTradeActPoint(int nActPoint);
-  unsigned int CalcSecIndex(float x, float z);
+  int GetLastTradeDalant();
+  int GetLastTradeGold();
+  int GetLastTradePoint();
+  int GetLastTradeActPoint(int nActPoint);
+  int CalcSecIndex(float x, float z);
   void SubLimitItemNum(int nLimitItemIndex, int nSubNum);
   void UpdateLimitItemNum(bool bUpdate);
   void SetLimitItemInitTime();
