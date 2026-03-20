@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Net;
 using AccountServer.Settings;
 using RFNetworking;
 using LoginServer.Packets;
@@ -45,7 +44,8 @@ public sealed class AccountMainContext
                 if (i >= _worlds.Length) break;
                 _worlds[i] = CloneWorldEntry(entry);
                 _worlds[i].IsService = false;
-                ParseGateAddress(ref _worlds[i]);
+                _worlds[i].GateIp = 0;
+                _worlds[i].GatePort = 0;
                 i++;
             }
             _worldCount = i;
@@ -297,46 +297,6 @@ public sealed class AccountMainContext
             GateIp = entry.GateIp,
             GatePort = entry.GatePort
         };
-    }
-
-    private static void ParseGateAddress(ref WorldEntry entry)
-    {
-        if (string.IsNullOrWhiteSpace(entry.Address))
-        {
-            entry.GateIp = 0;
-            entry.GatePort = 0;
-            return;
-        }
-
-        string host = entry.Address.Trim();
-        ushort port = 0;
-        int colon = host.LastIndexOf(':');
-        if (colon > 0 && host.IndexOf(':') == colon)
-        {
-            if (ushort.TryParse(host.Substring(colon + 1), out var parsed))
-            {
-                port = parsed;
-                host = host.Substring(0, colon);
-            }
-        }
-
-        if (!IPAddress.TryParse(host, out var ip))
-        {
-            entry.GateIp = 0;
-            entry.GatePort = port;
-            return;
-        }
-
-        var bytes = ip.GetAddressBytes();
-        if (bytes.Length != 4)
-        {
-            entry.GateIp = 0;
-            entry.GatePort = port;
-            return;
-        }
-
-        entry.GateIp = (uint)(bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24));
-        entry.GatePort = port;
     }
 
     private static string ClientKey(ulong loginConnId, _CLID clid)
