@@ -188,7 +188,7 @@ namespace AccountServer
                     break;
                 case WorldPageIndex:
                     lblStepTitle.Text = "World Registration";
-                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see. Installing RF_World from this step is optional.";
+                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see. Installing RF_World from this step is optional and can apply a country-specific SQL collation.";
                     break;
                 default:
                     lblStepTitle.Text = "Security Seed";

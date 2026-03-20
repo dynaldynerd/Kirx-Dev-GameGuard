@@ -31,6 +31,11 @@ namespace AccountServer.UI
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             settingsToolStripMenuItem = new ToolStripMenuItem();
+            accountToolStripMenuItem = new ToolStripMenuItem();
+            addToolStripMenuItem = new ToolStripMenuItem();
+            normalAccountToolStripMenuItem = new ToolStripMenuItem();
+            gMAccountToolStripMenuItem = new ToolStripMenuItem();
+            banAccountToolStripMenuItem = new ToolStripMenuItem();
             btnStart = new Button();
             btnStop = new Button();
             txtLog = new TextBox();
@@ -39,7 +44,7 @@ namespace AccountServer.UI
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, accountToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(484, 24);
@@ -59,6 +64,41 @@ namespace AccountServer.UI
             settingsToolStripMenuItem.Size = new Size(116, 22);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += OnOpenSettings;
+            // 
+            // accountToolStripMenuItem
+            // 
+            accountToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { addToolStripMenuItem });
+            accountToolStripMenuItem.Name = "accountToolStripMenuItem";
+            accountToolStripMenuItem.Size = new Size(64, 20);
+            accountToolStripMenuItem.Text = "Account";
+            // 
+            // addToolStripMenuItem
+            // 
+            addToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { normalAccountToolStripMenuItem, gMAccountToolStripMenuItem, banAccountToolStripMenuItem });
+            addToolStripMenuItem.Name = "addToolStripMenuItem";
+            addToolStripMenuItem.Size = new Size(180, 22);
+            addToolStripMenuItem.Text = "Add";
+            // 
+            // normalAccountToolStripMenuItem
+            // 
+            normalAccountToolStripMenuItem.Name = "normalAccountToolStripMenuItem";
+            normalAccountToolStripMenuItem.Size = new Size(164, 22);
+            normalAccountToolStripMenuItem.Text = "Normal Account";
+            normalAccountToolStripMenuItem.Click += OnAddNormalAccount;
+            // 
+            // gMAccountToolStripMenuItem
+            // 
+            gMAccountToolStripMenuItem.Name = "gMAccountToolStripMenuItem";
+            gMAccountToolStripMenuItem.Size = new Size(164, 22);
+            gMAccountToolStripMenuItem.Text = "GM Account";
+            gMAccountToolStripMenuItem.Click += OnAddGmAccount;
+            // 
+            // banAccountToolStripMenuItem
+            // 
+            banAccountToolStripMenuItem.Enabled = false;
+            banAccountToolStripMenuItem.Name = "banAccountToolStripMenuItem";
+            banAccountToolStripMenuItem.Size = new Size(164, 22);
+            banAccountToolStripMenuItem.Text = "Ban Account";
             // 
             // btnStart
             // 
@@ -116,6 +156,11 @@ namespace AccountServer.UI
         private MenuStrip menuStrip1;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem settingsToolStripMenuItem;
+        private ToolStripMenuItem accountToolStripMenuItem;
+        private ToolStripMenuItem addToolStripMenuItem;
+        private ToolStripMenuItem normalAccountToolStripMenuItem;
+        private ToolStripMenuItem gMAccountToolStripMenuItem;
+        private ToolStripMenuItem banAccountToolStripMenuItem;
         private Button btnStart;
         private Button btnStop;
         private TextBox txtLog;

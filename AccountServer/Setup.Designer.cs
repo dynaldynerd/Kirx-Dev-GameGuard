@@ -370,7 +370,7 @@ namespace AccountServer
             // 
             // btnInstallWorldDb
             // 
-            btnInstallWorldDb.Location = new Point(528, 83);
+            btnInstallWorldDb.Location = new Point(366, 83);
             btnInstallWorldDb.Name = "btnInstallWorldDb";
             btnInstallWorldDb.Size = new Size(184, 27);
             btnInstallWorldDb.TabIndex = 8;
@@ -384,7 +384,7 @@ namespace AccountServer
             lblWorldInstallNote.Name = "lblWorldInstallNote";
             lblWorldInstallNote.Size = new Size(592, 34);
             lblWorldInstallNote.TabIndex = 9;
-            lblWorldInstallNote.Text = "Optional: install the RF_World schema with a separate SQL Server connection. World registration still only stores the DB name.";
+            lblWorldInstallNote.Text = "Optional: install the RF_World schema with a separate SQL Server connection. Country and collation are chosen in the install dialog and only affect RF_World.";
             // 
             // cmbWorldType
             // 
@@ -400,7 +400,7 @@ namespace AccountServer
             // 
             txtWorldDb.Location = new Point(120, 86);
             txtWorldDb.Name = "txtWorldDb";
-            txtWorldDb.Size = new Size(392, 23);
+            txtWorldDb.Size = new Size(240, 23);
             txtWorldDb.TabIndex = 6;
             // 
             // txtWorldAddress

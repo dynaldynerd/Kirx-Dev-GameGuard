@@ -16,11 +16,26 @@ namespace AccountServer
         public WorldDatabaseInstallForm(string databaseName)
         {
             InitializeComponent();
+            BindCountryOptions();
             _databaseName = databaseName;
             txtDatabaseName.Text = databaseName;
             txtServerAddress.Text = "(local)";
             chkTrustedConnection.Checked = true;
             UpdateCredentialUi();
+        }
+
+        private void BindCountryOptions()
+        {
+            cmbCountry.DisplayMember = nameof(WorldDatabaseCollationOption.DisplayName);
+            cmbCountry.ValueMember = nameof(WorldDatabaseCollationOption.Key);
+            cmbCountry.DataSource = WorldDatabaseCollationOptions.All;
+            cmbCountry.SelectedItem = WorldDatabaseCollationOptions.Default;
+        }
+
+        private WorldDatabaseCollationOption GetSelectedCollationOption()
+        {
+            return cmbCountry.SelectedItem as WorldDatabaseCollationOption
+                ?? WorldDatabaseCollationOptions.Default;
         }
 
         private void TrustedConnectionChanged(object? sender, EventArgs e)
@@ -103,6 +118,8 @@ namespace AccountServer
 
             string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
             script = RewriteInstallScriptDatabaseName(script, DefaultDatabaseName, _databaseName);
+            WorldDatabaseCollationOption collationOption = GetSelectedCollationOption();
+            script = RewriteInstallScriptCollation(script, collationOption.SqlServerCollation);
 
             string masterConnectionString = BuildConnectionString("master");
 
@@ -116,6 +133,7 @@ namespace AccountServer
                     string prompt =
                         $"The world database '{_databaseName}' already exists.\n\n" +
                         "Reinstalling will delete the existing database and create it again from the bundled RF_World schema.\n\n" +
+                        $"Selected country: {collationOption.Summary}\n\n" +
                         "Do you want to continue?";
 
                     if (MessageBox.Show(this, prompt, "Install RF_World DB", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
@@ -218,6 +236,23 @@ namespace AccountServer
 
             string pattern = $@"(?<![A-Za-z0-9_]){Regex.Escape(defaultDatabaseName)}(?![A-Za-z0-9_])";
             return Regex.Replace(script, pattern, targetDatabaseName, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        }
+
+        private static string RewriteInstallScriptCollation(string script, string sqlServerCollation)
+        {
+            if (string.IsNullOrWhiteSpace(sqlServerCollation))
+            {
+                return script;
+            }
+
+            var createDatabasePattern = new Regex(
+                @"^(?<prefix>\s*CREATE\s+DATABASE\s+\[[^\]]+\])(?:\s+COLLATE\s+\S+)?\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+            return createDatabasePattern.Replace(
+                script,
+                match => $"{match.Groups["prefix"].Value} COLLATE {sqlServerCollation}",
+                1);
         }
 
         private static System.Collections.Generic.IEnumerable<string> SplitSqlServerBatches(string script)

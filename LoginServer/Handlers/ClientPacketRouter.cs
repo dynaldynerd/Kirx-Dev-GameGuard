@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LoginServer.Data;
 using LoginServer.Data.Contexts;
+using LoginServer.Data.Entities;
 using LoginServer.Packets;
 using LoginServer.Security;
 using LoginServer.Settings;
@@ -818,8 +819,7 @@ public sealed class ClientPacketRouter
 
                     await using (var billingCtx = new BillingDbContext(options))
                     {
-                        var entry = await billingCtx.UserStatuses
-                            .FirstOrDefaultAsync(u => u.Id == session.AccountId, cancellationToken)
+                        var entry = await GetOrCreateBillingUserStatusAsync(billingCtx, session.AccountId, cancellationToken)
                             .ConfigureAwait(false);
 
                         if (entry != null)
@@ -962,6 +962,49 @@ public sealed class ClientPacketRouter
         PacketStringUtil.FillFixed(req.szAccountID, session.AccountId);
         PacketStringUtil.FillFixed(req.szPassword, session.Password);
         return req;
+    }
+
+    private static async Task<BillingUserStatus?> GetOrCreateBillingUserStatusAsync(
+        BillingDbContext billingCtx,
+        string accountId,
+        CancellationToken cancellationToken)
+    {
+        BillingUserStatus? entry = await billingCtx.UserStatuses
+            .FirstOrDefaultAsync(u => u.Id == accountId, cancellationToken)
+            .ConfigureAwait(false);
+        if (entry != null)
+        {
+            return string.Equals(entry.Id, accountId, StringComparison.Ordinal) ? entry : null;
+        }
+
+        DateTime now = DateTime.Now;
+        billingCtx.UserStatuses.Add(new BillingUserStatus
+        {
+            Id = accountId,
+            Status = 1,
+            DtStartPrem = now,
+            DtEndPrem = now,
+            Cash = 0
+        });
+
+        try
+        {
+            await billingCtx.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException)
+        {
+            billingCtx.ChangeTracker.Clear();
+        }
+
+        entry = await billingCtx.UserStatuses
+            .FirstOrDefaultAsync(u => u.Id == accountId, cancellationToken)
+            .ConfigureAwait(false);
+        if (entry == null)
+        {
+            return null;
+        }
+
+        return string.Equals(entry.Id, accountId, StringComparison.Ordinal) ? entry : null;
     }
 
     private static bool IsDevUser(string accountId)

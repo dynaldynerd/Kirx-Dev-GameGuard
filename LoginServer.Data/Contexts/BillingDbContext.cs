@@ -20,7 +20,9 @@ public sealed class BillingDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasMaxLength(16);
             entity.Property(e => e.Status).HasColumnName("Status");
+            entity.Property(e => e.DtStartPrem).HasColumnName("DTStartPrem");
             entity.Property(e => e.DtEndPrem).HasColumnName("DTEndPrem");
+            entity.Property(e => e.Cash).HasColumnName("Cash");
         });
     }
 }

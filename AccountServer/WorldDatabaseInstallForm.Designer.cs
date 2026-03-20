@@ -12,6 +12,8 @@ namespace AccountServer
         private Label lblTitle = null!;
         private Label lblDatabaseName = null!;
         private TextBox txtDatabaseName = null!;
+        private Label lblCountry = null!;
+        private ComboBox cmbCountry = null!;
         private Label lblServerAddress = null!;
         private TextBox txtServerAddress = null!;
         private CheckBox chkTrustedConnection = null!;
@@ -38,6 +40,8 @@ namespace AccountServer
             lblTitle = new Label();
             lblDatabaseName = new Label();
             txtDatabaseName = new TextBox();
+            lblCountry = new Label();
+            cmbCountry = new ComboBox();
             lblServerAddress = new Label();
             txtServerAddress = new TextBox();
             chkTrustedConnection = new CheckBox();
@@ -78,29 +82,47 @@ namespace AccountServer
             txtDatabaseName.Size = new Size(239, 23);
             txtDatabaseName.TabIndex = 2;
             // 
+            // lblCountry
+            // 
+            lblCountry.AutoSize = true;
+            lblCountry.Location = new Point(16, 82);
+            lblCountry.Name = "lblCountry";
+            lblCountry.Size = new Size(47, 15);
+            lblCountry.TabIndex = 3;
+            lblCountry.Text = "Country";
+            // 
+            // cmbCountry
+            // 
+            cmbCountry.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCountry.FormattingEnabled = true;
+            cmbCountry.Location = new Point(129, 79);
+            cmbCountry.Name = "cmbCountry";
+            cmbCountry.Size = new Size(239, 23);
+            cmbCountry.TabIndex = 4;
+            // 
             // lblServerAddress
             // 
             lblServerAddress.AutoSize = true;
-            lblServerAddress.Location = new Point(16, 82);
+            lblServerAddress.Location = new Point(16, 114);
             lblServerAddress.Name = "lblServerAddress";
             lblServerAddress.Size = new Size(82, 15);
-            lblServerAddress.TabIndex = 3;
+            lblServerAddress.TabIndex = 5;
             lblServerAddress.Text = "Server Address";
             // 
             // txtServerAddress
             // 
-            txtServerAddress.Location = new Point(129, 79);
+            txtServerAddress.Location = new Point(129, 111);
             txtServerAddress.Name = "txtServerAddress";
             txtServerAddress.Size = new Size(239, 23);
-            txtServerAddress.TabIndex = 4;
+            txtServerAddress.TabIndex = 6;
             // 
             // chkTrustedConnection
             // 
             chkTrustedConnection.AutoSize = true;
-            chkTrustedConnection.Location = new Point(129, 111);
+            chkTrustedConnection.Location = new Point(129, 143);
             chkTrustedConnection.Name = "chkTrustedConnection";
             chkTrustedConnection.Size = new Size(124, 19);
-            chkTrustedConnection.TabIndex = 5;
+            chkTrustedConnection.TabIndex = 7;
             chkTrustedConnection.Text = "Trusted Connection";
             chkTrustedConnection.UseVisualStyleBackColor = true;
             chkTrustedConnection.CheckedChanged += TrustedConnectionChanged;
@@ -108,35 +130,35 @@ namespace AccountServer
             // lblUsername
             // 
             lblUsername.AutoSize = true;
-            lblUsername.Location = new Point(16, 142);
+            lblUsername.Location = new Point(16, 174);
             lblUsername.Name = "lblUsername";
             lblUsername.Size = new Size(60, 15);
-            lblUsername.TabIndex = 6;
+            lblUsername.TabIndex = 8;
             lblUsername.Text = "Username";
             // 
             // txtUsername
             // 
-            txtUsername.Location = new Point(129, 139);
+            txtUsername.Location = new Point(129, 171);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(239, 23);
-            txtUsername.TabIndex = 7;
+            txtUsername.TabIndex = 9;
             // 
             // lblPassword
             // 
             lblPassword.AutoSize = true;
-            lblPassword.Location = new Point(16, 171);
+            lblPassword.Location = new Point(16, 203);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new Size(57, 15);
-            lblPassword.TabIndex = 8;
+            lblPassword.TabIndex = 10;
             lblPassword.Text = "Password";
             // 
             // txtPassword
             // 
-            txtPassword.Location = new Point(129, 168);
+            txtPassword.Location = new Point(129, 200);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '*';
             txtPassword.Size = new Size(239, 23);
-            txtPassword.TabIndex = 9;
+            txtPassword.TabIndex = 11;
             // 
             // panelButtons
             // 
@@ -144,11 +166,11 @@ namespace AccountServer
             panelButtons.Controls.Add(btnCancel);
             panelButtons.Dock = DockStyle.Bottom;
             panelButtons.FlowDirection = FlowDirection.RightToLeft;
-            panelButtons.Location = new Point(0, 211);
+            panelButtons.Location = new Point(0, 243);
             panelButtons.Name = "panelButtons";
             panelButtons.Padding = new Padding(10);
             panelButtons.Size = new Size(384, 50);
-            panelButtons.TabIndex = 10;
+            panelButtons.TabIndex = 12;
             // 
             // btnInstall
             // 
@@ -178,7 +200,7 @@ namespace AccountServer
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(384, 261);
+            ClientSize = new Size(384, 293);
             Controls.Add(panelButtons);
             Controls.Add(txtPassword);
             Controls.Add(lblPassword);
@@ -187,6 +209,8 @@ namespace AccountServer
             Controls.Add(chkTrustedConnection);
             Controls.Add(txtServerAddress);
             Controls.Add(lblServerAddress);
+            Controls.Add(cmbCountry);
+            Controls.Add(lblCountry);
             Controls.Add(txtDatabaseName);
             Controls.Add(lblDatabaseName);
             Controls.Add(lblTitle);

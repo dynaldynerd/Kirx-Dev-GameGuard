@@ -1,6 +1,7 @@
 using AccountServer.Server;
 using AccountServer.Settings;
 using AccountServer.State;
+using AccountServer.Data;
 using RFNetworking;
 
 namespace AccountServer.UI;
@@ -121,6 +122,18 @@ public partial class MainForm : Form
         _worldHandler = CreateWorldHandler();
         _controlHandler = CreateControlHandler();
         AppendLog("Settings applied.");
+    }
+
+    private void OnAddNormalAccount(object? sender, EventArgs e)
+    {
+        using var form = new AddNormalAccountForm(new AccountAdminService(_settings));
+        form.ShowDialog(this);
+    }
+
+    private void OnAddGmAccount(object? sender, EventArgs e)
+    {
+        using var form = new AddGmAccountForm(new AccountAdminService(_settings));
+        form.ShowDialog(this);
     }
 
     private void AppendLog(string message)

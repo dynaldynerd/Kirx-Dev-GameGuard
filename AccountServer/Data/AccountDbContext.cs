@@ -10,6 +10,7 @@ public sealed class AccountDbContext : DbContext
     }
 
     public DbSet<StaffAccount> StaffAccounts => Set<StaffAccount>();
+    public DbSet<AccountAuth> AccountAuths => Set<AccountAuth>();
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
     public DbSet<UserBan> UserBans => Set<UserBan>();
     public DbSet<UserBanLog> UserBanLogs => Set<UserBanLog>();
@@ -34,12 +35,25 @@ public sealed class AccountDbContext : DbContext
             entity.Property(e => e.IdEnc).HasColumnName("ID_enc");
             entity.Property(e => e.PwHash).HasColumnName("PW_hash");
             entity.Property(e => e.Grade).HasColumnName("Grade");
+            entity.Property(e => e.Depart).HasColumnName("Depart");
+            entity.Property(e => e.RealName).HasColumnName("RealName");
             entity.Property(e => e.SubGrade).HasColumnName("SubGrade");
             entity.Property(e => e.TotalLogMin).HasColumnName("TotalLogMin");
             entity.Property(e => e.LastLoginDt).HasColumnName("LastLoginDT");
             entity.Property(e => e.LastLogoffDt).HasColumnName("LastLogoffDT");
             entity.Property(e => e.LastConnIp).HasColumnName("LastConnIP");
             entity.Property(e => e.ExpireDt).HasColumnName("ExpireDT");
+        });
+
+        modelBuilder.Entity<AccountAuth>(entity =>
+        {
+            entity.ToTable("tbl_rfaccount");
+            entity.HasKey(e => e.IdHmac);
+            entity.Property(e => e.IdHmac).HasColumnName("id_hmac");
+            entity.Property(e => e.IdEnc).HasColumnName("id_enc");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+            entity.Property(e => e.AccountType).HasColumnName("accounttype");
+            entity.Property(e => e.BirthDate).HasColumnName("birthdate");
         });
 
         modelBuilder.Entity<UserAccount>(entity =>

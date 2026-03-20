@@ -1,54 +1,335 @@
-CREATE TABLE nopach( IP TEXT(255) NULL );
-CREATE TABLE tbl_block_ip( nSerial INTEGER  NOT NULL, addr0 INTEGER NOT NULL, addr1 INTEGER NOT NULL, addr2 INTEGER NOT NULL, addr3 INTEGER NOT NULL, addr4 INTEGER NOT NULL, addr2range INTEGER NOT NULL, CONSTRAINT PK_tbl_block_ip PRIMARY KEY ( nSerial ASC ) );
-CREATE TABLE tbl_bugtime_connect_in_pcbang( nworldcode INTEGER NOT NULL, navatorserial INTEGER NULL, account TEXT(17) NULL );
-CREATE TABLE tbl_bugtime_connectpcbang( f1 INTEGER NOT NULL, f2 INTEGER NOT NULL, f3 INTEGER NOT NULL, f4 INTEGER NOT NULL );
-CREATE TABLE tbl_chargeresultstr( ID INTEGER NOT NULL, strError TEXT(32) NOT NULL, CONSTRAINT PK_tbl_chargeresultstr PRIMARY KEY ( ID ASC ) );
-CREATE TABLE tbl_connect_in_bugtime( ip TEXT(16) NOT NULL );
-CREATE TABLE tbl_connect_pcbang( ip TEXT(16) NOT NULL );
-CREATE TABLE tbl_connectpcbang_charserial( nWorldCode INTEGER NOT NULL, nAvatorSerial INTEGER NOT NULL );
-CREATE TABLE tbl_CristalBattle_Log( ID INTEGER  NOT NULL, DID INTEGER NOT NULL, SID INTEGER NOT NULL, Nth INTEGER NOT NULL, MasterRace INTEGER NOT NULL, MasterName TEXT(17) NOT NULL, MasterClass TEXT(4) NOT NULL, B_BossName TEXT(17) NOT NULL, C_BossName TEXT(17) NOT NULL, A_BossName TEXT(17) NOT NULL, MasterSubBossName1 TEXT(17) NOT NULL, MasterSubBossName2 TEXT(17) NOT NULL, MasterSubBossName3 TEXT(17) NOT NULL, MasterSubBossName4 TEXT(17) NOT NULL, MasterSubBossName5 TEXT(17) NOT NULL, StartTime TEXT NOT NULL, GetTime TEXT NOT NULL, ChaosHour INTEGER NOT NULL, ChaosMin INTEGER NOT NULL, ElapseHour INTEGER NOT NULL, ElapseMin INTEGER NOT NULL, ElapseSec INTEGER NOT NULL, KeeperHitter TEXT(17) NOT NULL, ByAnimus INTEGER NOT NULL, DestroyRace INTEGER NULL, CONSTRAINT PK_tbl_CristalBattle_Log PRIMARY KEY ( ID ASC ) );
-CREATE TABLE tbl_exp_connectip( F1 INTEGER NOT NULL, F2 INTEGER NOT NULL, F3 INTEGER NOT NULL, F4 INTEGER NOT NULL );
-CREATE TABLE tbl_GMActLog( ID INTEGER  NOT NULL, Account TEXT(17) NOT NULL, TID INTEGER NOT NULL, PID INTEGER NOT NULL, ActDate TEXT NOT NULL, CONSTRAINT PK_tbl_GMActLog PRIMARY KEY ( ID ASC ) );
-CREATE TABLE tbl_GMActParam( ID INTEGER  NOT NULL, Param1 BLOB NULL, Param2 BLOB NULL, Param3 BLOB NULL, Param4 BLOB NULL, Param5 BLOB NULL, Param6 BLOB NULL, Param7 BLOB NULL, Param8 BLOB NULL, Param9 BLOB NULL, CONSTRAINT PK_tbl_GMActParam PRIMARY KEY ( ID ASC ) );
-CREATE TABLE tbl_GMActType( ID INTEGER NOT NULL, bLog INTEGER NOT NULL, TypeName TEXT(50) NOT NULL, TypeNameKor TEXT(50) NOT NULL, CONSTRAINT PK_tbl_GMActType PRIMARY KEY ( ID ASC ) );
-CREATE TABLE tbl_GMjobLog( nSerial INTEGER  NOT NULL, szGMID TEXT(18) NOT NULL, nKind INTEGER NOT NULL, szAvatorName TEXT(18) NULL, nAvatorSerial INTEGER NULL, nAccountSerial INTEGER NULL, szDetail TEXT(50) NOT NULL, dtDate TEXT NOT NULL, CONSTRAINT PK_tbl_GMjobLog PRIMARY KEY ( nSerial ASC ) );
-CREATE TABLE tbl_HolyQuest_Log( serial INTEGER  NOT NULL, ServerName TEXT(32) NOT NULL, race INTEGER NOT NULL, CharName TEXT(17) NOT NULL, LogDate TEXT NOT NULL, dstRace INTEGER NOT NULL, CONSTRAINT PK_tbl_HolyQuest_Log PRIMARY KEY ( serial ASC ) );
-CREATE TABLE tbl_HostAccount( Account TEXT(17) NOT NULL, Password TEXT(17) NOT NULL, Serial INTEGER  NOT NULL, Grade INTEGER NOT NULL, Depart TEXT(24) NULL, RealName TEXT(12) NULL, Grade1 INTEGER NOT NULL, CONSTRAINT PK_tbl_HostAccount PRIMARY KEY ( Account ASC ) );
-CREATE TABLE tbl_iplist_pcbang( IP1 INTEGER NOT NULL, IP2 INTEGER NOT NULL, IP3 INTEGER NOT NULL, IP4 INTEGER NOT NULL, lastip INTEGER NOT NULL, CONSTRAINT PK_iplist_pcbangt PRIMARY KEY ( IP1 ASC, IP2 ASC, IP3 ASC, IP4 ASC ) );
-CREATE TABLE tbl_ItemBatch( ID INTEGER  NOT NULL, DCK INTEGER NULL, RID INTEGER NULL, account TEXT(17) NOT NULL, server TEXT(32) NOT NULL, name TEXT(17) NOT NULL, serial INTEGER NOT NULL, itemcode TEXT(10) NOT NULL, D INTEGER NOT NULL, U TEXT(15) NOT NULL, adddate TEXT NULL, givedate TEXT NULL, deldate TEXT NULL, charger TEXT(17) NULL, deleter TEXT(17) NULL );
-CREATE TABLE tbl_LUAccount( id BLOB(16) NOT NULL, password BLOB(24) NOT NULL, BCodeTU INTEGER NOT NULL, accounttype INTEGER NULL, Email TEXT(50) NULL, CONSTRAINT PK_RF_LUAccount PRIMARY KEY ( id ASC ) );
-CREATE TABLE tbl_protocolaccesslog( Idx INTEGER  NOT NULL, ProtocolMsgID INTEGER NOT NULL, ProtocolID INTEGER NOT NULL, GMSerial INTEGER NOT NULL, AccessDate TEXT NOT NULL, ProtocolFld0 BLOB(128) NULL, ProtocolFld1 BLOB(128) NULL, ProtocolFld2 BLOB(128) NULL, ProtocolFld3 BLOB(128) NULL, ProtocolFld4 BLOB(128) NULL, ProtocolFld5 BLOB(128) NULL, ProtocolFld6 BLOB(128) NULL, ProtocolFld7 BLOB(128) NULL, ProtocolFld8 BLOB(128) NULL, ProtocolFld9 BLOB(128) NULL, CONSTRAINT PF_tbl_protocolaccesslog_Idx PRIMARY KEY ( Idx ASC ) );
-CREATE TABLE tbl_protocolauthinfo( Idx INTEGER  NOT NULL, dck INTEGER NOT NULL, P_MsgID INTEGER NOT NULL, P_ID INTEGER NOT NULL, P_AuthType INTEGER NOT NULL, GMID TEXT(17) NOT NULL, GMSerial INTEGER NOT NULL, CONSTRAINT PF_tbl_protocolauthinfo_Idx PRIMARY KEY ( Idx ASC ) );
-CREATE TABLE tbl_protocolinfo( Idx INTEGER  NOT NULL, dck INTEGER NOT NULL, ProtocolMsgID INTEGER NOT NULL, ProtocolID INTEGER NOT NULL, ProtocolName TEXT(64) NOT NULL, ProtocolExplain TEXT(256) NOT NULL, ProtocolFldCnt INTEGER NOT NULL, UpdateDate TEXT NULL, CONSTRAINT PF_tbl_protocolinfo_Idx PRIMARY KEY ( Idx ASC ) );
-CREATE TABLE tbl_rfaccount( id_hmac BLOB(32) NOT NULL, id_enc BLOB(128) NOT NULL, password_hash TEXT(255) NOT NULL, accounttype INTEGER NOT NULL, birthdate TEXT NOT NULL, CONSTRAINT PK_tbl_rfaccount PRIMARY KEY ( id_hmac ASC ) );
-CREATE TABLE tbl_ServerUser_Log( serial INTEGER  NOT NULL, dtDate TEXT NOT NULL, nAverageUser INTEGER NOT NULL, nMaxUser INTEGER NOT NULL, ServerName TEXT(32) NOT NULL, nBellaUser INTEGER NOT NULL, nCoraUser INTEGER NOT NULL, nAccUser INTEGER NOT NULL, CONSTRAINT PK_tbl_ServerUser_Log PRIMARY KEY ( serial ASC ) );
-CREATE TABLE tbl_StaffAccount(
- Serial INTEGER PRIMARY KEY AUTOINCREMENT,
- ID_hmac BLOB NOT NULL,
- ID_enc BLOB NOT NULL,
- PW_hash TEXT NOT NULL,
- Grade INTEGER NOT NULL,
- Depart TEXT NOT NULL,
- RealName TEXT NOT NULL,
- LastConnIP TEXT NOT NULL,
- CreateDT TEXT NOT NULL,
- LastLoginDT TEXT NOT NULL,
- LastLogoffDT TEXT NOT NULL,
- TotalLogMin INTEGER NOT NULL,
- SubGrade INTEGER NOT NULL,
- ExpireDT TEXT NOT NULL,
- ComClass TEXT NOT NULL,
- BirthDay TEXT NOT NULL,
- UNIQUE (ID_hmac)
+-- RF_User SQLite schema rebuilt from the Thai MSSQL references.
+-- SQLite has no stored procedures, and secure RF_User auth is handled by the application layer.
+
+CREATE TABLE `tbl_block_ip` (
+	`nSerial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`addr0` INTEGER NOT NULL,
+	`addr1` INTEGER NOT NULL,
+	`addr2` INTEGER NOT NULL,
+	`addr3` INTEGER NOT NULL DEFAULT 0,
+	`addr4` INTEGER NOT NULL DEFAULT 255,
+	`addr2range` INTEGER NOT NULL DEFAULT 255
 );
-INSERT INTO sqlite_sequence (name, seq) VALUES ('tbl_StaffAccount', 2000000000);
-CREATE TABLE tbl_StaffAccount_BKP( Serial INTEGER  NOT NULL, ID_hmac BLOB(32) NOT NULL, ID_enc BLOB(128) NOT NULL, PW_hash TEXT(255) NOT NULL, Grade INTEGER NOT NULL, Depart TEXT(32) NOT NULL, RealName TEXT(12) NOT NULL, LastConnIP TEXT(16) NOT NULL, CreateDT TEXT NOT NULL, LastLoginDT TEXT NOT NULL, LastLogoffDT TEXT NOT NULL, TotalLogMin INTEGER NOT NULL, SubGrade INTEGER NOT NULL, ExpireDT TEXT NOT NULL, ComClass TEXT(12) NOT NULL, BirthDay TEXT(10) NOT NULL );
-CREATE TABLE tbl_UserAccount( serial INTEGER  NOT NULL, id_hmac BLOB(32) NOT NULL, id_enc BLOB(128) NOT NULL, createtime TEXT NOT NULL, createip TEXT(16) NOT NULL, lastlogintime TEXT NOT NULL, lastlogofftime TEXT NOT NULL, totallogmin INTEGER NOT NULL, lastconnectip TEXT(16) NOT NULL, pushclosetime TEXT NOT NULL, pusherip TEXT(16) NOT NULL, JoinCode INTEGER NOT NULL, LoginFailureCnt INTEGER NOT NULL, fire_on TEXT NOT NULL, fire_warning TEXT NOT NULL, uilock INTEGER NOT NULL, uilock_pw TEXT(255) NOT NULL, uilock_failcnt INTEGER NOT NULL, uilock_update TEXT NOT NULL, uilock_hintindex INTEGER NOT NULL, uilock_hintanswer TEXT(255) NOT NULL, uilock_find_pass_failcnt INTEGER NOT NULL, CONSTRAINT PK_tbl_rfuser PRIMARY KEY ( id_hmac ASC ), CONSTRAINT IX_tbl_rfuser UNIQUE ( serial ASC ) );
-CREATE TABLE tbl_UserBan( nAccountSerial INTEGER NOT NULL, dtStartDate TEXT NOT NULL, nPeriod INTEGER NOT NULL, nKind INTEGER NOT NULL, szReason TEXT(32) NULL, GMReason TEXT(32) NOT NULL, GMWriter TEXT(32) NOT NULL, ReasonType INTEGER NOT NULL, CONSTRAINT PK_tbl_UserBan PRIMARY KEY ( nAccountSerial ASC ) );
-CREATE TABLE tbl_UserBan_Log( nSerial INTEGER  NOT NULL, nAccountSerial INTEGER NOT NULL, dtStartdate TEXT NOT NULL, nPeriod INTEGER NOT NULL, nKind INTEGER NOT NULL, szReason TEXT(32) NULL, GMReason TEXT(32) NOT NULL, GMWriter TEXT(32) NOT NULL, CONSTRAINT PK_tbl_UserBan_Log PRIMARY KEY ( nSerial ASC ) );
-CREATE TABLE tbl_UserCount_Log( serial INTEGER  NOT NULL, dtDate TEXT NOT NULL, nAverageUser INTEGER NOT NULL, nMaxUser INTEGER NOT NULL, nMaxUserTestServer INTEGER NOT NULL, CONSTRAINT PK_tbl_UserCount_Log PRIMARY KEY ( serial ASC ) );
-CREATE TABLE tbl_usercurrentstate( serial INTEGER NOT NULL, state INTEGER NOT NULL, CONSTRAINT PK_tbl_usercurrentstate PRIMARY KEY ( serial ASC ) );
-CREATE TABLE tbl_UserPush_Log( nAccountSerial INTEGER NOT NULL, dtDate TEXT NOT NULL, PushIP TEXT(16) NOT NULL, CloseIP TEXT(16) NOT NULL, CONSTRAINT PK_tbl_UserPush_Log PRIMARY KEY ( nAccountSerial ASC, dtDate ASC ) );
-CREATE TABLE tbl_WorldHistory_Log( serverName TEXT(12) NOT NULL, race TEXT(12) NOT NULL, avatorNum INTEGER NOT NULL, dalant INTEGER NOT NULL, gold INTEGER NOT NULL, lv INTEGER NOT NULL, logDate TEXT NOT NULL, idx INTEGER  NOT NULL, CONSTRAINT PK_tbl_WorldHistory_Log PRIMARY KEY ( idx ASC ) );
-CREATE TABLE tbl_WorldServer_List( Serial INTEGER NOT NULL, Name TEXT(32) NOT NULL, State INTEGER NOT NULL, LastUpdate TEXT NOT NULL, msrepl_tran_version uniqueidentifier NOT NULL, CONSTRAINT PK_tbl_WorldServer_List PRIMARY KEY ( Serial ASC ) );
-CREATE TABLE tbNoPach( serial INTEGER  NOT NULL, id BLOB(16) NOT NULL, createtime TEXT NOT NULL, createip TEXT(16) NOT NULL, lastlogintime TEXT NOT NULL, lastlogofftime TEXT NOT NULL, totallogmin INTEGER NOT NULL, lastconnectip TEXT(16) NOT NULL, pushclosetime TEXT NOT NULL, pusherip TEXT(16) NOT NULL, JoinCode INTEGER NOT NULL );
+
+CREATE TABLE `tbl_bugtime_connect_in_pcbang` (
+	`nworldcode` INTEGER NOT NULL,
+	`navatorserial` INTEGER NULL,
+	`account` TEXT NULL
+);
+
+CREATE TABLE `tbl_bugtime_connectpcbang` (
+	`f1` INTEGER NOT NULL,
+	`f2` INTEGER NOT NULL,
+	`f3` INTEGER NOT NULL,
+	`f4` INTEGER NOT NULL
+);
+
+CREATE TABLE `tbl_connect_in_bugtime` (
+	`ip` TEXT NOT NULL
+);
+
+CREATE TABLE `tbl_connect_pcbang` (
+	`ip` TEXT NOT NULL
+);
+
+CREATE TABLE `tbl_connectpcbang_charserial` (
+	`nWorldCode` INTEGER NOT NULL,
+	`nAvatorSerial` INTEGER NOT NULL
+);
+
+CREATE TABLE `tbl_CristalBattle_Log` (
+	`ID` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`DID` INTEGER NOT NULL,
+	`SID` INTEGER NOT NULL,
+	`Nth` INTEGER NOT NULL,
+	`MasterRace` INTEGER NOT NULL,
+	`MasterName` TEXT NOT NULL,
+	`MasterClass` TEXT NOT NULL,
+	`B_BossName` TEXT NOT NULL,
+	`C_BossName` TEXT NOT NULL,
+	`A_BossName` TEXT NOT NULL,
+	`MasterSubBossName1` TEXT NOT NULL,
+	`MasterSubBossName2` TEXT NOT NULL,
+	`MasterSubBossName3` TEXT NOT NULL,
+	`MasterSubBossName4` TEXT NOT NULL,
+	`MasterSubBossName5` TEXT NOT NULL,
+	`StartTime` TEXT NOT NULL,
+	`GetTime` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`ChaosHour` INTEGER NOT NULL,
+	`ChaosMin` INTEGER NOT NULL,
+	`ElapseHour` INTEGER NOT NULL DEFAULT 0,
+	`ElapseMin` INTEGER NOT NULL DEFAULT 0,
+	`ElapseSec` INTEGER NOT NULL DEFAULT 0,
+	`KeeperHitter` TEXT NOT NULL DEFAULT ('*'),
+	`ByAnimus` INTEGER NOT NULL DEFAULT 255,
+	`DestroyRace` INTEGER NULL DEFAULT 255
+);
+INSERT INTO sqlite_sequence(name, seq) VALUES('tbl_CristalBattle_Log', 219);
+
+CREATE TABLE `tbl_exp_connectip` (
+	`F1` INTEGER NOT NULL,
+	`F2` INTEGER NOT NULL,
+	`F3` INTEGER NOT NULL,
+	`F4` INTEGER NOT NULL
+);
+
+CREATE TABLE `tbl_GMActLog` (
+	`ID` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`Account` TEXT NOT NULL,
+	`TID` INTEGER NOT NULL,
+	`PID` INTEGER NOT NULL DEFAULT 0,
+	`ActDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `tbl_GMActParam` (
+	`ID` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`Param1` BLOB NULL,
+	`Param2` BLOB NULL,
+	`Param3` BLOB NULL,
+	`Param4` BLOB NULL,
+	`Param5` BLOB NULL,
+	`Param6` BLOB NULL,
+	`Param7` BLOB NULL,
+	`Param8` BLOB NULL,
+	`Param9` BLOB NULL
+);
+
+CREATE TABLE `tbl_GMActType` (
+	`ID` INTEGER NOT NULL,
+	`bLog` INTEGER NOT NULL,
+	`TypeName` TEXT NOT NULL,
+	`TypeNameKor` TEXT NOT NULL,
+	PRIMARY KEY (`ID`)
+);
+
+CREATE TABLE `tbl_GMjobLog` (
+	`nSerial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`szGMID` TEXT NOT NULL,
+	`nKind` INTEGER NOT NULL DEFAULT 0,
+	`szAvatorName` TEXT NULL,
+	`nAvatorSerial` INTEGER NULL,
+	`nAccountSerial` INTEGER NULL,
+	`szDetail` TEXT NOT NULL,
+	`dtDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `tbl_HolyQuest_Log` (
+	`serial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`ServerName` TEXT NOT NULL,
+	`race` INTEGER NOT NULL,
+	`CharName` TEXT NOT NULL,
+	`LogDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`dstRace` INTEGER NOT NULL
+);
+
+CREATE TABLE `tbl_HostAccount` (
+	`Account` TEXT NOT NULL,
+	`Password` TEXT NOT NULL DEFAULT ('*'),
+	`Serial` INTEGER NOT NULL,
+	`Grade` INTEGER NOT NULL DEFAULT 0,
+	`Depart` TEXT NULL,
+	`RealName` TEXT NULL,
+	`Grade1` INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (`Account`)
+);
+
+CREATE TABLE `tbl_iplist_pcbang` (
+	`IP1` INTEGER NOT NULL,
+	`IP2` INTEGER NOT NULL,
+	`IP3` INTEGER NOT NULL,
+	`IP4` INTEGER NOT NULL,
+	`lastip` INTEGER NOT NULL,
+	PRIMARY KEY (`IP1`, `IP2`, `IP3`, `IP4`)
+);
+
+CREATE TABLE `tbl_protocolaccesslog` (
+	`Idx` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`ProtocolMsgID` INTEGER NOT NULL DEFAULT 0,
+	`ProtocolID` INTEGER NOT NULL DEFAULT 0,
+	`GMSerial` INTEGER NOT NULL DEFAULT 0,
+	`AccessDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`ProtocolFld0` BLOB NULL,
+	`ProtocolFld1` BLOB NULL,
+	`ProtocolFld2` BLOB NULL,
+	`ProtocolFld3` BLOB NULL,
+	`ProtocolFld4` BLOB NULL,
+	`ProtocolFld5` BLOB NULL,
+	`ProtocolFld6` BLOB NULL,
+	`ProtocolFld7` BLOB NULL,
+	`ProtocolFld8` BLOB NULL,
+	`ProtocolFld9` BLOB NULL
+);
+
+CREATE TABLE `tbl_protocolauthinfo` (
+	`Idx` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`dck` INTEGER NOT NULL DEFAULT 0,
+	`P_MsgID` INTEGER NOT NULL DEFAULT 0,
+	`P_ID` INTEGER NOT NULL DEFAULT 0,
+	`P_AuthType` INTEGER NOT NULL DEFAULT 0,
+	`GMID` TEXT NOT NULL DEFAULT ('*'),
+	`GMSerial` INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE `tbl_protocolinfo` (
+	`Idx` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`dck` INTEGER NOT NULL DEFAULT 0,
+	`ProtocolMsgID` INTEGER NOT NULL DEFAULT 0,
+	`ProtocolID` INTEGER NOT NULL DEFAULT 0,
+	`ProtocolName` TEXT NOT NULL DEFAULT ('*'),
+	`ProtocolExplain` TEXT NOT NULL DEFAULT ('*'),
+	`ProtocolFldCnt` INTEGER NOT NULL DEFAULT 0,
+	`UpdateDate` TEXT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `tbl_rfaccount` (
+	`id_hmac` BLOB NOT NULL,
+	`id_enc` BLOB NOT NULL,
+	`password_hash` TEXT NOT NULL,
+	`accounttype` INTEGER NOT NULL DEFAULT 0,
+	`birthdate` TEXT NULL,
+	PRIMARY KEY (`id_hmac`)
+);
+
+CREATE TABLE `tbl_ServerUser_Log` (
+	`serial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`dtDate` TEXT NOT NULL,
+	`nAverageUser` INTEGER NOT NULL DEFAULT 0,
+	`nMaxUser` INTEGER NOT NULL DEFAULT 0,
+	`ServerName` TEXT NOT NULL,
+	`nBellaUser` INTEGER NOT NULL DEFAULT 0,
+	`nCoraUser` INTEGER NOT NULL DEFAULT 0,
+	`nAccUser` INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE `tbl_StaffAccount` (
+	`Serial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`ID_hmac` BLOB NOT NULL,
+	`ID_enc` BLOB NOT NULL,
+	`PW_hash` TEXT NOT NULL,
+	`Grade` INTEGER NOT NULL DEFAULT ((1)),
+	`Depart` TEXT NOT NULL,
+	`RealName` TEXT NOT NULL,
+	`LastConnIP` TEXT NOT NULL DEFAULT '0',
+	`CreateDT` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`LastLoginDT` TEXT NOT NULL DEFAULT 0,
+	`LastLogoffDT` TEXT NOT NULL DEFAULT 0,
+	`TotalLogMin` INTEGER NOT NULL DEFAULT 0,
+	`SubGrade` INTEGER NOT NULL DEFAULT 0,
+	`ExpireDT` TEXT NOT NULL DEFAULT (datetime('now', '+1 month')),
+	`ComClass` TEXT NOT NULL DEFAULT '??',
+	`BirthDay` TEXT NOT NULL DEFAULT '',
+	UNIQUE (`ID_hmac`)
+);
+INSERT INTO sqlite_sequence(name, seq) VALUES('tbl_StaffAccount', 1999999999);
+
+CREATE TABLE `tbl_UserAccount` (
+	`serial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`id_hmac` BLOB NOT NULL,
+	`id_enc` BLOB NOT NULL,
+	`createtime` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`createip` TEXT NOT NULL DEFAULT '0',
+	`lastlogintime` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`lastlogofftime` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`totallogmin` INTEGER NOT NULL DEFAULT 0,
+	`lastconnectip` TEXT NOT NULL DEFAULT '0',
+	`pushclosetime` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`pusherip` TEXT NOT NULL DEFAULT '0',
+	`JoinCode` INTEGER NOT NULL DEFAULT 0,
+	`LoginFailureCnt` INTEGER NOT NULL DEFAULT 0,
+	`fire_on` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`fire_warning` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`uilock` INTEGER NOT NULL DEFAULT 0,
+	`uilock_pw` TEXT NOT NULL DEFAULT '',
+	`uilock_failcnt` INTEGER NOT NULL DEFAULT 0,
+	`uilock_update` TEXT NOT NULL DEFAULT 0,
+	`uilock_hintindex` INTEGER NOT NULL DEFAULT 0,
+	`uilock_hintanswer` TEXT NOT NULL DEFAULT '',
+	`uilock_find_pass_failcnt` INTEGER NOT NULL DEFAULT 0,
+	UNIQUE (`id_hmac`)
+);
+
+CREATE TABLE `tbl_UserBan` (
+	`nAccountSerial` INTEGER NOT NULL,
+	`dtStartDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`nPeriod` INTEGER NOT NULL,
+	`nKind` INTEGER NOT NULL DEFAULT 0,
+	`szReason` TEXT NULL,
+	`GMReason` TEXT NOT NULL DEFAULT ('*'),
+	`GMWriter` TEXT NOT NULL DEFAULT ('*'),
+	`reasontype` INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (`nAccountSerial`)
+);
+
+CREATE TABLE `tbl_UserBan_Log` (
+	`nSerial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`nAccountSerial` INTEGER NOT NULL,
+	`dtStartdate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`nPeriod` INTEGER NOT NULL,
+	`nKind` INTEGER NOT NULL DEFAULT 0,
+	`szReason` TEXT NULL,
+	`GMReason` TEXT NOT NULL DEFAULT ('*'),
+	`GMWriter` TEXT NOT NULL DEFAULT ('*')
+);
+
+CREATE TABLE `tbl_UserCount_Log` (
+	`serial` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`dtDate` TEXT NOT NULL,
+	`nAverageUser` INTEGER NOT NULL DEFAULT 0,
+	`nMaxUser` INTEGER NOT NULL DEFAULT 0,
+	`nMaxUserTestServer` INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE `tbl_usercurrentstate` (
+	`serial` INTEGER NOT NULL,
+	`state` INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (`serial`)
+);
+
+CREATE TABLE `tbl_UserPush_Log` (
+	`nAccountSerial` INTEGER NOT NULL DEFAULT 0,
+	`dtDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`PushIP` TEXT NOT NULL DEFAULT '0',
+	`CloseIP` TEXT NOT NULL DEFAULT '0',
+	PRIMARY KEY (`nAccountSerial`, `dtDate`)
+);
+
+CREATE TABLE `tbl_WorldHistory_Log` (
+	`serverName` TEXT NOT NULL,
+	`race` TEXT NOT NULL,
+	`avatorNum` INTEGER NOT NULL DEFAULT 0,
+	`dalant` INTEGER NOT NULL DEFAULT 0,
+	`gold` INTEGER NOT NULL DEFAULT 0,
+	`lv` INTEGER NOT NULL,
+	`logDate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`idx` INTEGER PRIMARY KEY AUTOINCREMENT
+);
+
+CREATE TABLE `tbl_WorldServer_List` (
+	`Serial` INTEGER NOT NULL,
+	`Name` TEXT NOT NULL,
+	`State` INTEGER NOT NULL,
+	`LastUpdate` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	`msrepl_tran_version` TEXT NOT NULL DEFAULT (newid()),
+	PRIMARY KEY (`Serial`)
+);
+
+CREATE TABLE `tbl_UserLogout_Log` (
+	`nAccountSerial` INTEGER NOT NULL,
+	`nCounter` INTEGER NOT NULL,
+	`dtLoginDate` TEXT NOT NULL,
+	`dtLogoutDate` TEXT NOT NULL,
+	`ip` TEXT NOT NULL,
+	PRIMARY KEY (`nAccountSerial`, `nCounter`)
+);
+
+CREATE TABLE `tbl_fg_detected_account` (
+	`account` TEXT NOT NULL,
+	`detect_time` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`account`, `detect_time`)
+);
+
+CREATE TABLE `tbl_fg_detected_ip` (
+	`ip` INTEGER NOT NULL,
+	`detect_time` TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`ip`, `detect_time`)
+);

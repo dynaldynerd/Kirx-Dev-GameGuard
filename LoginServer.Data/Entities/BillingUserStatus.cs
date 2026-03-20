@@ -15,6 +15,12 @@ public sealed class BillingUserStatus
     [Column("Status")]
     public int Status { get; set; }
 
+    [Column("DTStartPrem")]
+    public DateTime? DtStartPrem { get; set; }
+
     [Column("DTEndPrem")]
     public DateTime? DtEndPrem { get; set; }
+
+    [Column("Cash")]
+    public int Cash { get; set; }
 }

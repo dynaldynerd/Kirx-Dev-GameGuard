@@ -15,6 +15,8 @@ public partial class SettingsForm
     private TabPage tabWorldList = null!;
     private Panel panelGeneral = null!;
     private TableLayoutPanel tblGeneral = null!;
+    private GroupBox grpDanger = null!;
+    private Label lblReinstallWarning = null!;
     private Label lblMaxActive = null!;
     private Label lblListenHost = null!;
     private Label lblLoginPort = null!;
@@ -76,6 +78,8 @@ public partial class SettingsForm
         tabGeneral = new TabPage();
         panelGeneral = new Panel();
         tblGeneral = new TableLayoutPanel();
+        grpDanger = new GroupBox();
+        lblReinstallWarning = new Label();
         lblMaxActive = new Label();
         numMaxActive = new NumericUpDown();
         lblListenHost = new Label();
@@ -173,6 +177,7 @@ public partial class SettingsForm
         // panelGeneral
         // 
         panelGeneral.AutoScroll = true;
+        panelGeneral.Controls.Add(grpDanger);
         panelGeneral.Controls.Add(tblGeneral);
         panelGeneral.Dock = DockStyle.Fill;
         panelGeneral.Location = new Point(0, 0);
@@ -208,6 +213,29 @@ public partial class SettingsForm
         tblGeneral.RowCount = 5;
         tblGeneral.Size = new Size(712, 161);
         tblGeneral.TabIndex = 0;
+        // 
+        // grpDanger
+        // 
+        grpDanger.Controls.Add(btnReinstall);
+        grpDanger.Controls.Add(lblReinstallWarning);
+        grpDanger.Dock = DockStyle.Bottom;
+        grpDanger.ForeColor = Color.DarkRed;
+        grpDanger.Location = new Point(0, 341);
+        grpDanger.Name = "grpDanger";
+        grpDanger.Padding = new Padding(10);
+        grpDanger.Size = new Size(712, 103);
+        grpDanger.TabIndex = 1;
+        grpDanger.TabStop = false;
+        grpDanger.Text = "Reset Setup";
+        // 
+        // lblReinstallWarning
+        // 
+        lblReinstallWarning.ForeColor = SystemColors.ControlText;
+        lblReinstallWarning.Location = new Point(13, 25);
+        lblReinstallWarning.Name = "lblReinstallWarning";
+        lblReinstallWarning.Size = new Size(596, 46);
+        lblReinstallWarning.TabIndex = 0;
+        lblReinstallWarning.Text = "Reinstall resets Properties.Settings, deletes the AccountServer JSON settings file, restarts the app, and forces the setup wizard to run again.";
         // 
         // lblMaxActive
         // 
@@ -673,7 +701,6 @@ public partial class SettingsForm
         // 
         // panelButtons
         // 
-        panelButtons.Controls.Add(btnReinstall);
         panelButtons.Controls.Add(btnSave);
         panelButtons.Controls.Add(btnCancel);
         panelButtons.Dock = DockStyle.Bottom;
@@ -683,17 +710,6 @@ public partial class SettingsForm
         panelButtons.Padding = new Padding(10);
         panelButtons.Size = new Size(720, 48);
         panelButtons.TabIndex = 1;
-        // 
-        // btnReinstall
-        // 
-        btnReinstall.AutoSize = true;
-        btnReinstall.ForeColor = Color.DarkRed;
-        btnReinstall.Location = new Point(541, 13);
-        btnReinstall.Name = "btnReinstall";
-        btnReinstall.Size = new Size(75, 25);
-        btnReinstall.TabIndex = 2;
-        btnReinstall.Text = "Reinstall";
-        btnReinstall.Click += OnReinstall;
         // 
         // btnSave
         // 
@@ -708,12 +724,23 @@ public partial class SettingsForm
         // btnCancel
         // 
         btnCancel.AutoSize = true;
-        btnCancel.Location = new Point(460, 13);
+        btnCancel.Location = new Point(541, 13);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new Size(75, 25);
         btnCancel.TabIndex = 1;
         btnCancel.Text = "Cancel";
         btnCancel.Click += OnCancel;
+        // 
+        // btnReinstall
+        // 
+        btnReinstall.AutoSize = true;
+        btnReinstall.ForeColor = Color.DarkRed;
+        btnReinstall.Location = new Point(13, 68);
+        btnReinstall.Name = "btnReinstall";
+        btnReinstall.Size = new Size(75, 25);
+        btnReinstall.TabIndex = 1;
+        btnReinstall.Text = "Reinstall";
+        btnReinstall.Click += OnReinstall;
         // 
         // SettingsForm
         // 

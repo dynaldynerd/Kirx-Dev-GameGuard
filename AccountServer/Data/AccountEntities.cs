@@ -9,12 +9,23 @@ public sealed class StaffAccount
     public byte[] IdEnc { get; set; } = Array.Empty<byte>();
     public string PwHash { get; set; } = string.Empty;
     public byte Grade { get; set; }
+    public string Depart { get; set; } = string.Empty;
+    public string RealName { get; set; } = string.Empty;
     public byte SubGrade { get; set; }
     public int TotalLogMin { get; set; }
     public DateTime LastLoginDt { get; set; }
     public DateTime LastLogoffDt { get; set; }
     public string LastConnIp { get; set; } = string.Empty;
     public DateTime ExpireDt { get; set; }
+}
+
+public sealed class AccountAuth
+{
+    public byte[] IdHmac { get; set; } = Array.Empty<byte>();
+    public byte[] IdEnc { get; set; } = Array.Empty<byte>();
+    public string PasswordHash { get; set; } = string.Empty;
+    public byte AccountType { get; set; }
+    public DateTime? BirthDate { get; set; }
 }
 
 public sealed class UserAccount

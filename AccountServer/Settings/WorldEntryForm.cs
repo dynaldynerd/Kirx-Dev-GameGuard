@@ -62,4 +62,18 @@ public partial class WorldEntryForm : Form
         DialogResult = DialogResult.Cancel;
         Close();
     }
+
+    private void OnInstallDb(object? sender, EventArgs e)
+    {
+        string dbName = txtDbName.Text.Trim();
+        if (string.IsNullOrEmpty(dbName))
+        {
+            MessageBox.Show(this, "DB name is required before installation.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            txtDbName.Focus();
+            return;
+        }
+
+        using var form = new global::AccountServer.WorldDatabaseInstallForm(dbName);
+        form.ShowDialog(this);
+    }
 }

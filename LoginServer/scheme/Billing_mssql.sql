@@ -79,10 +79,10 @@ IF OBJECT_ID(N'[dbo].[tbl_UserStatus]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[tbl_UserStatus](
         [serial] [int] IDENTITY(1,1) NOT NULL,
-        [id] [varchar](16) NOT NULL,
-        [Status] [int] NOT NULL,
-        [DTStartPrem] [datetime] NULL,
-        [DTEndPrem] [datetime] NULL,
+        [id] [varchar](16) COLLATE Latin1_General_BIN2 NOT NULL,
+        [Status] [int] NOT NULL CONSTRAINT [DF_tbl_UserStatus_Status] DEFAULT ((1)),
+        [DTStartPrem] [datetime] NULL CONSTRAINT [DF_tbl_UserStatus_DTStartPrem] DEFAULT (getdate()),
+        [DTEndPrem] [datetime] NULL CONSTRAINT [DF_tbl_UserStatus_DTEndPrem] DEFAULT (getdate()),
         [Cash] [int] NOT NULL CONSTRAINT [DF_tbl_UserStatus_Cash] DEFAULT ((0)),
         CONSTRAINT [PK_tbl_UserStatus] PRIMARY KEY CLUSTERED (
             [id] ASC

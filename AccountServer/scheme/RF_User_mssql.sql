@@ -1,183 +1,38 @@
 USE [master]
 GO
-/****** Object:  Database [RF_User]    Script Date: 12/01/2026 16:35:26 ******/
 CREATE DATABASE [RF_User]
- CONTAINMENT = NONE
- WITH CATALOG_COLLATION = DATABASE_DEFAULT, LEDGER = OFF
 GO
 ALTER DATABASE [RF_User] SET COMPATIBILITY_LEVEL = 100
 GO
-IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
-begin
-EXEC [RF_User].[dbo].[sp_fulltext_database] @action = 'disable'
-end
-GO
-ALTER DATABASE [RF_User] SET ANSI_NULL_DEFAULT OFF 
-GO
-ALTER DATABASE [RF_User] SET ANSI_NULLS OFF 
-GO
-ALTER DATABASE [RF_User] SET ANSI_PADDING OFF 
-GO
-ALTER DATABASE [RF_User] SET ANSI_WARNINGS OFF 
-GO
-ALTER DATABASE [RF_User] SET ARITHABORT OFF 
-GO
-ALTER DATABASE [RF_User] SET AUTO_CLOSE OFF 
-GO
-ALTER DATABASE [RF_User] SET AUTO_SHRINK OFF 
-GO
-ALTER DATABASE [RF_User] SET AUTO_UPDATE_STATISTICS ON 
-GO
-ALTER DATABASE [RF_User] SET CURSOR_CLOSE_ON_COMMIT OFF 
-GO
-ALTER DATABASE [RF_User] SET CURSOR_DEFAULT  GLOBAL 
-GO
-ALTER DATABASE [RF_User] SET CONCAT_NULL_YIELDS_NULL OFF 
-GO
-ALTER DATABASE [RF_User] SET NUMERIC_ROUNDABORT OFF 
-GO
-ALTER DATABASE [RF_User] SET QUOTED_IDENTIFIER OFF 
-GO
-ALTER DATABASE [RF_User] SET RECURSIVE_TRIGGERS OFF 
-GO
-ALTER DATABASE [RF_User] SET  DISABLE_BROKER 
-GO
-ALTER DATABASE [RF_User] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
-GO
-ALTER DATABASE [RF_User] SET DATE_CORRELATION_OPTIMIZATION OFF 
-GO
-ALTER DATABASE [RF_User] SET TRUSTWORTHY OFF 
-GO
-ALTER DATABASE [RF_User] SET ALLOW_SNAPSHOT_ISOLATION OFF 
-GO
-ALTER DATABASE [RF_User] SET PARAMETERIZATION SIMPLE 
-GO
-ALTER DATABASE [RF_User] SET READ_COMMITTED_SNAPSHOT OFF 
-GO
-ALTER DATABASE [RF_User] SET HONOR_BROKER_PRIORITY OFF 
-GO
-ALTER DATABASE [RF_User] SET RECOVERY FULL 
-GO
-ALTER DATABASE [RF_User] SET  MULTI_USER 
-GO
-ALTER DATABASE [RF_User] SET PAGE_VERIFY TORN_PAGE_DETECTION  
-GO
-ALTER DATABASE [RF_User] SET DB_CHAINING OFF 
-GO
-ALTER DATABASE [RF_User] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
-GO
-ALTER DATABASE [RF_User] SET TARGET_RECOVERY_TIME = 0 SECONDS 
-GO
-ALTER DATABASE [RF_User] SET DELAYED_DURABILITY = DISABLED 
-GO
-ALTER DATABASE [RF_User] SET ACCELERATED_DATABASE_RECOVERY = OFF  
-GO
-EXEC sys.sp_db_vardecimal_storage_format N'RF_User', N'ON'
-GO
-ALTER DATABASE [RF_User] SET QUERY_STORE = OFF
-GO
 USE [RF_User]
 GO
-/****** Object:  User [rfbrazilaccount]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [rfbrazilaccount] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[rfbrazilaccount]
+
+/*
+Legacy Thai RF_User auth objects that depended on the old id/pw layout are intentionally omitted.
+RF_User now stores secure auth data through id_hmac / id_enc / password_hash and the application
+generates those values.
+*/
 GO
-/****** Object:  User [rf_merge]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [rf_merge] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[rf_merge]
-GO
-/****** Object:  User [rf_billing]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [rf_billing] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[rf_billing]
-GO
-/****** Object:  User [ph_user]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [ph_user] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[ph_user]
-GO
-/****** Object:  User [gferreira]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [gferreira] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[gferreira]
-GO
-/****** Object:  User [eventuser]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [eventuser] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[eventuser]
-GO
-/****** Object:  User [account_lug]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE USER [account_lug] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[account_lug]
-GO
-ALTER ROLE [db_owner] ADD MEMBER [rfbrazilaccount]
-GO
-ALTER ROLE [db_datareader] ADD MEMBER [rf_merge]
-GO
-ALTER ROLE [db_owner] ADD MEMBER [rf_billing]
-GO
-ALTER ROLE [db_datareader] ADD MEMBER [ph_user]
-GO
-ALTER ROLE [db_ddladmin] ADD MEMBER [gferreira]
-GO
-ALTER ROLE [db_datareader] ADD MEMBER [gferreira]
-GO
-ALTER ROLE [db_datawriter] ADD MEMBER [gferreira]
-GO
-/****** Object:  Schema [account_lug]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [account_lug]
-GO
-/****** Object:  Schema [eventuser]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [eventuser]
-GO
-/****** Object:  Schema [gferreira]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [gferreira]
-GO
-/****** Object:  Schema [ph_user]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [ph_user]
-GO
-/****** Object:  Schema [rf_billing]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [rf_billing]
-GO
-/****** Object:  Schema [rf_merge]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [rf_merge]
-GO
-/****** Object:  Schema [rfbrazilaccount]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE SCHEMA [rfbrazilaccount]
-GO
-/****** Object:  Table [dbo].[nopach]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[nopach](
-	[IP] [varchar](255) NULL
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[tbl_block_ip]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_block_ip](
 	[nSerial] [int] IDENTITY(1,1) NOT NULL,
 	[addr0] [tinyint] NOT NULL,
 	[addr1] [tinyint] NOT NULL,
 	[addr2] [tinyint] NOT NULL,
-	[addr3] [tinyint] NOT NULL,
-	[addr4] [tinyint] NOT NULL,
-	[addr2range] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_block_ip] PRIMARY KEY CLUSTERED 
-(
-	[nSerial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[addr3] [tinyint] NOT NULL DEFAULT ((0)),
+	[addr4] [tinyint] NOT NULL DEFAULT ((255)),
+	[addr2range] [tinyint] NOT NULL DEFAULT ((255)),
+	CONSTRAINT [PK_tbl_block_ip] PRIMARY KEY ([nSerial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_bugtime_connect_in_pcbang]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_bugtime_connect_in_pcbang](
 	[nworldcode] [int] NOT NULL,
 	[navatorserial] [int] NULL,
 	[account] [char](17) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_bugtime_connectpcbang]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_bugtime_connectpcbang](
 	[f1] [tinyint] NOT NULL,
 	[f2] [tinyint] NOT NULL,
@@ -185,53 +40,23 @@ CREATE TABLE [dbo].[tbl_bugtime_connectpcbang](
 	[f4] [tinyint] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_chargeresultstr]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[tbl_chargeresultstr](
-	[ID] [tinyint] NOT NULL,
-	[strError] [varchar](32) NOT NULL,
- CONSTRAINT [PK_tbl_chargeresultstr] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[tbl_connect_in_bugtime]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_connect_in_bugtime](
 	[ip] [nvarchar](16) NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_connect_pcbang]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_connect_pcbang](
 	[ip] [nvarchar](16) NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_connectpcbang_charserial]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_connectpcbang_charserial](
 	[nWorldCode] [tinyint] NOT NULL,
 	[nAvatorSerial] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_CristalBattle_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_CristalBattle_Log](
 	[ID] [int] IDENTITY(220,1) NOT NULL,
 	[DID] [int] NOT NULL,
@@ -249,26 +74,19 @@ CREATE TABLE [dbo].[tbl_CristalBattle_Log](
 	[MasterSubBossName4] [varchar](17) NOT NULL,
 	[MasterSubBossName5] [varchar](17) NOT NULL,
 	[StartTime] [datetime] NOT NULL,
-	[GetTime] [datetime] NOT NULL,
+	[GetTime] [datetime] NOT NULL DEFAULT (getdate()),
 	[ChaosHour] [tinyint] NOT NULL,
 	[ChaosMin] [tinyint] NOT NULL,
-	[ElapseHour] [tinyint] NOT NULL,
-	[ElapseMin] [tinyint] NOT NULL,
-	[ElapseSec] [tinyint] NOT NULL,
-	[KeeperHitter] [varchar](17) NOT NULL,
-	[ByAnimus] [tinyint] NOT NULL,
-	[DestroyRace] [tinyint] NULL,
- CONSTRAINT [PK_tbl_CristalBattle_Log] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[ElapseHour] [tinyint] NOT NULL DEFAULT ((0)),
+	[ElapseMin] [tinyint] NOT NULL DEFAULT ((0)),
+	[ElapseSec] [tinyint] NOT NULL DEFAULT ((0)),
+	[KeeperHitter] [varchar](17) NOT NULL DEFAULT ('*'),
+	[ByAnimus] [tinyint] NOT NULL DEFAULT ((255)),
+	[DestroyRace] [tinyint] NULL DEFAULT ((255)),
+	CONSTRAINT [PK_tbl_CristalBattle_Log] PRIMARY KEY ([ID] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_exp_connectip]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_exp_connectip](
 	[F1] [tinyint] NOT NULL,
 	[F2] [tinyint] NOT NULL,
@@ -276,28 +94,17 @@ CREATE TABLE [dbo].[tbl_exp_connectip](
 	[F4] [tinyint] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_GMActLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_GMActLog](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Account] [varchar](17) NOT NULL,
 	[TID] [int] NOT NULL,
-	[PID] [int] NOT NULL,
-	[ActDate] [datetime] NOT NULL,
- CONSTRAINT [PK_tbl_GMActLog] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[PID] [int] NOT NULL DEFAULT ((0)),
+	[ActDate] [datetime] NOT NULL DEFAULT (getdate()),
+	CONSTRAINT [PK_tbl_GMActLog] PRIMARY KEY ([ID] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_GMActParam]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_GMActParam](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Param1] [sql_variant] NULL,
@@ -309,156 +116,71 @@ CREATE TABLE [dbo].[tbl_GMActParam](
 	[Param7] [sql_variant] NULL,
 	[Param8] [sql_variant] NULL,
 	[Param9] [sql_variant] NULL,
- CONSTRAINT [PK_tbl_GMActParam] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PK_tbl_GMActParam] PRIMARY KEY ([ID] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_GMActType]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_GMActType](
 	[ID] [int] NOT NULL,
 	[bLog] [bit] NOT NULL,
 	[TypeName] [varchar](50) NOT NULL,
 	[TypeNameKor] [varchar](50) NOT NULL,
- CONSTRAINT [PK_tbl_GMActType] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PK_tbl_GMActType] PRIMARY KEY ([ID] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_GMjobLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_GMjobLog](
 	[nSerial] [int] IDENTITY(1,1) NOT NULL,
 	[szGMID] [varchar](18) NOT NULL,
-	[nKind] [tinyint] NOT NULL,
+	[nKind] [tinyint] NOT NULL DEFAULT ((0)),
 	[szAvatorName] [varchar](18) NULL,
 	[nAvatorSerial] [int] NULL,
 	[nAccountSerial] [int] NULL,
 	[szDetail] [varchar](50) NOT NULL,
-	[dtDate] [datetime] NOT NULL,
- CONSTRAINT [PK_tbl_GMjobLog] PRIMARY KEY CLUSTERED 
-(
-	[nSerial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[dtDate] [datetime] NOT NULL DEFAULT (getdate()),
+	CONSTRAINT [PK_tbl_GMjobLog] PRIMARY KEY ([nSerial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_HolyQuest_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_HolyQuest_Log](
 	[serial] [int] IDENTITY(1,1) NOT NULL,
 	[ServerName] [varchar](32) NOT NULL,
 	[race] [tinyint] NOT NULL,
 	[CharName] [varchar](17) NOT NULL,
-	[LogDate] [datetime] NOT NULL,
+	[LogDate] [datetime] NOT NULL DEFAULT (getdate()),
 	[dstRace] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_HolyQuest_Log] PRIMARY KEY NONCLUSTERED 
-(
-	[serial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PK_tbl_HolyQuest_Log] PRIMARY KEY ([serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_HostAccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_HostAccount](
 	[Account] [varchar](17) NOT NULL,
-	[Password] [varchar](17) NOT NULL,
+	[Password] [varchar](17) NOT NULL DEFAULT ('*'),
 	[Serial] [int] IDENTITY(1,1) NOT NULL,
-	[Grade] [tinyint] NOT NULL,
+	[Grade] [tinyint] NOT NULL DEFAULT ((0)),
 	[Depart] [varchar](24) NULL,
 	[RealName] [varchar](12) NULL,
-	[Grade1] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_HostAccount] PRIMARY KEY CLUSTERED 
-(
-	[Account] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[Grade1] [tinyint] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_HostAccount] PRIMARY KEY ([Account] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_iplist_pcbang]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_iplist_pcbang](
 	[IP1] [tinyint] NOT NULL,
 	[IP2] [tinyint] NOT NULL,
 	[IP3] [tinyint] NOT NULL,
 	[IP4] [tinyint] NOT NULL,
 	[lastip] [tinyint] NOT NULL,
- CONSTRAINT [PK_iplist_pcbangt] PRIMARY KEY CLUSTERED 
-(
-	[IP1] ASC,
-	[IP2] ASC,
-	[IP3] ASC,
-	[IP4] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PK_iplist_pcbangt] PRIMARY KEY ([IP1] ASC, [IP2] ASC, [IP3] ASC, [IP4] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_ItemBatch]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[tbl_ItemBatch](
-	[ID] [int] IDENTITY(1,1) NOT NULL,
-	[DCK] [bit] NULL,
-	[RID] [tinyint] NULL,
-	[account] [varchar](17) NOT NULL,
-	[server] [varchar](32) NOT NULL,
-	[name] [varchar](17) NOT NULL,
-	[serial] [int] NOT NULL,
-	[itemcode] [varchar](10) NOT NULL,
-	[D] [int] NOT NULL,
-	[U] [varchar](15) NOT NULL,
-	[adddate] [datetime] NULL,
-	[givedate] [datetime] NULL,
-	[deldate] [datetime] NULL,
-	[charger] [varchar](17) NULL,
-	[deleter] [varchar](17) NULL
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[tbl_LUAccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[tbl_LUAccount](
-	[id] [binary](16) NOT NULL,
-	[password] [binary](24) NOT NULL,
-	[BCodeTU] [tinyint] NOT NULL,
-	[accounttype] [tinyint] NULL,
-	[Email] [varchar](50) NULL,
- CONSTRAINT [PK_RF_LUAccount] PRIMARY KEY CLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[tbl_protocolaccesslog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_protocolaccesslog](
 	[Idx] [int] IDENTITY(1,1) NOT NULL,
-	[ProtocolMsgID] [int] NOT NULL,
-	[ProtocolID] [int] NOT NULL,
-	[GMSerial] [int] NOT NULL,
-	[AccessDate] [datetime] NOT NULL,
+	[ProtocolMsgID] [int] NOT NULL DEFAULT ((0)),
+	[ProtocolID] [int] NOT NULL DEFAULT ((0)),
+	[GMSerial] [int] NOT NULL DEFAULT ((0)),
+	[AccessDate] [datetime] NOT NULL DEFAULT (getdate()),
 	[ProtocolFld0] [binary](128) NULL,
 	[ProtocolFld1] [binary](128) NULL,
 	[ProtocolFld2] [binary](128) NULL,
@@ -469,869 +191,812 @@ CREATE TABLE [dbo].[tbl_protocolaccesslog](
 	[ProtocolFld7] [binary](128) NULL,
 	[ProtocolFld8] [binary](128) NULL,
 	[ProtocolFld9] [binary](128) NULL,
- CONSTRAINT [PF_tbl_protocolaccesslog_Idx] PRIMARY KEY CLUSTERED 
-(
-	[Idx] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PF_tbl_protocolaccesslog_Idx] PRIMARY KEY ([Idx] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_protocolauthinfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_protocolauthinfo](
 	[Idx] [int] IDENTITY(1,1) NOT NULL,
-	[dck] [bit] NOT NULL,
-	[P_MsgID] [int] NOT NULL,
-	[P_ID] [int] NOT NULL,
-	[P_AuthType] [tinyint] NOT NULL,
-	[GMID] [varchar](17) NOT NULL,
-	[GMSerial] [int] NOT NULL,
- CONSTRAINT [PF_tbl_protocolauthinfo_Idx] PRIMARY KEY CLUSTERED 
-(
-	[Idx] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[dck] [bit] NOT NULL DEFAULT ((0)),
+	[P_MsgID] [int] NOT NULL DEFAULT ((0)),
+	[P_ID] [int] NOT NULL DEFAULT ((0)),
+	[P_AuthType] [tinyint] NOT NULL DEFAULT ((0)),
+	[GMID] [varchar](17) NOT NULL DEFAULT ('*'),
+	[GMSerial] [int] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PF_tbl_protocolauthinfo_Idx] PRIMARY KEY ([Idx] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_protocolinfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_protocolinfo](
 	[Idx] [int] IDENTITY(1,1) NOT NULL,
-	[dck] [bit] NOT NULL,
-	[ProtocolMsgID] [int] NOT NULL,
-	[ProtocolID] [int] NOT NULL,
-	[ProtocolName] [varchar](64) NOT NULL,
-	[ProtocolExplain] [varchar](256) NOT NULL,
-	[ProtocolFldCnt] [tinyint] NOT NULL,
-	[UpdateDate] [datetime] NULL,
- CONSTRAINT [PF_tbl_protocolinfo_Idx] PRIMARY KEY CLUSTERED 
-(
-	[Idx] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[dck] [bit] NOT NULL DEFAULT ((0)),
+	[ProtocolMsgID] [int] NOT NULL DEFAULT ((0)),
+	[ProtocolID] [int] NOT NULL DEFAULT ((0)),
+	[ProtocolName] [varchar](64) NOT NULL DEFAULT ('*'),
+	[ProtocolExplain] [varchar](256) NOT NULL DEFAULT ('*'),
+	[ProtocolFldCnt] [tinyint] NOT NULL DEFAULT ((0)),
+	[UpdateDate] [datetime] NULL DEFAULT (getdate()),
+	CONSTRAINT [PF_tbl_protocolinfo_Idx] PRIMARY KEY ([Idx] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_rfaccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_rfaccount](
 	[id_hmac] [binary](32) NOT NULL,
 	[id_enc] [varbinary](128) NOT NULL,
 	[password_hash] [varchar](255) NOT NULL,
-	[accounttype] [tinyint] NOT NULL,
-	[birthdate] [smalldatetime] NOT NULL,
- CONSTRAINT [PK_tbl_rfaccount] PRIMARY KEY CLUSTERED (
-	[id_hmac] ASC
-)
+	[accounttype] [tinyint] NOT NULL DEFAULT ((0)),
+	[birthdate] [smalldatetime] NULL,
+	CONSTRAINT [PK_tbl_rfaccount] PRIMARY KEY ([id_hmac] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_ServerUser_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_ServerUser_Log](
 	[serial] [int] IDENTITY(1,1) NOT NULL,
 	[dtDate] [datetime] NOT NULL,
-	[nAverageUser] [int] NOT NULL,
-	[nMaxUser] [int] NOT NULL,
+	[nAverageUser] [int] NOT NULL DEFAULT ((0)),
+	[nMaxUser] [int] NOT NULL DEFAULT ((0)),
 	[ServerName] [varchar](32) NOT NULL,
-	[nBellaUser] [int] NOT NULL,
-	[nCoraUser] [int] NOT NULL,
-	[nAccUser] [int] NOT NULL,
- CONSTRAINT [PK_tbl_ServerUser_Log] PRIMARY KEY CLUSTERED 
-(
-	[serial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[nBellaUser] [int] NOT NULL DEFAULT ((0)),
+	[nCoraUser] [int] NOT NULL DEFAULT ((0)),
+	[nAccUser] [int] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_ServerUser_Log] PRIMARY KEY ([serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_StaffAccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_StaffAccount](
 	[Serial] [int] IDENTITY(2000000000,1) NOT NULL,
 	[ID_hmac] [binary](32) NOT NULL,
 	[ID_enc] [varbinary](128) NOT NULL,
 	[PW_hash] [varchar](255) NOT NULL,
-	[Grade] [tinyint] NOT NULL,
+	[Grade] [tinyint] NOT NULL DEFAULT ((1)),
 	[Depart] [varchar](32) NOT NULL,
 	[RealName] [varchar](12) NOT NULL,
-	[LastConnIP] [char](16) NOT NULL,
-	[CreateDT] [datetime] NOT NULL,
-	[LastLoginDT] [datetime] NOT NULL,
-	[LastLogoffDT] [datetime] NOT NULL,
-	[TotalLogMin] [int] NOT NULL,
-	[SubGrade] [tinyint] NOT NULL,
-	[ExpireDT] [datetime] NOT NULL,
-	[ComClass] [varchar](12) NOT NULL,
-	[BirthDay] [char](10) NOT NULL,
- CONSTRAINT [PK_tbl_StaffAccount] PRIMARY KEY CLUSTERED (
-	[Serial] ASC
-),
- CONSTRAINT [IX_tbl_StaffAccount] UNIQUE NONCLUSTERED (
-	[ID_hmac] ASC
-)
+	[LastConnIP] [char](16) NOT NULL DEFAULT ('0'),
+	[CreateDT] [datetime] NOT NULL DEFAULT (getdate()),
+	[LastLoginDT] [datetime] NOT NULL DEFAULT ((0)),
+	[LastLogoffDT] [datetime] NOT NULL DEFAULT ((0)),
+	[TotalLogMin] [int] NOT NULL DEFAULT ((0)),
+	[SubGrade] [tinyint] NOT NULL DEFAULT ((0)),
+	[ExpireDT] [datetime] NOT NULL DEFAULT (dateadd(month,(1),getdate())),
+	[ComClass] [varchar](12) NOT NULL DEFAULT ('??'),
+	[BirthDay] [char](10) NOT NULL DEFAULT (((0)-(0))-(0)),
+	CONSTRAINT [PK_tbl_StaffAccount] PRIMARY KEY ([Serial] ASC),
+	CONSTRAINT [IX_tbl_StaffAccount] UNIQUE ([ID_hmac] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_StaffAccount_BKP]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[tbl_StaffAccount_BKP](
-	[Serial] [int] IDENTITY(2000000000,1) NOT NULL,
-	[ID_hmac] [binary](32) NOT NULL,
-	[ID_enc] [varbinary](128) NOT NULL,
-	[PW_hash] [varchar](255) NOT NULL,
-	[Grade] [tinyint] NOT NULL,
-	[Depart] [varchar](32) NOT NULL,
-	[RealName] [varchar](12) NOT NULL,
-	[LastConnIP] [char](16) NOT NULL,
-	[CreateDT] [datetime] NOT NULL,
-	[LastLoginDT] [datetime] NOT NULL,
-	[LastLogoffDT] [datetime] NOT NULL,
-	[TotalLogMin] [int] NOT NULL,
-	[SubGrade] [tinyint] NOT NULL,
-	[ExpireDT] [datetime] NOT NULL,
-	[ComClass] [varchar](12) NOT NULL,
-	[BirthDay] [char](10) NOT NULL
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[tbl_UserAccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_UserAccount](
 	[serial] [int] IDENTITY(1,1) NOT NULL,
 	[id_hmac] [binary](32) NOT NULL,
 	[id_enc] [varbinary](128) NOT NULL,
-	[createtime] [datetime] NOT NULL,
-	[createip] [char](16) NOT NULL,
-	[lastlogintime] [datetime] NOT NULL,
-	[lastlogofftime] [datetime] NOT NULL,
-	[totallogmin] [int] NOT NULL,
-	[lastconnectip] [char](16) NOT NULL,
-	[pushclosetime] [datetime] NOT NULL,
-	[pusherip] [char](16) NOT NULL,
-	[JoinCode] [int] NOT NULL,
-	[LoginFailureCnt] [tinyint] NOT NULL,
-	[fire_on] [smalldatetime] NOT NULL,
-	[fire_warning] [smalldatetime] NOT NULL,
-	[uilock] [tinyint] NOT NULL,
-	[uilock_pw] [varchar](255) NOT NULL,
-	[uilock_failcnt] [tinyint] NOT NULL,
-	[uilock_update] [smalldatetime] NOT NULL,
-	[uilock_hintindex] [tinyint] NOT NULL,
-	[uilock_hintanswer] [varchar](255) NOT NULL,
-	[uilock_find_pass_failcnt] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_rfuser] PRIMARY KEY CLUSTERED (
-	[id_hmac] ASC
-),
- CONSTRAINT [IX_tbl_rfuser] UNIQUE NONCLUSTERED (
-	[serial] ASC
-)
+	[createtime] [datetime] NOT NULL DEFAULT (getdate()),
+	[createip] [char](16) NOT NULL DEFAULT ((0)),
+	[lastlogintime] [datetime] NOT NULL DEFAULT (getdate()),
+	[lastlogofftime] [datetime] NOT NULL DEFAULT (getdate()),
+	[totallogmin] [int] NOT NULL DEFAULT ((0)),
+	[lastconnectip] [char](16) NOT NULL DEFAULT ((0)),
+	[pushclosetime] [datetime] NOT NULL DEFAULT (getdate()),
+	[pusherip] [char](16) NOT NULL DEFAULT ((0)),
+	[JoinCode] [int] NOT NULL DEFAULT ((0)),
+	[LoginFailureCnt] [tinyint] NOT NULL DEFAULT ((0)),
+	[fire_on] [smalldatetime] NOT NULL DEFAULT (getdate()),
+	[fire_warning] [smalldatetime] NOT NULL DEFAULT (getdate()),
+	[uilock] [tinyint] NOT NULL DEFAULT ((0)),
+	[uilock_pw] [varchar](255) NOT NULL DEFAULT (''),
+	[uilock_failcnt] [tinyint] NOT NULL DEFAULT ((0)),
+	[uilock_update] [smalldatetime] NOT NULL DEFAULT ((0)),
+	[uilock_hintindex] [tinyint] NOT NULL DEFAULT ((0)),
+	[uilock_hintanswer] [varchar](255) NOT NULL DEFAULT (''),
+	[uilock_find_pass_failcnt] [tinyint] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_rfuser] PRIMARY KEY ([id_hmac] ASC),
+	CONSTRAINT [IX_tbl_rfuser] UNIQUE ([serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_UserBan](
 	[nAccountSerial] [int] NOT NULL,
-	[dtStartDate] [datetime] NOT NULL,
+	[dtStartDate] [datetime] NOT NULL DEFAULT (getdate()),
 	[nPeriod] [int] NOT NULL,
-	[nKind] [tinyint] NOT NULL,
+	[nKind] [tinyint] NOT NULL DEFAULT ((0)),
 	[szReason] [varchar](32) NULL,
-	[GMReason] [varchar](32) NOT NULL,
-	[GMWriter] [varchar](32) NOT NULL,
-	[ReasonType] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_UserBan] PRIMARY KEY CLUSTERED 
-(
-	[nAccountSerial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[GMReason] [varchar](32) NOT NULL DEFAULT ('*'),
+	[GMWriter] [varchar](32) NOT NULL DEFAULT ('*'),
+	[reasontype] [tinyint] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_UserBan] PRIMARY KEY ([nAccountSerial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_UserBan_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_UserBan_Log](
 	[nSerial] [int] IDENTITY(1,1) NOT NULL,
 	[nAccountSerial] [int] NOT NULL,
-	[dtStartdate] [datetime] NOT NULL,
+	[dtStartdate] [datetime] NOT NULL DEFAULT (getdate()),
 	[nPeriod] [int] NOT NULL,
-	[nKind] [tinyint] NOT NULL,
+	[nKind] [tinyint] NOT NULL DEFAULT ((0)),
 	[szReason] [varchar](32) NULL,
-	[GMReason] [varchar](32) NOT NULL,
-	[GMWriter] [varchar](32) NOT NULL,
- CONSTRAINT [PK_tbl_UserBan_Log] PRIMARY KEY CLUSTERED 
-(
-	[nSerial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[GMReason] [varchar](32) NOT NULL DEFAULT ('*'),
+	[GMWriter] [varchar](32) NOT NULL DEFAULT ('*'),
+	CONSTRAINT [PK_tbl_UserBan_Log] PRIMARY KEY ([nSerial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_UserCount_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_UserCount_Log](
 	[serial] [int] IDENTITY(1,1) NOT NULL,
 	[dtDate] [datetime] NOT NULL,
-	[nAverageUser] [int] NOT NULL,
-	[nMaxUser] [int] NOT NULL,
-	[nMaxUserTestServer] [int] NOT NULL,
- CONSTRAINT [PK_tbl_UserCount_Log] PRIMARY KEY CLUSTERED 
-(
-	[serial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[nAverageUser] [int] NOT NULL DEFAULT ((0)),
+	[nMaxUser] [int] NOT NULL DEFAULT ((0)),
+	[nMaxUserTestServer] [int] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_UserCount_Log] PRIMARY KEY ([serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_usercurrentstate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_usercurrentstate](
 	[serial] [int] NOT NULL,
-	[state] [tinyint] NOT NULL,
- CONSTRAINT [PK_tbl_usercurrentstate] PRIMARY KEY CLUSTERED 
-(
-	[serial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[state] [tinyint] NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_usercurrentstate] PRIMARY KEY ([serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_UserPush_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_UserPush_Log](
-	[nAccountSerial] [int] NOT NULL,
-	[dtDate] [datetime] NOT NULL,
-	[PushIP] [varchar](16) NOT NULL,
-	[CloseIP] [varchar](16) NOT NULL,
- CONSTRAINT [PK_tbl_UserPush_Log] PRIMARY KEY CLUSTERED 
-(
-	[nAccountSerial] ASC,
-	[dtDate] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[nAccountSerial] [int] NOT NULL DEFAULT ((0)),
+	[dtDate] [datetime] NOT NULL DEFAULT (getdate()),
+	[PushIP] [varchar](16) NOT NULL DEFAULT ((0)),
+	[CloseIP] [varchar](16) NOT NULL DEFAULT ((0)),
+	CONSTRAINT [PK_tbl_UserPush_Log] PRIMARY KEY ([nAccountSerial] ASC, [dtDate] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_WorldHistory_Log]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_WorldHistory_Log](
 	[serverName] [char](12) NOT NULL,
 	[race] [char](12) NOT NULL,
-	[avatorNum] [int] NOT NULL,
-	[dalant] [bigint] NOT NULL,
-	[gold] [bigint] NOT NULL,
+	[avatorNum] [int] NOT NULL DEFAULT ((0)),
+	[dalant] [bigint] NOT NULL DEFAULT ((0)),
+	[gold] [bigint] NOT NULL DEFAULT ((0)),
 	[lv] [int] NOT NULL,
-	[logDate] [datetime] NOT NULL,
+	[logDate] [datetime] NOT NULL DEFAULT (getdate()),
 	[idx] [int] IDENTITY(1,1) NOT NULL,
- CONSTRAINT [PK_tbl_WorldHistory_Log] PRIMARY KEY CLUSTERED 
-(
-	[idx] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	CONSTRAINT [PK_tbl_WorldHistory_Log] PRIMARY KEY ([idx] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbl_WorldServer_List]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 CREATE TABLE [dbo].[tbl_WorldServer_List](
 	[Serial] [int] NOT NULL,
 	[Name] [varchar](32) NOT NULL,
 	[State] [int] NOT NULL,
-	[LastUpdate] [datetime] NOT NULL,
-	[msrepl_tran_version] [uniqueidentifier] NOT NULL,
- CONSTRAINT [PK_tbl_WorldServer_List] PRIMARY KEY CLUSTERED 
-(
-	[Serial] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+	[LastUpdate] [datetime] NOT NULL DEFAULT (getdate()),
+	[msrepl_tran_version] [uniqueidentifier] NOT NULL DEFAULT (newid()),
+	CONSTRAINT [PK_tbl_WorldServer_List] PRIMARY KEY ([Serial] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[tbNoPach]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[tbNoPach](
-	[serial] [int] IDENTITY(1,1) NOT NULL,
-	[id] [binary](16) NOT NULL,
-	[createtime] [datetime] NOT NULL,
-	[createip] [char](16) NOT NULL,
-	[lastlogintime] [datetime] NOT NULL,
-	[lastlogofftime] [datetime] NOT NULL,
-	[totallogmin] [int] NOT NULL,
-	[lastconnectip] [char](16) NOT NULL,
-	[pushclosetime] [datetime] NOT NULL,
-	[pusherip] [char](16) NOT NULL,
-	[JoinCode] [int] NOT NULL
+
+CREATE TABLE [dbo].[tbl_UserLogout_Log](
+	[nAccountSerial] [int] NOT NULL,
+	[nCounter] [int] NOT NULL,
+	[dtLoginDate] [datetime] NOT NULL,
+	[dtLogoutDate] [datetime] NOT NULL,
+	[ip] [char](16) NOT NULL,
+	CONSTRAINT [PK_tbl_UserLogout_Log] PRIMARY KEY ([nAccountSerial] ASC, [nCounter] ASC)
 ) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_tbl_rfaccount]    Script Date: 12/01/2026 16:35:27 ******/
-CREATE NONCLUSTERED INDEX [IX_tbl_rfaccount] ON [dbo].[tbl_rfaccount]
-(
-	[password_hash] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-GO
-ALTER TABLE [dbo].[tbl_block_ip] ADD  CONSTRAINT [DF_tbl_permit_ip_addr3]  DEFAULT ((0)) FOR [addr3]
-GO
-ALTER TABLE [dbo].[tbl_block_ip] ADD  CONSTRAINT [DF_tbl_permit_ip_addr4]  DEFAULT ((255)) FOR [addr4]
-GO
-ALTER TABLE [dbo].[tbl_block_ip] ADD  CONSTRAINT [DF_tbl_block_ip_addr2range]  DEFAULT ((255)) FOR [addr2range]
-GO
-ALTER TABLE [dbo].[tbl_chargeresultstr] ADD  CONSTRAINT [DF_tbl_chargeresultstr_strError]  DEFAULT ('') FOR [strError]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_CristalBattle_Log_GetTime]  DEFAULT (getdate()) FOR [GetTime]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_CristalBattle_Log_ElapseHour]  DEFAULT ((0)) FOR [ElapseHour]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_CristalBattle_Log_ElapseMin]  DEFAULT ((0)) FOR [ElapseMin]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_CristalBattle_Log_ElapseSec]  DEFAULT ((0)) FOR [ElapseSec]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_cristalbattle_log_KeeperHitter]  DEFAULT ('*') FOR [KeeperHitter]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_cristalbattle_log_ByAnimus]  DEFAULT ((255)) FOR [ByAnimus]
-GO
-ALTER TABLE [dbo].[tbl_CristalBattle_Log] ADD  CONSTRAINT [DF_tbl_cristalbattle_log_DestroyRace]  DEFAULT ((255)) FOR [DestroyRace]
-GO
-ALTER TABLE [dbo].[tbl_GMActLog] ADD  CONSTRAINT [DF_tbl_GMActLog_PID]  DEFAULT ((0)) FOR [PID]
-GO
-ALTER TABLE [dbo].[tbl_GMActLog] ADD  CONSTRAINT [DF_tbl_GMActLog_ActDate]  DEFAULT (getdate()) FOR [ActDate]
-GO
-ALTER TABLE [dbo].[tbl_GMjobLog] ADD  CONSTRAINT [DF_tbl_GMjobLog_nKind]  DEFAULT ((0)) FOR [nKind]
-GO
-ALTER TABLE [dbo].[tbl_GMjobLog] ADD  CONSTRAINT [DF_tbl_GMjobLog_dtDate]  DEFAULT (getdate()) FOR [dtDate]
-GO
-ALTER TABLE [dbo].[tbl_HolyQuest_Log] ADD  CONSTRAINT [DF_tbl_HolyQuest_Log_LogDate]  DEFAULT (getdate()) FOR [LogDate]
-GO
-ALTER TABLE [dbo].[tbl_HostAccount] ADD  CONSTRAINT [DF_tbl_HostAccount_Password]  DEFAULT ('*') FOR [Password]
-GO
-ALTER TABLE [dbo].[tbl_HostAccount] ADD  CONSTRAINT [DF_tbl_HostAccount_Active]  DEFAULT ((0)) FOR [Grade]
-GO
-ALTER TABLE [dbo].[tbl_HostAccount] ADD  CONSTRAINT [DF_tbl_HostAccount_UserNum]  DEFAULT ((0)) FOR [Grade1]
-GO
-ALTER TABLE [dbo].[tbl_ItemBatch] ADD  CONSTRAINT [DF_tbl_ItemBatch_DCK]  DEFAULT (0) FOR [DCK]
-GO
-ALTER TABLE [dbo].[tbl_ItemBatch] ADD  CONSTRAINT [DF_tbl_ItemBatch_RID]  DEFAULT (11) FOR [RID]
-GO
-ALTER TABLE [dbo].[tbl_ItemBatch] ADD  CONSTRAINT [DF_tbl_ItemBatch_D]  DEFAULT (1) FOR [D]
-GO
-ALTER TABLE [dbo].[tbl_ItemBatch] ADD  CONSTRAINT [DF_tbl_ItemBatch_U]  DEFAULT (0x0fffffff) FOR [U]
-GO
-ALTER TABLE [dbo].[tbl_ItemBatch] ADD  CONSTRAINT [DF_tbl_ItemBatch_addda]  DEFAULT (getdate()) FOR [adddate]
-GO
-ALTER TABLE [dbo].[tbl_LUAccount] ADD  CONSTRAINT [DF_tbl_LUAccount]  DEFAULT (0) FOR [BCodeTU]
-GO
-ALTER TABLE [dbo].[tbl_LUAccount] ADD  DEFAULT ((0)) FOR [accounttype]
-GO
-ALTER TABLE [dbo].[tbl_protocolaccesslog] ADD  CONSTRAINT [DF_tbl_protocolaccesslog_ProtocolMsgID]  DEFAULT ((0)) FOR [ProtocolMsgID]
-GO
-ALTER TABLE [dbo].[tbl_protocolaccesslog] ADD  CONSTRAINT [DF_tbl_protocolaccesslog_ProtocolID]  DEFAULT ((0)) FOR [ProtocolID]
-GO
-ALTER TABLE [dbo].[tbl_protocolaccesslog] ADD  CONSTRAINT [DF_tbl_protocolaccesslog_GMSerial]  DEFAULT ((0)) FOR [GMSerial]
-GO
-ALTER TABLE [dbo].[tbl_protocolaccesslog] ADD  CONSTRAINT [DF_tbl_protocolaccesslog_AccessDate]  DEFAULT (getdate()) FOR [AccessDate]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_dck]  DEFAULT ((0)) FOR [dck]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_P_MsgID]  DEFAULT ((0)) FOR [P_MsgID]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_P_ID]  DEFAULT ((0)) FOR [P_ID]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_P_AuthType]  DEFAULT ((0)) FOR [P_AuthType]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_GMID]  DEFAULT ('*') FOR [GMID]
-GO
-ALTER TABLE [dbo].[tbl_protocolauthinfo] ADD  CONSTRAINT [DF_tbl_protocolauthinfo_GMSerial]  DEFAULT ((0)) FOR [GMSerial]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_dck]  DEFAULT ((0)) FOR [dck]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_ProtocolMsgID]  DEFAULT ((0)) FOR [ProtocolMsgID]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_ProtocolID]  DEFAULT ((0)) FOR [ProtocolID]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_ProtocolName]  DEFAULT ('*') FOR [ProtocolName]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_ProtocolExplain]  DEFAULT ('*') FOR [ProtocolExplain]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_ProtocolFldCnt]  DEFAULT ((0)) FOR [ProtocolFldCnt]
-GO
-ALTER TABLE [dbo].[tbl_protocolinfo] ADD  CONSTRAINT [DF_tbl_protocolinfo_UpdateDate]  DEFAULT (getdate()) FOR [UpdateDate]
-GO
-GO
-ALTER TABLE [dbo].[tbl_ServerUser_Log] ADD  CONSTRAINT [DF_tbl_ServerUser_Log_nAverageUser]  DEFAULT ((0)) FOR [nAverageUser]
-GO
-ALTER TABLE [dbo].[tbl_ServerUser_Log] ADD  CONSTRAINT [DF_tbl_ServerUser_Log_nMaxUser]  DEFAULT ((0)) FOR [nMaxUser]
-GO
-ALTER TABLE [dbo].[tbl_ServerUser_Log] ADD  CONSTRAINT [DF_tbl_ServerUser_Log_nBellaUser]  DEFAULT ((0)) FOR [nBellaUser]
-GO
-ALTER TABLE [dbo].[tbl_ServerUser_Log] ADD  CONSTRAINT [DF_tbl_ServerUser_Log_nCoraUser]  DEFAULT ((0)) FOR [nCoraUser]
-GO
-ALTER TABLE [dbo].[tbl_ServerUser_Log] ADD  CONSTRAINT [DF_tbl_ServerUser_Log_nAccUser]  DEFAULT ((0)) FOR [nAccUser]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_Grade]  DEFAULT ((1)) FOR [Grade]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_LastConnIP]  DEFAULT ('0') FOR [LastConnIP]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_CreateDT]  DEFAULT (getdate()) FOR [CreateDT]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_LastLoginDT]  DEFAULT ((0)) FOR [LastLoginDT]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_LastLogoffDT]  DEFAULT ((0)) FOR [LastLogoffDT]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_TotalLogMin]  DEFAULT ((0)) FOR [TotalLogMin]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_SubGrade]  DEFAULT ((0)) FOR [SubGrade]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_ExpireDT]  DEFAULT (dateadd(month,(1),getdate())) FOR [ExpireDT]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_ComClass]  DEFAULT ('??') FOR [ComClass]
-GO
-ALTER TABLE [dbo].[tbl_StaffAccount] ADD  CONSTRAINT [DF_tbl_StaffAccount_BirthDay]  DEFAULT (((0)-(0))-(0)) FOR [BirthDay]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_CreateTime]  DEFAULT (getdate()) FOR [createtime]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_createip]  DEFAULT ((0)) FOR [createip]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_LastLogTime]  DEFAULT (getdate()) FOR [lastlogintime]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_lastlogintime1]  DEFAULT (getdate()) FOR [lastlogofftime]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_TotalLogMin]  DEFAULT ((0)) FOR [totallogmin]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_lastconnectip]  DEFAULT ((0)) FOR [lastconnectip]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_pushclosetime]  DEFAULT (getdate()) FOR [pushclosetime]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_pusherip]  DEFAULT ((0)) FOR [pusherip]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_rfuser_JoinCode]  DEFAULT ((0)) FOR [JoinCode]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_loginfailurecnt]  DEFAULT ((0)) FOR [LoginFailureCnt]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_fire_on]  DEFAULT (getdate()) FOR [fire_on]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_fire_warning]  DEFAULT (getdate()) FOR [fire_warning]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock]  DEFAULT ((0)) FOR [uilock]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_pw]  DEFAULT ((0)) FOR [uilock_pw]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_failcnt]  DEFAULT ((0)) FOR [uilock_failcnt]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_update]  DEFAULT ((0)) FOR [uilock_update]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_hintindex]  DEFAULT ((0)) FOR [uilock_hintindex]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_hintanswer]  DEFAULT ((0)) FOR [uilock_hintanswer]
-GO
-ALTER TABLE [dbo].[tbl_UserAccount] ADD  CONSTRAINT [DF_tbl_useraccount_uilock_find_pass_failcnt]  DEFAULT ((0)) FOR [uilock_find_pass_failcnt]
-GO
-ALTER TABLE [dbo].[tbl_UserBan] ADD  CONSTRAINT [DF_tbl_UserBan_dtStartDate]  DEFAULT (getdate()) FOR [dtStartDate]
-GO
-ALTER TABLE [dbo].[tbl_UserBan] ADD  CONSTRAINT [DF_tbl_UserBan_nKind]  DEFAULT (0) FOR [nKind]
-GO
-ALTER TABLE [dbo].[tbl_UserBan] ADD  CONSTRAINT [DF_tbl_userban_GMReason]  DEFAULT ('*') FOR [GMReason]
-GO
-ALTER TABLE [dbo].[tbl_UserBan] ADD  CONSTRAINT [DF_tbl_userban_GMWriter]  DEFAULT ('*') FOR [GMWriter]
-GO
-ALTER TABLE [dbo].[tbl_UserBan] ADD  CONSTRAINT [DF_tbl_UserBan_ReasonType]  DEFAULT (0) FOR [ReasonType]
-GO
-ALTER TABLE [dbo].[tbl_UserBan_Log] ADD  CONSTRAINT [DF_tbl_UserBan_Log_dtStartdate]  DEFAULT (getdate()) FOR [dtStartdate]
-GO
-ALTER TABLE [dbo].[tbl_UserBan_Log] ADD  CONSTRAINT [DF_tbl_UserBan_Log_nKind]  DEFAULT ((0)) FOR [nKind]
-GO
-ALTER TABLE [dbo].[tbl_UserBan_Log] ADD  CONSTRAINT [DF_tbl_userban_log_GMReason]  DEFAULT ('*') FOR [GMReason]
-GO
-ALTER TABLE [dbo].[tbl_UserBan_Log] ADD  CONSTRAINT [DF_tbl_userban_log_GMWriter]  DEFAULT ('*') FOR [GMWriter]
-GO
-ALTER TABLE [dbo].[tbl_UserCount_Log] ADD  CONSTRAINT [DF_tbl_Usercount_Log_nAverageUser]  DEFAULT ((0)) FOR [nAverageUser]
-GO
-ALTER TABLE [dbo].[tbl_UserCount_Log] ADD  CONSTRAINT [DF_tbl_Usercount_Log_nMaxUser]  DEFAULT ((0)) FOR [nMaxUser]
-GO
-ALTER TABLE [dbo].[tbl_UserCount_Log] ADD  CONSTRAINT [DF_tbl_Usercount_Log_nMaxUserTestServer]  DEFAULT ((0)) FOR [nMaxUserTestServer]
-GO
-ALTER TABLE [dbo].[tbl_usercurrentstate] ADD  CONSTRAINT [DF_tbl_usercurrentstate_state]  DEFAULT ((0)) FOR [state]
-GO
-ALTER TABLE [dbo].[tbl_UserPush_Log] ADD  CONSTRAINT [DF_tbl_UserPush_Log_AccountSerial]  DEFAULT ((0)) FOR [nAccountSerial]
-GO
-ALTER TABLE [dbo].[tbl_UserPush_Log] ADD  CONSTRAINT [DF_tbl_UserPush_Log_Date]  DEFAULT (getdate()) FOR [dtDate]
-GO
-ALTER TABLE [dbo].[tbl_UserPush_Log] ADD  CONSTRAINT [DF_tbl_UserPush_Log_PushIP1]  DEFAULT ((0)) FOR [PushIP]
-GO
-ALTER TABLE [dbo].[tbl_UserPush_Log] ADD  CONSTRAINT [DF_tbl_UserPush_Log_CloseIP1]  DEFAULT ((0)) FOR [CloseIP]
-GO
-ALTER TABLE [dbo].[tbl_WorldHistory_Log] ADD  CONSTRAINT [DF_tbl_WorldHistory_Log_avatorNum]  DEFAULT ((0)) FOR [avatorNum]
-GO
-ALTER TABLE [dbo].[tbl_WorldHistory_Log] ADD  CONSTRAINT [DF_tbl_WorldHistory_Log_dalant]  DEFAULT ((0)) FOR [dalant]
-GO
-ALTER TABLE [dbo].[tbl_WorldHistory_Log] ADD  CONSTRAINT [DF_tbl_WorldHistory_Log_gold]  DEFAULT ((0)) FOR [gold]
-GO
-ALTER TABLE [dbo].[tbl_WorldHistory_Log] ADD  CONSTRAINT [DF_tbl_WorldHistory_Log_logDate]  DEFAULT (getdate()) FOR [logDate]
-GO
-ALTER TABLE [dbo].[tbl_WorldServer_List] ADD  CONSTRAINT [DF_tbl_WorldServer_List_LastUpdate]  DEFAULT (getdate()) FOR [LastUpdate]
-GO
-ALTER TABLE [dbo].[tbl_WorldServer_List] ADD  DEFAULT (newid()) FOR [msrepl_tran_version]
-GO
-ALTER TABLE [dbo].[tbl_GMActLog]  WITH NOCHECK ADD  CONSTRAINT [FK_CID] FOREIGN KEY([PID])
-REFERENCES [dbo].[tbl_GMActParam] ([ID])
-GO
-ALTER TABLE [dbo].[tbl_GMActLog] CHECK CONSTRAINT [FK_CID]
-GO
-ALTER TABLE [dbo].[tbl_GMActLog]  WITH NOCHECK ADD  CONSTRAINT [FK_TID] FOREIGN KEY([TID])
-REFERENCES [dbo].[tbl_GMActType] ([ID])
-GO
-ALTER TABLE [dbo].[tbl_GMActLog] CHECK CONSTRAINT [FK_TID]
-GO
-/****** Object:  StoredProcedure [dbo].[LUG_InsertAccount]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[LUG_UpdatePassword]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pCheck_Today_LogTable]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pDelete_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_BlockIP]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_Dev]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_GMjob]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_HolyQuestLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_ServerUserLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_ServerUserLog2]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_Staff]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_User]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserBan_20070302]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserBan_20071016]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserBanLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserBanLog_20070302]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserConnLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserCountLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserCountLog20080218]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserCurrentState]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserLogoutLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserLogoutLog_Daily]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserLogoutLog_Daily20070115]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pInsert_UserPushLog]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pProcess_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[prc_process_fg_detection]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_AccountPass]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_AccountPass_061122]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_AccountPass_China]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_BlockIP]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_BlockIP_20070122]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_BraAccountInfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_HolyQuestHistory]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_HostAccountInfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_HostAccountInfo20061113]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pselect_pcbangip]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_StaffExpire]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_StaffInfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_StaffInfoEx]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserBanHistory]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserBanHistory_20070302]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserCountInfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserInfo]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserInfo_20070612]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserInfoEx]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserInfoEx_20070221]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserInfoEx_20070718]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pSelect_UserSerial]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_FireguardBlock]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_FireguardBlock20071016]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_StaffLoginDate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_StaffLogoffDate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UILock_Init]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UILock_Refresh]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UILock_Update]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserBan]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserBan_20070302]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserBan_20071016]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserCurrentState]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserLoginDate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserLogoffDate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_UserPushDate]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS OFF
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  StoredProcedure [dbo].[pUpdate_WorldServer]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[pWork_SelLoginCharacter]    Script Date: 12/01/2026 16:35:27 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-USE [master]
-GO
-ALTER DATABASE [RF_User] SET  READ_WRITE 
+
+CREATE TABLE [dbo].[tbl_fg_detected_account](
+	[account] [varchar](16) NOT NULL,
+	[detect_time] [datetime] NOT NULL DEFAULT (getdate()),
+	CONSTRAINT [PK_tbl_fg_detected_account] PRIMARY KEY ([account] ASC, [detect_time] ASC)
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[tbl_fg_detected_ip](
+	[ip] [int] NOT NULL,
+	[detect_time] [datetime] NOT NULL DEFAULT (getdate()),
+	CONSTRAINT [PK_tbl_fg_detected_ip] PRIMARY KEY ([ip] ASC, [detect_time] ASC)
+) ON [PRIMARY]
+GO
+
+CREATE PROCEDURE [dbo].[pCheck_Today_LogTable]
+AS
+DECLARE @strSql nvarchar(500)
+DECLARE @today varchar(9)
+SET NOCOUNT ON
+SET @today = convert(varchar(9), getdate(), 112)
+SET @strSql = N'SELECT top 1 name FROM dbo.sysobjects WHERE id = object_id(''' + 'tbl_UserLogout_Log' + @today + ''')'
+EXEC sp_executesql @strSql
+IF @@rowcount < 1
+BEGIN
+    SET @strSql = N'CREATE TABLE [dbo].[tbl_UserLogout_Log' + @today + '] (' +
+        N'[idx] [int] IDENTITY (1, 1) NOT NULL, ' +
+        N'[nAccountSerial] [int] NOT NULL, ' +
+        N'[nWorldCode] [int] NOT NULL, ' +
+        N'[dtLoginDate] [datetime] NOT NULL, ' +
+        N'[dtLogoutDate] [datetime] NOT NULL, ' +
+        N'[nBillingType] [int] NOT NULL, ' +
+        N'[nLevel] [int] NULL, ' +
+        N'[nAvatorSerial] [int] NULL, ' +
+        N'[Account] [char] (17) NULL, ' +
+        N'[ip] [char] (16) NOT NULL ) ON [PRIMARY]'
+    EXEC sp_executesql @strSql
+
+    SET @strSql = N'ALTER TABLE [dbo].[tbl_UserLogout_Log' + @today + '] WITH NOCHECK ADD ' +
+        N'CONSTRAINT [PK_tbl_UserLogout_Log' + @today + '] PRIMARY KEY NONCLUSTERED ([idx]) ON [PRIMARY]'
+    EXEC sp_executesql @strSql
+
+    SET @strSql = N'CREATE CLUSTERED INDEX [IX_tbl_UserLogout_Log_Logout' + @today + '] ON ' +
+        N'[dbo].[tbl_UserLogout_Log' + @today + ']([dtLogoutDate]) ON [PRIMARY]'
+    EXEC sp_executesql @strSql
+
+    SET @strSql = N'CREATE INDEX [IX_tbl_UserLogout_Log' + @today + '] ON [dbo].[tbl_UserLogout_Log' + @today + '] ' +
+        N'([dtLoginDate]) ON [PRIMARY]'
+    EXEC sp_executesql @strSql
+END
+SET NOCOUNT OFF
+GO
+
+CREATE PROCEDURE [dbo].[pDelete_UserBan]
+@nSerial int
+AS
+DELETE  tbl_UserBan where nAccountSerial=@nSerial
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_BlockIP]
+@ipA tinyint,
+@ipB tinyint,
+@ipC tinyint,
+@ipD tinyint
+as
+
+insert tbl_block_ip(addr0, addr1, addr2, addr3, addr4, addr2range) values(@ipA, @ipB, @ipC, @ipD, @ipD, @ipC)
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_GMjob]
+@szGMID varchar(18),
+@nKind int,
+@szAvatorName varchar(18),
+@nAvatorSerial int,
+@nAccountSerial int,
+@szDetail varchar(50)
+AS
+INSERT INTO 
+tbl_GMjobLog( szGMID, nKind, szAvatorName, nAvatorSerial, nAccountSerial, szDetail )
+VALUES( @szGMID, @nKind, @szAvatorName, @nAvatorSerial, @nAccountSerial, @szDetail )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_HolyQuestLog]
+@race int,
+@dstRace int,
+@name varchar(17),
+@server varchar(32)
+AS
+INSERT INTO tbl_HolyQuest_Log( race, dstRace, CharName, ServerName, LogDate ) VALUES( @race, @dstRace, @name, @server, getdate() )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_ServerUserLog]
+@avrUser int,
+@maxUser int,
+@bUser int,
+@cUser int,
+@aUser int,
+@server varchar(32),
+@logDate varchar(17)
+AS
+INSERT INTO tbl_ServerUser_Log(dtDate, nAverageUser, nMaxUser, nBellaUser, nCoraUser, nAccUser, ServerName ) 
+VALUES(@logDate, @avrUser, @maxUser, @bUser, @cUser, @aUser, @server )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_ServerUserLog2]
+@avrUser int,
+@maxUser int,
+@bUser int,
+@cUser int,
+@aUser int,
+@server varchar(32)
+AS
+INSERT INTO tbl_ServerUser_Log(dtDate, nAverageUser, nMaxUser, nBellaUser, nCoraUser, nAccUser, ServerName ) 
+VALUES(getdate(), @avrUser, @maxUser, @bUser, @cUser, @aUser, @server )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserBan]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32)
+AS
+INSERT INTO 
+tbl_UserBan( nAccountSerial, nPeriod, nKind, szReason  ) 
+VALUES( @nSerial, @nPeriod, @nKind, @szReason )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserBan_20070302]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32),
+@szWriter varchar(32)
+AS
+INSERT INTO 
+[dbo].[tbl_UserBan] ( nAccountSerial, nPeriod, nKind, szReason,  GMReason, GMWriter) 
+VALUES( @nSerial, @nPeriod, @nKind, @szReason, @szReason, @szWriter )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserBan_20071016]
+@nSerial int, 
+@nPeriod int,
+@nKind int,
+@szReason varchar(32),
+@szWriter varchar(32),
+@reasontype tinyint
+as
+insert into
+[dbo].[tbl_UserBan] ( nAccountSerial, nPeriod, nKind, szReason,  GMReason, GMWriter, reasontype)
+values ( @nSerial, @nPeriod, @nKind, @szReason, @szReason, @szWriter, @reasontype )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserBanLog]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32)
+AS
+INSERT INTO 
+tbl_UserBan_Log( nAccountSerial, nPeriod, nKind, szReason ) 
+VALUES( @nSerial, @nPeriod, @nKind, @szReason )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserBanLog_20070302]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32),
+@szWriter varchar(32)
+AS
+INSERT INTO 
+[dbo].[tbl_UserBan_Log] ( nAccountSerial, nPeriod, nKind, szReason, GMReason, GMWriter ) 
+VALUES( @nSerial, @nPeriod, @nKind, @szReason, @szReason, @szWriter )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserConnLog]
+@serial int,
+@loginDate varchar(16),
+@ip varchar(16)
+AS
+declare @counter int
+set @counter = (SELECT count(nCounter) from tbl_UserLogout_Log where nAccountSerial = @serial)
+INSERT INTO tbl_UserLogout_Log(nAccountSerial, nCounter, dtLoginDate, dtLogoutDate, ip) VALUES(@serial, @counter, @loginDate, getdate(), @ip)
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserCountLog]  
+@avrUser int,  
+@maxUser int  
+AS  
+INSERT INTO [dbo].[tbl_UserCount_Log] (dtDate, nAverageUser, nMaxUser) VALUES(getdate(), @avrUser, @maxUser )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserCountLog20080218]
+@avruser int,  
+@maxuser int , 
+@maxusertestserver int
+as
+insert [dbo].[tbl_UserCount_Log] ([dtDate], [nAverageUser], [nMaxUser], [nMaxUserTestServer]) values ( getdate(), @avruser, @maxuser, @maxusertestserver )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserCurrentState]
+@serial int,
+@state int
+as
+insert [dbo].[tbl_usercurrentstate] ([serial], [state]) values ( @serial, @state )
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserLogoutLog]
+@serial int,
+@loginDate varchar(16),
+@ip varchar(16)
+AS
+declare @counter int
+set @counter = (SELECT count(nCounter) from tbl_UserLogout_Log where nAccountSerial = @serial)
+INSERT INTO tbl_UserLogout_Log(nAccountSerial, nCounter, dtLoginDate, dtLogoutDate, ip) VALUES(@serial, @counter, @loginDate, getdate(), @ip)
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserLogoutLog_Daily]
+@serial int,
+@loginDate varchar(16),
+@ip varchar(16),
+@worldcode int,
+@billingtype int,
+@level int,
+@charSerial int,
+@Account varchar(17)
+AS
+declare @today varchar(9)
+declare @strSql nvarchar(500)
+SET NOCOUNT ON
+	set @today = convert(varchar(9), getdate(), 112)
+	set @strSql = N'INSERT INTO tbl_UserLogout_Log' + @today + '(nAccountSerial, dtLoginDate, dtLogoutDate, ip, nWorldCode, nBillingType, nLevel, nAvatorSerial, Account) '
+	set @strSql = @strSql + N' VALUES( '+ convert( varchar(8), @serial) + ',' + '''' + @loginDate + '''' + ','
+	set @strSql = @strSql + N'''' + convert(varchar(32), getdate(), 20) + '''' + ',' + '''' + @ip +''''+ ',' + convert( varchar(8), @worldcode) + ','
+	set @strSql = @strSql + convert(varchar(4), @billingtype) + ',' + convert(varchar(4), @level) + ','
+	set @strSql = @strSql + convert(varchar(8), @charSerial)  + ',' +  '''' + @Account + ''''  + ') '
+--	select @strSql
+	exec sp_executesql  @strSql
+SET NOCOUNT OFF
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserLogoutLog_Daily20070115]    
+@serial int,    
+@loginDate varchar(16),    
+@ip varchar(16),    
+@worldcode int,    
+@billingtype int,    
+@level int,    
+@charSerial int,    
+@Account varchar(17)    
+as
+declare @today varchar(9)
+declare @strSql nvarchar(1024)
+set nocount on
+ set @today = convert(varchar(9), getdate(), 112)
+ set @strSql = N'INSERT INTO tbl_UserLogout_Log' + @today + '(nAccountSerial, dtLoginDate, dtLogoutDate, ip, nWorldCode, nBillingType, nLevel, nAvatorSerial, Account) '
+ set @strSql = @strSql + N' VALUES( '+ convert( varchar, @serial) + ',' + '''' + @loginDate + '''' + ','
+ set @strSql = @strSql + N'''' + convert(varchar(32), getdate(), 20) + '''' + ',' + '''' + @ip +''''+ ',' + convert( varchar, @worldcode) + ','
+ set @strSql = @strSql + convert(varchar, @billingtype) + ',' + convert(varchar, @level) + ','
+ set @strSql = @strSql + convert(varchar, @charSerial)  + ',' +  '''' + @Account + ''''  + ') '
+-- select @strSql
+ exec sp_executesql  @strSql    
+set nocount off
+GO
+
+CREATE PROCEDURE [dbo].[pInsert_UserPushLog]
+@serial int,
+@pushIP varchar(16),
+@closeIP varchar(16)
+AS
+INSERT INTO tbl_UserPush_Log(nAccountSerial, dtDate, PushIP, CloseIP) VALUES(@serial, getdate(), @pushIP, @closeIP)
+GO
+
+CREATE PROCEDURE [dbo].[pProcess_UserBan]    
+@nSerial int    
+as  
+declare @dtBan datetime    
+declare @dtBanAdd datetime    
+declare @nPeriod int    
+declare @nKind int    
+declare @nRet int  
+declare @tReasonType tinyint  
+    
+select @dtBan = dtStartdate, @tReasonType = reasontype  from tbl_userban where nAccountserial=@nSerial  
+  
+if  @dtBan is NULL     
+begin    
+    set @nRet = 0    
+    select @nRet, @tReasonType  
+    return    
+end    
+    
+set @nPeriod = (select nPeriod from tbl_userban where nAccountserial=@nSerial)    
+    
+if @nPeriod = 999    
+begin    
+    set @nRet = 2    
+    select @nRet, @tReasonType  
+    return    
+end    
+    
+set @dtBanAdd = dateadd( hh, @nPeriod, @dtBan)    
+    
+if @dtBanAdd <= (getdate())     
+begin    
+    set @nRet = 1    
+    select @nRet, @tReasonType  
+end    
+else    
+begin    
+    set @nKind = (select nKind from tbl_userban where nAccountserial=@nSerial)    
+    if @nKind = 0    
+    begin    
+        set @nRet = 2    
+        select @nRet, @tReasonType  
+    end    
+    else    
+    begin    
+        set @nRet = 3    
+        select @nRet, @tReasonType  
+    end    
+end    
+    
+return
+GO
+
+CREATE PROCEDURE [dbo].[prc_process_fg_detection]
+@account varchar(12),
+@ip int
+as
+
+declare @num_account int
+declare @num_ip int
+declare @detect_time smalldatetime
+declare @check_time smalldatetime
+
+set @num_account = 0
+set @num_ip = 0
+set @detect_time = getdate()
+set @check_time = dateadd(hour, -12, @detect_time)
+
+set nocount on
+
+insert tbl_fg_detected_account( account, detect_time ) values( @account, @detect_time )
+insert tbl_fg_detected_ip( ip, detect_time ) values( @ip, @detect_time )
+
+select @num_account = count(*) from tbl_fg_detected_account where account = @account and detect_time >= @check_time
+select @num_ip = count(*) from tbl_fg_detected_ip where ip = @ip and detect_time >= @check_time
+
+set nocount off
+
+select @num_account, @num_ip
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_BlockIP]
+@addr_0 tinyint,
+@addr_1 tinyint,
+@addr_2 tinyint,
+@addr_3 tinyint
+as
+select top 1 nSerial from [dbo].[tbl_block_ip]
+where addr0 = @addr_0 and addr1 = @addr_1 and addr2 = @addr_2 and @addr_3 between addr3 and addr4
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_BlockIP_20070122]
+@addr_0 tinyint,
+@addr_1 tinyint,
+@addr_2 tinyint,
+@addr_3 tinyint
+AS
+select	nSerial
+from	tbl_block_ip
+where	addr0 = @addr_0 and 
+	addr1 = @addr_1 and
+	@addr_2 between addr2 and addr2range and
+	@addr_3 between addr3 and addr4
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_HolyQuestHistory]
+@startDate varchar(16),
+@endDate varchar(16)
+AS
+select datepart(yyyy,LogDate),datepart(mm,LogDate), datepart(dd,LogDate), datepart(hh,LogDate), ServerName, race, CharName
+from tbl_HolyQuest_log where LogDate > @startDate and LogDate < @endDate order by LogDate
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_HostAccountInfo]
+@id varchar(16)
+ AS
+SELECT password, Grade FROM tbl_HostAccount WHERE Account = @id
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_HostAccountInfo20061113]
+@id varchar(16)
+ AS
+SELECT convert(varchar, password), Grade, Serial FROM [dbo].[tbl_HostAccount] WHERE Account =  @id
+GO
+
+CREATE PROCEDURE [dbo].[pselect_pcbangip]
+@ip1 tinyint,
+@ip2 tinyint, 
+@ip3 tinyint, 
+@ip4 tinyint 
+as
+select * from [dbo].[tbl_iplist_pcbang] where ip1 = @ip1 and ip2 = @ip2 and ip3 = @ip3 and @ip4 between ip4 and lastip
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_UserBan]
+@nSerial int
+AS
+SELECT  dtstartdate, nPeriod, nKind from tbl_UserBan where nAccountSerial=@nSerial
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_UserBanHistory]
+@nSerial int
+AS
+SELECT top 32 nKind, dtStartDate, nPeriod, szReason FROM tbl_UserBan_Log WHERE nAccountSerial=@nSerial order by nSerial desc
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_UserBanHistory_20070302]
+@nSerial int
+AS
+SELECT top 32 nKind, dtStartDate, nPeriod, szReason, GMWriter FROM [dbo].[tbl_UserBan_Log]
+WHERE nAccountSerial=@nSerial order by nSerial desc
+GO
+
+CREATE PROCEDURE [dbo].[pSelect_UserCountInfo]
+@startDate varchar(16),
+@endDate varchar(16)
+AS
+select datepart(yyyy,dtDate),datepart(mm,dtDate), datepart(dd,dtDate), datepart(hh,dtDate), nAverageUser, nMaxUser from tbl_userCount_log where dtDate > @startDate and dtDate < @endDate order by dtDate
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_StaffLogoffDate]
+@nAccountSerial int
+AS
+UPDATE tbl_StaffAccount SET LastLogoffDT = getdate()  WHERE serial=@nAccountSerial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UILock_Init]  
+@accountserial int,  
+@uilock_pw varchar(13),  
+@hintindex tinyint,  
+@hintanswer varchar(17),  
+@ret tinyint output  
+as
+
+set @ret = 0  
+declare @uilock tinyint  
+  
+select top 1 @uilock = [uilock] from [dbo].[tbl_useraccount] where [serial] = @accountserial  
+  
+if(@uilock is null) -- û  ø   ʴ´.  
+begin  
+ set @ret = 2  
+ return  
+end  
+  
+if(@uilock <> 0) -- ̹ ʱȭ Ǿ  0 ƴϴ.  
+begin  
+ set @ret = 1  
+ return  
+end  
+  
+  
+set nocount on  
+  
+update [dbo].[tbl_useraccount]
+set  [uilock] = 1,   
+  [uilock_pw] = @uilock_pw,   
+  [uilock_failcnt] = 0,  
+  [uilock_update] = getdate(),  
+  [uilock_hintindex] = @hintindex,  
+  [uilock_hintanswer] = @hintanswer  
+where [serial] = @accountserial  
+  
+set nocount off
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UILock_Refresh]    
+@accountserial int,    
+@byFailCnt tinyint,  
+@byFindPassFailCnt tinyint,    
+@ret tinyint output    
+as  
+  
+set @ret = 0    
+    
+declare @uilock tinyint    
+declare @uilock_failcnt tinyint  
+declare @uilock_findpass_failcnt tinyint   
+    
+select @uilock = [uilock], @uilock_failcnt = [uilock_failcnt], @uilock_findpass_failcnt = [uilock_find_pass_failcnt]  
+from [dbo].[tbl_useraccount] where [serial] = @accountserial    
+    
+if( (@uilock is null) or (@uilock_failcnt is null) )-- û  ø   ʴ´.    
+begin    
+ set @ret = 2    
+ return    
+end    
+    
+if(@uilock = 0) --  ʱȭ   ̴.    
+begin    
+ set @ret = 1    
+ return    
+end    
+    
+if(@uilock_failcnt >= 5) -- 5 ̻   Ƚ    .    
+begin    
+ set @ret = 3    
+ return    
+end    
+  
+if(@uilock_findpass_failcnt >= 5) -- 5 ̻   Ƚ    .    
+begin    
+ set @ret = 4  
+ return    
+end    
+    
+set nocount on    
+    
+update [dbo].[tbl_useraccount]  
+set  [uilock_failcnt] = @byFailCnt, [uilock_find_pass_failcnt] =@byFindPassFailCnt  
+where [serial] = @accountserial    
+    
+set nocount off
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UILock_Update]  
+@accountserial int,  
+@uilock_pw varchar(13),  
+@uilock_hintindex tinyint,  
+@uilock_hintanswer varchar(17),  
+@ret tinyint output  
+AS  
+  
+set @ret = 0  
+  
+declare @uilock tinyint  
+  
+select top 1 @uilock = uilock from tbl_useraccount where serial = @accountserial  
+  
+if(@uilock is null) -- û  ø   ʴ´.  
+begin  
+ set @ret = 2  
+ return  
+end  
+  
+if(@uilock = 0) --  ʱȭ   ̴.  
+begin  
+ set @ret = 1  
+ return  
+end  
+  
+  
+set nocount on  
+  
+update tbl_useraccount  
+set  uilock_pw = @uilock_pw,  
+  uilock_failcnt = 0,  
+  uilock_update = getdate(),  
+  uilock_hintindex = @uilock_hintindex,  
+  uilock_hintanswer = @uilock_hintanswer  
+where serial = @accountserial  
+  
+set nocount off
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UserBan]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32)
+AS
+UPDATE tbl_UserBan 
+set nPeriod=@nPeriod, nKind=@nKind, dtStartdate=(getdate()), szReason=@szReason
+where nAccountSerial=@nSerial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UserBan_20070302]
+@nSerial int,
+@nPeriod int,
+@nKind int,
+@szReason varchar(32),
+@szWriter varchar(32)
+AS
+UPDATE [dbo].[tbl_UserBan]
+set nPeriod=@nPeriod, nKind=@nKind, dtStartdate=(getdate()), szReason=@szReason, GMReason = @szReason, GMWriter = @szWriter
+where nAccountSerial=@nSerial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UserBan_20071016]
+@nSerial int, 
+@nPeriod int,
+@nKind int,
+@szReason varchar(32),
+@szWriter varchar(32),
+@reasontype tinyint
+as
+update [dbo].[tbl_UserBan]
+set nPeriod=@nPeriod, nKind=@nKind, dtStartdate=(getdate()), szReason=@szReason, GMReason = @szReason, GMWriter = @szWriter, reasontype = @reasontype
+where nAccountSerial=@nSerial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UserCurrentState]
+@serial int,
+@state tinyint
+as
+update [dbo].[tbl_usercurrentstate] set [state] = @state where [serial] = @serial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_UserLogoffDate]
+@nAccountSerial int
+AS
+UPDATE tbl_UserAccount SET lastlogofftime = getdate()  WHERE serial=@nAccountSerial
+GO
+
+CREATE PROCEDURE [dbo].[pUpdate_WorldServer]
+@Serial int,
+@State int
+AS
+update tbl_WorldServer_List set State=@State, LastUpdate=getDate() where Serial=@Serial
 GO
