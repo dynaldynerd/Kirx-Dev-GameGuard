@@ -97,7 +97,7 @@ public partial class SettingsForm : Form
     private void LoadDbProfileToControls()
     {
         var db = _userDb;
-        txtDbHost.Text = db.Host;
+        txtDbHost.Text = GetEffectiveDbHost(db.Host, db.Trusted);
         txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
         txtDbName.Text = db.Database;
         txtDbUser.Text = db.User;
@@ -134,7 +134,7 @@ public partial class SettingsForm : Form
             return false;
         }
 
-        _userDb.Host = txtDbHost.Text.Trim();
+        _userDb.Host = GetEffectiveDbHost(txtDbHost.Text.Trim(), radAuthTrusted.Checked);
         _userDb.Port = port;
         _userDb.Database = txtDbName.Text.Trim();
         _userDb.User = txtDbUser.Text.Trim();
@@ -169,9 +169,35 @@ public partial class SettingsForm : Form
 
     private void UpdateAuthFields()
     {
-        bool sqlAuth = radAuthSql.Checked;
+        bool isSqlServer = _settings.Database.Provider == DatabaseProvider.SqlServer;
+        bool isSqlite = _settings.Database.Provider == DatabaseProvider.Sqlite;
+
+        if (!isSqlServer && radAuthTrusted.Checked)
+        {
+            radAuthSql.Checked = true;
+        }
+
+        bool useTrusted = isSqlServer && radAuthTrusted.Checked;
+        bool sqlAuth = !isSqlite && (!isSqlServer || radAuthSql.Checked);
+
+        if (useTrusted && !string.Equals(txtDbHost.Text, DbProfile.TrustedSqlServerHost, StringComparison.Ordinal))
+        {
+            txtDbHost.Text = DbProfile.TrustedSqlServerHost;
+        }
+
+        txtDbHost.Enabled = !isSqlite && !useTrusted;
+        txtDbPort.Enabled = !isSqlite;
+        radAuthTrusted.Enabled = isSqlServer;
+        radAuthSql.Enabled = !isSqlite;
         txtDbUser.Enabled = sqlAuth;
         txtDbPass.Enabled = sqlAuth;
+    }
+
+    private string GetEffectiveDbHost(string host, bool trusted)
+    {
+        return _settings.Database.Provider == DatabaseProvider.SqlServer && trusted
+            ? DbProfile.TrustedSqlServerHost
+            : host;
     }
 
     private void OnGmAdd(object? sender, EventArgs e)

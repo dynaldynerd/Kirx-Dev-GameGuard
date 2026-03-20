@@ -115,7 +115,9 @@ public partial class SettingsForm : Form
         bool isBillingProfile = cboDbProfile.SelectedIndex == 1;
         var db = isBillingProfile ? _billingDb : _userDb;
         cboDbProvider.SelectedIndex = GetProviderIndex(db.Provider);
-        txtDbHost.Text = db.Host;
+        txtDbHost.Text = DatabaseSettings.NormalizeSqlServerHost(
+            db.Host,
+            db.Provider == LoginDatabaseProvider.SqlServer && db.Trusted);
         txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
         txtDbName.Text = isBillingProfile ? db.Database : "(from AccountServer)";
         txtDbName.ReadOnly = !isBillingProfile;
@@ -146,7 +148,9 @@ public partial class SettingsForm : Form
 
         var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
         db.Provider = provider;
-        db.Host = txtDbHost.Text.Trim();
+        db.Host = DatabaseSettings.NormalizeSqlServerHost(
+            txtDbHost.Text.Trim(),
+            provider == LoginDatabaseProvider.SqlServer && radAuthTrusted.Checked);
         db.Port = port;
         if (cboDbProfile.SelectedIndex == 1)
         {
@@ -185,7 +189,6 @@ public partial class SettingsForm : Form
         bool isSqlServer = provider == LoginDatabaseProvider.SqlServer;
         bool sqlAuth = radAuthSql.Checked;
 
-        txtDbHost.Enabled = !isSqlite;
         txtDbPort.Enabled = !isSqlite;
         grpAuth.Enabled = !isSqlite;
 
@@ -194,6 +197,13 @@ public partial class SettingsForm : Form
             radAuthSql.Checked = true;
         }
 
+        bool useTrusted = isSqlServer && radAuthTrusted.Checked;
+        if (useTrusted && !string.Equals(txtDbHost.Text, DatabaseSettings.TrustedSqlServerHost, StringComparison.Ordinal))
+        {
+            txtDbHost.Text = DatabaseSettings.TrustedSqlServerHost;
+        }
+
+        txtDbHost.Enabled = !isSqlite && !useTrusted;
         radAuthTrusted.Enabled = !isSqlite && isSqlServer;
         radAuthSql.Enabled = !isSqlite;
         txtDbUser.Enabled = !isSqlite && sqlAuth;

@@ -313,7 +313,6 @@ public partial class Setup : Form
         bool isSqlite = provider == LoginDatabaseProvider.Sqlite;
         bool isSqlServer = provider == LoginDatabaseProvider.SqlServer;
 
-        hostTextBox.Enabled = !isSqlite;
         portTextBox.Enabled = !isSqlite;
 
         if (!isSqlite && !isSqlServer && trustedCheckBox.Checked)
@@ -324,6 +323,16 @@ public partial class Setup : Form
         }
 
         trustedCheckBox.Enabled = !isSqlite && isSqlServer;
+
+        bool useTrusted = isSqlServer && trustedCheckBox.Checked;
+        if (useTrusted && !string.Equals(hostTextBox.Text, DatabaseSettings.TrustedSqlServerHost, StringComparison.Ordinal))
+        {
+            _loadingControls = true;
+            hostTextBox.Text = DatabaseSettings.TrustedSqlServerHost;
+            _loadingControls = false;
+        }
+
+        hostTextBox.Enabled = !isSqlite && !useTrusted;
 
         bool useSqlCredentials = !isSqlite && (provider == LoginDatabaseProvider.MariaDb || !trustedCheckBox.Checked);
         userTextBox.Enabled = useSqlCredentials;
@@ -372,7 +381,9 @@ public partial class Setup : Form
         }
 
         _billingDb.Provider = provider;
-        _billingDb.Host = txtBillingHost.Text.Trim();
+        _billingDb.Host = DatabaseSettings.NormalizeSqlServerHost(
+            txtBillingHost.Text.Trim(),
+            provider == LoginDatabaseProvider.SqlServer && chkBillingTrusted.Checked);
         _billingDb.Port = port;
         _billingDb.Database = txtBillingDbName.Text.Trim();
         _billingDb.User = txtBillingUser.Text.Trim();
@@ -404,7 +415,9 @@ public partial class Setup : Form
         }
 
         _userDb.Provider = provider;
-        _userDb.Host = txtUserDbHost.Text.Trim();
+        _userDb.Host = DatabaseSettings.NormalizeSqlServerHost(
+            txtUserDbHost.Text.Trim(),
+            provider == LoginDatabaseProvider.SqlServer && chkUserDbTrusted.Checked);
         _userDb.Port = port;
         _userDb.User = txtUserDbUser.Text.Trim();
         _userDb.Password = txtUserDbPass.Text;
@@ -716,12 +729,13 @@ public partial class Setup : Form
 
     private static string BuildSqlServerConnectionString(DatabaseSnapshot profile, string database)
     {
+        string host = DatabaseSettings.NormalizeSqlServerHost(profile.Host, profile.Trusted);
         if (profile.Trusted)
         {
-            return $"Server={profile.Host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
         }
 
-        return $"Server={profile.Host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+        return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
 
     private static string BuildMariaDbConnectionString(DatabaseSnapshot profile, string database)

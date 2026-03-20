@@ -39,6 +39,10 @@ public sealed class AppSettings
         {
             settings.Database.Provider = DatabaseProvider.SqlServer;
         }
+        if (settings.Database.Provider == DatabaseProvider.SqlServer && settings.Database.User.TrustedConnection)
+        {
+            settings.Database.User.Host = DbProfile.TrustedSqlServerHost;
+        }
         return settings;
     }
 
@@ -49,6 +53,10 @@ public sealed class AppSettings
         if (!string.IsNullOrEmpty(dir))
         {
             Directory.CreateDirectory(dir);
+        }
+        if (Database.Provider == DatabaseProvider.SqlServer && Database.User.TrustedConnection)
+        {
+            Database.User.Host = DbProfile.TrustedSqlServerHost;
         }
         var json = JsonSerializer.Serialize(this, JsonOptions());
         File.WriteAllText(path, json);
@@ -113,11 +121,12 @@ public sealed class DatabaseSettings
 
     private static string BuildConnectionString(DbProfile profile)
     {
+        string host = profile.GetEffectiveSqlServerHost();
         if (profile.TrustedConnection)
         {
-            return $"Server={profile.Host},{profile.Port};Database={profile.Database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host},{profile.Port};Database={profile.Database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
         }
-        return $"Server={profile.Host},{profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+        return $"Server={host},{profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
 
     public string BuildUserConnectionString(DatabaseProvider provider, string basePath) =>
@@ -151,12 +160,19 @@ public enum DatabaseProvider
 
 public sealed class DbProfile
 {
-    public string Host { get; set; } = "(local)";
+    public const string TrustedSqlServerHost = "(local)";
+
+    public string Host { get; set; } = TrustedSqlServerHost;
     public int Port { get; set; } = 1433;
     public string Database { get; set; } = "";
     public string User { get; set; } = "";
     public string Password { get; set; } = "";
     public bool TrustedConnection { get; set; } = true;
+
+    public string GetEffectiveSqlServerHost()
+    {
+        return TrustedConnection ? TrustedSqlServerHost : Host;
+    }
 }
 
 public sealed class GmFilterSettings

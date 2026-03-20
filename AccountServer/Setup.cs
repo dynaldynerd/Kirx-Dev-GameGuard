@@ -124,9 +124,13 @@ namespace AccountServer
             }
 
             trusted.Enabled = isSqlServer;
-            host.Enabled = true;
             port.Enabled = true;
             bool useTrusted = isSqlServer && trusted.Checked;
+            if (useTrusted && !string.Equals(host.Text, DbProfile.TrustedSqlServerHost, StringComparison.Ordinal))
+            {
+                host.Text = DbProfile.TrustedSqlServerHost;
+            }
+            host.Enabled = !useTrusted;
             user.Enabled = !useTrusted;
             pass.Enabled = !useTrusted;
         }
@@ -444,9 +448,12 @@ namespace AccountServer
 
         private void ApplyDatabaseSettings()
         {
-            _settings.Database.Provider = GetSelectedProvider();
+            DatabaseProvider provider = GetSelectedProvider();
+            _settings.Database.Provider = provider;
 
-            _settings.Database.User.Host = txtUserHost.Text.Trim();
+            _settings.Database.User.Host = provider == DatabaseProvider.SqlServer && chkUserTrusted.Checked
+                ? DbProfile.TrustedSqlServerHost
+                : txtUserHost.Text.Trim();
             _settings.Database.User.Port = (int)numUserPort.Value;
             _settings.Database.User.Database = txtUserDb.Text.Trim();
             _settings.Database.User.User = txtUserUser.Text.Trim();
@@ -720,11 +727,12 @@ namespace AccountServer
 
         private static string BuildSqlServerConnectionString(DbProfile profile, string database)
         {
+            string host = profile.GetEffectiveSqlServerHost();
             if (profile.TrustedConnection)
             {
-                return $"Server={profile.Host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+                return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
             }
-            return $"Server={profile.Host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
         }
 
         private static string BuildMariaDbConnectionString(DbProfile profile, string database)

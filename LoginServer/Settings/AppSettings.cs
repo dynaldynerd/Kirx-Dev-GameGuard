@@ -37,6 +37,12 @@ public sealed class AppSettings
         {
             settings.Database.BillingProvider = LoginDatabaseProvider.SqlServer;
         }
+        settings.Database.Host = DatabaseSettings.NormalizeSqlServerHost(
+            settings.Database.Host,
+            settings.Database.Provider == LoginDatabaseProvider.SqlServer && settings.Database.TrustedConnection);
+        settings.Database.BillingHost = DatabaseSettings.NormalizeSqlServerHost(
+            settings.Database.BillingHost,
+            settings.Database.BillingProvider == LoginDatabaseProvider.SqlServer && settings.Database.BillingTrustedConnection);
         return settings;
     }
 
@@ -48,6 +54,12 @@ public sealed class AppSettings
         {
             Directory.CreateDirectory(dir);
         }
+        Database.Host = DatabaseSettings.NormalizeSqlServerHost(
+            Database.Host,
+            Database.Provider == LoginDatabaseProvider.SqlServer && Database.TrustedConnection);
+        Database.BillingHost = DatabaseSettings.NormalizeSqlServerHost(
+            Database.BillingHost,
+            Database.BillingProvider == LoginDatabaseProvider.SqlServer && Database.BillingTrustedConnection);
         var json = JsonSerializer.Serialize(this, JsonOptions());
         File.WriteAllText(path, json);
     }
@@ -93,8 +105,10 @@ public sealed class AppSettings
 
 public sealed class DatabaseSettings
 {
+    public const string TrustedSqlServerHost = "(local)";
+
     public LoginDatabaseProvider Provider { get; set; } = LoginDatabaseProvider.SqlServer;
-    public string Host { get; set; } = "(local)";
+    public string Host { get; set; } = TrustedSqlServerHost;
     public int Port { get; set; } = 1433;
     [JsonIgnore]
     public string Database { get; set; } = string.Empty;
@@ -102,7 +116,7 @@ public sealed class DatabaseSettings
     public string Password { get; set; } = "";
     public bool TrustedConnection { get; set; } = true;
     public LoginDatabaseProvider BillingProvider { get; set; } = LoginDatabaseProvider.SqlServer;
-    public string BillingHost { get; set; } = "(local)";
+    public string BillingHost { get; set; } = TrustedSqlServerHost;
     public int BillingPort { get; set; } = 1433;
     public string BillingDatabase { get; set; } = "Billing";
     public string BillingUser { get; set; } = "";
@@ -137,6 +151,11 @@ public sealed class DatabaseSettings
         return Path.Combine(basePath, "Settings", "db", $"{databaseName}.db");
     }
 
+    public static string NormalizeSqlServerHost(string host, bool trustedConnection)
+    {
+        return trustedConnection ? TrustedSqlServerHost : host;
+    }
+
     private static string BuildConnectionString(
         LoginDatabaseProvider provider,
         string host,
@@ -157,11 +176,12 @@ public sealed class DatabaseSettings
             case LoginDatabaseProvider.MariaDb:
                 return $"Server={host};Port={port};Database={database};User ID={user};Password={password};";
             default:
+                string effectiveHost = NormalizeSqlServerHost(host, trustedConnection);
                 if (trustedConnection)
                 {
-                    return $"Server={host},{port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+                    return $"Server={effectiveHost},{port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
                 }
-                return $"Server={host},{port};Database={database};User ID={user};Password={password};TrustServerCertificate=True;Encrypt=False;";
+                return $"Server={effectiveHost},{port};Database={database};User ID={user};Password={password};TrustServerCertificate=True;Encrypt=False;";
         }
     }
 }

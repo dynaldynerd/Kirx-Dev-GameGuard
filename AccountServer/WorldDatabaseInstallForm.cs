@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using AccountServer.Settings;
 using Microsoft.Data.SqlClient;
 
 namespace AccountServer
@@ -46,6 +47,11 @@ namespace AccountServer
         private void UpdateCredentialUi()
         {
             bool useTrusted = chkTrustedConnection.Checked;
+            if (useTrusted && !string.Equals(txtServerAddress.Text, DbProfile.TrustedSqlServerHost, StringComparison.Ordinal))
+            {
+                txtServerAddress.Text = DbProfile.TrustedSqlServerHost;
+            }
+            txtServerAddress.Enabled = !useTrusted;
             txtUsername.Enabled = !useTrusted;
             txtPassword.Enabled = !useTrusted;
         }
@@ -195,7 +201,7 @@ namespace AccountServer
         {
             var builder = new SqlConnectionStringBuilder
             {
-                DataSource = txtServerAddress.Text.Trim(),
+                DataSource = chkTrustedConnection.Checked ? DbProfile.TrustedSqlServerHost : txtServerAddress.Text.Trim(),
                 InitialCatalog = database,
                 TrustServerCertificate = true,
                 Encrypt = false
