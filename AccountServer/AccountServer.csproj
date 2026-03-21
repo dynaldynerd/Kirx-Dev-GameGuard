@@ -37,18 +37,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="scheme\RF_User_mssql.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="scheme\RF_World_mssql.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="scheme\RF_User_mariadb.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="scheme\RF_User_sqlite.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="scheme\RF_User_mssql.sql">
+      <LogicalName>AccountServer.Schemas.RF_User_mssql.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\RF_World_mssql.sql">
+      <LogicalName>AccountServer.Schemas.RF_World_mssql.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\RF_User_mariadb.sql">
+      <LogicalName>AccountServer.Schemas.RF_User_mariadb.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\RF_User_sqlite.sql">
+      <LogicalName>AccountServer.Schemas.RF_User_sqlite.sql</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 

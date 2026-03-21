@@ -18,15 +18,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="scheme\Billing_mssql.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="scheme\Billing_mariadb.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="scheme\Billing_sqlite.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="scheme\Billing_mssql.sql">
+      <LogicalName>LoginServer.Schemas.Billing_mssql.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\Billing_mariadb.sql">
+      <LogicalName>LoginServer.Schemas.Billing_mariadb.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\Billing_sqlite.sql">
+      <LogicalName>LoginServer.Schemas.Billing_sqlite.sql</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <PropertyGroup>

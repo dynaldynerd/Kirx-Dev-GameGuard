@@ -51,12 +51,16 @@ partial class SettingsForm
         lblAccountHost = new System.Windows.Forms.Label();
         txtClientPort = new System.Windows.Forms.TextBox();
         lblClientPort = new System.Windows.Forms.Label();
+        grpDanger = new System.Windows.Forms.GroupBox();
+        btnReinstall = new System.Windows.Forms.Button();
+        lblReinstallWarning = new System.Windows.Forms.Label();
         btnSave = new System.Windows.Forms.Button();
         btnCancel = new System.Windows.Forms.Button();
         tabMain.SuspendLayout();
         tabDatabase.SuspendLayout();
         grpAuth.SuspendLayout();
         tabConnection.SuspendLayout();
+        grpDanger.SuspendLayout();
         SuspendLayout();
         // 
         // tabMain
@@ -421,10 +425,46 @@ partial class SettingsForm
         lblClientPort.TabIndex = 1;
         lblClientPort.Text = "Client port";
         // 
+        // grpDanger
+        // 
+        grpDanger.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+        grpDanger.Controls.Add(btnReinstall);
+        grpDanger.Controls.Add(lblReinstallWarning);
+        grpDanger.Location = new System.Drawing.Point(10, 276);
+        grpDanger.Margin = new System.Windows.Forms.Padding(2);
+        grpDanger.Name = "grpDanger";
+        grpDanger.Padding = new System.Windows.Forms.Padding(8);
+        grpDanger.Size = new System.Drawing.Size(272, 82);
+        grpDanger.TabIndex = 3;
+        grpDanger.TabStop = false;
+        grpDanger.Text = "Reset Setup";
+        // 
+        // btnReinstall
+        // 
+        btnReinstall.AutoSize = true;
+        btnReinstall.ForeColor = System.Drawing.Color.DarkRed;
+        btnReinstall.Location = new System.Drawing.Point(11, 50);
+        btnReinstall.Margin = new System.Windows.Forms.Padding(2);
+        btnReinstall.Name = "btnReinstall";
+        btnReinstall.Size = new System.Drawing.Size(65, 25);
+        btnReinstall.TabIndex = 1;
+        btnReinstall.Text = "Reinstall";
+        btnReinstall.UseVisualStyleBackColor = true;
+        btnReinstall.Click += OnReinstall;
+        // 
+        // lblReinstallWarning
+        // 
+        lblReinstallWarning.Location = new System.Drawing.Point(11, 20);
+        lblReinstallWarning.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+        lblReinstallWarning.Name = "lblReinstallWarning";
+        lblReinstallWarning.Size = new System.Drawing.Size(248, 30);
+        lblReinstallWarning.TabIndex = 0;
+        lblReinstallWarning.Text = "Resets LoginServer setup, deletes the JSON settings file, restarts the app, and can also delete Billing.";
+        // 
         // btnSave
         // 
         btnSave.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-        btnSave.Location = new System.Drawing.Point(442, 278);
+        btnSave.Location = new System.Drawing.Point(442, 363);
         btnSave.Margin = new System.Windows.Forms.Padding(2);
         btnSave.Name = "btnSave";
         btnSave.Size = new System.Drawing.Size(88, 25);
@@ -436,7 +476,7 @@ partial class SettingsForm
         // btnCancel
         // 
         btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-        btnCancel.Location = new System.Drawing.Point(350, 278);
+        btnCancel.Location = new System.Drawing.Point(350, 363);
         btnCancel.Margin = new System.Windows.Forms.Padding(2);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new System.Drawing.Size(88, 25);
@@ -449,7 +489,8 @@ partial class SettingsForm
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        ClientSize = new System.Drawing.Size(540, 314);
+        ClientSize = new System.Drawing.Size(540, 398);
+        Controls.Add(grpDanger);
         Controls.Add(btnCancel);
         Controls.Add(btnSave);
         Controls.Add(tabMain);
@@ -467,6 +508,8 @@ partial class SettingsForm
         grpAuth.PerformLayout();
         tabConnection.ResumeLayout(false);
         tabConnection.PerformLayout();
+        grpDanger.ResumeLayout(false);
+        grpDanger.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -506,6 +549,9 @@ partial class SettingsForm
     private System.Windows.Forms.TextBox txtLoadMid;
     private System.Windows.Forms.Label lblLoadHighSep;
     private System.Windows.Forms.TextBox txtLoadHigh;
+    private System.Windows.Forms.GroupBox grpDanger;
+    private System.Windows.Forms.Button btnReinstall;
+    private System.Windows.Forms.Label lblReinstallWarning;
     private System.Windows.Forms.Button btnSave;
     private System.Windows.Forms.Button btnCancel;
 }

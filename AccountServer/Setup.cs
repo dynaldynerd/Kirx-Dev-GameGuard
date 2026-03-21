@@ -196,7 +196,7 @@ namespace AccountServer
                     break;
                 default:
                     lblStepTitle.Text = "Security Seed";
-                    lblStepDescription.Text = "This Argon2 salt also seeds account ID protection. Keep it stable after the first setup.";
+                    lblStepDescription.Text = "This Argon2 salt also seeds account ID protection. Paste the original salt here if you are restoring an existing RF_User backup, and keep it stable after setup.";
                     break;
             }
 
@@ -317,8 +317,8 @@ namespace AccountServer
         private void BtnRegenerateSalt_Click(object? sender, EventArgs e)
         {
             const string prompt =
-                "Generate a different Argon2 salt for this fresh setup?\n\n" +
-                "After accounts exist, changing it would break account ID lookup and password verification.";
+                "Generate a different Argon2 salt for this setup?\n\n" +
+                "Do not do this if you are restoring an existing RF_User backup, because the original salt is required for account ID lookup and password verification.";
             if (MessageBox.Show(this, prompt, "Regenerate Salt", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
             {
                 return;
@@ -570,27 +570,54 @@ namespace AccountServer
                 }
             }
 
+            InstallProgressForm? progress = null;
             try
             {
+                string script = await LoadUserDatabaseScriptAsync(provider).ConfigureAwait(true);
+                script = RewriteInstallScriptDatabaseName(script);
+
+                IReadOnlyList<string> commands = provider == DatabaseProvider.SqlServer
+                    ? EmbeddedSqlScripts.SplitSqlServerBatches(script)
+                    : EmbeddedSqlScripts.SplitDelimitedStatements(script);
+
+                int totalSteps = commands.Count + (force ? 1 : 0);
+                progress = new InstallProgressForm("Install RF_User DB");
+                progress.Show(this);
+                progress.SetMarquee("Preparing RF_User install...");
+
+                int completedSteps = 0;
                 if (force)
                 {
+                    progress.SetProgress("Removing existing RF_User database...", completedSteps, totalSteps);
                     await DeleteExistingUserDatabaseAsync(provider).ConfigureAwait(true);
+                    completedSteps++;
                 }
 
                 if (provider == DatabaseProvider.Sqlite)
                 {
-                    return await InstallSqliteAsync().ConfigureAwait(true);
+                    return await InstallSqliteAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true);
                 }
                 if (provider == DatabaseProvider.MariaDb)
                 {
-                    return await InstallMariaDbAsync().ConfigureAwait(true);
+                    return await InstallMariaDbAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true);
                 }
-                return await InstallSqlServerAsync().ConfigureAwait(true);
+                return await InstallSqlServerAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true);
             }
             catch (Exception ex)
             {
+                if (progress != null && !progress.IsDisposed)
+                {
+                    progress.Close();
+                }
                 MessageBox.Show(this, $"Install failed: {ex.Message}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+            finally
+            {
+                if (progress != null && !progress.IsDisposed)
+                {
+                    progress.Close();
+                }
             }
         }
 
@@ -656,82 +683,76 @@ namespace AccountServer
             File.Delete(dbPath);
         }
 
-        private async Task<bool> InstallSqlServerAsync()
+        private static Task<string> LoadUserDatabaseScriptAsync(DatabaseProvider provider)
         {
-            string scriptPath = ResolveScriptPath("RF_User_mssql.sql");
-            if (!File.Exists(scriptPath))
+            return provider switch
             {
-                MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
+                DatabaseProvider.Sqlite => EmbeddedSqlScripts.LoadTextAsync("AccountServer.Schemas.RF_User_sqlite.sql"),
+                DatabaseProvider.MariaDb => EmbeddedSqlScripts.LoadTextAsync("AccountServer.Schemas.RF_User_mariadb.sql"),
+                _ => EmbeddedSqlScripts.LoadTextAsync("AccountServer.Schemas.RF_User_mssql.sql")
+            };
+        }
 
-            string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
-            script = RewriteInstallScriptDatabaseName(script);
+        private static string DescribeInstallUnit(DatabaseProvider provider)
+        {
+            return provider == DatabaseProvider.SqlServer ? "batch" : "statement";
+        }
+
+        private async Task<bool> InstallSqlServerAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
+        {
             string connString = BuildSqlServerConnectionString(_settings.Database.User, "master");
             await using var conn = new SqlConnection(connString);
+            progress.SetProgress("Connecting to SQL Server...", completedSteps, totalSteps);
             await conn.OpenAsync().ConfigureAwait(true);
-            foreach (string batch in SplitSqlServerBatches(script))
+            for (int i = 0; i < commands.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(batch))
-                {
-                    continue;
-                }
-                await using var cmd = new SqlCommand(batch, conn);
+                progress.SetProgress(
+                    $"Executing RF_User {DescribeInstallUnit(DatabaseProvider.SqlServer)} {i + 1} of {commands.Count}...",
+                    completedSteps,
+                    totalSteps);
+                await using var cmd = new SqlCommand(commands[i], conn);
                 await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+                completedSteps++;
             }
             return true;
         }
 
-        private async Task<bool> InstallMariaDbAsync()
+        private async Task<bool> InstallMariaDbAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
         {
-            string scriptPath = ResolveScriptPath("RF_User_mariadb.sql");
-            if (!File.Exists(scriptPath))
-            {
-                MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
-            string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
-            script = RewriteInstallScriptDatabaseName(script);
             string connString = BuildMariaDbConnectionString(_settings.Database.User, "information_schema");
             await using var conn = new MySqlConnection(connString);
+            progress.SetProgress("Connecting to MariaDB...", completedSteps, totalSteps);
             await conn.OpenAsync().ConfigureAwait(true);
-            foreach (string stmt in SplitStatements(script))
+            for (int i = 0; i < commands.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(stmt))
-                {
-                    continue;
-                }
-                await using var cmd = new MySqlCommand(stmt, conn);
+                progress.SetProgress(
+                    $"Executing RF_User {DescribeInstallUnit(DatabaseProvider.MariaDb)} {i + 1} of {commands.Count}...",
+                    completedSteps,
+                    totalSteps);
+                await using var cmd = new MySqlCommand(commands[i], conn);
                 await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+                completedSteps++;
             }
             return true;
         }
 
-        private async Task<bool> InstallSqliteAsync()
+        private async Task<bool> InstallSqliteAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
         {
-            string scriptPath = ResolveScriptPath("RF_User_sqlite.sql");
-            if (!File.Exists(scriptPath))
-            {
-                MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
             string dbPath = DatabaseSettings.GetSqlitePath(AppContext.BaseDirectory, _settings.Database.User.Database);
             Directory.CreateDirectory(Path.GetDirectoryName(dbPath) ?? AppContext.BaseDirectory);
-
-            string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
             string connString = $"Data Source={dbPath};";
             await using var conn = new SqliteConnection(connString);
+            progress.SetProgress("Creating SQLite RF_User database...", completedSteps, totalSteps);
             await conn.OpenAsync().ConfigureAwait(true);
-            foreach (string stmt in SplitStatements(script))
+            for (int i = 0; i < commands.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(stmt))
-                {
-                    continue;
-                }
-                await using var cmd = new SqliteCommand(stmt, conn);
+                progress.SetProgress(
+                    $"Executing RF_User {DescribeInstallUnit(DatabaseProvider.Sqlite)} {i + 1} of {commands.Count}...",
+                    completedSteps,
+                    totalSteps);
+                await using var cmd = new SqliteCommand(commands[i], conn);
                 await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+                completedSteps++;
             }
             return true;
         }
@@ -770,61 +791,5 @@ namespace AccountServer
             return identifier.Replace("`", "``", StringComparison.Ordinal);
         }
 
-        private static string ResolveScriptPath(string fileName)
-        {
-            string baseDir = AppContext.BaseDirectory;
-            string schemePath = Path.Combine(baseDir, "scheme", fileName);
-            if (File.Exists(schemePath))
-            {
-                return schemePath;
-            }
-            return Path.Combine(baseDir, fileName);
-        }
-
-        private static IEnumerable<string> SplitSqlServerBatches(string script)
-        {
-            var sb = new StringBuilder();
-            using var reader = new StringReader(script);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
-                {
-                    yield return sb.ToString();
-                    sb.Clear();
-                    continue;
-                }
-                sb.AppendLine(line);
-            }
-            if (sb.Length > 0)
-            {
-                yield return sb.ToString();
-            }
-        }
-
-        private static IEnumerable<string> SplitStatements(string script)
-        {
-            var sb = new StringBuilder();
-            bool inString = false;
-            for (int i = 0; i < script.Length; i++)
-            {
-                char c = script[i];
-                if (c == '\'' && (i == 0 || script[i - 1] != '\\'))
-                {
-                    inString = !inString;
-                }
-                if (c == ';' && !inString)
-                {
-                    yield return sb.ToString();
-                    sb.Clear();
-                    continue;
-                }
-                sb.Append(c);
-            }
-            if (sb.Length > 0)
-            {
-                yield return sb.ToString();
-            }
-        }
     }
 }

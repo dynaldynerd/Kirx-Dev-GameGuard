@@ -1,8 +1,12 @@
 using System;
 using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LoginServer.Data;
+using LoginServer.Data.Contexts;
 using LoginServer.Settings;
+using Microsoft.EntityFrameworkCore;
 
 namespace LoginServer.Settings;
 
@@ -245,6 +249,73 @@ public partial class SettingsForm : Form
     {
         DialogResult = DialogResult.Cancel;
         Close();
+    }
+
+    private async void OnReinstall(object? sender, EventArgs e)
+    {
+        const string prompt =
+            "Reinstall LoginServer?\n\n" +
+            "This will reset Properties.Settings, delete the JSON settings file, restart the application, and force the setup wizard to appear again on the next launch.";
+        if (MessageBox.Show(this, prompt, "Reinstall LoginServer", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        string databaseName = _settings.Database.BillingDatabase.Trim();
+        var deleteDatabaseChoice = MessageBox.Show(
+            this,
+            $"Delete the configured Billing database too?\n\n" +
+            $"Database: {databaseName}\n\n" +
+            "Yes = delete the configured Billing database before reinstall.\n" +
+            "No = keep the database and only reset LoginServer setup.\n" +
+            "Cancel = abort reinstall.",
+            "Delete Billing Database Too?",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
+        if (deleteDatabaseChoice == DialogResult.Cancel)
+        {
+            return;
+        }
+
+        if (deleteDatabaseChoice == DialogResult.Yes)
+        {
+            try
+            {
+                await DeleteConfiguredBillingDatabaseAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Failed to delete the configured Billing database.\n\n{ex.Message}",
+                    "Delete Database Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+        }
+
+        Properties.Settings.Default.Reset();
+        Properties.Settings.Default.Save();
+        if (File.Exists(AppSettings.DefaultPath))
+        {
+            File.Delete(AppSettings.DefaultPath);
+        }
+        Application.Restart();
+        Application.Exit();
+    }
+
+    private async Task DeleteConfiguredBillingDatabaseAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_settings.Database.BillingDatabase))
+        {
+            return;
+        }
+
+        string billingConnStr = _settings.Database.BuildBillingConnectionString();
+        var options = DbContextOptionsFactory.Create<BillingDbContext>(_settings.Database.BillingProvider, billingConnStr);
+        await using var billingDb = new BillingDbContext(options);
+        await billingDb.Database.EnsureDeletedAsync().ConfigureAwait(true);
     }
 }
 

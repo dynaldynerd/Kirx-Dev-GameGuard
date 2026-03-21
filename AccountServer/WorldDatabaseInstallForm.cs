@@ -117,24 +117,20 @@ namespace AccountServer
 
         private async Task<bool> InstallWorldDatabaseAsync()
         {
-            string scriptPath = ResolveScriptPath("RF_World_mssql.sql");
-            if (!File.Exists(scriptPath))
-            {
-                MessageBox.Show(this, $"Missing script: {scriptPath}", "Install RF_World DB", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
-            string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
+            string script = await EmbeddedSqlScripts.LoadTextAsync("AccountServer.Schemas.RF_World_mssql.sql").ConfigureAwait(true);
             script = RewriteInstallScriptDatabaseName(script, DefaultDatabaseName, _databaseName);
             WorldDatabaseCollationOption collationOption = GetSelectedCollationOption();
             script = RewriteInstallScriptCollation(script, collationOption.SqlServerCollation);
+            IReadOnlyList<string> batches = EmbeddedSqlScripts.SplitSqlServerBatches(script);
 
             string masterConnectionString = BuildConnectionString("master");
+            InstallProgressForm? progress = null;
 
             try
             {
                 await using var conn = new SqlConnection(masterConnectionString);
                 await conn.OpenAsync().ConfigureAwait(true);
+                bool deleteExisting = false;
 
                 if (await DatabaseExistsAsync(conn).ConfigureAwait(true))
                 {
@@ -148,27 +144,50 @@ namespace AccountServer
                     {
                         return false;
                     }
-
-                    await DeleteExistingDatabaseAsync(conn).ConfigureAwait(true);
+                    deleteExisting = true;
                 }
 
-                foreach (string batch in SplitSqlServerBatches(script))
-                {
-                    if (string.IsNullOrWhiteSpace(batch))
-                    {
-                        continue;
-                    }
+                int totalSteps = batches.Count + (deleteExisting ? 1 : 0);
+                int completedSteps = 0;
+                progress = new InstallProgressForm("Install RF_World DB");
+                progress.Show(this);
+                progress.SetMarquee("Preparing RF_World install...");
 
-                    await using var cmd = new SqlCommand(batch, conn);
+                if (deleteExisting)
+                {
+                    progress.SetProgress("Removing existing RF_World database...", completedSteps, totalSteps);
+                    await DeleteExistingDatabaseAsync(conn).ConfigureAwait(true);
+                    completedSteps++;
+                }
+
+                for (int i = 0; i < batches.Count; i++)
+                {
+                    progress.SetProgress(
+                        $"Executing RF_World batch {i + 1} of {batches.Count}...",
+                        completedSteps,
+                        totalSteps);
+                    await using var cmd = new SqlCommand(batches[i], conn);
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+                    completedSteps++;
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
+                if (progress != null && !progress.IsDisposed)
+                {
+                    progress.Close();
+                }
                 MessageBox.Show(this, $"World database install failed: {ex.Message}", "Install RF_World DB", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+            finally
+            {
+                if (progress != null && !progress.IsDisposed)
+                {
+                    progress.Close();
+                }
             }
         }
 
@@ -222,18 +241,6 @@ namespace AccountServer
             return builder.ConnectionString;
         }
 
-        private static string ResolveScriptPath(string fileName)
-        {
-            string baseDir = AppContext.BaseDirectory;
-            string schemePath = Path.Combine(baseDir, "scheme", fileName);
-            if (File.Exists(schemePath))
-            {
-                return schemePath;
-            }
-
-            return Path.Combine(baseDir, fileName);
-        }
-
         private static string RewriteInstallScriptDatabaseName(string script, string defaultDatabaseName, string targetDatabaseName)
         {
             if (string.IsNullOrWhiteSpace(targetDatabaseName) ||
@@ -263,27 +270,5 @@ namespace AccountServer
                 1);
         }
 
-        private static System.Collections.Generic.IEnumerable<string> SplitSqlServerBatches(string script)
-        {
-            var sb = new StringBuilder();
-            using var reader = new StringReader(script);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
-                {
-                    yield return sb.ToString();
-                    sb.Clear();
-                    continue;
-                }
-
-                sb.AppendLine(line);
-            }
-
-            if (sb.Length > 0)
-            {
-                yield return sb.ToString();
-            }
-        }
     }
 }

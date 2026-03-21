@@ -561,24 +561,52 @@ public partial class Setup : Form
 
     private async Task<bool> InstallBillingDatabaseAsync(bool force)
     {
+        InstallProgressForm? progress = null;
         try
         {
+            string script = await LoadBillingScriptAsync(_billingDb.Provider).ConfigureAwait(true);
+            script = RewriteInstallScriptDatabaseName(script, "Billing", _billingDb.Database);
+
+            IReadOnlyList<string> commands = _billingDb.Provider == LoginDatabaseProvider.SqlServer
+                ? EmbeddedSqlScripts.SplitSqlServerBatches(script)
+                : EmbeddedSqlScripts.SplitDelimitedStatements(script);
+
+            int totalSteps = commands.Count + (force ? 1 : 0);
+            progress = new InstallProgressForm("Install Billing DB");
+            progress.Show(this);
+            progress.SetMarquee("Preparing Billing install...");
+
+            int completedSteps = 0;
             if (force)
             {
+                progress.SetProgress("Removing existing Billing database...", completedSteps, totalSteps);
                 await DeleteExistingBillingDatabaseAsync().ConfigureAwait(true);
+                completedSteps++;
             }
 
-            return _billingDb.Provider switch
+            bool ok = _billingDb.Provider switch
             {
-                LoginDatabaseProvider.Sqlite => await InstallSqliteBillingAsync().ConfigureAwait(true),
-                LoginDatabaseProvider.MariaDb => await InstallMariaDbBillingAsync().ConfigureAwait(true),
-                _ => await InstallSqlServerBillingAsync().ConfigureAwait(true)
+                LoginDatabaseProvider.Sqlite => await InstallSqliteBillingAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true),
+                LoginDatabaseProvider.MariaDb => await InstallMariaDbBillingAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true),
+                _ => await InstallSqlServerBillingAsync(progress, commands, completedSteps, totalSteps).ConfigureAwait(true)
             };
+            return ok;
         }
         catch (Exception ex)
         {
+            if (progress != null && !progress.IsDisposed)
+            {
+                progress.Close();
+            }
             MessageBox.Show(this, $"Billing install failed: {ex.Message}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
+        }
+        finally
+        {
+            if (progress != null && !progress.IsDisposed)
+            {
+                progress.Close();
+            }
         }
     }
 
@@ -639,89 +667,78 @@ public partial class Setup : Form
         }
     }
 
-    private async Task<bool> InstallSqlServerBillingAsync()
+    private static Task<string> LoadBillingScriptAsync(LoginDatabaseProvider provider)
     {
-        string scriptPath = ResolveScriptPath("Billing_mssql.sql");
-        if (!File.Exists(scriptPath))
+        return provider switch
         {
-            MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return false;
-        }
+            LoginDatabaseProvider.Sqlite => EmbeddedSqlScripts.LoadTextAsync("LoginServer.Schemas.Billing_sqlite.sql"),
+            LoginDatabaseProvider.MariaDb => EmbeddedSqlScripts.LoadTextAsync("LoginServer.Schemas.Billing_mariadb.sql"),
+            _ => EmbeddedSqlScripts.LoadTextAsync("LoginServer.Schemas.Billing_mssql.sql")
+        };
+    }
 
-        string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
-        script = RewriteInstallScriptDatabaseName(script, "Billing", _billingDb.Database);
+    private static string DescribeInstallUnit(LoginDatabaseProvider provider)
+    {
+        return provider == LoginDatabaseProvider.SqlServer ? "batch" : "statement";
+    }
+
+    private async Task<bool> InstallSqlServerBillingAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
+    {
         string connString = BuildSqlServerConnectionString(_billingDb, "master");
         await using var conn = new SqlConnection(connString);
+        progress.SetProgress("Connecting to SQL Server...", completedSteps, totalSteps);
         await conn.OpenAsync().ConfigureAwait(true);
-
-        foreach (string batch in SplitSqlServerBatches(script))
+        for (int i = 0; i < commands.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(batch))
-            {
-                continue;
-            }
-
-            await using var cmd = new SqlCommand(batch, conn);
+            progress.SetProgress(
+                $"Executing Billing {DescribeInstallUnit(LoginDatabaseProvider.SqlServer)} {i + 1} of {commands.Count}...",
+                completedSteps,
+                totalSteps);
+            await using var cmd = new SqlCommand(commands[i], conn);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+            completedSteps++;
         }
 
         return true;
     }
 
-    private async Task<bool> InstallMariaDbBillingAsync()
+    private async Task<bool> InstallMariaDbBillingAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
     {
-        string scriptPath = ResolveScriptPath("Billing_mariadb.sql");
-        if (!File.Exists(scriptPath))
-        {
-            MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return false;
-        }
-
-        string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
-        script = RewriteInstallScriptDatabaseName(script, "Billing", _billingDb.Database);
         string connString = BuildMariaDbConnectionString(_billingDb, "information_schema");
         await using var conn = new MySqlConnection(connString);
+        progress.SetProgress("Connecting to MariaDB...", completedSteps, totalSteps);
         await conn.OpenAsync().ConfigureAwait(true);
-
-        foreach (string stmt in SplitStatements(script))
+        for (int i = 0; i < commands.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(stmt))
-            {
-                continue;
-            }
-
-            await using var cmd = new MySqlCommand(stmt, conn);
+            progress.SetProgress(
+                $"Executing Billing {DescribeInstallUnit(LoginDatabaseProvider.MariaDb)} {i + 1} of {commands.Count}...",
+                completedSteps,
+                totalSteps);
+            await using var cmd = new MySqlCommand(commands[i], conn);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+            completedSteps++;
         }
 
         return true;
     }
 
-    private async Task<bool> InstallSqliteBillingAsync()
+    private async Task<bool> InstallSqliteBillingAsync(InstallProgressForm progress, IReadOnlyList<string> commands, int completedSteps, int totalSteps)
     {
-        string scriptPath = ResolveScriptPath("Billing_sqlite.sql");
-        if (!File.Exists(scriptPath))
-        {
-            MessageBox.Show(this, $"Missing script: {scriptPath}", "Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return false;
-        }
-
         string dbPath = DatabaseSettings.GetSqlitePath(AppContext.BaseDirectory, _billingDb.Database);
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath) ?? AppContext.BaseDirectory);
-        string script = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(true);
         string connString = $"Data Source={dbPath};";
         await using var conn = new SqliteConnection(connString);
+        progress.SetProgress("Creating SQLite Billing database...", completedSteps, totalSteps);
         await conn.OpenAsync().ConfigureAwait(true);
-
-        foreach (string stmt in SplitStatements(script))
+        for (int i = 0; i < commands.Count; i++)
         {
-            if (string.IsNullOrWhiteSpace(stmt))
-            {
-                continue;
-            }
-
-            await using var cmd = new SqliteCommand(stmt, conn);
+            progress.SetProgress(
+                $"Executing Billing {DescribeInstallUnit(LoginDatabaseProvider.Sqlite)} {i + 1} of {commands.Count}...",
+                completedSteps,
+                totalSteps);
+            await using var cmd = new SqliteCommand(commands[i], conn);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+            completedSteps++;
         }
 
         return true;
@@ -743,13 +760,6 @@ public partial class Setup : Form
         return $"Server={profile.Host};Port={profile.Port};Database={database};User ID={profile.User};Password={profile.Password};";
     }
 
-    private static string ResolveScriptPath(string fileName)
-    {
-        string baseDir = AppContext.BaseDirectory;
-        string schemePath = Path.Combine(baseDir, "scheme", fileName);
-        return File.Exists(schemePath) ? schemePath : Path.Combine(baseDir, fileName);
-    }
-
     private static string RewriteInstallScriptDatabaseName(string script, string defaultDatabaseName, string targetDatabaseName)
     {
         if (string.IsNullOrWhiteSpace(targetDatabaseName) ||
@@ -767,54 +777,4 @@ public partial class Setup : Form
         return identifier.Replace("`", "``", StringComparison.Ordinal);
     }
 
-    private static IEnumerable<string> SplitSqlServerBatches(string script)
-    {
-        var sb = new StringBuilder();
-        using var reader = new StringReader(script);
-        string? line;
-        while ((line = reader.ReadLine()) != null)
-        {
-            if (line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
-            {
-                yield return sb.ToString();
-                sb.Clear();
-                continue;
-            }
-
-            sb.AppendLine(line);
-        }
-
-        if (sb.Length > 0)
-        {
-            yield return sb.ToString();
-        }
-    }
-
-    private static IEnumerable<string> SplitStatements(string script)
-    {
-        var sb = new StringBuilder();
-        bool inString = false;
-        for (int i = 0; i < script.Length; i++)
-        {
-            char c = script[i];
-            if (c == '\'' && (i == 0 || script[i - 1] != '\\'))
-            {
-                inString = !inString;
-            }
-
-            if (c == ';' && !inString)
-            {
-                yield return sb.ToString();
-                sb.Clear();
-                continue;
-            }
-
-            sb.Append(c);
-        }
-
-        if (sb.Length > 0)
-        {
-            yield return sb.ToString();
-        }
-    }
 }

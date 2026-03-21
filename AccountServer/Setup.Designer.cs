@@ -483,7 +483,7 @@ namespace AccountServer
             lblSecurityNote.Name = "lblSecurityNote";
             lblSecurityNote.Size = new Size(696, 60);
             lblSecurityNote.TabIndex = 3;
-            lblSecurityNote.Text = "This value is generated once during setup. AccountServer uses it for Argon2 password verification and as the seed for protected account ID storage. Changing it later will break existing account lookups.";
+            lblSecurityNote.Text = "This value is generated once during setup. If you are restoring an existing RF_User backup, paste the original salt here before finishing setup. Changing it after accounts exist will break password verification and protected account ID lookup.";
             // 
             // btnRegenerateSalt
             // 
@@ -499,7 +499,7 @@ namespace AccountServer
             // 
             txtArgon2Salt.Location = new Point(16, 40);
             txtArgon2Salt.Name = "txtArgon2Salt";
-            txtArgon2Salt.ReadOnly = true;
+            txtArgon2Salt.ReadOnly = false;
             txtArgon2Salt.Size = new Size(592, 23);
             txtArgon2Salt.TabIndex = 1;
             // 

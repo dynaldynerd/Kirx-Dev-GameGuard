@@ -750,7 +750,7 @@ void CGuild::PushDQSGuildMasterLastConnn()
   query.dwSerial = m_MasterData.dwSerial;
   query.dwGuildIndex = m_nIndex;
   query.dwGuildSerial = m_dwSerial;
-  query.dwLimitConnTime = GetConnectTime_AddBySec(-1814400);
+  query.dwLimitConnTime = static_cast<unsigned int>(GetConnectTime_AddBySec(-1814400));
 
   g_Main.PushDQSData(
     -1,

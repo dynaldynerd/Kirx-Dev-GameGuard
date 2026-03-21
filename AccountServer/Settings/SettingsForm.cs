@@ -3,7 +3,11 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
+using MySqlConnector;
 
 namespace AccountServer.Settings;
 
@@ -279,7 +283,7 @@ public partial class SettingsForm : Form
         Close();
     }
 
-    private void OnReinstall(object? sender, EventArgs e)
+    private async void OnReinstall(object? sender, EventArgs e)
     {
         const string prompt =
             "Reinstall AccountServer?\n\n" +
@@ -287,6 +291,40 @@ public partial class SettingsForm : Form
         if (MessageBox.Show(this, prompt, "Reinstall AccountServer", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
         {
             return;
+        }
+
+        string databaseName = _settings.Database.User.Database.Trim();
+        var deleteDatabaseChoice = MessageBox.Show(
+            this,
+            $"Delete the configured RF_User database too?\n\n" +
+            $"Database: {databaseName}\n\n" +
+            "Yes = delete the configured database before reinstall.\n" +
+            "No = keep the database and only reset AccountServer setup.\n" +
+            "Cancel = abort reinstall.",
+            "Delete Database Too?",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
+        if (deleteDatabaseChoice == DialogResult.Cancel)
+        {
+            return;
+        }
+
+        if (deleteDatabaseChoice == DialogResult.Yes)
+        {
+            try
+            {
+                await DeleteConfiguredUserDatabaseAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Failed to delete the configured RF_User database.\n\n{ex.Message}",
+                    "Delete Database Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
         }
 
         Properties.Settings.Default.Reset();
@@ -297,6 +335,83 @@ public partial class SettingsForm : Form
         }
         Application.Restart();
         Application.Exit();
+    }
+
+    private Task DeleteConfiguredUserDatabaseAsync()
+    {
+        return _settings.Database.Provider switch
+        {
+            DatabaseProvider.Sqlite => DeleteConfiguredSqliteDatabaseAsync(),
+            DatabaseProvider.MariaDb => DeleteConfiguredMariaDbDatabaseAsync(),
+            _ => DeleteConfiguredSqlServerDatabaseAsync()
+        };
+    }
+
+    private async Task DeleteConfiguredSqlServerDatabaseAsync()
+    {
+        string connString = BuildSqlServerConnectionString(_settings.Database.User, "master");
+        await using var conn = new SqlConnection(connString);
+        await conn.OpenAsync().ConfigureAwait(true);
+
+        const string dropSql =
+            """
+            IF DB_ID(@name) IS NOT NULL
+            BEGIN
+                DECLARE @quotedName nvarchar(258) = QUOTENAME(@name);
+                DECLARE @dropSql nvarchar(max) =
+                    N'ALTER DATABASE ' + @quotedName + N' SET SINGLE_USER WITH ROLLBACK IMMEDIATE; ' +
+                    N'DROP DATABASE ' + @quotedName + N';';
+                EXEC(@dropSql);
+            END
+            """;
+
+        await using var cmd = new SqlCommand(dropSql, conn);
+        cmd.Parameters.AddWithValue("@name", _settings.Database.User.Database);
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+    }
+
+    private async Task DeleteConfiguredMariaDbDatabaseAsync()
+    {
+        string connString = BuildMariaDbConnectionString(_settings.Database.User, "information_schema");
+        await using var conn = new MySqlConnection(connString);
+        await conn.OpenAsync().ConfigureAwait(true);
+
+        string escapedName = EscapeMariaDbIdentifier(_settings.Database.User.Database);
+        string dropSql = $"DROP DATABASE IF EXISTS `{escapedName}`;";
+        await using var cmd = new MySqlCommand(dropSql, conn);
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
+    }
+
+    private Task DeleteConfiguredSqliteDatabaseAsync()
+    {
+        string dbPath = DatabaseSettings.GetSqlitePath(AppContext.BaseDirectory, _settings.Database.User.Database);
+        if (File.Exists(dbPath))
+        {
+            File.Delete(dbPath);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static string BuildSqlServerConnectionString(DbProfile profile, string database)
+    {
+        string host = profile.GetEffectiveSqlServerHost();
+        if (profile.TrustedConnection)
+        {
+            return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+        }
+
+        return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+    }
+
+    private static string BuildMariaDbConnectionString(DbProfile profile, string database)
+    {
+        return $"Server={profile.Host};Port={profile.Port};Database={database};User ID={profile.User};Password={profile.Password};";
+    }
+
+    private static string EscapeMariaDbIdentifier(string identifier)
+    {
+        return identifier.Replace("`", "``", StringComparison.Ordinal);
     }
 }
 
