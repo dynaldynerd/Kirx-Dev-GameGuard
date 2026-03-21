@@ -721,7 +721,21 @@ public sealed class ClientPacketRouter
         {
             if (IsDevUser(session.AccountId))
             {
-                // Dev/GM account: bypass user DB/billing; account server will handle auth.
+                // Dev/GM account: bypass RF_User auth, but still ensure Billing has a baseline row.
+                try
+                {
+                    var billingOptions = DbContextOptionsFactory.Create<BillingDbContext>(
+                        settings.Database.BillingProvider,
+                        billingConnStr);
+                    await using var billingCtx = new BillingDbContext(billingOptions);
+                    await GetOrCreateBillingUserStatusAsync(billingCtx, session.AccountId, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _log($"GM billing sync failed for '{session.AccountId}': {ex.Message}");
+                }
+
                 session.BillType = 1;
                 session.RemainTime = 255;
                 session.IsPremium = true;
