@@ -22,7 +22,9 @@ public partial class WorldEntryForm : Form
     private void LoadEntry()
     {
         txtName.Text = _entry.Name;
-        txtAddress.Text = _entry.Address;
+        txtAddress.Text = string.IsNullOrWhiteSpace(_entry.Address)
+            ? DbProfile.TrustedSqlServerHost
+            : _entry.Address;
         txtDbName.Text = _entry.DbName;
         cmbType.SelectedIndex = _entry.Type == 1 ? 1 : 0;
     }
@@ -39,7 +41,7 @@ public partial class WorldEntryForm : Form
         }
         if (string.IsNullOrEmpty(address))
         {
-            MessageBox.Show(this, "Address is required.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "Database server address/IP is required.", "Invalid Value", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         if (string.IsNullOrEmpty(dbName))
@@ -73,7 +75,18 @@ public partial class WorldEntryForm : Form
             return;
         }
 
-        using var form = new global::AccountServer.WorldDatabaseInstallForm(dbName);
+        string serverAddress = txtAddress.Text.Trim();
+        if (string.IsNullOrEmpty(serverAddress))
+        {
+            serverAddress = DbProfile.TrustedSqlServerHost;
+        }
+
+        bool useTrustedConnection = string.Equals(
+            serverAddress,
+            DbProfile.TrustedSqlServerHost,
+            StringComparison.OrdinalIgnoreCase);
+
+        using var form = new global::AccountServer.WorldDatabaseInstallForm(dbName, serverAddress, useTrustedConnection);
         form.ShowDialog(this);
     }
 }

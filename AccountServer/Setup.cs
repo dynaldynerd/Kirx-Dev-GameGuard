@@ -71,7 +71,9 @@ namespace AccountServer
                 : new WorldEntry();
 
             txtWorldName.Text = world.Name;
-            txtWorldAddress.Text = world.Address;
+            txtWorldAddress.Text = string.IsNullOrWhiteSpace(world.Address)
+                ? DbProfile.TrustedSqlServerHost
+                : world.Address;
             txtWorldDb.Text = world.DbName;
             cmbWorldType.SelectedIndex = GetWorldTypeIndex(world.Type);
 
@@ -192,7 +194,7 @@ namespace AccountServer
                     break;
                 case WorldPageIndex:
                     lblStepTitle.Text = "World Registration";
-                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see. Installing RF_World from this step is optional and can apply a country-specific SQL collation.";
+                    lblStepDescription.Text = "Define the first world entry that LoginServer clients will see. The address here is the RF_World database server/IP. Installing RF_World from this step is optional and can apply a country-specific SQL collation.";
                     break;
                 default:
                     lblStepTitle.Text = "Security Seed";
@@ -330,6 +332,7 @@ namespace AccountServer
         private void BtnInstallWorldDb_Click(object? sender, EventArgs e)
         {
             string worldDatabaseName = txtWorldDb.Text.Trim();
+            string worldDatabaseAddress = txtWorldAddress.Text.Trim();
             if (string.IsNullOrWhiteSpace(worldDatabaseName))
             {
                 MessageBox.Show(this, "Enter the world DB name first.", "World Registration", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -337,7 +340,17 @@ namespace AccountServer
                 return;
             }
 
-            using var dialog = new WorldDatabaseInstallForm(worldDatabaseName);
+            if (string.IsNullOrWhiteSpace(worldDatabaseAddress))
+            {
+                worldDatabaseAddress = DbProfile.TrustedSqlServerHost;
+            }
+
+            bool useTrustedConnection = string.Equals(
+                worldDatabaseAddress,
+                DbProfile.TrustedSqlServerHost,
+                StringComparison.OrdinalIgnoreCase);
+
+            using var dialog = new WorldDatabaseInstallForm(worldDatabaseName, worldDatabaseAddress, useTrustedConnection);
             dialog.ShowDialog(this);
         }
 
@@ -418,7 +431,7 @@ namespace AccountServer
                 string.IsNullOrWhiteSpace(txtWorldAddress.Text) ||
                 string.IsNullOrWhiteSpace(txtWorldDb.Text))
             {
-                message = "World entry fields are required.";
+                message = "World name, database server address/IP, and DB name are required.";
                 return false;
             }
 

@@ -440,9 +440,9 @@ namespace AccountServer
             lblWorldAddress.AutoSize = true;
             lblWorldAddress.Location = new Point(16, 60);
             lblWorldAddress.Name = "lblWorldAddress";
-            lblWorldAddress.Size = new Size(49, 15);
+            lblWorldAddress.Size = new Size(94, 15);
             lblWorldAddress.TabIndex = 1;
-            lblWorldAddress.Text = "Address";
+            lblWorldAddress.Text = "DB Server/IP";
             // 
             // lblWorldName
             // 

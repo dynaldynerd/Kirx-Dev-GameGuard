@@ -14,14 +14,16 @@ namespace AccountServer
         private const string DefaultDatabaseName = "RF_World";
         private readonly string _databaseName;
 
-        public WorldDatabaseInstallForm(string databaseName)
+        public WorldDatabaseInstallForm(string databaseName, string? serverAddress = null, bool trustedConnection = true)
         {
             InitializeComponent();
             BindCountryOptions();
             _databaseName = databaseName;
             txtDatabaseName.Text = databaseName;
-            txtServerAddress.Text = "(local)";
-            chkTrustedConnection.Checked = true;
+            txtServerAddress.Text = string.IsNullOrWhiteSpace(serverAddress)
+                ? DbProfile.TrustedSqlServerHost
+                : serverAddress.Trim();
+            chkTrustedConnection.Checked = trustedConnection;
             UpdateCredentialUi();
         }
 

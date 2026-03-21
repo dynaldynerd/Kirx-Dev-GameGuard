@@ -87,7 +87,7 @@ public sealed class AppSettings
                     new()
                     {
                         Name = "RF_LEET",
-                        Address = "127.0.0.1",
+                        Address = DbProfile.TrustedSqlServerHost,
                         DbName = "RF_World",
                         Type = 0
                     }
@@ -188,7 +188,7 @@ public sealed class WorldListSettings
 public sealed class WorldEntry
 {
     public string Name { get; set; } = "";
-    public string Address { get; set; } = "";
+    public string Address { get; set; } = DbProfile.TrustedSqlServerHost;
     public string DbName { get; set; } = "";
     public int Type { get; set; }
     [JsonIgnore]

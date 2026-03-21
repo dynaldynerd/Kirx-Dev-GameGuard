@@ -101,9 +101,9 @@ public partial class WorldEntryForm
         lblAddress.AutoSize = true;
         lblAddress.Location = new Point(13, 39);
         lblAddress.Name = "lblAddress";
-        lblAddress.Size = new Size(49, 15);
+        lblAddress.Size = new Size(94, 15);
         lblAddress.TabIndex = 2;
-        lblAddress.Text = "Address";
+        lblAddress.Text = "DB Server/IP";
         // 
         // txtAddress
         // 
