@@ -13,6 +13,10 @@
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="ShipDebug|x64">
+      <Configuration>ShipDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
@@ -53,9 +57,19 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
-    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ShipDebug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
+    <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -64,9 +78,9 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
-    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -79,6 +93,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ShipDebug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,6 +158,33 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ShipDebug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\\tinyxml;$(ProjectDir)ThirdParty\\lua-5.1.5\\src;$(ProjectDir)ThirdParty\\cryptopp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;SHIPDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;SHIPDEBUG;NO_LEGACY_DEBUG_MANIFEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LinkIncremental>true</LinkIncremental>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -543,6 +587,7 @@
     <ClInclude Include="Entities\CRtc.h" />
     <ClInclude Include="Entities\CRusiaBillingMgr.h" />
     <ClInclude Include="Entities\RFAcc.h" />
+    <ClInclude Include="Entities\RuntimeAssert.h" />
     <ClInclude Include="Entities\CSetItemEffect.h" />
     <ClInclude Include="Entities\CSetItemType.h" />
     <ClInclude Include="Entities\CSkyBox.h" />
@@ -1304,6 +1349,7 @@
     <ClCompile Include="Entities\CRtc.cpp" />
     <ClCompile Include="Entities\CRusiaBillingMgr.cpp" />
     <ClCompile Include="Entities\RFAcc.cpp" />
+    <ClCompile Include="Entities\RuntimeAssert.cpp" />
     <ClCompile Include="Entities\CSetItemEffect.cpp" />
     <ClCompile Include="Entities\CSetItemType.cpp" />
     <ClCompile Include="Entities\CSkyBox.cpp" />
@@ -1612,7 +1658,8 @@
     <ProjectReference Include="ThirdParty\\cryptopp\\cryptlib.vcxproj">
       <Project>{c39f4b46-6e89-4074-902e-ca57073044d2}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <SetConfiguration>Configuration=$(Configuration)</SetConfiguration>
+      <SetConfiguration Condition="'$(Configuration)'=='ShipDebug'">Configuration=Release</SetConfiguration>
+      <SetConfiguration Condition="'$(Configuration)'!='ShipDebug'">Configuration=$(Configuration)</SetConfiguration>
       <SetPlatform>Platform=x64</SetPlatform>
     </ProjectReference>
   </ItemGroup>

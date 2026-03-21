@@ -416,7 +416,9 @@ BLOCK "VarFileInfo"
 }
 }
 
+#ifndef NO_LEGACY_DEBUG_MANIFEST
 1 24 "MANIFEST1_1.txt"
+#endif
 
 134 RCDATA "240134_1.bin"
 

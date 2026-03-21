@@ -15,6 +15,9 @@
 #include "LuaParam3.h"
 #include "LuaShim.h"
 #include "LuaTinker.h"
+#ifdef SHIPDEBUG
+#include "RuntimeAssert.h"
+#endif
 #include "WorldServerUtil.h"
 
 #include <assert.h>
@@ -315,10 +318,18 @@ bool CLuaScriptMgr::AttachLuaScript(CLuaScript *pScript, CLuaCommand *pAttachCom
 {
   if (!m_MasterState)
   {
+#ifdef SHIPDEBUG
+    RuntimeAssert::Fail(
+      L"m_MasterState",
+      L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
+      285);
+    return false;
+#else
     _wassert(
       L"m_MasterState",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
       285);
+#endif
   }
 
   if (!pScript)
@@ -365,10 +376,18 @@ bool CLuaScriptMgr::DetackLuaScript(CLuaScript *pScript)
 {
   if (!m_MasterState)
   {
+#ifdef SHIPDEBUG
+    RuntimeAssert::Fail(
+      L"m_MasterState",
+      L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
+      330);
+    return false;
+#else
     _wassert(
       L"m_MasterState",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\LuaScriptMgr\\LuaScriptMgr.cpp",
       330);
+#endif
   }
 
   if (!pScript)

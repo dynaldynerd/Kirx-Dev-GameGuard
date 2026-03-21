@@ -14,6 +14,9 @@
 #include "CRFMonsterAIMgr.h"
 #include "EmotionType.h"
 #include "GlobalObjects.h"
+#ifdef SHIPDEBUG
+#include "RuntimeAssert.h"
+#endif
 #include "WorldServerUtil.h"
 
 #include <assert.h>
@@ -270,11 +273,20 @@ if (!pHFS)
 
   if (!mon->m_pRecordSet)
   {
+#ifdef SHIPDEBUG
+    RuntimeAssert::Fail(
+      L"pMon->m_pRecordSet",
+      L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
+      L"Handler.cpp",
+      146);
+    return;
+#else
     _wassert(
       L"pMon->m_pRecordSet",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
       L"Handler.cpp",
       146);
+#endif
   }
 
   const int offensiveType = mon->GetOffensiveType();
@@ -886,11 +898,20 @@ if (!pMon || !pAI)
 
   if (!pMon->m_pRecordSet)
   {
+#ifdef SHIPDEBUG
+    RuntimeAssert::Fail(
+      L"pMon->m_pRecordSet",
+      L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
+      L"Handler.cpp",
+      364);
+    return 0;
+#else
     _wassert(
       L"pMon->m_pRecordSet",
       L"G:\\00_ZoneServer_Source\\03_Temp_Source\\2009_05_13_Source_Oversea\\zoneserver\\GameMain\\NewMonster\\NewMonsterAI_Df_"
       L"Handler.cpp",
       364);
+#endif
   }
 
   signed int normalValue = 100;

@@ -1,6 +1,9 @@
 ﻿#pragma once
 
 #include "IdaCompat.h"
+#ifdef SHIPDEBUG
+#include "RuntimeAssert.h"
+#endif
 
 #include <assert.h>
 #include <cstring>
@@ -80,7 +83,12 @@ namespace US
       }
       if (!m_pPool)
       {
+#ifdef SHIPDEBUG
+        RuntimeAssert::Fail(L"m_pPool", L".\\../Common/USGeneric/CircularFIFO.h", 97);
+        return;
+#else
         _wassert(L"m_pPool", L".\\../Common/USGeneric/CircularFIFO.h", 97);
+#endif
       }
     }
 
@@ -119,7 +127,12 @@ namespace US
       CScope_Lock<Lock> lock(&m_CS);
       if (!pOut)
       {
+#ifdef SHIPDEBUG
+        RuntimeAssert::Fail(L"pOut", L".\\../Common/USGeneric/CircularFIFO.h", 59);
+        return false;
+#else
         _wassert(L"pOut", L".\\../Common/USGeneric/CircularFIFO.h", 59);
+#endif
       }
       if (m_Size)
       {

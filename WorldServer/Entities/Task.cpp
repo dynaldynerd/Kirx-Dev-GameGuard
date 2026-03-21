@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include "Task.h"
+#ifdef SHIPDEBUG
+#include "RuntimeAssert.h"
+#endif
 
 #include <crtdbg.h>
 #include <intrin.h>
@@ -31,6 +34,17 @@ void Task::SetTask(int nTaskCode, const unsigned __int8 *p, unsigned __int64 siz
   _bFill = true;
   _nTaskCode = nTaskCode;
   std::memcpy(&_tmReg, MyTimer::GetTime(), sizeof(_tmReg));
+#ifdef SHIPDEBUG
+  if (size >= _nMaxBufSize
+      && RuntimeAssert::ShouldBreak(
+        L"size < _nMaxBufSize",
+        L"g:\\00_zoneserver_source\\03_temp_source\\2009_05_13_source_oversea\\zoneserver\\gamemain\\partiallypaid\\Task.h",
+        51))
+  {
+    __debugbreak();
+    return;
+  }
+#else
   if (size >= _nMaxBufSize
       && _CrtDbgReportW(
            2,
@@ -42,6 +56,7 @@ void Task::SetTask(int nTaskCode, const unsigned __int8 *p, unsigned __int64 siz
   {
     __debugbreak();
   }
+#endif
   _nBufSize = size;
   std::memcpy(_pBuf, p, _nBufSize);
 }
