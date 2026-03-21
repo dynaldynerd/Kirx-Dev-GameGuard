@@ -36,6 +36,9 @@ namespace AccountServer.UI
             normalAccountToolStripMenuItem = new ToolStripMenuItem();
             gMAccountToolStripMenuItem = new ToolStripMenuItem();
             banAccountToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
+            argon2SaltToolStripMenuItem = new ToolStripMenuItem();
             btnStart = new Button();
             btnStop = new Button();
             txtLog = new TextBox();
@@ -44,7 +47,7 @@ namespace AccountServer.UI
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, accountToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, accountToolStripMenuItem, helpToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(484, 24);
@@ -99,6 +102,27 @@ namespace AccountServer.UI
             banAccountToolStripMenuItem.Name = "banAccountToolStripMenuItem";
             banAccountToolStripMenuItem.Size = new Size(164, 22);
             banAccountToolStripMenuItem.Text = "Ban Account";
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { argon2SaltToolStripMenuItem });
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(107, 22);
+            aboutToolStripMenuItem.Text = "About";
+            // 
+            // argon2SaltToolStripMenuItem
+            // 
+            argon2SaltToolStripMenuItem.Name = "argon2SaltToolStripMenuItem";
+            argon2SaltToolStripMenuItem.Size = new Size(136, 22);
+            argon2SaltToolStripMenuItem.Text = "Argon2 Salt";
+            argon2SaltToolStripMenuItem.Click += OnShowArgon2Salt;
             // 
             // btnStart
             // 
@@ -161,6 +185,9 @@ namespace AccountServer.UI
         private ToolStripMenuItem normalAccountToolStripMenuItem;
         private ToolStripMenuItem gMAccountToolStripMenuItem;
         private ToolStripMenuItem banAccountToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem aboutToolStripMenuItem;
+        private ToolStripMenuItem argon2SaltToolStripMenuItem;
         private Button btnStart;
         private Button btnStop;
         private TextBox txtLog;

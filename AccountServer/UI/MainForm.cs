@@ -136,6 +136,12 @@ public partial class MainForm : Form
         form.ShowDialog(this);
     }
 
+    private void OnShowArgon2Salt(object? sender, EventArgs e)
+    {
+        using var form = new Argon2SaltForm(_settings.Security.Argon2SaltBase64);
+        form.ShowDialog(this);
+    }
+
     private void AppendLog(string message)
     {
         if (InvokeRequired)
