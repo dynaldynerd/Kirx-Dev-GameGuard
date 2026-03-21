@@ -14,6 +14,12 @@ public sealed class BillingDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        if (Database.IsSqlServer())
+        {
+            modelBuilder.HasDefaultSchema("dbo");
+        }
+
         modelBuilder.Entity<BillingUserStatus>(entity =>
         {
             entity.ToTable("tbl_UserStatus");

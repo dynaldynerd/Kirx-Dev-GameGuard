@@ -14,6 +14,7 @@ using LoginServer.Settings;
 using LoginServer.State;
 using RFNetworking;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace LoginServer.Handlers;
 
@@ -743,7 +744,7 @@ public sealed class ClientPacketRouter
                     return;
                 }
 
-                string userConnStr = settings.Database.BuildConnectionString(accountDbName);
+                string userConnStr = settings.Database.BuildConnectionString(databaseName: accountDbName);
                 string? passwordHash = null;
                 byte[] salt;
                 try
@@ -773,8 +774,9 @@ public sealed class ClientPacketRouter
 
                 var idHmac = CryptoHelper.ComputeHmacSha256(Encoding.UTF8.GetBytes(session.AccountId), salt);
                 var userDbOptions = DbContextOptionsFactory.Create<LoginDbContext>(settings.Database.Provider, userConnStr);
-                await using (var userCtx = new LoginDbContext(userDbOptions))
+                try
                 {
+                    await using var userCtx = new LoginDbContext(userDbOptions);
                     var account = await userCtx.Accounts
                         .AsNoTracking()
                         .FirstOrDefaultAsync(a => a.IdHmac == idHmac, cancellationToken)
@@ -784,6 +786,15 @@ public sealed class ClientPacketRouter
                     {
                         passwordHash = account.PasswordHash?.Trim();
                     }
+                }
+                catch (SqlException ex) when (settings.Database.Provider == LoginDatabaseProvider.SqlServer)
+                {
+                    var builder = new SqlConnectionStringBuilder(userConnStr);
+                    _log(
+                        $"RF_User query failed: provider=SqlServer dataSource={builder.DataSource} " +
+                        $"database={builder.InitialCatalog} accountDbName={accountDbName} " +
+                        $"accountDbIp={MainContext.Instance.AccountDbIp ?? string.Empty} ex={ex.Message}");
+                    throw;
                 }
 
                 if (passwordHash == null)

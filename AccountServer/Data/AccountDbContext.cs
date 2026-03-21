@@ -26,6 +26,11 @@ public sealed class AccountDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        if (Database.IsSqlServer())
+        {
+            modelBuilder.HasDefaultSchema("dbo");
+        }
+
         modelBuilder.Entity<StaffAccount>(entity =>
         {
             entity.ToTable("tbl_StaffAccount");
