@@ -177,7 +177,6 @@ function createNormalAccount(array $config, string $username, string $password):
 
     $idHmacHex = bin2hex($idHmac);
     $idEncHex = bin2hex($idEnc);
-    $now = date('Y-m-d H:i:s');
 
     if (!sqlsrv_begin_transaction($connection)) {
         throw new RuntimeException(formatSqlsrvErrors());
@@ -185,11 +184,6 @@ function createNormalAccount(array $config, string $username, string $password):
 
     try {
         if (binaryRecordExists($connection, 'dbo.tbl_rfaccount', 'id_hmac', $idHmacHex)) {
-            sqlsrv_rollback($connection);
-            return ['ok' => false, 'message' => 'That normal account already exists.'];
-        }
-
-        if (binaryRecordExists($connection, 'dbo.tbl_UserAccount', 'id_hmac', $idHmacHex)) {
             sqlsrv_rollback($connection);
             return ['ok' => false, 'message' => 'That normal account already exists.'];
         }
@@ -204,64 +198,6 @@ function createNormalAccount(array $config, string $username, string $password):
                 NULL
             );";
         runStatement($connection, $insertAuthSql, [$idHmacHex, $idEncHex, $passwordHashBase64]);
-
-        $insertUserSql = "
-            INSERT INTO dbo.tbl_UserAccount (
-                id_hmac,
-                id_enc,
-                createtime,
-                createip,
-                lastlogintime,
-                lastlogofftime,
-                totallogmin,
-                lastconnectip,
-                pushclosetime,
-                pusherip,
-                JoinCode,
-                LoginFailureCnt,
-                fire_on,
-                fire_warning,
-                uilock,
-                uilock_pw,
-                uilock_failcnt,
-                uilock_update,
-                uilock_hintindex,
-                uilock_hintanswer,
-                uilock_find_pass_failcnt
-            )
-            VALUES (
-                CONVERT(binary(32), ?, 2),
-                CONVERT(varbinary(128), ?, 2),
-                ?,
-                '0',
-                ?,
-                ?,
-                0,
-                '0',
-                ?,
-                '0',
-                0,
-                0,
-                ?,
-                ?,
-                0,
-                '',
-                0,
-                ?,
-                0,
-                '',
-                0
-            );";
-        runStatement($connection, $insertUserSql, [$idHmacHex, $idEncHex, $now, $now, $now, $now, $now, $now, $now]);
-
-        $serialSql = "SELECT TOP 1 serial FROM dbo.tbl_UserAccount WHERE id_hmac = CONVERT(binary(32), ?, 2);";
-        $serialStatement = runStatement($connection, $serialSql, [$idHmacHex]);
-        $serialRow = sqlsrv_fetch_array($serialStatement, SQLSRV_FETCH_ASSOC);
-        if ($serialRow === null || !isset($serialRow['serial'])) {
-            throw new RuntimeException('Created account row but could not read back serial.');
-        }
-
-        runStatement($connection, 'INSERT INTO dbo.tbl_usercurrentstate (serial, state) VALUES (?, 0);', [(int)$serialRow['serial']]);
 
         if (!sqlsrv_commit($connection)) {
             throw new RuntimeException(formatSqlsrvErrors());

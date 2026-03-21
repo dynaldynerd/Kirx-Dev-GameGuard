@@ -59,19 +59,13 @@ public sealed class AccountAdminService
         bool authExists = await db.AccountAuths.AsNoTracking()
             .AnyAsync(x => x.IdHmac == idHmac, token)
             .ConfigureAwait(false);
-        bool userExists = await db.UserAccounts.AsNoTracking()
-            .AnyAsync(x => x.IdHmac == idHmac, token)
-            .ConfigureAwait(false);
-        if (authExists || userExists)
+        if (authExists)
         {
             return AccountAdminResult.Fail("That normal account already exists.");
         }
 
         string passwordHash = CryptoHelper.HashArgon2idBase64(password, _argonSalt);
         byte[] idEnc = EncryptId(username);
-        var now = DateTime.Now;
-
-        await using var tx = await db.Database.BeginTransactionAsync(token).ConfigureAwait(false);
 
         db.AccountAuths.Add(new AccountAuth
         {
@@ -82,51 +76,7 @@ public sealed class AccountAdminService
             BirthDate = null
         });
 
-        var userAccount = new UserAccount
-        {
-            IdHmac = idHmac,
-            IdEnc = idEnc,
-            CreateTime = now,
-            CreateIp = "0",
-            LastLoginTime = now,
-            LastLogoffTime = now,
-            TotalLogMin = 0,
-            LastConnectIp = "0",
-            PushCloseTime = now,
-            PusherIp = "0",
-            JoinCode = 0,
-            LoginFailureCnt = 0,
-            FireOn = now,
-            FireWarning = now,
-            UiLock = 0,
-            UiLockPw = string.Empty,
-            UiLockFailCnt = 0,
-            UiLockUpdate = now,
-            UiLockHintIndex = 0,
-            UiLockHintAnswer = string.Empty,
-            UiLockFindPassFailCount = 0
-        };
-
-        db.UserAccounts.Add(userAccount);
         await db.SaveChangesAsync(token).ConfigureAwait(false);
-
-        int serial = userAccount.Serial;
-        if (serial <= 0)
-        {
-            serial = await db.UserAccounts.AsNoTracking()
-                .Where(x => x.IdHmac == idHmac)
-                .Select(x => x.Serial)
-                .FirstAsync(token)
-                .ConfigureAwait(false);
-        }
-
-        db.UserCurrentStates.Add(new UserCurrentState
-        {
-            Serial = serial,
-            State = 0
-        });
-        await db.SaveChangesAsync(token).ConfigureAwait(false);
-        await tx.CommitAsync(token).ConfigureAwait(false);
 
         return AccountAdminResult.Success($"Normal account '{username}' created.");
     }

@@ -7,7 +7,7 @@ Requirements:
 - `sqlsrv` extension
 - `openssl` extension
 - `sodium` extension
-- SQL Server account with insert/select access to `tbl_rfaccount`, `tbl_UserAccount`, and `tbl_usercurrentstate`
+- SQL Server account with insert/select access to `tbl_rfaccount`
 
 Setup:
 1. Copy `.env.example` to `.env`

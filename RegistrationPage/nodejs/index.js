@@ -134,7 +134,6 @@ async function createNormalAccount(username, password) {
   const passwordHashBase64 = await hashPassword(password);
   const idHmacHex = idHmac.toString('hex');
   const idEncHex = idEnc.toString('hex');
-  const now = new Date();
 
   const pool = new sql.ConnectionPool({
     server: config.dbHost,
@@ -168,16 +167,6 @@ async function createNormalAccount(username, password) {
 
     request = new sql.Request(transaction);
     request.input('id_hmac_hex', sql.VarChar(64), idHmacHex);
-    result = await request.query(
-      "SELECT TOP 1 1 AS found FROM dbo.tbl_UserAccount WHERE id_hmac = CONVERT(binary(32), @id_hmac_hex, 2);"
-    );
-    if (result.recordset.length > 0) {
-      await transaction.rollback();
-      return { ok: false, message: 'That normal account already exists.' };
-    }
-
-    request = new sql.Request(transaction);
-    request.input('id_hmac_hex', sql.VarChar(64), idHmacHex);
     request.input('id_enc_hex', sql.VarChar(sql.MAX), idEncHex);
     request.input('password_hash', sql.VarChar(255), passwordHashBase64);
     await request.query(`
@@ -190,75 +179,6 @@ async function createNormalAccount(username, password) {
         NULL
       );
     `);
-
-    request = new sql.Request(transaction);
-    request.input('id_hmac_hex', sql.VarChar(64), idHmacHex);
-    request.input('id_enc_hex', sql.VarChar(sql.MAX), idEncHex);
-    request.input('now', sql.DateTime, now);
-    await request.query(`
-      INSERT INTO dbo.tbl_UserAccount (
-        id_hmac,
-        id_enc,
-        createtime,
-        createip,
-        lastlogintime,
-        lastlogofftime,
-        totallogmin,
-        lastconnectip,
-        pushclosetime,
-        pusherip,
-        JoinCode,
-        LoginFailureCnt,
-        fire_on,
-        fire_warning,
-        uilock,
-        uilock_pw,
-        uilock_failcnt,
-        uilock_update,
-        uilock_hintindex,
-        uilock_hintanswer,
-        uilock_find_pass_failcnt
-      )
-      VALUES (
-        CONVERT(binary(32), @id_hmac_hex, 2),
-        CONVERT(varbinary(128), @id_enc_hex, 2),
-        @now,
-        '0',
-        @now,
-        @now,
-        0,
-        '0',
-        @now,
-        '0',
-        0,
-        0,
-        @now,
-        @now,
-        0,
-        '',
-        0,
-        @now,
-        0,
-        '',
-        0
-      );
-    `);
-
-    request = new sql.Request(transaction);
-    request.input('id_hmac_hex', sql.VarChar(64), idHmacHex);
-    result = await request.query(
-      "SELECT TOP 1 serial FROM dbo.tbl_UserAccount WHERE id_hmac = CONVERT(binary(32), @id_hmac_hex, 2);"
-    );
-    if (result.recordset.length === 0) {
-      throw new Error('Created account row but could not read back serial.');
-    }
-
-    const serial = result.recordset[0].serial;
-    request = new sql.Request(transaction);
-    request.input('serial', sql.Int, serial);
-    await request.query(
-      'INSERT INTO dbo.tbl_usercurrentstate (serial, state) VALUES (@serial, 0);'
-    );
 
     await transaction.commit();
     return { ok: true, message: `Normal account '${username}' created.` };
