@@ -71,9 +71,7 @@ namespace AccountServer
                 : new WorldEntry();
 
             txtWorldName.Text = world.Name;
-            txtWorldAddress.Text = string.IsNullOrWhiteSpace(world.Address)
-                ? DbProfile.TrustedSqlServerHost
-                : world.Address;
+            txtWorldAddress.Text = WorldEntry.NormalizeDatabaseServerAddress(world.Address);
             txtWorldDb.Text = world.DbName;
             cmbWorldType.SelectedIndex = GetWorldTypeIndex(world.Type);
 
@@ -481,7 +479,7 @@ namespace AccountServer
                 new()
                 {
                     Name = txtWorldName.Text.Trim(),
-                    Address = txtWorldAddress.Text.Trim(),
+                    Address = WorldEntry.NormalizeDatabaseServerAddress(txtWorldAddress.Text),
                     DbName = txtWorldDb.Text.Trim(),
                     Type = GetSelectedWorldType()
                 }

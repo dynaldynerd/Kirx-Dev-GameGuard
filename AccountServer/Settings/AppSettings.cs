@@ -43,6 +43,11 @@ public sealed class AppSettings
         {
             settings.Database.User.Host = DbProfile.TrustedSqlServerHost;
         }
+        settings.WorldList ??= new WorldListSettings();
+        foreach (var world in settings.WorldList.Worlds)
+        {
+            world.Address = WorldEntry.NormalizeDatabaseServerAddress(world.Address);
+        }
         return settings;
     }
 
@@ -57,6 +62,11 @@ public sealed class AppSettings
         if (Database.Provider == DatabaseProvider.SqlServer && Database.User.TrustedConnection)
         {
             Database.User.Host = DbProfile.TrustedSqlServerHost;
+        }
+        WorldList ??= new WorldListSettings();
+        foreach (var world in WorldList.Worlds)
+        {
+            world.Address = WorldEntry.NormalizeDatabaseServerAddress(world.Address);
         }
         var json = JsonSerializer.Serialize(this, JsonOptions());
         File.WriteAllText(path, json);
@@ -187,6 +197,20 @@ public sealed class WorldListSettings
 
 public sealed class WorldEntry
 {
+    public static string NormalizeDatabaseServerAddress(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return DbProfile.TrustedSqlServerHost;
+        }
+
+        string trimmed = address.Trim();
+        return trimmed.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+               trimmed.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            ? DbProfile.TrustedSqlServerHost
+            : trimmed;
+    }
+
     public string Name { get; set; } = "";
     public string Address { get; set; } = DbProfile.TrustedSqlServerHost;
     public string DbName { get; set; } = "";

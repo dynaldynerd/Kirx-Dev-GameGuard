@@ -22,9 +22,7 @@ public partial class WorldEntryForm : Form
     private void LoadEntry()
     {
         txtName.Text = _entry.Name;
-        txtAddress.Text = string.IsNullOrWhiteSpace(_entry.Address)
-            ? DbProfile.TrustedSqlServerHost
-            : _entry.Address;
+        txtAddress.Text = WorldEntry.NormalizeDatabaseServerAddress(_entry.Address);
         txtDbName.Text = _entry.DbName;
         cmbType.SelectedIndex = _entry.Type == 1 ? 1 : 0;
     }
@@ -51,7 +49,7 @@ public partial class WorldEntryForm : Form
         }
 
         _entry.Name = name;
-        _entry.Address = address;
+        _entry.Address = WorldEntry.NormalizeDatabaseServerAddress(address);
         _entry.DbName = dbName;
         _entry.Type = cmbType.SelectedIndex == 1 ? 1 : 0;
 
@@ -75,11 +73,7 @@ public partial class WorldEntryForm : Form
             return;
         }
 
-        string serverAddress = txtAddress.Text.Trim();
-        if (string.IsNullOrEmpty(serverAddress))
-        {
-            serverAddress = DbProfile.TrustedSqlServerHost;
-        }
+        string serverAddress = WorldEntry.NormalizeDatabaseServerAddress(txtAddress.Text);
 
         bool useTrustedConnection = string.Equals(
             serverAddress,
