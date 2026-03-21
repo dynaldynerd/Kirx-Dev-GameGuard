@@ -6,7 +6,7 @@ namespace
 {
 constexpr char kDefaultBillingServer[] = "(local)";
 constexpr char kDefaultBillingDbName[] = "BILLING";
-constexpr char kDefaultWorldTrustedConnection[] = "0";
+constexpr char kDefaultWorldTrustedConnection[] = "1";
 constexpr char kDefaultBillingTrustedConnection[] = "1";
 constexpr char kDefaultUserId[] = "sa";
 }
@@ -34,7 +34,7 @@ CDatabaseSetupDlg::CDatabaseSetupDlg(CWnd *pParent)
     m_billingDbName(),
     m_billingUserId(),
     m_billingPassword(),
-    m_worldTrustedConnection(FALSE),
+    m_worldTrustedConnection(TRUE),
     m_billingTrustedConnection(TRUE)
 {
 }
@@ -171,7 +171,7 @@ void CDatabaseSetupDlg::LoadSettings()
   m_billingDbName = CString(kDefaultBillingDbName);
   m_billingUserId = CString(kDefaultUserId);
   m_billingPassword.Empty();
-  m_worldTrustedConnection = FALSE;
+  m_worldTrustedConnection = TRUE;
   m_billingTrustedConnection = TRUE;
 
   const CStringA iniPath = BuildIniPath();
