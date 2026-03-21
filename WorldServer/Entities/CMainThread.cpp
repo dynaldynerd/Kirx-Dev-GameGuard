@@ -1403,7 +1403,7 @@ void TimeLimitMgr::InsertPlayerStatus(
 unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 15, "%d", dwLastConnTime);
+  sprintf_s(buffer, 15, "%u", dwLastConnTime);
   const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};
@@ -1448,7 +1448,7 @@ unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
 unsigned int TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 15, "%d", dwLastConnTime);
+  sprintf_s(buffer, 15, "%u", dwLastConnTime);
   const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};

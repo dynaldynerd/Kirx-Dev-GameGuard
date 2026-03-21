@@ -1811,7 +1811,7 @@ unsigned __int8 CRFWorldDatabase::Select_Unit(unsigned int dwCharacterSerial, _w
         }
         for (int j = 0; j < 4; ++j)
         {
-          ret = SQLGetData(m_hStmtSelect, ++column, 4, &pUnitInfo->UnitInfo[j].dwCutTime, 0, &indicator);
+          ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pUnitInfo->UnitInfo[j].dwCutTime, 0, &indicator);
         }
         for (int k = 0; k < 8; ++k)
         {

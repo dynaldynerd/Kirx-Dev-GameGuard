@@ -1499,7 +1499,7 @@ char CMainThread::_db_Update_Unit(
         sprintf_s(
           source,
           sizeof(source),
-          "Cut_%d=%d,",
+          "Cut_%d=%u,",
           unitIndex,
           pNewData->dbUnit.m_List[unitIndex].dwCutTime);
         std::strcat(buffer, source);
@@ -1767,7 +1767,7 @@ char CMainThread::_db_Update_NpcQuest_History(
       sprintf_s(
         buffer,
         sizeof(buffer),
-        "Code%d='%s',Level%d=%d ,Time%d=%d,",
+        "Code%d='%s',Level%d=%d ,Time%d=%u,",
         index + 1,
         pNewData->dbQuest.m_History[index].szQuestCode,
         index + 1,
@@ -2652,7 +2652,7 @@ char CMainThread::_db_Update_PrimiumPlayTime(
 
   if (pNewData->dbPlayTimeInPcbang.dwLastConnTime != pOldData->dbPlayTimeInPcbang.dwLastConnTime)
   {
-    sprintf_s(buffer, sizeof(buffer), "[LastConnTime]= %d,", pNewData->dbPlayTimeInPcbang.dwLastConnTime);
+    sprintf_s(buffer, sizeof(buffer), "[LastConnTime]= %u,", pNewData->dbPlayTimeInPcbang.dwLastConnTime);
     std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.dwContPlayTime != pOldData->dbPlayTimeInPcbang.dwContPlayTime)
