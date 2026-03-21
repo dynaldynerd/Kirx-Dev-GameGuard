@@ -123,7 +123,7 @@ public sealed class DatabaseSettings
     public string BillingPassword { get; set; } = "";
     public bool BillingTrustedConnection { get; set; } = true;
 
-    public string BuildConnectionString(string? basePath = null)
+    public string BuildUserConnectionString(string? basePath = null)
     {
         return BuildConnectionString(Provider, Host, Port, Database, User, Password, TrustedConnection, basePath);
     }

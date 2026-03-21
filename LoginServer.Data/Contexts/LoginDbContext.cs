@@ -12,6 +12,12 @@ public sealed class LoginDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        if (Database.IsSqlServer())
+        {
+            modelBuilder.HasDefaultSchema("dbo");
+        }
+
         modelBuilder.Entity<Account>(entity =>
         {
             entity.ToTable("tbl_rfaccount");
