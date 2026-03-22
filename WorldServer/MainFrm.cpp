@@ -27,6 +27,19 @@ constexpr UINT kStatusIndicators[] = {
   ID_SEPARATOR,
   ID_SEPARATOR,
 };
+
+bool HasPendingUserDbWork()
+{
+  for (int userIndex = 0; userIndex < MAX_PLAYER; ++userIndex)
+  {
+    if (g_UserDB[userIndex].m_bDBWaitState)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
 }
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
@@ -143,10 +156,13 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
-  if (nIDEvent == 0 && m_bExitConfirm && !m_bAllowWindowClose && !g_Main.m_bServerClosing)
+  if (nIDEvent == 0 && m_bExitConfirm && !m_bAllowWindowClose)
   {
-    FinalizeShutdown();
-    return;
+    if (!g_Main.m_bServerClosing && !HasPendingUserDbWork())
+    {
+      FinalizeShutdown();
+      return;
+    }
   }
 
   UpdateStatusBar();

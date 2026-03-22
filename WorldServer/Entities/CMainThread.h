@@ -812,6 +812,8 @@ public:
   CLogFile m_logHack;
   CLogFile m_logPvP;
   CLogFile m_logMonNum;
+  CMyTimer m_tmPreCloseCountdown;
+  int m_nPreCloseCountdownSeconds;
   CMyTimer m_tmForceUserExit;
   int m_nForceExitSocketIndexOffset;
   bool m_bServerClosing;
@@ -1319,6 +1321,8 @@ public:
   virtual ~CMainThread();
 
 private:
+  void BroadcastPreCloseCountdown(int remainingSeconds);
+  void ProcessPreCloseCountdown();
   void OnRun();
   void CheckAvatorState();
   void CheckAccountLineState();
