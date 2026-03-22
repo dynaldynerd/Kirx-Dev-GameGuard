@@ -2,6 +2,7 @@
 
 #include "CGameServerView.h"
 
+#include "MainFrm.h"
 #include "CGameServerDoc.h"
 #include "COpenDlg.h"
 #include "DatabaseSetupDlg.h"
@@ -22,6 +23,7 @@ IMPLEMENT_DYNCREATE(CGameServerView, CFormView)
 
 BEGIN_MESSAGE_MAP(CGameServerView, CFormView)
   ON_WM_CREATE()
+  ON_BN_CLICKED(IDC_MAIN_START, &CGameServerView::OnButtonStart)
   ON_BN_CLICKED(1029, &CGameServerView::OnButtonDisplayall)
   ON_BN_CLICKED(1024, &CGameServerView::OnButtonMonster)
   ON_BN_CLICKED(1022, &CGameServerView::OnBUTTONPreClose)
@@ -33,12 +35,16 @@ END_MESSAGE_MAP()
 
 CGameServerView::CGameServerView()
   : CFormView(IDD_MAIN_VIEW),
+    m_btStart(),
     m_btServerClose(),
     m_btPreClose(),
     m_btMonster(),
     m_btDisplayAll(),
     m_btHSKStop(),
-    m_btLogFile()
+    m_btLogFile(),
+    m_bStartupInProgress(false),
+    m_bStartupCompleted(false),
+    m_bRuntimeViewsCreated(false)
 {
 }
 
@@ -50,6 +56,7 @@ CGameServerView::~CGameServerView()
 void CGameServerView::DoDataExchange(CDataExchange *pDX)
 {
   CFormView::DoDataExchange(pDX);
+  DDX_Control(pDX, IDC_MAIN_START, m_btStart);
   DDX_Control(pDX, 1025, m_btServerClose);
   DDX_Control(pDX, 1022, m_btPreClose);
   DDX_Control(pDX, 1024, m_btMonster);
@@ -72,6 +79,7 @@ void CGameServerView::OnInitialUpdate()
     parentFrame->RecalcLayout(TRUE);
   }
   ResizeParentToFit(TRUE);
+  UpdateStartupControls();
 }
 
 int CGameServerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -82,46 +90,101 @@ int CGameServerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
   }
 
   CGameServerDoc *document = GetDocument();
-
-  if (!HasRequiredStartupSettings())
-  {
-    CDatabaseSetupDlg databaseSetupDialog;
-    if (databaseSetupDialog.DoModal() != IDOK)
-    {
-      return -1;
-    }
-  }
-
-  COpenDlg openDialog;
-  CWnd *desktopWindow = CWnd::GetDesktopWindow();
-  openDialog.Create(IDD_LOADING, desktopWindow);
-
-  if (!g_Main.Init())
-  {
-    MyMessageBox("Error", "CGameServerView::OnCreate(...) : \r\ng_Main.Init() Fail!");
-    openDialog.DestroyWindow();
-    return -1;
-  }
-
-  openDialog.DestroyWindow();
   if (document != nullptr)
   {
-    document->CreateDisplayView(this);
-    document->CreateSheetView(this);
     document->m_pwndMainView = this;
   }
 
-  CFrameWnd *parentFrame = GetParentFrame();
-  if (parentFrame != nullptr)
+  if (CDatabaseSetupDlg::IsAutoStartEnabled())
   {
-    parentFrame->SetWindowText(_T("RF Online: WorldServer"));
+    OnButtonStart();
   }
 
   return 0;
 }
 
+void CGameServerView::OnButtonStart()
+{
+  if (m_bStartupInProgress || m_bStartupCompleted)
+  {
+    return;
+  }
+
+  CMainFrame *mainFrame = GetMainFrame();
+  m_bStartupInProgress = true;
+  UpdateStartupControls();
+  if (mainFrame != nullptr)
+  {
+    mainFrame->SetServerStartupState(CMainFrame::kStarting);
+  }
+
+  if (!HasRequiredStartupSettings())
+  {
+    CDatabaseSetupDlg databaseSetupDialog(this);
+    if (databaseSetupDialog.DoModal() != IDOK)
+    {
+      m_bStartupInProgress = false;
+      UpdateStartupControls();
+      if (mainFrame != nullptr)
+      {
+        mainFrame->SetServerStartupState(CMainFrame::kNotStarted);
+      }
+      return;
+    }
+  }
+
+  COpenDlg openDialog;
+  CWnd *desktopWindow = CWnd::GetDesktopWindow();
+  if (desktopWindow != nullptr)
+  {
+    openDialog.Create(IDD_LOADING, desktopWindow);
+  }
+
+  if (!g_Main.Init())
+  {
+    MyMessageBox("Error", "CGameServerView::OnButtonStart(...) : \r\ng_Main.Init() Fail!");
+    if (openDialog.GetSafeHwnd() != nullptr)
+    {
+      openDialog.DestroyWindow();
+    }
+
+    m_bStartupInProgress = false;
+    UpdateStartupControls();
+    if (mainFrame != nullptr)
+    {
+      mainFrame->SetServerStartupState(CMainFrame::kNotStarted);
+    }
+    return;
+  }
+
+  if (openDialog.GetSafeHwnd() != nullptr)
+  {
+    openDialog.DestroyWindow();
+  }
+
+  CGameServerDoc *document = GetDocument();
+  if (document != nullptr)
+  {
+    EnsureRuntimeViewsCreated(document);
+    document->m_pwndMainView = this;
+  }
+
+  m_bStartupCompleted = true;
+  m_bStartupInProgress = false;
+  UpdateStartupControls();
+  if (mainFrame != nullptr)
+  {
+    mainFrame->SetServerStartupState(CMainFrame::kStarted);
+  }
+}
+
 void CGameServerView::OnButtonDisplaymode()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1001, 0, 0, 0);
@@ -130,6 +193,11 @@ void CGameServerView::OnButtonDisplaymode()
 
 void CGameServerView::OnButtonDisplayall()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1009, 0, 0, 0);
@@ -138,6 +206,11 @@ void CGameServerView::OnButtonDisplayall()
 
 void CGameServerView::OnButtonMonster()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1003, 0, 0, 0);
@@ -146,6 +219,11 @@ void CGameServerView::OnButtonMonster()
 
 void CGameServerView::OnBUTTONPreClose()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1010, 0, 0, 0);
@@ -159,6 +237,11 @@ void CGameServerView::OnButtonLogfile()
 
 void CGameServerView::OnBUTTONServerClose()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1012, 0, 0, 0);
@@ -167,6 +250,11 @@ void CGameServerView::OnBUTTONServerClose()
 
 void CGameServerView::OnBUTTONHSKControl()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     g_Main.m_GameMsg.PackingMsg(1015, 0, 0, 0);
@@ -180,6 +268,11 @@ void CGameServerView::OnBUTTONWorldConnect()
 
 void CGameServerView::OnButtonOffplayer()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode())
   {
     // this is not a stub
@@ -190,6 +283,11 @@ void CGameServerView::OnButtonOffplayer()
 
 void CGameServerView::OnButtonDummy()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode() && g_pDoc != nullptr)
   {
     CRect drawRect;
@@ -200,6 +298,11 @@ void CGameServerView::OnButtonDummy()
 
 void CGameServerView::OnButtonCollline()
 {
+  if (!IsServerStarted())
+  {
+    return;
+  }
+
   if (!g_Main.IsReleaseServiceMode() && g_pDoc != nullptr)
   {
     CRect drawRect;
@@ -216,4 +319,71 @@ CGameServerDoc *CGameServerView::GetDocument() const
     return nullptr;
   }
   return static_cast<CGameServerDoc *>(m_pDocument);
+}
+
+CMainFrame *CGameServerView::GetMainFrame() const
+{
+  return DYNAMIC_DOWNCAST(CMainFrame, GetParentFrame());
+}
+
+bool CGameServerView::IsServerStarted() const
+{
+  return m_bStartupCompleted;
+}
+
+void CGameServerView::EnsureRuntimeViewsCreated(CGameServerDoc *document)
+{
+  if (document == nullptr || m_bRuntimeViewsCreated)
+  {
+    return;
+  }
+
+  document->CreateDisplayView(this);
+  document->CreateSheetView(this);
+  m_bRuntimeViewsCreated = true;
+}
+
+void CGameServerView::UpdateStartupControls()
+{
+  const BOOL enableServerControls = m_bStartupCompleted ? TRUE : FALSE;
+  if (m_btDisplayAll.GetSafeHwnd() != nullptr)
+  {
+    m_btDisplayAll.EnableWindow(enableServerControls);
+  }
+  if (m_btMonster.GetSafeHwnd() != nullptr)
+  {
+    m_btMonster.EnableWindow(enableServerControls);
+  }
+  if (m_btLogFile.GetSafeHwnd() != nullptr)
+  {
+    m_btLogFile.EnableWindow(enableServerControls);
+  }
+  if (m_btPreClose.GetSafeHwnd() != nullptr)
+  {
+    m_btPreClose.EnableWindow(enableServerControls);
+  }
+  if (m_btServerClose.GetSafeHwnd() != nullptr)
+  {
+    m_btServerClose.EnableWindow(enableServerControls);
+  }
+  if (m_btHSKStop.GetSafeHwnd() != nullptr)
+  {
+    m_btHSKStop.EnableWindow(enableServerControls);
+  }
+  if (m_btStart.GetSafeHwnd() != nullptr)
+  {
+    m_btStart.EnableWindow((!m_bStartupInProgress && !m_bStartupCompleted) ? TRUE : FALSE);
+    if (m_bStartupCompleted)
+    {
+      m_btStart.SetWindowText(_T("Started"));
+    }
+    else if (m_bStartupInProgress)
+    {
+      m_btStart.SetWindowText(_T("Starting..."));
+    }
+    else
+    {
+      m_btStart.SetWindowText(_T("Start"));
+    }
+  }
 }

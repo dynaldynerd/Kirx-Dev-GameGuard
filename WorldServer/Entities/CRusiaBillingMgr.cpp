@@ -35,7 +35,7 @@ CRusiaBillingMgr *CRusiaBillingMgr::Instance()
   char currentDir[MAX_PATH]{};
   if (GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDir)), currentDir))
   {
-    sprintf_s(iniPath, sizeof(iniPath), "%s\\Initialize\\Database.ini", currentDir);
+    sprintf_s(iniPath, sizeof(iniPath), "%s\\Initialize\\settings.ini", currentDir);
   }
 
   char szDSN[64]{};
@@ -196,7 +196,7 @@ int CRusiaBillingMgr::LoadINIFile()
   memset(buffer, 0, 260);
   GetCurrentDirectoryA(260, buffer);
   memset(fileName, 0, 260);
-  sprintf_s(fileName, sizeof(fileName), "%s\\Initialize\\Database.ini", buffer);
+  sprintf_s(fileName, sizeof(fileName), "%s\\Initialize\\settings.ini", buffer);
 
   std::memset(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase, 0, sizeof(CRusiaBillingMgr::m_pRusiaBill->m_lpszDataBase));
   if (!GetPrivateProfileStringA(

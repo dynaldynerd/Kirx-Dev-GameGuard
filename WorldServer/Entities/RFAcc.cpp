@@ -14,7 +14,7 @@ bool CRFAcc::ReadRfAccOptions(char *ip, unsigned __int64 ipSize, bool *trustedCo
   if (!GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDir)), currentDir)) { return false; }
 
   char iniPath[MAX_PATH]{};
-  sprintf_s(iniPath, "%s\\Initialize\\Database.ini", currentDir);
+  sprintf_s(iniPath, "%s\\Initialize\\settings.ini", currentDir);
 
   char trustedBuffer[16]{};
   if (!ReadOptionAndWriteDefault(iniPath, "Billing", "IP", "(local)", ip, ipSize)) { return false; }

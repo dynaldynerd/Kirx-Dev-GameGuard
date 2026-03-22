@@ -36,8 +36,8 @@ CNationSettingData *CNationSettingFactoryRU::Create(
   created->SetCashDBDSNSetFlag();
   char worldDbId[64]{};
   char worldDbPw[64]{};
-  ReadOptionAndWriteDefault(".\\Initialize\\Database.ini", "WorldDB", "ID", "rfrusworld", worldDbId, sizeof(worldDbId));
-  ReadOptionAndWriteDefault(".\\Initialize\\Database.ini", "WorldDB", "PWD", "#rf%rusworld", worldDbPw, sizeof(worldDbPw));
+  ReadOptionAndWriteDefault(".\\Initialize\\settings.ini", "WorldDB", "ID", "rfrusworld", worldDbId, sizeof(worldDbId));
+  ReadOptionAndWriteDefault(".\\Initialize\\settings.ini", "WorldDB", "PWD", "#rf%rusworld", worldDbPw, sizeof(worldDbPw));
   strcpy_s(created->m_szWorldDBID, sizeof(created->m_szWorldDBID), worldDbId);
   strcpy_s(created->m_szWorldDBPW, sizeof(created->m_szWorldDBPW), worldDbPw);
 

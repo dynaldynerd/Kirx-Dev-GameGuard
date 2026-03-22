@@ -467,7 +467,7 @@ bool CLogTypeDBTaskManager::InitDB(const char *szDBName, const char *szDBIP)
 
   char trustedConnectionValue[16]{};
   ReadOptionAndWriteDefault(
-    ".\\Initialize\\Database.ini",
+    ".\\Initialize\\settings.ini",
     "WorldDB",
     "trusted_connection",
     "0",

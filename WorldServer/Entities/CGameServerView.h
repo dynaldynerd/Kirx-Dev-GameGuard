@@ -4,6 +4,7 @@
 #include "resource.h"
 
 class CGameServerDoc;
+class CMainFrame;
 
 class CGameServerView : public CFormView
 {
@@ -33,6 +34,7 @@ protected:
   void OnInitialUpdate() override;
 
   afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+  afx_msg void OnButtonStart();
   afx_msg void OnButtonDisplaymode();
   afx_msg void OnButtonDisplayall();
   afx_msg void OnButtonMonster();
@@ -44,10 +46,20 @@ protected:
   DECLARE_MESSAGE_MAP()
 
 private:
+  CMainFrame *GetMainFrame() const;
+  bool IsServerStarted() const;
+  void EnsureRuntimeViewsCreated(CGameServerDoc *document);
+  void UpdateStartupControls();
+
+private:
+  CButton m_btStart;
   CButton m_btServerClose;
   CButton m_btPreClose;
   CButton m_btMonster;
   CButton m_btDisplayAll;
   CButton m_btHSKStop;
   CButton m_btLogFile;
+  bool m_bStartupInProgress;
+  bool m_bStartupCompleted;
+  bool m_bRuntimeViewsCreated;
 };

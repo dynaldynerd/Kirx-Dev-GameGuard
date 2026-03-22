@@ -16,7 +16,7 @@
 namespace
 {
 constexpr int kFixedWindowWidth = 700;
-constexpr int kFixedWindowHeight = 540;
+constexpr int kFixedWindowHeight = 580;
 constexpr UINT kStatusIndicators[] = {
   ID_SEPARATOR,
   ID_SEPARATOR,
@@ -27,6 +27,20 @@ constexpr UINT kStatusIndicators[] = {
   ID_SEPARATOR,
   ID_SEPARATOR,
 };
+
+LPCTSTR GetStartupStateTitle(CMainFrame::ServerStartupState state)
+{
+  switch (state)
+  {
+    case CMainFrame::kStarting:
+      return _T("Starting");
+    case CMainFrame::kStarted:
+      return _T("Started");
+    case CMainFrame::kNotStarted:
+    default:
+      return _T("Not Started");
+  }
+}
 }
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
@@ -43,6 +57,7 @@ END_MESSAGE_MAP()
 CMainFrame::CMainFrame() noexcept
   : m_bExitConfirm(false),
     m_bAllowWindowClose(false),
+    m_serverStartupState(kNotStarted),
     m_statusBar()
 {
   g_pFrame = this;
@@ -71,6 +86,12 @@ __int64 CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       return CFrameWnd::WindowProc(message, wParam, lParam);
     }
 
+    if (!IsServerStarted())
+    {
+      m_bAllowWindowClose = true;
+      return CFrameWnd::WindowProc(message, wParam, lParam);
+    }
+
     if (!m_bExitConfirm)
     {
       int messageResult = IDYES;
@@ -91,6 +112,27 @@ __int64 CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
   }
 
   return CFrameWnd::WindowProc(message, wParam, lParam);
+}
+
+void CMainFrame::SetServerStartupState(ServerStartupState state)
+{
+  m_serverStartupState = state;
+  UpdateStatusBar();
+  RefreshWindowTitle();
+  if (GetSafeHwnd() != nullptr)
+  {
+    UpdateWindow();
+  }
+}
+
+CMainFrame::ServerStartupState CMainFrame::GetServerStartupState() const
+{
+  return m_serverStartupState;
+}
+
+bool CMainFrame::IsServerStarted() const
+{
+  return m_serverStartupState == kStarted;
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -143,7 +185,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
-  if (nIDEvent == 0 && m_bExitConfirm && !m_bAllowWindowClose && !g_Main.m_bServerClosing)
+  if (nIDEvent == 0 && IsServerStarted() && m_bExitConfirm && !m_bAllowWindowClose && !g_Main.m_bServerClosing)
   {
     FinalizeShutdown();
     return;
@@ -224,13 +266,27 @@ void CMainFrame::BuildAsciiTitleToken(const char *source, char *destination, siz
 
 void CMainFrame::RefreshWindowTitle()
 {
+  if (GetSafeHwnd() == nullptr)
+  {
+    return;
+  }
+
+  const LPCTSTR startupStateTitle = GetStartupStateTitle(m_serverStartupState);
+  if (!IsServerStarted())
+  {
+    CString title;
+    title.Format(_T("RF Online: WorldServer [%s]"), startupStateTitle);
+    SetWindowText(title);
+    return;
+  }
+
   CStringA mode;
   MakeModeName(mode);
 
   CString title;
   if (g_Main.IsExcuteService())
   {
-    title = _T("ZoneServer");
+    title.Format(_T("ZoneServer [%s]"), startupStateTitle);
   }
   else
   {
@@ -249,12 +305,13 @@ void CMainFrame::RefreshWindowTitle()
     }
 
     title.Format(
-      _T("RF Online: %S Server, %S DB (%S), MAX(%d), lim(%d)"),
+      _T("RF Online: %S Server, %S DB (%S), MAX(%d), lim(%d) [%s]"),
       worldName,
       worldDbName,
       mode.GetString(),
       MAX_PLAYER,
-      g_Main.m_nLimUserNum);
+      g_Main.m_nLimUserNum,
+      startupStateTitle);
   }
 
   SetWindowText(title);
@@ -264,6 +321,17 @@ void CMainFrame::UpdateStatusBar()
 {
   if (m_statusBar.GetSafeHwnd() == nullptr)
   {
+    return;
+  }
+
+  if (!IsServerStarted())
+  {
+    for (int paneIndex = 0; paneIndex < 6; ++paneIndex)
+    {
+      m_statusBar.SetPaneText(paneIndex, _T(""), TRUE);
+    }
+    m_statusBar.SetPaneText(6, _T("OPN: 0 - 0"), TRUE);
+    m_statusBar.SetPaneText(7, _T(""), TRUE);
     return;
   }
 

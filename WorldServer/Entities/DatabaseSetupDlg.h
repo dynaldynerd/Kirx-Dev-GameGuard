@@ -12,6 +12,7 @@ public:
   explicit CDatabaseSetupDlg(CWnd *pParent = nullptr);
   ~CDatabaseSetupDlg() override;
   static bool HasRequiredSettings();
+  static bool IsAutoStartEnabled();
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
@@ -24,7 +25,7 @@ protected:
   DECLARE_MESSAGE_MAP()
 
 private:
-  static CStringA BuildDatabaseIniPath();
+  static CStringA BuildSettingsIniPath();
   static CStringA BuildInitializeDirectoryPath();
   static CStringA BuildWorldInfoIniPath();
   static CStringA BuildWorldInfoDirectoryPath();

@@ -5295,21 +5295,21 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
   char worldDbId[64]{};
   char worldDbPassword[64]{};
   ReadOptionAndWriteDefault(
-    ".\\Initialize\\Database.ini",
+    ".\\Initialize\\settings.ini",
     "WorldDB",
     "trusted_connection",
     "0",
     trustedConnectionValue,
     sizeof(trustedConnectionValue));
   ReadOptionAndWriteDefault(
-    ".\\Initialize\\Database.ini",
+    ".\\Initialize\\settings.ini",
     "WorldDB",
     "ID",
     defaultWorldDbId ? defaultWorldDbId : "sa",
     worldDbId,
     sizeof(worldDbId));
   ReadOptionAndWriteDefault(
-    ".\\Initialize\\Database.ini",
+    ".\\Initialize\\settings.ini",
     "WorldDB",
     "PWD",
     defaultWorldDbPassword ? defaultWorldDbPassword : "",

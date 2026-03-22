@@ -7,11 +7,22 @@ protected:
     DECLARE_DYNCREATE(CMainFrame)
 
 public:
+    enum ServerStartupState
+    {
+        kNotStarted = 0,
+        kStarting = 1,
+        kStarted = 2,
+    };
+
     CMainFrame() noexcept;
     virtual ~CMainFrame();
 
     virtual int PreCreateWindow(CREATESTRUCT& cs) override;
     virtual __int64 WindowProc(UINT message, WPARAM wParam, LPARAM lParam) override;
+
+    void SetServerStartupState(ServerStartupState state);
+    ServerStartupState GetServerStartupState() const;
+    bool IsServerStarted() const;
 
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -32,5 +43,6 @@ private:
 
     bool m_bExitConfirm;
     bool m_bAllowWindowClose;
+    ServerStartupState m_serverStartupState;
     CStatusBar m_statusBar;
 };

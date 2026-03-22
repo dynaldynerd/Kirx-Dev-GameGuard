@@ -51,7 +51,7 @@ void CGameServerDoc::CreateDisplayView(CWnd *pWnd)
     WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE | WS_EX_APPWINDOW | WS_EX_TOOLWINDOW,
     WS_EX_CONTROLPARENT,
     SWP_FRAMECHANGED);
-  m_DisplayView.MoveWindow(18, 40, 400, 400, TRUE);
+  m_DisplayView.MoveWindow(18, 82, 400, 400, TRUE);
   m_DisplayView.ShowWindow(SW_SHOW);
 }
 
@@ -61,5 +61,5 @@ void CGameServerDoc::CreateSheetView(CWnd *pWnd)
   m_InfoSheet.Create(pWnd, WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0);
   m_InfoSheet.ModifyStyleEx(0, WS_EX_CONTROLPARENT, 0);
   m_InfoSheet.SetActiveIndex(0);
-  m_InfoSheet.MoveWindow(436, 35, 250, 400);
+  m_InfoSheet.MoveWindow(436, 82, 250, 400);
 }
