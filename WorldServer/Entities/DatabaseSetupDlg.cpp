@@ -264,6 +264,28 @@ bool CDatabaseSetupDlg::IsAutoStartEnabled()
   return GetPrivateProfileIntA(kInstalledSection, kAutoStartKey, 0, settingsIniPath) != 0;
 }
 
+bool CDatabaseSetupDlg::SetAutoStartEnabled(bool enabled)
+{
+  const CStringA initializeDirectory = BuildInitializeDirectoryPath();
+  if (initializeDirectory.IsEmpty())
+  {
+    return false;
+  }
+
+  if (!CreateDirectoryA(initializeDirectory, nullptr) && GetLastError() != ERROR_ALREADY_EXISTS)
+  {
+    return false;
+  }
+
+  const CStringA settingsIniPath = BuildSettingsIniPath();
+  if (settingsIniPath.IsEmpty())
+  {
+    return false;
+  }
+
+  return WritePrivateProfileStringA(kInstalledSection, kAutoStartKey, enabled ? "1" : "0", settingsIniPath) != FALSE;
+}
+
 CStringA CDatabaseSetupDlg::BuildSettingsIniPath()
 {
   return BuildPathFromCurrentDirectory("Initialize\\settings.ini");

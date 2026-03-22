@@ -35,6 +35,7 @@ LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
   POPUP "Settings(&S)"
   {
     MENUITEM "Database(&D)...",  32772
+    MENUITEM "Autostart(&A)",  32773
   }
   POPUP "Help(&H)"
   {

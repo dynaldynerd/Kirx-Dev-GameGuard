@@ -16,7 +16,7 @@
 namespace
 {
 constexpr int kFixedWindowWidth = 700;
-constexpr int kFixedWindowHeight = 580;
+constexpr int kFixedWindowHeight = 600;
 constexpr UINT kStatusIndicators[] = {
   ID_SEPARATOR,
   ID_SEPARATOR,
@@ -52,6 +52,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
   ON_WM_DESTROY()
   ON_WM_PAINT()
   ON_COMMAND(ID_SETTINGS_DATABASE, &CMainFrame::OnSettingsDatabase)
+  ON_COMMAND(ID_SETTINGS_AUTOSTART, &CMainFrame::OnSettingsAutostart)
+  ON_UPDATE_COMMAND_UI(ID_SETTINGS_AUTOSTART, &CMainFrame::OnUpdateSettingsAutostart)
 END_MESSAGE_MAP()
 
 CMainFrame::CMainFrame() noexcept
@@ -215,6 +217,30 @@ void CMainFrame::OnSettingsDatabase()
   {
     AfxMessageBox(L"Setup files updated. Restart WorldServer for the changes to take effect.");
   }
+}
+
+void CMainFrame::OnSettingsAutostart()
+{
+  const bool enableAutoStart = !CDatabaseSetupDlg::IsAutoStartEnabled();
+  if (!CDatabaseSetupDlg::SetAutoStartEnabled(enableAutoStart))
+  {
+    AfxMessageBox(L"Failed to update Initialize\\settings.ini.");
+    return;
+  }
+
+  AfxMessageBox(enableAutoStart
+                  ? L"Autostart enabled. WorldServer will auto-start on the next launch."
+                  : L"Autostart disabled. WorldServer will wait for Start on the next launch.");
+}
+
+void CMainFrame::OnUpdateSettingsAutostart(CCmdUI *pCmdUI)
+{
+  if (pCmdUI == nullptr)
+  {
+    return;
+  }
+
+  pCmdUI->SetCheck(CDatabaseSetupDlg::IsAutoStartEnabled() ? 1 : 0);
 }
 
 void CMainFrame::FinalizeShutdown()

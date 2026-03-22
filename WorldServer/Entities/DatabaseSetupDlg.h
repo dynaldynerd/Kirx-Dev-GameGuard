@@ -13,6 +13,7 @@ public:
   ~CDatabaseSetupDlg() override;
   static bool HasRequiredSettings();
   static bool IsAutoStartEnabled();
+  static bool SetAutoStartEnabled(bool enabled);
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
