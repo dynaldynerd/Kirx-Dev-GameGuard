@@ -46,7 +46,7 @@ static class Program
 
     private static bool TryLoadPersistedSettings(out string errorMessage)
     {
-        if (!File.Exists(AppSettings.DefaultPath))
+        if (!AppSettings.HasPersistedSettingsFile())
         {
             errorMessage = $"LoginServer is missing its persisted settings file:\n{AppSettings.DefaultPath}";
             return false;
@@ -54,7 +54,7 @@ static class Program
 
         try
         {
-            _ = AppSettings.Load(AppSettings.DefaultPath);
+            _ = AppSettings.Load();
             errorMessage = string.Empty;
             return true;
         }

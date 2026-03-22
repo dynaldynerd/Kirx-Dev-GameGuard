@@ -39,6 +39,25 @@
     <Prefer32Bit>false</Prefer32Bit>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationIcon>Assets\WorldServer.ico</ApplicationIcon>
+    <DistOutputDir>$(MSBuildProjectDirectory)\..\dist\Account &amp; Login Server\</DistOutputDir>
   </PropertyGroup>
+
+  <Target Name="CopyLoginServerToDist" AfterTargets="Build">
+    <ItemGroup>
+      <DistFiles Include="$(TargetDir)**\*.*"
+                 Exclude="$(TargetDir)Settings\**\*.*;$(TargetDir)appsettings*.json" />
+      <DistDirectories Include="@(DistFiles->'$(DistOutputDir)%(RecursiveDir)')" />
+    </ItemGroup>
+    <MakeDir Directories="@(DistDirectories)" />
+    <Copy
+      SourceFiles="@(DistFiles)"
+      DestinationFiles="@(DistFiles->'$(DistOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      OverwriteReadOnlyFiles="true"
+      Retries="2"
+      RetryDelayMilliseconds="250"
+      ContinueOnError="WarnAndContinue" />
+  </Target>
 
 </Project>

@@ -16,15 +16,53 @@ public sealed class AppSettings
     public bool VerboseLogging { get; set; }
 
     [JsonIgnore]
-    public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
+    public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "Settings", "appsettings.login.json");
+
+    [JsonIgnore]
+    public static string LegacyDefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
+
+    public static string ResolvePersistedPath()
+    {
+        if (File.Exists(DefaultPath))
+        {
+            return DefaultPath;
+        }
+
+        if (File.Exists(LegacyDefaultPath))
+        {
+            return LegacyDefaultPath;
+        }
+
+        return DefaultPath;
+    }
+
+    public static bool HasPersistedSettingsFile()
+    {
+        return File.Exists(DefaultPath) || File.Exists(LegacyDefaultPath);
+    }
+
+    public static void DeletePersistedSettingsFiles()
+    {
+        if (File.Exists(DefaultPath))
+        {
+            File.Delete(DefaultPath);
+        }
+
+        if (!string.Equals(LegacyDefaultPath, DefaultPath, StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(LegacyDefaultPath))
+        {
+            File.Delete(LegacyDefaultPath);
+        }
+    }
 
     public static AppSettings Load(string? path = null)
     {
-        path ??= DefaultPath;
+        bool useDefaultLookup = string.IsNullOrWhiteSpace(path);
+        path ??= ResolvePersistedPath();
         if (!File.Exists(path))
         {
             var defaults = CreateDefault();
-            defaults.Save(path);
+            defaults.Save(DefaultPath);
             return defaults;
         }
 
@@ -46,6 +84,14 @@ public sealed class AppSettings
         settings.Database.BillingHost = DatabaseSettings.NormalizeSqlServerHost(
             settings.Database.BillingHost,
             settings.Database.BillingProvider == LoginDatabaseProvider.SqlServer && settings.Database.BillingTrustedConnection);
+
+        if (useDefaultLookup &&
+            string.Equals(path, LegacyDefaultPath, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(path, DefaultPath, StringComparison.OrdinalIgnoreCase))
+        {
+            settings.Save(DefaultPath);
+        }
+
         return settings;
     }
 

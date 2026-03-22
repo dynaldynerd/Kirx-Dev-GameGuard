@@ -182,7 +182,7 @@ public sealed class LoginHandler : AccountHandlerBase
             ReleaseAccount(account, "CloseLoginServer");
         }
 
-        _log($"{DateTime.Now:HH:mm:ss}/ Close Login Server");
+        _log("Close Login Server");
     }
 
     private Task<bool> LoginAccountRequest(PublicConnection connection, _login_account_request_loac_blit req, CancellationToken token)
@@ -879,7 +879,7 @@ public sealed class LoginHandler : AccountHandlerBase
         try
         {
             await connection.SendAsync(env, token).ConfigureAwait(false);
-            _log($"{DateTime.Now:HH:mm:ss}/ Login Server Login");
+            _log("Login Server Login");
         }
         catch (Exception ex)
         {

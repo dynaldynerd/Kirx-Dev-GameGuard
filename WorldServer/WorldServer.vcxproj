@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -22,7 +14,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -33,31 +24,14 @@
   <PropertyGroup>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -67,7 +41,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -78,20 +52,13 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="Shared" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -102,45 +69,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <StructMemberAlignment>8Bytes</StructMemberAlignment>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\\tinyxml;$(ProjectDir)ThirdParty\\lua-5.1.5\\src;$(ProjectDir)ThirdParty\\cryptopp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <StructMemberAlignment>8Bytes</StructMemberAlignment>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\\tinyxml;$(ProjectDir)ThirdParty\\lua-5.1.5\\src;$(ProjectDir)ThirdParty\\cryptopp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;odbc32.lib;odbccp32.lib;legacy_stdio_definitions.lib;ddraw.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
+  <PropertyGroup>
+    <WorldServerRuntimeDir>D:\RF Server\Server\Zone Server\RF_Bin\</WorldServerRuntimeDir>
+    <WorldServerDistDebugDir>$(ProjectDir)..\dist\WorldServer\debug\</WorldServerDistDebugDir>
+    <WorldServerDistShipDebugDir>$(ProjectDir)..\dist\WorldServer\shipdebug\</WorldServerDistShipDebugDir>
+    <WorldServerDistOutputDir Condition="'$(Configuration)'=='Debug'">$(WorldServerDistDebugDir)</WorldServerDistOutputDir>
+    <WorldServerDistOutputDir Condition="'$(Configuration)'=='ShipDebug'">$(WorldServerDistShipDebugDir)</WorldServerDistOutputDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -207,7 +142,6 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -1018,13 +952,11 @@
     <ClInclude Include="Entities\wrac_packets.h" />
     <ClInclude Include="ThirdParty\tinyxml\tinystr.h" />
     <ClInclude Include="ThirdParty\tinyxml\tinyxml.h" />
-
     <ClInclude Include="Entities\Packet\ClientZonePacket.h" />
     <ClInclude Include="Entities\Packet\ZoneClientPacket.h" />
     <ClInclude Include="Entities\Packet\WorldAccountPacket.h" />
     <ClInclude Include="Entities\Packet\AccountWorldPacket.h" />
   </ItemGroup>
-
   <ItemGroup>
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">
@@ -1506,19 +1438,16 @@
     <ClCompile Include="ThirdParty\tinyxml\tinyxml.cpp" />
     <ClCompile Include="ThirdParty\tinyxml\tinyxmlerror.cpp" />
     <ClCompile Include="ThirdParty\tinyxml\tinyxmlparser.cpp" />
-  
     <ClCompile Include="Entities\Packet\ZoneClientPacket.cpp" />
     <ClCompile Include="Entities\Packet\ClientZonePacket.cpp" />
     <ClCompile Include="Entities\Packet\WorldAccountPacket.cpp" />
     <ClCompile Include="Entities\Packet\AccountWorldPacket.cpp" />
   </ItemGroup>
-
   <ItemGroup>
     <ClCompile Update="Entities\quest_check_result.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
-
   <ItemGroup>
     <ClCompile Include="ThirdParty\lua-5.1.5\src\lapi.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -1637,23 +1566,19 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemGroup>
-
   <ItemGroup>
     <ResourceCompile Include="WorldServer.rc" />
   </ItemGroup>
-
   <ItemGroup>
     <Image Include="ICON128_1.ico" />
     <Image Include="ICON129_1.ico" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="MANIFEST1_1.txt" />
     <None Include="TEXT151_1.txt" />
     <None Include="240134_1.bin" />
     <None Include="241128_1.bin" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="ThirdParty\\cryptopp\\cryptlib.vcxproj">
       <Project>{c39f4b46-6e89-4074-902e-ca57073044d2}</Project>
@@ -1663,13 +1588,41 @@
       <SetPlatform>Platform=x64</SetPlatform>
     </ProjectReference>
   </ItemGroup>
-
   <Target Name="EnforceX64Platform" BeforeTargets="PrepareForBuild" Condition="'$(Platform)' != 'x64' and '$(Platform)' != 'X64'">
     <Error Text="WorldServer supports x64 builds only. Switch Visual Studio Platform to x64." />
   </Target>
-
+  <Target Name="DetectWorldServerGitBranch" Condition="'$(Platform)'=='x64'">
+    <PropertyGroup>
+      <WorldServerGitBranchFile>$(IntDir)git_branch.txt</WorldServerGitBranchFile>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntDir)" />
+    <Exec Command="git branch --show-current &gt; &quot;$(WorldServerGitBranchFile)&quot;" WorkingDirectory="$(ProjectDir)..\" IgnoreExitCode="true" />
+    <ReadLinesFromFile File="$(WorldServerGitBranchFile)" Condition="Exists('$(WorldServerGitBranchFile)')">
+      <Output TaskParameter="Lines" ItemName="WorldServerGitBranchOutput" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <WorldServerGitBranch>@(WorldServerGitBranchOutput)</WorldServerGitBranch>
+      <WorldServerGitBranch>$([System.String]::Copy('$(WorldServerGitBranch)').Trim())</WorldServerGitBranch>
+    </PropertyGroup>
+  </Target>
+  <Target Name="CopyWorldServerToDist" AfterTargets="Build" Condition="'$(Platform)'=='x64' and ('$(Configuration)'=='Debug' or '$(Configuration)'=='ShipDebug') and Exists('$(TargetPath)')">
+    <ItemGroup>
+      <WorldServerDistFiles Include="$(TargetPath)" />
+      <WorldServerDistFiles Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+      <WorldServerDistFiles Include="$(TargetDir)$(TargetName).ilk" Condition="Exists('$(TargetDir)$(TargetName).ilk')" />
+    </ItemGroup>
+    <MakeDir Directories="$(WorldServerDistOutputDir)" />
+    <Copy SourceFiles="@(WorldServerDistFiles)" DestinationFolder="$(WorldServerDistOutputDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" Retries="2" RetryDelayMilliseconds="250" ContinueOnError="WarnAndContinue" />
+  </Target>
+  <Target Name="CopyWorldServerDebugToRuntime" AfterTargets="Build" DependsOnTargets="DetectWorldServerGitBranch" Condition="'$(Platform)'=='x64' and '$(Configuration)'=='Debug' and Exists('$(TargetPath)')">
+    <ItemGroup Condition="'$(WorldServerGitBranch)'=='main'">
+      <WorldServerRuntimeFiles Include="$(TargetPath)" />
+      <WorldServerRuntimeFiles Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+      <WorldServerRuntimeFiles Include="$(TargetDir)$(TargetName).ilk" Condition="Exists('$(TargetDir)$(TargetName).ilk')" />
+    </ItemGroup>
+    <MakeDir Directories="$(WorldServerRuntimeDir)" Condition="'$(WorldServerGitBranch)'=='main'" />
+    <Copy SourceFiles="@(WorldServerRuntimeFiles)" DestinationFolder="$(WorldServerRuntimeDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" Retries="2" RetryDelayMilliseconds="250" ContinueOnError="WarnAndContinue" Condition="'$(WorldServerGitBranch)'=='main'" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
-
-

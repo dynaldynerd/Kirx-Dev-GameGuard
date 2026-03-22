@@ -723,10 +723,7 @@ public partial class SettingsForm : Form
 
         Properties.Settings.Default.Reset();
         Properties.Settings.Default.Save();
-        if (File.Exists(AppSettings.DefaultPath))
-        {
-            File.Delete(AppSettings.DefaultPath);
-        }
+        AppSettings.DeletePersistedSettingsFiles();
         Application.Restart();
         Application.Exit();
     }

@@ -84,7 +84,7 @@ public sealed class WorldHandler : AccountHandlerBase
         _context.UpdateWorldService(worldCode, false);
         _context.UpdateWorldGate(worldCode, 0, 0);
         _context.UnregisterWorld(connection);
-        _log($"{DateTime.Now:HH:mm:ss}/ Disconnect World Server : Code ({worldCode}), Name ({world.Name})");
+        _log($"Disconnect World Server : Code ({worldCode}), Name ({world.Name})");
     }
 
     public override async Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
@@ -364,7 +364,7 @@ public sealed class WorldHandler : AccountHandlerBase
         };
 
         await SendToLoginServersAsync(env, token).ConfigureAwait(false);
-        _log($"{DateTime.Now:HH:mm:ss}: Start World: Code ({worldCode}), Name ({worldEntry.Name})");
+        _log($"Start World: Code ({worldCode}), Name ({worldEntry.Name})");
         return true;
     }
 
@@ -404,7 +404,7 @@ public sealed class WorldHandler : AccountHandlerBase
         };
 
         await SendToLoginServersAsync(env, token).ConfigureAwait(false);
-        _log($"{DateTime.Now:HH:mm:ss}: Stop World: Code ({worldCode}), Name ({worldEntry.Name})");
+        _log($"Stop World: Code ({worldCode}), Name ({worldEntry.Name})");
         return true;
     }
 
