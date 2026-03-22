@@ -18,6 +18,7 @@ public partial class SettingsForm : Form
     private readonly DatabaseSnapshot _userDb;
     private readonly BindingList<WorldEntry> _worlds;
     private readonly CheckBox _chkAutostart = new();
+    private readonly CheckBox _chkVerboseLogging = new();
     private readonly bool _worldEntryEditingLocked;
 
     public SettingsForm()
@@ -165,8 +166,30 @@ public partial class SettingsForm : Form
         _chkAutostart.ForeColor = System.Drawing.Color.FromArgb(138, 82, 0);
         _chkAutostart.UseVisualStyleBackColor = false;
 
+        var lblVerboseLogging = new Label
+        {
+            AutoSize = true,
+            Text = "Verbose Logging",
+            Anchor = AnchorStyles.Left,
+            ForeColor = System.Drawing.Color.FromArgb(138, 82, 0),
+            BackColor = autostartPanel.BackColor,
+            Margin = new Padding(0, 9, 16, 0)
+        };
+
+        _chkVerboseLogging.AutoSize = true;
+        _chkVerboseLogging.Text = "Show packet-level and connection debug logs";
+        _chkVerboseLogging.Anchor = AnchorStyles.Left;
+        _chkVerboseLogging.BackColor = autostartPanel.BackColor;
+        _chkVerboseLogging.ForeColor = System.Drawing.Color.FromArgb(138, 82, 0);
+        _chkVerboseLogging.UseVisualStyleBackColor = false;
+
+        autostartPanel.RowCount = 2;
+        autostartPanel.RowStyles.Add(new RowStyle());
+        autostartPanel.RowStyles.Add(new RowStyle());
         autostartPanel.Controls.Add(lblAutostart, 0, 0);
         autostartPanel.Controls.Add(_chkAutostart, 1, 0);
+        autostartPanel.Controls.Add(lblVerboseLogging, 0, 1);
+        autostartPanel.Controls.Add(_chkVerboseLogging, 1, 1);
 
         int row = tblGeneral.RowCount;
         tblGeneral.RowCount = row + 1;
@@ -195,6 +218,7 @@ public partial class SettingsForm : Form
     {
         txtListenHost.Text = _settings.Listener.Host;
         _chkAutostart.Checked = _settings.Autostart;
+        _chkVerboseLogging.Checked = _settings.VerboseLogging;
 
         numLoginPort.Value = ClampNumeric(numLoginPort, _settings.Listener.LoginPort);
         numWorldPort.Value = ClampNumeric(numWorldPort, _settings.Listener.WorldPort);
@@ -252,6 +276,7 @@ public partial class SettingsForm : Form
         _settings.WorldList.Worlds = _worlds.Select(CloneWorldEntry).ToList();
         _settings.MaxActiveClients = (int)numMaxActive.Value;
         _settings.Autostart = _chkAutostart.Checked;
+        _settings.VerboseLogging = _chkVerboseLogging.Checked;
         _settings.Listener.Host = txtListenHost.Text.Trim();
         _settings.Listener.LoginPort = (int)numLoginPort.Value;
         _settings.Listener.WorldPort = (int)numWorldPort.Value;

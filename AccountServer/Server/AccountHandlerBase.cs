@@ -11,19 +11,30 @@ namespace AccountServer.Server;
 public abstract class AccountHandlerBase : NetworkHandlerBase
 {
     protected readonly Action<string> _log;
+    private readonly Func<bool> _isVerboseLoggingEnabled;
     protected readonly AccountMainContext _context = AccountMainContext.Instance;
     protected readonly AppSettings _settings;
     protected readonly IAccountDatabase _db;
 
     protected AccountHandlerBase(
         Action<string> log,
+        Func<bool> isVerboseLoggingEnabled,
         AppSettings settings,
         string? connectionString = null,
         IAccountDatabase? db = null)
     {
         _log = log;
+        _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
         _settings = settings;
         _db = db ?? CreateDefaultDb(settings, connectionString);
+    }
+
+    protected void LogVerbose(string message)
+    {
+        if (_isVerboseLoggingEnabled())
+        {
+            _log(message);
+        }
     }
 
     protected static IAccountDatabase CreateDefaultDb(AppSettings settings, string? connectionString)
@@ -149,7 +160,7 @@ public abstract class AccountHandlerBase : NetworkHandlerBase
             _context.RemoveActiveAccount(accountSerial);
         }
 
-        _log($"ReleaseAccount: {reason} account={accountId} serial={accountSerial}");
+        LogVerbose($"ReleaseAccount: {reason} account={accountId} serial={accountSerial}");
     }
 
     private async Task UpdateAccountLogoffAsync(uint accountSerial, byte userCode)

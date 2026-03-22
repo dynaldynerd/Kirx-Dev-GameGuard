@@ -24,12 +24,22 @@ namespace LoginServer.Handlers;
 public sealed class ClientPacketRouter
 {
     private readonly Action<string> _log;
+    private readonly Func<bool> _isVerboseLoggingEnabled;
     private readonly AppSettings _settings;
 
-    public ClientPacketRouter(Action<string> log, AppSettings settings)
+    public ClientPacketRouter(Action<string> log, Func<bool> isVerboseLoggingEnabled, AppSettings settings)
     {
         _log = log;
+        _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
         _settings = settings;
+    }
+
+    private void LogVerbose(string message)
+    {
+        if (_isVerboseLoggingEnabled())
+        {
+            _log(message);
+        }
     }
 
     public async Task<bool> HandleAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
@@ -81,7 +91,7 @@ public sealed class ClientPacketRouter
             }
             case 15:
                 // Historically nation-specific noop; we accept it universally.
-                _log("Client opcode 21/15 accepted (noop).");
+                LogVerbose("Client opcode 21/15 accepted (noop).");
                 return true;
             case 17:
             {
@@ -354,7 +364,7 @@ public sealed class ClientPacketRouter
             Payload = payload
         };
         _ = accountConn.SendAsync(env, cancellationToken);
-        _log($"SelectWorldRequest from {connection.RemoteEndPoint} worldIndex={worldIndex}");
+        LogVerbose($"SelectWorldRequest from {connection.RemoteEndPoint} worldIndex={worldIndex}");
         return Task.FromResult(true);
     }
 
@@ -409,7 +419,7 @@ public sealed class ClientPacketRouter
         session.OverlapUser = false;
         session.AccountSerial = uint.MaxValue;
 
-        _log($"PushCloseRequest forwarded for idx={session.Index} serial={session.ClidSerial}");
+        LogVerbose($"PushCloseRequest forwarded for idx={session.Index} serial={session.ClidSerial}");
         return Task.FromResult(true);
     }
 
@@ -577,7 +587,7 @@ public sealed class ClientPacketRouter
 
     private Task<bool> MotpValidationRequest(PublicConnection connection, _motp_validation_request_cllo request, CancellationToken cancellationToken)
     {
-        _log($"MotpValidationRequest from {connection.RemoteEndPoint} type={request.byType}");
+        LogVerbose($"MotpValidationRequest from {connection.RemoteEndPoint} type={request.byType}");
         return Task.FromResult(true);
     }
 
@@ -1007,33 +1017,26 @@ public sealed class ClientPacketRouter
         }
 
         DateTime now = DateTime.Now;
-        billingCtx.UserStatuses.Add(new BillingUserStatus
+        var entryToInsert = new BillingUserStatus
         {
             Id = accountId,
             Status = 1,
             DtStartPrem = now,
             DtEndPrem = now,
             Cash = 0
-        });
+        };
+        billingCtx.UserStatuses.Add(entryToInsert);
 
         try
         {
             await billingCtx.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return entryToInsert;
         }
         catch (DbUpdateException)
         {
             billingCtx.ChangeTracker.Clear();
-        }
-
-        entry = await billingCtx.UserStatuses
-            .FirstOrDefaultAsync(u => u.Id == accountId, cancellationToken)
-            .ConfigureAwait(false);
-        if (entry == null)
-        {
             return null;
         }
-
-        return string.Equals(entry.Id, accountId, StringComparison.Ordinal) ? entry : null;
     }
 
     private static bool IsDevUser(string accountId)

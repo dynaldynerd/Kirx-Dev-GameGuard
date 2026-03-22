@@ -17,19 +17,23 @@ public partial class MainWindow : Form
     private LoginHandler? _accountHandler;
     private ClientPacketRouter? _clientRouter;
     private AccountPacketRouter? _accountRouter;
-    private bool _verboseLog = true;
+    private bool _verboseLog;
     private Task? _accountReconnectTask;
     private bool _isStopping;
     private bool _running;
+    private bool _accountConnectAttemptLogged;
+    private bool _accountConnectFailureLogged;
 
     public MainWindow()
     {
         InitializeComponent();
+        _verboseLog = _settings.VerboseLogging;
         ApplySettingsToUi();
     }
 
     private void ApplySettingsToUi()
     {
+        _verboseLog = _settings.VerboseLogging;
         verboseLogToolStripMenuItem.Checked = _verboseLog;
         UpdateExternalOpenButton(MainContext.Instance.ExternalOpen);
     }
@@ -62,16 +66,17 @@ public partial class MainWindow : Form
         _isStopping = false;
         _cts = new CancellationTokenSource();
 
-        _clientRouter = new ClientPacketRouter(AppendLog, _settings);
-        _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
+        _clientRouter = new ClientPacketRouter(AppendLog, IsVerboseLoggingEnabled, _settings);
+        _clientHandler = new LoginHandler("Client", AppendLog, IsVerboseLoggingEnabled, _clientRouter, null);
         _clientListener = new NetworkListener(_clientHandler, _settings.Network.MaxConnections);
-        _clientListener.Log += AppendLog;
+        _clientListener.Log += OnClientListenerLog;
         MainContext.Instance.MaxConnections = _settings.Network.MaxConnections;
 
-        _accountRouter = new AccountPacketRouter(AppendLog);
-        _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter, OnAccountConnected, OnAccountDisconnected);
+        _accountRouter = new AccountPacketRouter(AppendLog, IsVerboseLoggingEnabled);
+        _accountHandler = new LoginHandler("Account", AppendLog, IsVerboseLoggingEnabled, null, _accountRouter, OnAccountConnected, OnAccountDisconnected);
         _accountConnector = new NetworkConnector(_accountHandler);
-        _accountConnector.Log += AppendLog;
+        _accountConnector.Log += OnAccountConnectorLog;
+        ResetAccountReconnectLogState();
         StartAccountReconnectLoop();
         await Task.CompletedTask;
     }
@@ -146,18 +151,20 @@ public partial class MainWindow : Form
             return;
         }
 
-        string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        if (_verboseLog || IsImportant(message))
+        logTextBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+    }
+
+    private void AppendVerboseLog(string message)
+    {
+        if (_verboseLog)
         {
-            logTextBox.AppendText(line + Environment.NewLine);
+            AppendLog(message);
         }
     }
 
-    private bool IsImportant(string message)
+    private bool IsVerboseLoggingEnabled()
     {
-        // Simple heuristic: always show errors/warnings
-        return message.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               message.IndexOf("warn", StringComparison.OrdinalIgnoreCase) >= 0;
+        return _verboseLog;
     }
 
     private void UpdateStatus(string text)
@@ -188,6 +195,8 @@ public partial class MainWindow : Form
     private void OnToggleVerboseLog(object? sender, EventArgs e)
     {
         _verboseLog = verboseLogToolStripMenuItem.Checked;
+        _settings.VerboseLogging = _verboseLog;
+        _settings.Save();
     }
 
     private void OnToggleExternalOpenClicked(object? sender, EventArgs e)
@@ -224,8 +233,15 @@ public partial class MainWindow : Form
         if (_accountConnector.IsConnected) return;
 
         UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
-        AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
+        if (!_accountConnectAttemptLogged)
+        {
+            AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
+            _accountConnectAttemptLogged = true;
+        }
         await _accountConnector.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, token).ConfigureAwait(false);
+        _accountConnectAttemptLogged = false;
+        _accountConnectFailureLogged = false;
+        AppendLog($"Connected to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}.");
         UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
     }
 
@@ -276,7 +292,11 @@ public partial class MainWindow : Form
             }
             catch (Exception ex)
             {
-                AppendLog($"Account connection failed: {ex.Message}. Retrying in 1 second...");
+                if (!_accountConnectFailureLogged)
+                {
+                    AppendLog($"Failed to connect to account server: {ex.Message}. Retrying until AccountServer is available.");
+                    _accountConnectFailureLogged = true;
+                }
                 UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
 
                 try
@@ -347,7 +367,8 @@ public partial class MainWindow : Form
     private async void OnAccountDisconnected()
     {
         if (_isStopping) return;
-        AppendLog("Account server disconnected; stopping client listener and retrying...");
+        AppendLog("Account server disconnected. Retrying until AccountServer is available.");
+        ResetAccountReconnectLogState();
         await StopClientListenerAsync().ConfigureAwait(false);
         UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
         StartAccountReconnectLoop();
@@ -367,7 +388,7 @@ public partial class MainWindow : Form
         try
         {
             await accountConn.SendAsync(env, token).ConfigureAwait(false);
-            AppendLog("Sent world list request to account server.");
+            AppendVerboseLog("Sent world list request to account server.");
         }
         catch (Exception ex)
         {
@@ -392,13 +413,37 @@ public partial class MainWindow : Form
         try
         {
             await accountConn.SendAsync(env, token).ConfigureAwait(false);
-            AppendLog("Sent account DB info request to account server.");
+            AppendVerboseLog("Sent account DB info request to account server.");
         }
         catch (Exception ex)
         {
             AppendLog($"Account DB info request send failed: {ex.Message}");
             throw;
         }
+    }
+
+    private void ResetAccountReconnectLogState()
+    {
+        _accountConnectAttemptLogged = false;
+        _accountConnectFailureLogged = false;
+    }
+
+    private void OnClientListenerLog(string message)
+    {
+        if (message.StartsWith("Client ", StringComparison.Ordinal) &&
+            (message.Contains(" connected from ", StringComparison.Ordinal) ||
+             message.Contains(" disconnected.", StringComparison.Ordinal)))
+        {
+            AppendVerboseLog(message);
+            return;
+        }
+
+        AppendLog(message);
+    }
+
+    private void OnAccountConnectorLog(string message)
+    {
+        AppendVerboseLog(message);
     }
 
     protected override async void OnShown(EventArgs e)
@@ -415,24 +460,34 @@ public partial class MainWindow : Form
     {
         private readonly string _role;
         private readonly Action<string> _log;
+        private readonly Func<bool> _isVerboseLoggingEnabled;
         private readonly ClientPacketRouter? _clientRouter;
         private readonly AccountPacketRouter? _accountRouter;
         private readonly Action? _onAccountConnected;
         private readonly Action? _onAccountDisconnected;
 
-        public LoginHandler(string role, Action<string> log, ClientPacketRouter? clientRouter, AccountPacketRouter? accountRouter, Action? onAccountConnected = null, Action? onAccountDisconnected = null)
+        public LoginHandler(string role, Action<string> log, Func<bool> isVerboseLoggingEnabled, ClientPacketRouter? clientRouter, AccountPacketRouter? accountRouter, Action? onAccountConnected = null, Action? onAccountDisconnected = null)
         {
             _role = role;
             _log = log;
+            _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
             _clientRouter = clientRouter;
             _accountRouter = accountRouter;
             _onAccountConnected = onAccountConnected;
             _onAccountDisconnected = onAccountDisconnected;
         }
 
+        private void LogVerbose(string message)
+        {
+            if (_isVerboseLoggingEnabled())
+            {
+                _log(message);
+            }
+        }
+
         public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
-            _log($"{_role} connected {connection.RemoteEndPoint} (id {connection.ConnectionId})");
+            LogVerbose($"{_role} connected {connection.RemoteEndPoint} (id {connection.ConnectionId})");
             if (_clientRouter != null)
             {
                 MainContext.Instance.RegisterClientConnection(connection);
@@ -447,7 +502,7 @@ public partial class MainWindow : Form
 
         public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
-            _log($"{_role} disconnected (id {connection.ConnectionId})");
+            LogVerbose($"{_role} disconnected (id {connection.ConnectionId})");
             if (_clientRouter != null)
             {
                 var session = MainContext.Instance.GetClient((uint)connection.ConnectionId);
@@ -507,7 +562,7 @@ public partial class MainWindow : Form
 
         public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
         {
-            _log($"{_role} internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
+            LogVerbose($"{_role} internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
             return Task.CompletedTask;
         }
     }

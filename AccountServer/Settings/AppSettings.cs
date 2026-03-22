@@ -14,6 +14,7 @@ public sealed class AppSettings
     public SecuritySettings Security { get; set; } = new();
     public ListenerSettings Listener { get; set; } = new();
     public bool Autostart { get; set; }
+    public bool VerboseLogging { get; set; }
     public int MaxActiveClients { get; set; } = -1;
 
     [JsonIgnore]
@@ -104,6 +105,7 @@ public sealed class AppSettings
             },
             MaxActiveClients = -1,
             Autostart = false,
+            VerboseLogging = false,
             Security = new SecuritySettings(),
             Listener = new ListenerSettings
             {

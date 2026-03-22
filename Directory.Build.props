@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup Condition="'$(UsingMicrosoftNETSdk)' == 'true'">
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/_reports/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

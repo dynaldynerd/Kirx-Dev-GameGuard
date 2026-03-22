@@ -18,6 +18,7 @@ public partial class SettingsForm : Form
     private readonly DatabaseSnapshot _billingDb;
     private readonly CheckBox _chkAutostart = new();
     private readonly CheckBox _chkAutoOpenExternalConnection = new();
+    private readonly CheckBox _chkVerboseLogging = new();
     private readonly CheckBox _chkTrustedConnection = new();
     private readonly TabPage _tabGeneral = new();
     private bool _suppressDbProfileEvents;
@@ -88,6 +89,7 @@ public partial class SettingsForm : Form
             txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
             _chkAutostart.Checked = _settings.Autostart;
             _chkAutoOpenExternalConnection.Checked = _settings.AutoOpenExternalConnection;
+            _chkVerboseLogging.Checked = _settings.VerboseLogging;
             var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
             txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
             txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
@@ -158,6 +160,26 @@ public partial class SettingsForm : Form
         _chkAutoOpenExternalConnection.ForeColor = Color.FromArgb(138, 82, 0);
         _chkAutoOpenExternalConnection.UseVisualStyleBackColor = false;
 
+        var lblVerboseLogging = new Label
+        {
+            AutoSize = true,
+            Name = "lblVerboseLogging",
+            Text = "Verbose Logging",
+            Anchor = AnchorStyles.Left,
+            ForeColor = Color.FromArgb(138, 82, 0),
+            BackColor = autostartPanel.BackColor,
+            Margin = new Padding(0, 9, 16, 0)
+        };
+
+        _chkVerboseLogging.AutoSize = true;
+        _chkVerboseLogging.Name = "chkVerboseLogging";
+        _chkVerboseLogging.TabIndex = 2;
+        _chkVerboseLogging.Text = "Show packet-level and client connection debug logs";
+        _chkVerboseLogging.Anchor = AnchorStyles.Left;
+        _chkVerboseLogging.BackColor = autostartPanel.BackColor;
+        _chkVerboseLogging.ForeColor = Color.FromArgb(138, 82, 0);
+        _chkVerboseLogging.UseVisualStyleBackColor = false;
+
         ConfigureDangerGroup();
 
         var generalLayout = new TableLayoutPanel
@@ -179,13 +201,16 @@ public partial class SettingsForm : Form
             Margin = new Padding(0, 18, 0, 0)
         };
 
-        autostartPanel.RowCount = 2;
+        autostartPanel.RowCount = 3;
+        autostartPanel.RowStyles.Add(new RowStyle());
         autostartPanel.RowStyles.Add(new RowStyle());
         autostartPanel.RowStyles.Add(new RowStyle());
         autostartPanel.Controls.Add(lblAutostart, 0, 0);
         autostartPanel.Controls.Add(_chkAutostart, 1, 0);
         autostartPanel.Controls.Add(lblAutoOpenExternal, 0, 1);
         autostartPanel.Controls.Add(_chkAutoOpenExternalConnection, 1, 1);
+        autostartPanel.Controls.Add(lblVerboseLogging, 0, 2);
+        autostartPanel.Controls.Add(_chkVerboseLogging, 1, 2);
 
         generalLayout.Controls.Add(autostartPanel, 0, 0);
         generalLayout.Controls.Add(generalInfo, 0, 1);
@@ -493,6 +518,7 @@ public partial class SettingsForm : Form
         _settings.Network.MaxConnections = maxConn;
         _settings.Autostart = _chkAutostart.Checked;
         _settings.AutoOpenExternalConnection = _chkAutoOpenExternalConnection.Checked;
+        _settings.VerboseLogging = _chkVerboseLogging.Checked;
         if (!int.TryParse(txtLoadLow.Text, out var load0) ||
             !int.TryParse(txtLoadMid.Text, out var load1) ||
             !int.TryParse(txtLoadHigh.Text, out var load2) ||

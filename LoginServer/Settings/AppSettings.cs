@@ -13,6 +13,7 @@ public sealed class AppSettings
     public SecuritySettings Security { get; set; } = new();
     public bool Autostart { get; set; }
     public bool AutoOpenExternalConnection { get; set; }
+    public bool VerboseLogging { get; set; }
 
     [JsonIgnore]
     public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
@@ -96,7 +97,8 @@ public sealed class AppSettings
             },
             Security = new SecuritySettings(),
             Autostart = false,
-            AutoOpenExternalConnection = false
+            AutoOpenExternalConnection = false,
+            VerboseLogging = false
         };
     }
 
