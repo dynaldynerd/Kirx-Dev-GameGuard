@@ -371,6 +371,8 @@ CMainThread::~CMainThread()
 
 void CMainThread::Release()
 {
+  m_tmPreCloseCountdown.StopTimer();
+  m_nPreCloseCountdownSeconds = 0;
   m_bRuleThread = false;
   m_bDQSThread = false;
   Sleep(3000);
@@ -463,6 +465,8 @@ void CMainThread::gm_ServerClose()
 {
   if (!m_bServerClosing)
   {
+    m_tmPreCloseCountdown.StopTimer();
+    m_nPreCloseCountdownSeconds = 0;
     m_bServerClosing = true;
     m_tmForceUserExit.BeginTimer(50);
     m_nForceExitSocketIndexOffset = 0;
@@ -566,8 +570,31 @@ void CMainThread::gm_DisplayAll()
 
 void CMainThread::gm_PreCloseAnn()
 {
+  if (m_bServerClosing)
+  {
+    return;
+  }
+
+  m_nPreCloseCountdownSeconds = 10;
+  m_tmPreCloseCountdown.BeginTimer(1000);
+  BroadcastPreCloseCountdown(m_nPreCloseCountdownSeconds);
+}
+
+void CMainThread::BroadcastPreCloseCountdown(int remainingSeconds)
+{
+  if (remainingSeconds < 0)
+  {
+    return;
+  }
+
   char buffer[132]{};
-  sprintf_s(buffer, sizeof(buffer), "%s server close warning.", m_szWorldName);
+  sprintf_s(
+    buffer,
+    sizeof(buffer),
+    "%s server close in %d second%s.",
+    m_szWorldName,
+    remainingSeconds,
+    remainingSeconds == 1 ? "" : "s");
 
   for (int index = 0; index < MAX_PLAYER; ++index)
   {
@@ -583,6 +610,24 @@ void CMainThread::gm_PreCloseAnn()
         nullptr);
     }
   }
+}
+
+void CMainThread::ProcessPreCloseCountdown()
+{
+  if (m_nPreCloseCountdownSeconds <= 0 || !m_tmPreCloseCountdown.CountingTimer())
+  {
+    return;
+  }
+
+  --m_nPreCloseCountdownSeconds;
+  if (m_nPreCloseCountdownSeconds <= 0)
+  {
+    BroadcastPreCloseCountdown(0);
+    gm_ServerClose();
+    return;
+  }
+
+  BroadcastPreCloseCountdown(m_nPreCloseCountdownSeconds);
 }
 
 void CMainThread::gm_UserExit()
@@ -3993,6 +4038,7 @@ void CMainThread::OnRun()
   CMoneySupplyMgr::Instance()->LoopMoneySupply();
   CheckConnNumLog();
   m_GameMsg.PumpMsgList();
+  ProcessPreCloseCountdown();
   CPvpUserAndGuildRankingSystem::Instance()->Loop();
   ContUserSaveJobCheck();
   OnLoop_VoteSystem();
