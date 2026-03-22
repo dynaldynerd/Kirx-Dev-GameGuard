@@ -45,15 +45,4 @@ public interface IAccountDatabase
     Task<(byte Ret, byte Result)> UILock_RefreshAsync(uint accountSerial, byte failCount, byte findPassFailCount, CancellationToken token);
     Task<bool> Update_StaffLogoffDateAsync(uint accountSerial, CancellationToken token);
     Task<bool> Update_UserLogoffDateAsync(uint accountSerial, CancellationToken token);
-    Task<bool> Create_LogOutTableAsync(string date, CancellationToken token);
-    Task<bool> Insert_UserLogoutLogAsync(
-        uint accountSerial,
-        string loginDate,
-        string ip,
-        uint worldCode,
-        byte billingType,
-        byte level,
-        uint avatarSerial,
-        string account,
-        CancellationToken token);
 }

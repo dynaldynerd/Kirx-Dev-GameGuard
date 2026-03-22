@@ -14,6 +14,7 @@ public sealed class AppSettings
     public WorldListSettings WorldList { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
     public ListenerSettings Listener { get; set; } = new();
+    public bool Autostart { get; set; }
     public int MaxActiveClients { get; set; } = -1;
 
     [JsonIgnore]
@@ -104,6 +105,7 @@ public sealed class AppSettings
                 }
             },
             MaxActiveClients = -1,
+            Autostart = false,
             Security = new SecuritySettings(),
             Listener = new ListenerSettings
             {

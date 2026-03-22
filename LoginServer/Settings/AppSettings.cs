@@ -11,6 +11,7 @@ public sealed class AppSettings
     public DatabaseSettings Database { get; set; } = new();
     public NetworkSettings Network { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
+    public bool Autostart { get; set; }
 
     [JsonIgnore]
     public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
@@ -92,7 +93,8 @@ public sealed class AppSettings
                 MaxConnections = 5000,
                 UserLoadThresholds = new[] { 500, 1000, 1500 }
             },
-            Security = new SecuritySettings()
+            Security = new SecuritySettings(),
+            Autostart = false
         };
     }
 

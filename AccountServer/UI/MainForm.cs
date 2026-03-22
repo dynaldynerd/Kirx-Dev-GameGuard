@@ -53,6 +53,11 @@ public partial class MainForm : Form
 
     private async void btnStart_Click(object sender, EventArgs e)
     {
+        await StartServerAsync();
+    }
+
+    private async Task StartServerAsync()
+    {
         if (_running) return;
         _running = true;
         btnStart.Enabled = false;
@@ -156,5 +161,15 @@ public partial class MainForm : Form
     {
         base.OnFormClosing(e);
         _cts?.Cancel();
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (_settings.Autostart)
+        {
+            await StartServerAsync();
+        }
     }
 }

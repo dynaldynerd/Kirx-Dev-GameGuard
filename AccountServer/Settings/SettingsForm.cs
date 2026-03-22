@@ -17,6 +17,7 @@ public partial class SettingsForm : Form
     private readonly DatabaseSnapshot _userDb;
     private readonly BindingList<WorldEntry> _worlds;
     private readonly BindingList<string> _gmPrefixes;
+    private readonly CheckBox _chkAutostart = new();
 
     public SettingsForm()
         : this(new AppSettings(), true)
@@ -35,6 +36,7 @@ public partial class SettingsForm : Form
         _worlds = new BindingList<WorldEntry>(settings.WorldList.Worlds.Select(CloneWorldEntry).ToList());
         _gmPrefixes = new BindingList<string>(settings.GmFilter.Prefixes.ToList());
         InitializeComponent();
+        InitializeAutostartControl();
         lstGmPrefixes.DataSource = _gmPrefixes;
         gridWorlds.DataSource = _worlds;
         HideExtraWorldColumns();
@@ -98,6 +100,26 @@ public partial class SettingsForm : Form
         LoadGeneralSettings();
     }
 
+    private void InitializeAutostartControl()
+    {
+        var lblAutostart = new Label
+        {
+            AutoSize = true,
+            Text = "Autostart",
+            Anchor = AnchorStyles.Left
+        };
+
+        _chkAutostart.AutoSize = true;
+        _chkAutostart.Text = "Start server automatically on launch";
+        _chkAutostart.Anchor = AnchorStyles.Left;
+
+        int row = tblGeneral.RowCount;
+        tblGeneral.RowCount = row + 1;
+        tblGeneral.RowStyles.Add(new RowStyle());
+        tblGeneral.Controls.Add(lblAutostart, 0, row);
+        tblGeneral.Controls.Add(_chkAutostart, 1, row);
+    }
+
     private void LoadDbProfileToControls()
     {
         var db = _userDb;
@@ -114,6 +136,7 @@ public partial class SettingsForm : Form
     private void LoadGeneralSettings()
     {
         txtListenHost.Text = _settings.Listener.Host;
+        _chkAutostart.Checked = _settings.Autostart;
 
         numLoginPort.Value = ClampNumeric(numLoginPort, _settings.Listener.LoginPort);
         numWorldPort.Value = ClampNumeric(numWorldPort, _settings.Listener.WorldPort);
@@ -158,6 +181,7 @@ public partial class SettingsForm : Form
         _settings.GmFilter.Prefixes = _gmPrefixes.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
         _settings.WorldList.Worlds = _worlds.Select(CloneWorldEntry).ToList();
         _settings.MaxActiveClients = (int)numMaxActive.Value;
+        _settings.Autostart = _chkAutostart.Checked;
         _settings.Listener.Host = txtListenHost.Text.Trim();
         _settings.Listener.LoginPort = (int)numLoginPort.Value;
         _settings.Listener.WorldPort = (int)numWorldPort.Value;

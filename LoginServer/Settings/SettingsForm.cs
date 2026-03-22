@@ -15,6 +15,8 @@ public partial class SettingsForm : Form
     private readonly AppSettings _settings;
     private readonly DatabaseSnapshot _userDb;
     private readonly DatabaseSnapshot _billingDb;
+    private readonly CheckBox _chkAutostart = new();
+    private readonly TabPage _tabGeneral = new();
 
     public SettingsForm(AppSettings settings)
     {
@@ -40,6 +42,7 @@ public partial class SettingsForm : Form
             Trusted = settings.Database.BillingTrustedConnection
         };
         InitializeComponent();
+        InitializeAutostartControl();
         LoadFromSettings();
     }
 
@@ -53,10 +56,37 @@ public partial class SettingsForm : Form
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
         txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
+        _chkAutostart.Checked = _settings.Autostart;
         var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
         txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
         txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
         txtLoadHigh.Text = (loads.Length > 2 ? loads[2] : 1500).ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void InitializeAutostartControl()
+    {
+        _tabGeneral.Text = "General";
+        _tabGeneral.Padding = new Padding(8);
+        _tabGeneral.UseVisualStyleBackColor = true;
+
+        var lblAutostart = new Label
+        {
+            AutoSize = true,
+            Location = new System.Drawing.Point(10, 20),
+            Name = "lblAutostart",
+            Text = "Autostart"
+        };
+
+        _chkAutostart.AutoSize = true;
+        _chkAutostart.Location = new System.Drawing.Point(124, 18);
+        _chkAutostart.Name = "chkAutostart";
+        _chkAutostart.TabIndex = 0;
+        _chkAutostart.Text = "Start server automatically on launch";
+        _chkAutostart.UseVisualStyleBackColor = true;
+
+        _tabGeneral.Controls.Add(lblAutostart);
+        _tabGeneral.Controls.Add(_chkAutostart);
+        tabMain.TabPages.Insert(0, _tabGeneral);
     }
 
     private bool SaveToSettings()
@@ -101,6 +131,7 @@ public partial class SettingsForm : Form
         _settings.Network.AccountHost = txtAccountHost.Text.Trim();
         _settings.Network.AccountPort = aPort;
         _settings.Network.MaxConnections = maxConn;
+        _settings.Autostart = _chkAutostart.Checked;
         if (!int.TryParse(txtLoadLow.Text, out var load0) ||
             !int.TryParse(txtLoadMid.Text, out var load1) ||
             !int.TryParse(txtLoadHigh.Text, out var load2) ||
