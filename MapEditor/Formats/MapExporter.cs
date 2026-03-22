@@ -1057,6 +1057,20 @@ public static class MapExporter
     }
 
     state.FogColor = EncodeArgb(environment.FogColor);
+    if (environment.LensFlareScales is { Length: > 0 })
+    {
+      for (int i = 0; i < state.LensFlareScales.Length; ++i)
+      {
+        float scale = i < environment.LensFlareScales.Length ? environment.LensFlareScales[i] : 1.0f;
+        state.LensFlareScales[i] = float.IsFinite(scale) ? scale : 1.0f;
+      }
+    }
+
+    if (!string.IsNullOrWhiteSpace(environment.LensFlareTexturePath))
+    {
+      state.LensTextureNameBytes = EncodeFixedAscii(environment.LensFlareTexturePath, R3mNameBytes);
+    }
+
     if (IsFinite(environment.LensFlarePosition))
     {
       state.LensPositionX = environment.LensFlarePosition.X;
@@ -1211,6 +1225,24 @@ public static class MapExporter
     }
 
     writer.Write(fixedBytes);
+  }
+
+  private static byte[] EncodeFixedAscii(string text, int expectedLength)
+  {
+    byte[] output = new byte[expectedLength];
+    if (string.IsNullOrWhiteSpace(text))
+    {
+      return output;
+    }
+
+    byte[] encoded = Encoding.ASCII.GetBytes(text.Trim());
+    int copyLength = Math.Min(expectedLength - 1, encoded.Length);
+    if (copyLength > 0)
+    {
+      Buffer.BlockCopy(encoded, 0, output, 0, copyLength);
+    }
+
+    return output;
   }
 
   private static void WriteBytesAlways(string targetPath, byte[] bytes)
@@ -2116,7 +2148,7 @@ public static class MapExporter
       Fog2BbMaxX = 0.0f,
       Fog2BbMaxY = 0.0f,
       Fog2BbMaxZ = 0.0f,
-      LensFlareScales = new float[16],
+      LensFlareScales = CreateDefaultLensFlareScales(),
       LensTextureNameBytes = new byte[R3mNameBytes],
       LensPositionX = 0.0f,
       LensPositionY = 0.0f,
@@ -2126,5 +2158,13 @@ public static class MapExporter
       Trailing = Array.Empty<byte>(),
     };
   }
+
+  private static float[] CreateDefaultLensFlareScales()
+  {
+    float[] scales = new float[16];
+    Array.Fill(scales, 1.0f);
+    return scales;
+  }
+
   private readonly record struct SectionEntry(uint Offset, uint Size);
 }

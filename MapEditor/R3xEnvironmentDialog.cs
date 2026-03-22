@@ -162,15 +162,24 @@ internal sealed class R3xEnvironmentDialog : Form
       (float)_lensXUpDown.Value,
       (float)_lensYUpDown.Value,
       (float)_lensZUpDown.Value);
+    MapEnvironmentSettings existing = EditedSettings;
 
     EditedSettings = new MapEnvironmentSettings(
       _fogEnabledCheckBox.Checked,
       fogStart,
       fogEnd,
       fogColor,
+      existing.Fog2Enabled,
+      existing.FogStart2,
+      existing.FogEnd2,
+      existing.FogColor2,
+      existing.Fog2BoxMin,
+      existing.Fog2BoxMax,
       _fogRangeCheckBox.Checked,
       _noFogSkyCheckBox.Checked,
       _lensFlareCheckBox.Checked,
+      existing.LensFlareScales,
+      existing.LensFlareTexturePath,
       lensPosition);
 
     DialogResult = DialogResult.OK;
