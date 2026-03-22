@@ -677,8 +677,8 @@ char CMainThread::_db_Update_Base(
   sprintf_s(source, sizeof(source), "Slot=%d,", pNewData->dbAvator.m_bySlotIndex);
   std::strcat(buffer, source);
 
-  unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
-  sprintf_s(source, sizeof(source), "LastConnTime=%u WHERE Serial=%d", localTime, dwSerial);
+  unsigned __int64 localTime = GetKorLocalTime();
+  sprintf_s(source, sizeof(source), "LastConnTime=%I64u WHERE Serial=%d", localTime, dwSerial);
   std::strcat(buffer, source);
 
   return 1;
@@ -1168,7 +1168,7 @@ char CMainThread::_db_Update_Supplement(
   }
   if (pOldData->dbSupplement.dwBufPotionEndTime != pNewData->dbSupplement.dwBufPotionEndTime)
   {
-    sprintf_s(buffer, 128, "BufEndTime = %u,", pNewData->dbSupplement.dwBufPotionEndTime);
+    sprintf_s(buffer, 128, "BufEndTime = %I64u,", pNewData->dbSupplement.dwBufPotionEndTime);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
   if (pOldData->dbSupplement.dwRaceBuffClear != pNewData->dbSupplement.dwRaceBuffClear)
@@ -1499,7 +1499,7 @@ char CMainThread::_db_Update_Unit(
         sprintf_s(
           source,
           sizeof(source),
-          "Cut_%d=%u,",
+          "Cut_%d=%I64u,",
           unitIndex,
           pNewData->dbUnit.m_List[unitIndex].dwCutTime);
         std::strcat(buffer, source);
@@ -1767,7 +1767,7 @@ char CMainThread::_db_Update_NpcQuest_History(
       sprintf_s(
         buffer,
         sizeof(buffer),
-        "Code%d='%s',Level%d=%d ,Time%d=%u,",
+        "Code%d='%s',Level%d=%d ,Time%d=%I64u,",
         index + 1,
         pNewData->dbQuest.m_History[index].szQuestCode,
         index + 1,
@@ -2278,8 +2278,8 @@ unsigned __int8 CMainThread::_db_Update_TimeLimitInfo(
     sprintf_s(buffer, 128, "TLStatus = %u,", pNewData->dbTimeLimitInfo.byTLStatus);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
-  unsigned int localTime = static_cast<unsigned int>(GetKorLocalTime());
-  sprintf_s(buffer, 128, "LastLogoutTime=%u,", localTime);
+  unsigned __int64 localTime = GetKorLocalTime();
+  sprintf_s(buffer, 128, "LastLogoutTime=%I64u,", localTime);
   strcat_s(pSzQuery, nBufferSize, buffer);
 
   size_t queryLength = std::strlen(pSzQuery);
@@ -2652,7 +2652,7 @@ char CMainThread::_db_Update_PrimiumPlayTime(
 
   if (pNewData->dbPlayTimeInPcbang.dwLastConnTime != pOldData->dbPlayTimeInPcbang.dwLastConnTime)
   {
-    sprintf_s(buffer, sizeof(buffer), "[LastConnTime]= %u,", pNewData->dbPlayTimeInPcbang.dwLastConnTime);
+    sprintf_s(buffer, sizeof(buffer), "[LastConnTime]= %I64u,", pNewData->dbPlayTimeInPcbang.dwLastConnTime);
     std::strcat(pSzQuery, buffer);
   }
   if (pNewData->dbPlayTimeInPcbang.dwContPlayTime != pOldData->dbPlayTimeInPcbang.dwContPlayTime)

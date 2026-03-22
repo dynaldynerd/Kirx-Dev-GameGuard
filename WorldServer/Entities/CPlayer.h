@@ -282,7 +282,7 @@ struct  _UNIT_DB_BASE
       _unit_bullet_param m_SpareBulletParam[8];
     };
     int nPullingFee;
-    unsigned int dwCutTime;
+    unsigned __int64 dwCutTime;
     unsigned __int16 wBooster;
 
     _LIST();
@@ -319,7 +319,7 @@ struct  _QUEST_DB_BASE
     char szQuestCode[8];
     int nEventNo;
     unsigned __int8 byLevel;
-    unsigned int dwEventEndTime;
+    unsigned __int64 dwEventEndTime;
 
     _NPC_QUEST_HISTORY();
     void Init();

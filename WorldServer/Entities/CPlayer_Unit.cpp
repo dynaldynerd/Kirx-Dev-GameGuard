@@ -512,7 +512,7 @@ void CPlayer::CheckUnitCutTime()
     return;
   }
 
-  const unsigned int now = static_cast<unsigned int>(GetKorLocalTime());
+  const unsigned __int64 now = GetKorLocalTime();
   for (int index = 0; index < 4; ++index)
   {
     _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];

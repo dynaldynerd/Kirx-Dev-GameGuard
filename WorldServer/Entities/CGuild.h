@@ -188,7 +188,7 @@ public:
   void SendMsg_ManageGuildCommitteeResult(char bAppoint, char *pwszCommitteeName);
   void SendMsg_MasterElectPossible(char bPossible);
   void Complete_DB_Update_Committee(char *pData);
-  void CompleteSelectMasterLastConn(unsigned int dwLastConnTime);
+  void CompleteSelectMasterLastConn(unsigned __int64 dwLastConnTime);
   int GetMemberNum();
   void Release();
 

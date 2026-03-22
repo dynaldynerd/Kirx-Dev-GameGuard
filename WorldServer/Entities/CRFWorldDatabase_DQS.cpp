@@ -94,7 +94,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoBySerial(
         SQLGetData(
           m_hStmtSelect,
           10u,
-          SQL_C_ULONG,
+          SQL_C_UBIGINT,
           &pCharacterDataArray->CharacterInfo[count].dwLastConnTime,
           0,
           &indicator);
@@ -212,7 +212,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfo(
         SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwDalant, 0, &indicator);
         SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwGold, 0, &indicator);
         SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwBaseShape, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwLastConnTime, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_UBIGINT, &pCharacterData->dwLastConnTime, 0, &indicator);
         for (int j = 0; j < 8; ++j)
         {
           SQLGetData(

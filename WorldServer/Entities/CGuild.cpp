@@ -384,10 +384,10 @@ void CGuild::SetGuild(
   m_bPossibleElectMaster = false;
   if (m_MasterData.IsFill())
   {
-    unsigned int lastConnTime = static_cast<unsigned int>(-1);
-    const unsigned int limitConnTime = static_cast<unsigned int>(GetConnectTime_AddBySec(-1814400));
+    unsigned __int64 lastConnTime = static_cast<unsigned __int64>(-1);
+    const unsigned __int64 limitConnTime = GetConnectTime_AddBySec(-1814400);
     g_Main.m_pWorldDB->Select_GuildMasterLastConn(m_MasterData.dwSerial, limitConnTime, &lastConnTime);
-    if (lastConnTime != static_cast<unsigned int>(-1))
+    if (lastConnTime != static_cast<unsigned __int64>(-1))
     {
       m_bPossibleElectMaster = true;
     }
@@ -750,7 +750,7 @@ void CGuild::PushDQSGuildMasterLastConnn()
   query.dwSerial = m_MasterData.dwSerial;
   query.dwGuildIndex = m_nIndex;
   query.dwGuildSerial = m_dwSerial;
-  query.dwLimitConnTime = static_cast<unsigned int>(GetConnectTime_AddBySec(-1814400));
+  query.dwLimitConnTime = GetConnectTime_AddBySec(-1814400);
 
   g_Main.PushDQSData(
     -1,
@@ -2787,9 +2787,9 @@ void CGuild::SendMsg_MasterElectPossible(char bPossible)
   }
 }
 
-void CGuild::CompleteSelectMasterLastConn(unsigned int dwLastConnTime)
+void CGuild::CompleteSelectMasterLastConn(unsigned __int64 dwLastConnTime)
 {
-  if (dwLastConnTime != static_cast<unsigned int>(-1))
+  if (dwLastConnTime != static_cast<unsigned __int64>(-1))
   {
     m_bPossibleElectMaster = true;
     MakeDownMemberPacket();
