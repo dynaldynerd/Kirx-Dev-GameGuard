@@ -307,15 +307,31 @@
     <Filter Include="Header Files\RFAcc">
       <UniqueIdentifier>{1F534D80-F95E-4F4D-89B3-350DED34EE6F}</UniqueIdentifier>
     </Filter>
-  
-    <Filter Include="Header Files\Packets\ClientZone"><UniqueIdentifier>{64D05F51-BBA6-4E9A-8BC4-251011CE5E94}</UniqueIdentifier></Filter>
-    <Filter Include="Header Files\Packets\ZoneClient"><UniqueIdentifier>{2DECDB58-CF6B-404C-B312-E071BBAC422F}</UniqueIdentifier></Filter>
-    <Filter Include="Header Files\Packets\WorldAccount"><UniqueIdentifier>{0825ABDC-CC9B-4E77-A358-7D8C0FF63CAC}</UniqueIdentifier></Filter>
-    <Filter Include="Header Files\Packets\AccountWorld"><UniqueIdentifier>{AB4F4920-5DA9-4544-A0CC-233CEEBB8BE1}</UniqueIdentifier></Filter>
-    <Filter Include="Source Files\Packets\ClientZone"><UniqueIdentifier>{1FB907E9-3AEE-45D7-A88C-50B9D1D6284C}</UniqueIdentifier></Filter>
-    <Filter Include="Source Files\Packets\ZoneClient"><UniqueIdentifier>{C3328AE4-60C8-48C0-8782-C53026971086}</UniqueIdentifier></Filter>
-    <Filter Include="Source Files\Packets\WorldAccount"><UniqueIdentifier>{40EB218E-7685-4FD1-BE53-14133CA55405}</UniqueIdentifier></Filter>
-    <Filter Include="Source Files\Packets\AccountWorld"><UniqueIdentifier>{61D5CB68-EB69-4B96-8DFC-FD21C11C6D30}</UniqueIdentifier></Filter></ItemGroup>
+    <Filter Include="Header Files\Packets\ClientZone">
+      <UniqueIdentifier>{64D05F51-BBA6-4E9A-8BC4-251011CE5E94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Packets\ZoneClient">
+      <UniqueIdentifier>{2DECDB58-CF6B-404C-B312-E071BBAC422F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Packets\WorldAccount">
+      <UniqueIdentifier>{0825ABDC-CC9B-4E77-A358-7D8C0FF63CAC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Packets\AccountWorld">
+      <UniqueIdentifier>{AB4F4920-5DA9-4544-A0CC-233CEEBB8BE1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Packets\ClientZone">
+      <UniqueIdentifier>{1FB907E9-3AEE-45D7-A88C-50B9D1D6284C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Packets\ZoneClient">
+      <UniqueIdentifier>{C3328AE4-60C8-48C0-8782-C53026971086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Packets\WorldAccount">
+      <UniqueIdentifier>{40EB218E-7685-4FD1-BE53-14133CA55405}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Packets\AccountWorld">
+      <UniqueIdentifier>{61D5CB68-EB69-4B96-8DFC-FD21C11C6D30}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\a_trade_adjust_price_request_clzo.h">
       <Filter>Header Files\Packets\ClientZone</Filter>
@@ -2741,11 +2757,21 @@
     <ClInclude Include="WorldServer.h">
       <Filter>Header Files\App</Filter>
     </ClInclude>
-  
-    <ClInclude Include="Entities\Packet\WorldAccountPacket.h"><Filter>Header Files\Packets\WorldAccount</Filter></ClInclude>
-    <ClInclude Include="Entities\Packet\AccountWorldPacket.h"><Filter>Header Files\Packets\AccountWorld</Filter></ClInclude>
-    <ClInclude Include="Entities\Packet\ZoneClientPacket.h"><Filter>Header Files\Packets\ZoneClient</Filter></ClInclude>
-    <ClInclude Include="Entities\Packet\ClientZonePacket.h"><Filter>Header Files\Packets\ClientZone</Filter></ClInclude>
+    <ClInclude Include="Entities\Packet\WorldAccountPacket.h">
+      <Filter>Header Files\Packets\WorldAccount</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Packet\AccountWorldPacket.h">
+      <Filter>Header Files\Packets\AccountWorld</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Packet\ZoneClientPacket.h">
+      <Filter>Header Files\Packets\ZoneClient</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Packet\ClientZonePacket.h">
+      <Filter>Header Files\Packets\ClientZone</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\RuntimeAssert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Entities\AggroCaculateData.cpp">
@@ -4266,11 +4292,21 @@
     <ClCompile Include="WorldServer.cpp">
       <Filter>Source Files\App</Filter>
     </ClCompile>
-  
-    <ClCompile Include="Entities\Packet\ZoneClientPacket.cpp"><Filter>Source Files\Packets\ZoneClient</Filter></ClCompile>
-    <ClCompile Include="Entities\Packet\ClientZonePacket.cpp"><Filter>Source Files\Packets\ClientZone</Filter></ClCompile>
-    <ClCompile Include="Entities\Packet\AccountWorldPacket.cpp"><Filter>Source Files\Packets\AccountWorld</Filter></ClCompile>
-    <ClCompile Include="Entities\Packet\WorldAccountPacket.cpp"><Filter>Source Files\Packets\WorldAccount</Filter></ClCompile>
+    <ClCompile Include="Entities\Packet\ZoneClientPacket.cpp">
+      <Filter>Source Files\Packets\ZoneClient</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Packet\ClientZonePacket.cpp">
+      <Filter>Source Files\Packets\ClientZone</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Packet\AccountWorldPacket.cpp">
+      <Filter>Source Files\Packets\AccountWorld</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Packet\WorldAccountPacket.cpp">
+      <Filter>Source Files\Packets\WorldAccount</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\RuntimeAssert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WorldServer.rc">
