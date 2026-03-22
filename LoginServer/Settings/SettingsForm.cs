@@ -15,6 +15,8 @@ public partial class SettingsForm : Form
     private readonly AppSettings _settings;
     private readonly DatabaseSnapshot _userDb;
     private readonly DatabaseSnapshot _billingDb;
+    private readonly CheckBox _chkAutostart = new();
+    private readonly TabPage _tabGeneral = new();
 
     public SettingsForm(AppSettings settings)
     {
@@ -40,6 +42,7 @@ public partial class SettingsForm : Form
             Trusted = settings.Database.BillingTrustedConnection
         };
         InitializeComponent();
+        InitializeAutostartControl();
         LoadFromSettings();
     }
 
@@ -53,10 +56,57 @@ public partial class SettingsForm : Form
         txtAccountHost.Text = _settings.Network.AccountHost;
         txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
         txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
+        _chkAutostart.Checked = _settings.Autostart;
         var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
         txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
         txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
         txtLoadHigh.Text = (loads.Length > 2 ? loads[2] : 1500).ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void InitializeAutostartControl()
+    {
+        _tabGeneral.Text = "General";
+        _tabGeneral.Padding = new Padding(8);
+        _tabGeneral.UseVisualStyleBackColor = true;
+
+        var autostartPanel = new TableLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = System.Drawing.Color.FromArgb(255, 247, 223),
+            ColumnCount = 2,
+            Dock = DockStyle.Top,
+            Margin = new Padding(0),
+            Padding = new Padding(12, 10, 12, 10)
+        };
+        autostartPanel.ColumnStyles.Add(new ColumnStyle());
+        autostartPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+        var lblAutostart = new Label
+        {
+            AutoSize = true,
+            Name = "lblAutostart",
+            Text = "Autostart",
+            Anchor = AnchorStyles.Left,
+            ForeColor = System.Drawing.Color.FromArgb(138, 82, 0),
+            BackColor = autostartPanel.BackColor,
+            Margin = new Padding(0, 3, 16, 0)
+        };
+
+        _chkAutostart.AutoSize = true;
+        _chkAutostart.Name = "chkAutostart";
+        _chkAutostart.TabIndex = 0;
+        _chkAutostart.Text = "Start server automatically on launch";
+        _chkAutostart.Anchor = AnchorStyles.Left;
+        _chkAutostart.BackColor = autostartPanel.BackColor;
+        _chkAutostart.ForeColor = System.Drawing.Color.FromArgb(138, 82, 0);
+        _chkAutostart.UseVisualStyleBackColor = false;
+
+        autostartPanel.Controls.Add(lblAutostart, 0, 0);
+        autostartPanel.Controls.Add(_chkAutostart, 1, 0);
+
+        _tabGeneral.Controls.Add(autostartPanel);
+        tabMain.TabPages.Insert(0, _tabGeneral);
     }
 
     private bool SaveToSettings()
@@ -101,6 +151,7 @@ public partial class SettingsForm : Form
         _settings.Network.AccountHost = txtAccountHost.Text.Trim();
         _settings.Network.AccountPort = aPort;
         _settings.Network.MaxConnections = maxConn;
+        _settings.Autostart = _chkAutostart.Checked;
         if (!int.TryParse(txtLoadLow.Text, out var load0) ||
             !int.TryParse(txtLoadMid.Text, out var load1) ||
             !int.TryParse(txtLoadHigh.Text, out var load2) ||

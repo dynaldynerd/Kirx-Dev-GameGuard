@@ -20,6 +20,7 @@ public partial class MainWindow : Form
     private bool _verboseLog = true;
     private Task? _accountReconnectTask;
     private bool _isStopping;
+    private bool _running;
 
     public MainWindow()
     {
@@ -42,6 +43,17 @@ public partial class MainWindow : Form
 
     private async void OnStartClicked(object sender, EventArgs e)
     {
+        await StartServerAsync();
+    }
+
+    private async Task StartServerAsync()
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        _running = true;
         startButton.Enabled = false;
         stopButton.Enabled = true;
         UpdateStatus("Status: Starting...");
@@ -84,6 +96,8 @@ public partial class MainWindow : Form
 
     private async Task StopAllAsync()
     {
+        _running = false;
+        _isStopping = true;
         _cts?.Cancel();
 
         try
@@ -328,6 +342,16 @@ public partial class MainWindow : Form
         {
             AppendLog($"Account DB info request send failed: {ex.Message}");
             throw;
+        }
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (_settings.Autostart)
+        {
+            await StartServerAsync();
         }
     }
 

@@ -11,7 +11,6 @@ public partial class SettingsForm
     private TabControl tabMain = null!;
     private TabPage tabGeneral = null!;
     private TabPage tabDatabase = null!;
-    private TabPage tabGmFilter = null!;
     private TabPage tabWorldList = null!;
     private Panel panelGeneral = null!;
     private TableLayoutPanel tblGeneral = null!;
@@ -43,13 +42,6 @@ public partial class SettingsForm
     private FlowLayoutPanel panelAuth = null!;
     private RadioButton radAuthTrusted = null!;
     private RadioButton radAuthSql = null!;
-    private TableLayoutPanel tblGm = null!;
-    private ListBox lstGmPrefixes = null!;
-    private FlowLayoutPanel panelGmButtons = null!;
-    private Label lblGmPrefix = null!;
-    private TextBox txtGmPrefix = null!;
-    private Button btnGmAdd = null!;
-    private Button btnGmRemove = null!;
     private Panel panelWorld = null!;
     private TableLayoutPanel tblWorldLayout = null!;
     private TableLayoutPanel tblWorldHeader = null!;
@@ -107,14 +99,6 @@ public partial class SettingsForm
         txtDbUser = new TextBox();
         lblDbPass = new Label();
         txtDbPass = new TextBox();
-        tabGmFilter = new TabPage();
-        tblGm = new TableLayoutPanel();
-        lstGmPrefixes = new ListBox();
-        panelGmButtons = new FlowLayoutPanel();
-        lblGmPrefix = new Label();
-        txtGmPrefix = new TextBox();
-        btnGmAdd = new Button();
-        btnGmRemove = new Button();
         tabWorldList = new TabPage();
         panelWorld = new Panel();
         tblWorldLayout = new TableLayoutPanel();
@@ -140,9 +124,6 @@ public partial class SettingsForm
         panelDb.SuspendLayout();
         tblDatabase.SuspendLayout();
         panelAuth.SuspendLayout();
-        tabGmFilter.SuspendLayout();
-        tblGm.SuspendLayout();
-        panelGmButtons.SuspendLayout();
         tabWorldList.SuspendLayout();
         panelWorld.SuspendLayout();
         tblWorldLayout.SuspendLayout();
@@ -155,7 +136,6 @@ public partial class SettingsForm
         // 
         tabMain.Controls.Add(tabGeneral);
         tabMain.Controls.Add(tabDatabase);
-        tabMain.Controls.Add(tabGmFilter);
         tabMain.Controls.Add(tabWorldList);
         tabMain.Dock = DockStyle.Fill;
         tabMain.Location = new Point(0, 0);
@@ -507,90 +487,6 @@ public partial class SettingsForm
         txtDbPass.TabIndex = 13;
         txtDbPass.UseSystemPasswordChar = true;
         // 
-        // tabGmFilter
-        // 
-        tabGmFilter.Controls.Add(tblGm);
-        tabGmFilter.Location = new Point(4, 24);
-        tabGmFilter.Name = "tabGmFilter";
-        tabGmFilter.Size = new Size(712, 444);
-        tabGmFilter.TabIndex = 2;
-        tabGmFilter.Text = "GM Filter";
-        tabGmFilter.UseVisualStyleBackColor = true;
-        // 
-        // tblGm
-        // 
-        tblGm.ColumnCount = 2;
-        tblGm.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70F));
-        tblGm.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
-        tblGm.Controls.Add(lstGmPrefixes, 0, 0);
-        tblGm.Controls.Add(panelGmButtons, 1, 0);
-        tblGm.Dock = DockStyle.Fill;
-        tblGm.Location = new Point(0, 0);
-        tblGm.Name = "tblGm";
-        tblGm.Padding = new Padding(8);
-        tblGm.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tblGm.Size = new Size(712, 444);
-        tblGm.TabIndex = 0;
-        // 
-        // lstGmPrefixes
-        // 
-        lstGmPrefixes.Dock = DockStyle.Fill;
-        lstGmPrefixes.Location = new Point(11, 11);
-        lstGmPrefixes.Name = "lstGmPrefixes";
-        lstGmPrefixes.Size = new Size(481, 422);
-        lstGmPrefixes.TabIndex = 0;
-        // 
-        // panelGmButtons
-        // 
-        panelGmButtons.AutoSize = true;
-        panelGmButtons.Controls.Add(lblGmPrefix);
-        panelGmButtons.Controls.Add(txtGmPrefix);
-        panelGmButtons.Controls.Add(btnGmAdd);
-        panelGmButtons.Controls.Add(btnGmRemove);
-        panelGmButtons.Dock = DockStyle.Fill;
-        panelGmButtons.FlowDirection = FlowDirection.TopDown;
-        panelGmButtons.Location = new Point(498, 11);
-        panelGmButtons.Name = "panelGmButtons";
-        panelGmButtons.Padding = new Padding(6);
-        panelGmButtons.Size = new Size(203, 422);
-        panelGmButtons.TabIndex = 1;
-        // 
-        // lblGmPrefix
-        // 
-        lblGmPrefix.AutoSize = true;
-        lblGmPrefix.Location = new Point(9, 6);
-        lblGmPrefix.Name = "lblGmPrefix";
-        lblGmPrefix.Size = new Size(36, 15);
-        lblGmPrefix.TabIndex = 0;
-        lblGmPrefix.Text = "Prefix";
-        // 
-        // txtGmPrefix
-        // 
-        txtGmPrefix.Location = new Point(9, 24);
-        txtGmPrefix.Name = "txtGmPrefix";
-        txtGmPrefix.Size = new Size(140, 23);
-        txtGmPrefix.TabIndex = 1;
-        // 
-        // btnGmAdd
-        // 
-        btnGmAdd.AutoSize = true;
-        btnGmAdd.Location = new Point(9, 53);
-        btnGmAdd.Name = "btnGmAdd";
-        btnGmAdd.Size = new Size(75, 25);
-        btnGmAdd.TabIndex = 2;
-        btnGmAdd.Text = "Add";
-        btnGmAdd.Click += OnGmAdd;
-        // 
-        // btnGmRemove
-        // 
-        btnGmRemove.AutoSize = true;
-        btnGmRemove.Location = new Point(9, 84);
-        btnGmRemove.Name = "btnGmRemove";
-        btnGmRemove.Size = new Size(75, 25);
-        btnGmRemove.TabIndex = 3;
-        btnGmRemove.Text = "Remove";
-        btnGmRemove.Click += OnGmRemove;
-        // 
         // tabWorldList
         // 
         tabWorldList.Controls.Add(panelWorld);
@@ -772,11 +668,6 @@ public partial class SettingsForm
         tblDatabase.PerformLayout();
         panelAuth.ResumeLayout(false);
         panelAuth.PerformLayout();
-        tabGmFilter.ResumeLayout(false);
-        tblGm.ResumeLayout(false);
-        tblGm.PerformLayout();
-        panelGmButtons.ResumeLayout(false);
-        panelGmButtons.PerformLayout();
         tabWorldList.ResumeLayout(false);
         panelWorld.ResumeLayout(false);
         tblWorldLayout.ResumeLayout(false);

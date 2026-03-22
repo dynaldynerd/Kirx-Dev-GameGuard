@@ -53,7 +53,17 @@ public partial class MainForm : Form
 
     private async void btnStart_Click(object sender, EventArgs e)
     {
+        await StartServerAsync();
+    }
+
+    private async Task StartServerAsync()
+    {
         if (_running) return;
+        if (!EnsureWorldEntriesConfigured())
+        {
+            return;
+        }
+
         _running = true;
         btnStart.Enabled = false;
         btnStop.Enabled = true;
@@ -105,7 +115,7 @@ public partial class MainForm : Form
 
     private void OnOpenSettings(object sender, EventArgs e)
     {
-        using var form = new SettingsForm(_settings);
+        using var form = new SettingsForm(_settings, _running);
         if (form.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -156,5 +166,29 @@ public partial class MainForm : Form
     {
         base.OnFormClosing(e);
         _cts?.Cancel();
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (_settings.Autostart)
+        {
+            await StartServerAsync();
+        }
+    }
+
+    private bool EnsureWorldEntriesConfigured()
+    {
+        bool hasWorldEntries = _settings.WorldList?.Worlds != null && _settings.WorldList.Worlds.Count > 0;
+        if (hasWorldEntries)
+        {
+            return true;
+        }
+
+        const string message = "AccountServer requires at least one configured world entry before it can start.";
+        AppendLog(message);
+        MessageBox.Show(this, message, "World Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return false;
     }
 }

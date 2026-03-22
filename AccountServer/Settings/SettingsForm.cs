@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -16,26 +17,33 @@ public partial class SettingsForm : Form
     private readonly AppSettings _settings;
     private readonly DatabaseSnapshot _userDb;
     private readonly BindingList<WorldEntry> _worlds;
-    private readonly BindingList<string> _gmPrefixes;
+    private readonly CheckBox _chkAutostart = new();
+    private readonly bool _worldEntryEditingLocked;
 
     public SettingsForm()
-        : this(new AppSettings(), true)
+        : this(new AppSettings(), true, false)
     {
     }
 
     public SettingsForm(AppSettings settings)
-        : this(settings, false)
+        : this(settings, false, false)
     {
     }
 
-    private SettingsForm(AppSettings settings, bool designTime)
+    public SettingsForm(AppSettings settings, bool worldEntryEditingLocked)
+        : this(settings, false, worldEntryEditingLocked)
+    {
+    }
+
+    private SettingsForm(AppSettings settings, bool designTime, bool worldEntryEditingLocked)
     {
         _settings = settings;
         _userDb = DatabaseSnapshot.From(settings.Database.User);
         _worlds = new BindingList<WorldEntry>(settings.WorldList.Worlds.Select(CloneWorldEntry).ToList());
-        _gmPrefixes = new BindingList<string>(settings.GmFilter.Prefixes.ToList());
+        _worldEntryEditingLocked = worldEntryEditingLocked;
         InitializeComponent();
-        lstGmPrefixes.DataSource = _gmPrefixes;
+        InitializeAutostartControl();
+        InitializeWorldListEditingLock();
         gridWorlds.DataSource = _worlds;
         HideExtraWorldColumns();
         if (!designTime)
@@ -77,6 +85,26 @@ public partial class SettingsForm : Form
         }
     }
 
+    private void InitializeWorldListEditingLock()
+    {
+        if (!_worldEntryEditingLocked)
+        {
+            return;
+        }
+
+        btnWorldAdd.Enabled = false;
+        tabMain.Selecting += OnTabMainSelecting;
+    }
+
+    private void OnTabMainSelecting(object? sender, TabControlCancelEventArgs e)
+    {
+        if (_worldEntryEditingLocked && ReferenceEquals(e.TabPage, tabWorldList))
+        {
+            e.Cancel = true;
+            ShowWorldEntryEditingLockedMessage();
+        }
+    }
+
     private static WorldEntry CloneWorldEntry(WorldEntry entry)
     {
         return new WorldEntry
@@ -98,6 +126,48 @@ public partial class SettingsForm : Form
         LoadGeneralSettings();
     }
 
+    private void InitializeAutostartControl()
+    {
+        var autostartPanel = new TableLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = System.Drawing.Color.FromArgb(255, 247, 223),
+            ColumnCount = 2,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(3, 6, 3, 0),
+            Padding = new Padding(12, 10, 12, 10)
+        };
+        autostartPanel.ColumnStyles.Add(new ColumnStyle());
+        autostartPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+        var lblAutostart = new Label
+        {
+            AutoSize = true,
+            Text = "Autostart",
+            Anchor = AnchorStyles.Left,
+            ForeColor = System.Drawing.Color.FromArgb(138, 82, 0),
+            BackColor = autostartPanel.BackColor,
+            Margin = new Padding(0, 3, 16, 0)
+        };
+
+        _chkAutostart.AutoSize = true;
+        _chkAutostart.Text = "Start server automatically on launch";
+        _chkAutostart.Anchor = AnchorStyles.Left;
+        _chkAutostart.BackColor = autostartPanel.BackColor;
+        _chkAutostart.ForeColor = System.Drawing.Color.FromArgb(138, 82, 0);
+        _chkAutostart.UseVisualStyleBackColor = false;
+
+        autostartPanel.Controls.Add(lblAutostart, 0, 0);
+        autostartPanel.Controls.Add(_chkAutostart, 1, 0);
+
+        int row = tblGeneral.RowCount;
+        tblGeneral.RowCount = row + 1;
+        tblGeneral.RowStyles.Add(new RowStyle());
+        tblGeneral.Controls.Add(autostartPanel, 0, row);
+        tblGeneral.SetColumnSpan(autostartPanel, 2);
+    }
+
     private void LoadDbProfileToControls()
     {
         var db = _userDb;
@@ -114,6 +184,7 @@ public partial class SettingsForm : Form
     private void LoadGeneralSettings()
     {
         txtListenHost.Text = _settings.Listener.Host;
+        _chkAutostart.Checked = _settings.Autostart;
 
         numLoginPort.Value = ClampNumeric(numLoginPort, _settings.Listener.LoginPort);
         numWorldPort.Value = ClampNumeric(numWorldPort, _settings.Listener.WorldPort);
@@ -154,10 +225,21 @@ public partial class SettingsForm : Form
             return false;
         }
 
+        if (_worlds.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                "At least one world entry is required.",
+                "World Entry Required",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return false;
+        }
+
         _userDb.ApplyTo(_settings.Database.User);
-        _settings.GmFilter.Prefixes = _gmPrefixes.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
         _settings.WorldList.Worlds = _worlds.Select(CloneWorldEntry).ToList();
         _settings.MaxActiveClients = (int)numMaxActive.Value;
+        _settings.Autostart = _chkAutostart.Checked;
         _settings.Listener.Host = txtListenHost.Text.Trim();
         _settings.Listener.LoginPort = (int)numLoginPort.Value;
         _settings.Listener.WorldPort = (int)numWorldPort.Value;
@@ -204,31 +286,13 @@ public partial class SettingsForm : Form
             : host;
     }
 
-    private void OnGmAdd(object? sender, EventArgs e)
-    {
-        var prefix = txtGmPrefix.Text.Trim();
-        if (string.IsNullOrEmpty(prefix))
-        {
-            return;
-        }
-        if (_gmPrefixes.Contains(prefix))
-        {
-            return;
-        }
-        _gmPrefixes.Add(prefix);
-        txtGmPrefix.Clear();
-    }
-
-    private void OnGmRemove(object? sender, EventArgs e)
-    {
-        if (lstGmPrefixes.SelectedItem is string value)
-        {
-            _gmPrefixes.Remove(value);
-        }
-    }
-
     private void OnWorldAdd(object? sender, EventArgs e)
     {
+        if (!EnsureWorldListEditable())
+        {
+            return;
+        }
+
         var entry = new WorldEntry();
         using var form = new WorldEntryForm(entry);
         if (form.ShowDialog(this) != DialogResult.OK)
@@ -238,8 +302,13 @@ public partial class SettingsForm : Form
         _worlds.Add(entry);
     }
 
-    private void OnWorldGridClick(object? sender, DataGridViewCellEventArgs e)
+    private async void OnWorldGridClick(object? sender, DataGridViewCellEventArgs e)
     {
+        if (!EnsureWorldListEditable())
+        {
+            return;
+        }
+
         if (e.RowIndex < 0 || e.ColumnIndex < 0)
         {
             return;
@@ -247,7 +316,7 @@ public partial class SettingsForm : Form
 
         var entry = _worlds[e.RowIndex];
         var column = gridWorlds.Columns[e.ColumnIndex];
-        if (column.Name == "colEdit")
+        if (ReferenceEquals(column, colWorldEdit))
         {
             using var form = new WorldEntryForm(entry);
             if (form.ShowDialog(this) == DialogResult.OK)
@@ -256,14 +325,71 @@ public partial class SettingsForm : Form
             }
             return;
         }
-        if (column.Name == "colDelete")
+        if (ReferenceEquals(column, colWorldDelete))
         {
-            var confirm = MessageBox.Show(this, "Remove selected world?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm == DialogResult.Yes)
+            if (_worlds.Count <= 1)
             {
-                _worlds.RemoveAt(e.RowIndex);
+                MessageBox.Show(
+                    this,
+                    "At least one world entry is required. Add another world entry before removing this one.",
+                    "World Entry Required",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
             }
+
+            DialogResult deleteChoice = MessageBox.Show(
+                this,
+                BuildDeleteWorldPrompt(entry),
+                "Remove World Entry",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
+            if (deleteChoice == DialogResult.Cancel)
+            {
+                return;
+            }
+
+            if (deleteChoice == DialogResult.Yes)
+            {
+                try
+                {
+                    await DeleteWorldDatabaseAsync(entry).ConfigureAwait(true);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        this,
+                        $"Failed to delete world database '{entry.DbName}'.\n\n{ex.Message}",
+                        "Delete World Database Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return;
+                }
+            }
+
+            _worlds.RemoveAt(e.RowIndex);
         }
+    }
+
+    private bool EnsureWorldListEditable()
+    {
+        if (!_worldEntryEditingLocked)
+        {
+            return true;
+        }
+
+        ShowWorldEntryEditingLockedMessage();
+        return false;
+    }
+
+    private void ShowWorldEntryEditingLockedMessage()
+    {
+        MessageBox.Show(
+            this,
+            "Stop AccountServer first before editing world entries.",
+            "World Entry Editing Locked",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
     }
 
     private void OnSave(object? sender, EventArgs e)
@@ -301,10 +427,22 @@ public partial class SettingsForm : Form
             "Yes = delete the configured database before reinstall.\n" +
             "No = keep the database and only reset AccountServer setup.\n" +
             "Cancel = abort reinstall.",
-            "Delete Database Too?",
+            "Delete RF_User Database Too?",
             MessageBoxButtons.YesNoCancel,
             MessageBoxIcon.Question);
         if (deleteDatabaseChoice == DialogResult.Cancel)
+        {
+            return;
+        }
+
+        var configuredWorldDatabases = GetDistinctWorldDatabases(_settings.WorldList.Worlds);
+        DialogResult deleteWorldDatabasesChoice = MessageBox.Show(
+            this,
+            BuildDeleteWorldDatabasesPrompt(configuredWorldDatabases),
+            "Delete World Databases Too?",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
+        if (deleteWorldDatabasesChoice == DialogResult.Cancel)
         {
             return;
         }
@@ -327,6 +465,24 @@ public partial class SettingsForm : Form
             }
         }
 
+        if (deleteWorldDatabasesChoice == DialogResult.Yes)
+        {
+            try
+            {
+                await DeleteWorldDatabasesAsync(configuredWorldDatabases).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Failed to delete one or more configured world databases.\n\n{ex.Message}",
+                    "Delete World Databases Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+        }
+
         Properties.Settings.Default.Reset();
         Properties.Settings.Default.Save();
         if (File.Exists(AppSettings.DefaultPath))
@@ -339,17 +495,35 @@ public partial class SettingsForm : Form
 
     private Task DeleteConfiguredUserDatabaseAsync()
     {
+        return DeleteDatabaseAsync(_settings.Database.User);
+    }
+
+    private Task DeleteWorldDatabaseAsync(WorldEntry entry)
+    {
+        return DeleteDatabaseAsync(CreateWorldDatabaseProfile(entry));
+    }
+
+    private async Task DeleteWorldDatabasesAsync(IReadOnlyList<WorldEntry> worlds)
+    {
+        foreach (var world in worlds)
+        {
+            await DeleteWorldDatabaseAsync(world).ConfigureAwait(true);
+        }
+    }
+
+    private Task DeleteDatabaseAsync(DbProfile profile)
+    {
         return _settings.Database.Provider switch
         {
-            DatabaseProvider.Sqlite => DeleteConfiguredSqliteDatabaseAsync(),
-            DatabaseProvider.MariaDb => DeleteConfiguredMariaDbDatabaseAsync(),
-            _ => DeleteConfiguredSqlServerDatabaseAsync()
+            DatabaseProvider.Sqlite => DeleteSqliteDatabaseAsync(profile),
+            DatabaseProvider.MariaDb => DeleteMariaDbDatabaseAsync(profile),
+            _ => DeleteSqlServerDatabaseAsync(profile)
         };
     }
 
-    private async Task DeleteConfiguredSqlServerDatabaseAsync()
+    private async Task DeleteSqlServerDatabaseAsync(DbProfile profile)
     {
-        string connString = BuildSqlServerConnectionString(_settings.Database.User, "master");
+        string connString = BuildSqlServerConnectionString(profile, "master");
         await using var conn = new SqlConnection(connString);
         await conn.OpenAsync().ConfigureAwait(true);
 
@@ -366,25 +540,25 @@ public partial class SettingsForm : Form
             """;
 
         await using var cmd = new SqlCommand(dropSql, conn);
-        cmd.Parameters.AddWithValue("@name", _settings.Database.User.Database);
+        cmd.Parameters.AddWithValue("@name", profile.Database);
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
     }
 
-    private async Task DeleteConfiguredMariaDbDatabaseAsync()
+    private async Task DeleteMariaDbDatabaseAsync(DbProfile profile)
     {
-        string connString = BuildMariaDbConnectionString(_settings.Database.User, "information_schema");
+        string connString = BuildMariaDbConnectionString(profile, "information_schema");
         await using var conn = new MySqlConnection(connString);
         await conn.OpenAsync().ConfigureAwait(true);
 
-        string escapedName = EscapeMariaDbIdentifier(_settings.Database.User.Database);
+        string escapedName = EscapeMariaDbIdentifier(profile.Database);
         string dropSql = $"DROP DATABASE IF EXISTS `{escapedName}`;";
         await using var cmd = new MySqlCommand(dropSql, conn);
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(true);
     }
 
-    private Task DeleteConfiguredSqliteDatabaseAsync()
+    private Task DeleteSqliteDatabaseAsync(DbProfile profile)
     {
-        string dbPath = DatabaseSettings.GetSqlitePath(AppContext.BaseDirectory, _settings.Database.User.Database);
+        string dbPath = DatabaseSettings.GetSqlitePath(AppContext.BaseDirectory, profile.Database);
         if (File.Exists(dbPath))
         {
             File.Delete(dbPath);
@@ -393,9 +567,85 @@ public partial class SettingsForm : Form
         return Task.CompletedTask;
     }
 
+    private DbProfile CreateWorldDatabaseProfile(WorldEntry entry)
+    {
+        return new DbProfile
+        {
+            Host = WorldEntry.NormalizeDatabaseServerAddress(entry.Address),
+            Port = _settings.Database.User.Port,
+            Database = entry.DbName.Trim(),
+            User = _settings.Database.User.User,
+            Password = _settings.Database.User.Password,
+            TrustedConnection = _settings.Database.User.TrustedConnection
+        };
+    }
+
+    private static string BuildDeleteWorldPrompt(WorldEntry entry)
+    {
+        return
+            $"Remove world entry '{entry.Name}'?\n\n" +
+            $"DB Server/IP: {WorldEntry.NormalizeDatabaseServerAddress(entry.Address)}\n" +
+            $"DB Name: {entry.DbName}\n\n" +
+            "Yes = remove the entry and delete the world database.\n" +
+            "No = remove the entry only.\n" +
+            "Cancel = keep everything unchanged.";
+    }
+
+    private static string BuildDeleteWorldDatabasesPrompt(IReadOnlyList<WorldEntry> worlds)
+    {
+        if (worlds.Count == 0)
+        {
+            return
+                "Delete all configured world databases too?\n\n" +
+                "No configured world DB entries were found.\n\n" +
+                "Yes = continue reinstall with no world DB deletion needed.\n" +
+                "No = continue reinstall and keep current world DB state.\n" +
+                "Cancel = abort reinstall.";
+        }
+
+        string worldList = string.Join(
+            Environment.NewLine,
+            worlds.Select(world =>
+                $"- {world.Name} ({WorldEntry.NormalizeDatabaseServerAddress(world.Address)} / {world.DbName})"));
+
+        return
+            "Delete all configured world databases too?\n\n" +
+            $"{worldList}\n\n" +
+            "Yes = delete all listed world databases before reinstall.\n" +
+            "No = keep the world databases and only reset AccountServer setup.\n" +
+            "Cancel = abort reinstall.";
+    }
+
+    private static List<WorldEntry> GetDistinctWorldDatabases(IEnumerable<WorldEntry> worlds)
+    {
+        var result = new List<WorldEntry>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var world in worlds)
+        {
+            if (string.IsNullOrWhiteSpace(world.DbName))
+            {
+                continue;
+            }
+
+            string address = WorldEntry.NormalizeDatabaseServerAddress(world.Address);
+            string key = $"{address}\n{world.DbName.Trim()}";
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            result.Add(CloneWorldEntry(world));
+        }
+
+        return result;
+    }
+
     private static string BuildSqlServerConnectionString(DbProfile profile, string database)
     {
-        string host = profile.GetEffectiveSqlServerHost();
+        string host = string.IsNullOrWhiteSpace(profile.Host)
+            ? DbProfile.TrustedSqlServerHost
+            : profile.Host.Trim();
         if (profile.TrustedConnection)
         {
             return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";

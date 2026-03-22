@@ -10,10 +10,10 @@ namespace AccountServer.Settings;
 public sealed class AppSettings
 {
     public DatabaseSettings Database { get; set; } = new();
-    public GmFilterSettings GmFilter { get; set; } = new();
     public WorldListSettings WorldList { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
     public ListenerSettings Listener { get; set; } = new();
+    public bool Autostart { get; set; }
     public int MaxActiveClients { get; set; } = -1;
 
     [JsonIgnore]
@@ -80,7 +80,7 @@ public sealed class AppSettings
             {
                 Provider = DatabaseProvider.SqlServer,
                 User = new DbProfile
-                {
+            {
                     Host = "(local)",
                     Port = 1433,
                     Database = "RF_User",
@@ -89,7 +89,6 @@ public sealed class AppSettings
                     TrustedConnection = true
                 }
             },
-            GmFilter = new GmFilterSettings(),
             WorldList = new WorldListSettings
             {
                 Worlds = new List<WorldEntry>
@@ -104,6 +103,7 @@ public sealed class AppSettings
                 }
             },
             MaxActiveClients = -1,
+            Autostart = false,
             Security = new SecuritySettings(),
             Listener = new ListenerSettings
             {
@@ -183,11 +183,6 @@ public sealed class DbProfile
     {
         return TrustedConnection ? TrustedSqlServerHost : Host;
     }
-}
-
-public sealed class GmFilterSettings
-{
-    public List<string> Prefixes { get; set; } = new();
 }
 
 public sealed class WorldListSettings
