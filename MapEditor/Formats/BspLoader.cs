@@ -135,6 +135,8 @@ public static class BspLoader
       SkyMaterialSurfaceIds = skyData.Mesh.MaterialSurfaceIds,
       SkyMaterialAlphaTypes = skyData.Mesh.MaterialAlphaTypes,
       SkySurfaceTextures = skyData.Mesh.SurfaceTextures,
+      SkySceneObjects = skyData.SceneObjects,
+      SkySceneMatGroups = skyData.SceneMatGroups,
       EntityRenderVertices = entityData.Mesh.Vertices,
       EntityMaterialSpans = entityData.Mesh.MaterialSpans,
       EntityMaterials = entityData.Mesh.Materials,
@@ -520,27 +522,30 @@ public static class BspLoader
       float fogEnd = reader.ReadSingle();
       uint fogColorArgb = reader.ReadUInt32();
 
-      _ = reader.ReadSingle(); // FogStart2
-      _ = reader.ReadSingle(); // FogEnd2
-      _ = reader.ReadUInt32(); // FogColor2
-      _ = reader.ReadSingle(); // Fog2 BBMin.X
-      _ = reader.ReadSingle(); // Fog2 BBMin.Y
-      _ = reader.ReadSingle(); // Fog2 BBMin.Z
-      _ = reader.ReadSingle(); // Fog2 BBMax.X
-      _ = reader.ReadSingle(); // Fog2 BBMax.Y
-      _ = reader.ReadSingle(); // Fog2 BBMax.Z
+      float fogStart2 = reader.ReadSingle();
+      float fogEnd2 = reader.ReadSingle();
+      uint fogColor2Argb = reader.ReadUInt32();
+      float fog2BbMinX = reader.ReadSingle();
+      float fog2BbMinY = reader.ReadSingle();
+      float fog2BbMinZ = reader.ReadSingle();
+      float fog2BbMaxX = reader.ReadSingle();
+      float fog2BbMaxY = reader.ReadSingle();
+      float fog2BbMaxZ = reader.ReadSingle();
 
+      float[] lensFlareScales = new float[ExtMatLensFlareScaleCount];
       for (int i = 0; i < ExtMatLensFlareScaleCount; ++i)
       {
-        _ = reader.ReadSingle();
+        float scale = reader.ReadSingle();
+        lensFlareScales[i] = float.IsFinite(scale) ? scale : 1.0f;
       }
 
-      _ = ReadExactBytes(reader, ExtMatNameBytes, "R3X lens texture name");
+      byte[] lensTextureNameBytes = ReadExactBytes(reader, ExtMatNameBytes, "R3X lens texture name");
       float lensX = reader.ReadSingle();
       float lensY = reader.ReadSingle();
       float lensZ = reader.ReadSingle();
       _ = ReadExactBytes(reader, ExtMatNameBytes, "R3X environment entity name");
       _ = reader.ReadUInt32(); // EnvId
+      string lensTexturePath = DecodeAscii(lensTextureNameBytes).Trim();
 
       bool fogEnabled = (flags & ExtMatExistFirstFog) != 0;
       if (fogEnabled)
@@ -561,14 +566,36 @@ public static class BspLoader
         fogEnd = 5000.0f;
       }
 
+      bool fog2Enabled =
+        float.IsFinite(fogStart2)
+        && float.IsFinite(fogEnd2)
+        && fogEnd2 > fogStart2
+        && fogStart2 >= 0.0f;
+      Vector3 fogColor2 = DecodeRgbFromArgb(fogColor2Argb);
+      Vector3 fog2BoxMin = new(fog2BbMinX, fog2BbMinY, fog2BbMinZ);
+      Vector3 fog2BoxMax = new(fog2BbMaxX, fog2BbMaxY, fog2BbMaxZ);
+      if (!IsFinite(fog2BoxMin) || !IsFinite(fog2BoxMax))
+      {
+        fog2BoxMin = Vector3.Zero;
+        fog2BoxMax = Vector3.Zero;
+      }
+
       return new MapEnvironmentSettings(
         fogEnabled,
         fogStart,
         fogEnd,
         DecodeRgbFromArgb(fogColorArgb),
+        fog2Enabled,
+        fog2Enabled ? fogStart2 : 0.0f,
+        fog2Enabled ? fogEnd2 : 0.0f,
+        fogColor2,
+        fog2BoxMin,
+        fog2BoxMax,
         (flags & ExtMatFogRange) != 0,
         (flags & ExtMatNoFogSky) != 0,
         (flags & ExtMatExistLensFlare) != 0,
+        lensFlareScales,
+        lensTexturePath,
         new Vector3(lensX, lensY, lensZ));
     }
     catch
@@ -2080,7 +2107,14 @@ public static class BspLoader
       return SkyData.Empty;
     }
 
-    return new SkyData(MergeEntityMeshes(meshes));
+    RenderMeshData mergedMesh = MergeEntityMeshes(meshes);
+    if (meshes.Count == 1)
+    {
+      EntityMeshData singleSky = meshes[0];
+      return new SkyData(mergedMesh, singleSky.SceneObjects, singleSky.SceneMatGroups);
+    }
+
+    return new SkyData(mergedMesh, Array.Empty<EntitySceneObject>(), Array.Empty<EntitySceneMatGroup>());
   }
 
   private static EntityRenderData ReadEntityRenderData(
@@ -5339,14 +5373,18 @@ public static class BspLoader
 
   private sealed class SkyData
   {
-    public static SkyData Empty { get; } = new(RenderMeshData.Empty);
+    public static SkyData Empty { get; } = new(RenderMeshData.Empty, Array.Empty<EntitySceneObject>(), Array.Empty<EntitySceneMatGroup>());
 
-    public SkyData(RenderMeshData mesh)
+    public SkyData(RenderMeshData mesh, EntitySceneObject[] sceneObjects, EntitySceneMatGroup[] sceneMatGroups)
     {
       Mesh = mesh;
+      SceneObjects = sceneObjects;
+      SceneMatGroups = sceneMatGroups;
     }
 
     public RenderMeshData Mesh { get; }
+    public EntitySceneObject[] SceneObjects { get; }
+    public EntitySceneMatGroup[] SceneMatGroups { get; }
   }
 
   private sealed class EntityRenderData

@@ -101,9 +101,17 @@ public readonly record struct MapEnvironmentSettings(
   float FogStart,
   float FogEnd,
   Vector3 FogColor,
+  bool Fog2Enabled,
+  float FogStart2,
+  float FogEnd2,
+  Vector3 FogColor2,
+  Vector3 Fog2BoxMin,
+  Vector3 Fog2BoxMax,
   bool FogRangeEnabled,
   bool NoFogSky,
   bool HasLensFlare,
+  float[] LensFlareScales,
+  string LensFlareTexturePath,
   Vector3 LensFlarePosition)
 {
   public static MapEnvironmentSettings Default =>
@@ -113,9 +121,24 @@ public readonly record struct MapEnvironmentSettings(
       5000.0f,
       new Vector3(0.05f, 0.06f, 0.08f),
       false,
+      0.0f,
+      0.0f,
+      Vector3.Zero,
+      Vector3.Zero,
+      Vector3.Zero,
       false,
       false,
+      false,
+      CreateDefaultLensFlareScales(),
+      string.Empty,
       Vector3.Zero);
+
+  private static float[] CreateDefaultLensFlareScales()
+  {
+    float[] scales = new float[16];
+    Array.Fill(scales, 1.0f);
+    return scales;
+  }
 }
 
 public readonly record struct ExtDummyDefinition(
@@ -281,6 +304,8 @@ public sealed class LoadedMap
   public required int[] SkyMaterialSurfaceIds { get; init; }
   public required uint[] SkyMaterialAlphaTypes { get; init; }
   public required R3TextureBlob[] SkySurfaceTextures { get; init; }
+  public required EntitySceneObject[] SkySceneObjects { get; init; }
+  public required EntitySceneMatGroup[] SkySceneMatGroups { get; init; }
   public required BspRenderVertex[] EntityRenderVertices { get; init; }
   public required BspMaterialSpan[] EntityMaterialSpans { get; init; }
   public required MaterialDefinition[] EntityMaterials { get; init; }
