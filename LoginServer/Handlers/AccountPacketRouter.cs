@@ -314,7 +314,8 @@ public sealed class AccountPacketRouter
 
         if (client != null)
         {
-            var payload = _login_account_result_locl.FromAclos(result, session!.BillType);
+            byte clientBillingType = session!.IsPremium ? (byte)1 : (byte)0;
+            var payload = _login_account_result_locl.FromAclos(result, clientBillingType);
             var env = new PacketEnvelope
             {
                 OpCode = 21,

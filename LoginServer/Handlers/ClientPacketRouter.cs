@@ -716,6 +716,10 @@ public sealed class ClientPacketRouter
         string billingConnStr = settings.Database.BuildBillingConnectionString();
         byte retCode = 0;
         session.LoginCode = 0;
+        session.BillType = 0;
+        session.RemainTime = 255;
+        session.IsPremium = false;
+        session.AgeLimit = false;
 
         try
         {
