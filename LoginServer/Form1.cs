@@ -57,6 +57,7 @@ public partial class MainWindow : Form
         startButton.Enabled = false;
         stopButton.Enabled = true;
         UpdateStatus("Status: Starting...");
+        SetExternalOpen(_settings.AutoOpenExternalConnection, logChange: false);
 
         _isStopping = false;
         _cts = new CancellationTokenSource();
@@ -71,19 +72,8 @@ public partial class MainWindow : Form
         _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter, OnAccountConnected, OnAccountDisconnected);
         _accountConnector = new NetworkConnector(_accountHandler);
         _accountConnector.Log += AppendLog;
-
-        try
-        {
-            await ConnectAccountAsync(_cts.Token).ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            AppendLog($"Start failed: {ex.Message}");
-            statusLabel.Text = "Status: Stopped";
-            startButton.Enabled = true;
-            stopButton.Enabled = false;
-            await StopAllAsync();
-        }
+        StartAccountReconnectLoop();
+        await Task.CompletedTask;
     }
 
     private async void OnStopClicked(object sender, EventArgs e)
@@ -99,6 +89,8 @@ public partial class MainWindow : Form
         _running = false;
         _isStopping = true;
         _cts?.Cancel();
+        SetExternalOpen(false, logChange: false);
+        var reconnectTask = _accountReconnectTask;
 
         try
         {
@@ -122,6 +114,17 @@ public partial class MainWindow : Form
         catch (Exception ex)
         {
             AppendLog($"Listener stop error: {ex.Message}");
+        }
+
+        if (reconnectTask != null)
+        {
+            try
+            {
+                await reconnectTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         _cts?.Dispose();
@@ -189,9 +192,7 @@ public partial class MainWindow : Form
 
     private void OnToggleExternalOpenClicked(object? sender, EventArgs e)
     {
-        bool isOpen = MainContext.Instance.ToggleExternalOpen();
-        UpdateExternalOpenButton(isOpen);
-        AppendLog($"External login {(isOpen ? "opened" : "closed")}.");
+        SetExternalOpen(!MainContext.Instance.ExternalOpen, logChange: true);
     }
 
     private void UpdateExternalOpenButton(bool isOpen)
@@ -205,14 +206,89 @@ public partial class MainWindow : Form
         externalOpenButton.Text = isOpen ? "External: Open" : "External: Closed";
     }
 
+    private void SetExternalOpen(bool isOpen, bool logChange)
+    {
+        bool previous = MainContext.Instance.ExternalOpen;
+        MainContext.Instance.ExternalOpen = isOpen;
+        UpdateExternalOpenButton(isOpen);
+
+        if (logChange && previous != isOpen)
+        {
+            AppendLog($"External login {(isOpen ? "opened" : "closed")}.");
+        }
+    }
+
     private async Task ConnectAccountAsync(CancellationToken token)
     {
         if (_accountConnector == null || token.IsCancellationRequested) return;
         if (_accountConnector.IsConnected) return;
 
+        UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
         AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
         await _accountConnector.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, token).ConfigureAwait(false);
-            UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+        UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+    }
+
+    private void StartAccountReconnectLoop()
+    {
+        if (_cts == null || _accountConnector == null)
+        {
+            return;
+        }
+
+        if (_accountReconnectTask != null && !_accountReconnectTask.IsCompleted)
+        {
+            return;
+        }
+
+        _accountReconnectTask = Task.Run(() => EnsureAccountConnectionLoopAsync(_cts.Token), CancellationToken.None);
+    }
+
+    private async Task EnsureAccountConnectionLoopAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested && !_isStopping)
+        {
+            if (_accountConnector == null)
+            {
+                return;
+            }
+
+            if (_accountConnector.IsConnected)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                continue;
+            }
+
+            try
+            {
+                await ConnectAccountAsync(token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Account connection failed: {ex.Message}. Retrying in 1 second...");
+                UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
     }
 
     private async Task StartClientListenerAsync(CancellationToken token)
@@ -266,7 +342,6 @@ public partial class MainWindow : Form
         {
             AppendLog($"Start client listener after account connect failed: {ex.Message}");
         }
-        _accountReconnectTask = null;
     }
 
     private async void OnAccountDisconnected()
@@ -274,27 +349,8 @@ public partial class MainWindow : Form
         if (_isStopping) return;
         AppendLog("Account server disconnected; stopping client listener and retrying...");
         await StopClientListenerAsync().ConfigureAwait(false);
-
-        if (_cts == null || (_accountReconnectTask != null && !_accountReconnectTask.IsCompleted))
-        {
-            return;
-        }
-
-        _accountReconnectTask = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token).ConfigureAwait(false);
-                await ConnectAccountAsync(_cts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception ex)
-            {
-                AppendLog($"Account reconnect loop error: {ex.Message}");
-            }
-        });
+        UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+        StartAccountReconnectLoop();
     }
 
     private async Task SendWorldListRequestAsync(CancellationToken token)

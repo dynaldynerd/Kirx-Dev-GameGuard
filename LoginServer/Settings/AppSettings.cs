@@ -12,6 +12,7 @@ public sealed class AppSettings
     public NetworkSettings Network { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
     public bool Autostart { get; set; }
+    public bool AutoOpenExternalConnection { get; set; }
 
     [JsonIgnore]
     public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
@@ -94,7 +95,8 @@ public sealed class AppSettings
                 UserLoadThresholds = new[] { 500, 1000, 1500 }
             },
             Security = new SecuritySettings(),
-            Autostart = false
+            Autostart = false,
+            AutoOpenExternalConnection = false
         };
     }
 

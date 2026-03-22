@@ -9,6 +9,7 @@ namespace RFNetworking;
 public sealed class NetworkConnector : IAsyncDisposable
 {
     private readonly INetworkHandler _handler;
+    private readonly object _sync = new();
     private SaeaConnection? _connection;
     private CancellationTokenSource? _cts;
     private Task? _runTask;
@@ -35,27 +36,51 @@ public sealed class NetworkConnector : IAsyncDisposable
 
     public async Task ConnectAsync(string host, int port, CancellationToken cancellationToken)
     {
-        if (_connection != null)
+        lock (_sync)
         {
-            throw new InvalidOperationException("Connector already running.");
+            if (_connection != null)
+            {
+                throw new InvalidOperationException("Connector already running.");
+            }
         }
 
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        await socket.ConnectAsync(host, port, _cts.Token).ConfigureAwait(false);
-        socket.NoDelay = true;
-
-        uint serial = (uint)Interlocked.Increment(ref _nextSerial);
-        _connection = new SaeaConnection(1, serial, socket, _handler, Log);
-        _connection.Closed += async (c, ex) => await OnClosedAsync(c, ex).ConfigureAwait(false);
-        Log?.Invoke($"Connected to {host}:{port}");
-
-        _runTask = Task.Run(async () =>
+        try
         {
-            await _connection.OnConnectedAsync(CancellationToken.None).ConfigureAwait(false);
-            _connection.StartReceive();
-            StartPingLoop(_cts.Token);
-        }, CancellationToken.None);
+            await socket.ConnectAsync(host, port, linkedCts.Token).ConfigureAwait(false);
+            socket.NoDelay = true;
+
+            uint serial = (uint)Interlocked.Increment(ref _nextSerial);
+            var connection = new SaeaConnection(1, serial, socket, _handler, Log);
+            connection.Closed += async (c, ex) => await OnClosedAsync(c, ex).ConfigureAwait(false);
+
+            lock (_sync)
+            {
+                if (_connection != null)
+                {
+                    throw new InvalidOperationException("Connector already running.");
+                }
+
+                _cts = linkedCts;
+                _connection = connection;
+            }
+
+            Log?.Invoke($"Connected to {host}:{port}");
+
+            _runTask = Task.Run(async () =>
+            {
+                await connection.OnConnectedAsync(CancellationToken.None).ConfigureAwait(false);
+                connection.StartReceive();
+                StartPingLoop(connection, linkedCts.Token);
+            }, CancellationToken.None);
+        }
+        catch
+        {
+            try { socket.Dispose(); } catch { }
+            linkedCts.Dispose();
+            throw;
+        }
 
         await Task.Yield();
     }
@@ -68,39 +93,70 @@ public sealed class NetworkConnector : IAsyncDisposable
 
     public async Task StopAsync()
     {
-        _cts?.Cancel();
-        if (_runTask != null)
-        {
-            try { await _runTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
-        }
+        CancellationTokenSource? cts;
+        SaeaConnection? connection;
+        Task? runTask;
+        Task? pingTask;
 
-        if (_connection != null)
+        lock (_sync)
         {
-            await _handler.OnDisconnectedAsync(_connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
-            await _connection.DisposeAsync().ConfigureAwait(false);
+            cts = _cts;
+            connection = _connection;
+            runTask = _runTask;
+            pingTask = _pingTask;
+            _cts = null;
             _connection = null;
-        }
-        if (_pingTask != null)
-        {
-            try { await _pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            _runTask = null;
             _pingTask = null;
         }
 
-        _cts?.Dispose();
-        _cts = null;
-        _runTask = null;
+        cts?.Cancel();
+        if (runTask != null)
+        {
+            try { await runTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+        }
+
+        if (connection != null)
+        {
+            await _handler.OnDisconnectedAsync(connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
+        }
+        if (pingTask != null)
+        {
+            try { await pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+        }
+
+        cts?.Dispose();
         Log?.Invoke("Connector stopped.");
     }
 
     private async Task OnClosedAsync(SaeaConnection connection, Exception? ex)
     {
-        await _handler.OnDisconnectedAsync(connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
-        await connection.DisposeAsync().ConfigureAwait(false);
-        if (_pingTask != null)
+        CancellationTokenSource? cts = null;
+        Task? pingTask = null;
+
+        lock (_sync)
         {
-            try { await _pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            if (ReferenceEquals(_connection, connection))
+            {
+                _connection = null;
+                _runTask = null;
+                cts = _cts;
+                _cts = null;
+            }
+
+            pingTask = _pingTask;
             _pingTask = null;
         }
+
+        cts?.Cancel();
+        await _handler.OnDisconnectedAsync(connection.PublicConnection, CancellationToken.None).ConfigureAwait(false);
+        await connection.DisposeAsync().ConfigureAwait(false);
+        if (pingTask != null)
+        {
+            try { await pingTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+        }
+        cts?.Dispose();
         if (ex != null)
         {
             Log?.Invoke($"Connector error: {ex.Message}");
@@ -111,15 +167,14 @@ public sealed class NetworkConnector : IAsyncDisposable
         }
     }
 
-    private void StartPingLoop(CancellationToken token)
+    private void StartPingLoop(SaeaConnection connection, CancellationToken token)
     {
-        if (_connection == null) return;
         if (_pingTask != null && !_pingTask.IsCompleted) return;
 
         var packet = PingPacket;
         _pingTask = Task.Run(async () =>
         {
-            while (!token.IsCancellationRequested && _connection != null)
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
@@ -132,7 +187,7 @@ public sealed class NetworkConnector : IAsyncDisposable
 
                 try
                 {
-                    await _connection.SendAsync(packet, token).ConfigureAwait(false);
+                    await connection.SendAsync(packet, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -141,6 +196,8 @@ public sealed class NetworkConnector : IAsyncDisposable
                 catch (Exception ex)
                 {
                     Log?.Invoke($"Connector ping failed: {ex.Message}");
+                    connection.RequestClose(ex);
+                    break;
                 }
 
             }
