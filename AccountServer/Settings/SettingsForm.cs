@@ -42,6 +42,7 @@ public partial class SettingsForm : Form
         _worlds = new BindingList<WorldEntry>(settings.WorldList.Worlds.Select(CloneWorldEntry).ToList());
         _worldEntryEditingLocked = worldEntryEditingLocked;
         InitializeComponent();
+        HideDatabasePortControls();
         InitializeAutostartControl();
         InitializeWorldListEditingLock();
         gridWorlds.DataSource = _worlds;
@@ -83,6 +84,12 @@ public partial class SettingsForm : Form
                 col.Visible = false;
             }
         }
+    }
+
+    private void HideDatabasePortControls()
+    {
+        lblDbPort.Visible = false;
+        txtDbPort.Visible = false;
     }
 
     private void InitializeWorldListEditingLock()
@@ -171,8 +178,11 @@ public partial class SettingsForm : Form
     private void LoadDbProfileToControls()
     {
         var db = _userDb;
-        txtDbHost.Text = GetEffectiveDbHost(db.Host, db.Trusted);
-        txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
+        txtDbHost.Text = DbProfile.GetDisplayHost(
+            _settings.Database.Provider,
+            db.Host,
+            db.Port,
+            db.Trusted);
         txtDbName.Text = db.Database;
         txtDbUser.Text = db.User;
         txtDbPass.Text = db.Password;
@@ -203,14 +213,16 @@ public partial class SettingsForm : Form
 
     private bool SaveCurrentDbProfile()
     {
-        if (!int.TryParse(txtDbPort.Text, out var port) || port < 1 || port > 65535)
-        {
-            MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-
-        _userDb.Host = GetEffectiveDbHost(txtDbHost.Text.Trim(), radAuthTrusted.Checked);
-        _userDb.Port = port;
+        _userDb.Host = DbProfile.NormalizeHostForStorage(
+            _settings.Database.Provider,
+            txtDbHost.Text.Trim(),
+            radAuthTrusted.Checked);
+        _userDb.Port = DbProfile.GetEffectivePort(
+            _settings.Database.Provider,
+            _userDb.Host,
+            _settings.Database.Provider == DatabaseProvider.MariaDb
+                ? DbProfile.DefaultMariaDbPort
+                : DbProfile.DefaultSqlServerPort);
         _userDb.Database = txtDbName.Text.Trim();
         _userDb.User = txtDbUser.Text.Trim();
         _userDb.Password = txtDbPass.Text;
@@ -272,7 +284,6 @@ public partial class SettingsForm : Form
         }
 
         txtDbHost.Enabled = !isSqlite && !useTrusted;
-        txtDbPort.Enabled = !isSqlite;
         radAuthTrusted.Enabled = isSqlServer;
         radAuthSql.Enabled = !isSqlite;
         txtDbUser.Enabled = sqlAuth;
@@ -572,7 +583,10 @@ public partial class SettingsForm : Form
         return new DbProfile
         {
             Host = WorldEntry.NormalizeDatabaseServerAddress(entry.Address),
-            Port = _settings.Database.User.Port,
+            Port = DbProfile.GetEffectivePort(
+                _settings.Database.Provider,
+                _settings.Database.User.Host,
+                _settings.Database.User.Port),
             Database = entry.DbName.Trim(),
             User = _settings.Database.User.User,
             Password = _settings.Database.User.Password,
@@ -643,20 +657,19 @@ public partial class SettingsForm : Form
 
     private static string BuildSqlServerConnectionString(DbProfile profile, string database)
     {
-        string host = string.IsNullOrWhiteSpace(profile.Host)
-            ? DbProfile.TrustedSqlServerHost
-            : profile.Host.Trim();
+        string host = DbProfile.BuildSqlServerDataSource(profile.Host, profile.Port, profile.TrustedConnection);
         if (profile.TrustedConnection)
         {
-            return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
         }
 
-        return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+        return $"Server={host};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
 
     private static string BuildMariaDbConnectionString(DbProfile profile, string database)
     {
-        return $"Server={profile.Host};Port={profile.Port};Database={database};User ID={profile.User};Password={profile.Password};";
+        DbProfile.ResolveMariaDbEndpoint(profile.Host, profile.Port, out string host, out int port);
+        return $"Server={host};Port={port};Database={database};User ID={profile.User};Password={profile.Password};";
     }
 
     private static string EscapeMariaDbIdentifier(string identifier)

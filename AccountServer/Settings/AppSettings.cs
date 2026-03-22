@@ -82,7 +82,7 @@ public sealed class AppSettings
                 User = new DbProfile
             {
                     Host = "(local)",
-                    Port = 1433,
+                    Port = DbProfile.DefaultSqlServerPort,
                     Database = "RF_User",
                     User = string.Empty,
                     Password = string.Empty,
@@ -131,12 +131,12 @@ public sealed class DatabaseSettings
 
     private static string BuildConnectionString(DbProfile profile)
     {
-        string host = profile.GetEffectiveSqlServerHost();
+        string host = DbProfile.BuildSqlServerDataSource(profile.Host, profile.Port, profile.TrustedConnection);
         if (profile.TrustedConnection)
         {
-            return $"Server={host},{profile.Port};Database={profile.Database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host};Database={profile.Database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
         }
-        return $"Server={host},{profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+        return $"Server={host};Database={profile.Database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
 
     public string BuildUserConnectionString(DatabaseProvider provider, string basePath) =>
@@ -154,7 +154,8 @@ public sealed class DatabaseSettings
             case DatabaseProvider.Sqlite:
                 return $"Data Source={GetSqlitePath(basePath, profile.Database)};";
             case DatabaseProvider.MariaDb:
-                return $"Server={profile.Host};Port={profile.Port};Database={profile.Database};User ID={profile.User};Password={profile.Password};";
+                DbProfile.ResolveMariaDbEndpoint(profile.Host, profile.Port, out string host, out int port);
+                return $"Server={host};Port={port};Database={profile.Database};User ID={profile.User};Password={profile.Password};";
             default:
                 return BuildConnectionString(profile);
         }
@@ -171,9 +172,11 @@ public enum DatabaseProvider
 public sealed class DbProfile
 {
     public const string TrustedSqlServerHost = "(local)";
+    public const int DefaultSqlServerPort = 1433;
+    public const int DefaultMariaDbPort = 3306;
 
     public string Host { get; set; } = TrustedSqlServerHost;
-    public int Port { get; set; } = 1433;
+    public int Port { get; set; } = DefaultSqlServerPort;
     public string Database { get; set; } = "";
     public string User { get; set; } = "";
     public string Password { get; set; } = "";
@@ -182,6 +185,158 @@ public sealed class DbProfile
     public string GetEffectiveSqlServerHost()
     {
         return TrustedConnection ? TrustedSqlServerHost : Host;
+    }
+
+    public static string NormalizeHostForStorage(DatabaseProvider provider, string host, bool trustedConnection)
+    {
+        if (provider == DatabaseProvider.SqlServer)
+        {
+            return trustedConnection
+                ? TrustedSqlServerHost
+                : (string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim());
+        }
+
+        return string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim();
+    }
+
+    public static string GetDisplayHost(DatabaseProvider provider, string host, int port, bool trustedConnection)
+    {
+        if (provider == DatabaseProvider.Sqlite)
+        {
+            return string.Empty;
+        }
+
+        string normalizedHost = NormalizeHostForStorage(provider, host, trustedConnection);
+        if (TrySplitExplicitPort(provider, normalizedHost, out _, out _))
+        {
+            return normalizedHost;
+        }
+
+        int effectivePort = GetEffectivePort(provider, normalizedHost, port);
+        return provider == DatabaseProvider.SqlServer
+            ? (effectivePort == DefaultSqlServerPort ? normalizedHost : $"{normalizedHost},{effectivePort}")
+            : (effectivePort == DefaultMariaDbPort ? normalizedHost : $"{normalizedHost}:{effectivePort}");
+    }
+
+    public static int GetEffectivePort(DatabaseProvider provider, string host, int port)
+    {
+        if (provider == DatabaseProvider.Sqlite)
+        {
+            return 0;
+        }
+
+        if (TrySplitExplicitPort(provider, host, out _, out int explicitPort))
+        {
+            return explicitPort;
+        }
+
+        return NormalizePort(provider, port);
+    }
+
+    public static string GetEndpointHost(DatabaseProvider provider, string host, bool trustedConnection)
+    {
+        string normalizedHost = NormalizeHostForStorage(provider, host, trustedConnection);
+        if (TrySplitExplicitPort(provider, normalizedHost, out string server, out _))
+        {
+            return server;
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalizedHost))
+        {
+            return normalizedHost;
+        }
+
+        return provider == DatabaseProvider.MariaDb ? "127.0.0.1" : TrustedSqlServerHost;
+    }
+
+    public static string BuildSqlServerDataSource(string host, int port, bool trustedConnection)
+    {
+        string normalizedHost = NormalizeHostForStorage(DatabaseProvider.SqlServer, host, trustedConnection);
+        if (string.IsNullOrWhiteSpace(normalizedHost))
+        {
+            normalizedHost = TrustedSqlServerHost;
+        }
+
+        if (TrySplitExplicitPort(DatabaseProvider.SqlServer, normalizedHost, out string server, out int explicitPort))
+        {
+            return $"{server},{explicitPort}";
+        }
+
+        int effectivePort = NormalizePort(DatabaseProvider.SqlServer, port);
+        return effectivePort == DefaultSqlServerPort ? normalizedHost : $"{normalizedHost},{effectivePort}";
+    }
+
+    public static void ResolveMariaDbEndpoint(string host, int port, out string server, out int effectivePort)
+    {
+        string normalizedHost = string.IsNullOrWhiteSpace(host) ? "127.0.0.1" : host.Trim();
+        if (TrySplitExplicitPort(DatabaseProvider.MariaDb, normalizedHost, out string parsedServer, out int parsedPort))
+        {
+            server = parsedServer;
+            effectivePort = parsedPort;
+            return;
+        }
+
+        server = normalizedHost;
+        effectivePort = NormalizePort(DatabaseProvider.MariaDb, port);
+    }
+
+    private static int NormalizePort(DatabaseProvider provider, int port)
+    {
+        if (port >= 1 && port <= 65535)
+        {
+            return port;
+        }
+
+        return provider == DatabaseProvider.MariaDb ? DefaultMariaDbPort : DefaultSqlServerPort;
+    }
+
+    private static bool TrySplitExplicitPort(DatabaseProvider provider, string host, out string server, out int port)
+    {
+        server = string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim();
+        port = 0;
+        if (string.IsNullOrWhiteSpace(server))
+        {
+            return false;
+        }
+
+        return provider switch
+        {
+            DatabaseProvider.SqlServer =>
+                TryExtractPort(server, ',', out server, out port) ||
+                TryExtractPort(server, ':', out server, out port),
+            DatabaseProvider.MariaDb =>
+                TryExtractPort(server, ':', out server, out port) ||
+                TryExtractPort(server, ',', out server, out port),
+            _ => false
+        };
+    }
+
+    private static bool TryExtractPort(string value, char separator, out string server, out int port)
+    {
+        server = value.Trim();
+        port = 0;
+
+        int separatorIndex = value.LastIndexOf(separator);
+        if (separatorIndex <= 0 || separatorIndex >= value.Length - 1)
+        {
+            return false;
+        }
+
+        string suffix = value[(separatorIndex + 1)..].Trim();
+        if (!int.TryParse(suffix, out int parsedPort) || parsedPort < 1 || parsedPort > 65535)
+        {
+            return false;
+        }
+
+        string host = value[..separatorIndex].Trim();
+        if (host.Length == 0)
+        {
+            return false;
+        }
+
+        server = host;
+        port = parsedPort;
+        return true;
     }
 }
 

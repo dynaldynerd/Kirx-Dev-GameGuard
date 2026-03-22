@@ -17,6 +17,8 @@ public partial class SettingsForm : Form
     private readonly DatabaseSnapshot _billingDb;
     private readonly CheckBox _chkAutostart = new();
     private readonly TabPage _tabGeneral = new();
+    private bool _suppressDbProfileEvents;
+    private int _activeDbProfileIndex;
 
     public SettingsForm(AppSettings settings)
     {
@@ -42,25 +44,41 @@ public partial class SettingsForm : Form
             Trusted = settings.Database.BillingTrustedConnection
         };
         InitializeComponent();
+        HideDbPortControls();
         InitializeAutostartControl();
         LoadFromSettings();
     }
 
+    private void HideDbPortControls()
+    {
+        lblDbPort.Visible = false;
+        txtDbPort.Visible = false;
+    }
+
     private void LoadFromSettings()
     {
-        cboDbProfile.Items.Clear();
-        cboDbProfile.Items.AddRange(new object[] { "User DB", "Billing DB" });
-        cboDbProfile.SelectedIndex = 0;
-        LoadDbProfileToControls();
-        txtClientPort.Text = _settings.Network.ClientPort.ToString(CultureInfo.InvariantCulture);
-        txtAccountHost.Text = _settings.Network.AccountHost;
-        txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
-        txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
-        _chkAutostart.Checked = _settings.Autostart;
-        var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
-        txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
-        txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
-        txtLoadHigh.Text = (loads.Length > 2 ? loads[2] : 1500).ToString(CultureInfo.InvariantCulture);
+        _suppressDbProfileEvents = true;
+        try
+        {
+            cboDbProfile.Items.Clear();
+            cboDbProfile.Items.AddRange(new object[] { "User DB", "Billing DB" });
+            _activeDbProfileIndex = 0;
+            cboDbProfile.SelectedIndex = _activeDbProfileIndex;
+            LoadDbProfileToControls();
+            txtClientPort.Text = _settings.Network.ClientPort.ToString(CultureInfo.InvariantCulture);
+            txtAccountHost.Text = _settings.Network.AccountHost;
+            txtAccountPort.Text = _settings.Network.AccountPort.ToString(CultureInfo.InvariantCulture);
+            txtMaxConn.Text = _settings.Network.MaxConnections.ToString(CultureInfo.InvariantCulture);
+            _chkAutostart.Checked = _settings.Autostart;
+            var loads = _settings.Network.UserLoadThresholds ?? Array.Empty<int>();
+            txtLoadLow.Text = (loads.Length > 0 ? loads[0] : 500).ToString(CultureInfo.InvariantCulture);
+            txtLoadMid.Text = (loads.Length > 1 ? loads[1] : 1000).ToString(CultureInfo.InvariantCulture);
+            txtLoadHigh.Text = (loads.Length > 2 ? loads[2] : 1500).ToString(CultureInfo.InvariantCulture);
+        }
+        finally
+        {
+            _suppressDbProfileEvents = false;
+        }
     }
 
     private void InitializeAutostartControl()
@@ -167,13 +185,14 @@ public partial class SettingsForm : Form
 
     private void LoadDbProfileToControls()
     {
-        bool isBillingProfile = cboDbProfile.SelectedIndex == 1;
+        bool isBillingProfile = _activeDbProfileIndex == 1;
         var db = isBillingProfile ? _billingDb : _userDb;
         cboDbProvider.SelectedIndex = GetProviderIndex(db.Provider);
-        txtDbHost.Text = DatabaseSettings.NormalizeSqlServerHost(
+        txtDbHost.Text = DatabaseSettings.GetDisplayHost(
+            db.Provider,
             db.Host,
+            db.Port,
             db.Provider == LoginDatabaseProvider.SqlServer && db.Trusted);
-        txtDbPort.Text = db.Port.ToString(CultureInfo.InvariantCulture);
         txtDbName.Text = isBillingProfile ? db.Database : "(from AccountServer)";
         txtDbName.ReadOnly = !isBillingProfile;
         txtDbUser.Text = db.User;
@@ -186,28 +205,17 @@ public partial class SettingsForm : Form
     private bool SaveCurrentDbProfile()
     {
         var provider = GetSelectedProvider();
-        int port = cboDbProfile.SelectedIndex == 1 ? _billingDb.Port : _userDb.Port;
-        if (provider != LoginDatabaseProvider.Sqlite &&
-            (!int.TryParse(txtDbPort.Text, out port) || port < 1 || port > 65535))
-        {
-            MessageBox.Show(this, "DB port must be 1-65535.", "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return false;
-        }
-        if (provider == LoginDatabaseProvider.Sqlite &&
-            int.TryParse(txtDbPort.Text, out var sqlitePort) &&
-            sqlitePort >= 1 &&
-            sqlitePort <= 65535)
-        {
-            port = sqlitePort;
-        }
-
-        var db = cboDbProfile.SelectedIndex == 1 ? _billingDb : _userDb;
+        var db = _activeDbProfileIndex == 1 ? _billingDb : _userDb;
         db.Provider = provider;
-        db.Host = DatabaseSettings.NormalizeSqlServerHost(
+        db.Host = DatabaseSettings.NormalizeHostForStorage(
+            provider,
             txtDbHost.Text.Trim(),
             provider == LoginDatabaseProvider.SqlServer && radAuthTrusted.Checked);
-        db.Port = port;
-        if (cboDbProfile.SelectedIndex == 1)
+        db.Port = DatabaseSettings.GetEffectivePort(
+            provider,
+            db.Host,
+            provider == LoginDatabaseProvider.MariaDb ? DatabaseSettings.DefaultMariaDbPort : DatabaseSettings.DefaultSqlServerPort);
+        if (_activeDbProfileIndex == 1)
         {
             db.Database = txtDbName.Text.Trim();
         }
@@ -219,11 +227,32 @@ public partial class SettingsForm : Form
 
     private void OnDbProfileChanged(object? sender, EventArgs e)
     {
-        // Save current profile before switching
-        if (!SaveCurrentDbProfile())
+        if (_suppressDbProfileEvents)
         {
             return;
         }
+
+        int newProfileIndex = cboDbProfile.SelectedIndex;
+        if (newProfileIndex == _activeDbProfileIndex)
+        {
+            return;
+        }
+
+        if (!SaveCurrentDbProfile())
+        {
+            _suppressDbProfileEvents = true;
+            try
+            {
+                cboDbProfile.SelectedIndex = _activeDbProfileIndex;
+            }
+            finally
+            {
+                _suppressDbProfileEvents = false;
+            }
+            return;
+        }
+
+        _activeDbProfileIndex = newProfileIndex;
         LoadDbProfileToControls();
     }
 
@@ -244,7 +273,6 @@ public partial class SettingsForm : Form
         bool isSqlServer = provider == LoginDatabaseProvider.SqlServer;
         bool sqlAuth = radAuthSql.Checked;
 
-        txtDbPort.Enabled = !isSqlite;
         grpAuth.Enabled = !isSqlite;
 
         if (!isSqlite && !isSqlServer && radAuthTrusted.Checked)
