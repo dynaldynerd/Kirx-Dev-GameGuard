@@ -32,6 +32,7 @@ WorldServer/WorldServer/**
 WorldServer/x64/**
 RF Online Old Sourcecode/
 _reports/
+dist/
 /ref/
 # Local analysis / report artifacts (root-level)
 _send_packet_caller_cleanup_report.txt
@@ -47,3 +48,4 @@ temp_upgrade_arrays.txt
 tmp_batch2_ida.txt
 build_after_ticket_fix.log
 _msbuild_sln_x64_diag.log
+AGENTS.md
