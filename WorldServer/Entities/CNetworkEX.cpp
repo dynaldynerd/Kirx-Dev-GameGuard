@@ -589,7 +589,7 @@ void CNetworkEX::AcceptClientCheck(unsigned int dwProID, unsigned int dwIndex, u
   }
   else
   {
-    if (g_Main.m_bServerClosing)
+    if (g_Main.IsServerClosing())
     {
       Close(0, dwIndex, false, nullptr);
     }
