@@ -463,11 +463,10 @@ void CMainThread::AccountServerLogin()
 
 void CMainThread::gm_ServerClose()
 {
-  if (!m_bServerClosing)
+  if (BeginServerClose())
   {
     m_tmPreCloseCountdown.StopTimer();
     m_nPreCloseCountdownSeconds = 0;
-    m_bServerClosing = true;
     m_tmForceUserExit.BeginTimer(50);
     m_nForceExitSocketIndexOffset = 0;
   }
@@ -570,7 +569,7 @@ void CMainThread::gm_DisplayAll()
 
 void CMainThread::gm_PreCloseAnn()
 {
-  if (m_bServerClosing)
+  if (IsServerClosing())
   {
     return;
   }
@@ -4209,7 +4208,7 @@ void CMainThread::ForceCloseUserInTiming()
   {
     m_tmForceUserExit.StopTimer();
     m_nForceExitSocketIndexOffset = 0;
-    m_bServerClosing = false;
+    EndServerClose();
     return;
   }
 
@@ -5053,12 +5052,38 @@ void CMainThread::pc_SetRaceGreetingMsg(int racenum, char *pwszBossName, char *p
 
 void CMainThread::pc_AllUserKickInform()
 {
-  if (!m_bServerClosing)
+  if (BeginServerClose())
   {
-    m_bServerClosing = true;
     m_tmForceUserExit.BeginTimer(50);
     m_nForceExitSocketIndexOffset = 0;
   }
+}
+
+bool CMainThread::BeginServerClose()
+{
+  return InterlockedCompareExchange(&m_lServerClosingState, 1, 0) == 0;
+}
+
+void CMainThread::EndServerClose()
+{
+  InterlockedExchange(&m_lServerClosingState, 0);
+}
+
+bool CMainThread::IsServerClosing() const
+{
+  return InterlockedCompareExchange(
+           const_cast<volatile LONG *>(&m_lServerClosingState),
+           0,
+           0)
+    != 0;
+}
+
+LONG CMainThread::GetShutdownPendingLogoutCount() const
+{
+  return InterlockedCompareExchange(
+    const_cast<volatile LONG *>(&m_lShutdownPendingLogoutCount),
+    0,
+    0);
 }
 
 void CMainThread::pc_ChatLockCommand(_CLID *pidLocal, unsigned __int16 wBlockTimeH)

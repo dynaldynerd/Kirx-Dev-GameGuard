@@ -63,6 +63,45 @@ CLogFile CUserDB::s_logAvatorDB;
 CMgrAccountLobbyHistory CUserDB::s_MgrLobbyHistory;
 _MOVE_LOBBY_DELAY CUserDB::s_MoveLobbyDelay;
 
+namespace
+{
+// Non-IDA parity: track close-time logout completions separately from generic DB wait state.
+volatile LONG g_shutdownLogoutPending[MAX_PLAYER]{};
+
+void BeginShutdownLogoutTracking(const CUserDB &user)
+{
+  if (!g_Main.IsServerClosing())
+  {
+    return;
+  }
+
+  const unsigned int userIndex = user.m_idWorld.wIndex;
+  if (userIndex >= MAX_PLAYER)
+  {
+    return;
+  }
+
+  if (InterlockedCompareExchange(&g_shutdownLogoutPending[userIndex], 1, 0) == 0)
+  {
+    InterlockedIncrement(&g_Main.m_lShutdownPendingLogoutCount);
+  }
+}
+
+void CompleteShutdownLogoutTracking(const CUserDB &user)
+{
+  const unsigned int userIndex = user.m_idWorld.wIndex;
+  if (userIndex >= MAX_PLAYER)
+  {
+    return;
+  }
+
+  if (InterlockedCompareExchange(&g_shutdownLogoutPending[userIndex], 0, 1) == 1)
+  {
+    InterlockedDecrement(&g_Main.m_lShutdownPendingLogoutCount);
+  }
+}
+}
+
 const char wszNonMakeName_0[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName_1[3][17] = {"GM", "ADMIN", "OPERATOR"};
 const char wszNonMakeName[3][17] = {"GM", "ADMIN", "OPERATOR"};
@@ -2802,6 +2841,8 @@ void CUserDB::Exit_Account_Request()
 
   if (m_bActive)
   {
+    BeginShutdownLogoutTracking(*this);
+
     if (m_dwSerial == static_cast<unsigned int>(-1))
     {
       _qry_case_lobby_logout qry{};
@@ -2861,6 +2902,7 @@ void CUserDB::Exit_Account_Request()
 
 void CUserDB::Exit_Account_Complete(unsigned __int8 byRetCode)
 {
+  CompleteShutdownLogoutTracking(*this);
   m_bDBWaitState = false;
 
   _logout_account_request_wrac msg{};

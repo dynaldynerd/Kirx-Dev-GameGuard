@@ -819,7 +819,8 @@ public:
   int m_nPreCloseCountdownSeconds;
   CMyTimer m_tmForceUserExit;
   int m_nForceExitSocketIndexOffset;
-  bool m_bServerClosing;
+  volatile LONG m_lServerClosingState;
+  volatile LONG m_lShutdownPendingLogoutCount;
   bool m_bCheckOverTickCount;
   int m_nSleepTerm;
   int m_nSleepValue;
@@ -870,6 +871,10 @@ public:
   bool IsTestServer() const;
   bool IsReleaseServiceMode() const;
   bool IsExcuteService() const;
+  bool BeginServerClose();
+  void EndServerClose();
+  bool IsServerClosing() const;
+  LONG GetShutdownPendingLogoutCount() const;
   unsigned int GetMonsterRecordNum() const;
   _DB_QRY_SYN_DATA *PushDQSData(
     unsigned int dwAccountSerial,
