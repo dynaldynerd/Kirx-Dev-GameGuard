@@ -932,7 +932,7 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
     {
       std::strcpy(history.szQuestCode, pszQuestCode);
       history.byLevel = byLevel;
-      history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
+      history.dwEventEndTime = GetConnectTime_AddBySec(static_cast<int>(dRepeatTime));
       return static_cast<unsigned __int8>(j);
     }
     if (history.byLevel < minLevel)
@@ -945,7 +945,7 @@ unsigned __int8 CQuestMgr::InsertNpcQuestHistory(char *pszQuestCode, char byLeve
   _QUEST_DB_BASE::_NPC_QUEST_HISTORY &history = m_pQuestData->m_History[bestIndex];
   std::strcpy(history.szQuestCode, pszQuestCode);
   history.byLevel = byLevel;
-  history.dwEventEndTime = static_cast<unsigned int>(GetConnectTime_AddBySec(static_cast<int>(dRepeatTime)));
+  history.dwEventEndTime = GetConnectTime_AddBySec(static_cast<int>(dRepeatTime));
   return static_cast<unsigned __int8>(bestIndex);
 }
 _happen_event_cont *CQuestMgr::CheckQuestHappenEvent(

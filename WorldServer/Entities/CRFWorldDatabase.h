@@ -593,8 +593,8 @@ public:
   int Select_GetCharSerialByNameRace(char *pwszName, unsigned __int8 byRace, unsigned int *pSerial);
   unsigned __int8 Select_GuildMasterLastConn(
     unsigned int dwSerial,
-    unsigned int dwLimitConnTime,
-    unsigned int *pdwLastConnTime);
+    unsigned __int64 dwLimitConnTime,
+    unsigned __int64 *pdwLastConnTime);
   bool Select_CharacterReName(char *pwszName, unsigned int *pSerial);
   bool Update_CharacterReName(char *pwszName, unsigned int dwSerial);
   bool Rebirth_Base(unsigned int dwCharacterSerial, char *pwszName);
@@ -611,7 +611,7 @@ public:
   bool UpdateVotedReset_General(unsigned int dwSerial);
   bool UpdateServerResetToken(unsigned int dwToken, unsigned __int16 wProcType, unsigned int dwESerial);
 
-  int Select_Player_Last_LogoutTime(unsigned int dwAccSerial, unsigned int *pdwLastLogoutTime);
+  int Select_Player_Last_LogoutTime(unsigned int dwAccSerial, unsigned __int64 *pdwLastLogoutTime);
   bool Insert_PlayerTimeLimitInfo(unsigned int dwAccountSerial);
   bool Update_Player_TimeLimit_Info(unsigned int dwAccSerial, unsigned int dwFatigue, unsigned __int8 wStatus);
 

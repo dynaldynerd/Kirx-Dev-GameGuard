@@ -1449,7 +1449,7 @@ struct Player_TL_Status
   unsigned int m_dwFatigue;
   unsigned int m_dwStartTime;
   unsigned int m_dwAccountSerial;
-  unsigned int m_dwLastLogoutTime;
+  unsigned __int64 m_dwLastLogoutTime;
   bool m_bUpdateLogout;
 
   unsigned __int8 GetTLStatus();
@@ -1486,17 +1486,17 @@ struct  TimeLimitMgr
     unsigned int dwAccountSerial,
     unsigned __int8 byStatus,
     unsigned int dwFatigue,
-    unsigned int dwLastLogoutTime,
+    unsigned __int64 dwLastLogoutTime,
     bool bAgeLimit);
   bool CheckPlayerStatus(
     unsigned __int16 wIndex,
-    unsigned int dwLastContSaveTime,
+    unsigned __int64 dwLastContSaveTime,
     unsigned __int8 *pbyStatus,
     unsigned int *pdwFatigue);
   void Pop_Data(unsigned int dwAccountSerial, unsigned __int16 wIndex);
   void Push_Data(Player_TL_Status *data, unsigned __int16 wIndex);
-  unsigned int ClacLastLogoutTimeSec(unsigned int dwLastConnTime);
-  unsigned int ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime);
+  unsigned int ClacLastLogoutTimeSec(unsigned __int64 dwLastConnTime);
+  unsigned int ClacLastLogoutTimeToFatigue(unsigned __int64 dwLastConnTime);
   unsigned __int16 GetEndPlayTime();
   bool UpdatePlayerStatus(unsigned __int16 wIndex, unsigned int dwFatigue, unsigned __int8 wStatus);
   void ReSetPercent(unsigned __int16 wIndex);
@@ -2172,7 +2172,7 @@ struct   _SUPPLEMENT_DB_BASE
 {
   long double dPvpPointLeak;
   bool bLastAttBuff;
-  unsigned int dwBufPotionEndTime;
+  unsigned __int64 dwBufPotionEndTime;
   unsigned int dwRaceBuffClear;
   unsigned __int8 byVoted;
   unsigned __int8 VoteEnable;
@@ -2191,7 +2191,7 @@ struct   _SUPPLEMENT_DB_BASE
 struct  _PCBANG_PLAY_TIME
 {
   unsigned int dwAccSerial;
-  unsigned int dwLastConnTime;
+  unsigned __int64 dwLastConnTime;
   unsigned int dwContPlayTime;
   bool bForcedClose;
   unsigned __int8 byReceiveCoupon;
@@ -2226,7 +2226,7 @@ struct  _TIMELIMITINFO_DB_BASE
   unsigned int dwAccSerial;
   unsigned int dwFatigue;
   unsigned __int8 byTLStatus;
-  unsigned int dwLastLogoutTime;
+  unsigned __int64 dwLastLogoutTime;
 };
 #pragma pack(pop)
 

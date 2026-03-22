@@ -331,11 +331,11 @@ void CCouponMgr::LoadData(unsigned int dwAccSerial, _PCBANG_PLAY_TIME *pkInfo)
   dateString[5] = buffer[4];
   dateString[6] = '\0';
 
-  const unsigned int lastConnDate = pkInfo->dwLastConnTime / 10000;
+  const unsigned __int64 lastConnDate = pkInfo->dwLastConnTime / 10000;
   const int today = std::atoi(dateString);
   const unsigned long long connectTimeLimit = GetConnectTime_AddBySec(-1800);
 
-  if (lastConnDate == static_cast<unsigned int>(today) && lastConnDate)
+  if (lastConnDate == static_cast<unsigned __int64>(today) && lastConnDate)
   {
     if (pkInfo->dwLastConnTime <= connectTimeLimit || pkInfo->dwContPlayTime <= 10)
     {
@@ -381,7 +381,7 @@ void CCouponMgr::LogOut(bool bForceClose)
     {
       m_pkInfo->bForcedClose = bForceClose;
       m_pkInfo->dwContPlayTime = m_dwContTime;
-      m_pkInfo->dwLastConnTime = static_cast<unsigned int>(GetKorLocalTime());
+      m_pkInfo->dwLastConnTime = GetKorLocalTime();
       m_pkInfo->byReceiveCoupon = m_byReceiveCoupon;
       m_pkInfo->byEnsureTime = m_byRemainTime;
     }

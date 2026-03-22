@@ -3625,7 +3625,7 @@ bool __fastcall ct_tl_info_set(CPlayer *pOne)
 bool __fastcall ct_tl_info_view(CPlayer *pOne)
 {
   unsigned int dwFatigue; // [rsp+40h] [rbp-288h]
-  unsigned int dwLastLogoutTime; // [rsp+44h] [rbp-284h]
+  unsigned __int64 dwLastLogoutTime; // [rsp+44h] [rbp-284h]
   __int16 byTLStatus; // [rsp+48h] [rbp-280h]
   char Destination[56]; // [rsp+58h] [rbp-270h] BYREF
   char Buffer[520]; // [rsp+90h] [rbp-238h] BYREF
@@ -3652,7 +3652,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
         sprintf_s(
           Buffer,
           512,
-          "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %d",
+          "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %I64u",
           Destination,
           dwFatigue,
           byTLStatus,
@@ -3676,7 +3676,7 @@ bool __fastcall ct_tl_info_view(CPlayer *pOne)
     sprintf_s(
       Buffer,
       512,
-      "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %d",
+      "Player Time Limit Info : Name = %s, Fatigue = %d, Status = %d, LogoutTime = %I64u",
       Destination,
       dwFatigue,
       byTLStatus,

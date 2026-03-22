@@ -1936,7 +1936,7 @@ int CPlayer::SetDamage(
 
 bool CPlayer::IsOverOneDay()
 {
-  const unsigned int lastConnTime = this->m_pUserDB->m_AvatorData.dbAvator.m_dwLastConnTime;
+  const unsigned __int64 lastConnTime = this->m_pUserDB->m_AvatorData.dbAvator.m_dwLastConnTime;
 
   char dateBuffer[48]{};
   char timeBuffer[48]{};
@@ -1968,10 +1968,10 @@ bool CPlayer::IsOverOneDay()
   const unsigned int curDay = static_cast<unsigned int>(atoi(dayString));
   (void)atoi(hourMinString);
 
-  const unsigned int lastYearMonth = lastConnTime / 1000000;
+  const unsigned int lastYearMonth = static_cast<unsigned int>(lastConnTime / 1000000);
   const unsigned int lastYear = lastYearMonth / 100;
   const unsigned int lastMonth = lastYearMonth % 100;
-  const unsigned int lastDay = lastConnTime % 1000000 / 10000;
+  const unsigned int lastDay = static_cast<unsigned int>(lastConnTime % 1000000 / 10000);
 
   if (curYear == static_cast<int>(lastYear))
   {

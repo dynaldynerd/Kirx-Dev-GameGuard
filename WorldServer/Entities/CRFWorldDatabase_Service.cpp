@@ -505,7 +505,7 @@ int CRFWorldDatabase::Select_PrimiumPlayTime(unsigned int dwAccSerial,
     sqlRet = SQLFetch(this->m_hStmtSelect);
     if (!sqlRet || sqlRet == SQL_SUCCESS_WITH_INFO)
     {
-      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, SQL_C_ULONG, &kInfo->dwLastConnTime, 0, &indicator);
+      sqlRet = SQLGetData(this->m_hStmtSelect, 1u, SQL_C_UBIGINT, &kInfo->dwLastConnTime, 0, &indicator);
       sqlRet = SQLGetData(this->m_hStmtSelect, 2u, 4, &kInfo->dwContPlayTime, 0, &indicator);
       sqlRet = SQLGetData(this->m_hStmtSelect, 3u, static_cast<SQLSMALLINT>(65529), &kInfo->bForcedClose, 0, &indicator);
       sqlRet = SQLGetData(this->m_hStmtSelect, 4u, static_cast<SQLSMALLINT>(65530), &kInfo->byReceiveCoupon, 0, &indicator);
@@ -960,7 +960,7 @@ unsigned __int8 CRFWorldDatabase::Select_NpcQuest_History(unsigned int dwSerial,
         sqlRet = SQLGetData(
           this->m_hStmtSelect,
           ++columnNumber,
-          SQL_C_ULONG,
+          SQL_C_UBIGINT,
           &pNpcQHis->List[historyIndex].dwEventEndTime,
           0,
           &indicator);
