@@ -28,17 +28,9 @@ constexpr UINT kStatusIndicators[] = {
   ID_SEPARATOR,
 };
 
-bool HasPendingUserDbWork()
+bool HasPendingShutdownLogout()
 {
-  for (int userIndex = 0; userIndex < MAX_PLAYER; ++userIndex)
-  {
-    if (g_UserDB[userIndex].m_bDBWaitState)
-    {
-      return true;
-    }
-  }
-
-  return false;
+  return g_Main.GetShutdownPendingLogoutCount() != 0;
 }
 }
 
@@ -158,7 +150,7 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
   if (nIDEvent == 0 && m_bExitConfirm && !m_bAllowWindowClose)
   {
-    if (!g_Main.m_bServerClosing && !HasPendingUserDbWork())
+    if (!g_Main.IsServerClosing() && !HasPendingShutdownLogout())
     {
       FinalizeShutdown();
       return;

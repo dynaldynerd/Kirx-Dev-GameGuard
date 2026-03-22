@@ -5289,7 +5289,7 @@ void CPlayer::NetClose(bool bMoveOutLobby)
     {
       needMove = true;
     }
-    else if (g_Main.m_bServerClosing)
+    else if (g_Main.IsServerClosing())
     {
       needMove = false;
     }
