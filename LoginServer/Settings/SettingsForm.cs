@@ -69,23 +69,43 @@ public partial class SettingsForm : Form
         _tabGeneral.Padding = new Padding(8);
         _tabGeneral.UseVisualStyleBackColor = true;
 
+        var autostartPanel = new TableLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = System.Drawing.Color.FromArgb(255, 247, 223),
+            ColumnCount = 2,
+            Dock = DockStyle.Top,
+            Margin = new Padding(0),
+            Padding = new Padding(12, 10, 12, 10)
+        };
+        autostartPanel.ColumnStyles.Add(new ColumnStyle());
+        autostartPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
         var lblAutostart = new Label
         {
             AutoSize = true,
-            Location = new System.Drawing.Point(10, 20),
             Name = "lblAutostart",
-            Text = "Autostart"
+            Text = "Autostart",
+            Anchor = AnchorStyles.Left,
+            ForeColor = System.Drawing.Color.FromArgb(138, 82, 0),
+            BackColor = autostartPanel.BackColor,
+            Margin = new Padding(0, 3, 16, 0)
         };
 
         _chkAutostart.AutoSize = true;
-        _chkAutostart.Location = new System.Drawing.Point(124, 18);
         _chkAutostart.Name = "chkAutostart";
         _chkAutostart.TabIndex = 0;
         _chkAutostart.Text = "Start server automatically on launch";
-        _chkAutostart.UseVisualStyleBackColor = true;
+        _chkAutostart.Anchor = AnchorStyles.Left;
+        _chkAutostart.BackColor = autostartPanel.BackColor;
+        _chkAutostart.ForeColor = System.Drawing.Color.FromArgb(138, 82, 0);
+        _chkAutostart.UseVisualStyleBackColor = false;
 
-        _tabGeneral.Controls.Add(lblAutostart);
-        _tabGeneral.Controls.Add(_chkAutostart);
+        autostartPanel.Controls.Add(lblAutostart, 0, 0);
+        autostartPanel.Controls.Add(_chkAutostart, 1, 0);
+
+        _tabGeneral.Controls.Add(autostartPanel);
         tabMain.TabPages.Insert(0, _tabGeneral);
     }
 
