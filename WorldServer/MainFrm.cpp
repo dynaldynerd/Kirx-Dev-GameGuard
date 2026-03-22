@@ -171,7 +171,7 @@ void CMainFrame::OnSettingsDatabase()
   CDatabaseSetupDlg dialog(this);
   if (dialog.DoModal() == IDOK)
   {
-    AfxMessageBox(L"Initialize\\Database.ini updated. Restart WorldServer for the changes to take effect.");
+    AfxMessageBox(L"Setup files updated. Restart WorldServer for the changes to take effect.");
   }
 }
 

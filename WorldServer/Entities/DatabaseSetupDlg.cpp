@@ -2,6 +2,8 @@
 
 #include "DatabaseSetupDlg.h"
 
+#include <cstdlib>
+
 namespace
 {
 constexpr char kDefaultBillingServer[] = "(local)";
@@ -9,6 +11,56 @@ constexpr char kDefaultBillingDbName[] = "BILLING";
 constexpr char kDefaultWorldTrustedConnection[] = "1";
 constexpr char kDefaultBillingTrustedConnection[] = "1";
 constexpr char kDefaultUserId[] = "sa";
+constexpr char kDefaultAccountAddress[] = "127.0.0.1";
+constexpr char kDefaultAccountPort[] = "29000";
+constexpr char kDefaultGatePort[] = "27780";
+
+CStringA BuildPathFromCurrentDirectory(const char *relativePath)
+{
+  char currentDirectory[MAX_PATH]{};
+  if (!GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDirectory)), currentDirectory))
+  {
+    return CStringA();
+  }
+
+  CStringA path;
+  path.Format("%s\\%s", currentDirectory, relativePath);
+  return path;
+}
+
+bool FileExists(const CStringA &path)
+{
+  if (path.IsEmpty())
+  {
+    return false;
+  }
+
+  const DWORD attributes = GetFileAttributesA(path);
+  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+void ReadIniString(
+  const CStringA &iniPath,
+  const char *section,
+  const char *key,
+  const char *defaultValue,
+  char *buffer,
+  DWORD bufferSize)
+{
+  if (buffer == nullptr || bufferSize == 0)
+  {
+    return;
+  }
+
+  if (iniPath.IsEmpty())
+  {
+    buffer[0] = '\0';
+    return;
+  }
+
+  GetPrivateProfileStringA(section, key, defaultValue, buffer, bufferSize, iniPath);
+}
+
 }
 
 IMPLEMENT_DYNAMIC(CDatabaseSetupDlg, CDialog)
@@ -28,12 +80,20 @@ CDatabaseSetupDlg::CDatabaseSetupDlg(CWnd *pParent)
     m_billingTrustedConnectionCheck(),
     m_billingUserEdit(),
     m_billingPasswordEdit(),
+    m_accountAddressEdit(),
+    m_accountPortEdit(),
+    m_gateIpEdit(),
+    m_gatePortEdit(),
     m_worldUserId(),
     m_worldPassword(),
     m_billingServerAddress(),
     m_billingDbName(),
     m_billingUserId(),
     m_billingPassword(),
+    m_accountAddress(),
+    m_accountPort(),
+    m_gateIp(),
+    m_gatePort(),
     m_worldTrustedConnection(TRUE),
     m_billingTrustedConnection(TRUE)
 {
@@ -55,12 +115,20 @@ void CDatabaseSetupDlg::DoDataExchange(CDataExchange *pDX)
   DDX_Control(pDX, IDC_DB_SETUP_BILLING_TRUSTED, m_billingTrustedConnectionCheck);
   DDX_Control(pDX, IDC_DB_SETUP_BILLING_USER, m_billingUserEdit);
   DDX_Control(pDX, IDC_DB_SETUP_BILLING_PASSWORD, m_billingPasswordEdit);
+  DDX_Control(pDX, IDC_DB_SETUP_ACCOUNT_ADDRESS, m_accountAddressEdit);
+  DDX_Control(pDX, IDC_DB_SETUP_ACCOUNT_PORT, m_accountPortEdit);
+  DDX_Control(pDX, IDC_DB_SETUP_GATE_IP, m_gateIpEdit);
+  DDX_Control(pDX, IDC_DB_SETUP_GATE_PORT, m_gatePortEdit);
   DDX_Text(pDX, IDC_DB_SETUP_WORLD_USER, m_worldUserId);
   DDX_Text(pDX, IDC_DB_SETUP_WORLD_PASSWORD, m_worldPassword);
   DDX_Text(pDX, IDC_DB_SETUP_BILLING_SERVER, m_billingServerAddress);
   DDX_Text(pDX, IDC_DB_SETUP_BILLING_DB, m_billingDbName);
   DDX_Text(pDX, IDC_DB_SETUP_BILLING_USER, m_billingUserId);
   DDX_Text(pDX, IDC_DB_SETUP_BILLING_PASSWORD, m_billingPassword);
+  DDX_Text(pDX, IDC_DB_SETUP_ACCOUNT_ADDRESS, m_accountAddress);
+  DDX_Text(pDX, IDC_DB_SETUP_ACCOUNT_PORT, m_accountPort);
+  DDX_Text(pDX, IDC_DB_SETUP_GATE_IP, m_gateIp);
+  DDX_Text(pDX, IDC_DB_SETUP_GATE_PORT, m_gatePort);
   DDX_Check(pDX, IDC_DB_SETUP_WORLD_TRUSTED, m_worldTrustedConnection);
   DDX_Check(pDX, IDC_DB_SETUP_BILLING_TRUSTED, m_billingTrustedConnection);
 }
@@ -82,6 +150,10 @@ void CDatabaseSetupDlg::OnOK()
   m_billingServerAddress.Trim();
   m_billingDbName.Trim();
   m_billingUserId.Trim();
+  m_accountAddress.Trim();
+  m_accountPort.Trim();
+  m_gateIp.Trim();
+  m_gatePort.Trim();
 
   if (m_billingTrustedConnection)
   {
@@ -116,9 +188,39 @@ void CDatabaseSetupDlg::OnOK()
     return;
   }
 
+  if (!IsValidIpv4Address(m_accountAddress))
+  {
+    AfxMessageBox(L"AccountLine server address must be a valid IPv4 address.");
+    m_accountAddressEdit.SetFocus();
+    return;
+  }
+
+  unsigned __int16 accountPort = 0;
+  if (!TryParsePort(m_accountPort, &accountPort))
+  {
+    AfxMessageBox(L"AccountLine port must be between 1 and 65535.");
+    m_accountPortEdit.SetFocus();
+    return;
+  }
+
+  unsigned __int16 gatePort = 0;
+  if (!TryParsePort(m_gatePort, &gatePort))
+  {
+    AfxMessageBox(L"ClientLine port must be between 1 and 65535.");
+    m_gatePortEdit.SetFocus();
+    return;
+  }
+
+  if (!m_gateIp.IsEmpty() && !IsValidIpv4Address(m_gateIp))
+  {
+    AfxMessageBox(L"ClientLine gate IP must be a valid IPv4 address.");
+    m_gateIpEdit.SetFocus();
+    return;
+  }
+
   if (!SaveSettings())
   {
-    AfxMessageBox(L"Failed to save Initialize\\Database.ini.");
+    AfxMessageBox(L"Failed to save setup files.");
     return;
   }
 
@@ -137,30 +239,90 @@ void CDatabaseSetupDlg::OnBnClickedBillingTrustedConnection()
   UpdateCredentialControls();
 }
 
-CStringA CDatabaseSetupDlg::BuildIniPath() const
+bool CDatabaseSetupDlg::HasRequiredSettings()
 {
-  char currentDirectory[MAX_PATH]{};
-  if (!GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDirectory)), currentDirectory))
+  const CStringA databaseIniPath = BuildDatabaseIniPath();
+  const CStringA worldInfoIniPath = BuildWorldInfoIniPath();
+  if (!FileExists(databaseIniPath) || !FileExists(worldInfoIniPath))
   {
-    return CStringA();
+    return false;
   }
 
-  CStringA iniPath;
-  iniPath.Format("%s\\Initialize\\Database.ini", currentDirectory);
-  return iniPath;
+  char accountAddressBuffer[64]{};
+  char accountPortBuffer[16]{};
+  char gateIpBuffer[64]{};
+  char gatePortBuffer[16]{};
+
+  ReadIniString(worldInfoIniPath, "System", "AccountAddress", "", accountAddressBuffer, static_cast<DWORD>(sizeof(accountAddressBuffer)));
+  ReadIniString(worldInfoIniPath, "System", "AccountPort", "", accountPortBuffer, static_cast<DWORD>(sizeof(accountPortBuffer)));
+  ReadIniString(worldInfoIniPath, "System", "GateIP", "", gateIpBuffer, static_cast<DWORD>(sizeof(gateIpBuffer)));
+  ReadIniString(worldInfoIniPath, "System", "GatePort", "", gatePortBuffer, static_cast<DWORD>(sizeof(gatePortBuffer)));
+
+  unsigned __int16 parsedPort = 0;
+  const CString gateIp(gateIpBuffer);
+  const bool hasValidGateIp = gateIp.IsEmpty() || IsValidIpv4Address(gateIp);
+  return IsValidIpv4Address(CString(accountAddressBuffer))
+      && TryParsePort(CString(accountPortBuffer), &parsedPort)
+      && hasValidGateIp
+      && TryParsePort(CString(gatePortBuffer), &parsedPort);
 }
 
-CStringA CDatabaseSetupDlg::BuildInitializeDirectoryPath() const
+CStringA CDatabaseSetupDlg::BuildDatabaseIniPath()
 {
-  char currentDirectory[MAX_PATH]{};
-  if (!GetCurrentDirectoryA(static_cast<DWORD>(sizeof(currentDirectory)), currentDirectory))
+  return BuildPathFromCurrentDirectory("Initialize\\Database.ini");
+}
+
+CStringA CDatabaseSetupDlg::BuildInitializeDirectoryPath()
+{
+  return BuildPathFromCurrentDirectory("Initialize");
+}
+
+CStringA CDatabaseSetupDlg::BuildWorldInfoIniPath()
+{
+  return BuildPathFromCurrentDirectory("..\\WorldInfo\\WorldInfo.ini");
+}
+
+CStringA CDatabaseSetupDlg::BuildWorldInfoDirectoryPath()
+{
+  return BuildPathFromCurrentDirectory("..\\WorldInfo");
+}
+
+bool CDatabaseSetupDlg::IsValidIpv4Address(const CString &value)
+{
+  CStringA valueA(value);
+  valueA.Trim();
+  if (valueA.IsEmpty())
   {
-    return CStringA();
+    return false;
   }
 
-  CStringA directoryPath;
-  directoryPath.Format("%s\\Initialize", currentDirectory);
-  return directoryPath;
+  IN_ADDR address{};
+  return InetPtonA(AF_INET, valueA, &address) == 1;
+}
+
+bool CDatabaseSetupDlg::TryParsePort(const CString &value, unsigned __int16 *port)
+{
+  if (port == nullptr)
+  {
+    return false;
+  }
+
+  CStringA valueA(value);
+  valueA.Trim();
+  if (valueA.IsEmpty())
+  {
+    return false;
+  }
+
+  char *end = nullptr;
+  const unsigned long parsed = std::strtoul(valueA, &end, 10);
+  if (end == valueA.GetString() || *end != '\0' || parsed == 0 || parsed > 65535)
+  {
+    return false;
+  }
+
+  *port = static_cast<unsigned __int16>(parsed);
+  return true;
 }
 
 void CDatabaseSetupDlg::LoadSettings()
@@ -171,14 +333,12 @@ void CDatabaseSetupDlg::LoadSettings()
   m_billingDbName = CString(kDefaultBillingDbName);
   m_billingUserId = CString(kDefaultUserId);
   m_billingPassword.Empty();
+  m_accountAddress = CString(kDefaultAccountAddress);
+  m_accountPort = CString(kDefaultAccountPort);
+  m_gateIp.Empty();
+  m_gatePort = CString(kDefaultGatePort);
   m_worldTrustedConnection = TRUE;
   m_billingTrustedConnection = TRUE;
-
-  const CStringA iniPath = BuildIniPath();
-  if (iniPath.IsEmpty())
-  {
-    return;
-  }
 
   char worldTrustedBuffer[16]{};
   char worldUserBuffer[64]{};
@@ -188,41 +348,73 @@ void CDatabaseSetupDlg::LoadSettings()
   char billingDbBuffer[64]{};
   char billingUserBuffer[64]{};
   char billingPasswordBuffer[64]{};
-
-  GetPrivateProfileStringA(
-    "WorldDB",
-    "trusted_connection",
-    kDefaultWorldTrustedConnection,
-    worldTrustedBuffer,
-    static_cast<DWORD>(sizeof(worldTrustedBuffer)),
-    iniPath);
-  GetPrivateProfileStringA("WorldDB", "ID", kDefaultUserId, worldUserBuffer, static_cast<DWORD>(sizeof(worldUserBuffer)), iniPath);
-  GetPrivateProfileStringA("WorldDB", "PWD", "", worldPasswordBuffer, static_cast<DWORD>(sizeof(worldPasswordBuffer)), iniPath);
-
-  GetPrivateProfileStringA(
-    "Billing",
-    "IP",
-    kDefaultBillingServer,
-    billingServerBuffer,
-    static_cast<DWORD>(sizeof(billingServerBuffer)),
-    iniPath);
-  GetPrivateProfileStringA(
-    "Billing",
-    "trusted_connection",
-    kDefaultBillingTrustedConnection,
-    billingTrustedBuffer,
-    static_cast<DWORD>(sizeof(billingTrustedBuffer)),
-    iniPath);
-
-  GetPrivateProfileStringA(
-    "Billing",
-    "DB",
-    kDefaultBillingDbName,
-    billingDbBuffer,
-    static_cast<DWORD>(sizeof(billingDbBuffer)),
-    iniPath);
-  GetPrivateProfileStringA("Billing", "ID", kDefaultUserId, billingUserBuffer, static_cast<DWORD>(sizeof(billingUserBuffer)), iniPath);
-  GetPrivateProfileStringA("Billing", "PWD", "", billingPasswordBuffer, static_cast<DWORD>(sizeof(billingPasswordBuffer)), iniPath);
+  strcpy_s(worldTrustedBuffer, sizeof(worldTrustedBuffer), kDefaultWorldTrustedConnection);
+  strcpy_s(worldUserBuffer, sizeof(worldUserBuffer), kDefaultUserId);
+  billingServerBuffer[0] = '\0';
+  strcpy_s(billingServerBuffer, sizeof(billingServerBuffer), kDefaultBillingServer);
+  strcpy_s(billingTrustedBuffer, sizeof(billingTrustedBuffer), kDefaultBillingTrustedConnection);
+  strcpy_s(billingDbBuffer, sizeof(billingDbBuffer), kDefaultBillingDbName);
+  strcpy_s(billingUserBuffer, sizeof(billingUserBuffer), kDefaultUserId);
+  const CStringA databaseIniPath = BuildDatabaseIniPath();
+  if (!databaseIniPath.IsEmpty())
+  {
+    ReadIniString(
+      databaseIniPath,
+      "WorldDB",
+      "trusted_connection",
+      kDefaultWorldTrustedConnection,
+      worldTrustedBuffer,
+      static_cast<DWORD>(sizeof(worldTrustedBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "WorldDB",
+      "ID",
+      kDefaultUserId,
+      worldUserBuffer,
+      static_cast<DWORD>(sizeof(worldUserBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "WorldDB",
+      "PWD",
+      "",
+      worldPasswordBuffer,
+      static_cast<DWORD>(sizeof(worldPasswordBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "Billing",
+      "IP",
+      kDefaultBillingServer,
+      billingServerBuffer,
+      static_cast<DWORD>(sizeof(billingServerBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "Billing",
+      "trusted_connection",
+      kDefaultBillingTrustedConnection,
+      billingTrustedBuffer,
+      static_cast<DWORD>(sizeof(billingTrustedBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "Billing",
+      "DB",
+      kDefaultBillingDbName,
+      billingDbBuffer,
+      static_cast<DWORD>(sizeof(billingDbBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "Billing",
+      "ID",
+      kDefaultUserId,
+      billingUserBuffer,
+      static_cast<DWORD>(sizeof(billingUserBuffer)));
+    ReadIniString(
+      databaseIniPath,
+      "Billing",
+      "PWD",
+      "",
+      billingPasswordBuffer,
+      static_cast<DWORD>(sizeof(billingPasswordBuffer)));
+  }
 
   m_worldUserId = CString(worldUserBuffer);
   m_worldPassword = CString(worldPasswordBuffer);
@@ -232,6 +424,77 @@ void CDatabaseSetupDlg::LoadSettings()
   m_billingPassword = CString(billingPasswordBuffer);
   m_worldTrustedConnection = (worldTrustedBuffer[0] != '\0' && worldTrustedBuffer[0] != '0') ? TRUE : FALSE;
   m_billingTrustedConnection = (billingTrustedBuffer[0] != '\0' && billingTrustedBuffer[0] != '0') ? TRUE : FALSE;
+
+  const CStringA worldInfoIniPath = BuildWorldInfoIniPath();
+  char accountAddressBuffer[64]{};
+  char accountPortBuffer[16]{};
+  char gateIpBuffer[64]{};
+  char gatePortBuffer[16]{};
+  ReadIniString(
+    worldInfoIniPath,
+    "System",
+    "AccountAddress",
+    "",
+    accountAddressBuffer,
+    static_cast<DWORD>(sizeof(accountAddressBuffer)));
+  ReadIniString(
+    worldInfoIniPath,
+    "System",
+    "AccountPort",
+    kDefaultAccountPort,
+    accountPortBuffer,
+    static_cast<DWORD>(sizeof(accountPortBuffer)));
+  ReadIniString(
+    worldInfoIniPath,
+    "System",
+    "GateIP",
+    "",
+    gateIpBuffer,
+    static_cast<DWORD>(sizeof(gateIpBuffer)));
+  ReadIniString(
+    worldInfoIniPath,
+    "System",
+    "GatePort",
+    kDefaultGatePort,
+    gatePortBuffer,
+    static_cast<DWORD>(sizeof(gatePortBuffer)));
+
+  if (!IsValidIpv4Address(CString(accountAddressBuffer)))
+  {
+    const CStringA worldSystemIniPath = BuildPathFromCurrentDirectory("Initialize\\WorldSystem.ini");
+    ReadIniString(
+      worldSystemIniPath,
+      "System",
+      "AccountAddress",
+      kDefaultAccountAddress,
+      accountAddressBuffer,
+      static_cast<DWORD>(sizeof(accountAddressBuffer)));
+  }
+
+  if (IsValidIpv4Address(CString(accountAddressBuffer)))
+  {
+    m_accountAddress = CString(accountAddressBuffer);
+  }
+
+  unsigned __int16 parsedPort = 0;
+  if (TryParsePort(CString(accountPortBuffer), &parsedPort))
+  {
+    m_accountPort = CString(accountPortBuffer);
+  }
+
+  if (std::strcmp(gateIpBuffer, "X") == 0)
+  {
+    gateIpBuffer[0] = '\0';
+  }
+  if (IsValidIpv4Address(CString(gateIpBuffer)))
+  {
+    m_gateIp = CString(gateIpBuffer);
+  }
+
+  if (TryParsePort(CString(gatePortBuffer), &parsedPort))
+  {
+    m_gatePort = CString(gatePortBuffer);
+  }
 }
 
 bool CDatabaseSetupDlg::SaveSettings()
@@ -247,8 +510,19 @@ bool CDatabaseSetupDlg::SaveSettings()
     return false;
   }
 
-  const CStringA iniPath = BuildIniPath();
-  if (iniPath.IsEmpty())
+  const CStringA databaseIniPath = BuildDatabaseIniPath();
+  const CStringA worldInfoDirectory = BuildWorldInfoDirectoryPath();
+  if (worldInfoDirectory.IsEmpty())
+  {
+    return false;
+  }
+  if (!CreateDirectoryA(worldInfoDirectory, nullptr) && GetLastError() != ERROR_ALREADY_EXISTS)
+  {
+    return false;
+  }
+
+  const CStringA worldInfoIniPath = BuildWorldInfoIniPath();
+  if (databaseIniPath.IsEmpty() || worldInfoIniPath.IsEmpty())
   {
     return false;
   }
@@ -260,17 +534,25 @@ bool CDatabaseSetupDlg::SaveSettings()
   const CStringA billingDbNameA(m_billingDbName);
   const CStringA billingUserIdA(m_billingUserId);
   const CStringA billingPasswordA(m_billingPassword);
+  const CStringA accountAddressA(m_accountAddress);
+  const CStringA accountPortA(m_accountPort);
+  const CStringA gateIpA(m_gateIp);
+  const CStringA gatePortA(m_gatePort);
   const char *worldTrustedConnectionValue = m_worldTrustedConnection ? "1" : "0";
   const char *billingTrustedConnectionValue = m_billingTrustedConnection ? "1" : "0";
 
-  return WritePrivateProfileStringA("WorldDB", "trusted_connection", worldTrustedConnectionValue, iniPath) != FALSE
-      && WritePrivateProfileStringA("WorldDB", "ID", worldUserIdA, iniPath) != FALSE
-      && WritePrivateProfileStringA("WorldDB", "PWD", worldPasswordA, iniPath) != FALSE
-      && WritePrivateProfileStringA("Billing", "IP", billingServerAddressA, iniPath) != FALSE
-      && WritePrivateProfileStringA("Billing", "trusted_connection", billingTrustedConnectionValue, iniPath) != FALSE
-      && WritePrivateProfileStringA("Billing", "DB", billingDbNameA, iniPath) != FALSE
-      && WritePrivateProfileStringA("Billing", "ID", billingUserIdA, iniPath) != FALSE
-      && WritePrivateProfileStringA("Billing", "PWD", billingPasswordA, iniPath) != FALSE;
+  return WritePrivateProfileStringA("WorldDB", "trusted_connection", worldTrustedConnectionValue, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("WorldDB", "ID", worldUserIdA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("WorldDB", "PWD", worldPasswordA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("Billing", "IP", billingServerAddressA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("Billing", "trusted_connection", billingTrustedConnectionValue, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("Billing", "DB", billingDbNameA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("Billing", "ID", billingUserIdA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("Billing", "PWD", billingPasswordA, databaseIniPath) != FALSE
+      && WritePrivateProfileStringA("System", "AccountAddress", accountAddressA, worldInfoIniPath) != FALSE
+      && WritePrivateProfileStringA("System", "AccountPort", accountPortA, worldInfoIniPath) != FALSE
+      && WritePrivateProfileStringA("System", "GateIP", gateIpA, worldInfoIniPath) != FALSE
+      && WritePrivateProfileStringA("System", "GatePort", gatePortA, worldInfoIniPath) != FALSE;
 }
 
 void CDatabaseSetupDlg::UpdateCredentialControls()

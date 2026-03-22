@@ -11,6 +11,7 @@ class CDatabaseSetupDlg : public CDialog
 public:
   explicit CDatabaseSetupDlg(CWnd *pParent = nullptr);
   ~CDatabaseSetupDlg() override;
+  static bool HasRequiredSettings();
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;
@@ -23,8 +24,12 @@ protected:
   DECLARE_MESSAGE_MAP()
 
 private:
-  CStringA BuildIniPath() const;
-  CStringA BuildInitializeDirectoryPath() const;
+  static CStringA BuildDatabaseIniPath();
+  static CStringA BuildInitializeDirectoryPath();
+  static CStringA BuildWorldInfoIniPath();
+  static CStringA BuildWorldInfoDirectoryPath();
+  static bool IsValidIpv4Address(const CString &value);
+  static bool TryParsePort(const CString &value, unsigned __int16 *port);
   void LoadSettings();
   bool SaveSettings();
   void UpdateCredentialControls();
@@ -38,12 +43,20 @@ private:
   CButton m_billingTrustedConnectionCheck;
   CEdit m_billingUserEdit;
   CEdit m_billingPasswordEdit;
+  CEdit m_accountAddressEdit;
+  CEdit m_accountPortEdit;
+  CEdit m_gateIpEdit;
+  CEdit m_gatePortEdit;
   CString m_worldUserId;
   CString m_worldPassword;
   CString m_billingServerAddress;
   CString m_billingDbName;
   CString m_billingUserId;
   CString m_billingPassword;
+  CString m_accountAddress;
+  CString m_accountPort;
+  CString m_gateIp;
+  CString m_gatePort;
   BOOL m_worldTrustedConnection;
   BOOL m_billingTrustedConnection;
 };

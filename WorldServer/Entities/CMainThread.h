@@ -764,6 +764,9 @@ public:
   char m_szWorldDBName[64];
   unsigned int m_dwMessengerIP;
   unsigned int m_dwAccountIP;
+  unsigned int m_dwGateIP;
+  unsigned __int16 m_wAccountPort;
+  unsigned __int16 m_wGatePort;
   unsigned int m_dwCheckAccountOldTick;
   CMyTimer m_tmrCheckAvator;
   CMyTimer m_tmrCheckLoop;

@@ -155,6 +155,92 @@ unsigned int g_dwTimeAliveMonNum = 0;
 unsigned int g_dwMaxDeadMonNum = 0;
 constexpr const char kCandidateMgrInitFailFmt[] = "CandidateMgr::Instance()->Initialize(%d) Fail!";
 constexpr DWORD kHalfDays = 43200000;
+constexpr char kWorldInfoIniPath[] = "..\\WorldInfo\\WorldInfo.ini";
+constexpr char kWorldSystemIniPath[] = ".\\Initialize\\WorldSystem.ini";
+constexpr unsigned __int16 kDefaultAccountPort = 29000;
+constexpr unsigned __int16 kDefaultGatePort = 27780;
+
+bool TryParseConfiguredPort(const char *text, unsigned __int16 *port)
+{
+  if (text == nullptr || port == nullptr || text[0] == '\0')
+  {
+    return false;
+  }
+
+  char *end = nullptr;
+  const unsigned long parsed = std::strtoul(text, &end, 10);
+  if (end == text || *end != '\0' || parsed == 0 || parsed > 65535)
+  {
+    return false;
+  }
+
+  *port = static_cast<unsigned __int16>(parsed);
+  return true;
+}
+
+bool ReadConfiguredPort(
+  const char *iniPath,
+  const char *section,
+  const char *key,
+  unsigned __int16 defaultPort,
+  unsigned __int16 *port)
+{
+  char defaultBuffer[16]{};
+  sprintf_s(defaultBuffer, sizeof(defaultBuffer), "%u", defaultPort);
+
+  char valueBuffer[16]{};
+  GetPrivateProfileStringA(section, key, defaultBuffer, valueBuffer, static_cast<DWORD>(sizeof(valueBuffer)), iniPath);
+  return TryParseConfiguredPort(valueBuffer, port);
+}
+
+bool ReadConfiguredIpv4Address(const char *iniPath, const char *section, const char *key, unsigned int *address)
+{
+  if (address == nullptr)
+  {
+    return false;
+  }
+
+  char valueBuffer[128]{};
+  GetPrivateProfileStringA(section, key, "", valueBuffer, static_cast<DWORD>(sizeof(valueBuffer)), iniPath);
+  if (valueBuffer[0] == '\0')
+  {
+    return false;
+  }
+
+  IN_ADDR parsedAddress{};
+  if (InetPtonA(AF_INET, valueBuffer, &parsedAddress) != 1)
+  {
+    return false;
+  }
+
+  *address = parsedAddress.s_addr;
+  return true;
+}
+
+bool ReadGateIpv4Address(unsigned int *address)
+{
+  if (address == nullptr)
+  {
+    return false;
+  }
+
+  char valueBuffer[128]{};
+  GetPrivateProfileStringA("System", "GateIP", "", valueBuffer, static_cast<DWORD>(sizeof(valueBuffer)), kWorldInfoIniPath);
+  if (valueBuffer[0] == '\0' || std::strcmp(valueBuffer, "X") == 0)
+  {
+    *address = GetIPAddress();
+    return *address != static_cast<unsigned int>(-1);
+  }
+
+  IN_ADDR parsedAddress{};
+  if (InetPtonA(AF_INET, valueBuffer, &parsedAddress) != 1)
+  {
+    return false;
+  }
+
+  *address = parsedAddress.s_addr;
+  return true;
+}
 }
 
 unsigned int TimeLimitMgr::m_dwCnt;
@@ -362,17 +448,7 @@ void CMainThread::AccountServerLogin()
   _open_world_request_wrac request;
 
   std::strcpy(request.szWorldName, m_szWorldName);
-
-  char returnedString[128]{};
-  GetPrivateProfileStringA("System", "GateIP", "X", returnedString, sizeof(returnedString), "..\\WorldInfo\\WorldInfo.ini");
-  if (!std::strcmp(returnedString, "X"))
-  {
-    request.dwWorldServerIP = GetIPAddress();
-  }
-  else
-  {
-    request.dwWorldServerIP = inet_addr(returnedString);
-  }
+  request.dwWorldServerIP = m_dwGateIP;
 
   memcpy_s(request.byHash, sizeof(request.byHash), g_cbHashVerify, sizeof(g_cbHashVerify));
 
@@ -2083,25 +2159,6 @@ int CMainThread::LoadINI()
 
 int CMainThread::LoadWorldSystemINI()
 {
-  char returnedString[128]{};
-  GetPrivateProfileStringA(
-    "System",
-    "AccountAddress",
-    "X",
-    returnedString,
-    static_cast<DWORD>(sizeof(returnedString)),
-    ".\\Initialize\\WorldSystem.ini");
-  if (strcmp(returnedString, "X") == 0)
-  {
-    return -1;
-  }
-  IN_ADDR addr{};
-  if (InetPtonA(AF_INET, returnedString, &addr) != 1)
-  {
-    return -1;
-  }
-  m_dwAccountIP = addr.s_addr;
-
   GetPrivateProfileStringA(
     "VersionCheck",
     "Ver_CheckKey",
@@ -2114,22 +2171,45 @@ int CMainThread::LoadWorldSystemINI()
 
 int CMainThread::LoadWorldInfoINI()
 {
+  if (!ReadConfiguredIpv4Address(kWorldInfoIniPath, "System", "AccountAddress", &m_dwAccountIP))
+  {
+    if (!ReadConfiguredIpv4Address(kWorldSystemIniPath, "System", "AccountAddress", &m_dwAccountIP))
+    {
+      return -5;
+    }
+  }
+
+  if (!ReadConfiguredPort(kWorldInfoIniPath, "System", "AccountPort", kDefaultAccountPort, &m_wAccountPort))
+  {
+    return -6;
+  }
+
+  if (!ReadGateIpv4Address(&m_dwGateIP))
+  {
+    return -7;
+  }
+
+  if (!ReadConfiguredPort(kWorldInfoIniPath, "System", "GatePort", kDefaultGatePort, &m_wGatePort))
+  {
+    return -8;
+  }
+
   GetPrivateProfileStringA(
     "System",
     "WorldName",
     "X",
     m_szWorldName,
     static_cast<DWORD>(sizeof(m_szWorldName)),
-    "..\\WorldInfo\\WorldInfo.ini");
+    kWorldInfoIniPath);
   if (strcmp(m_szWorldName, "X") == 0)
   {
     return -1;
   }
   strncpy_s(m_wszWorldName, sizeof(m_wszWorldName), m_szWorldName, _TRUNCATE);
 
-  m_bFreeServer = GetPrivateProfileIntA("System", "FreeServer", 0, "..\\WorldInfo\\WorldInfo.ini");
+  m_bFreeServer = GetPrivateProfileIntA("System", "FreeServer", 0, kWorldInfoIniPath);
   m_byWorldType = static_cast<unsigned __int8>(
-    GetPrivateProfileIntA("System", "ServerType", 2, "..\\WorldInfo\\WorldInfo.ini"));
+    GetPrivateProfileIntA("System", "ServerType", 2, kWorldInfoIniPath));
 
   char releaseType[9]{};
   GetPrivateProfileStringA(
@@ -2138,7 +2218,7 @@ int CMainThread::LoadWorldInfoINI()
     "X",
     releaseType,
     static_cast<DWORD>(sizeof(releaseType)),
-    "..\\WorldInfo\\WorldInfo.ini");
+    kWorldInfoIniPath);
   if (_stricmp(releaseType, "Internal") == 0)
   {
     m_bReleaseServiceMode = false;
@@ -2163,7 +2243,7 @@ int CMainThread::LoadWorldInfoINI()
     "X",
     executeService,
     static_cast<DWORD>(sizeof(executeService)),
-    "..\\WorldInfo\\WorldInfo.ini");
+    kWorldInfoIniPath);
   if (_stricmp(executeService, "true") == 0)
   {
     m_bExcuteService = true;
@@ -2188,7 +2268,7 @@ int CMainThread::LoadWorldInfoINI()
     "X",
     nationCode,
     static_cast<DWORD>(sizeof(nationCode)),
-    "..\\WorldInfo\\WorldInfo.ini");
+    kWorldInfoIniPath);
 
   CNationCodeStrTable table;
   if (!table.Init())
@@ -3662,7 +3742,7 @@ bool CMainThread::NetworkInit()
   }
   params[0].m_byRecvSleepTime = 10;
   params[0].m_bySendSleepTime = 2;
-  params[0].m_wPort = 27780;
+  params[0].m_wPort = m_wGatePort;
   params[0].m_bSpeedHackCheck = 1;
   params[0].m_bOddMsgWriteLog = 1;
   params[0].m_dwSocketRecycleTerm = 30000;
@@ -4054,7 +4134,7 @@ void CMainThread::CheckAccountLineState()
       m_dwCheckAccountOldTick = loopTime;
       in_addr accountAddress{};
       accountAddress.S_un.S_addr = m_dwAccountIP;
-      g_Network.Connect(1, 0, accountAddress, 29000);
+      g_Network.Connect(1, 0, accountAddress, m_wAccountPort);
     }
   }
 }
@@ -5303,18 +5383,9 @@ void CMainThread::SerivceSelfStart()
   if (!m_bCheckOverTickCount && g_Main.m_bWorldOpen && !g_Main.m_bWorldService)
   {
     m_bWorldService = true;
-    char returnedString[148]{};
-    GetPrivateProfileStringA("System", "GateIP", "X", returnedString, 128, "..\\WorldInfo\\WorldInfo.ini");
     _start_world_request_wrac request{};
-    if (!std::strcmp(returnedString, "X"))
-    {
-      request.dwGateIP = GetIPAddress();
-    }
-    else
-    {
-      request.dwGateIP = inet_addr(returnedString);
-    }
-    request.wGatePort = 27780;
+    request.dwGateIP = m_dwGateIP;
+    request.wGatePort = m_wGatePort;
     unsigned __int8 pbyType[2]{1, 3};
     const unsigned __int16 len = request.size();
     g_Network.m_pProcess[1]->LoadSendMsg(0, pbyType, reinterpret_cast<char *>(&request), len);

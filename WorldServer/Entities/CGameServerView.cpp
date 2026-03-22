@@ -12,10 +12,9 @@
 
 namespace
 {
-bool DatabaseIniExists()
+bool HasRequiredStartupSettings()
 {
-  const DWORD attributes = GetFileAttributesA(".\\Initialize\\Database.ini");
-  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+  return CDatabaseSetupDlg::HasRequiredSettings();
 }
 }
 
@@ -84,7 +83,7 @@ int CGameServerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
   CGameServerDoc *document = GetDocument();
 
-  if (!DatabaseIniExists())
+  if (!HasRequiredStartupSettings())
   {
     CDatabaseSetupDlg databaseSetupDialog;
     if (databaseSetupDialog.DoModal() != IDOK)
