@@ -26,11 +26,21 @@ public partial class MainForm : Form
     public MainForm(AppSettings settings)
     {
         InitializeComponent();
+        ApplyExecutableIcon();
         _settings = settings;
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
         _loginHandler = CreateLoginHandler();
         _worldHandler = CreateWorldHandler();
         _controlHandler = CreateControlHandler();
+    }
+
+    private void ApplyExecutableIcon()
+    {
+        using var appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        if (appIcon != null)
+        {
+            Icon = (System.Drawing.Icon)appIcon.Clone();
+        }
     }
 
     private LoginHandler CreateLoginHandler()

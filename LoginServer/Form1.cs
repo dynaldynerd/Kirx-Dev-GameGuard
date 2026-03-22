@@ -27,8 +27,18 @@ public partial class MainWindow : Form
     public MainWindow()
     {
         InitializeComponent();
+        ApplyExecutableIcon();
         _verboseLog = _settings.VerboseLogging;
         ApplySettingsToUi();
+    }
+
+    private void ApplyExecutableIcon()
+    {
+        using var appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        if (appIcon != null)
+        {
+            Icon = (System.Drawing.Icon)appIcon.Clone();
+        }
     }
 
     private void ApplySettingsToUi()
