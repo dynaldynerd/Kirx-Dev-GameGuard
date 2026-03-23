@@ -1704,11 +1704,21 @@ internal sealed class MapViewerControl : UserControl
     return new MapBounds(Vector3.ComponentMin(a, b), Vector3.ComponentMax(a, b));
   }
 
+  private FrontFaceDirection GetMapFrontFaceDirection()
+  {
+    return _flipNorthSouth ? FrontFaceDirection.Cw : FrontFaceDirection.Ccw;
+  }
+
   private Vector3 ConvertWorldPosition(Vector3 position)
   {
     return _flipNorthSouth
       ? new Vector3(position.X, position.Y, -position.Z)
       : position;
+  }
+
+  private static Vector3 ConvertSkyDisplayPosition(Vector3 position)
+  {
+    return position;
   }
 
   private Vector3 ConvertSourcePosition(Vector3 displayPosition)
@@ -1744,6 +1754,18 @@ internal sealed class MapViewerControl : UserControl
     }
 
     return converted;
+  }
+
+  private static BspRenderVertex[] CloneRenderVertices(BspRenderVertex[] source)
+  {
+    if (source.Length == 0)
+    {
+      return source;
+    }
+
+    BspRenderVertex[] cloned = new BspRenderVertex[source.Length];
+    Array.Copy(source, cloned, source.Length);
+    return cloned;
   }
 
   private Vector3[] ConvertDisplayPositions(Vector3[] source)
@@ -2319,7 +2341,7 @@ internal sealed class MapViewerControl : UserControl
     Vector3 clearColor = GetMapClearColor();
     GL.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, 1.0f);
     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-    GL.FrontFace(_flipNorthSouth ? FrontFaceDirection.Cw : FrontFaceDirection.Ccw);
+    GL.FrontFace(GetMapFrontFaceDirection());
 
     float aspect = Math.Max(0.0001f, (float)_glControl.ClientSize.Width / Math.Max(1f, _glControl.ClientSize.Height));
     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(65f), aspect, 0.1f, 200000f);
@@ -2354,7 +2376,9 @@ internal sealed class MapViewerControl : UserControl
       GL.Disable(EnableCap.DepthTest);
       GL.Enable(EnableCap.CullFace);
       GL.DepthMask(false);
+      GL.FrontFace(FrontFaceDirection.Ccw);
       DrawSkyMesh(_skyVao, _skyVertexCount, _skyDrawSpans, ref skyMvp, ref skyView, _skySurfaceToTexture, null);
+      GL.FrontFace(GetMapFrontFaceDirection());
       GL.Disable(EnableCap.Blend);
       GL.DepthMask(true);
       GL.Enable(EnableCap.CullFace);
@@ -2858,7 +2882,7 @@ internal sealed class MapViewerControl : UserControl
     _parityEntityUploadBufferLength = 0;
     _bspLastFrameTick = int.MinValue;
 
-    _skyDrawVertices = ConvertRenderVertices(_map.SkyRenderVertices);
+    _skyDrawVertices = CloneRenderVertices(_map.SkyRenderVertices);
     _skySceneObjects = _map.SkySceneObjects;
     _skySceneMatGroups = _map.SkySceneMatGroups;
     _hasAnimatedSkyGeometry =
@@ -3608,7 +3632,7 @@ internal sealed class MapViewerControl : UserControl
           worldPosition = TransformEntityPosition(worldPosition, objectMatrix);
         }
 
-        Vector3 displayPosition = ConvertWorldPosition(worldPosition);
+        Vector3 displayPosition = ConvertSkyDisplayPosition(worldPosition);
         BspRenderVertex sourceVertex = _skyDrawVertices[vertexCursor];
         _skyDrawVertices[vertexCursor] = new BspRenderVertex(displayPosition, sourceVertex.Uv, sourceVertex.LightUv, sourceVertex.Color);
 
@@ -6410,7 +6434,7 @@ internal sealed class MapViewerControl : UserControl
     GL.Disable(EnableCap.Blend);
     GL.Enable(EnableCap.CullFace);
     GL.CullFace(TriangleFace.Back);
-    GL.FrontFace(_flipNorthSouth ? FrontFaceDirection.Cw : FrontFaceDirection.Ccw);
+    GL.FrontFace(GetMapFrontFaceDirection());
     GL.Enable(EnableCap.PolygonOffsetFill);
     GL.PolygonOffset(2.0f, 4.0f);
 
@@ -8172,7 +8196,7 @@ internal sealed class MapViewerControl : UserControl
     lensView.M42 = 0.0f;
     lensView.M43 = 0.0f;
     Matrix4 lensMvp = lensView * projection;
-    Vector3 displayLensPosition = ConvertWorldPosition(sourceLensPosition);
+    Vector3 displayLensPosition = ConvertSkyDisplayPosition(sourceLensPosition);
     Vector4 clip = TransformPointRow(displayLensPosition, lensMvp);
     if (clip.W <= 0.00001f)
     {
