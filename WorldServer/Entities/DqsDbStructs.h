@@ -17,7 +17,7 @@ struct _worlddb_character_base_info
   unsigned int dwDalant;
   unsigned int dwGold;
   unsigned int dwBaseShape;
-  unsigned int dwLastConnTime;
+  unsigned __int64 dwLastConnTime;
   char szAccount[17];
   __int16 shEKArray[8];
   unsigned int dwEUArray[8];
@@ -81,7 +81,7 @@ struct _worlddb_character_supplement_info
 {
   long double dPvpPointLeak;
   bool bLastAttBuff;
-  unsigned int dwBufPotionEndTime;
+  unsigned __int64 dwBufPotionEndTime;
   unsigned int dwRaceBuffClear;
   unsigned __int8 byVoted;
   unsigned __int8 VoteEnable;
@@ -96,7 +96,7 @@ struct _worlddb_time_limit_info
   unsigned int dwAccSerial;
   unsigned int dwFatigue;
   unsigned __int8 byTLStatus;
-  unsigned int dwLastLogoutTime;
+  unsigned __int64 dwLastLogoutTime;
 };
 
 struct _worlddb_inven_info
@@ -124,7 +124,7 @@ struct _worlddb_unit_info_array
     unsigned int dwSpare[8];
     int nKeepingFee;
     int nPullingFee;
-    unsigned int dwCutTime;
+    unsigned __int64 dwCutTime;
   };
 
   __worlddb_unit_info UnitInfo[4];
@@ -163,7 +163,7 @@ struct  _worlddb_npc_quest_complete_history
   {
     char szQuestCode[8];
     unsigned __int8 byLevel;
-    unsigned int dwEventEndTime;
+    unsigned __int64 dwEventEndTime;
   };
 
   __list List[70];
@@ -762,8 +762,8 @@ struct  _qry_case_select_guild_master_lastconn
   unsigned int dwSerial;
   unsigned int dwGuildIndex;
   unsigned int dwGuildSerial;
-  unsigned int dwLimitConnTime;
-  unsigned int dwLastConnTime;
+  unsigned __int64 dwLimitConnTime;
+  unsigned __int64 dwLastConnTime;
 };
 
 struct  _qry_case_character_rename
@@ -1084,18 +1084,18 @@ inline _rege_char_data::_rege_char_data()
 }
 
 #if defined(_MSC_VER)
-static_assert(sizeof(_worlddb_character_base_info) == 224, "_worlddb_character_base_info size mismatch");
+static_assert(sizeof(_worlddb_character_base_info) == 232, "_worlddb_character_base_info size mismatch");
 static_assert(offsetof(_worlddb_character_base_info, dwSerial) == 20, "_worlddb_character_base_info.dwSerial offset mismatch");
 static_assert(offsetof(_worlddb_character_base_info, byRace) == 24, "_worlddb_character_base_info.byRace offset mismatch");
 static_assert(offsetof(_worlddb_character_base_info, dwDalant) == 32, "_worlddb_character_base_info.dwDalant offset mismatch");
-static_assert(offsetof(_worlddb_character_base_info, lnUIDArray) == 152, "_worlddb_character_base_info.lnUIDArray offset mismatch");
-static_assert(offsetof(_worlddb_character_base_info, dwCheckSum) == 216, "_worlddb_character_base_info.dwCheckSum offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, lnUIDArray) == 160, "_worlddb_character_base_info.lnUIDArray offset mismatch");
+static_assert(offsetof(_worlddb_character_base_info, dwCheckSum) == 224, "_worlddb_character_base_info.dwCheckSum offset mismatch");
 
-static_assert(sizeof(_worlddb_time_limit_info) == 16, "_worlddb_time_limit_info size mismatch");
+static_assert(sizeof(_worlddb_time_limit_info) == 24, "_worlddb_time_limit_info size mismatch");
 static_assert(offsetof(_worlddb_time_limit_info, dwAccSerial) == 0, "_worlddb_time_limit_info.dwAccSerial offset mismatch");
 static_assert(offsetof(_worlddb_time_limit_info, dwFatigue) == 4, "_worlddb_time_limit_info.dwFatigue offset mismatch");
 static_assert(offsetof(_worlddb_time_limit_info, byTLStatus) == 8, "_worlddb_time_limit_info.byTLStatus offset mismatch");
-static_assert(offsetof(_worlddb_time_limit_info, dwLastLogoutTime) == 12, "_worlddb_time_limit_info.dwLastLogoutTime offset mismatch");
+static_assert(offsetof(_worlddb_time_limit_info, dwLastLogoutTime) == 16, "_worlddb_time_limit_info.dwLastLogoutTime offset mismatch");
 
 static_assert(sizeof(_worlddb_trade_info::__trade_key) == 80, "_worlddb_trade_info::__trade_key size mismatch");
 static_assert(

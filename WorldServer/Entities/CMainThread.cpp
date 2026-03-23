@@ -1431,7 +1431,7 @@ void TimeLimitMgr::InsertPlayerStatus(
   unsigned int dwAccountSerial,
   unsigned __int8 byStatus,
   unsigned int dwFatigue,
-  unsigned int dwLastLogoutTime,
+  unsigned __int64 dwLastLogoutTime,
   bool bAgeLimit)
 {
   Player_TL_Status data{};
@@ -1444,10 +1444,10 @@ void TimeLimitMgr::InsertPlayerStatus(
   Push_Data(&data, wIndex);
 }
 
-unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
+unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned __int64 dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 15, "%u", dwLastConnTime);
+  sprintf_s(buffer, sizeof(buffer), "%I64u", dwLastConnTime);
   const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};
@@ -1489,10 +1489,10 @@ unsigned int TimeLimitMgr::ClacLastLogoutTimeSec(unsigned int dwLastConnTime)
   return static_cast<unsigned int>(SumMinuteBetweenSec(&tmLast));
 }
 
-unsigned int TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned int dwLastConnTime)
+unsigned int TimeLimitMgr::ClacLastLogoutTimeToFatigue(unsigned __int64 dwLastConnTime)
 {
   char buffer[28]{};
-  sprintf_s(buffer, 15, "%u", dwLastConnTime);
+  sprintf_s(buffer, sizeof(buffer), "%I64u", dwLastConnTime);
   const int len = static_cast<int>(std::strlen(buffer));
 
   tm tmLast{};
@@ -1546,7 +1546,7 @@ unsigned __int16 TimeLimitMgr::GetEndPlayTime()
 
 bool TimeLimitMgr::CheckPlayerStatus(
   unsigned __int16 wIndex,
-  unsigned int dwLastContSaveTime,
+  unsigned __int64 dwLastContSaveTime,
   unsigned __int8 *pbyStatus,
   unsigned int *pdwFatigue)
 {

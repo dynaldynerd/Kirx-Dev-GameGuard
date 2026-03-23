@@ -25,7 +25,7 @@ struct _REGED_AVATOR_DB
   unsigned int m_dwBaseShape;
   _EQUIPKEY m_EquipKey[8];
   unsigned __int8 m_byEquipLv[8];
-  unsigned int m_dwLastConnTime;
+  unsigned __int64 m_dwLastConnTime;
   _REGED_AVATOR_DB();
   void Init();
 };

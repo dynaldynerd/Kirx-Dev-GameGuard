@@ -7970,7 +7970,7 @@ void CPlayer::ForcePullUnit(bool bLogout)
 
   if (bLogout && m_bOper)
   {
-    m_pUsingUnit->dwCutTime = static_cast<unsigned int>(GetKorLocalTime());
+    m_pUsingUnit->dwCutTime = GetKorLocalTime();
     if (m_pUserDB)
     {
       m_pUserDB->Update_UnitData(m_pUsingUnit->bySlotIndex, m_pUsingUnit);
@@ -15219,7 +15219,7 @@ void CPlayer::CreateComplete()
     }
   }
 
-  const unsigned int endTime = this->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime;
+  const unsigned __int64 endTime = this->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime;
   if (endTime <= GetKorLocalTime())
   {
     this->m_PotionBufUse.SetExtPotionBufUse(0);

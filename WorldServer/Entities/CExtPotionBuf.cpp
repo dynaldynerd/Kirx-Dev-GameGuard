@@ -171,7 +171,7 @@ void CExtPotionBuf::UseBuffPotion(CPlayer *pOne)
 {
   m_bExtPotionBufUse = true;
   m_dwEndPotionTime = GetConnectTime_AddBySec(2592000);
-  pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = static_cast<unsigned int>(m_dwEndPotionTime);
+  pOne->m_pUserDB->m_AvatorData.dbSupplement.dwBufPotionEndTime = m_dwEndPotionTime;
   SendMsg_RemainBufUseTime(1, pOne->m_ObjID.m_wIndex, 30, 0, 0);
 }
 

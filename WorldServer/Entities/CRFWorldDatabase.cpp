@@ -858,7 +858,7 @@ int CRFWorldDatabase::Select_PlayerTimeLimitInfo(
       {
         ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pTimeLimiInfo->dwFatigue, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_UTINYINT, &pTimeLimiInfo->byTLStatus, 0, &indicator);
-        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_ULONG, &pTimeLimiInfo->dwLastLogoutTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_UBIGINT, &pTimeLimiInfo->dwLastLogoutTime, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -2612,11 +2612,11 @@ int CRFWorldDatabase::Select_GetCharSerialByNameRace(
 
 unsigned __int8 CRFWorldDatabase::Select_GuildMasterLastConn(
   unsigned int dwSerial,
-  unsigned int dwLimitConnTime,
-  unsigned int *pdwLastConnTime)
+  unsigned __int64 dwLimitConnTime,
+  unsigned __int64 *pdwLastConnTime)
 {
   char buffer[260]{};
-  sprintf_s(buffer, "{ CALL pSelect_GuildMasterLastConn( %u, %u ) }", dwSerial, dwLimitConnTime);
+  sprintf_s(buffer, "{ CALL pSelect_GuildMasterLastConn( %u, %I64u ) }", dwSerial, dwLimitConnTime);
 
   if (m_bSaveDBLog)
   {
@@ -2632,7 +2632,7 @@ unsigned __int8 CRFWorldDatabase::Select_GuildMasterLastConn(
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLLEN indicator = 0;
-        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, pdwLastConnTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_UBIGINT, pdwLastConnTime, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -2976,7 +2976,7 @@ bool CRFWorldDatabase::UpdateServerResetToken(unsigned int dwToken, unsigned __i
   return ExecUpdateQuery(buffer, true);
 }
 
-int CRFWorldDatabase::Select_Player_Last_LogoutTime(unsigned int dwAccSerial, unsigned int *pdwLastLogoutTime)
+int CRFWorldDatabase::Select_Player_Last_LogoutTime(unsigned int dwAccSerial, unsigned __int64 *pdwLastLogoutTime)
 {
   char buffer[1048]{};
   sprintf_s(
@@ -2998,7 +2998,7 @@ int CRFWorldDatabase::Select_Player_Last_LogoutTime(unsigned int dwAccSerial, un
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLLEN indicator = 0;
-        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, pdwLastLogoutTime, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_UBIGINT, pdwLastLogoutTime, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -3814,7 +3814,7 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoByName(char *pwszChara
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwDalant, 0, &indicator);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwGold, 0, &indicator);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwBaseShape, 0, &indicator);
-  ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwLastConnTime, 0, &indicator);
+  ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_UBIGINT, &pCharacterData->dwLastConnTime, 0, &indicator);
   ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_CHAR, pCharacterData->szAccount, 17, &indicator);
 
   for (int j = 0; j < 8; ++j)
