@@ -11,19 +11,30 @@ namespace AccountServer.Server;
 public abstract class AccountHandlerBase : NetworkHandlerBase
 {
     protected readonly Action<string> _log;
+    private readonly Func<bool> _isVerboseLoggingEnabled;
     protected readonly AccountMainContext _context = AccountMainContext.Instance;
     protected readonly AppSettings _settings;
     protected readonly IAccountDatabase _db;
 
     protected AccountHandlerBase(
         Action<string> log,
+        Func<bool> isVerboseLoggingEnabled,
         AppSettings settings,
         string? connectionString = null,
         IAccountDatabase? db = null)
     {
         _log = log;
+        _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
         _settings = settings;
         _db = db ?? CreateDefaultDb(settings, connectionString);
+    }
+
+    protected void LogVerbose(string message)
+    {
+        if (_isVerboseLoggingEnabled())
+        {
+            _log(message);
+        }
     }
 
     protected static IAccountDatabase CreateDefaultDb(AppSettings settings, string? connectionString)
@@ -123,10 +134,20 @@ public abstract class AccountHandlerBase : NetworkHandlerBase
             return;
         }
 
-        if (account.UserCode == 0 && account.AccountSerial != 0)
+        uint accountSerial = account.AccountSerial;
+        byte userCode = account.UserCode;
+        uint clientIp = account.ClientIp;
+        string accountId = account.AccountId;
+
+        if (userCode == 0 && accountSerial != 0)
         {
-            string ip = new IPAddress(account.ClientIp).ToString();
-            _ = _db.Insert_UserPushLogAsync((int)account.AccountSerial, ip, ip, CancellationToken.None);
+            string ip = new IPAddress(clientIp).ToString();
+            _ = _db.Insert_UserPushLogAsync((int)accountSerial, ip, ip, CancellationToken.None);
+        }
+
+        if (accountSerial != 0)
+        {
+            _ = UpdateAccountLogoffAsync(accountSerial, userCode);
         }
 
         account.IsLogin = false;
@@ -134,12 +155,30 @@ public abstract class AccountHandlerBase : NetworkHandlerBase
         account.GlobalId = default;
 
         _context.RemoveClient(account.LoginServerIndex, account.Clid);
-        if (account.AccountSerial != 0)
+        if (accountSerial != 0)
         {
-            _context.RemoveActiveAccount(account.AccountSerial);
+            _context.RemoveActiveAccount(accountSerial);
         }
 
-        _log($"ReleaseAccount: {reason} account={account.AccountId} serial={account.AccountSerial}");
+        LogVerbose($"ReleaseAccount: {reason} account={accountId} serial={accountSerial}");
+    }
+
+    private async Task UpdateAccountLogoffAsync(uint accountSerial, byte userCode)
+    {
+        try
+        {
+            bool updated = userCode == 1
+                ? await _db.Update_StaffLogoffDateAsync(accountSerial, CancellationToken.None).ConfigureAwait(false)
+                : await _db.Update_UserLogoffDateAsync(accountSerial, CancellationToken.None).ConfigureAwait(false);
+            if (!updated)
+            {
+                _log($"Update logoff date failed for serial={accountSerial} userCode={userCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log($"Update logoff date failed for serial={accountSerial}: {ex.Message}");
+        }
     }
 
     protected async Task SendSelectWorldResultAsync(PublicConnection connection, _select_world_result_aclo payload, CancellationToken token)

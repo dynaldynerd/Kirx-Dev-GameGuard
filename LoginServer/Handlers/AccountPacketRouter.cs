@@ -17,10 +17,20 @@ namespace LoginServer.Handlers;
 public sealed class AccountPacketRouter
 {
     private readonly Action<string> _log;
+    private readonly Func<bool> _isVerboseLoggingEnabled;
 
-    public AccountPacketRouter(Action<string> log)
+    public AccountPacketRouter(Action<string> log, Func<bool> isVerboseLoggingEnabled)
     {
         _log = log;
+        _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
+    }
+
+    private void LogVerbose(string message)
+    {
+        if (_isVerboseLoggingEnabled())
+        {
+            _log(message);
+        }
     }
 
     public async Task<bool> HandleAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
@@ -239,14 +249,14 @@ public sealed class AccountPacketRouter
 
     private Task<bool> InformUserNumWorld(PublicConnection connection, _inform_usernum_world_aclo info, CancellationToken cancellationToken)
     {
-        _log($"InformUserNumWorld: serviceWorldNum={info.byServiceWorldNum} users[0]={info.wUserNum[0]} ...");
+        LogVerbose($"InformUserNumWorld: serviceWorldNum={info.byServiceWorldNum} users[0]={info.wUserNum[0]} ...");
         MainContext.Instance.UpdateUserCounts(info.byServiceWorldNum, info.wUserNum);
         return Task.FromResult(true);
     }
 
     private Task<bool> JoinAccountResult(PublicConnection connection, _join_account_result_aclo result, CancellationToken cancellationToken)
     {
-        _log($"JoinAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
+        LogVerbose($"JoinAccountResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
         MainContext.Instance.RecordJoinResult(result.idLocal.wIndex, result.byRetCode);
 
         var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
@@ -314,7 +324,8 @@ public sealed class AccountPacketRouter
 
         if (client != null)
         {
-            var payload = _login_account_result_locl.FromAclos(result, session!.BillType);
+            byte clientBillingType = session!.IsPremium ? (byte)1 : (byte)0;
+            var payload = _login_account_result_locl.FromAclos(result, clientBillingType);
             var env = new PacketEnvelope
             {
                 OpCode = 21,
@@ -328,7 +339,7 @@ public sealed class AccountPacketRouter
 
     private Task<bool> SelectWorldResult(PublicConnection connection, _select_world_result_aclo result, CancellationToken cancellationToken)
     {
-        _log($"SelectWorldResult: index={result.idLocal.wIndex} ret={result.byRetCode} masterKey[0]={result.dwWorldMasterKey[0]}");
+        LogVerbose($"SelectWorldResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
         MainContext.Instance.RecordSelectWorldResult(result.idLocal.wIndex, result.byRetCode, result.dwWorldMasterKey);
 
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
@@ -374,7 +385,7 @@ public sealed class AccountPacketRouter
 
     private Task<bool> PushCloseResult(PublicConnection connection, _push_close_result_aclo result, CancellationToken cancellationToken)
     {
-        _log($"PushCloseResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
+        LogVerbose($"PushCloseResult: index={result.idLocal.wIndex} ret={result.byRetCode}");
         MainContext.Instance.RecordPushCloseResult(result.idLocal.wIndex, result.byRetCode);
 
         var client = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
@@ -402,7 +413,7 @@ public sealed class AccountPacketRouter
             return Task.FromResult(false);
         }
 
-        _log($"ForceCloseCommand: index={cmd.idLocal.wIndex} serial={cmd.idLocal.dwSerial}");
+        LogVerbose($"ForceCloseCommand: index={cmd.idLocal.wIndex} serial={cmd.idLocal.dwSerial}");
 
         var session = MainContext.Instance.GetClient(cmd.idLocal.wIndex);
         var target = MainContext.Instance.GetClientConnection(cmd.idLocal.wIndex);
@@ -443,7 +454,7 @@ public sealed class AccountPacketRouter
             _ => false
         };
 
-        _log($"LoginStatRequest: clientIndex={request.wClientIndex} stat={request.byStat} => externalOpen={externalOpen}");
+        LogVerbose($"LoginStatRequest: clientIndex={request.wClientIndex} stat={request.byStat} => externalOpen={externalOpen}");
         MainContext.Instance.ExternalOpen = externalOpen;
 
         // Send response to the client indexed by wClientIndex if connected.
@@ -470,7 +481,7 @@ public sealed class AccountPacketRouter
     private Task<bool> HolyQuestNowStat(PublicConnection connection, _holy_quest_now_report_aclo report, CancellationToken cancellationToken)
     {
         // Native implementation is a no-op; we just log receipt.
-        _log($"HolyQuestNowStat: worldCode={report.wWorldCode} masterRace={report.byMasterRaceCode}");
+        LogVerbose($"HolyQuestNowStat: worldCode={report.wWorldCode} masterRace={report.byMasterRaceCode}");
         return Task.FromResult(true);
     }
 
@@ -480,13 +491,13 @@ public sealed class AccountPacketRouter
         string ip = PacketStringUtil.ToAscii(result.szIP);
         string argon2SaltBase64 = PacketStringUtil.ToAscii(result.szArgon2SaltBase64);
         MainContext.Instance.RecordAccountDbInfo(dbName, ip, argon2SaltBase64);
-        _log($"AccountDBInfoResult: dbName={dbName} ip={ip} saltReceived={!string.IsNullOrWhiteSpace(argon2SaltBase64)}");
+        LogVerbose($"AccountDBInfoResult: dbName={dbName} ip={ip} saltReceived={!string.IsNullOrWhiteSpace(argon2SaltBase64)}");
         return Task.FromResult(true);
     }
 
     private Task<bool> NotifyManageAccountAuthInfo(PublicConnection connection, _notify_manage_account_auth_info_aclo result, CancellationToken cancellationToken)
     {
-        _log($"NotifyManageAccountAuthInfo: index={result.idLocal.wIndex} ret={result.byRetCode}");
+        LogVerbose($"NotifyManageAccountAuthInfo: index={result.idLocal.wIndex} ret={result.byRetCode}");
 
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var target = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
@@ -536,7 +547,7 @@ public sealed class AccountPacketRouter
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
 
-        _log($"ManageAccountAuthResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        LogVerbose($"ManageAccountAuthResult: index={result.idLocal.wIndex} ret={result.byRet}");
 
         if (session != null)
         {
@@ -570,7 +581,7 @@ public sealed class AccountPacketRouter
             return Task.FromResult(false);
         }
 
-        _log($"ManageClientLimitRunAccountResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        LogVerbose($"ManageClientLimitRunAccountResult: index={result.idLocal.wIndex} ret={result.byRet}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
 
@@ -603,7 +614,7 @@ public sealed class AccountPacketRouter
 
         string name = PacketStringUtil.ToAscii(result.m_szName);
         string db = PacketStringUtil.ToAscii(result.m_szDBName);
-        _log($"ManageClientLimitRunWorldResult: index={result.idLocal.wIndex} ret={result.byRet} code={result.m_dwCode} name={name} db={db} type={result.m_byType}");
+        LogVerbose($"ManageClientLimitRunWorldResult: index={result.idLocal.wIndex} ret={result.byRet} code={result.m_dwCode} name={name} db={db} type={result.m_byType}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
         if (session != null)
@@ -661,7 +672,7 @@ public sealed class AccountPacketRouter
             return Task.FromResult(false);
         }
 
-        _log($"ManageClientForceExitResult: index={result.idLocal.wIndex} ret={result.byRet}");
+        LogVerbose($"ManageClientForceExitResult: index={result.idLocal.wIndex} ret={result.byRet}");
         var session = MainContext.Instance.GetClient(result.idLocal.wIndex);
         var clientConn = MainContext.Instance.GetClientConnection(result.idLocal.wIndex);
         if (session != null)

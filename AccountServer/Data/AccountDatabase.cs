@@ -632,65 +632,6 @@ public sealed class AccountDatabase : IAccountDatabase
         return ExecNonQueryTextAsync(query, token, ("@serial", accountSerial));
     }
 
-    public async Task<bool> Create_LogOutTableAsync(string date, CancellationToken token)
-    {
-        string createTable = $"CREATE TABLE [dbo].[tbl_UserLogout_Log{date}] (" +
-                             " [idx] [int] IDENTITY (1, 1) NOT NULL, [nAccountSerial] [int] NOT NULL," +
-                             " [nWorldCode] [int] NOT NULL, [dtLoginDate] [datetime] NOT NULL, [dtLogoutDate] [datetime] NOT NULL," +
-                             " [nBillingType] [int] NOT NULL, [nLevel] [int] NULL," +
-                             " [nAvatorSerial] [int] NULL, [Account] [char] (17) NULL," +
-                             " [ip] [char] (16) NOT NULL ) ON [PRIMARY]";
-
-        string addPk = $"ALTER TABLE [dbo].[tbl_UserLogout_Log{date}] WITH NOCHECK ADD CONSTRAINT [PK_tbl_UserLogout_Log{date}]" +
-                       " PRIMARY KEY  NONCLUSTERED ( [idx] )  ON [PRIMARY]";
-
-        string idxLogout = $"CREATE  CLUSTERED  INDEX [IX_tbl_UserLogout_Log_Logout{date}] ON [dbo].[tbl_UserLogout_Log{date}]" +
-                           " ([dtLogoutDate]) ON [PRIMARY]";
-
-        string idxLogin = $"CREATE  INDEX [IX_tbl_UserLogout_Log{date}] ON [dbo].[tbl_UserLogout_Log{date}]" +
-                          " ([dtLoginDate]) ON [PRIMARY]";
-
-        if (!await ExecNonQueryTextAsync(createTable, token).ConfigureAwait(false))
-        {
-            return false;
-        }
-        if (!await ExecNonQueryTextAsync(addPk, token).ConfigureAwait(false))
-        {
-            return false;
-        }
-        if (!await ExecNonQueryTextAsync(idxLogout, token).ConfigureAwait(false))
-        {
-            return false;
-        }
-        return await ExecNonQueryTextAsync(idxLogin, token).ConfigureAwait(false);
-    }
-
-    public Task<bool> Insert_UserLogoutLogAsync(
-        uint accountSerial,
-        string loginDate,
-        string ip,
-        uint worldCode,
-        byte billingType,
-        byte level,
-        uint avatarSerial,
-        string account,
-        CancellationToken token)
-    {
-        const string query =
-            "exec pInsert_UserLogoutLog_Daily20070115 @serial, @loginDate, @ip, @world, @bill, @level, @avatar, @account";
-        return ExecNonQueryTextAsync(
-            query,
-            token,
-            ("@serial", accountSerial),
-            ("@loginDate", loginDate),
-            ("@ip", ip),
-            ("@world", worldCode),
-            ("@bill", billingType),
-            ("@level", level),
-            ("@avatar", avatarSerial),
-            ("@account", account));
-    }
-
     private async Task<bool> ExecNonQueryAsync(string procName, CancellationToken token, params (string name, object value)[] parameters)
     {
         try

@@ -17,18 +17,33 @@ public partial class MainWindow : Form
     private LoginHandler? _accountHandler;
     private ClientPacketRouter? _clientRouter;
     private AccountPacketRouter? _accountRouter;
-    private bool _verboseLog = true;
+    private bool _verboseLog;
     private Task? _accountReconnectTask;
     private bool _isStopping;
+    private bool _running;
+    private bool _accountConnectAttemptLogged;
+    private bool _accountConnectFailureLogged;
 
     public MainWindow()
     {
         InitializeComponent();
+        ApplyExecutableIcon();
+        _verboseLog = _settings.VerboseLogging;
         ApplySettingsToUi();
+    }
+
+    private void ApplyExecutableIcon()
+    {
+        using var appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        if (appIcon != null)
+        {
+            Icon = (System.Drawing.Icon)appIcon.Clone();
+        }
     }
 
     private void ApplySettingsToUi()
     {
+        _verboseLog = _settings.VerboseLogging;
         verboseLogToolStripMenuItem.Checked = _verboseLog;
         UpdateExternalOpenButton(MainContext.Instance.ExternalOpen);
     }
@@ -42,36 +57,38 @@ public partial class MainWindow : Form
 
     private async void OnStartClicked(object sender, EventArgs e)
     {
+        await StartServerAsync();
+    }
+
+    private async Task StartServerAsync()
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        _running = true;
         startButton.Enabled = false;
         stopButton.Enabled = true;
         UpdateStatus("Status: Starting...");
+        SetExternalOpen(_settings.AutoOpenExternalConnection, logChange: false);
 
         _isStopping = false;
         _cts = new CancellationTokenSource();
 
-        _clientRouter = new ClientPacketRouter(AppendLog, _settings);
-        _clientHandler = new LoginHandler("Client", AppendLog, _clientRouter, null);
+        _clientRouter = new ClientPacketRouter(AppendLog, IsVerboseLoggingEnabled, _settings);
+        _clientHandler = new LoginHandler("Client", AppendLog, IsVerboseLoggingEnabled, _clientRouter, null);
         _clientListener = new NetworkListener(_clientHandler, _settings.Network.MaxConnections);
-        _clientListener.Log += AppendLog;
+        _clientListener.Log += OnClientListenerLog;
         MainContext.Instance.MaxConnections = _settings.Network.MaxConnections;
 
-        _accountRouter = new AccountPacketRouter(AppendLog);
-        _accountHandler = new LoginHandler("Account", AppendLog, null, _accountRouter, OnAccountConnected, OnAccountDisconnected);
+        _accountRouter = new AccountPacketRouter(AppendLog, IsVerboseLoggingEnabled);
+        _accountHandler = new LoginHandler("Account", AppendLog, IsVerboseLoggingEnabled, null, _accountRouter, OnAccountConnected, OnAccountDisconnected);
         _accountConnector = new NetworkConnector(_accountHandler);
-        _accountConnector.Log += AppendLog;
-
-        try
-        {
-            await ConnectAccountAsync(_cts.Token).ConfigureAwait(true);
-        }
-        catch (Exception ex)
-        {
-            AppendLog($"Start failed: {ex.Message}");
-            statusLabel.Text = "Status: Stopped";
-            startButton.Enabled = true;
-            stopButton.Enabled = false;
-            await StopAllAsync();
-        }
+        _accountConnector.Log += OnAccountConnectorLog;
+        ResetAccountReconnectLogState();
+        StartAccountReconnectLoop();
+        await Task.CompletedTask;
     }
 
     private async void OnStopClicked(object sender, EventArgs e)
@@ -84,7 +101,11 @@ public partial class MainWindow : Form
 
     private async Task StopAllAsync()
     {
+        _running = false;
+        _isStopping = true;
         _cts?.Cancel();
+        SetExternalOpen(false, logChange: false);
+        var reconnectTask = _accountReconnectTask;
 
         try
         {
@@ -110,6 +131,17 @@ public partial class MainWindow : Form
             AppendLog($"Listener stop error: {ex.Message}");
         }
 
+        if (reconnectTask != null)
+        {
+            try
+            {
+                await reconnectTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
         _cts?.Dispose();
         _cts = null;
         _clientListener = null;
@@ -129,18 +161,20 @@ public partial class MainWindow : Form
             return;
         }
 
-        string line = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        if (_verboseLog || IsImportant(message))
+        logTextBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+    }
+
+    private void AppendVerboseLog(string message)
+    {
+        if (_verboseLog)
         {
-            logTextBox.AppendText(line + Environment.NewLine);
+            AppendLog(message);
         }
     }
 
-    private bool IsImportant(string message)
+    private bool IsVerboseLoggingEnabled()
     {
-        // Simple heuristic: always show errors/warnings
-        return message.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               message.IndexOf("warn", StringComparison.OrdinalIgnoreCase) >= 0;
+        return _verboseLog;
     }
 
     private void UpdateStatus(string text)
@@ -171,13 +205,13 @@ public partial class MainWindow : Form
     private void OnToggleVerboseLog(object? sender, EventArgs e)
     {
         _verboseLog = verboseLogToolStripMenuItem.Checked;
+        _settings.VerboseLogging = _verboseLog;
+        _settings.Save();
     }
 
     private void OnToggleExternalOpenClicked(object? sender, EventArgs e)
     {
-        bool isOpen = MainContext.Instance.ToggleExternalOpen();
-        UpdateExternalOpenButton(isOpen);
-        AppendLog($"External login {(isOpen ? "opened" : "closed")}.");
+        SetExternalOpen(!MainContext.Instance.ExternalOpen, logChange: true);
     }
 
     private void UpdateExternalOpenButton(bool isOpen)
@@ -191,14 +225,100 @@ public partial class MainWindow : Form
         externalOpenButton.Text = isOpen ? "External: Open" : "External: Closed";
     }
 
+    private void SetExternalOpen(bool isOpen, bool logChange)
+    {
+        bool previous = MainContext.Instance.ExternalOpen;
+        MainContext.Instance.ExternalOpen = isOpen;
+        UpdateExternalOpenButton(isOpen);
+
+        if (logChange && previous != isOpen)
+        {
+            AppendLog($"External login {(isOpen ? "opened" : "closed")}.");
+        }
+    }
+
     private async Task ConnectAccountAsync(CancellationToken token)
     {
         if (_accountConnector == null || token.IsCancellationRequested) return;
         if (_accountConnector.IsConnected) return;
 
-        AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
+        UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+        if (!_accountConnectAttemptLogged)
+        {
+            AppendLog($"Connecting to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}...");
+            _accountConnectAttemptLogged = true;
+        }
         await _accountConnector.ConnectAsync(_settings.Network.AccountHost, _settings.Network.AccountPort, token).ConfigureAwait(false);
-            UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+        _accountConnectAttemptLogged = false;
+        _accountConnectFailureLogged = false;
+        AppendLog($"Connected to account server {_settings.Network.AccountHost}:{_settings.Network.AccountPort}.");
+        UpdateStatus($"Status: Account connected {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+    }
+
+    private void StartAccountReconnectLoop()
+    {
+        if (_cts == null || _accountConnector == null)
+        {
+            return;
+        }
+
+        if (_accountReconnectTask != null && !_accountReconnectTask.IsCompleted)
+        {
+            return;
+        }
+
+        _accountReconnectTask = Task.Run(() => EnsureAccountConnectionLoopAsync(_cts.Token), CancellationToken.None);
+    }
+
+    private async Task EnsureAccountConnectionLoopAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested && !_isStopping)
+        {
+            if (_accountConnector == null)
+            {
+                return;
+            }
+
+            if (_accountConnector.IsConnected)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                continue;
+            }
+
+            try
+            {
+                await ConnectAccountAsync(token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                if (!_accountConnectFailureLogged)
+                {
+                    AppendLog($"Failed to connect to account server: {ex.Message}. Retrying until AccountServer is available.");
+                    _accountConnectFailureLogged = true;
+                }
+                UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
     }
 
     private async Task StartClientListenerAsync(CancellationToken token)
@@ -252,35 +372,16 @@ public partial class MainWindow : Form
         {
             AppendLog($"Start client listener after account connect failed: {ex.Message}");
         }
-        _accountReconnectTask = null;
     }
 
     private async void OnAccountDisconnected()
     {
         if (_isStopping) return;
-        AppendLog("Account server disconnected; stopping client listener and retrying...");
+        AppendLog("Account server disconnected. Retrying until AccountServer is available.");
+        ResetAccountReconnectLogState();
         await StopClientListenerAsync().ConfigureAwait(false);
-
-        if (_cts == null || (_accountReconnectTask != null && !_accountReconnectTask.IsCompleted))
-        {
-            return;
-        }
-
-        _accountReconnectTask = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token).ConfigureAwait(false);
-                await ConnectAccountAsync(_cts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception ex)
-            {
-                AppendLog($"Account reconnect loop error: {ex.Message}");
-            }
-        });
+        UpdateStatus($"Status: Waiting for account {_settings.Network.AccountHost}:{_settings.Network.AccountPort}");
+        StartAccountReconnectLoop();
     }
 
     private async Task SendWorldListRequestAsync(CancellationToken token)
@@ -297,7 +398,7 @@ public partial class MainWindow : Form
         try
         {
             await accountConn.SendAsync(env, token).ConfigureAwait(false);
-            AppendLog("Sent world list request to account server.");
+            AppendVerboseLog("Sent world list request to account server.");
         }
         catch (Exception ex)
         {
@@ -322,7 +423,7 @@ public partial class MainWindow : Form
         try
         {
             await accountConn.SendAsync(env, token).ConfigureAwait(false);
-            AppendLog("Sent account DB info request to account server.");
+            AppendVerboseLog("Sent account DB info request to account server.");
         }
         catch (Exception ex)
         {
@@ -331,28 +432,72 @@ public partial class MainWindow : Form
         }
     }
 
+    private void ResetAccountReconnectLogState()
+    {
+        _accountConnectAttemptLogged = false;
+        _accountConnectFailureLogged = false;
+    }
+
+    private void OnClientListenerLog(string message)
+    {
+        if (message.StartsWith("Client ", StringComparison.Ordinal) &&
+            (message.Contains(" connected from ", StringComparison.Ordinal) ||
+             message.Contains(" disconnected.", StringComparison.Ordinal)))
+        {
+            AppendVerboseLog(message);
+            return;
+        }
+
+        AppendLog(message);
+    }
+
+    private void OnAccountConnectorLog(string message)
+    {
+        AppendVerboseLog(message);
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (_settings.Autostart)
+        {
+            await StartServerAsync();
+        }
+    }
+
     private sealed class LoginHandler : NetworkHandlerBase
     {
         private readonly string _role;
         private readonly Action<string> _log;
+        private readonly Func<bool> _isVerboseLoggingEnabled;
         private readonly ClientPacketRouter? _clientRouter;
         private readonly AccountPacketRouter? _accountRouter;
         private readonly Action? _onAccountConnected;
         private readonly Action? _onAccountDisconnected;
 
-        public LoginHandler(string role, Action<string> log, ClientPacketRouter? clientRouter, AccountPacketRouter? accountRouter, Action? onAccountConnected = null, Action? onAccountDisconnected = null)
+        public LoginHandler(string role, Action<string> log, Func<bool> isVerboseLoggingEnabled, ClientPacketRouter? clientRouter, AccountPacketRouter? accountRouter, Action? onAccountConnected = null, Action? onAccountDisconnected = null)
         {
             _role = role;
             _log = log;
+            _isVerboseLoggingEnabled = isVerboseLoggingEnabled;
             _clientRouter = clientRouter;
             _accountRouter = accountRouter;
             _onAccountConnected = onAccountConnected;
             _onAccountDisconnected = onAccountDisconnected;
         }
 
+        private void LogVerbose(string message)
+        {
+            if (_isVerboseLoggingEnabled())
+            {
+                _log(message);
+            }
+        }
+
         public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
-            _log($"{_role} connected {connection.RemoteEndPoint} (id {connection.ConnectionId})");
+            LogVerbose($"{_role} connected {connection.RemoteEndPoint} (id {connection.ConnectionId})");
             if (_clientRouter != null)
             {
                 MainContext.Instance.RegisterClientConnection(connection);
@@ -367,7 +512,7 @@ public partial class MainWindow : Form
 
         public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
         {
-            _log($"{_role} disconnected (id {connection.ConnectionId})");
+            LogVerbose($"{_role} disconnected (id {connection.ConnectionId})");
             if (_clientRouter != null)
             {
                 var session = MainContext.Instance.GetClient((uint)connection.ConnectionId);
@@ -427,7 +572,7 @@ public partial class MainWindow : Form
 
         public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
         {
-            _log($"{_role} internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
+            LogVerbose($"{_role} internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
             return Task.CompletedTask;
         }
     }
