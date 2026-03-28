@@ -17,6 +17,41 @@ bool HasRequiredStartupSettings()
 {
   return CDatabaseSetupDlg::HasRequiredSettings();
 }
+
+struct StartupThreadContext
+{
+  HWND notificationWindow;
+};
+
+UINT RunStartupWorker(LPVOID parameter)
+{
+  auto *context = static_cast<StartupThreadContext *>(parameter);
+  const HWND notificationWindow = context != nullptr ? context->notificationWindow : nullptr;
+  delete context;
+
+  SetStartupWorkerThreadId(GetCurrentThreadId());
+  PostStartupProgress("Preparing startup...");
+
+  const bool initSucceeded = g_Main.Init() != 0;
+  const bool hasStartupError = HasStartupUiErrorState();
+  if (initSucceeded)
+  {
+    PostStartupProgress("Startup complete.");
+  }
+
+  ClearStartupWorkerThreadId();
+
+  if (notificationWindow != nullptr && ::IsWindow(notificationWindow))
+  {
+    ::PostMessageA(
+      notificationWindow,
+      initSucceeded ? WM_WORLD_STARTUP_COMPLETE : WM_WORLD_STARTUP_FAILED,
+      hasStartupError ? 1 : 0,
+      0);
+  }
+
+  return 0;
+}
 }
 
 IMPLEMENT_DYNCREATE(CGameServerView, CFormView)
@@ -31,6 +66,10 @@ BEGIN_MESSAGE_MAP(CGameServerView, CFormView)
   ON_BN_CLICKED(1043, &CGameServerView::OnBUTTONHSKControl)
   ON_BN_CLICKED(1023, &CGameServerView::OnButtonLogfile)
   ON_COMMAND(32771, &CGameServerView::OnButtonDisplaymode)
+  ON_MESSAGE(WM_WORLD_STARTUP_PROGRESS, &CGameServerView::OnStartupProgressMessage)
+  ON_MESSAGE(WM_WORLD_STARTUP_COMPLETE, &CGameServerView::OnStartupCompletedMessage)
+  ON_MESSAGE(WM_WORLD_STARTUP_FAILED, &CGameServerView::OnStartupFailedMessage)
+  ON_MESSAGE(WM_WORLD_STARTUP_ERROR, &CGameServerView::OnStartupErrorMessage)
 END_MESSAGE_MAP()
 
 CGameServerView::CGameServerView()
@@ -42,6 +81,7 @@ CGameServerView::CGameServerView()
     m_btDisplayAll(),
     m_btHSKStop(),
     m_btLogFile(),
+    m_pOpenDlg(nullptr),
     m_bStartupInProgress(false),
     m_bStartupCompleted(false),
     m_bRuntimeViewsCreated(false)
@@ -50,7 +90,8 @@ CGameServerView::CGameServerView()
 
 CGameServerView::~CGameServerView()
 {
-  // this is not a stub
+  UnregisterStartupUiWindow(GetSafeHwnd());
+  DestroyLoadingDialog();
 }
 
 void CGameServerView::DoDataExchange(CDataExchange *pDX)
@@ -133,34 +174,98 @@ void CGameServerView::OnButtonStart()
     }
   }
 
-  COpenDlg openDialog;
-  CWnd *desktopWindow = CWnd::GetDesktopWindow();
-  if (desktopWindow != nullptr)
-  {
-    openDialog.Create(IDD_LOADING, desktopWindow);
-  }
+  ShowLoadingDialog();
+  RegisterStartupUiWindow(GetSafeHwnd());
+  ResetStartupUiErrorState();
+  UpdateLoadingStatus("Preparing startup...");
 
-  if (!g_Main.Init())
+  if (!BeginStartupWorker())
   {
-    MyMessageBox("Error", "CGameServerView::OnButtonStart(...) : \r\ng_Main.Init() Fail!");
-    if (openDialog.GetSafeHwnd() != nullptr)
-    {
-      openDialog.DestroyWindow();
-    }
-
+    UnregisterStartupUiWindow(GetSafeHwnd());
+    DestroyLoadingDialog();
     m_bStartupInProgress = false;
     UpdateStartupControls();
     if (mainFrame != nullptr)
     {
       mainFrame->SetServerStartupState(CMainFrame::kNotStarted);
     }
+
+    MyMessageBox("Error", "CGameServerView::OnButtonStart(...) : \r\nFailed to create startup worker thread.");
+    return;
+  }
+}
+
+bool CGameServerView::BeginStartupWorker()
+{
+  auto *context = new StartupThreadContext{};
+  context->notificationWindow = GetSafeHwnd();
+
+  CWinThread *startupThread = AfxBeginThread(RunStartupWorker, context);
+  if (startupThread == nullptr)
+  {
+    delete context;
+    return false;
+  }
+
+  return true;
+}
+
+void CGameServerView::ShowLoadingDialog()
+{
+  if (m_pOpenDlg != nullptr)
+  {
     return;
   }
 
-  if (openDialog.GetSafeHwnd() != nullptr)
+  CWnd *parentWindow = GetMainFrame();
+  if (parentWindow == nullptr)
   {
-    openDialog.DestroyWindow();
+    parentWindow = this;
   }
+
+  auto *openDialog = new COpenDlg(parentWindow);
+  if (!openDialog->Create(IDD_LOADING, parentWindow))
+  {
+    delete openDialog;
+    return;
+  }
+
+  openDialog->CenterWindow(parentWindow);
+  openDialog->ShowWindow(SW_SHOW);
+  openDialog->UpdateWindow();
+  m_pOpenDlg = openDialog;
+}
+
+void CGameServerView::DestroyLoadingDialog()
+{
+  if (m_pOpenDlg == nullptr)
+  {
+    return;
+  }
+
+  if (m_pOpenDlg->GetSafeHwnd() != nullptr)
+  {
+    m_pOpenDlg->DestroyWindow();
+  }
+
+  delete m_pOpenDlg;
+  m_pOpenDlg = nullptr;
+}
+
+void CGameServerView::UpdateLoadingStatus(const char *statusText)
+{
+  if (m_pOpenDlg == nullptr)
+  {
+    return;
+  }
+
+  m_pOpenDlg->SetStatusText(statusText);
+}
+
+void CGameServerView::CompleteStartupSuccess()
+{
+  DestroyLoadingDialog();
+  ResetStartupUiErrorState();
 
   CGameServerDoc *document = GetDocument();
   if (document != nullptr)
@@ -172,10 +277,80 @@ void CGameServerView::OnButtonStart()
   m_bStartupCompleted = true;
   m_bStartupInProgress = false;
   UpdateStartupControls();
+
+  CMainFrame *mainFrame = GetMainFrame();
   if (mainFrame != nullptr)
   {
     mainFrame->SetServerStartupState(CMainFrame::kStarted);
   }
+}
+
+void CGameServerView::CompleteStartupFailure()
+{
+  DestroyLoadingDialog();
+  ResetStartupUiErrorState();
+  m_bStartupCompleted = false;
+  m_bStartupInProgress = false;
+  UpdateStartupControls();
+
+  CMainFrame *mainFrame = GetMainFrame();
+  if (mainFrame != nullptr)
+  {
+    mainFrame->SetServerStartupState(CMainFrame::kNotStarted);
+  }
+}
+
+LRESULT CGameServerView::OnStartupProgressMessage(WPARAM wParam, LPARAM lParam)
+{
+  (void)wParam;
+
+  auto *payload = reinterpret_cast<StartupUiMessagePayload *>(lParam);
+  if (payload != nullptr)
+  {
+    UpdateLoadingStatus(payload->text);
+    delete payload;
+  }
+
+  return 0;
+}
+
+LRESULT CGameServerView::OnStartupCompletedMessage(WPARAM wParam, LPARAM lParam)
+{
+  (void)wParam;
+  (void)lParam;
+
+  UnregisterStartupUiWindow(GetSafeHwnd());
+  CompleteStartupSuccess();
+  return 0;
+}
+
+LRESULT CGameServerView::OnStartupFailedMessage(WPARAM wParam, LPARAM lParam)
+{
+  (void)lParam;
+
+  UnregisterStartupUiWindow(GetSafeHwnd());
+  CompleteStartupFailure();
+  if (wParam == 0)
+  {
+    MyMessageBox("Error", "CGameServerView::OnButtonStart(...) : \r\ng_Main.Init() Fail!");
+  }
+
+  return 0;
+}
+
+LRESULT CGameServerView::OnStartupErrorMessage(WPARAM wParam, LPARAM lParam)
+{
+  (void)wParam;
+
+  auto *payload = reinterpret_cast<StartupUiMessagePayload *>(lParam);
+  if (payload != nullptr)
+  {
+    const char *title = payload->title[0] != '\0' ? payload->title : "Error";
+    MessageBoxA(GetSafeHwnd(), payload->text, title, MB_OK | MB_ICONERROR);
+    delete payload;
+  }
+
+  return 0;
 }
 
 void CGameServerView::OnButtonDisplaymode()

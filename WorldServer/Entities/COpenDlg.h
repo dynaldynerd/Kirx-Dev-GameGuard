@@ -10,6 +10,7 @@ class COpenDlg : public CDialog
 public:
   explicit COpenDlg(CWnd *pParent = nullptr);
   ~COpenDlg() override;
+  void SetStatusText(const char *statusText);
 
 protected:
   void DoDataExchange(CDataExchange *pDX) override;

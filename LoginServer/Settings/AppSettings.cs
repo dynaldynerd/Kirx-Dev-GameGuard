@@ -11,17 +11,58 @@ public sealed class AppSettings
     public DatabaseSettings Database { get; set; } = new();
     public NetworkSettings Network { get; set; } = new();
     public SecuritySettings Security { get; set; } = new();
+    public bool Autostart { get; set; }
+    public bool AutoOpenExternalConnection { get; set; }
+    public bool VerboseLogging { get; set; }
 
     [JsonIgnore]
-    public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
+    public static string DefaultPath => Path.Combine(AppContext.BaseDirectory, "Settings", "appsettings.login.json");
+
+    [JsonIgnore]
+    public static string LegacyDefaultPath => Path.Combine(AppContext.BaseDirectory, "appsettings.login.json");
+
+    public static string ResolvePersistedPath()
+    {
+        if (File.Exists(DefaultPath))
+        {
+            return DefaultPath;
+        }
+
+        if (File.Exists(LegacyDefaultPath))
+        {
+            return LegacyDefaultPath;
+        }
+
+        return DefaultPath;
+    }
+
+    public static bool HasPersistedSettingsFile()
+    {
+        return File.Exists(DefaultPath) || File.Exists(LegacyDefaultPath);
+    }
+
+    public static void DeletePersistedSettingsFiles()
+    {
+        if (File.Exists(DefaultPath))
+        {
+            File.Delete(DefaultPath);
+        }
+
+        if (!string.Equals(LegacyDefaultPath, DefaultPath, StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(LegacyDefaultPath))
+        {
+            File.Delete(LegacyDefaultPath);
+        }
+    }
 
     public static AppSettings Load(string? path = null)
     {
-        path ??= DefaultPath;
+        bool useDefaultLookup = string.IsNullOrWhiteSpace(path);
+        path ??= ResolvePersistedPath();
         if (!File.Exists(path))
         {
             var defaults = CreateDefault();
-            defaults.Save(path);
+            defaults.Save(DefaultPath);
             return defaults;
         }
 
@@ -43,6 +84,14 @@ public sealed class AppSettings
         settings.Database.BillingHost = DatabaseSettings.NormalizeSqlServerHost(
             settings.Database.BillingHost,
             settings.Database.BillingProvider == LoginDatabaseProvider.SqlServer && settings.Database.BillingTrustedConnection);
+
+        if (useDefaultLookup &&
+            string.Equals(path, LegacyDefaultPath, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(path, DefaultPath, StringComparison.OrdinalIgnoreCase))
+        {
+            settings.Save(DefaultPath);
+        }
+
         return settings;
     }
 
@@ -92,7 +141,10 @@ public sealed class AppSettings
                 MaxConnections = 5000,
                 UserLoadThresholds = new[] { 500, 1000, 1500 }
             },
-            Security = new SecuritySettings()
+            Security = new SecuritySettings(),
+            Autostart = false,
+            AutoOpenExternalConnection = false,
+            VerboseLogging = false
         };
     }
 
@@ -106,10 +158,12 @@ public sealed class AppSettings
 public sealed class DatabaseSettings
 {
     public const string TrustedSqlServerHost = "(local)";
+    public const int DefaultSqlServerPort = 1433;
+    public const int DefaultMariaDbPort = 3306;
 
     public LoginDatabaseProvider Provider { get; set; } = LoginDatabaseProvider.SqlServer;
     public string Host { get; set; } = TrustedSqlServerHost;
-    public int Port { get; set; } = 1433;
+    public int Port { get; set; } = DefaultSqlServerPort;
     [JsonIgnore]
     public string Database { get; set; } = string.Empty;
     public string User { get; set; } = "";
@@ -117,7 +171,7 @@ public sealed class DatabaseSettings
     public bool TrustedConnection { get; set; } = true;
     public LoginDatabaseProvider BillingProvider { get; set; } = LoginDatabaseProvider.SqlServer;
     public string BillingHost { get; set; } = TrustedSqlServerHost;
-    public int BillingPort { get; set; } = 1433;
+    public int BillingPort { get; set; } = DefaultSqlServerPort;
     public string BillingDatabase { get; set; } = "Billing";
     public string BillingUser { get; set; } = "";
     public string BillingPassword { get; set; } = "";
@@ -153,7 +207,84 @@ public sealed class DatabaseSettings
 
     public static string NormalizeSqlServerHost(string host, bool trustedConnection)
     {
-        return trustedConnection ? TrustedSqlServerHost : host;
+        return trustedConnection
+            ? TrustedSqlServerHost
+            : (string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim());
+    }
+
+    public static string NormalizeHostForStorage(LoginDatabaseProvider provider, string host, bool trustedConnection)
+    {
+        if (provider == LoginDatabaseProvider.SqlServer)
+        {
+            return NormalizeSqlServerHost(host, trustedConnection);
+        }
+
+        return string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim();
+    }
+
+    public static string GetDisplayHost(LoginDatabaseProvider provider, string host, int port, bool trustedConnection)
+    {
+        if (provider == LoginDatabaseProvider.Sqlite)
+        {
+            return string.Empty;
+        }
+
+        string normalizedHost = NormalizeHostForStorage(provider, host, trustedConnection);
+        if (TrySplitExplicitPort(provider, normalizedHost, out _, out _))
+        {
+            return normalizedHost;
+        }
+
+        int effectivePort = GetEffectivePort(provider, normalizedHost, port);
+        return provider == LoginDatabaseProvider.SqlServer
+            ? (effectivePort == DefaultSqlServerPort ? normalizedHost : $"{normalizedHost},{effectivePort}")
+            : (effectivePort == DefaultMariaDbPort ? normalizedHost : $"{normalizedHost}:{effectivePort}");
+    }
+
+    public static int GetEffectivePort(LoginDatabaseProvider provider, string host, int port)
+    {
+        if (provider == LoginDatabaseProvider.Sqlite)
+        {
+            return 0;
+        }
+
+        if (TrySplitExplicitPort(provider, host, out _, out int explicitPort))
+        {
+            return explicitPort;
+        }
+
+        return NormalizePort(provider, port);
+    }
+
+    public static string BuildSqlServerDataSource(string host, int port, bool trustedConnection)
+    {
+        string normalizedHost = NormalizeSqlServerHost(host, trustedConnection);
+        if (string.IsNullOrWhiteSpace(normalizedHost))
+        {
+            normalizedHost = TrustedSqlServerHost;
+        }
+
+        if (TrySplitExplicitPort(LoginDatabaseProvider.SqlServer, normalizedHost, out string server, out int explicitPort))
+        {
+            return $"{server},{explicitPort}";
+        }
+
+        int effectivePort = NormalizePort(LoginDatabaseProvider.SqlServer, port);
+        return effectivePort == DefaultSqlServerPort ? normalizedHost : $"{normalizedHost},{effectivePort}";
+    }
+
+    public static void ResolveMariaDbEndpoint(string host, int port, out string server, out int effectivePort)
+    {
+        string normalizedHost = string.IsNullOrWhiteSpace(host) ? "127.0.0.1" : host.Trim();
+        if (TrySplitExplicitPort(LoginDatabaseProvider.MariaDb, normalizedHost, out string parsedServer, out int parsedPort))
+        {
+            server = parsedServer;
+            effectivePort = parsedPort;
+            return;
+        }
+
+        server = normalizedHost;
+        effectivePort = NormalizePort(LoginDatabaseProvider.MariaDb, port);
     }
 
     private static string BuildConnectionString(
@@ -174,15 +305,75 @@ public sealed class DatabaseSettings
                 return $"Data Source={GetSqlitePath(sqliteBasePath, database)};";
             }
             case LoginDatabaseProvider.MariaDb:
-                return $"Server={host};Port={port};Database={database};User ID={user};Password={password};";
+                ResolveMariaDbEndpoint(host, port, out string mariaDbHost, out int mariaDbPort);
+                return $"Server={mariaDbHost};Port={mariaDbPort};Database={database};User ID={user};Password={password};";
             default:
-                string effectiveHost = NormalizeSqlServerHost(host, trustedConnection);
+                string dataSource = BuildSqlServerDataSource(host, port, trustedConnection);
                 if (trustedConnection)
                 {
-                    return $"Server={effectiveHost},{port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+                    return $"Server={dataSource};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
                 }
-                return $"Server={effectiveHost},{port};Database={database};User ID={user};Password={password};TrustServerCertificate=True;Encrypt=False;";
+                return $"Server={dataSource};Database={database};User ID={user};Password={password};TrustServerCertificate=True;Encrypt=False;";
         }
+    }
+
+    private static int NormalizePort(LoginDatabaseProvider provider, int port)
+    {
+        if (port >= 1 && port <= 65535)
+        {
+            return port;
+        }
+
+        return provider == LoginDatabaseProvider.MariaDb ? DefaultMariaDbPort : DefaultSqlServerPort;
+    }
+
+    private static bool TrySplitExplicitPort(LoginDatabaseProvider provider, string host, out string server, out int port)
+    {
+        server = string.IsNullOrWhiteSpace(host) ? string.Empty : host.Trim();
+        port = 0;
+        if (string.IsNullOrWhiteSpace(server))
+        {
+            return false;
+        }
+
+        return provider switch
+        {
+            LoginDatabaseProvider.SqlServer =>
+                TryExtractPort(server, ',', out server, out port) ||
+                TryExtractPort(server, ':', out server, out port),
+            LoginDatabaseProvider.MariaDb =>
+                TryExtractPort(server, ':', out server, out port) ||
+                TryExtractPort(server, ',', out server, out port),
+            _ => false
+        };
+    }
+
+    private static bool TryExtractPort(string value, char separator, out string server, out int port)
+    {
+        server = value.Trim();
+        port = 0;
+
+        int separatorIndex = value.LastIndexOf(separator);
+        if (separatorIndex <= 0 || separatorIndex >= value.Length - 1)
+        {
+            return false;
+        }
+
+        string suffix = value[(separatorIndex + 1)..].Trim();
+        if (!int.TryParse(suffix, out int parsedPort) || parsedPort < 1 || parsedPort > 65535)
+        {
+            return false;
+        }
+
+        string host = value[..separatorIndex].Trim();
+        if (host.Length == 0)
+        {
+            return false;
+        }
+
+        server = host;
+        port = parsedPort;
+        return true;
     }
 }
 

@@ -8,22 +8,23 @@ public sealed class ControlHandler : AccountHandlerBase
 {
     public ControlHandler(
         Action<string> log,
+        Func<bool> isVerboseLoggingEnabled,
         AppSettings settings,
         string? connectionString = null,
         IAccountDatabase? db = null)
-        : base(log, settings, connectionString, db)
+        : base(log, isVerboseLoggingEnabled, settings, connectionString, db)
     {
     }
 
     public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (control)");
+        LogVerbose($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (control)");
         return Task.CompletedTask;
     }
 
     public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] disconnected (control)");
+        LogVerbose($"[{connection.ConnectionId}] disconnected (control)");
         return Task.CompletedTask;
     }
 

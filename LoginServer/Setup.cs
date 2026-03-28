@@ -47,12 +47,21 @@ public partial class Setup : Form
             Trusted = _settings.Database.BillingTrustedConnection
         };
 
+        HideDatabasePortControls();
         LoadFromSettings();
         WireBillingChangeTracking();
         MarkBillingStepPending(updateUi: false);
         UpdateBillingUiForProvider();
         UpdateUserDbUiForProvider();
         UpdateWizardUi();
+    }
+
+    private void HideDatabasePortControls()
+    {
+        lblBillingPort.Visible = false;
+        txtBillingPort.Visible = false;
+        lblUserDbPort.Visible = false;
+        txtUserDbPort.Visible = false;
     }
 
     protected override void OnShown(EventArgs e)
@@ -66,8 +75,11 @@ public partial class Setup : Form
         _loadingControls = true;
 
         cboBillingProvider.SelectedIndex = GetProviderIndex(_billingDb.Provider);
-        txtBillingHost.Text = _billingDb.Host;
-        txtBillingPort.Text = _billingDb.Port.ToString(CultureInfo.InvariantCulture);
+        txtBillingHost.Text = DatabaseSettings.GetDisplayHost(
+            _billingDb.Provider,
+            _billingDb.Host,
+            _billingDb.Port,
+            _billingDb.Provider == LoginDatabaseProvider.SqlServer && _billingDb.Trusted);
         txtBillingDbName.Text = _billingDb.Database;
         chkBillingTrusted.Checked = _billingDb.Trusted;
         txtBillingUser.Text = _billingDb.User;
@@ -78,8 +90,11 @@ public partial class Setup : Form
         numClientPort.Value = ClampPort(_settings.Network.ClientPort);
 
         cboUserDbProvider.SelectedIndex = GetProviderIndex(_userDb.Provider);
-        txtUserDbHost.Text = _userDb.Host;
-        txtUserDbPort.Text = _userDb.Port.ToString(CultureInfo.InvariantCulture);
+        txtUserDbHost.Text = DatabaseSettings.GetDisplayHost(
+            _userDb.Provider,
+            _userDb.Host,
+            _userDb.Port,
+            _userDb.Provider == LoginDatabaseProvider.SqlServer && _userDb.Trusted);
         chkUserDbTrusted.Checked = _userDb.Trusted;
         txtUserDbUser.Text = _userDb.User;
         txtUserDbPass.Text = _userDb.Password;
@@ -97,7 +112,6 @@ public partial class Setup : Form
     private void WireBillingChangeTracking()
     {
         txtBillingHost.TextChanged += BillingInputChanged;
-        txtBillingPort.TextChanged += BillingInputChanged;
         txtBillingDbName.TextChanged += BillingInputChanged;
         txtBillingUser.TextChanged += BillingInputChanged;
         txtBillingPass.TextChanged += BillingInputChanged;
@@ -146,7 +160,7 @@ public partial class Setup : Form
         {
             lblStepTitle.Text = "Account Setup";
             lblStepDescription.Text =
-                "Configure the AccountServer endpoint and RF_User access. RF_User database name comes from AccountServer, so only provider, host, port, and auth are configured here.";
+                "Configure the AccountServer endpoint and RF_User access. RF_User database name comes from AccountServer, so only provider, host, and auth are configured here.";
         }
 
         bool isBillingPage = pageSetup.SelectedIndex == BillingPageIndex;
@@ -300,20 +314,18 @@ public partial class Setup : Form
 
     private void UpdateBillingUiForProvider()
     {
-        UpdateAuthFieldsForProvider(GetSelectedProvider(cboBillingProvider), chkBillingTrusted, txtBillingHost, txtBillingPort, txtBillingUser, txtBillingPass);
+        UpdateAuthFieldsForProvider(GetSelectedProvider(cboBillingProvider), chkBillingTrusted, txtBillingHost, txtBillingUser, txtBillingPass);
     }
 
     private void UpdateUserDbUiForProvider()
     {
-        UpdateAuthFieldsForProvider(GetSelectedProvider(cboUserDbProvider), chkUserDbTrusted, txtUserDbHost, txtUserDbPort, txtUserDbUser, txtUserDbPass);
+        UpdateAuthFieldsForProvider(GetSelectedProvider(cboUserDbProvider), chkUserDbTrusted, txtUserDbHost, txtUserDbUser, txtUserDbPass);
     }
 
-    private void UpdateAuthFieldsForProvider(LoginDatabaseProvider provider, CheckBox trustedCheckBox, TextBox hostTextBox, TextBox portTextBox, TextBox userTextBox, TextBox passTextBox)
+    private void UpdateAuthFieldsForProvider(LoginDatabaseProvider provider, CheckBox trustedCheckBox, TextBox hostTextBox, TextBox userTextBox, TextBox passTextBox)
     {
         bool isSqlite = provider == LoginDatabaseProvider.Sqlite;
         bool isSqlServer = provider == LoginDatabaseProvider.SqlServer;
-
-        portTextBox.Enabled = !isSqlite;
 
         if (!isSqlite && !isSqlServer && trustedCheckBox.Checked)
         {
@@ -362,29 +374,15 @@ public partial class Setup : Form
     private bool SaveBillingSnapshot(bool showMessage, out string message)
     {
         var provider = GetSelectedProvider(cboBillingProvider);
-        int port = _billingDb.Port;
-
-        if (provider != LoginDatabaseProvider.Sqlite &&
-            (!int.TryParse(txtBillingPort.Text, out port) || port < 1 || port > 65535))
-        {
-            message = "Billing DB port must be 1-65535.";
-            if (showMessage)
-            {
-                MessageBox.Show(this, message, "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            return false;
-        }
-
-        if (provider == LoginDatabaseProvider.Sqlite)
-        {
-            port = 0;
-        }
-
         _billingDb.Provider = provider;
-        _billingDb.Host = DatabaseSettings.NormalizeSqlServerHost(
+        _billingDb.Host = DatabaseSettings.NormalizeHostForStorage(
+            provider,
             txtBillingHost.Text.Trim(),
             provider == LoginDatabaseProvider.SqlServer && chkBillingTrusted.Checked);
-        _billingDb.Port = port;
+        _billingDb.Port = DatabaseSettings.GetEffectivePort(
+            provider,
+            _billingDb.Host,
+            provider == LoginDatabaseProvider.MariaDb ? DatabaseSettings.DefaultMariaDbPort : DatabaseSettings.DefaultSqlServerPort);
         _billingDb.Database = txtBillingDbName.Text.Trim();
         _billingDb.User = txtBillingUser.Text.Trim();
         _billingDb.Password = txtBillingPass.Text;
@@ -396,29 +394,15 @@ public partial class Setup : Form
     private bool SaveUserDbSnapshot(bool showMessage, out string message)
     {
         var provider = GetSelectedProvider(cboUserDbProvider);
-        int port = _userDb.Port;
-
-        if (provider != LoginDatabaseProvider.Sqlite &&
-            (!int.TryParse(txtUserDbPort.Text, out port) || port < 1 || port > 65535))
-        {
-            message = "RF_User DB port must be 1-65535.";
-            if (showMessage)
-            {
-                MessageBox.Show(this, message, "Invalid Port", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            return false;
-        }
-
-        if (provider == LoginDatabaseProvider.Sqlite)
-        {
-            port = 0;
-        }
-
         _userDb.Provider = provider;
-        _userDb.Host = DatabaseSettings.NormalizeSqlServerHost(
+        _userDb.Host = DatabaseSettings.NormalizeHostForStorage(
+            provider,
             txtUserDbHost.Text.Trim(),
             provider == LoginDatabaseProvider.SqlServer && chkUserDbTrusted.Checked);
-        _userDb.Port = port;
+        _userDb.Port = DatabaseSettings.GetEffectivePort(
+            provider,
+            _userDb.Host,
+            provider == LoginDatabaseProvider.MariaDb ? DatabaseSettings.DefaultMariaDbPort : DatabaseSettings.DefaultSqlServerPort);
         _userDb.User = txtUserDbUser.Text.Trim();
         _userDb.Password = txtUserDbPass.Text;
         _userDb.Trusted = chkUserDbTrusted.Checked;
@@ -510,12 +494,6 @@ public partial class Setup : Form
             if (string.IsNullOrWhiteSpace(snapshot.Host))
             {
                 message = $"{profileName} host is required.";
-                return false;
-            }
-
-            if (snapshot.Port < 1 || snapshot.Port > 65535)
-            {
-                message = $"{profileName} port must be 1-65535.";
                 return false;
             }
 
@@ -746,18 +724,19 @@ public partial class Setup : Form
 
     private static string BuildSqlServerConnectionString(DatabaseSnapshot profile, string database)
     {
-        string host = DatabaseSettings.NormalizeSqlServerHost(profile.Host, profile.Trusted);
+        string host = DatabaseSettings.BuildSqlServerDataSource(profile.Host, profile.Port, profile.Trusted);
         if (profile.Trusted)
         {
-            return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
         }
 
-        return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+        return $"Server={host};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
     }
 
     private static string BuildMariaDbConnectionString(DatabaseSnapshot profile, string database)
     {
-        return $"Server={profile.Host};Port={profile.Port};Database={database};User ID={profile.User};Password={profile.Password};";
+        DatabaseSettings.ResolveMariaDbEndpoint(profile.Host, profile.Port, out string host, out int port);
+        return $"Server={host};Port={port};Database={database};User ID={profile.User};Password={profile.Password};";
     }
 
     private static string RewriteInstallScriptDatabaseName(string script, string defaultDatabaseName, string targetDatabaseName)

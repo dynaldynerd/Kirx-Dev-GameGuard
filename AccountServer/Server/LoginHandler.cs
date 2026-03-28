@@ -33,23 +33,24 @@ public sealed class LoginHandler : AccountHandlerBase
 
     public LoginHandler(
         Action<string> log,
+        Func<bool> isVerboseLoggingEnabled,
         AppSettings settings,
         string? connectionString = null,
         IAccountDatabase? db = null)
-        : base(log, settings, connectionString, db)
+        : base(log, isVerboseLoggingEnabled, settings, connectionString, db)
     {
     }
 
     public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (login)");
+        LogVerbose($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (login)");
         _context.Register(connection);
         return Task.CompletedTask;
     }
 
     public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] disconnected (login)");
+        LogVerbose($"[{connection.ConnectionId}] disconnected (login)");
         CloseLoginServer(connection);
         _context.Unregister(connection);
         return Task.CompletedTask;
@@ -57,7 +58,7 @@ public sealed class LoginHandler : AccountHandlerBase
 
     public override Task OnInternalPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
+        LogVerbose($"[{connection.ConnectionId}] internal op={packet.OpCode} sub={packet.SubCode} len={packet.Payload.Length}");
         return Task.CompletedTask;
     }
 
@@ -157,7 +158,7 @@ public sealed class LoginHandler : AccountHandlerBase
     private Task<bool> JoinAccountRequest(PublicConnection connection, _join_account_request_loac request, CancellationToken token)
     {
         var id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
-        _log($"[{connection.ConnectionId}] JoinAccountRequest id='{id}' ip={new IPAddress(request.dwClientIP)} idx={request.idLocal.wIndex} serial={request.idLocal.dwSerial}");
+        LogVerbose($"[{connection.ConnectionId}] JoinAccountRequest id='{id}' ip={new IPAddress(request.dwClientIP)} idx={request.idLocal.wIndex} serial={request.idLocal.dwSerial}");
         return Task.FromResult(true);
     }
 
@@ -181,7 +182,7 @@ public sealed class LoginHandler : AccountHandlerBase
             ReleaseAccount(account, "CloseLoginServer");
         }
 
-        _log($"{DateTime.Now:HH:mm:ss}/ Close Login Server");
+        _log("Close Login Server");
     }
 
     private Task<bool> LoginAccountRequest(PublicConnection connection, _login_account_request_loac_blit req, CancellationToken token)
@@ -412,7 +413,7 @@ public sealed class LoginHandler : AccountHandlerBase
                 try
                 {
                     await worldConnection.SendAsync(env, token).ConfigureAwait(false);
-                    _log($"{user.AccountId} Key: {user.MasterKey[0]}, {user.MasterKey[1]}, {user.MasterKey[2]}, {user.MasterKey[3]}");
+                    LogVerbose($"{user.AccountId} Key: {user.MasterKey[0]}, {user.MasterKey[1]}, {user.MasterKey[2]}, {user.MasterKey[3]}");
                 }
                 catch (Exception ex)
                 {
@@ -734,7 +735,7 @@ public sealed class LoginHandler : AccountHandlerBase
             try
             {
                 await connection.SendAsync(env, token).ConfigureAwait(false);
-                _log($"[{session.ConnectionId}] ForceCloseAccount sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
+                LogVerbose($"[{session.ConnectionId}] ForceCloseAccount sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
             }
             catch (Exception ex)
             {
@@ -767,7 +768,7 @@ public sealed class LoginHandler : AccountHandlerBase
             try
             {
                 await worldConnection.SendAsync(env, token).ConfigureAwait(false);
-                _log($"[{session.ConnectionId}] ForceCloseAccount to world {session.WorldCode} sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
+                LogVerbose($"[{session.ConnectionId}] ForceCloseAccount to world {session.WorldCode} sent (kickType={kickType}, direct={directly}, pushIp={pushIp}).");
             }
             catch (Exception ex)
             {
@@ -878,7 +879,7 @@ public sealed class LoginHandler : AccountHandlerBase
         try
         {
             await connection.SendAsync(env, token).ConfigureAwait(false);
-            _log($"{DateTime.Now:HH:mm:ss}/ Login Server Login");
+            _log("Login Server Login");
         }
         catch (Exception ex)
         {
@@ -890,7 +891,7 @@ public sealed class LoginHandler : AccountHandlerBase
     private Task<bool> LoginServerStatResult(PublicConnection connection, _login_server_stat_result_loac request, CancellationToken token)
     {
         _externalLoginOpen = request.byRet == 1;
-        _log($"LoginServerStatResult: clientIndex={request.wClientIndex} externalOpen={_externalLoginOpen}");
+        LogVerbose($"LoginServerStatResult: clientIndex={request.wClientIndex} externalOpen={_externalLoginOpen}");
         return Task.FromResult(true);
     }
 

@@ -6,6 +6,7 @@
 #include "R3XLoadData.h"
 
 #include <cstdarg>
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -75,6 +76,36 @@
 namespace
 {
   char szDefCivilCode[] = "11111";
+  std::atomic<HWND> g_startupUiWindow(nullptr);
+  std::atomic<DWORD> g_startupWorkerThreadId(0);
+  std::atomic<bool> g_startupUiErrorState(false);
+
+  bool PostStartupUiPayload(UINT message, const char *title, const char *text)
+  {
+    const HWND startupUiWindow = g_startupUiWindow.load();
+    if (startupUiWindow == nullptr || !::IsWindow(startupUiWindow))
+    {
+      return false;
+    }
+
+    auto *payload = new StartupUiMessagePayload{};
+    if (title != nullptr)
+    {
+      strcpy_s(payload->title, sizeof(payload->title), title);
+    }
+    if (text != nullptr)
+    {
+      strcpy_s(payload->text, sizeof(payload->text), text);
+    }
+
+    if (!::PostMessageA(startupUiWindow, message, 0, reinterpret_cast<LPARAM>(payload)))
+    {
+      delete payload;
+      return false;
+    }
+
+    return true;
+  }
 }
 
 const char *dayofweek[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
@@ -4263,6 +4294,45 @@ void clear_file(const char *directory, int keepCount)
   FindClose(findHandle);
 }
 
+void RegisterStartupUiWindow(HWND windowHandle)
+{
+  g_startupUiWindow.store(windowHandle);
+}
+
+void UnregisterStartupUiWindow(HWND windowHandle)
+{
+  const HWND currentWindow = g_startupUiWindow.load();
+  if (currentWindow == windowHandle)
+  {
+    g_startupUiWindow.store(nullptr);
+  }
+}
+
+void SetStartupWorkerThreadId(DWORD threadId)
+{
+  g_startupWorkerThreadId.store(threadId);
+}
+
+void ClearStartupWorkerThreadId()
+{
+  g_startupWorkerThreadId.store(0);
+}
+
+void ResetStartupUiErrorState()
+{
+  g_startupUiErrorState.store(false);
+}
+
+bool HasStartupUiErrorState()
+{
+  return g_startupUiErrorState.load();
+}
+
+void PostStartupProgress(const char *message)
+{
+  PostStartupUiPayload(WM_WORLD_STARTUP_PROGRESS, "", message);
+}
+
 int MyMessageBox(const char *title, const char *format, ...)
 {
   char buffer[1024]{};
@@ -4272,6 +4342,16 @@ int MyMessageBox(const char *title, const char *format, ...)
   va_end(args);
   OutputDebugStringA(buffer);
   OutputDebugStringA("\n");
+  const DWORD startupWorkerThreadId = g_startupWorkerThreadId.load();
+  if (startupWorkerThreadId != 0 && GetCurrentThreadId() == startupWorkerThreadId)
+  {
+    g_startupUiErrorState.store(true);
+    if (PostStartupUiPayload(WM_WORLD_STARTUP_ERROR, title, buffer))
+    {
+      return 0;
+    }
+  }
+
   MessageBoxA(nullptr, buffer, title, MB_OK | MB_ICONERROR);
   return 0;
 }

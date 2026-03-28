@@ -16,23 +16,24 @@ public sealed class WorldHandler : AccountHandlerBase
 
     public WorldHandler(
         Action<string> log,
+        Func<bool> isVerboseLoggingEnabled,
         AppSettings settings,
         string? connectionString = null,
         IAccountDatabase? db = null)
-        : base(log, settings, connectionString, db)
+        : base(log, isVerboseLoggingEnabled, settings, connectionString, db)
     {
     }
 
     public override Task OnConnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (world)");
+        LogVerbose($"[{connection.ConnectionId}] connected from {connection.RemoteEndPoint} (world)");
         _context.RegisterWorldConnection(connection);
         return Task.CompletedTask;
     }
 
     public override Task OnDisconnectedAsync(PublicConnection connection, CancellationToken cancellationToken)
     {
-        _log($"[{connection.ConnectionId}] disconnected (world)");
+        LogVerbose($"[{connection.ConnectionId}] disconnected (world)");
         return CloseWorldServerAsync(connection, cancellationToken);
     }
 
@@ -83,7 +84,7 @@ public sealed class WorldHandler : AccountHandlerBase
         _context.UpdateWorldService(worldCode, false);
         _context.UpdateWorldGate(worldCode, 0, 0);
         _context.UnregisterWorld(connection);
-        _log($"{DateTime.Now:HH:mm:ss}/ Disconnect World Server : Code ({worldCode}), Name ({world.Name})");
+        _log($"Disconnect World Server : Code ({worldCode}), Name ({world.Name})");
     }
 
     public override async Task OnPacketAsync(PublicConnection connection, PacketEnvelope packet, CancellationToken cancellationToken)
@@ -363,7 +364,7 @@ public sealed class WorldHandler : AccountHandlerBase
         };
 
         await SendToLoginServersAsync(env, token).ConfigureAwait(false);
-        _log($"{DateTime.Now:HH:mm:ss}: Start World: Code ({worldCode}), Name ({worldEntry.Name})");
+        _log($"Start World: Code ({worldCode}), Name ({worldEntry.Name})");
         return true;
     }
 
@@ -403,7 +404,7 @@ public sealed class WorldHandler : AccountHandlerBase
         };
 
         await SendToLoginServersAsync(env, token).ConfigureAwait(false);
-        _log($"{DateTime.Now:HH:mm:ss}: Stop World: Code ({worldCode}), Name ({worldEntry.Name})");
+        _log($"Stop World: Code ({worldCode}), Name ({worldEntry.Name})");
         return true;
     }
 
@@ -569,7 +570,7 @@ public sealed class WorldHandler : AccountHandlerBase
     private async Task<bool> FireguardBlockRequest(PublicConnection connection, _fireguard_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
-        _log($"FireguardBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
+        LogVerbose($"FireguardBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
 
         var (ret, err, res) = await _db.Check_Fireguard_BlockAsync(id, token).ConfigureAwait(false);
         if (ret != 0)
@@ -762,7 +763,7 @@ public sealed class WorldHandler : AccountHandlerBase
     private async Task<bool> FireguardDivideBlockRequest(PublicConnection connection, _fireguard_divide_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
-        _log($"FireguardDivideBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
+        LogVerbose($"FireguardDivideBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
 
         var (ret, accountCount, ipCount) = await _db.Fireguard_Block_Type1Async(id, request.dwIP, token).ConfigureAwait(false);
         if (ret != 0)
@@ -880,7 +881,7 @@ public sealed class WorldHandler : AccountHandlerBase
     private async Task<bool> ApexBlockRequest(PublicConnection connection, _apex_block_request_wrac request, CancellationToken token)
     {
         string id = PacketStringUtil.ToAsciiNullTerm(request.szAccountID);
-        _log($"ApexBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
+        LogVerbose($"ApexBlockRequest id='{id}' serial={request.dwAccountSerial} ip={new IPAddress(request.dwIP)}");
 
         bool ok = await _db.Insert_UserBan_ApexAsync(request.dwAccountSerial, token).ConfigureAwait(false);
         if (!ok)
@@ -895,7 +896,7 @@ public sealed class WorldHandler : AccountHandlerBase
         if (_context.TryGetWorldSessionByConnection(connection.ConnectionId, out var worldSession)
             && _context.TryGetWorld(worldSession.WorldCode, out var world))
         {
-            _log($"{worldSession.WorldCode}..{world.Name}: WorldOperReport : before : {(request.bBefore ? 1 : 0)} -> after: {(request.bAfter ? 1 : 0)}");
+            LogVerbose($"{worldSession.WorldCode}..{world.Name}: WorldOperReport : before : {(request.bBefore ? 1 : 0)} -> after: {(request.bAfter ? 1 : 0)}");
         }
         else
         {
@@ -910,7 +911,7 @@ public sealed class WorldHandler : AccountHandlerBase
             && _context.TryGetWorld(worldSession.WorldCode, out var world))
         {
             string date = PacketStringUtil.ToAsciiNullTerm(request.szLogDate);
-            _log($"UserNumReport {world.Name} avg={request.dwAveragePerHour} max={request.dwMaxPerHour} date={date}");
+            LogVerbose($"UserNumReport {world.Name} avg={request.dwAveragePerHour} max={request.dwMaxPerHour} date={date}");
 
             uint[] playerPerRace = request.dwPlayerPerRace ?? new uint[3];
             bool ok = await _db.Insert_ServerUserLogAsync(
@@ -1020,7 +1021,7 @@ public sealed class WorldHandler : AccountHandlerBase
 
     private Task<bool> DisconnectGuildWarCharacterResult(PublicConnection connection, _character_disconnect_result_wrac request, CancellationToken token)
     {
-        _log($"DisconnectGuildWarCharacterResult clientIndex={request.wClientIndex} result={request.byResult}");
+        LogVerbose($"DisconnectGuildWarCharacterResult clientIndex={request.wClientIndex} result={request.byResult}");
         return Task.FromResult(true);
     }
 
@@ -1074,12 +1075,19 @@ public sealed class WorldHandler : AccountHandlerBase
     private async Task<bool> CashDbSettingRequest(PublicConnection connection, CancellationToken token)
     {
         var send = new _cashdb_setting_result_acwr();
-        PacketStringUtil.FillFixed(send.szIP, _settings.Database.User.Host);
+        string cashDbHost = DbProfile.GetEndpointHost(
+            _settings.Database.Provider,
+            _settings.Database.User.Host,
+            _settings.Database.User.TrustedConnection);
+        PacketStringUtil.FillFixed(send.szIP, cashDbHost);
         PacketStringUtil.FillFixed(send.szDBName, _settings.Database.User.Database);
         PacketStringUtil.FillFixed(send.szDSN, _settings.Database.User.Database);
         PacketStringUtil.FillFixed(send.szAccount, _settings.Database.User.User);
         PacketStringUtil.FillFixed(send.szPassword, _settings.Database.User.Password);
-        send.dwPort = (uint)_settings.Database.User.Port;
+        send.dwPort = (uint)DbProfile.GetEffectivePort(
+            _settings.Database.Provider,
+            _settings.Database.User.Host,
+            _settings.Database.User.Port);
 
         var env = new PacketEnvelope
         {

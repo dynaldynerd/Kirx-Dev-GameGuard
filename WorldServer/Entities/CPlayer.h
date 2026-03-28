@@ -1460,9 +1460,16 @@ public:
   void pc_MoveStop(float *pfCur);
   void pc_Stop();
   void pc_MoveModeChangeRequest(unsigned __int8 byMoveType);
-  bool CheckMove(float *pfTar);
+  bool CheckMove(float *pfTar, bool bAllowIdleStart);
   void MoveError();
-  bool CheckSpeedHack(float fRealSpeed, float *pfTar);
+  bool CheckSpeedHack(
+    float fRealSpeed,
+    float *pfTar,
+    bool bAllowIdleStart,
+    unsigned int currentTime,
+    bool *pbSpeedClamped,
+    bool *pbSpeedHardStop);
+  bool RealMovPosCheckSpeedHack(float fRealSpeed, float *pfTar, unsigned int currentTime);
   bool CheckFlyHack(float *pfTar);
   bool CheckWallHack(float *pfTar);
   void pc_GotoBasePortalRequest(unsigned __int16 wItemSerial);
@@ -2678,8 +2685,6 @@ public:
   float m_fLastRecvPos[3];
   unsigned __int8 m_byLastRecvMapIndex;
   unsigned int m_dwLastTakeItemTime;
-  int m_nCheckMovePacket;
-  bool m_bCheckMovePacket;
   unsigned __int8 m_byDefMatCount;
   _100_per_random_table m_MakeRandTable;
   CMapData *m_pBindMapData;

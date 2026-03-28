@@ -27,12 +27,19 @@ namespace AccountServer
         {
             InitializeComponent();
             _settings = AppSettings.Load();
+            HideDatabasePortControl();
             EnsureSetupSalt();
             LoadFromSettings();
             WireDatabaseChangeTracking();
             MarkDatabaseStepPending(updateUi: false);
             UpdateDbUiForProvider();
             UpdateWizardUi();
+        }
+
+        private void HideDatabasePortControl()
+        {
+            lblUserPort.Visible = false;
+            numUserPort.Visible = false;
         }
 
         protected override void OnShown(EventArgs e)
@@ -59,8 +66,11 @@ namespace AccountServer
                 _ => 0
             };
 
-            txtUserHost.Text = _settings.Database.User.Host;
-            numUserPort.Value = ClampPort(_settings.Database.User.Port);
+            txtUserHost.Text = DbProfile.GetDisplayHost(
+                _settings.Database.Provider,
+                _settings.Database.User.Host,
+                _settings.Database.User.Port,
+                _settings.Database.User.TrustedConnection);
             txtUserDb.Text = _settings.Database.User.Database;
             txtUserUser.Text = _settings.Database.User.User;
             txtUserPass.Text = _settings.Database.User.Password;
@@ -101,7 +111,7 @@ namespace AccountServer
             bool isSqlite = provider == DatabaseProvider.Sqlite;
             bool isSqlServer = provider == DatabaseProvider.SqlServer;
 
-            SetProfileEnabled(isSqlite, isSqlServer, chkUserTrusted, txtUserHost, numUserPort, txtUserUser, txtUserPass);
+            SetProfileEnabled(isSqlite, isSqlServer, chkUserTrusted, txtUserHost, txtUserUser, txtUserPass);
         }
 
         private static void SetProfileEnabled(
@@ -109,7 +119,6 @@ namespace AccountServer
             bool isSqlServer,
             CheckBox trusted,
             TextBox host,
-            NumericUpDown port,
             TextBox user,
             TextBox pass)
         {
@@ -117,14 +126,12 @@ namespace AccountServer
             {
                 trusted.Enabled = false;
                 host.Enabled = false;
-                port.Enabled = false;
                 user.Enabled = false;
                 pass.Enabled = false;
                 return;
             }
 
             trusted.Enabled = isSqlServer;
-            port.Enabled = true;
             bool useTrusted = isSqlServer && trusted.Checked;
             if (useTrusted && !string.Equals(host.Text, DbProfile.TrustedSqlServerHost, StringComparison.Ordinal))
             {
@@ -150,7 +157,6 @@ namespace AccountServer
         private void WireDatabaseChangeTracking()
         {
             txtUserHost.TextChanged += DatabaseInputChanged;
-            numUserPort.ValueChanged += DatabaseInputChanged;
             txtUserDb.TextChanged += DatabaseInputChanged;
             txtUserUser.TextChanged += DatabaseInputChanged;
             txtUserPass.TextChanged += DatabaseInputChanged;
@@ -404,11 +410,6 @@ namespace AccountServer
                     message = "Database host is required.";
                     return false;
                 }
-                if (numUserPort.Value < 1 || numUserPort.Value > 65535)
-                {
-                    message = "Database port must be 1-65535.";
-                    return false;
-                }
                 if (provider == DatabaseProvider.MariaDb)
                 {
                     if (string.IsNullOrWhiteSpace(txtUserUser.Text))
@@ -462,10 +463,14 @@ namespace AccountServer
             DatabaseProvider provider = GetSelectedProvider();
             _settings.Database.Provider = provider;
 
-            _settings.Database.User.Host = provider == DatabaseProvider.SqlServer && chkUserTrusted.Checked
-                ? DbProfile.TrustedSqlServerHost
-                : txtUserHost.Text.Trim();
-            _settings.Database.User.Port = (int)numUserPort.Value;
+            _settings.Database.User.Host = DbProfile.NormalizeHostForStorage(
+                provider,
+                txtUserHost.Text.Trim(),
+                provider == DatabaseProvider.SqlServer && chkUserTrusted.Checked);
+            _settings.Database.User.Port = DbProfile.GetEffectivePort(
+                provider,
+                _settings.Database.User.Host,
+                provider == DatabaseProvider.MariaDb ? DbProfile.DefaultMariaDbPort : DbProfile.DefaultSqlServerPort);
             _settings.Database.User.Database = txtUserDb.Text.Trim();
             _settings.Database.User.User = txtUserUser.Text.Trim();
             _settings.Database.User.Password = txtUserPass.Text;
@@ -759,17 +764,18 @@ namespace AccountServer
 
         private static string BuildSqlServerConnectionString(DbProfile profile, string database)
         {
-            string host = profile.GetEffectiveSqlServerHost();
+            string host = DbProfile.BuildSqlServerDataSource(profile.Host, profile.Port, profile.TrustedConnection);
             if (profile.TrustedConnection)
             {
-                return $"Server={host},{profile.Port};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
+                return $"Server={host};Database={database};Integrated Security=True;TrustServerCertificate=True;Encrypt=False;";
             }
-            return $"Server={host},{profile.Port};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
+            return $"Server={host};Database={database};User ID={profile.User};Password={profile.Password};TrustServerCertificate=True;Encrypt=False;";
         }
 
         private static string BuildMariaDbConnectionString(DbProfile profile, string database)
         {
-            return $"Server={profile.Host};Port={profile.Port};Database={database};User ID={profile.User};Password={profile.Password};";
+            DbProfile.ResolveMariaDbEndpoint(profile.Host, profile.Port, out string host, out int port);
+            return $"Server={host};Port={port};Database={database};User ID={profile.User};Password={profile.Password};";
         }
 
         private string RewriteInstallScriptDatabaseName(string script)

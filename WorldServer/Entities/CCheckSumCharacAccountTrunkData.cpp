@@ -5,6 +5,7 @@
 #include "CCheckSumBaseConverter.h"
 #include "CCheckSumCharacTrunkConverter.h"
 #include "CRFWorldDatabase.h"
+#include "GlobalObjects.h"
 
 CCheckSumCharacAccountTrunkData::CCheckSumCharacAccountTrunkData(
   unsigned int dwSerial,
@@ -173,6 +174,15 @@ int CCheckSumCharacAccountTrunkData::CheckDiff(
       {
         return -1;
       }
+      g_Main.m_logSystemError.Write(
+        "NpcData mismatch >> char(%s,%u) idx(%d) dbDecoded(%u) srcDecoded(%u) dbEncoded(%u) srcEncoded(%u)",
+        wszName,
+        m_dwSerial,
+        j,
+        orgValue,
+        chgValue,
+        m_dwValues[j],
+        kSrcValue->m_dwValues[j]);
     }
   }
 
@@ -189,6 +199,17 @@ int CCheckSumCharacAccountTrunkData::CheckDiff(
       {
         return -1;
       }
+      g_Main.m_logSystemError.Write(
+        "AnimusData mismatch >> char(%s,%u) account(%u) race(%u) idx(%d) dbDecoded(%.0f) srcDecoded(%.0f) dbEncoded(%.0f) srcEncoded(%.0f)",
+        wszName,
+        m_dwSerial,
+        m_dwAccountSerial,
+        m_byRace,
+        k,
+        static_cast<double>(orgVal),
+        static_cast<double>(chgVal),
+        static_cast<double>(m_dValues[k]),
+        static_cast<double>(kSrcValue->m_dValues[k]));
     }
   }
 

@@ -102,6 +102,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <WorldServerDistDebugDir>$(ProjectDir)..\dist\WorldServer\debug\</WorldServerDistDebugDir>
+    <WorldServerDistShipDebugDir>$(ProjectDir)..\dist\WorldServer\shipdebug\</WorldServerDistShipDebugDir>
+    <WorldServerDistOutputDir Condition="'$(Configuration)'=='Debug'">$(WorldServerDistDebugDir)</WorldServerDistOutputDir>
+    <WorldServerDistOutputDir Condition="'$(Configuration)'=='ShipDebug'">$(WorldServerDistShipDebugDir)</WorldServerDistOutputDir>
+  </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -1666,6 +1672,15 @@
 
   <Target Name="EnforceX64Platform" BeforeTargets="PrepareForBuild" Condition="'$(Platform)' != 'x64' and '$(Platform)' != 'X64'">
     <Error Text="WorldServer supports x64 builds only. Switch Visual Studio Platform to x64." />
+  </Target>
+  <Target Name="CopyWorldServerToDist" AfterTargets="Build" Condition="'$(Platform)'=='x64' and ('$(Configuration)'=='Debug' or '$(Configuration)'=='ShipDebug') and Exists('$(TargetPath)')">
+    <ItemGroup>
+      <WorldServerDistFiles Include="$(TargetPath)" />
+      <WorldServerDistFiles Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+      <WorldServerDistFiles Include="$(TargetDir)$(TargetName).ilk" Condition="Exists('$(TargetDir)$(TargetName).ilk')" />
+    </ItemGroup>
+    <MakeDir Directories="$(WorldServerDistOutputDir)" />
+    <Copy SourceFiles="@(WorldServerDistFiles)" DestinationFolder="$(WorldServerDistOutputDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" Retries="2" RetryDelayMilliseconds="250" ContinueOnError="WarnAndContinue" />
   </Target>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -29,6 +29,17 @@ struct _EQUIP_MASTERY_LIM;
 struct _economy_history_data;
 struct tm;
 
+constexpr UINT WM_WORLD_STARTUP_PROGRESS = WM_APP + 0x220;
+constexpr UINT WM_WORLD_STARTUP_COMPLETE = WM_APP + 0x221;
+constexpr UINT WM_WORLD_STARTUP_FAILED = WM_APP + 0x222;
+constexpr UINT WM_WORLD_STARTUP_ERROR = WM_APP + 0x223;
+
+struct StartupUiMessagePayload
+{
+  char title[128];
+  char text[1024];
+};
+
 struct R3Texture
 {
   char mName[128];
@@ -118,6 +129,13 @@ bool ReadOptionAndWriteDefault(const char *iniPath, const char *section, const c
 char *cvt_string(int nVal);
 void WriteServerStartHistory(const char *format, ...);
 void clear_file(const char *directory, int keepCount);
+void RegisterStartupUiWindow(HWND windowHandle);
+void UnregisterStartupUiWindow(HWND windowHandle);
+void SetStartupWorkerThreadId(DWORD threadId);
+void ClearStartupWorkerThreadId();
+void ResetStartupUiErrorState();
+bool HasStartupUiErrorState();
+void PostStartupProgress(const char *message);
 int MyMessageBox(const char *title, const char *format, ...);
 int MyCrtDebugReportHook(int reportType, char *message, int *returnValue);
 void ServerProgramExit(const char *source, int reason);

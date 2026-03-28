@@ -26,6 +26,7 @@ public partial class MainForm : Form
     public MainForm(AppSettings settings)
     {
         InitializeComponent();
+        ApplyExecutableIcon();
         _settings = settings;
         AccountMainContext.Instance.LoadWorldList(_settings.WorldList.Worlds);
         _loginHandler = CreateLoginHandler();
@@ -33,27 +34,46 @@ public partial class MainForm : Form
         _controlHandler = CreateControlHandler();
     }
 
+    private void ApplyExecutableIcon()
+    {
+        using var appIcon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        if (appIcon != null)
+        {
+            Icon = (System.Drawing.Icon)appIcon.Clone();
+        }
+    }
+
     private LoginHandler CreateLoginHandler()
     {
         var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
-        return new LoginHandler(AppendLog, _settings, connString);
+        return new LoginHandler(AppendLog, () => _settings.VerboseLogging, _settings, connString);
     }
 
     private WorldHandler CreateWorldHandler()
     {
         var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
-        return new WorldHandler(AppendLog, _settings, connString);
+        return new WorldHandler(AppendLog, () => _settings.VerboseLogging, _settings, connString);
     }
 
     private ControlHandler CreateControlHandler()
     {
         var connString = _settings.Database.BuildUserConnectionString(_settings.Database.Provider, AppContext.BaseDirectory);
-        return new ControlHandler(AppendLog, _settings, connString);
+        return new ControlHandler(AppendLog, () => _settings.VerboseLogging, _settings, connString);
     }
 
     private async void btnStart_Click(object sender, EventArgs e)
     {
+        await StartServerAsync();
+    }
+
+    private async Task StartServerAsync()
+    {
         if (_running) return;
+        if (!EnsureWorldEntriesConfigured())
+        {
+            return;
+        }
+
         _running = true;
         btnStart.Enabled = false;
         btnStop.Enabled = true;
@@ -105,7 +125,7 @@ public partial class MainForm : Form
 
     private void OnOpenSettings(object sender, EventArgs e)
     {
-        using var form = new SettingsForm(_settings);
+        using var form = new SettingsForm(_settings, _running);
         if (form.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -156,5 +176,29 @@ public partial class MainForm : Form
     {
         base.OnFormClosing(e);
         _cts?.Cancel();
+    }
+
+    protected override async void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (_settings.Autostart)
+        {
+            await StartServerAsync();
+        }
+    }
+
+    private bool EnsureWorldEntriesConfigured()
+    {
+        bool hasWorldEntries = _settings.WorldList?.Worlds != null && _settings.WorldList.Worlds.Count > 0;
+        if (hasWorldEntries)
+        {
+            return true;
+        }
+
+        const string message = "AccountServer requires at least one configured world entry before it can start.";
+        AppendLog(message);
+        MessageBox.Show(this, message, "World Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return false;
     }
 }
