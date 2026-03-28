@@ -5,6 +5,7 @@
 
 class CGameServerDoc;
 class CMainFrame;
+class COpenDlg;
 
 class CGameServerView : public CFormView
 {
@@ -42,12 +43,22 @@ protected:
   afx_msg void OnButtonLogfile();
   afx_msg void OnBUTTONServerClose();
   afx_msg void OnBUTTONHSKControl();
+  afx_msg LRESULT OnStartupProgressMessage(WPARAM wParam, LPARAM lParam);
+  afx_msg LRESULT OnStartupCompletedMessage(WPARAM wParam, LPARAM lParam);
+  afx_msg LRESULT OnStartupFailedMessage(WPARAM wParam, LPARAM lParam);
+  afx_msg LRESULT OnStartupErrorMessage(WPARAM wParam, LPARAM lParam);
 
   DECLARE_MESSAGE_MAP()
 
 private:
   CMainFrame *GetMainFrame() const;
   bool IsServerStarted() const;
+  bool BeginStartupWorker();
+  void ShowLoadingDialog();
+  void DestroyLoadingDialog();
+  void UpdateLoadingStatus(const char *statusText);
+  void CompleteStartupSuccess();
+  void CompleteStartupFailure();
   void EnsureRuntimeViewsCreated(CGameServerDoc *document);
   void UpdateStartupControls();
 
@@ -59,6 +70,7 @@ private:
   CButton m_btDisplayAll;
   CButton m_btHSKStop;
   CButton m_btLogFile;
+  COpenDlg *m_pOpenDlg;
   bool m_bStartupInProgress;
   bool m_bStartupCompleted;
   bool m_bRuntimeViewsCreated;

@@ -1780,6 +1780,11 @@ char CMainThread::Init()
 
   const DWORD startTick = GetTickCount();
   WriteServerStartHistory("Init >> tickcount: %u", startTick);
+  const auto reportStartupPhase = [](const char *message)
+  {
+    PostStartupProgress(message);
+    WriteServerStartHistory("Init phase: %s", message);
+  };
 
   m_bWorldOpen = false;
   m_bWorldService = false;
@@ -1796,6 +1801,7 @@ char CMainThread::Init()
     return false;
   }
 
+  reportStartupPhase("Preparing startup environment...");
   CreateDirectoryA("..\\ZoneServerLog\\", nullptr);
   CreateDirectoryA("..\\ZoneServerLog\\Systemlog", nullptr);
   clear_file("..\\ZoneServerLog\\Systemlog", 15);
@@ -1886,11 +1892,13 @@ char CMainThread::Init()
 
   m_logLoadingError.Write("Server Load Start!!");
 
+  reportStartupPhase("Loading server configuration...");
   if (!LoadINI())
   {
     MyMessageBox("CGameServerDoc Error", "LoadINI()");
     return false;
   }
+  reportStartupPhase("Validating startup configuration...");
   if (!CheckDefine())
   {
     MyMessageBox("CGameServerDoc Error", "CheckDefine()");
@@ -1901,17 +1909,20 @@ char CMainThread::Init()
     MyMessageBox("CGameServerDoc Error", "check_dbsyn_data_size()");
     return false;
   }
+  reportStartupPhase("Loading game data...");
   if (!DataFileInit())
   {
     MyMessageBox("CGameServerDoc Error", "DataFileInit()");
     return false;
   }
+  reportStartupPhase("Allocating world objects...");
   if (!ObjectInit())
   {
     MyMessageBox("CGameServerDoc Error", "ObjectInit()");
     return false;
   }
   m_logLoadingError.Write("Game Data Load Complete!!");
+  reportStartupPhase("Initializing network services...");
   if (!NetworkInit())
   {
     MyMessageBox("CGameServerDoc Error", "NetworkInit() == false");
@@ -1921,6 +1932,7 @@ char CMainThread::Init()
   m_logLoadingError.Write("Network Init Complete!!");
   m_logLoadingError.Write("Map Load Start!!");
 
+  reportStartupPhase("Loading maps and event data...");
   if (!g_MapOper.Init())
   {
     MyMessageBox("CGameServerDoc Error", "g_MapOper.Init() == false");
@@ -1946,6 +1958,7 @@ char CMainThread::Init()
 
   m_logLoadingError.Write("Map Load Complete!!");
 
+  reportStartupPhase("Initializing gameplay systems...");
   const int asyncInit = CAsyncLogger::Instance()->Init();
   if (asyncInit != 0)
   {
@@ -2130,6 +2143,7 @@ char CMainThread::Init()
     return false;
   }
 
+  reportStartupPhase("Starting worker threads...");
   m_bRuleThread = true;
   _beginthread(CMainThread::RuleThread, 0, this);
   m_bDQSThread = true;
@@ -2148,7 +2162,7 @@ char CMainThread::Init()
   }
   if (g_pFrame != nullptr)
   {
-    g_pFrame->SendMessage(12, 0, 0);
+    g_pFrame->PostMessage(12, 0, 0);
   }
 
   MakeSystemTower();
@@ -2171,6 +2185,7 @@ char CMainThread::Init()
   m_dwCheatSetLevel = 50;
   m_dwServerResetToken = 1990011;
 
+  reportStartupPhase("Finalizing startup...");
   if (!CGoldenBoxItemMgr::Instance()->Initialize())
   {
     MyMessageBox("CMainThread::Init() : ", "CGoldenBoxItemMgr::Instance()->Initialize() Fail!");
@@ -3568,7 +3583,7 @@ void CMainThread::gm_MainThreadControl()
 
   if (g_pFrame != nullptr)
   {
-    g_pFrame->SendMessage(12, 0, 0);
+    g_pFrame->PostMessage(12, 0, 0);
   }
 }
 
@@ -5388,7 +5403,10 @@ bool CMainThread::DatabaseInit(char *pszDBName, char *pszDBIP)
     sizeof(worldDbPassword));
   const bool bTrustedConnection = trustedConnectionValue[0] != '\0' && trustedConnectionValue[0] != '0';
   std::strcpy(m_szWorldDBName, pszDBName);
-  g_pFrame->SendMessage(12, 0, 0);
+  if (g_pFrame != nullptr)
+  {
+    g_pFrame->PostMessage(12, 0, 0);
+  }
 
   if (!m_pWorldDB)
   {

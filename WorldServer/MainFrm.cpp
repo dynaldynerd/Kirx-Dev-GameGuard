@@ -93,6 +93,12 @@ __int64 CMainFrame::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       return CFrameWnd::WindowProc(message, wParam, lParam);
     }
 
+    if (m_serverStartupState == kStarting)
+    {
+      AfxMessageBox(L"WorldServer startup is still in progress.");
+      return 0;
+    }
+
     if (!IsServerStarted())
     {
       m_bAllowWindowClose = true;
