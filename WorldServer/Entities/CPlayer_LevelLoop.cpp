@@ -1418,18 +1418,6 @@ void CPlayer::Loop()
     {
       CheckPos_Region();
     }
-    if (m_nCheckMovePacket > 17)
-    {
-      m_bCheckMovePacket = true;
-      g_Main.m_logMove.Write(
-        "id: %s >> %s ( %d ), Move Count : %d, map(%s)",
-        m_pUserDB->m_szAccountID,
-        m_Param.GetCharNameA(),
-        m_dwObjSerial,
-        m_nCheckMovePacket,
-        m_pCurMap->m_pMapSet->m_strCode);
-    }
-    m_nCheckMovePacket = 0;
   }
 
   CheckAlterMaxPoint();

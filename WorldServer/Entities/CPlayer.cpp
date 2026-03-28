@@ -1668,7 +1668,6 @@ char CPlayer::Init(_object_id *pID)
   m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
   m_MoveHackInfo.m_dwWarningEndTime = 0;
   m_MoveHackInfo.m_fLastSpeed = 0.0f;
-  m_MoveHackInfo.m_nCountMove = 0;
   m_MoveHackInfo.m_nCountWarning = 0;
   // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
   std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
@@ -1732,7 +1731,6 @@ bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_fSelfDestructionDamage = 0.0f;
   this->m_fTalik_DefencePoint = 0.0f;
   this->m_fTalik_AvoidPoint = 0.0f;
-  this->m_bCheckMovePacket = 0;
   this->m_bLinkBoardDownload = 0;
   this->m_bSpecialDownload = 0;
   this->m_bQuestDownload = 0;
@@ -1941,7 +1939,6 @@ bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
     this->m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
     this->m_MoveHackInfo.m_dwWarningEndTime = 0;
     this->m_MoveHackInfo.m_fLastSpeed = this->GetMoveSpeed();
-    this->m_MoveHackInfo.m_nCountMove = 0;
     this->m_MoveHackInfo.m_nCountWarning = 0;
 
     this->m_bCntEnable = 0;
@@ -3225,76 +3222,111 @@ bool CPlayer::CheckFlyHack(float *pfTar)
   return true;
 }
 
-bool CPlayer::CheckSpeedHack(float fRealSpeed, float *pfTar)
+bool CPlayer::CheckSpeedHack(
+  float fRealSpeed,
+  float *pfTar,
+  bool bAllowIdleStart,
+  unsigned int currentTime,
+  bool *pbSpeedClamped,
+  bool *pbSpeedHardStop)
 {
-  const unsigned int now = GetLoopTime();
-  unsigned int tmTime = 100;
+  constexpr unsigned int kMinElapsedMs = 100;
+  constexpr unsigned int kMaxElapsedMs = 1800;
+  constexpr float kMoveSlack = 25.0f;
+  constexpr float kIdleStartSlack = 30.0f;
+  constexpr float kHardStopOvershoot = 30.0f;
 
-  if (!m_bMove || m_MoveHackInfo.m_nCountMove < 1)
+  if (pbSpeedClamped)
   {
-    if (!std::memcmp(m_fCurPos, pfTar, sizeof(m_fCurPos)))
-    {
-      return true;
-    }
-
-    m_MoveHackInfo.m_nCountMove = 0;
-    tmTime += 600;
+    *pbSpeedClamped = false;
   }
-  else
+  if (pbSpeedHardStop)
   {
-    const unsigned int diff = now - m_MoveHackInfo.m_dwLastMoveTime;
-    tmTime += diff;
-    if (tmTime > 5000)
-    {
-      tmTime = 2500;
-    }
+    *pbSpeedHardStop = false;
   }
 
-  const float fDist = fRealSpeed * 15.0f * static_cast<float>(tmTime) / 1000.0f;
-  const float fSqrt = Get3DSqrt(m_fCurPos, pfTar);
-  if (fSqrt < fDist)
+  if (!std::memcmp(m_fCurPos, pfTar, sizeof(m_fCurPos)))
   {
     return true;
   }
 
-  const float fRatio = fSqrt / fDist;
-  if (fRatio <= 1.3f)
+  float allowedDistance = bAllowIdleStart ? kIdleStartSlack : kMoveSlack;
+  if (m_bMove)
+  {
+    unsigned int elapsedMs = currentTime - m_dwLastSetPointTime;
+    if (elapsedMs < kMinElapsedMs)
+    {
+      elapsedMs = kMinElapsedMs;
+    }
+    if (elapsedMs > kMaxElapsedMs)
+    {
+      elapsedMs = kMaxElapsedMs;
+    }
+    allowedDistance = (fRealSpeed * 15.0f * static_cast<float>(elapsedMs) / 1000.0f) + kMoveSlack;
+  }
+
+  const float reportedDistance = GetSqrt(m_fCurPos, pfTar);
+  if (reportedDistance <= allowedDistance)
   {
     return true;
   }
-  if (fRatio >= 5.0f)
+
+  const float dx = pfTar[0] - m_fCurPos[0];
+  const float dy = pfTar[1] - m_fCurPos[1];
+  const float dz = pfTar[2] - m_fCurPos[2];
+  const float ratio = allowedDistance / reportedDistance;
+  pfTar[0] = m_fCurPos[0] + (dx * ratio);
+  pfTar[1] = m_fCurPos[1] + (dy * ratio);
+  pfTar[2] = m_fCurPos[2] + (dz * ratio);
+  if (pbSpeedClamped)
   {
+    *pbSpeedClamped = true;
+  }
+
+  const float overshootDistance = reportedDistance - allowedDistance;
+  if (overshootDistance > kHardStopOvershoot)
+  {
+    if (pbSpeedHardStop)
+    {
+      *pbSpeedHardStop = true;
+    }
     return false;
   }
 
-  if (m_MoveHackInfo.m_dwWarningEndTime == 0 || now > m_MoveHackInfo.m_dwWarningEndTime)
-  {
-    m_MoveHackInfo.m_nCountWarning = 0;
-  }
-
-  int countWarning = m_MoveHackInfo.m_nCountWarning;
-  m_MoveHackInfo.m_dwWarningEndTime = now + 3000;
-
-  if (countWarning >= 15)
-  {
-    return false;
-  }
-
-  if (fRatio > 1.3f && fRatio <= 1.65f)
-  {
-    countWarning += 2;
-  }
-  else if (fRatio > 1.65f && fRatio <= 2.1f)
-  {
-    countWarning += 5;
-  }
-  else
-  {
-    countWarning += 9;
-  }
-
-  m_MoveHackInfo.m_nCountWarning = ++countWarning;
   return true;
+}
+
+bool CPlayer::RealMovPosCheckSpeedHack(float fRealSpeed, float *pfTar, unsigned int currentTime)
+{
+  constexpr unsigned int kMinElapsedMs = 100;
+  constexpr unsigned int kMaxElapsedMs = 1800;
+  constexpr float kMoveSlack = 25.0f;
+
+  unsigned int elapsedMs = currentTime - m_dwLastSetPointTime;
+  if (elapsedMs < kMinElapsedMs)
+  {
+    elapsedMs = kMinElapsedMs;
+  }
+  if (elapsedMs > kMaxElapsedMs)
+  {
+    elapsedMs = kMaxElapsedMs;
+  }
+
+  const float realDistance = fRealSpeed * 15.0f * static_cast<float>(elapsedMs) / 1000.0f;
+  const float reportedDistance = GetSqrt(m_fCurPos, pfTar);
+  if (reportedDistance <= realDistance)
+  {
+    return true;
+  }
+
+  const float dx = pfTar[0] - m_fCurPos[0];
+  const float dy = pfTar[1] - m_fCurPos[1];
+  const float dz = pfTar[2] - m_fCurPos[2];
+  const float ratio = realDistance / reportedDistance;
+  pfTar[0] = m_fCurPos[0] + (dx * ratio);
+  pfTar[1] = m_fCurPos[1] + (dy * ratio);
+  pfTar[2] = m_fCurPos[2] + (dz * ratio);
+  return reportedDistance <= (realDistance + kMoveSlack);
 }
 
 void CPlayer::MoveError()
@@ -3308,7 +3340,7 @@ void CPlayer::MoveError()
   }
 }
 
-bool CPlayer::CheckMove(float *pfTar)
+bool CPlayer::CheckMove(float *pfTar, bool bAllowIdleStart)
 {
   // Non-IDA parity: observers bypass move-hack checks (speed/wall/fly).
   if (m_bObserver)
@@ -3316,20 +3348,20 @@ bool CPlayer::CheckMove(float *pfTar)
     return true;
   }
 
+  const unsigned int currentTime = GetLoopTime();
   bool result = false;
+  bool speedClamped = false;
 
   do
   {
-    const float lastSpeed = m_MoveHackInfo.m_fLastSpeed;
-    float currentSpeed = GetMoveSpeed();
+    const float currentSpeed = GetMoveSpeed();
     m_MoveHackInfo.m_fLastSpeed = currentSpeed;
-    if (lastSpeed > currentSpeed)
+    if (!CheckSpeedHack(currentSpeed, pfTar, bAllowIdleStart, currentTime, &speedClamped, nullptr))
     {
-      currentSpeed = lastSpeed;
-    }
-
-    if (!CheckSpeedHack(currentSpeed, pfTar))
-    {
+      if (speedClamped)
+      {
+        std::memcpy(m_fCurPos, pfTar, sizeof(m_fCurPos));
+      }
       break;
     }
 
@@ -3343,6 +3375,11 @@ bool CPlayer::CheckMove(float *pfTar)
       break;
     }
 
+    if (speedClamped)
+    {
+      std::memcpy(m_fCurPos, pfTar, sizeof(m_fCurPos));
+    }
+
     result = true;
   } while (false);
 
@@ -3352,8 +3389,7 @@ bool CPlayer::CheckMove(float *pfTar)
   }
   else
   {
-    ++m_MoveHackInfo.m_nCountMove;
-    m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
+    m_MoveHackInfo.m_dwLastMoveTime = currentTime;
   }
 
   return result;
@@ -3371,13 +3407,8 @@ void CPlayer::pc_MoveModeChangeRequest(unsigned __int8 byMoveType)
 
 void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar, unsigned __int8 byDirect)
 {
-  if (!CheckMove(pfCur))
-  {
-    return;
-  }
-
+  const unsigned int currentTime = GetLoopTime();
   unsigned __int8 errorCode = 0;
-  const unsigned __int8 prevMoveType = m_byMoveType;
   if (m_pmTrd.bDTradeMode)
   {
     errorCode = 7;
@@ -3410,42 +3441,42 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   {
     errorCode = 13;
   }
-  else if (m_pCurMap->IsMapIn(pfCur))
+  else if (!m_pCurMap->IsMapIn(pfCur))
   {
-    if (m_byUserDgr || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 100.0f && std::fabs(m_fCurPos[2] - pfCur[2]) <= 100.0f))
+    errorCode = 4;
+  }
+  else if (!m_byUserDgr
+           && (std::fabs(m_fCurPos[0] - pfCur[0]) > 100.0f
+               || std::fabs(m_fCurPos[2] - pfCur[2]) > 100.0f))
+  {
+    errorCode = 11;
+  }
+  else
+  {
+    const int raceTown = m_byPosRaceTown;
+    const int raceCode = static_cast<int>(m_Param.GetRaceCode());
+    if (raceTown != raceCode && (byMoveType == 1 || byMoveType == 2))
     {
-      const int raceTown = m_byPosRaceTown;
-      const int raceCode = static_cast<int>(m_Param.GetRaceCode());
-      if (raceTown != raceCode && (byMoveType == 1 || byMoveType == 2))
+      if (IsRidingUnit())
       {
-        if (IsRidingUnit())
-        {
-          if (!m_pUsingUnit->wBooster)
-          {
-            errorCode = 5;
-          }
-        }
-        else if (m_bMove)
-        {
-          if (!GetSP())
-          {
-            errorCode = 5;
-          }
-        }
-        else if (m_fEquipSpeed >= static_cast<float>(GetSP()))
+        if (!m_pUsingUnit->wBooster)
         {
           errorCode = 5;
         }
       }
+      else if (m_bMove)
+      {
+        if (!GetSP())
+        {
+          errorCode = 5;
+        }
+      }
+      else if (m_fEquipSpeed >= static_cast<float>(GetSP()))
+      {
+        errorCode = 5;
+      }
     }
-    else
-    {
-      errorCode = 11;
-    }
-  }
-  else
-  {
-    errorCode = 4;
+
   }
 
   if (errorCode)
@@ -3478,6 +3509,7 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   m_byMoveDirect = byDirect;
   std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
   std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
+  m_MoveHackInfo.m_dwLastMoveTime = currentTime;
 
   bool otherSend = true;
   if (m_bMove && m_byLastDirect == byDirect)
@@ -3506,7 +3538,7 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
   {
     RemoveSFContHelpByEffect(2, 14);
   }
-  m_dwLastSetPointTime = GetLoopTime();
+  m_dwLastSetPointTime = currentTime;
   if (m_bMineMode)
   {
     m_bMineMode = false;
@@ -3517,11 +3549,7 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
 
 void CPlayer::pc_RealMovPos(float *pfCur)
 {
-  if (!CheckMove(pfCur))
-  {
-    return;
-  }
-
+  const unsigned int currentTime = GetLoopTime();
   unsigned __int8 errorCode = 0;
   if (m_bMove)
   {
@@ -3559,6 +3587,23 @@ void CPlayer::pc_RealMovPos(float *pfCur)
         {
           errorCode = 4;
         }
+        else
+        {
+          const float currentSpeed = GetMoveSpeed();
+          m_MoveHackInfo.m_fLastSpeed = currentSpeed;
+          if (!RealMovPosCheckSpeedHack(currentSpeed, pfCur, currentTime))
+          {
+            errorCode = 12;
+          }
+          else if (!CheckFlyHack(pfCur))
+          {
+            errorCode = 12;
+          }
+          else if (!CheckWallHack(pfCur))
+          {
+            errorCode = 12;
+          }
+        }
       }
       else
       {
@@ -3577,6 +3622,11 @@ void CPlayer::pc_RealMovPos(float *pfCur)
 
   if (errorCode)
   {
+    if(errorCode == 12)
+    {
+      std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
+      std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
+    }
     SendMsg_MoveError(static_cast<char>(errorCode));
     if (m_bMove)
     {
@@ -3589,18 +3639,14 @@ void CPlayer::pc_RealMovPos(float *pfCur)
   {
     std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
     std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
-    ++m_nCheckMovePacket;
-    m_dwLastSetPointTime = GetLoopTime();
+    m_MoveHackInfo.m_dwLastMoveTime = currentTime;
+    m_dwLastSetPointTime = currentTime;
   }
 }
 
 void CPlayer::pc_MoveStop(float *pfCur)
 {
-  if (!CheckMove(pfCur))
-  {
-    return;
-  }
-
+  const unsigned int currentTime = GetLoopTime();
   unsigned __int8 errorCode = 0;
   if (m_bMove)
   {
@@ -3620,18 +3666,32 @@ void CPlayer::pc_MoveStop(float *pfCur)
     {
       errorCode = 10;
     }
-    else if (m_byUserDgr
-             || (std::fabs(m_fCurPos[0] - pfCur[0]) <= 200.0f
-                 && std::fabs(m_fCurPos[2] - pfCur[2]) <= 200.0f))
+    else if (!m_pCurMap->IsMapIn(pfCur))
     {
-      if (!m_pCurMap->IsMapIn(pfCur))
-      {
-        errorCode = 4;
-      }
+      errorCode = 4;
+    }
+    else if (!m_byUserDgr
+             && (std::fabs(m_fCurPos[0] - pfCur[0]) > 200.0f
+                 || std::fabs(m_fCurPos[2] - pfCur[2]) > 200.0f))
+    {
+      errorCode = 11;
     }
     else
     {
-      errorCode = 11;
+      const float currentSpeed = GetMoveSpeed();
+      m_MoveHackInfo.m_fLastSpeed = currentSpeed;
+      if (!CheckSpeedHack(currentSpeed, pfCur, false, currentTime, nullptr, nullptr))
+      {
+        errorCode = 11;
+      }
+      else if (!CheckFlyHack(pfCur))
+      {
+        errorCode = 11;
+      }
+      else if (!CheckWallHack(pfCur))
+      {
+        errorCode = 11;
+      }
     }
   }
   else
@@ -3654,7 +3714,7 @@ void CPlayer::pc_MoveStop(float *pfCur)
   {
     std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
     std::memcpy(m_fCurPos, pfCur, sizeof(m_fCurPos));
-    ++m_nCheckMovePacket;
+    m_MoveHackInfo.m_dwLastMoveTime = currentTime;
     const bool outExtra = IsOutExtraStopPos(m_fCurPos);
     SendMsg_Stop(outExtra);
     Stop();
@@ -5194,7 +5254,6 @@ void CPlayer::NetClose(bool bMoveOutLobby)
   m_MoveHackInfo.m_dwLastMoveTime = 0;
   m_MoveHackInfo.m_dwWarningEndTime = 0;
   m_MoveHackInfo.m_fLastSpeed = 0.0f;
-  m_MoveHackInfo.m_nCountMove = 0;
   m_MoveHackInfo.m_nCountWarning = 0;
   std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
   m_dwNormalAttackDelayEnd = 0;
@@ -5285,7 +5344,7 @@ void CPlayer::NetClose(bool bMoveOutLobby)
     CCharacter::Destroy();
 
     bool needMove = false;
-    if (m_bOutOfMap || m_bCheckMovePacket)
+    if (m_bOutOfMap)
     {
       needMove = true;
     }
@@ -14745,8 +14804,6 @@ bool CPlayer::Create()
   }
 
   SenseState();
-  this->m_nCheckMovePacket = 0;
-  this->m_bCheckMovePacket = 0;
   g_HolySys.SendHolyStoneHP(this);
   this->m_byStoneMapMoveInfo = 0;
   this->m_dwPatriarchAppointTime = static_cast<unsigned int>(-1);
