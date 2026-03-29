@@ -63,8 +63,17 @@ internal sealed class MapViewerControl : UserControl
     All = 7,
   }
 
+  private enum SelectionTool
+  {
+    None = 0,
+    Bsp = 1,
+    Collision = 2,
+    Dummy = 3,
+  }
+
   private const int MeshFloatStride = 10;
   private const int MeshByteStride = MeshFloatStride * 4;
+  private const int SelectionMarqueeThresholdPixels = 4;
 
   private const int DdsHeaderSize = 128;
   private const int FourCcDxt1 = 0x31545844;
@@ -342,11 +351,15 @@ internal sealed class MapViewerControl : UserControl
   private bool _showServerOverlay;
   private ServerOverlayFilter _serverOverlayFilter = ServerOverlayFilter.None;
   private bool _serverInteractionEnabled = true;
+  private bool _serverDummyDragArmed;
   private bool _serverDummyDragging;
+  private Point _serverDummyDragStartMouse;
   private Vector3 _serverDummyDragStartSource;
   private Vector3 _serverDummyDragStartOffset;
   private float _serverDummyDragPlaneY;
   private ServerDummyPosition? _selectedServerDummy;
+  private readonly HashSet<ServerDummyPosition> _selectedServerDummies = [];
+  private readonly Dictionary<ServerDummyPosition, Vector3> _serverDummyDragStartOffsets = [];
   private bool _bspSelectModeEnabled = true;
   private bool _bspMoveModeEnabled;
   private bool _bspScaleModeEnabled;
@@ -377,6 +390,7 @@ internal sealed class MapViewerControl : UserControl
   private int _collisionSelectionVbo;
   private int _collisionSelectionVertexCount;
   private int _selectedCollisionLineIndex = -1;
+  private readonly HashSet<int> _selectedCollisionLineIndices = [];
   private int _bspSelectionVao;
   private int _bspSelectionVbo;
   private int _bspSelectionLineVertexCount;
@@ -409,6 +423,22 @@ internal sealed class MapViewerControl : UserControl
   private readonly Dictionary<VertexKey, int[]> _bspFacesByVertexKey = [];
   private readonly Dictionary<EdgeKey, int[]> _bspFacesByEdgeKey = [];
   private readonly Dictionary<VertexKey, int[]> _bspVertexIndexBuckets = [];
+  private bool _selectionMarqueeArmed;
+  private bool _selectionMarqueeVisible;
+  private SelectionTool _selectionMarqueeTool = SelectionTool.None;
+  private Point _selectionMarqueeStartMouse;
+  private Point _selectionMarqueeCurrentMouse;
+  private Rectangle _selectionMarqueeScreenBounds = Rectangle.Empty;
+  private int _pendingCollisionClickLineIndex = -1;
+  private ServerDummyPosition? _pendingDummyClickSelection;
+  private bool _pendingBspClickSelectionValid;
+  private int _pendingBspClickFaceIndex = -1;
+  private int _pendingBspClickObjectId = -1;
+  private bool _pendingBspClickFaceOnly;
+  private int[] _pendingBspClickFaceIndices = Array.Empty<int>();
+  private VertexKey[] _pendingBspClickVertexKeys = Array.Empty<VertexKey>();
+  private EdgeKey[] _pendingBspClickEdgeKeys = Array.Empty<EdgeKey>();
+  private bool _pendingBspClickAppendSelection;
 
   private int _clipDebugProgram;
   private int _checkerTexture;
@@ -543,10 +573,7 @@ internal sealed class MapViewerControl : UserControl
     ResetBspMovePreviewState(restorePositions: false);
     _bspMoveDragging = false;
     _bspDragOperation = BspDragOperation.None;
-    if (_selectedCollisionLineIndex >= map.CollisionLines.Length)
-    {
-      _selectedCollisionLineIndex = -1;
-    }
+    PruneCollisionSelectionForCurrentMap();
     PruneBspSelectionsForCurrentMap();
 
     if (_glReady)
@@ -576,10 +603,7 @@ internal sealed class MapViewerControl : UserControl
     _bspMoveDragging = false;
     _bspDragOperation = BspDragOperation.None;
     BuildEntitySceneModelLookup(map);
-    if (_selectedCollisionLineIndex >= map.CollisionLines.Length)
-    {
-      _selectedCollisionLineIndex = -1;
-    }
+    PruneCollisionSelectionForCurrentMap();
 
     if (previousMap != null)
     {
@@ -618,11 +642,11 @@ internal sealed class MapViewerControl : UserControl
     }
 
     _map = map;
-    if (map.ServerData == null)
-    {
-      _selectedServerDummy = null;
-      _serverDummyDragging = false;
-    }
+    _selectedServerDummy = null;
+    _selectedServerDummies.Clear();
+    _serverDummyDragArmed = false;
+    _serverDummyDragging = false;
+    _serverDummyDragStartOffsets.Clear();
     if (_glReady && TryMakeCurrent())
     {
       UpdateServerOverlayBuffers();
@@ -800,17 +824,28 @@ internal sealed class MapViewerControl : UserControl
       {
         CancelServerDummyDrag(restoreOffset: false);
       }
+
+      if (!_serverInteractionEnabled)
+      {
+        _serverDummyDragArmed = false;
+        _serverDummyDragStartOffsets.Clear();
+        if (_selectionMarqueeTool == SelectionTool.Dummy)
+        {
+          CancelSelectionMarquee();
+        }
+      }
     }
   }
 
   public void SetSelectedServerDummy(ServerDummyPosition? dummy)
   {
-    _selectedServerDummy = dummy;
-    if (_glReady && TryMakeCurrent())
+    if (dummy == null)
     {
-      UpdateSelectedServerDummyBuffer();
+      SetSelectedServerDummySetInternal(Array.Empty<ServerDummyPosition>(), null, notify: false);
+      return;
     }
-    _glControl.Invalidate();
+
+    SetSelectedServerDummySetInternal([dummy], dummy, notify: false);
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -825,6 +860,11 @@ internal sealed class MapViewerControl : UserControl
         _bspMoveDragging = false;
         _bspDragOperation = BspDragOperation.None;
         CancelBspMovePreview();
+      }
+
+      if (!_bspSelectModeEnabled && _selectionMarqueeTool == SelectionTool.Bsp)
+      {
+        CancelSelectionMarquee();
       }
     }
   }
@@ -1008,6 +1048,11 @@ internal sealed class MapViewerControl : UserControl
         _collisionSelectModeEnabled = false;
       }
 
+      if (_collisionDrawModeEnabled && _selectionMarqueeTool == SelectionTool.Collision)
+      {
+        CancelSelectionMarquee();
+      }
+
       _glControl.Invalidate();
     }
   }
@@ -1033,6 +1078,10 @@ internal sealed class MapViewerControl : UserControl
           UpdateCollisionDrawPreviewBuffer();
         }
       }
+      else if (_selectionMarqueeTool == SelectionTool.Collision)
+      {
+        CancelSelectionMarquee();
+      }
 
       _glControl.Invalidate();
     }
@@ -1040,25 +1089,186 @@ internal sealed class MapViewerControl : UserControl
 
   public void SetSelectedCollisionLineIndex(int lineIndex)
   {
-    int normalized = -1;
-    if (_map != null && (uint)lineIndex < (uint)_map.CollisionLines.Length)
+    if (lineIndex < 0)
     {
-      normalized = lineIndex;
-    }
-
-    if (_selectedCollisionLineIndex == normalized)
-    {
+      SetSelectedCollisionLineIndicesInternal(Array.Empty<int>(), -1);
       return;
     }
 
-    _selectedCollisionLineIndex = normalized;
-    UpdateCollisionSelectionBuffer();
-    CollisionLineSelectionChanged?.Invoke(_selectedCollisionLineIndex);
+    SetSelectedCollisionLineIndicesInternal([lineIndex], lineIndex);
   }
 
   public void ClearSelectedCollisionLine()
   {
-    SetSelectedCollisionLineIndex(-1);
+    SetSelectedCollisionLineIndicesInternal(Array.Empty<int>(), -1);
+  }
+
+  public int[] GetSelectedCollisionLineIndicesSnapshot()
+  {
+    HashSet<int> selectedLineIndices = new(_selectedCollisionLineIndices);
+    if (selectedLineIndices.Count <= 0 && _selectedCollisionLineIndex >= 0)
+    {
+      selectedLineIndices.Add(_selectedCollisionLineIndex);
+    }
+
+    return selectedLineIndices.Count <= 0 ? Array.Empty<int>() : selectedLineIndices.ToArray();
+  }
+
+  public ServerDummyPosition[] GetSelectedServerDummiesSnapshot()
+  {
+    HashSet<ServerDummyPosition> selectedDummies = new(_selectedServerDummies);
+    if (selectedDummies.Count <= 0 && _selectedServerDummy != null)
+    {
+      selectedDummies.Add(_selectedServerDummy);
+    }
+
+    return selectedDummies.Count <= 0 ? Array.Empty<ServerDummyPosition>() : selectedDummies.ToArray();
+  }
+
+  private void SetSelectedCollisionLineIndicesInternal(IReadOnlyCollection<int> lineIndices, int preferredPrimaryIndex)
+  {
+    HashSet<int> normalized = new();
+    if (_map != null)
+    {
+      int lineCount = _map.CollisionLines.Length;
+      foreach (int lineIndex in lineIndices)
+      {
+        if (lineIndex >= 0 && lineIndex < lineCount)
+        {
+          normalized.Add(lineIndex);
+        }
+      }
+    }
+
+    int primaryIndex = -1;
+    if (normalized.Count > 0)
+    {
+      if (normalized.Contains(preferredPrimaryIndex))
+      {
+        primaryIndex = preferredPrimaryIndex;
+      }
+      else
+      {
+        foreach (int lineIndex in normalized)
+        {
+          primaryIndex = lineIndex;
+          break;
+        }
+      }
+    }
+
+    if (_selectedCollisionLineIndex == primaryIndex && _selectedCollisionLineIndices.SetEquals(normalized))
+    {
+      return;
+    }
+
+    _selectedCollisionLineIndices.Clear();
+    foreach (int lineIndex in normalized)
+    {
+      _selectedCollisionLineIndices.Add(lineIndex);
+    }
+
+    _selectedCollisionLineIndex = primaryIndex;
+    UpdateCollisionSelectionBuffer();
+    CollisionLineSelectionChanged?.Invoke(_selectedCollisionLineIndex);
+  }
+
+  private void PruneCollisionSelectionForCurrentMap()
+  {
+    if (_map == null)
+    {
+      _selectedCollisionLineIndices.Clear();
+      _selectedCollisionLineIndex = -1;
+      return;
+    }
+
+    int lineCount = _map.CollisionLines.Length;
+    List<int>? invalidIndices = null;
+    foreach (int lineIndex in _selectedCollisionLineIndices)
+    {
+      if ((uint)lineIndex >= (uint)lineCount)
+      {
+        invalidIndices ??= new List<int>();
+        invalidIndices.Add(lineIndex);
+      }
+    }
+
+    if (invalidIndices != null)
+    {
+      for (int i = 0; i < invalidIndices.Count; ++i)
+      {
+        _selectedCollisionLineIndices.Remove(invalidIndices[i]);
+      }
+    }
+
+    if (_selectedCollisionLineIndex >= 0 && _selectedCollisionLineIndices.Contains(_selectedCollisionLineIndex))
+    {
+      return;
+    }
+
+    if (_selectedCollisionLineIndices.Count > 0)
+    {
+      foreach (int lineIndex in _selectedCollisionLineIndices)
+      {
+        _selectedCollisionLineIndex = lineIndex;
+        return;
+      }
+    }
+
+    _selectedCollisionLineIndex = -1;
+  }
+
+  private void SetSelectedServerDummySetInternal(
+    IReadOnlyCollection<ServerDummyPosition> dummies,
+    ServerDummyPosition? preferredPrimaryDummy,
+    bool notify)
+  {
+    HashSet<ServerDummyPosition> normalized = new();
+    foreach (ServerDummyPosition dummy in dummies)
+    {
+      if (dummy != null)
+      {
+        normalized.Add(dummy);
+      }
+    }
+
+    ServerDummyPosition? primaryDummy = null;
+    if (preferredPrimaryDummy != null && normalized.Contains(preferredPrimaryDummy))
+    {
+      primaryDummy = preferredPrimaryDummy;
+    }
+    else if (normalized.Count > 0)
+    {
+      foreach (ServerDummyPosition dummy in normalized)
+      {
+        primaryDummy = dummy;
+        break;
+      }
+    }
+
+    if (ReferenceEquals(_selectedServerDummy, primaryDummy) && _selectedServerDummies.SetEquals(normalized))
+    {
+      return;
+    }
+
+    _selectedServerDummies.Clear();
+    foreach (ServerDummyPosition dummy in normalized)
+    {
+      _selectedServerDummies.Add(dummy);
+    }
+
+    _selectedServerDummy = primaryDummy;
+    if (_glReady && TryMakeCurrent())
+    {
+      UpdateSelectedServerDummyBuffer();
+    }
+
+    if (notify)
+    {
+      ServerDummySelectionChanged?.Invoke(_selectedServerDummy);
+    }
+
+    _glControl.Invalidate();
   }
 
   public bool TryGetSelectedBspObjectId(out int objectId)
@@ -1142,6 +1352,47 @@ internal sealed class MapViewerControl : UserControl
     _selectedBspFaceIndex = normalizedFace;
     _selectedBspObjectId = normalizedObject;
     _selectedBspFaceOnly = normalizedFaceOnly;
+    UpdateBspSelectionBuffer();
+    BspSelectionChanged?.Invoke(_selectedBspFaceIndex, _selectedBspObjectId);
+    _glControl.Invalidate();
+  }
+
+  private void SetSelectedBspObjectSelectionSet(IReadOnlyCollection<int> objectIds, int preferredPrimaryObjectId)
+  {
+    CancelBspMovePreview();
+    _selectedBspObjectIds.Clear();
+    _selectedBspFaceSelections.Clear();
+    _selectedBspVertexKeys.Clear();
+    _selectedBspEdgeKeys.Clear();
+    foreach (int objectId in objectIds)
+    {
+      if (IsMeaningfulBspObjectSelection(objectId))
+      {
+        _selectedBspObjectIds.Add(objectId);
+      }
+    }
+
+    if (_selectedBspObjectIds.Count <= 0)
+    {
+      ClearSelectedBspSelection();
+      return;
+    }
+
+    _selectedBspFaceIndex = -1;
+    if (_selectedBspObjectIds.Contains(preferredPrimaryObjectId))
+    {
+      _selectedBspObjectId = preferredPrimaryObjectId;
+    }
+    else
+    {
+      foreach (int objectId in _selectedBspObjectIds)
+      {
+        _selectedBspObjectId = objectId;
+        break;
+      }
+    }
+
+    _selectedBspFaceOnly = false;
     UpdateBspSelectionBuffer();
     BspSelectionChanged?.Invoke(_selectedBspFaceIndex, _selectedBspObjectId);
     _glControl.Invalidate();
@@ -2960,6 +3211,7 @@ internal sealed class MapViewerControl : UserControl
   {
     if (_map == null)
     {
+      CancelSelectionMarquee();
       _meshVertexCount = 0;
       _skyVertexCount = 0;
       _entityVertexCount = 0;
@@ -2977,6 +3229,7 @@ internal sealed class MapViewerControl : UserControl
       _bspSelectionLineVertexCount = 0;
       _bspSelectionPointVertexCount = 0;
       _selectedCollisionLineIndex = -1;
+      _selectedCollisionLineIndices.Clear();
       _selectedBspObjectIds.Clear();
       _selectedBspFaceSelections.Clear();
       _selectedBspVertexKeys.Clear();
@@ -2984,6 +3237,11 @@ internal sealed class MapViewerControl : UserControl
       _selectedBspFaceIndex = -1;
       _selectedBspObjectId = -1;
       _selectedBspFaceOnly = false;
+      _selectedServerDummy = null;
+      _selectedServerDummies.Clear();
+      _serverDummyDragArmed = false;
+      _serverDummyDragging = false;
+      _serverDummyDragStartOffsets.Clear();
       ResetBspMovePreviewState(restorePositions: false);
       _bspMoveDragging = false;
       _bspDragOperation = BspDragOperation.None;
@@ -3120,11 +3378,15 @@ internal sealed class MapViewerControl : UserControl
       ClearWallGroupVertexCounts();
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
+      _selectedCollisionLineIndices.Clear();
+      _selectedCollisionLineIndex = -1;
       _bspSelectionLineVertexCount = 0;
       _bspSelectionPointVertexCount = 0;
       _collisionDrawDragging = false;
       _serverMarkerVertexCount = 0;
       _selectedServerMarkerVertexCount = 0;
+      _selectedServerDummy = null;
+      _selectedServerDummies.Clear();
       Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
       return;
     }
@@ -3149,11 +3411,15 @@ internal sealed class MapViewerControl : UserControl
       _lineVertexCount = 0;
       _collisionDrawPreviewVertexCount = 0;
       _collisionSelectionVertexCount = 0;
+      _selectedCollisionLineIndices.Clear();
+      _selectedCollisionLineIndex = -1;
       _bspSelectionLineVertexCount = 0;
       _bspSelectionPointVertexCount = 0;
       _collisionDrawDragging = false;
       _serverMarkerVertexCount = 0;
       _selectedServerMarkerVertexCount = 0;
+      _selectedServerDummy = null;
+      _selectedServerDummies.Clear();
       Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
       ClearBspFloorSpatialIndex();
       ClearBspSelectionSpatialIndex();
@@ -3234,23 +3500,38 @@ internal sealed class MapViewerControl : UserControl
 
   private void UpdateSelectedServerDummyBuffer()
   {
-    if (_map?.ServerData == null || _selectedServerDummy == null)
+    if (_map?.ServerData == null)
     {
       _selectedServerMarkerVertexCount = 0;
       return;
     }
 
-    if (!TryBuildDummyBox(_selectedServerDummy, _map.ServerData, out Vector3[] corners))
+    List<Vector3> markerVertices = new();
+    HashSet<ServerDummyPosition> selectedDummies = new(_selectedServerDummies);
+    if (selectedDummies.Count <= 0 && _selectedServerDummy != null)
     {
-      _selectedServerMarkerVertexCount = 0;
+      selectedDummies.Add(_selectedServerDummy);
+    }
+
+    foreach (ServerDummyPosition dummy in selectedDummies)
+    {
+      if (!TryBuildDummyBox(dummy, _map.ServerData, out Vector3[] corners))
+      {
+        continue;
+      }
+
+      markerVertices.AddRange(ConvertDisplayPositions(BuildDummyBoxLineVertices(corners)));
+    }
+
+    _selectedServerMarkerVertexCount = markerVertices.Count;
+    if (_selectedServerMarkerVertexCount <= 0)
+    {
       return;
     }
 
-    Vector3[] markerVertices = ConvertDisplayPositions(BuildDummyBoxLineVertices(corners));
-    _selectedServerMarkerVertexCount = markerVertices.Length;
     GL.BindVertexArray(_selectedServerMarkerVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _selectedServerMarkerVbo);
-    GL.BufferData(BufferTarget.ArrayBuffer, markerVertices.Length * 12, markerVertices, BufferUsageHint.DynamicDraw);
+    GL.BufferData(BufferTarget.ArrayBuffer, markerVertices.Count * 12, markerVertices.ToArray(), BufferUsageHint.DynamicDraw);
   }
 
   private void DrawServerOverlayMarkers()
@@ -7914,7 +8195,25 @@ internal sealed class MapViewerControl : UserControl
     corners = Array.Empty<Vector3>();
     if ((uint)dummy.HelperIndex >= (uint)serverData.Helpers.Length)
     {
-      return false;
+      Vector3 editedMin = dummy.EditedWorldMin;
+      Vector3 editedMax = dummy.EditedWorldMax;
+      if (!IsFinite(editedMin) || !IsFinite(editedMax))
+      {
+        return false;
+      }
+
+      corners =
+      [
+        new Vector3(editedMin.X, editedMin.Y, editedMin.Z),
+        new Vector3(editedMax.X, editedMin.Y, editedMin.Z),
+        new Vector3(editedMax.X, editedMax.Y, editedMin.Z),
+        new Vector3(editedMin.X, editedMax.Y, editedMin.Z),
+        new Vector3(editedMin.X, editedMin.Y, editedMax.Z),
+        new Vector3(editedMax.X, editedMin.Y, editedMax.Z),
+        new Vector3(editedMax.X, editedMax.Y, editedMax.Z),
+        new Vector3(editedMin.X, editedMax.Y, editedMax.Z),
+      ];
+      return true;
     }
 
     ServerHelperObject helper = serverData.Helpers[dummy.HelperIndex];
@@ -9894,24 +10193,46 @@ internal sealed class MapViewerControl : UserControl
   private bool TryBuildSelectedCollisionDisplayLines(out Vector3[] displayLines)
   {
     displayLines = Array.Empty<Vector3>();
-    if (_map == null || (uint)_selectedCollisionLineIndex >= (uint)_map.CollisionLines.Length)
+    if (_map == null)
     {
       return false;
     }
 
-    if (!TryBuildCollisionLineQuadSource(_map, _selectedCollisionLineIndex, out Vector3 startBottom, out Vector3 endBottom, out Vector3 startTop, out Vector3 endTop))
+    HashSet<int> selectedLineIndices = new(_selectedCollisionLineIndices);
+    if (selectedLineIndices.Count <= 0 && (uint)_selectedCollisionLineIndex < (uint)_map.CollisionLines.Length)
+    {
+      selectedLineIndices.Add(_selectedCollisionLineIndex);
+    }
+
+    if (selectedLineIndices.Count <= 0)
     {
       return false;
     }
 
-    Vector3[] sourceLines =
-    [
-      startBottom, endBottom,
-      startBottom, startTop,
-      endBottom, endTop,
-      startTop, endTop,
-    ];
-    displayLines = ConvertDisplayPositions(sourceLines);
+    List<Vector3> sourceLines = new(selectedLineIndices.Count * 8);
+    foreach (int lineIndex in selectedLineIndices)
+    {
+      if (!TryBuildCollisionLineQuadSource(_map, lineIndex, out Vector3 startBottom, out Vector3 endBottom, out Vector3 startTop, out Vector3 endTop))
+      {
+        continue;
+      }
+
+      sourceLines.Add(startBottom);
+      sourceLines.Add(endBottom);
+      sourceLines.Add(startBottom);
+      sourceLines.Add(startTop);
+      sourceLines.Add(endBottom);
+      sourceLines.Add(endTop);
+      sourceLines.Add(startTop);
+      sourceLines.Add(endTop);
+    }
+
+    if (sourceLines.Count <= 0)
+    {
+      return false;
+    }
+
+    displayLines = ConvertDisplayPositions(sourceLines.ToArray());
     return displayLines.Length > 0;
   }
 
@@ -11835,30 +12156,36 @@ internal sealed class MapViewerControl : UserControl
 
   private void CancelServerDummyDrag(bool restoreOffset)
   {
-    if (restoreOffset && _selectedServerDummy != null)
+    if (restoreOffset)
     {
-      _selectedServerDummy.EditOffset = _serverDummyDragStartOffset;
+      foreach ((ServerDummyPosition dummy, Vector3 startOffset) in _serverDummyDragStartOffsets)
+      {
+        dummy.EditOffset = startOffset;
+      }
+
+      if (_serverDummyDragStartOffsets.Count <= 0 && _selectedServerDummy != null)
+      {
+        _selectedServerDummy.EditOffset = _serverDummyDragStartOffset;
+      }
+
       RefreshServerOverlay();
     }
 
+    _serverDummyDragArmed = false;
     _serverDummyDragging = false;
+    _serverDummyDragStartOffsets.Clear();
     _glControl.Capture = false;
   }
 
   private void SetSelectedServerDummyInternal(ServerDummyPosition? dummy, bool notify)
   {
-    if (ReferenceEquals(_selectedServerDummy, dummy))
+    if (dummy == null)
     {
+      SetSelectedServerDummySetInternal(Array.Empty<ServerDummyPosition>(), null, notify);
       return;
     }
 
-    _selectedServerDummy = dummy;
-    if (notify)
-    {
-      ServerDummySelectionChanged?.Invoke(dummy);
-    }
-
-    _glControl.Invalidate();
+    SetSelectedServerDummySetInternal([dummy], dummy, notify);
   }
 
   private bool TryPickVisibleServerDummy(Point mouseLocation, out ServerDummyPosition? dummy)
@@ -11912,6 +12239,731 @@ internal sealed class MapViewerControl : UserControl
     }
 
     return TryIntersectRayWithPlaneY(rayOrigin, rayDirection, _serverDummyDragPlaneY, out point);
+  }
+
+  private SelectionTool GetActiveSelectionTool()
+  {
+    if (_serverInteractionEnabled)
+    {
+      return SelectionTool.Dummy;
+    }
+
+    if (_collisionSelectModeEnabled)
+    {
+      return SelectionTool.Collision;
+    }
+
+    if (_bspSelectModeEnabled)
+    {
+      return SelectionTool.Bsp;
+    }
+
+    return SelectionTool.None;
+  }
+
+  private void BeginSelectionMarquee(SelectionTool tool, Point mouseLocation)
+  {
+    CancelSelectionMarquee();
+    if (tool == SelectionTool.None)
+    {
+      return;
+    }
+
+    _selectionMarqueeArmed = true;
+    _selectionMarqueeVisible = false;
+    _selectionMarqueeTool = tool;
+    _selectionMarqueeStartMouse = mouseLocation;
+    _selectionMarqueeCurrentMouse = mouseLocation;
+    _selectionMarqueeScreenBounds = Rectangle.Empty;
+  }
+
+  private void SetPendingCollisionClickSelection(int lineIndex)
+  {
+    _pendingCollisionClickLineIndex = lineIndex;
+  }
+
+  private void SetPendingDummyClickSelection(ServerDummyPosition? dummy)
+  {
+    _pendingDummyClickSelection = dummy;
+  }
+
+  private void SetPendingBspClickSelection(
+    bool hasCandidate,
+    int faceIndex,
+    int objectId,
+    bool faceOnly,
+    int[] explicitFaceIndices,
+    VertexKey[] explicitVertexKeys,
+    EdgeKey[] explicitEdgeKeys,
+    bool appendSelection)
+  {
+    _pendingBspClickSelectionValid = hasCandidate;
+    _pendingBspClickFaceIndex = faceIndex;
+    _pendingBspClickObjectId = objectId;
+    _pendingBspClickFaceOnly = faceOnly;
+    _pendingBspClickFaceIndices = explicitFaceIndices;
+    _pendingBspClickVertexKeys = explicitVertexKeys;
+    _pendingBspClickEdgeKeys = explicitEdgeKeys;
+    _pendingBspClickAppendSelection = appendSelection;
+  }
+
+  private void ResetPendingSelectionClickState()
+  {
+    _pendingCollisionClickLineIndex = -1;
+    _pendingDummyClickSelection = null;
+    _pendingBspClickSelectionValid = false;
+    _pendingBspClickFaceIndex = -1;
+    _pendingBspClickObjectId = -1;
+    _pendingBspClickFaceOnly = false;
+    _pendingBspClickFaceIndices = Array.Empty<int>();
+    _pendingBspClickVertexKeys = Array.Empty<VertexKey>();
+    _pendingBspClickEdgeKeys = Array.Empty<EdgeKey>();
+    _pendingBspClickAppendSelection = false;
+  }
+
+  private void UpdateSelectionMarquee(Point mouseLocation)
+  {
+    if (!_selectionMarqueeArmed)
+    {
+      return;
+    }
+
+    _selectionMarqueeCurrentMouse = mouseLocation;
+    if (!HasExceededSelectionMarqueeThreshold(_selectionMarqueeStartMouse, _selectionMarqueeCurrentMouse))
+    {
+      return;
+    }
+
+    Rectangle clientBounds = BuildSelectionMarqueeClientRectangle(_selectionMarqueeStartMouse, _selectionMarqueeCurrentMouse);
+    Rectangle screenBounds = _glControl.RectangleToScreen(clientBounds);
+    if (_selectionMarqueeVisible)
+    {
+      ControlPaint.DrawReversibleFrame(_selectionMarqueeScreenBounds, Color.Black, FrameStyle.Dashed);
+    }
+
+    _selectionMarqueeVisible = true;
+    _selectionMarqueeScreenBounds = screenBounds;
+    ControlPaint.DrawReversibleFrame(_selectionMarqueeScreenBounds, Color.Black, FrameStyle.Dashed);
+  }
+
+  private void CancelSelectionMarquee(bool clearPendingSelectionState = true)
+  {
+    if (_selectionMarqueeVisible)
+    {
+      ControlPaint.DrawReversibleFrame(_selectionMarqueeScreenBounds, Color.Black, FrameStyle.Dashed);
+    }
+
+    _selectionMarqueeArmed = false;
+    _selectionMarqueeVisible = false;
+    _selectionMarqueeTool = SelectionTool.None;
+    _selectionMarqueeScreenBounds = Rectangle.Empty;
+    if (clearPendingSelectionState)
+    {
+      ResetPendingSelectionClickState();
+    }
+  }
+
+  private bool TryBeginServerDummyDrag(Point mouseLocation)
+  {
+    if (_selectedServerDummy == null)
+    {
+      return false;
+    }
+
+    _serverDummyDragPlaneY = _selectedServerDummy.EditedWorldCenter.Y;
+    if (!TryProjectMouseToServerDragPlane(mouseLocation, out Vector3 startPoint))
+    {
+      return false;
+    }
+
+    _serverDummyDragging = true;
+    _serverDummyDragArmed = false;
+    _serverDummyDragStartSource = startPoint;
+    _serverDummyDragStartOffset = _selectedServerDummy.EditOffset;
+    _serverDummyDragStartOffsets.Clear();
+    if (_selectedServerDummies.Count > 0)
+    {
+      foreach (ServerDummyPosition dummy in _selectedServerDummies)
+      {
+        _serverDummyDragStartOffsets[dummy] = dummy.EditOffset;
+      }
+    }
+    else
+    {
+      _serverDummyDragStartOffsets[_selectedServerDummy] = _selectedServerDummy.EditOffset;
+    }
+
+    _glControl.Capture = true;
+    return true;
+  }
+
+  private void ApplyServerDummyDragDelta(Vector3 delta)
+  {
+    if (_selectedServerDummy == null)
+    {
+      return;
+    }
+
+    if (_serverDummyDragStartOffsets.Count <= 0)
+    {
+      _selectedServerDummy.EditOffset = _serverDummyDragStartOffset + delta;
+      RefreshServerOverlay();
+      return;
+    }
+
+    foreach ((ServerDummyPosition dummy, Vector3 startOffset) in _serverDummyDragStartOffsets)
+    {
+      dummy.EditOffset = startOffset + delta;
+    }
+
+    RefreshServerOverlay();
+  }
+
+  private static Rectangle BuildSelectionMarqueeClientRectangle(Point start, Point end)
+  {
+    int left = Math.Min(start.X, end.X);
+    int top = Math.Min(start.Y, end.Y);
+    int width = Math.Max(1, Math.Abs(end.X - start.X));
+    int height = Math.Max(1, Math.Abs(end.Y - start.Y));
+    return new Rectangle(left, top, width, height);
+  }
+
+  private static bool HasExceededSelectionMarqueeThreshold(Point start, Point end)
+  {
+    return Math.Abs(end.X - start.X) >= SelectionMarqueeThresholdPixels
+      || Math.Abs(end.Y - start.Y) >= SelectionMarqueeThresholdPixels;
+  }
+
+  private void ApplySelectionMarquee(SelectionTool tool, Rectangle selectionRectangle)
+  {
+    switch (tool)
+    {
+      case SelectionTool.Collision:
+        SelectCollisionLinesInRectangle(selectionRectangle);
+        break;
+      case SelectionTool.Dummy:
+        SelectServerDummiesInRectangle(selectionRectangle);
+        break;
+      case SelectionTool.Bsp:
+        SelectBspItemsInRectangle(selectionRectangle);
+        break;
+    }
+  }
+
+  private void ClearSelectionForTool(SelectionTool tool)
+  {
+    switch (tool)
+    {
+      case SelectionTool.Collision:
+        ClearSelectedCollisionLine();
+        break;
+      case SelectionTool.Dummy:
+        SetSelectedServerDummySetInternal(Array.Empty<ServerDummyPosition>(), null, notify: true);
+        break;
+      case SelectionTool.Bsp:
+        ClearSelectedBspSelection();
+        break;
+    }
+  }
+
+  private void ApplyPendingClickSelection(SelectionTool tool)
+  {
+    switch (tool)
+    {
+      case SelectionTool.Collision:
+        if (_pendingCollisionClickLineIndex >= 0)
+        {
+          SetSelectedCollisionLineIndex(_pendingCollisionClickLineIndex);
+        }
+        else
+        {
+          ClearSelectedCollisionLine();
+        }
+        break;
+      case SelectionTool.Dummy:
+        SetSelectedServerDummyInternal(_pendingDummyClickSelection, notify: true);
+        break;
+      case SelectionTool.Bsp:
+        ApplyPendingBspClickSelection();
+        break;
+    }
+  }
+
+  private void ApplyPendingBspClickSelection()
+  {
+    if (!_pendingBspClickSelectionValid)
+    {
+      if (!_pendingBspClickAppendSelection)
+      {
+        ClearSelectedBspSelection();
+      }
+
+      return;
+    }
+
+    if (_pendingBspClickAppendSelection)
+    {
+      if (_pendingBspClickEdgeKeys.Length > 0)
+      {
+        ToggleSelectedBspEdgeKeySet(_pendingBspClickEdgeKeys);
+      }
+      else if (_pendingBspClickVertexKeys.Length > 0)
+      {
+        ToggleSelectedBspVertexKeySet(_pendingBspClickVertexKeys);
+      }
+      else if (_pendingBspClickFaceIndices.Length > 0)
+      {
+        ToggleBspFaceSelectionSet(_pendingBspClickFaceIndices, _pendingBspClickFaceIndex);
+      }
+      else
+      {
+        ToggleBspSelection(_pendingBspClickFaceIndex, _pendingBspClickObjectId, _pendingBspClickFaceOnly);
+      }
+
+      return;
+    }
+
+    if (_pendingBspClickEdgeKeys.Length > 0)
+    {
+      SetSelectedBspEdgeKeySet(_pendingBspClickEdgeKeys);
+    }
+    else if (_pendingBspClickVertexKeys.Length > 0)
+    {
+      SetSelectedBspVertexKeySet(_pendingBspClickVertexKeys);
+    }
+    else if (_pendingBspClickFaceIndices.Length > 0)
+    {
+      SetSelectedBspFaceSelectionSet(_pendingBspClickFaceIndices, _pendingBspClickFaceIndex);
+    }
+    else
+    {
+      SetSelectedBspSelection(_pendingBspClickFaceIndex, _pendingBspClickObjectId, _pendingBspClickFaceOnly);
+    }
+  }
+
+  private void SelectCollisionLinesInRectangle(Rectangle selectionRectangle)
+  {
+    if (_map == null || _map.CollisionLines.Length <= 0)
+    {
+      ClearSelectedCollisionLine();
+      return;
+    }
+
+    Matrix4 viewProjection = BuildCurrentViewProjectionMatrix();
+    RectangleF selectionBounds = RectangleF.FromLTRB(
+      selectionRectangle.Left,
+      selectionRectangle.Top,
+      selectionRectangle.Right,
+      selectionRectangle.Bottom);
+    List<int> selectedLineIndices = new();
+    for (int lineIndex = 0; lineIndex < _map.CollisionLines.Length; ++lineIndex)
+    {
+      if (!TryBuildCollisionLineQuadSource(_map, lineIndex, out Vector3 startBottom, out Vector3 endBottom, out Vector3 startTop, out Vector3 endTop))
+      {
+        continue;
+      }
+
+      if (!TryProjectSourcePointToClient(startBottom, viewProjection, out PointF projectedStartBottom)
+          || !TryProjectSourcePointToClient(endBottom, viewProjection, out PointF projectedEndBottom)
+          || !TryProjectSourcePointToClient(startTop, viewProjection, out PointF projectedStartTop)
+          || !TryProjectSourcePointToClient(endTop, viewProjection, out PointF projectedEndTop))
+      {
+        continue;
+      }
+
+      if (DoesProjectedSegmentIntersectSelection(selectionBounds, projectedStartBottom, projectedEndBottom)
+          || DoesProjectedSegmentIntersectSelection(selectionBounds, projectedStartBottom, projectedStartTop)
+          || DoesProjectedSegmentIntersectSelection(selectionBounds, projectedEndBottom, projectedEndTop)
+          || DoesProjectedSegmentIntersectSelection(selectionBounds, projectedStartTop, projectedEndTop))
+      {
+        selectedLineIndices.Add(lineIndex);
+      }
+    }
+
+    SetSelectedCollisionLineIndicesInternal(
+      selectedLineIndices,
+      selectedLineIndices.Count > 0 ? selectedLineIndices[0] : -1);
+  }
+
+  private void SelectServerDummiesInRectangle(Rectangle selectionRectangle)
+  {
+    if (_map?.ServerData is not ServerMapData serverData || _serverOverlayFilter == ServerOverlayFilter.None)
+    {
+      SetSelectedServerDummySetInternal(Array.Empty<ServerDummyPosition>(), null, notify: true);
+      return;
+    }
+
+    Matrix4 viewProjection = BuildCurrentViewProjectionMatrix();
+    RectangleF selectionBounds = RectangleF.FromLTRB(
+      selectionRectangle.Left,
+      selectionRectangle.Top,
+      selectionRectangle.Right,
+      selectionRectangle.Bottom);
+    List<ServerDummyPosition> selectedDummies = new();
+    foreach (ServerDummyPosition dummy in EnumerateVisibleServerDummies(serverData))
+    {
+      if (!TryProjectSourcePointToClient(dummy.EditedWorldCenter, viewProjection, out PointF projectedCenter))
+      {
+        continue;
+      }
+
+      if (IsPointInsideSelectionRectangle(selectionBounds, projectedCenter))
+      {
+        selectedDummies.Add(dummy);
+      }
+    }
+
+    SetSelectedServerDummySetInternal(
+      selectedDummies,
+      selectedDummies.Count > 0 ? selectedDummies[0] : null,
+      notify: true);
+  }
+
+  private void SelectBspItemsInRectangle(Rectangle selectionRectangle)
+  {
+    if (_map == null || _map.BspRenderVertices.Length < 3)
+    {
+      ClearSelectedBspSelection();
+      return;
+    }
+
+    Matrix4 viewProjection = BuildCurrentViewProjectionMatrix();
+    RectangleF selectionBounds = RectangleF.FromLTRB(
+      selectionRectangle.Left,
+      selectionRectangle.Top,
+      selectionRectangle.Right,
+      selectionRectangle.Bottom);
+    BspRenderVertex[] vertices = _map.BspRenderVertices;
+    int triangleCount = vertices.Length / 3;
+    switch (_bspSelectionMode)
+    {
+      case BspSelectionMode.Vertex:
+      {
+        HashSet<VertexKey> selectedVertexKeys = new();
+        for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+        {
+          int vertexBase = faceIndex * 3;
+          for (int k = 0; k < 3; ++k)
+          {
+            Vector3 sourcePosition = vertices[vertexBase + k].Position;
+            if (!TryProjectDisplayPointToClient(
+              ConvertWorldPosition(sourcePosition),
+              viewProjection,
+              out PointF projectedPoint))
+            {
+              continue;
+            }
+
+            if (IsPointInsideSelectionRectangle(selectionBounds, projectedPoint))
+            {
+              selectedVertexKeys.Add(CreateVertexKey(sourcePosition));
+            }
+          }
+        }
+
+        if (selectedVertexKeys.Count > 0)
+        {
+          SetSelectedBspVertexKeySet(selectedVertexKeys);
+        }
+        else
+        {
+          ClearSelectedBspSelection();
+        }
+
+        break;
+      }
+      case BspSelectionMode.Edge:
+      {
+        HashSet<EdgeKey> selectedEdgeKeys = new();
+        for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+        {
+          int vertexBase = faceIndex * 3;
+          Vector3 sourceV0 = vertices[vertexBase].Position;
+          Vector3 sourceV1 = vertices[vertexBase + 1].Position;
+          Vector3 sourceV2 = vertices[vertexBase + 2].Position;
+          VertexKey key0 = CreateVertexKey(sourceV0);
+          VertexKey key1 = CreateVertexKey(sourceV1);
+          VertexKey key2 = CreateVertexKey(sourceV2);
+          Vector3 displayV0 = ConvertWorldPosition(sourceV0);
+          Vector3 displayV1 = ConvertWorldPosition(sourceV1);
+          Vector3 displayV2 = ConvertWorldPosition(sourceV2);
+          Vector3[][] displayEdges =
+          [
+            [displayV0, displayV1],
+            [displayV1, displayV2],
+            [displayV2, displayV0],
+          ];
+          EdgeKey[] edgeKeys =
+          [
+            CreateEdgeKey(key0, key1),
+            CreateEdgeKey(key1, key2),
+            CreateEdgeKey(key2, key0),
+          ];
+          for (int edgeIndex = 0; edgeIndex < displayEdges.Length; ++edgeIndex)
+          {
+            if (TryProjectDisplayPointToClient(displayEdges[edgeIndex][0], viewProjection, out PointF projectedEdgeStart)
+                && TryProjectDisplayPointToClient(displayEdges[edgeIndex][1], viewProjection, out PointF projectedEdgeEnd)
+                && DoesProjectedSegmentIntersectSelection(selectionBounds, projectedEdgeStart, projectedEdgeEnd))
+            {
+              selectedEdgeKeys.Add(edgeKeys[edgeIndex]);
+            }
+          }
+        }
+
+        if (selectedEdgeKeys.Count > 0)
+        {
+          SetSelectedBspEdgeKeySet(selectedEdgeKeys);
+        }
+        else
+        {
+          ClearSelectedBspSelection();
+        }
+
+        break;
+      }
+      case BspSelectionMode.Face:
+      {
+        HashSet<int> selectedFaceIndices = new();
+        for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+        {
+          int vertexBase = faceIndex * 3;
+          Vector3 centroid = (vertices[vertexBase].Position + vertices[vertexBase + 1].Position + vertices[vertexBase + 2].Position) / 3.0f;
+          if (TryProjectSourcePointToClient(centroid, viewProjection, out PointF projectedCentroid)
+              && IsPointInsideSelectionRectangle(selectionBounds, projectedCentroid))
+          {
+            selectedFaceIndices.Add(faceIndex);
+          }
+        }
+
+        if (selectedFaceIndices.Count > 0)
+        {
+          int preferredFaceIndex = -1;
+          foreach (int faceIndex in selectedFaceIndices)
+          {
+            preferredFaceIndex = faceIndex;
+            break;
+          }
+
+          SetSelectedBspFaceSelectionSet(selectedFaceIndices, preferredFaceIndex);
+        }
+        else
+        {
+          ClearSelectedBspSelection();
+        }
+
+        break;
+      }
+      case BspSelectionMode.Object:
+      default:
+      {
+        HashSet<int> selectedObjectIds = new();
+        HashSet<int> fallbackFaceIndices = new();
+        for (int faceIndex = 0; faceIndex < triangleCount; ++faceIndex)
+        {
+          int vertexBase = faceIndex * 3;
+          Vector3 centroid = (vertices[vertexBase].Position + vertices[vertexBase + 1].Position + vertices[vertexBase + 2].Position) / 3.0f;
+          if (!TryProjectSourcePointToClient(centroid, viewProjection, out PointF projectedCentroid) ||
+              !IsPointInsideSelectionRectangle(selectionBounds, projectedCentroid))
+          {
+            continue;
+          }
+
+          if (TryResolveFaceObjectId(faceIndex, out int objectId) && IsMeaningfulBspObjectSelection(objectId))
+          {
+            selectedObjectIds.Add(objectId);
+          }
+          else
+          {
+            fallbackFaceIndices.Add(faceIndex);
+          }
+        }
+
+        if (selectedObjectIds.Count > 0)
+        {
+          int preferredObjectId = -1;
+          foreach (int objectId in selectedObjectIds)
+          {
+            preferredObjectId = objectId;
+            break;
+          }
+
+          SetSelectedBspObjectSelectionSet(selectedObjectIds, preferredObjectId);
+        }
+        else if (fallbackFaceIndices.Count > 0)
+        {
+          int preferredFaceIndex = -1;
+          foreach (int faceIndex in fallbackFaceIndices)
+          {
+            preferredFaceIndex = faceIndex;
+            break;
+          }
+
+          SetSelectedBspFaceSelectionSet(fallbackFaceIndices, preferredFaceIndex);
+        }
+        else
+        {
+          ClearSelectedBspSelection();
+        }
+
+        break;
+      }
+    }
+  }
+
+  private Matrix4 BuildCurrentViewProjectionMatrix()
+  {
+    float aspect = Math.Max(0.0001f, (float)_glControl.ClientSize.Width / Math.Max(1f, _glControl.ClientSize.Height));
+    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(65f), aspect, 0.1f, 200000f);
+    Matrix4 view = _camera.GetViewMatrix();
+    return view * projection;
+  }
+
+  private bool TryProjectSourcePointToClient(Vector3 sourcePosition, Matrix4 viewProjection, out PointF projectedPoint)
+  {
+    return TryProjectDisplayPointToClient(ConvertWorldPosition(sourcePosition), viewProjection, out projectedPoint);
+  }
+
+  private static bool IsPointInsideSelectionRectangle(RectangleF selectionBounds, PointF point)
+  {
+    return point.X >= selectionBounds.Left
+      && point.X <= selectionBounds.Right
+      && point.Y >= selectionBounds.Top
+      && point.Y <= selectionBounds.Bottom;
+  }
+
+  private static float ComputePointOrientation(PointF a, PointF b, PointF c)
+  {
+    return (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
+  }
+
+  private static bool IsPointOnSegment(PointF a, PointF b, PointF point)
+  {
+    const float epsilon = 0.01f;
+    return point.X >= MathF.Min(a.X, b.X) - epsilon
+      && point.X <= MathF.Max(a.X, b.X) + epsilon
+      && point.Y >= MathF.Min(a.Y, b.Y) - epsilon
+      && point.Y <= MathF.Max(a.Y, b.Y) + epsilon;
+  }
+
+  private static bool DoLineSegmentsIntersect(PointF a1, PointF a2, PointF b1, PointF b2)
+  {
+    float o1 = ComputePointOrientation(a1, a2, b1);
+    float o2 = ComputePointOrientation(a1, a2, b2);
+    float o3 = ComputePointOrientation(b1, b2, a1);
+    float o4 = ComputePointOrientation(b1, b2, a2);
+    const float epsilon = 0.01f;
+    bool hasGeneralIntersection =
+      ((o1 > epsilon && o2 < -epsilon) || (o1 < -epsilon && o2 > epsilon))
+      && ((o3 > epsilon && o4 < -epsilon) || (o3 < -epsilon && o4 > epsilon));
+    if (hasGeneralIntersection)
+    {
+      return true;
+    }
+
+    if (MathF.Abs(o1) <= epsilon && IsPointOnSegment(a1, a2, b1))
+    {
+      return true;
+    }
+
+    if (MathF.Abs(o2) <= epsilon && IsPointOnSegment(a1, a2, b2))
+    {
+      return true;
+    }
+
+    if (MathF.Abs(o3) <= epsilon && IsPointOnSegment(b1, b2, a1))
+    {
+      return true;
+    }
+
+    if (MathF.Abs(o4) <= epsilon && IsPointOnSegment(b1, b2, a2))
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static bool DoesProjectedSegmentIntersectSelection(RectangleF selectionBounds, PointF start, PointF end)
+  {
+    if (IsPointInsideSelectionRectangle(selectionBounds, start) || IsPointInsideSelectionRectangle(selectionBounds, end))
+    {
+      return true;
+    }
+
+    PointF topLeft = new(selectionBounds.Left, selectionBounds.Top);
+    PointF topRight = new(selectionBounds.Right, selectionBounds.Top);
+    PointF bottomRight = new(selectionBounds.Right, selectionBounds.Bottom);
+    PointF bottomLeft = new(selectionBounds.Left, selectionBounds.Bottom);
+    return DoLineSegmentsIntersect(start, end, topLeft, topRight)
+      || DoLineSegmentsIntersect(start, end, topRight, bottomRight)
+      || DoLineSegmentsIntersect(start, end, bottomRight, bottomLeft)
+      || DoLineSegmentsIntersect(start, end, bottomLeft, topLeft);
+  }
+
+  private bool TryProjectDisplayPointToClient(Vector3 displayPosition, Matrix4 viewProjection, out PointF projectedPoint)
+  {
+    projectedPoint = PointF.Empty;
+    Vector4 clip = TransformPointRow(displayPosition, viewProjection);
+    if (!float.IsFinite(clip.X) || !float.IsFinite(clip.Y) || !float.IsFinite(clip.Z) || !float.IsFinite(clip.W))
+    {
+      return false;
+    }
+
+    if (MathF.Abs(clip.W) < 0.000001f || clip.W <= 0.0f)
+    {
+      return false;
+    }
+
+    float invW = 1.0f / clip.W;
+    float ndcX = clip.X * invW;
+    float ndcY = clip.Y * invW;
+    if (!float.IsFinite(ndcX) || !float.IsFinite(ndcY))
+    {
+      return false;
+    }
+
+    int width = Math.Max(1, _glControl.ClientSize.Width);
+    int height = Math.Max(1, _glControl.ClientSize.Height);
+    projectedPoint = new PointF(
+      (ndcX * 0.5f + 0.5f) * width,
+      (1.0f - (ndcY * 0.5f + 0.5f)) * height);
+    return float.IsFinite(projectedPoint.X) && float.IsFinite(projectedPoint.Y);
+  }
+
+  private bool TryBuildProjectedClientBounds(Vector3[] displayPoints, Matrix4 viewProjection, out RectangleF projectedBounds)
+  {
+    projectedBounds = RectangleF.Empty;
+    if (displayPoints.Length <= 0)
+    {
+      return false;
+    }
+
+    bool hasProjectedPoint = false;
+    float minX = float.PositiveInfinity;
+    float minY = float.PositiveInfinity;
+    float maxX = float.NegativeInfinity;
+    float maxY = float.NegativeInfinity;
+    for (int index = 0; index < displayPoints.Length; ++index)
+    {
+      if (!TryProjectDisplayPointToClient(displayPoints[index], viewProjection, out PointF projectedPoint))
+      {
+        continue;
+      }
+
+      hasProjectedPoint = true;
+      minX = MathF.Min(minX, projectedPoint.X);
+      minY = MathF.Min(minY, projectedPoint.Y);
+      maxX = MathF.Max(maxX, projectedPoint.X);
+      maxY = MathF.Max(maxY, projectedPoint.Y);
+    }
+
+    if (!hasProjectedPoint)
+    {
+      return false;
+    }
+
+    projectedBounds = RectangleF.FromLTRB(minX, minY, maxX, maxY);
+    return projectedBounds.Width >= 0.0f && projectedBounds.Height >= 0.0f;
   }
 
   private IEnumerable<ServerDummyPosition> EnumerateVisibleServerDummies(ServerMapData serverData)
@@ -12068,48 +13120,46 @@ internal sealed class MapViewerControl : UserControl
   {
     _glControl.Focus();
 
-    if (_serverInteractionEnabled && e.Button == MouseButtons.Left)
+    if (e.Button == MouseButtons.Left)
     {
-      if (_selectedServerDummy != null &&
-          TryPickSelectedServerDummy(e.Location))
+      SelectionTool activeSelectionTool = GetActiveSelectionTool();
+      if (activeSelectionTool == SelectionTool.Dummy)
       {
-        _serverDummyDragPlaneY = _selectedServerDummy.EditedWorldCenter.Y;
-        if (!TryProjectMouseToServerDragPlane(e.Location, out Vector3 startPoint))
+        if (TryPickVisibleServerDummy(e.Location, out ServerDummyPosition? pickedDummy))
         {
+          HashSet<ServerDummyPosition> currentSelection = new(_selectedServerDummies);
+          if (currentSelection.Count <= 0 && _selectedServerDummy != null)
+          {
+            currentSelection.Add(_selectedServerDummy);
+          }
+
+          if (pickedDummy != null && currentSelection.Contains(pickedDummy))
+          {
+            SetSelectedServerDummySetInternal(currentSelection.ToArray(), pickedDummy, notify: true);
+            _serverDummyDragArmed = true;
+            _serverDummyDragStartMouse = e.Location;
+          }
+          else
+          {
+            BeginSelectionMarquee(SelectionTool.Dummy, e.Location);
+            SetPendingDummyClickSelection(pickedDummy);
+          }
+
           return;
         }
 
-        _serverDummyDragging = true;
-        _serverDummyDragStartSource = startPoint;
-        _serverDummyDragStartOffset = _selectedServerDummy.EditOffset;
-        _glControl.Capture = true;
+        BeginSelectionMarquee(SelectionTool.Dummy, e.Location);
+        SetPendingDummyClickSelection(null);
         return;
       }
 
-      if (TryPickVisibleServerDummy(e.Location, out ServerDummyPosition? pickedDummy))
+      if (_collisionSelectModeEnabled)
       {
-        SetSelectedServerDummyInternal(pickedDummy, notify: true);
-      }
-      else
-      {
-        SetSelectedServerDummyInternal(null, notify: true);
-      }
+        BeginSelectionMarquee(SelectionTool.Collision, e.Location);
+        SetPendingCollisionClickSelection(TryPickCollisionLine(e.Location, out int selectedLineIndex) ? selectedLineIndex : -1);
 
-      return;
-    }
-
-    if (_collisionSelectModeEnabled && e.Button == MouseButtons.Left)
-    {
-      if (TryPickCollisionLine(e.Location, out int selectedLineIndex))
-      {
-        SetSelectedCollisionLineIndex(selectedLineIndex);
+        return;
       }
-      else
-      {
-        ClearSelectedCollisionLine();
-      }
-
-      return;
     }
 
     if (_collisionDrawModeEnabled && e.Button == MouseButtons.Left)
@@ -12228,61 +13278,24 @@ internal sealed class MapViewerControl : UserControl
     if (_bspSelectModeEnabled && e.Button == MouseButtons.Left)
     {
       bool appendSelection = (ModifierKeys & Keys.Shift) == Keys.Shift;
-      if (TryResolveBspSelectionFromMouse(
+      bool hasCandidate = TryResolveBspSelectionFromMouse(
         e.Location,
         out int faceIndex,
         out int selectedObjectId,
         out bool faceOnly,
         out int[] explicitFaceIndices,
         out VertexKey[] explicitVertexKeys,
-        out EdgeKey[] explicitEdgeKeys))
-      {
-        if (appendSelection)
-        {
-          if (explicitEdgeKeys.Length > 0)
-          {
-            ToggleSelectedBspEdgeKeySet(explicitEdgeKeys);
-          }
-          else if (explicitVertexKeys.Length > 0)
-          {
-            ToggleSelectedBspVertexKeySet(explicitVertexKeys);
-          }
-          else if (explicitFaceIndices.Length > 0)
-          {
-            ToggleBspFaceSelectionSet(explicitFaceIndices, faceIndex);
-          }
-          else
-          {
-            ToggleBspSelection(faceIndex, selectedObjectId, faceOnly);
-          }
-        }
-        else
-        {
-          if (explicitEdgeKeys.Length > 0)
-          {
-            SetSelectedBspEdgeKeySet(explicitEdgeKeys);
-          }
-          else if (explicitVertexKeys.Length > 0)
-          {
-            SetSelectedBspVertexKeySet(explicitVertexKeys);
-          }
-          else if (explicitFaceIndices.Length > 0)
-          {
-            SetSelectedBspFaceSelectionSet(explicitFaceIndices, faceIndex);
-          }
-          else
-          {
-            SetSelectedBspSelection(faceIndex, selectedObjectId, faceOnly);
-          }
-        }
-      }
-      else
-      {
-        if (!appendSelection)
-        {
-          ClearSelectedBspSelection();
-        }
-      }
+        out EdgeKey[] explicitEdgeKeys);
+      BeginSelectionMarquee(SelectionTool.Bsp, e.Location);
+      SetPendingBspClickSelection(
+        hasCandidate,
+        faceIndex,
+        selectedObjectId,
+        faceOnly,
+        explicitFaceIndices,
+        explicitVertexKeys,
+        explicitEdgeKeys,
+        appendSelection);
 
       return;
     }
@@ -12297,6 +13310,12 @@ internal sealed class MapViewerControl : UserControl
 
   private void OnMouseUp(object? sender, MouseEventArgs e)
   {
+    if (_serverDummyDragArmed && e.Button == MouseButtons.Left)
+    {
+      _serverDummyDragArmed = false;
+      return;
+    }
+
     if (_serverDummyDragging && e.Button == MouseButtons.Left)
     {
       if (_serverDummyDragging && _selectedServerDummy != null)
@@ -12305,18 +13324,39 @@ internal sealed class MapViewerControl : UserControl
         if (TryProjectMouseToServerDragPlane(e.Location, out Vector3 endPoint))
         {
           Vector3 delta = endPoint - _serverDummyDragStartSource;
-          _selectedServerDummy.EditOffset = _serverDummyDragStartOffset + delta;
-          RefreshServerOverlay();
+          ApplyServerDummyDragDelta(delta);
           moved = delta.LengthSquared > 0.0001f;
         }
 
         _serverDummyDragging = false;
+        _serverDummyDragStartOffsets.Clear();
         _glControl.Capture = false;
         if (moved)
         {
           ServerDummyMoved?.Invoke(_selectedServerDummy);
         }
       }
+
+      return;
+    }
+
+    if (_selectionMarqueeArmed && e.Button == MouseButtons.Left)
+    {
+      SelectionTool marqueeTool = _selectionMarqueeTool;
+      _selectionMarqueeCurrentMouse = e.Location;
+      Rectangle selectionRectangle = BuildSelectionMarqueeClientRectangle(_selectionMarqueeStartMouse, _selectionMarqueeCurrentMouse);
+      bool shouldApply = _selectionMarqueeVisible;
+      CancelSelectionMarquee(clearPendingSelectionState: false);
+      if (shouldApply)
+      {
+        ApplySelectionMarquee(marqueeTool, selectionRectangle);
+      }
+      else
+      {
+        ApplyPendingClickSelection(marqueeTool);
+      }
+
+      ResetPendingSelectionClickState();
 
       return;
     }
@@ -12421,14 +13461,33 @@ internal sealed class MapViewerControl : UserControl
 
   private void OnMouseMove(object? sender, MouseEventArgs e)
   {
+    if (_serverDummyDragArmed && _selectedServerDummy != null)
+    {
+      if (!HasExceededSelectionMarqueeThreshold(_serverDummyDragStartMouse, e.Location))
+      {
+        return;
+      }
+
+      if (!TryBeginServerDummyDrag(_serverDummyDragStartMouse))
+      {
+        _serverDummyDragArmed = false;
+        return;
+      }
+    }
+
     if (_serverDummyDragging && _selectedServerDummy != null)
     {
       if (TryProjectMouseToServerDragPlane(e.Location, out Vector3 currentPoint))
       {
         Vector3 delta = currentPoint - _serverDummyDragStartSource;
-        _selectedServerDummy.EditOffset = _serverDummyDragStartOffset + delta;
-        RefreshServerOverlay();
+        ApplyServerDummyDragDelta(delta);
       }
+      return;
+    }
+
+    if (_selectionMarqueeArmed)
+    {
+      UpdateSelectionMarquee(e.Location);
       return;
     }
 
@@ -12493,6 +13552,15 @@ internal sealed class MapViewerControl : UserControl
     {
       _capturingLook = false;
       _glControl.Capture = false;
+      if (_selectionMarqueeArmed || _selectionMarqueeVisible)
+      {
+        CancelSelectionMarquee();
+      }
+      if (_serverDummyDragArmed)
+      {
+        _serverDummyDragArmed = false;
+        _serverDummyDragStartOffsets.Clear();
+      }
       if (_serverDummyDragging)
       {
         CancelServerDummyDrag(restoreOffset: true);
@@ -12510,7 +13578,7 @@ internal sealed class MapViewerControl : UserControl
         UpdateCollisionDrawPreviewBuffer();
       }
 
-      if (_selectedCollisionLineIndex >= 0)
+      if (_selectedCollisionLineIndices.Count > 0 || _selectedCollisionLineIndex >= 0)
       {
         ClearSelectedCollisionLine();
       }
@@ -12518,6 +13586,11 @@ internal sealed class MapViewerControl : UserControl
       if (_selectedBspFaceIndex >= 0 || _selectedBspObjectId >= 0)
       {
         ClearSelectedBspSelection();
+      }
+
+      if (_selectedServerDummies.Count > 0 || _selectedServerDummy != null)
+      {
+        SetSelectedServerDummySetInternal(Array.Empty<ServerDummyPosition>(), null, notify: true);
       }
     }
     else if (e.KeyCode == Keys.R)

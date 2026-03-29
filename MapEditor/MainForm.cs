@@ -2,6 +2,7 @@ using MapEditor.Formats;
 using MapEditor.Viewer;
 using OpenTK.Mathematics;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -39,23 +40,38 @@ internal sealed partial class MainForm : Form
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
   private Panel _viewerCanvasPanel = null!;
   private Panel _serverInspectorOverlayPanel = null!;
+  private Button _serverInspectorDockTabButton = null!;
   private Label _serverInspectorSummaryLabel = null!;
   private ComboBox _serverInspectorModeComboBox = null!;
   private Panel _serverInspectorContentPanel = null!;
   private Panel _serverMonsterPanel = null!;
   private TextBox _serverMonsterSearchTextBox = null!;
+  private TextBox _serverMonsterDefinitionSearchTextBox = null!;
+  private ComboBox _serverMonsterDefinitionComboBox = null!;
+  private ComboBox _serverMonsterSpawnSetComboBox = null!;
+  private NumericUpDown _serverMonsterIntervalUpDown = null!;
+  private Button _serverMonsterAddBlockButton = null!;
+  private Button _serverMonsterAddDummyButton = null!;
+  private Button _serverMonsterAddSpawnButton = null!;
+  private Label _serverMonsterBlockLabel = null!;
   private Label _serverMonsterDetailLabel = null!;
   private Button _serverInspectorJumpButton = null!;
+  private Button _serverInspectorAutoHideButton = null!;
   private ListView _serverSummaryListView = null!;
   private ListView _serverMonsterListView = null!;
+  private ListView _serverMonsterDummyListView = null!;
+  private ListView _serverMonsterSpawnListView = null!;
   private ListView _serverPortalListView = null!;
   private ListView _serverStoreListView = null!;
   private ListView _serverStartListView = null!;
   private ListView _serverResourceListView = null!;
-  private ListView _serverSafeListView = null!;
   private string _serverMonsterSearchText = string.Empty;
+  private string _serverMonsterDefinitionSearchText = string.Empty;
   private ServerInspectorMode _serverInspectorMode = ServerInspectorMode.Summary;
   private bool _suppressServerSelectionSync;
+  private bool _suppressMonsterSpawnIntervalValueChanged;
+  private bool _suppressMonsterDefinitionSelectionChanged;
+  private bool _serverInspectorDockHidden;
 
   public MainForm()
     : this(Array.Empty<string>(), isDesignerCtor: true)
@@ -92,6 +108,7 @@ internal sealed partial class MainForm : Form
     };
     _viewerCanvasPanel.Controls.Add(_viewer);
     _viewer.BringToFront();
+    _serverInspectorDockTabButton.BringToFront();
     _serverInspectorOverlayPanel.BringToFront();
     InitializeViewerBindings();
     SyncTeleportInputsFromCamera();
@@ -119,8 +136,7 @@ internal sealed partial class MainForm : Form
     Stores = 2,
     Starts = 3,
     Resources = 4,
-    Safe = 5,
-    Summary = 6,
+    Summary = 5,
   }
 
   private void InitializeServerInspectorUi()
@@ -137,6 +153,20 @@ internal sealed partial class MainForm : Form
     _viewerCanvasPanel.Controls.Add(_viewerHintLabel);
     _viewerCanvasPanel.Resize += (_, _) => ApplyServerInspectorSplitterDistance();
 
+    _serverInspectorDockTabButton = new Button
+    {
+      Width = 34,
+      Height = 82,
+      Text = "Srv\r\nData",
+      FlatStyle = FlatStyle.System,
+      Visible = false,
+      TabStop = false,
+    };
+    _serverInspectorDockTabButton.TextAlign = ContentAlignment.MiddleCenter;
+    _serverInspectorDockTabButton.UseMnemonic = false;
+    _serverInspectorDockTabButton.Cursor = Cursors.Hand;
+    _serverInspectorDockTabButton.Click += (_, _) => ShowServerInspectorDockPanel();
+
     _serverInspectorOverlayPanel = new Panel
     {
       Width = 360,
@@ -150,13 +180,29 @@ internal sealed partial class MainForm : Form
       Dock = DockStyle.Fill,
       BackColor = _serverInspectorOverlayPanel.BackColor,
     };
-    Label inspectorTitleLabel = new()
+    Panel inspectorHeaderPanel = new()
     {
       Dock = DockStyle.Top,
-      Height = 24,
+      Height = 28,
+    };
+    Label inspectorTitleLabel = new()
+    {
+      Dock = DockStyle.Fill,
       Text = "Server Data",
       TextAlign = ContentAlignment.MiddleLeft,
     };
+    _serverInspectorAutoHideButton = new Button
+    {
+      Dock = DockStyle.Right,
+      Width = 78,
+      Text = "Auto Hide",
+      TabStop = false,
+    };
+    _serverInspectorAutoHideButton.UseMnemonic = false;
+    _serverInspectorAutoHideButton.Cursor = Cursors.Hand;
+    _serverInspectorAutoHideButton.Click += (_, _) => HideServerInspectorDockPanel();
+    inspectorHeaderPanel.Controls.Add(_serverInspectorAutoHideButton);
+    inspectorHeaderPanel.Controls.Add(inspectorTitleLabel);
     _serverInspectorSummaryLabel = new Label
     {
       Dock = DockStyle.Top,
@@ -177,7 +223,6 @@ internal sealed partial class MainForm : Form
       new ServerInspectorModeItem("Stores", ServerInspectorMode.Stores),
       new ServerInspectorModeItem("Starts", ServerInspectorMode.Starts),
       new ServerInspectorModeItem("Resources", ServerInspectorMode.Resources),
-      new ServerInspectorModeItem("Safe", ServerInspectorMode.Safe),
       new ServerInspectorModeItem("Summary", ServerInspectorMode.Summary),
     ]);
     _serverInspectorModeComboBox.SelectedIndexChanged += OnServerInspectorModeComboBoxSelectedIndexChanged;
@@ -203,9 +248,13 @@ internal sealed partial class MainForm : Form
     };
 
     _serverSummaryListView = CreateServerListView(("Field", 120), ("Value", 220));
-    _serverMonsterListView = CreateServerListView(("Dummy", 88), ("Monster", 164), ("Block", 76), ("Spawns", 56), ("Pos", 132));
-    _serverMonsterListView.SelectedIndexChanged += (_, _) => UpdateMonsterInspectorSelectionDetails();
-    _serverMonsterListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverMonsterListView = CreateServerListView(("Block", 92), ("Code", 92), ("Monster", 132), ("Dummies", 54), ("Entries", 54), ("Limit", 54), ("Center", 120));
+    _serverMonsterListView.SelectedIndexChanged += OnServerMonsterListSelectionChanged;
+    _serverMonsterDummyListView = CreateServerListView(("Dummy", 88), ("Pos", 148), ("Size", 88));
+    _serverMonsterDummyListView.SelectedIndexChanged += OnServerMonsterDummyListSelectionChanged;
+    _serverMonsterDummyListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverMonsterSpawnListView = CreateServerListView(("Set", 42), ("Monster Code", 94), ("Monster", 132), ("Interval", 64), ("Limit", 48), ("Min", 44), ("Max", 44));
+    _serverMonsterSpawnListView.SelectedIndexChanged += OnServerMonsterSpawnListSelectionChanged;
     _serverPortalListView = CreateServerListView(("Code", 92), ("Link Map", 92), ("Link Portal", 92), ("Menu", 124), ("Need Lv", 60), ("Dummy", 84), ("Pos", 170));
     _serverPortalListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
     _serverStoreListView = CreateServerListView(("Store", 92), ("NPC", 148), ("NPC Code", 96), ("Trade", 56), ("Angle", 56), ("Dummy", 84), ("Pos", 170));
@@ -214,13 +263,12 @@ internal sealed partial class MainForm : Form
     _serverStartListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
     _serverResourceListView = CreateServerListView(("Index", 54), ("Grade", 68), ("Dummy", 84), ("Pos", 180));
     _serverResourceListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
-    _serverSafeListView = CreateServerListView(("Index", 54), ("Dummy", 84), ("Pos", 180));
-    _serverSafeListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
 
     _serverMonsterPanel = new Panel
     {
       Dock = DockStyle.Fill,
     };
+
     Panel monsterSearchPanel = new()
     {
       Dock = DockStyle.Top,
@@ -243,24 +291,211 @@ internal sealed partial class MainForm : Form
     monsterSearchPanel.Controls.Add(_serverMonsterSearchTextBox);
     monsterSearchPanel.Controls.Add(monsterSearchLabel);
 
+    Panel monsterEditorPanel = new()
+    {
+      Dock = DockStyle.Bottom,
+      Height = 380,
+      Padding = new Padding(0, 6, 0, 0),
+    };
+    Panel monsterEditorHeaderPanel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 98,
+    };
+    _serverMonsterBlockLabel = new Label
+    {
+      Dock = DockStyle.Top,
+      Height = 34,
+      Text = "Select a monster block to edit dummies and spawn entries.",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    Panel monsterDefinitionPanel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 28,
+      Padding = new Padding(0, 0, 0, 4),
+    };
+    Label monsterDefinitionLabel = new()
+    {
+      Dock = DockStyle.Left,
+      Width = 50,
+      Text = "Monster",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverMonsterAddSpawnButton = new Button
+    {
+      Dock = DockStyle.Right,
+      Width = 98,
+      Text = "Spawn Monster",
+    };
+    _serverMonsterAddSpawnButton.Click += (_, _) => AddMonsterSpawnFromUi();
+    _serverMonsterAddBlockButton = new Button
+    {
+      Dock = DockStyle.Right,
+      Width = 92,
+      Text = "Add Monster",
+    };
+    _serverMonsterAddBlockButton.Click += (_, _) => AddMonsterBlockFromUi();
+    _serverMonsterDefinitionComboBox = new ComboBox
+    {
+      Dock = DockStyle.Fill,
+      DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    _serverMonsterDefinitionComboBox.SelectedIndexChanged += OnServerMonsterDefinitionComboBoxSelectedIndexChanged;
+    _serverMonsterDefinitionSearchTextBox = new TextBox
+    {
+      Dock = DockStyle.Right,
+      Width = 132,
+      PlaceholderText = "Find monster",
+    };
+    _serverMonsterDefinitionSearchTextBox.TextChanged += OnServerMonsterDefinitionSearchTextChanged;
+    monsterDefinitionPanel.Controls.Add(_serverMonsterDefinitionComboBox);
+    monsterDefinitionPanel.Controls.Add(_serverMonsterDefinitionSearchTextBox);
+    monsterDefinitionPanel.Controls.Add(_serverMonsterAddSpawnButton);
+    monsterDefinitionPanel.Controls.Add(_serverMonsterAddBlockButton);
+    monsterDefinitionPanel.Controls.Add(monsterDefinitionLabel);
+
+    Panel monsterActionPanel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 28,
+    };
+    Label monsterSetLabel = new()
+    {
+      Dock = DockStyle.Left,
+      Width = 28,
+      Text = "Set",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverMonsterSpawnSetComboBox = new ComboBox
+    {
+      Dock = DockStyle.Left,
+      Width = 72,
+      DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    _serverMonsterSpawnSetComboBox.SelectedIndexChanged += (_, _) => UpdateMonsterEditorActions();
+    Label monsterIntervalLabel = new()
+    {
+      Dock = DockStyle.Left,
+      Width = 52,
+      Text = "Interval",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverMonsterIntervalUpDown = new NumericUpDown
+    {
+      Dock = DockStyle.Left,
+      Width = 92,
+      Minimum = 0,
+      Maximum = uint.MaxValue,
+      ThousandsSeparator = true,
+      Value = 60,
+    };
+    _serverMonsterIntervalUpDown.ValueChanged += OnServerMonsterSpawnIntervalValueChanged;
+    _serverMonsterAddDummyButton = new Button
+    {
+      Dock = DockStyle.Right,
+      Width = 92,
+      Text = "Add Dummy",
+    };
+    _serverMonsterAddDummyButton.Click += (_, _) => AddMonsterDummyFromUi();
+    monsterActionPanel.Controls.Add(_serverMonsterAddDummyButton);
+    monsterActionPanel.Controls.Add(_serverMonsterIntervalUpDown);
+    monsterActionPanel.Controls.Add(monsterIntervalLabel);
+    monsterActionPanel.Controls.Add(_serverMonsterSpawnSetComboBox);
+    monsterActionPanel.Controls.Add(monsterSetLabel);
+
+    monsterEditorHeaderPanel.Controls.Add(monsterActionPanel);
+    monsterEditorHeaderPanel.Controls.Add(monsterDefinitionPanel);
+    monsterEditorHeaderPanel.Controls.Add(_serverMonsterBlockLabel);
+
+    Label monsterDummyListLabel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 20,
+      Text = "Dummy Boxes",
+      TextAlign = ContentAlignment.BottomLeft,
+    };
+    Panel monsterDummyListPanel = new()
+    {
+      Dock = DockStyle.Fill,
+      Padding = new Padding(0, 6, 0, 0),
+    };
+    monsterDummyListPanel.Controls.Add(_serverMonsterDummyListView);
+    monsterDummyListPanel.Controls.Add(monsterDummyListLabel);
+
+    Label monsterSpawnListLabel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 20,
+      Text = "Spawn Entries",
+      TextAlign = ContentAlignment.BottomLeft,
+    };
+
+    Panel monsterSpawnListPanel = new()
+    {
+      Dock = DockStyle.Fill,
+      Padding = new Padding(0, 6, 0, 0),
+    };
+    monsterSpawnListPanel.Controls.Add(_serverMonsterSpawnListView);
+    monsterSpawnListPanel.Controls.Add(monsterSpawnListLabel);
+
+    SplitContainer monsterListsSplitContainer = new()
+    {
+      Dock = DockStyle.Fill,
+      Orientation = Orientation.Horizontal,
+      FixedPanel = FixedPanel.None,
+      IsSplitterFixed = false,
+      Panel1MinSize = 90,
+      Panel2MinSize = 120,
+      SplitterWidth = 6,
+    };
+    bool monsterListsSplitterInitialized = false;
+    void EnsureMonsterListsSplitterDistance()
+    {
+      if (monsterListsSplitterInitialized)
+      {
+        return;
+      }
+
+      int totalHeight = monsterListsSplitContainer.ClientSize.Height;
+      int maxDistance = totalHeight - monsterListsSplitContainer.Panel2MinSize - monsterListsSplitContainer.SplitterWidth;
+      if (maxDistance < monsterListsSplitContainer.Panel1MinSize)
+      {
+        return;
+      }
+
+      monsterListsSplitContainer.SplitterDistance = Math.Clamp(108, monsterListsSplitContainer.Panel1MinSize, maxDistance);
+      monsterListsSplitterInitialized = true;
+    }
+
+    monsterListsSplitContainer.HandleCreated += (_, _) => EnsureMonsterListsSplitterDistance();
+    monsterListsSplitContainer.Resize += (_, _) => EnsureMonsterListsSplitterDistance();
+    monsterListsSplitContainer.Panel1.Controls.Add(monsterDummyListPanel);
+    monsterListsSplitContainer.Panel2.Controls.Add(monsterSpawnListPanel);
+
     _serverMonsterDetailLabel = new Label
     {
       Dock = DockStyle.Bottom,
-      Height = 72,
+      Height = 52,
       Text = "Load a server folder to inspect monster spawns.",
       TextAlign = ContentAlignment.TopLeft,
     };
 
+    monsterEditorPanel.Controls.Add(monsterListsSplitContainer);
+    monsterEditorPanel.Controls.Add(_serverMonsterDetailLabel);
+    monsterEditorPanel.Controls.Add(monsterEditorHeaderPanel);
+
     _serverMonsterPanel.Controls.Add(_serverMonsterListView);
-    _serverMonsterPanel.Controls.Add(_serverMonsterDetailLabel);
+    _serverMonsterPanel.Controls.Add(monsterEditorPanel);
     _serverMonsterPanel.Controls.Add(monsterSearchPanel);
 
     inspectorPanel.Controls.Add(_serverInspectorContentPanel);
     inspectorPanel.Controls.Add(_serverInspectorJumpButton);
     inspectorPanel.Controls.Add(_serverInspectorModeComboBox);
     inspectorPanel.Controls.Add(_serverInspectorSummaryLabel);
-    inspectorPanel.Controls.Add(inspectorTitleLabel);
+    inspectorPanel.Controls.Add(inspectorHeaderPanel);
     _serverInspectorOverlayPanel.Controls.Add(inspectorPanel);
+    _viewerCanvasPanel.Controls.Add(_serverInspectorDockTabButton);
     _viewerCanvasPanel.Controls.Add(_serverInspectorOverlayPanel);
     _viewerHostPanel.Controls.Add(_viewerCanvasPanel);
     ApplyServerInspectorSplitterDistance();
@@ -290,6 +525,58 @@ internal sealed partial class MainForm : Form
       margin,
       overlayWidth,
       overlayHeight);
+
+    if (_serverInspectorDockTabButton != null && !_serverInspectorDockTabButton.IsDisposed)
+    {
+      int tabWidth = 34;
+      int tabHeight = Math.Min(92, Math.Max(72, availableHeight / 6));
+      _serverInspectorDockTabButton.Bounds = new Rectangle(
+        Math.Max(margin, availableWidth - tabWidth - margin),
+        Math.Max(margin, margin + 28),
+        tabWidth,
+        tabHeight);
+    }
+  }
+
+  private void UpdateServerInspectorDockVisibility()
+  {
+    bool hasServerData = _loadedMap?.ServerData != null;
+    if (_serverInspectorOverlayPanel != null)
+    {
+      _serverInspectorOverlayPanel.Visible = hasServerData && !_serverInspectorDockHidden;
+      if (_serverInspectorOverlayPanel.Visible)
+      {
+        _serverInspectorOverlayPanel.BringToFront();
+      }
+    }
+
+    if (_serverInspectorDockTabButton != null)
+    {
+      _serverInspectorDockTabButton.Visible = hasServerData && _serverInspectorDockHidden;
+      if (_serverInspectorDockTabButton.Visible)
+      {
+        _serverInspectorDockTabButton.BringToFront();
+      }
+    }
+
+    if (_serverInspectorAutoHideButton != null)
+    {
+      _serverInspectorAutoHideButton.Visible = hasServerData && !_serverInspectorDockHidden;
+    }
+
+    ApplyServerInspectorSplitterDistance();
+  }
+
+  private void ShowServerInspectorDockPanel()
+  {
+    _serverInspectorDockHidden = false;
+    UpdateServerInspectorDockVisibility();
+  }
+
+  private void HideServerInspectorDockPanel()
+  {
+    _serverInspectorDockHidden = true;
+    UpdateServerInspectorDockVisibility();
   }
 
   private ListView CreateServerListView(params (string Title, int Width)[] columns)
@@ -363,9 +650,6 @@ internal sealed partial class MainForm : Form
         case ServerInspectorMode.Resources:
           _serverInspectorContentPanel.Controls.Add(_serverResourceListView);
           break;
-        case ServerInspectorMode.Safe:
-          _serverInspectorContentPanel.Controls.Add(_serverSafeListView);
-          break;
         default:
           _serverInspectorContentPanel.Controls.Add(_serverSummaryListView);
           break;
@@ -392,10 +676,9 @@ internal sealed partial class MainForm : Form
       ServerInspectorMode.Stores => MapViewerControl.ServerOverlayFilter.Stores,
       ServerInspectorMode.Starts => MapViewerControl.ServerOverlayFilter.Starts,
       ServerInspectorMode.Resources => MapViewerControl.ServerOverlayFilter.Resources,
-      ServerInspectorMode.Safe => MapViewerControl.ServerOverlayFilter.Safe,
       _ => MapViewerControl.ServerOverlayFilter.None,
     };
-    _viewer.SetSelectedServerDummy(TryGetSelectedServerInspectorItem(GetActiveServerListView())?.Dummy);
+    UpdateDummySelectionToolState();
     UpdateViewerServerInteraction();
     UpdateServerInspectorActions();
     _viewer.Invalidate();
@@ -413,14 +696,23 @@ internal sealed partial class MainForm : Form
       return;
     }
 
-    _viewer.SetSelectedServerDummy(TryGetSelectedServerInspectorItem(listView)?.Dummy);
+    if (_serverInspectorMode == ServerInspectorMode.Monsters)
+    {
+      _viewer.SetSelectedServerDummy(GetSelectedMonsterNavigationDummy());
+    }
+    else
+    {
+      _viewer.SetSelectedServerDummy(TryGetSelectedServerInspectorItem(listView)?.Dummy);
+    }
+
     UpdateServerInspectorActions();
   }
 
   private void UpdateServerInspectorActions()
   {
-    ListView? activeListView = GetActiveServerListView();
-    bool hasSelection = TryGetSelectedServerInspectorItem(activeListView) != null;
+    bool hasSelection = _serverInspectorMode == ServerInspectorMode.Monsters
+      ? GetSelectedMonsterInspectorItem() != null || GetSelectedMonsterDummyInspectorItem() != null
+      : TryGetSelectedServerInspectorItem(GetActiveServerListView()) != null;
 
     if (_serverInspectorJumpButton != null)
     {
@@ -436,26 +728,41 @@ internal sealed partial class MainForm : Form
     }
 
     bool hasServerData = _loadedMap?.ServerData != null;
-    bool hasBspOrCollisionTool =
-      _mouseDrawCollisionButton.Checked ||
-      _selectCollisionButton.Checked ||
-      _bspSelectModeButton.Checked ||
-      _bspMoveModeButton.Checked ||
-      _bspScaleModeButton.Checked ||
-      _bspRotateModeButton.Checked;
-    _viewer.ServerInteractionEnabled = hasServerData && _serverInspectorMode != ServerInspectorMode.Summary && !hasBspOrCollisionTool;
+    _viewer.ServerInteractionEnabled =
+      hasServerData &&
+      _selectDummyButton.Checked &&
+      _serverInspectorMode != ServerInspectorMode.Summary;
+  }
+
+  private void UpdateDummySelectionToolState()
+  {
+    if (_selectDummyButton == null)
+    {
+      return;
+    }
+
+    bool hasServerData = _loadedMap?.ServerData != null;
+    if (_selectDummyButton.Enabled == hasServerData)
+    {
+      return;
+    }
+
+    _selectDummyButton.Enabled = hasServerData;
+    if (!hasServerData && _selectDummyButton.Checked)
+    {
+      _selectDummyButton.Checked = false;
+    }
   }
 
   private ListView? GetActiveServerListView()
   {
     return _serverInspectorMode switch
     {
-      ServerInspectorMode.Monsters => _serverMonsterListView,
+      ServerInspectorMode.Monsters => _serverMonsterDummyListView.SelectedItems.Count > 0 ? _serverMonsterDummyListView : _serverMonsterListView,
       ServerInspectorMode.Portals => _serverPortalListView,
       ServerInspectorMode.Stores => _serverStoreListView,
       ServerInspectorMode.Starts => _serverStartListView,
       ServerInspectorMode.Resources => _serverResourceListView,
-      ServerInspectorMode.Safe => _serverSafeListView,
       ServerInspectorMode.Summary => _serverSummaryListView,
       _ => null,
     };
@@ -463,12 +770,10 @@ internal sealed partial class MainForm : Form
 
   private IEnumerable<(ServerInspectorMode Mode, ListView ListView)> EnumerateServerInspectorLists()
   {
-    yield return (ServerInspectorMode.Monsters, _serverMonsterListView);
     yield return (ServerInspectorMode.Portals, _serverPortalListView);
     yield return (ServerInspectorMode.Stores, _serverStoreListView);
     yield return (ServerInspectorMode.Starts, _serverStartListView);
     yield return (ServerInspectorMode.Resources, _serverResourceListView);
-    yield return (ServerInspectorMode.Safe, _serverSafeListView);
   }
 
   private static IServerInspectorItem? TryGetSelectedServerInspectorItem(ListView? listView)
@@ -498,9 +803,18 @@ internal sealed partial class MainForm : Form
 
   private void OnViewerServerDummyMoved(ServerDummyPosition dummy)
   {
-    if (_loadedMap?.ServerData == null)
+    if (_loadedMap?.ServerData is not ServerMapData serverData)
     {
       return;
+    }
+
+    for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+    {
+      ServerMapMonsterBlock block = serverData.MonsterBlocks[blockIndex];
+      if (block.Dummies.Any(dummyRef => ReferenceEquals(dummyRef.Dummy, dummy)))
+      {
+        block.WorldCenter = ComputeMonsterBlockCenter(block.Dummies);
+      }
     }
 
     RefreshServerInspector();
@@ -514,6 +828,12 @@ internal sealed partial class MainForm : Form
     _suppressServerSelectionSync = true;
     try
     {
+      if (TrySelectMonsterInspectorItem(dummy))
+      {
+        UpdateServerInspectorActions();
+        return;
+      }
+
       foreach ((ServerInspectorMode mode, ListView listView) in EnumerateServerInspectorLists())
       {
         ListViewItem? match = FindServerInspectorListItemByDummy(listView, dummy);
@@ -527,7 +847,6 @@ internal sealed partial class MainForm : Form
         match.Selected = true;
         match.Focused = true;
         match.EnsureVisible();
-        _viewer.SetSelectedServerDummy(dummy);
         UpdateServerInspectorActions();
         return;
       }
@@ -539,17 +858,57 @@ internal sealed partial class MainForm : Form
         return;
       }
 
+      ClearListViewSelection(_serverMonsterListView);
+      ClearListViewSelection(_serverMonsterDummyListView);
+      ClearListViewSelection(_serverMonsterSpawnListView);
+      UpdateMonsterInspectorSelectionDetails();
       foreach ((_, ListView listView) in EnumerateServerInspectorLists())
       {
         ClearListViewSelection(listView);
       }
-      _viewer.SetSelectedServerDummy(null);
       UpdateServerInspectorActions();
     }
     finally
     {
       _suppressServerSelectionSync = false;
     }
+  }
+
+  private bool TrySelectMonsterInspectorItem(ServerDummyPosition? dummy)
+  {
+    if (dummy == null || _serverMonsterListView == null)
+    {
+      return false;
+    }
+
+    for (int index = 0; index < _serverMonsterListView.Items.Count; ++index)
+    {
+      if (_serverMonsterListView.Items[index].Tag is not ServerMonsterBlockInspectorItem blockItem)
+      {
+        continue;
+      }
+
+      if (!blockItem.Block.Dummies.Any(dummyRef => ReferenceEquals(dummyRef.Dummy, dummy)))
+      {
+        continue;
+      }
+
+      SetServerInspectorMode(ServerInspectorMode.Monsters, syncComboBox: true);
+      ClearListViewSelection(_serverMonsterListView);
+      ListViewItem blockListItem = _serverMonsterListView.Items[index];
+      blockListItem.Selected = true;
+      blockListItem.Focused = true;
+      blockListItem.EnsureVisible();
+      RefreshMonsterEditorSelection(dummy, preferredSpawn: null, selectFirstDummyWhenNeeded: false, selectFirstSpawnWhenNeeded: false);
+      return true;
+    }
+
+    return false;
+  }
+
+  private ServerDummyPosition? GetSelectedMonsterNavigationDummy()
+  {
+    return GetSelectedMonsterDummyInspectorItem()?.Dummy ?? GetSelectedMonsterInspectorItem()?.Dummy;
   }
 
   private static ListViewItem? FindServerInspectorListItemByDummy(ListView listView, ServerDummyPosition? dummy)
@@ -582,6 +941,7 @@ internal sealed partial class MainForm : Form
   {
     _openMapFolderMenuItem.Click += (_, _) => OpenMapRootFromDialog();
     _openServerFolderMenuItem.Click += (_, _) => OpenServerRootFromDialog();
+    _saveServerDataMenuItem.Click += (_, _) => SaveServerDataFromUi();
     _saveEbpOnlyMenuItem.Click += (_, _) => SaveCurrentEbpOnlyFromDialog();
     _saveMapAsMenuItem.Click += (_, _) => SaveCurrentMapAsFromDialog();
     _exportBlenderPackageMenuItem.Click += (_, _) => ExportBlenderPackageFromDialog();
@@ -701,8 +1061,16 @@ internal sealed partial class MainForm : Form
       _viewer.Invalidate();
     };
 
+    _mouseDrawCollisionButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.CollisionDraw);
+    _selectCollisionButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.CollisionSelect);
+    _selectDummyButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.DummySelect);
+    _bspSelectModeButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.BspSelect);
+    _bspMoveModeButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.BspMove);
+    _bspScaleModeButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.BspScale);
+    _bspRotateModeButton.Click += (_, _) => ActivatePrimaryToolMode(PrimaryToolMode.BspRotate);
     _mouseDrawCollisionButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _selectCollisionButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
+    _selectDummyButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _bspSelectModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _bspMoveModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
     _bspScaleModeButton.CheckedChanged += (_, _) => SyncToolModesFromUi();
@@ -746,6 +1114,17 @@ internal sealed partial class MainForm : Form
     Bsp = 2,
   }
 
+  private enum PrimaryToolMode
+  {
+    CollisionDraw = 0,
+    CollisionSelect = 1,
+    DummySelect = 2,
+    BspSelect = 3,
+    BspMove = 4,
+    BspScale = 5,
+    BspRotate = 6,
+  }
+
   private void SyncToolModesFromUi()
   {
     if (_suppressToolModeSync)
@@ -759,6 +1138,7 @@ internal sealed partial class MainForm : Form
       if (_mouseDrawCollisionButton.Checked)
       {
         _selectCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
         _bspSelectModeButton.Checked = false;
         _bspMoveModeButton.Checked = false;
         _bspScaleModeButton.Checked = false;
@@ -767,6 +1147,16 @@ internal sealed partial class MainForm : Form
       else if (_selectCollisionButton.Checked)
       {
         _mouseDrawCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
+        _bspSelectModeButton.Checked = false;
+        _bspMoveModeButton.Checked = false;
+        _bspScaleModeButton.Checked = false;
+        _bspRotateModeButton.Checked = false;
+      }
+      else if (_selectDummyButton.Checked)
+      {
+        _mouseDrawCollisionButton.Checked = false;
+        _selectCollisionButton.Checked = false;
         _bspSelectModeButton.Checked = false;
         _bspMoveModeButton.Checked = false;
         _bspScaleModeButton.Checked = false;
@@ -776,6 +1166,7 @@ internal sealed partial class MainForm : Form
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
         _bspScaleModeButton.Checked = false;
         _bspRotateModeButton.Checked = false;
         _bspSelectModeButton.Checked = true;
@@ -784,6 +1175,7 @@ internal sealed partial class MainForm : Form
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
         _bspMoveModeButton.Checked = false;
         _bspRotateModeButton.Checked = false;
         _bspSelectModeButton.Checked = true;
@@ -792,6 +1184,7 @@ internal sealed partial class MainForm : Form
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
         _bspMoveModeButton.Checked = false;
         _bspScaleModeButton.Checked = false;
         _bspSelectModeButton.Checked = true;
@@ -800,6 +1193,7 @@ internal sealed partial class MainForm : Form
       {
         _mouseDrawCollisionButton.Checked = false;
         _selectCollisionButton.Checked = false;
+        _selectDummyButton.Checked = false;
         _bspMoveModeButton.Checked = false;
         _bspScaleModeButton.Checked = false;
         _bspRotateModeButton.Checked = false;
@@ -827,6 +1221,36 @@ internal sealed partial class MainForm : Form
 
     _viewer.Focus();
     UpdateUndoUiState();
+  }
+
+  private void ActivatePrimaryToolMode(PrimaryToolMode mode)
+  {
+    if (_suppressToolModeSync)
+    {
+      return;
+    }
+
+    _suppressToolModeSync = true;
+    try
+    {
+      _mouseDrawCollisionButton.Checked = mode == PrimaryToolMode.CollisionDraw;
+      _selectCollisionButton.Checked = mode == PrimaryToolMode.CollisionSelect;
+      _selectDummyButton.Checked = mode == PrimaryToolMode.DummySelect && _selectDummyButton.Enabled;
+      bool isBspTool = mode == PrimaryToolMode.BspSelect
+        || mode == PrimaryToolMode.BspMove
+        || mode == PrimaryToolMode.BspScale
+        || mode == PrimaryToolMode.BspRotate;
+      _bspSelectModeButton.Checked = isBspTool;
+      _bspMoveModeButton.Checked = mode == PrimaryToolMode.BspMove;
+      _bspScaleModeButton.Checked = mode == PrimaryToolMode.BspScale;
+      _bspRotateModeButton.Checked = mode == PrimaryToolMode.BspRotate;
+    }
+    finally
+    {
+      _suppressToolModeSync = false;
+    }
+
+    SyncToolModesFromUi();
   }
 
   private void SetBspSelectionMode(MapViewerControl.BspSelectionMode mode)
@@ -1102,8 +1526,7 @@ internal sealed partial class MainForm : Form
         + $"Portals: {serverData.Portals.Length:N0}{Environment.NewLine}"
         + $"Stores: {serverData.Stores.Length:N0}{Environment.NewLine}"
         + $"Start points: {serverData.StartPoints.Length:N0}{Environment.NewLine}"
-        + $"Resources: {serverData.ResourceNodes.Length:N0}{Environment.NewLine}"
-        + $"Safe zones: {serverData.SafeZones.Length:N0}";
+        + $"Resources: {serverData.ResourceNodes.Length:N0}";
       return true;
     }
     catch (Exception ex)
@@ -1132,14 +1555,8 @@ internal sealed partial class MainForm : Form
     }
 
     ServerMapData? serverData = _loadedMap?.ServerData;
-    if (_serverInspectorOverlayPanel != null)
-    {
-      _serverInspectorOverlayPanel.Visible = serverData != null;
-      if (_serverInspectorOverlayPanel.Visible)
-      {
-        _serverInspectorOverlayPanel.BringToFront();
-      }
-    }
+    UpdateDummySelectionToolState();
+    UpdateServerInspectorDockVisibility();
 
     if (serverData != null)
     {
@@ -1170,8 +1587,7 @@ internal sealed partial class MainForm : Form
     PopulateStoreInspectorList(serverData);
     PopulateStartInspectorList(serverData);
     PopulateResourceInspectorList(serverData);
-    PopulateSafeInspectorList(serverData);
-    UpdateMonsterInspectorSelectionDetails();
+    RefreshMonsterEditorSelection(preferredDummy: null, preferredSpawn: null, selectFirstDummyWhenNeeded: false, selectFirstSpawnWhenNeeded: false);
     UpdateServerOverlayModeFromInspector();
   }
 
@@ -1199,7 +1615,6 @@ internal sealed partial class MainForm : Form
       AddServerListItem(_serverSummaryListView, null, "Store", serverData.Stores.Length.ToString("N0"));
       AddServerListItem(_serverSummaryListView, null, "Start", serverData.StartPoints.Length.ToString("N0"));
       AddServerListItem(_serverSummaryListView, null, "Resource", serverData.ResourceNodes.Length.ToString("N0"));
-      AddServerListItem(_serverSummaryListView, null, "Safe", serverData.SafeZones.Length.ToString("N0"));
     }
     finally
     {
@@ -1209,6 +1624,7 @@ internal sealed partial class MainForm : Form
 
   private void PopulateMonsterInspectorList(ServerMapData? serverData)
   {
+    string? previouslySelectedBlockCode = GetSelectedMonsterInspectorItem()?.Block.Code;
     _serverMonsterListView.BeginUpdate();
     try
     {
@@ -1230,6 +1646,7 @@ internal sealed partial class MainForm : Form
         List<string> monsterCodes = new();
         List<string> monsterNames = new();
         int spawnCount = 0;
+        ulong totalRegenLimit = 0;
         bool matchesFilter = string.IsNullOrWhiteSpace(filter);
         for (int setIndex = 0; setIndex < block.SpawnSets.Length; ++setIndex)
         {
@@ -1238,6 +1655,7 @@ internal sealed partial class MainForm : Form
           {
             ServerMapMonsterSpawn spawn = spawnSet.Spawns[spawnIndex];
             ++spawnCount;
+            totalRegenLimit += spawn.RegenLimit;
             if (!monsterCodes.Contains(spawn.MonsterCode, StringComparer.OrdinalIgnoreCase))
             {
               monsterCodes.Add(spawn.MonsterCode);
@@ -1263,29 +1681,36 @@ internal sealed partial class MainForm : Form
           continue;
         }
 
+        string monsterCodeSummary = BuildMonsterSummary(monsterCodes, monsterCodes);
         string monsterSummary = BuildMonsterSummary(monsterNames, monsterCodes);
-        for (int dummyIndex = 0; dummyIndex < block.Dummies.Length; ++dummyIndex)
+        ServerDummyPosition primaryDummy = block.Dummies[0].Dummy;
+        ServerMonsterBlockInspectorItem monsterItem = new()
         {
-          ServerDummyPosition dummy = block.Dummies[dummyIndex].Dummy;
-          ServerMonsterInspectorItem monsterItem = new()
-          {
-            Label = $"monster dummy {dummy.Code}",
-            Dummy = dummy,
-            BlockCode = block.Code,
-            MonsterSummary = monsterSummary,
-            MonsterCodes = monsterCodes.ToArray(),
-            MonsterNames = monsterNames.ToArray(),
-            SpawnCount = spawnCount,
-            SetCount = block.SpawnSets.Length,
-          };
-          AddServerListItem(
-            _serverMonsterListView,
-            monsterItem,
-            dummy.Code,
-            monsterSummary,
-            block.Code,
-            spawnCount.ToString(),
-            FormatSourcePosition(dummy.EditedWorldCenter));
+          Label = $"monster block {block.Code}",
+          Dummy = primaryDummy,
+          Block = block,
+          MonsterSummary = monsterSummary,
+          MonsterCodes = monsterCodes.ToArray(),
+          MonsterNames = monsterNames.ToArray(),
+          SpawnCount = spawnCount,
+          TotalRegenLimit = totalRegenLimit,
+          SetCount = block.SpawnSets.Length,
+        };
+        ListViewItem listItem = AddServerListItem(
+          _serverMonsterListView,
+          monsterItem,
+          block.Code,
+          monsterCodeSummary,
+          monsterSummary,
+          block.Dummies.Length.ToString(),
+          spawnCount.ToString(),
+          totalRegenLimit.ToString("N0"),
+          FormatSourcePosition(block.WorldCenter));
+        if (!string.IsNullOrWhiteSpace(previouslySelectedBlockCode) &&
+            string.Equals(block.Code, previouslySelectedBlockCode, StringComparison.OrdinalIgnoreCase))
+        {
+          listItem.Selected = true;
+          listItem.Focused = true;
         }
       }
     }
@@ -1299,44 +1724,936 @@ internal sealed partial class MainForm : Form
   {
     _serverMonsterSearchText = _serverMonsterSearchTextBox.Text;
     PopulateMonsterInspectorList(_loadedMap?.ServerData);
+    RefreshMonsterEditorSelection(preferredDummy: null, preferredSpawn: null, selectFirstDummyWhenNeeded: true, selectFirstSpawnWhenNeeded: true);
+  }
+
+  private void OnServerMonsterDefinitionSearchTextChanged(object? sender, EventArgs e)
+  {
+    _serverMonsterDefinitionSearchText = _serverMonsterDefinitionSearchTextBox.Text;
+    PopulateMonsterDefinitionComboBox(_loadedMap?.ServerData);
+    UpdateMonsterEditorActions();
+  }
+
+  private void OnServerMonsterDefinitionComboBoxSelectedIndexChanged(object? sender, EventArgs e)
+  {
+    if (_suppressMonsterDefinitionSelectionChanged)
+    {
+      return;
+    }
+
+    UpdateMonsterEditorActions();
+  }
+
+  private void OnServerMonsterListSelectionChanged(object? sender, EventArgs e)
+  {
+    RefreshMonsterEditorSelection(preferredDummy: null, preferredSpawn: null, selectFirstDummyWhenNeeded: true, selectFirstSpawnWhenNeeded: true);
+    if (!_suppressServerSelectionSync)
+    {
+      _viewer.SetSelectedServerDummy(GetSelectedMonsterNavigationDummy());
+      UpdateServerInspectorActions();
+    }
+  }
+
+  private void OnServerMonsterDummyListSelectionChanged(object? sender, EventArgs e)
+  {
+    UpdateMonsterInspectorSelectionDetails();
+  }
+
+  private void OnServerMonsterSpawnListSelectionChanged(object? sender, EventArgs e)
+  {
+    UpdateMonsterInspectorSelectionDetails();
+  }
+
+  private void RefreshMonsterEditorSelection(
+    ServerDummyPosition? preferredDummy,
+    ServerMapMonsterSpawn? preferredSpawn,
+    bool selectFirstDummyWhenNeeded,
+    bool selectFirstSpawnWhenNeeded)
+  {
+    ServerMonsterDummyInspectorItem? currentDummyItem = GetSelectedMonsterDummyInspectorItem();
+    ServerMonsterSpawnInspectorItem? currentSpawnItem = GetSelectedMonsterSpawnItem();
+    ServerDummyPosition? dummyToSelect = preferredDummy ?? currentDummyItem?.Dummy;
+    ServerMapMonsterSpawn? spawnToSelect = preferredSpawn ?? currentSpawnItem?.Spawn;
+    int preferredSetIndex = currentSpawnItem?.SetIndex ?? GetSelectedMonsterSpawnSetIndex();
+    ServerMonsterBlockInspectorItem? monsterItem = GetSelectedMonsterInspectorItem();
+    PopulateMonsterDummyList(monsterItem, dummyToSelect, selectFirstDummyWhenNeeded);
+    PopulateMonsterSpawnSetComboBox(_loadedMap?.ServerData, monsterItem?.Block, preferredSetIndex);
+    PopulateMonsterSpawnList(monsterItem, spawnToSelect, selectFirstSpawnWhenNeeded);
     UpdateMonsterInspectorSelectionDetails();
   }
 
   private void UpdateMonsterInspectorSelectionDetails()
   {
-    if (_serverMonsterDetailLabel == null)
+    if (_serverMonsterDetailLabel == null || _serverMonsterBlockLabel == null)
     {
       return;
     }
 
-    if (_loadedMap?.ServerData == null)
+    ServerMapData? serverData = _loadedMap?.ServerData;
+    if (serverData == null)
     {
+      PopulateMonsterDefinitionComboBox(null);
+      PopulateMonsterDummyList(null, null, selectFirstWhenNeeded: false);
+      PopulateMonsterSpawnSetComboBox(null, null, 0);
+      PopulateMonsterSpawnList(null, null, selectFirstWhenNeeded: false);
+      _serverMonsterBlockLabel.Text = "Load a server folder to inspect monster spawns.";
       _serverMonsterDetailLabel.Text = "Load a server folder to inspect monster spawns.";
+      UpdateMonsterEditorActions();
       return;
     }
 
-    if (_serverMonsterListView.SelectedItems.Count <= 0 ||
-        _serverMonsterListView.SelectedItems[0].Tag is not ServerMonsterInspectorItem monsterItem)
+    PopulateMonsterDefinitionComboBox(serverData);
+
+    ServerMonsterBlockInspectorItem? monsterItem = GetSelectedMonsterInspectorItem();
+    ServerMonsterDummyInspectorItem? dummyItem = GetSelectedMonsterDummyInspectorItem();
+    ServerMonsterSpawnInspectorItem? spawnItem = GetSelectedMonsterSpawnItem();
+    if (monsterItem == null)
     {
       int visibleCount = _serverMonsterListView.Items.Count;
-      _serverMonsterDetailLabel.Text =
+      _serverMonsterBlockLabel.Text =
         visibleCount > 0
-          ? $"Showing {visibleCount:N0} monster dummy areas. Select one to inspect or move its spawn box."
-          : "No monster dummy areas match the current search.";
+          ? $"Showing {visibleCount:N0} monster blocks. Select one to edit its dummy boxes and spawn entries."
+          : "No monster blocks match the current search.";
+      _serverMonsterDetailLabel.Text = "Choose a monster definition, set, and interval, then click Add Monster to create a new monster block at the camera.";
+      UpdateMonsterEditorActions();
       return;
     }
 
-    string names = monsterItem.MonsterNames.Length > 0
-      ? string.Join(", ", monsterItem.MonsterNames.Take(4))
-      : string.Join(", ", monsterItem.MonsterCodes.Take(4));
-    if ((monsterItem.MonsterNames.Length > 4) || (monsterItem.MonsterNames.Length == 0 && monsterItem.MonsterCodes.Length > 4))
+    _serverMonsterBlockLabel.Text =
+      $"Block: {monsterItem.Block.Code} | Dummies: {monsterItem.Block.Dummies.Length:N0} | Sets: {monsterItem.Block.SpawnSets.Length:N0} | Entries: {monsterItem.SpawnCount:N0} | Limit: {monsterItem.TotalRegenLimit:N0}{Environment.NewLine}"
+      + $"Center: {FormatSourcePosition(monsterItem.Block.WorldCenter)}";
+
+    if (spawnItem != null)
     {
-      names += ", ...";
+      _suppressMonsterSpawnIntervalValueChanged = true;
+      try
+      {
+        decimal intervalValue = Math.Clamp((decimal)spawnItem.Spawn.RegenTime, _serverMonsterIntervalUpDown.Minimum, _serverMonsterIntervalUpDown.Maximum);
+        if (_serverMonsterIntervalUpDown.Value != intervalValue)
+        {
+          _serverMonsterIntervalUpDown.Value = intervalValue;
+        }
+      }
+      finally
+      {
+        _suppressMonsterSpawnIntervalValueChanged = false;
+      }
+
+      _serverMonsterDetailLabel.Text =
+        $"Spawn Set: {spawnItem.SetIndex} | Monster: {spawnItem.Spawn.MonsterCode} ({spawnItem.Spawn.MonsterName}){Environment.NewLine}"
+        + $"Interval: {spawnItem.Spawn.RegenTime:N0} | Limit: {spawnItem.Spawn.RegenLimit:N0} | Min: {spawnItem.Spawn.RegenMin:N0} | Max: {spawnItem.Spawn.RegenMax:N0}";
+      UpdateMonsterEditorActions();
+      return;
     }
+
+    string codes = BuildMonsterSummary(monsterItem.MonsterCodes, monsterItem.MonsterCodes);
+    string names = BuildMonsterSummary(monsterItem.MonsterNames, monsterItem.MonsterCodes);
+
+    if (dummyItem != null)
+    {
+      Vector3 dummySize = dummyItem.Dummy.EditedWorldMax - dummyItem.Dummy.EditedWorldMin;
+      _serverMonsterDetailLabel.Text =
+        $"Dummy: {dummyItem.Dummy.Code} | Center: {FormatSourcePosition(dummyItem.Dummy.EditedWorldCenter)}{Environment.NewLine}"
+        + $"Size: {dummySize.X:F1}, {dummySize.Y:F1}, {dummySize.Z:F1}{Environment.NewLine}"
+        + "Move this dummy in the viewport or use Add Dummy to clone another spawn box into the same block.";
+      UpdateMonsterEditorActions();
+      return;
+    }
+
     _serverMonsterDetailLabel.Text =
-      $"Dummy: {monsterItem.Dummy.Code} | Block: {monsterItem.BlockCode} | Sets: {monsterItem.SetCount} | Spawns: {monsterItem.SpawnCount}{Environment.NewLine}"
+      $"Monster Code: {codes}{Environment.NewLine}"
       + $"Monsters: {names}{Environment.NewLine}"
-      + $"Center: {FormatSourcePosition(monsterItem.Dummy.EditedWorldCenter)}";
+      + $"Primary Dummy: {monsterItem.Dummy.Code}{Environment.NewLine}"
+      + "Select a dummy row to focus one spawn box, or select a spawn row to edit interval.";
+    UpdateMonsterEditorActions();
+  }
+
+  private void PopulateMonsterDummyList(ServerMonsterBlockInspectorItem? monsterItem, ServerDummyPosition? preferredDummy, bool selectFirstWhenNeeded)
+  {
+    if (_serverMonsterDummyListView == null)
+    {
+      return;
+    }
+
+    ListViewItem? itemToSelect = null;
+    _serverMonsterDummyListView.BeginUpdate();
+    try
+    {
+      _serverMonsterDummyListView.Items.Clear();
+      if (monsterItem == null)
+      {
+        return;
+      }
+
+      for (int dummyIndex = 0; dummyIndex < monsterItem.Block.Dummies.Length; ++dummyIndex)
+      {
+        ServerMapMonsterDummyRef dummyRef = monsterItem.Block.Dummies[dummyIndex];
+        ServerDummyPosition dummy = dummyRef.Dummy;
+        Vector3 dummySize = dummy.EditedWorldMax - dummy.EditedWorldMin;
+        ServerMonsterDummyInspectorItem dummyItem = new()
+        {
+          Label = $"monster dummy {dummy.Code}",
+          Dummy = dummy,
+          DummyRef = dummyRef,
+          Block = monsterItem.Block,
+        };
+        ListViewItem listViewItem = AddServerListItem(
+          _serverMonsterDummyListView,
+          dummyItem,
+          dummy.Code,
+          FormatSourcePosition(dummy.EditedWorldCenter),
+          $"{dummySize.X:F0},{dummySize.Y:F0},{dummySize.Z:F0}");
+        if (preferredDummy != null && ReferenceEquals(preferredDummy, dummy))
+        {
+          itemToSelect = listViewItem;
+        }
+      }
+    }
+    finally
+    {
+      _serverMonsterDummyListView.EndUpdate();
+    }
+
+    if (itemToSelect == null && selectFirstWhenNeeded && _serverMonsterDummyListView.Items.Count > 0)
+    {
+      itemToSelect = _serverMonsterDummyListView.Items[0];
+    }
+
+    if (itemToSelect != null)
+    {
+      ClearListViewSelection(_serverMonsterDummyListView);
+      itemToSelect.Selected = true;
+      itemToSelect.Focused = true;
+      itemToSelect.EnsureVisible();
+    }
+  }
+
+  private void PopulateMonsterDefinitionComboBox(ServerMapData? serverData)
+  {
+    if (_serverMonsterDefinitionComboBox == null)
+    {
+      return;
+    }
+
+    string? previouslySelectedCode = GetSelectedMonsterDefinition()?.Code;
+    string filter = _serverMonsterDefinitionSearchText.Trim();
+    _suppressMonsterDefinitionSelectionChanged = true;
+    try
+    {
+      _serverMonsterDefinitionComboBox.BeginUpdate();
+      _serverMonsterDefinitionComboBox.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      foreach (ServerMonsterDefinition definition in serverData.MonsterDefinitions)
+      {
+        if (!string.IsNullOrWhiteSpace(filter) &&
+            definition.Code.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0 &&
+            definition.DisplayName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+        {
+          continue;
+        }
+
+        _serverMonsterDefinitionComboBox.Items.Add(new ServerMonsterDefinitionComboItem
+        {
+          Definition = definition,
+        });
+      }
+
+      if (_serverMonsterDefinitionComboBox.Items.Count <= 0)
+      {
+        return;
+      }
+
+      int selectedIndex = 0;
+      if (!string.IsNullOrWhiteSpace(previouslySelectedCode))
+      {
+        for (int index = 0; index < _serverMonsterDefinitionComboBox.Items.Count; ++index)
+        {
+          if (_serverMonsterDefinitionComboBox.Items[index] is ServerMonsterDefinitionComboItem item &&
+              string.Equals(item.Definition.Code, previouslySelectedCode, StringComparison.OrdinalIgnoreCase))
+          {
+            selectedIndex = index;
+            break;
+          }
+        }
+      }
+
+      _serverMonsterDefinitionComboBox.SelectedIndex = selectedIndex;
+    }
+    finally
+    {
+      _serverMonsterDefinitionComboBox.EndUpdate();
+      _suppressMonsterDefinitionSelectionChanged = false;
+    }
+  }
+
+  private void PopulateMonsterSpawnSetComboBox(ServerMapData? serverData, ServerMapMonsterBlock? block, int preferredSetIndex)
+  {
+    if (_serverMonsterSpawnSetComboBox == null)
+    {
+      return;
+    }
+
+    int setCount = block?.SpawnSets.Length ?? Math.Max(1, serverData?.MapDefinition.MonsterSetFileCount ?? 1);
+    preferredSetIndex = Math.Clamp(preferredSetIndex, 0, Math.Max(0, setCount - 1));
+    _serverMonsterSpawnSetComboBox.BeginUpdate();
+    try
+    {
+      _serverMonsterSpawnSetComboBox.Items.Clear();
+      for (int setIndex = 0; setIndex < setCount; ++setIndex)
+      {
+        _serverMonsterSpawnSetComboBox.Items.Add(new MonsterSpawnSetComboItem(setIndex));
+      }
+
+      if (_serverMonsterSpawnSetComboBox.Items.Count > 0)
+      {
+        _serverMonsterSpawnSetComboBox.SelectedIndex = preferredSetIndex;
+      }
+    }
+    finally
+    {
+      _serverMonsterSpawnSetComboBox.EndUpdate();
+    }
+  }
+
+  private void PopulateMonsterSpawnList(ServerMonsterBlockInspectorItem? monsterItem, ServerMapMonsterSpawn? preferredSpawn, bool selectFirstWhenNeeded)
+  {
+    if (_serverMonsterSpawnListView == null)
+    {
+      return;
+    }
+
+    ListViewItem? itemToSelect = null;
+    _serverMonsterSpawnListView.BeginUpdate();
+    try
+    {
+      _serverMonsterSpawnListView.Items.Clear();
+      if (monsterItem == null)
+      {
+        return;
+      }
+
+      for (int setIndex = 0; setIndex < monsterItem.Block.SpawnSets.Length; ++setIndex)
+      {
+        ServerMapMonsterSpawnSet spawnSet = monsterItem.Block.SpawnSets[setIndex];
+        for (int spawnIndex = 0; spawnIndex < spawnSet.Spawns.Length; ++spawnIndex)
+        {
+          ServerMapMonsterSpawn spawn = spawnSet.Spawns[spawnIndex];
+          ServerMonsterSpawnInspectorItem spawnItem = new()
+          {
+            Block = monsterItem.Block,
+            SetIndex = spawnSet.SetIndex,
+            Spawn = spawn,
+          };
+          ListViewItem listViewItem = AddServerListItem(
+            _serverMonsterSpawnListView,
+            spawnItem,
+            spawnSet.SetIndex.ToString(),
+            spawn.MonsterCode,
+            spawn.MonsterName,
+            spawn.RegenTime.ToString("N0"),
+            spawn.RegenLimit.ToString("N0"),
+            spawn.RegenMin.ToString("N0"),
+            spawn.RegenMax.ToString("N0"));
+          if (preferredSpawn != null && ReferenceEquals(preferredSpawn, spawn))
+          {
+            itemToSelect = listViewItem;
+          }
+        }
+      }
+    }
+    finally
+    {
+      _serverMonsterSpawnListView.EndUpdate();
+    }
+
+    if (itemToSelect == null && selectFirstWhenNeeded && _serverMonsterSpawnListView.Items.Count > 0)
+    {
+      itemToSelect = _serverMonsterSpawnListView.Items[0];
+    }
+
+    if (itemToSelect != null)
+    {
+      ClearListViewSelection(_serverMonsterSpawnListView);
+      itemToSelect.Selected = true;
+      itemToSelect.Focused = true;
+      itemToSelect.EnsureVisible();
+    }
+  }
+
+  private void UpdateMonsterEditorActions()
+  {
+    bool hasServerData = _loadedMap?.ServerData != null;
+    bool hasDefinition = GetSelectedMonsterDefinition() != null;
+    bool hasMonsterSelection = GetSelectedMonsterInspectorItem() != null;
+    bool hasSpawnSelection = GetSelectedMonsterSpawnItem() != null;
+
+    if (_serverMonsterDefinitionSearchTextBox != null)
+    {
+      _serverMonsterDefinitionSearchTextBox.Enabled = hasServerData;
+    }
+
+    if (_serverMonsterDefinitionComboBox != null)
+    {
+      _serverMonsterDefinitionComboBox.Enabled = hasServerData && _serverMonsterDefinitionComboBox.Items.Count > 0;
+    }
+
+    if (_serverMonsterSpawnSetComboBox != null)
+    {
+      _serverMonsterSpawnSetComboBox.Enabled = hasServerData && _serverMonsterSpawnSetComboBox.Items.Count > 0;
+    }
+
+    if (_serverMonsterIntervalUpDown != null)
+    {
+      _serverMonsterIntervalUpDown.Enabled = hasServerData;
+    }
+
+    if (_serverMonsterAddBlockButton != null)
+    {
+      _serverMonsterAddBlockButton.Enabled = hasServerData && hasDefinition;
+    }
+
+    if (_serverMonsterAddDummyButton != null)
+    {
+      _serverMonsterAddDummyButton.Enabled = hasMonsterSelection;
+    }
+
+    if (_serverMonsterAddSpawnButton != null)
+    {
+      _serverMonsterAddSpawnButton.Enabled = hasMonsterSelection && hasDefinition;
+    }
+
+    if (_serverMonsterSpawnListView != null)
+    {
+      _serverMonsterSpawnListView.Enabled = hasMonsterSelection;
+    }
+
+    if (_serverMonsterDummyListView != null)
+    {
+      _serverMonsterDummyListView.Enabled = hasMonsterSelection;
+    }
+
+    if (!hasSpawnSelection && _serverMonsterIntervalUpDown != null && hasServerData && _serverMonsterIntervalUpDown.Value <= 0)
+    {
+      _serverMonsterIntervalUpDown.Value = 60;
+    }
+  }
+
+  private void OnServerMonsterSpawnIntervalValueChanged(object? sender, EventArgs e)
+  {
+    if (_suppressMonsterSpawnIntervalValueChanged)
+    {
+      return;
+    }
+
+    ServerMonsterSpawnInspectorItem? spawnItem = GetSelectedMonsterSpawnItem();
+    if (spawnItem == null)
+    {
+      return;
+    }
+
+    uint newInterval = (uint)_serverMonsterIntervalUpDown.Value;
+    if (spawnItem.Spawn.RegenTime == newInterval)
+    {
+      return;
+    }
+
+    spawnItem.Spawn.RegenTime = newInterval;
+    PopulateMonsterSpawnList(GetSelectedMonsterInspectorItem(), spawnItem.Spawn, selectFirstWhenNeeded: false);
+    UpdateMonsterInspectorSelectionDetails();
+    _statusBaseText = $"Updated spawn interval for {spawnItem.Spawn.MonsterCode} in block {spawnItem.Block.Code} to {newInterval:N0}.";
+    RefreshRuntimeStatus();
+  }
+
+  private void AddMonsterBlockFromUi()
+  {
+    if (_loadedMap?.ServerData is not ServerMapData serverData)
+    {
+      return;
+    }
+
+    ServerMonsterDefinition? definition = GetSelectedMonsterDefinition();
+    if (definition == null)
+    {
+      MessageBox.Show(this, "Pick a monster definition first.", "Add Monster", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    ServerMonsterBlockInspectorItem? templateItem = GetSelectedMonsterInspectorItem();
+    ServerMonsterDummyInspectorItem? templateDummyItem = GetSelectedMonsterDummyInspectorItem();
+    ServerMapMonsterSpawn? templateSpawn = GetSelectedMonsterSpawnItem()?.Spawn;
+    if (templateSpawn == null && templateItem != null)
+    {
+      templateSpawn = templateItem.Block.SpawnSets.SelectMany(static set => set.Spawns).FirstOrDefault();
+    }
+
+    int newBlockRecordIndex = GetNextMonsterBlockRecordIndex(serverData);
+    string newBlockCode = GenerateUniqueMonsterBlockCode(serverData);
+    ServerDummyPosition newDummy = CreateMonsterDummyAtCamera(
+      templateDummyItem?.Dummy ?? templateItem?.Dummy,
+      GenerateUniqueMonsterDummyCode(serverData, newBlockCode));
+    int targetSetIndex = GetSelectedMonsterSpawnSetIndex();
+    ServerMapMonsterSpawn newSpawn = CreateMonsterSpawn(serverData, definition, (uint)_serverMonsterIntervalUpDown.Value, templateSpawn);
+    int spawnSetCount = Math.Max(1, serverData.MapDefinition.MonsterSetFileCount);
+    ServerMapMonsterSpawnSet[] spawnSets = new ServerMapMonsterSpawnSet[spawnSetCount];
+    for (int setIndex = 0; setIndex < spawnSets.Length; ++setIndex)
+    {
+      spawnSets[setIndex] = new ServerMapMonsterSpawnSet
+      {
+        SetIndex = setIndex,
+        Spawns = setIndex == Math.Clamp(targetSetIndex, 0, spawnSets.Length - 1)
+          ? [newSpawn]
+          : Array.Empty<ServerMapMonsterSpawn>(),
+      };
+    }
+
+    ServerMapMonsterBlock newBlock = new()
+    {
+      RecordIndex = newBlockRecordIndex,
+      DeclaredIndex = checked((uint)newBlockRecordIndex),
+      Code = newBlockCode,
+      MinCount = templateItem?.Block.MinCount ?? 1,
+      MobCount = templateItem?.Block.MobCount ?? 1,
+      MaxCount = templateItem?.Block.MaxCount ?? 1,
+      WorldCenter = newDummy.EditedWorldCenter,
+      Dummies =
+      [
+        new ServerMapMonsterDummyRef
+        {
+          DummyCode = newDummy.Code,
+          SelectProp = templateDummyItem?.DummyRef.SelectProp ?? templateItem?.Block.Dummies.FirstOrDefault()?.SelectProp ?? 0u,
+          Dummy = newDummy,
+        }
+      ],
+      SpawnSets = spawnSets,
+    };
+
+    serverData.MonsterBlocks = [.. serverData.MonsterBlocks, newBlock];
+    serverData.MonsterDummies = [.. serverData.MonsterDummies, newDummy];
+    serverData.MonsterSpawnCount += 1;
+    OnMonsterDataEdited(newDummy, newSpawn, $"Added monster block {newBlock.Code} with {definition.Code}.");
+  }
+
+  private void AddMonsterDummyFromUi()
+  {
+    if (_loadedMap?.ServerData is not ServerMapData serverData)
+    {
+      return;
+    }
+
+    ServerMonsterBlockInspectorItem? monsterItem = GetSelectedMonsterInspectorItem();
+    if (monsterItem == null)
+    {
+      MessageBox.Show(this, "Select a monster block first.", "Add Dummy", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    ServerMonsterDummyInspectorItem? selectedDummyItem = GetSelectedMonsterDummyInspectorItem();
+    ServerDummyPosition newDummy = CreateMonsterDummyAtCamera(
+      selectedDummyItem?.Dummy ?? monsterItem.Dummy,
+      GenerateUniqueMonsterDummyCode(serverData, monsterItem.Block.Code));
+    ServerMapMonsterDummyRef newDummyRef = new()
+    {
+      DummyCode = newDummy.Code,
+      SelectProp = selectedDummyItem?.DummyRef.SelectProp ?? monsterItem.Block.Dummies.FirstOrDefault()?.SelectProp ?? 0u,
+      Dummy = newDummy,
+    };
+
+    monsterItem.Block.Dummies = [.. monsterItem.Block.Dummies, newDummyRef];
+    monsterItem.Block.WorldCenter = ComputeMonsterBlockCenter(monsterItem.Block.Dummies);
+    serverData.MonsterDummies = [.. serverData.MonsterDummies, newDummy];
+    OnMonsterDataEdited(newDummy, null, $"Added dummy {newDummy.Code} to monster block {monsterItem.Block.Code}.");
+  }
+
+  private void AddMonsterSpawnFromUi()
+  {
+    if (_loadedMap?.ServerData is not ServerMapData serverData)
+    {
+      return;
+    }
+
+    ServerMonsterBlockInspectorItem? monsterItem = GetSelectedMonsterInspectorItem();
+    if (monsterItem == null)
+    {
+      MessageBox.Show(this, "Select a monster block first.", "Spawn Monster", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    ServerMonsterDefinition? definition = GetSelectedMonsterDefinition();
+    if (definition == null)
+    {
+      MessageBox.Show(this, "Pick a monster definition first.", "Spawn Monster", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    int targetSetIndex = Math.Clamp(GetSelectedMonsterSpawnSetIndex(), 0, Math.Max(0, monsterItem.Block.SpawnSets.Length - 1));
+    ServerMapMonsterSpawn? templateSpawn = GetSelectedMonsterSpawnItem()?.Spawn;
+    if (templateSpawn == null)
+    {
+      templateSpawn = monsterItem.Block.SpawnSets[targetSetIndex].Spawns.FirstOrDefault()
+        ?? monsterItem.Block.SpawnSets.SelectMany(static set => set.Spawns).FirstOrDefault();
+    }
+
+    ServerMapMonsterSpawn newSpawn = CreateMonsterSpawn(serverData, definition, (uint)_serverMonsterIntervalUpDown.Value, templateSpawn);
+    ServerMapMonsterSpawnSet targetSet = monsterItem.Block.SpawnSets[targetSetIndex];
+    targetSet.Spawns = [.. targetSet.Spawns, newSpawn];
+    serverData.MonsterSpawnCount += 1;
+    OnMonsterDataEdited(GetSelectedMonsterNavigationDummy() ?? monsterItem.Dummy, newSpawn, $"Added spawn {definition.Code} to block {monsterItem.Block.Code} set {targetSet.SetIndex}.");
+  }
+
+  private void OnMonsterDataEdited(ServerDummyPosition? preferredDummy, ServerMapMonsterSpawn? preferredSpawn, string statusText)
+  {
+    _viewer.RefreshServerOverlay();
+    RefreshServerInspector();
+    if (preferredDummy != null)
+    {
+      _viewer.SetSelectedServerDummy(preferredDummy);
+      SelectServerInspectorItem(preferredDummy);
+    }
+
+    if (preferredSpawn != null)
+    {
+      SelectMonsterSpawnInspectorItem(preferredSpawn);
+    }
+
+    _statusBaseText = statusText;
+    RefreshRuntimeStatus();
+  }
+
+  private void SelectMonsterSpawnInspectorItem(ServerMapMonsterSpawn? spawn)
+  {
+    if (spawn == null || _serverMonsterSpawnListView == null)
+    {
+      return;
+    }
+
+    foreach (ListViewItem item in _serverMonsterSpawnListView.Items)
+    {
+      if (item.Tag is ServerMonsterSpawnInspectorItem spawnItem && ReferenceEquals(spawnItem.Spawn, spawn))
+      {
+        ClearListViewSelection(_serverMonsterSpawnListView);
+        item.Selected = true;
+        item.Focused = true;
+        item.EnsureVisible();
+        return;
+      }
+    }
+  }
+
+  private ServerMonsterBlockInspectorItem? GetSelectedMonsterInspectorItem()
+  {
+    return _serverMonsterListView.SelectedItems.Count > 0
+      ? _serverMonsterListView.SelectedItems[0].Tag as ServerMonsterBlockInspectorItem
+      : null;
+  }
+
+  private ServerMonsterDummyInspectorItem? GetSelectedMonsterDummyInspectorItem()
+  {
+    return _serverMonsterDummyListView != null && _serverMonsterDummyListView.SelectedItems.Count > 0
+      ? _serverMonsterDummyListView.SelectedItems[0].Tag as ServerMonsterDummyInspectorItem
+      : null;
+  }
+
+  private ServerMonsterSpawnInspectorItem? GetSelectedMonsterSpawnItem()
+  {
+    return _serverMonsterSpawnListView != null && _serverMonsterSpawnListView.SelectedItems.Count > 0
+      ? _serverMonsterSpawnListView.SelectedItems[0].Tag as ServerMonsterSpawnInspectorItem
+      : null;
+  }
+
+  private ServerMonsterDefinition? GetSelectedMonsterDefinition()
+  {
+    return _serverMonsterDefinitionComboBox.SelectedItem is ServerMonsterDefinitionComboItem item ? item.Definition : null;
+  }
+
+  private int GetSelectedMonsterSpawnSetIndex()
+  {
+    if (_serverMonsterSpawnSetComboBox.SelectedItem is MonsterSpawnSetComboItem setItem)
+    {
+      return setItem.SetIndex;
+    }
+
+    return 0;
+  }
+
+  private ServerDummyPosition CreateMonsterDummyAtCamera(ServerDummyPosition? templateDummy, string dummyCode)
+  {
+    Vector3 center = GetPreferredMonsterPlacementCenter();
+    Vector3 halfExtents = GetMonsterDummyHalfExtents(templateDummy);
+    return new ServerDummyPosition
+    {
+      Code = dummyCode,
+      HelperIndex = ushort.MaxValue,
+      LocalMin = -halfExtents,
+      LocalMax = halfExtents,
+      WorldMin = center - halfExtents,
+      WorldMax = center + halfExtents,
+      WorldRightTop = center + halfExtents,
+      WorldLeftBottom = center - halfExtents,
+      WorldCenter = center,
+      WorldDirection = Vector3.UnitZ,
+      IsPositionable = true,
+    };
+  }
+
+  private Vector3 GetPreferredMonsterPlacementCenter()
+  {
+    if (_viewer.TryGetCameraSourcePose(out Vector3 sourcePosition, out Vector3 sourceForward))
+    {
+      sourceForward.Y = 0.0f;
+      if (sourceForward.LengthSquared < 0.000001f)
+      {
+        sourceForward = -Vector3.UnitZ;
+      }
+      else
+      {
+        sourceForward = Vector3.Normalize(sourceForward);
+      }
+
+      return sourcePosition + sourceForward * 250.0f;
+    }
+
+    if (_loadedMap != null)
+    {
+      return (_loadedMap.Bounds.Min + _loadedMap.Bounds.Max) * 0.5f;
+    }
+
+    return Vector3.Zero;
+  }
+
+  private static Vector3 GetMonsterDummyHalfExtents(ServerDummyPosition? templateDummy)
+  {
+    if (templateDummy != null)
+    {
+      Vector3 editedSize = templateDummy.EditedWorldMax - templateDummy.EditedWorldMin;
+      if (IsFinite(editedSize) &&
+          editedSize.X > 0.0001f &&
+          editedSize.Y > 0.0001f &&
+          editedSize.Z > 0.0001f)
+      {
+        Vector3 halfExtents = editedSize * 0.5f;
+        return new Vector3(
+          MathF.Max(halfExtents.X, 40.0f),
+          MathF.Max(halfExtents.Y, 40.0f),
+          MathF.Max(halfExtents.Z, 40.0f));
+      }
+    }
+
+    return new Vector3(180.0f, 120.0f, 180.0f);
+  }
+
+  private static Vector3 ComputeMonsterBlockCenter(ServerMapMonsterDummyRef[] dummyRefs)
+  {
+    if (dummyRefs.Length <= 0)
+    {
+      return Vector3.Zero;
+    }
+
+    Vector3 sum = Vector3.Zero;
+    for (int index = 0; index < dummyRefs.Length; ++index)
+    {
+      sum += dummyRefs[index].Dummy.EditedWorldCenter;
+    }
+
+    return sum / dummyRefs.Length;
+  }
+
+  private static int GetNextMonsterBlockRecordIndex(ServerMapData serverData)
+  {
+    int nextIndex = 0;
+    for (int index = 0; index < serverData.MonsterBlocks.Length; ++index)
+    {
+      nextIndex = Math.Max(nextIndex, serverData.MonsterBlocks[index].RecordIndex + 1);
+    }
+
+    return nextIndex;
+  }
+
+  private static int GetNextMonsterSpawnRecordIndex(ServerMapData serverData)
+  {
+    int nextIndex = 0;
+    for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+    {
+      ServerMapMonsterBlock block = serverData.MonsterBlocks[blockIndex];
+      for (int setIndex = 0; setIndex < block.SpawnSets.Length; ++setIndex)
+      {
+        ServerMapMonsterSpawnSet spawnSet = block.SpawnSets[setIndex];
+        for (int spawnIndex = 0; spawnIndex < spawnSet.Spawns.Length; ++spawnIndex)
+        {
+          nextIndex = Math.Max(nextIndex, spawnSet.Spawns[spawnIndex].RecordIndex + 1);
+        }
+      }
+    }
+
+    return nextIndex;
+  }
+
+  private static string GenerateUniqueMonsterBlockCode(ServerMapData serverData)
+  {
+    HashSet<string> existingCodes = new(serverData.MonsterBlocks.Select(static block => block.Code), StringComparer.OrdinalIgnoreCase);
+    string mapFileName = serverData.MapDefinition.FileName;
+    string prefix = $"{mapFileName.ToLowerInvariant()}m";
+    int minimumDigits = 2;
+    for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+    {
+      if (TryParseMonsterBlockCodeNumber(serverData.MonsterBlocks[blockIndex].Code, mapFileName, out _, out string digits))
+      {
+        minimumDigits = Math.Max(minimumDigits, digits.Length);
+      }
+    }
+
+    for (int index = 1; index < 10000; ++index)
+    {
+      string candidate = $"{prefix}{index.ToString($"D{minimumDigits}", CultureInfo.InvariantCulture)}";
+      if (!existingCodes.Contains(candidate))
+      {
+        return candidate;
+      }
+    }
+
+    return $"{prefix}{Guid.NewGuid():N}";
+  }
+
+  private static string GenerateUniqueMonsterDummyCode(ServerMapData serverData, string? blockCode)
+  {
+    HashSet<string> existingCodes = new(serverData.Helpers.Select(static helper => helper.Name), StringComparer.OrdinalIgnoreCase);
+    for (int dummyIndex = 0; dummyIndex < serverData.MonsterDummies.Length; ++dummyIndex)
+    {
+      existingCodes.Add(serverData.MonsterDummies[dummyIndex].Code);
+    }
+
+    if (TryBuildMonsterDummyPrefix(serverData.MapDefinition.FileName, blockCode, out string dummyPrefix))
+    {
+      int nextDummyIndex = 0;
+      for (int dummyIndex = 0; dummyIndex < serverData.MonsterDummies.Length; ++dummyIndex)
+      {
+        if (!TryParseMonsterDummySequence(serverData.MonsterDummies[dummyIndex].Code, dummyPrefix, out int parsedIndex))
+        {
+          continue;
+        }
+
+        nextDummyIndex = Math.Max(nextDummyIndex, parsedIndex + 1);
+      }
+
+      for (int index = nextDummyIndex; index < nextDummyIndex + 10000; ++index)
+      {
+        string candidate = $"{dummyPrefix}{index.ToString(CultureInfo.InvariantCulture)}";
+        if (!existingCodes.Contains(candidate))
+        {
+          return candidate;
+        }
+      }
+    }
+
+    string fallbackPrefix = $"{serverData.MapDefinition.FileName.ToLowerInvariant()}_dm_";
+    for (int index = 1; index < 10000; ++index)
+    {
+      string candidate = $"{fallbackPrefix}{index:0000}";
+      if (!existingCodes.Contains(candidate))
+      {
+        return candidate;
+      }
+    }
+
+    return $"{fallbackPrefix}{Guid.NewGuid():N}";
+  }
+
+  private static bool TryParseMonsterBlockCodeNumber(string blockCode, string mapFileName, out int numericValue, out string digits)
+  {
+    numericValue = 0;
+    digits = string.Empty;
+    if (string.IsNullOrWhiteSpace(blockCode) || string.IsNullOrWhiteSpace(mapFileName))
+    {
+      return false;
+    }
+
+    string expectedPrefix = $"{mapFileName}m";
+    if (!blockCode.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    digits = blockCode[expectedPrefix.Length..];
+    if (digits.Length == 0)
+    {
+      return false;
+    }
+
+    for (int index = 0; index < digits.Length; ++index)
+    {
+      if (!char.IsDigit(digits[index]))
+      {
+        return false;
+      }
+    }
+
+    return int.TryParse(digits, CultureInfo.InvariantCulture, out numericValue);
+  }
+
+  private static bool TryBuildMonsterDummyPrefix(string mapFileName, string? blockCode, out string dummyPrefix)
+  {
+    dummyPrefix = string.Empty;
+    if (!TryParseMonsterBlockCodeNumber(blockCode ?? string.Empty, mapFileName, out _, out string digits))
+    {
+      return false;
+    }
+
+    dummyPrefix = $"dmm{digits}_";
+    return true;
+  }
+
+  private static bool TryParseMonsterDummySequence(string dummyCode, string dummyPrefix, out int sequence)
+  {
+    sequence = 0;
+    if (!dummyCode.StartsWith(dummyPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    string suffix = dummyCode[dummyPrefix.Length..];
+    if (suffix.Length == 0)
+    {
+      return false;
+    }
+
+    for (int index = 0; index < suffix.Length; ++index)
+    {
+      if (!char.IsDigit(suffix[index]))
+      {
+        return false;
+      }
+    }
+
+    return int.TryParse(suffix, CultureInfo.InvariantCulture, out sequence);
+  }
+
+  private static ServerMapMonsterSpawn CreateMonsterSpawn(
+    ServerMapData serverData,
+    ServerMonsterDefinition definition,
+    uint regenTime,
+    ServerMapMonsterSpawn? templateSpawn)
+  {
+    int recordIndex = GetNextMonsterSpawnRecordIndex(serverData);
+    return new ServerMapMonsterSpawn
+    {
+      RecordIndex = recordIndex,
+      DeclaredIndex = checked((uint)recordIndex),
+      MonsterCode = definition.Code,
+      MonsterRecordIndex = definition.RecordIndex,
+      MonsterName = definition.DisplayName,
+      MonsterLevel = definition.Level,
+      MonsterGrade = definition.MobGrade,
+      MonsterRaceCode = definition.RaceCode,
+      RegenTime = regenTime,
+      RegenLimit = templateSpawn?.RegenLimit ?? 1u,
+      RegenProp = templateSpawn?.RegenProp ?? 0u,
+      RegenMin = templateSpawn?.RegenMin ?? 1u,
+      StandardKill = templateSpawn?.StandardKill ?? 0u,
+      RegenMax = templateSpawn?.RegenMax ?? 1u,
+    };
   }
 
   private static string BuildMonsterSummary(IReadOnlyList<string> names, IReadOnlyList<string> codes)
@@ -1505,41 +2822,7 @@ internal sealed partial class MainForm : Form
     }
   }
 
-  private void PopulateSafeInspectorList(ServerMapData? serverData)
-  {
-    _serverSafeListView.BeginUpdate();
-    try
-    {
-      _serverSafeListView.Items.Clear();
-      if (serverData == null)
-      {
-        return;
-      }
-
-      for (int index = 0; index < serverData.SafeZones.Length; ++index)
-      {
-        ServerMapSafeZone safeZone = serverData.SafeZones[index];
-        ServerDummyInspectorItem inspectorItem = new()
-        {
-          Label = $"safe zone {safeZone.Index}",
-          Mode = ServerInspectorMode.Safe,
-          Dummy = safeZone.Dummy,
-        };
-        AddServerListItem(
-          _serverSafeListView,
-          inspectorItem,
-          safeZone.Index.ToString(),
-          safeZone.Dummy.Code,
-          FormatSourcePosition(safeZone.Dummy.EditedWorldCenter));
-      }
-    }
-    finally
-    {
-      _serverSafeListView.EndUpdate();
-    }
-  }
-
-  private static void AddServerListItem(ListView listView, object? tag, params string[] values)
+  private static ListViewItem AddServerListItem(ListView listView, object? tag, params string[] values)
   {
     ListViewItem item = new(values);
     if (tag != null)
@@ -1548,11 +2831,17 @@ internal sealed partial class MainForm : Form
     }
 
     listView.Items.Add(item);
+    return item;
   }
 
   private static string FormatSourcePosition(Vector3 position)
   {
     return FormattableString.Invariant($"{position.X:F1}, {position.Y:F1}, {position.Z:F1}");
+  }
+
+  private static bool IsFinite(Vector3 value)
+  {
+    return float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
   }
 
   private void OnServerListItemActivate(object? sender, EventArgs e)
@@ -1595,7 +2884,7 @@ internal sealed partial class MainForm : Form
 
     return listView.SelectedItems[0].Tag switch
     {
-      IServerInspectorItem inspectorItem => new ServerNavigationTarget(inspectorItem.Label, inspectorItem.Dummy.EditedWorldCenter),
+      IServerInspectorItem inspectorItem => new ServerNavigationTarget(inspectorItem.Label, GetServerDummyTopCenter(inspectorItem.Dummy)),
       _ => null,
     };
   }
@@ -1603,7 +2892,46 @@ internal sealed partial class MainForm : Form
   private bool TryJumpToServerTarget(ServerNavigationTarget navigationTarget)
   {
     Vector3 position = navigationTarget.Position;
-    return _viewer.TrySetCameraSourcePosition(position.X, position.Y + 180.0f, position.Z);
+    return _viewer.TrySetCameraSourcePosition(position.X, position.Y, position.Z);
+  }
+
+  private static Vector3 GetServerDummyTopCenter(ServerDummyPosition dummy)
+  {
+    Vector3 center = dummy.EditedWorldCenter;
+    float topY = MathF.Max(dummy.EditedWorldMin.Y, dummy.EditedWorldMax.Y);
+    return new Vector3(center.X, topY, center.Z);
+  }
+
+  private void SaveServerDataFromUi()
+  {
+    if (_loadedMap?.ServerData is not ServerMapData serverData)
+    {
+      MessageBox.Show(this, "No server-side map data is loaded.", "Save Server Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      return;
+    }
+
+    try
+    {
+      ServerMapSaveResult saveResult = ServerMapSaver.Save(serverData);
+      _statusBaseText =
+        $"Saved server data | Helpers: {saveResult.SavedDummyCount:N0} | Monster blocks: {saveResult.SavedMonsterBlockCount:N0} | Monster spawns: {saveResult.SavedMonsterSpawnCount:N0} | Portals: {saveResult.SavedPortalCount:N0}";
+      RefreshRuntimeStatus();
+      MessageBox.Show(
+        this,
+        $"Saved server data back to RF_Bin.{Environment.NewLine}{Environment.NewLine}"
+        + $"Helper SPT: {saveResult.HelperScriptPath}{Environment.NewLine}"
+        + $"Monster blocks: {saveResult.MonsterBlockTablePath}{Environment.NewLine}"
+        + $"Portal table: {saveResult.PortalTablePath}",
+        "Save Server Data",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Information);
+    }
+    catch (Exception ex)
+    {
+      MessageBox.Show(this, ex.Message, "Save Server Data Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      _statusBaseText = "Save server data failed.";
+      RefreshRuntimeStatus();
+    }
   }
 
   private void SaveCurrentMapAsFromDialog()
@@ -1939,8 +3267,7 @@ internal sealed partial class MainForm : Form
         + $" | Srv Portal: {serverData.Portals.Length:N0}"
         + $" | Srv Store: {serverData.Stores.Length:N0}"
         + $" | Srv Start: {serverData.StartPoints.Length:N0}"
-        + $" | Srv Res: {serverData.ResourceNodes.Length:N0}"
-        + $" | Srv Safe: {serverData.SafeZones.Length:N0}";
+        + $" | Srv Res: {serverData.ResourceNodes.Length:N0}";
     }
     else if (!string.IsNullOrWhiteSpace(serverLoadNote))
     {
@@ -3687,17 +5014,51 @@ internal sealed partial class MainForm : Form
     public required ServerDummyPosition Dummy { get; init; }
   }
 
-  private sealed class ServerMonsterInspectorItem : IServerInspectorItem
+  private sealed class ServerMonsterBlockInspectorItem : IServerInspectorItem
   {
     public ServerInspectorMode Mode => ServerInspectorMode.Monsters;
     public required string Label { get; init; }
     public required ServerDummyPosition Dummy { get; init; }
-    public required string BlockCode { get; init; }
+    public required ServerMapMonsterBlock Block { get; init; }
     public required string MonsterSummary { get; init; }
     public required string[] MonsterCodes { get; init; }
     public required string[] MonsterNames { get; init; }
     public required int SpawnCount { get; init; }
+    public required ulong TotalRegenLimit { get; init; }
     public required int SetCount { get; init; }
+  }
+
+  private sealed class ServerMonsterDummyInspectorItem : IServerInspectorItem
+  {
+    public ServerInspectorMode Mode => ServerInspectorMode.Monsters;
+    public required string Label { get; init; }
+    public required ServerDummyPosition Dummy { get; init; }
+    public required ServerMapMonsterDummyRef DummyRef { get; init; }
+    public required ServerMapMonsterBlock Block { get; init; }
+  }
+
+  private sealed class ServerMonsterSpawnInspectorItem
+  {
+    public required ServerMapMonsterBlock Block { get; init; }
+    public required int SetIndex { get; init; }
+    public required ServerMapMonsterSpawn Spawn { get; init; }
+  }
+
+  private sealed class ServerMonsterDefinitionComboItem
+  {
+    public required ServerMonsterDefinition Definition { get; init; }
+
+    public override string ToString()
+    {
+      return string.IsNullOrWhiteSpace(Definition.DisplayName)
+        ? Definition.Code
+        : $"{Definition.Code} - {Definition.DisplayName}";
+    }
+  }
+
+  private readonly record struct MonsterSpawnSetComboItem(int SetIndex)
+  {
+    public override string ToString() => $"Set {SetIndex}";
   }
 
   private readonly record struct MapListEntry(string Name, string FolderPath, string BspPath, string EbpPath);

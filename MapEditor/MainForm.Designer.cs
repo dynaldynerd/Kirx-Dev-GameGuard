@@ -10,6 +10,7 @@ partial class MainForm
   private ToolStripMenuItem _loadMenuItem = null!;
   private ToolStripMenuItem _openMapFolderMenuItem = null!;
   private ToolStripMenuItem _openServerFolderMenuItem = null!;
+  private ToolStripMenuItem _saveServerDataMenuItem = null!;
   private ToolStripMenuItem _saveEbpOnlyMenuItem = null!;
   private ToolStripMenuItem _saveMapAsMenuItem = null!;
   private ToolStripSeparator _fileBlenderSeparator = null!;
@@ -70,6 +71,7 @@ partial class MainForm
   private ToolStripButton _gridButton = null!;
   private ToolStripButton _mouseDrawCollisionButton = null!;
   private ToolStripButton _selectCollisionButton = null!;
+  private ToolStripButton _selectDummyButton = null!;
   private ToolStripButton _deleteSelectedCollisionButton = null!;
   private ToolStripSeparator _collisionSeparator1 = null!;
   private ToolStripLabel _boundaryMarginLabel = null!;
@@ -143,6 +145,7 @@ partial class MainForm
     _loadMenuItem = new ToolStripMenuItem();
     _openMapFolderMenuItem = new ToolStripMenuItem();
     _openServerFolderMenuItem = new ToolStripMenuItem();
+    _saveServerDataMenuItem = new ToolStripMenuItem();
     _saveEbpOnlyMenuItem = new ToolStripMenuItem();
     _saveMapAsMenuItem = new ToolStripMenuItem();
     _fileBlenderSeparator = new ToolStripSeparator();
@@ -207,6 +210,7 @@ partial class MainForm
     _gridButton = new ToolStripButton();
     _mouseDrawCollisionButton = new ToolStripButton();
     _selectCollisionButton = new ToolStripButton();
+    _selectDummyButton = new ToolStripButton();
     _deleteSelectedCollisionButton = new ToolStripButton();
     _collisionSeparator1 = new ToolStripSeparator();
     _boundaryMarginLabel = new ToolStripLabel();
@@ -274,6 +278,7 @@ partial class MainForm
     _fileMenuItem.DropDownItems.AddRange(new ToolStripItem[]
     {
       _loadMenuItem,
+      _saveServerDataMenuItem,
       _saveEbpOnlyMenuItem,
       _saveMapAsMenuItem,
       _fileBlenderSeparator,
@@ -300,6 +305,10 @@ partial class MainForm
     _openServerFolderMenuItem.Name = "_openServerFolderMenuItem";
     _openServerFolderMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.O;
     _openServerFolderMenuItem.Text = "&Server Folder...";
+
+    _saveServerDataMenuItem.Name = "_saveServerDataMenuItem";
+    _saveServerDataMenuItem.ShortcutKeys = Keys.Control | Keys.Alt | Keys.S;
+    _saveServerDataMenuItem.Text = "Save Server &Data";
 
     _saveEbpOnlyMenuItem.Name = "_saveEbpOnlyMenuItem";
     _saveEbpOnlyMenuItem.ShortcutKeys = Keys.Control | Keys.S;
@@ -653,8 +662,10 @@ partial class MainForm
     {
       _collisionButton,
       _gridButton,
-      _mouseDrawCollisionButton,
+      _bspSelectModeButton,
       _selectCollisionButton,
+      _selectDummyButton,
+      _mouseDrawCollisionButton,
       _deleteSelectedCollisionButton,
       _undoCollisionButton,
       _redoCollisionButton,
@@ -698,6 +709,19 @@ partial class MainForm
     _selectCollisionButton.Name = "_selectCollisionButton";
     _selectCollisionButton.Text = "SelWall";
     _selectCollisionButton.ToolTipText = "Mouse collision selection mode: left click wall segment to select";
+
+    _bspSelectModeButton.CheckOnClick = true;
+    _bspSelectModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _bspSelectModeButton.Name = "_bspSelectModeButton";
+    _bspSelectModeButton.Text = "SelBSP";
+    _bspSelectModeButton.ToolTipText = "Mouse select BSP mesh object/face in viewport";
+
+    _selectDummyButton.CheckOnClick = true;
+    _selectDummyButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+    _selectDummyButton.Enabled = false;
+    _selectDummyButton.Name = "_selectDummyButton";
+    _selectDummyButton.Text = "SelDummy";
+    _selectDummyButton.ToolTipText = "Mouse dummy selection mode: left click select, drag empty space for box-select, drag selected dummy to move";
 
     _deleteSelectedCollisionButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _deleteSelectedCollisionButton.Enabled = false;
@@ -785,7 +809,6 @@ partial class MainForm
     _bspEditorStrip.GripStyle = ToolStripGripStyle.Hidden;
     _bspEditorStrip.Items.AddRange(new ToolStripItem[]
     {
-      _bspSelectModeButton,
       _bspMoveModeButton,
       _bspScaleModeButton,
       _bspRotateModeButton,
@@ -817,12 +840,6 @@ partial class MainForm
     _bspEditorStrip.RenderMode = ToolStripRenderMode.System;
     _bspEditorStrip.Size = new Size(1600, 25);
     _bspEditorStrip.TabIndex = 3;
-
-    _bspSelectModeButton.CheckOnClick = true;
-    _bspSelectModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
-    _bspSelectModeButton.Name = "_bspSelectModeButton";
-    _bspSelectModeButton.Text = "BSP Select";
-    _bspSelectModeButton.ToolTipText = "Mouse select BSP mesh object/face in viewport";
 
     _bspMoveModeButton.CheckOnClick = true;
     _bspMoveModeButton.DisplayStyle = ToolStripItemDisplayStyle.Text;

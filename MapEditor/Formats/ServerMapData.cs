@@ -72,41 +72,46 @@ public sealed class ServerMapMonsterDummyRef
 public sealed class ServerMapMonsterSpawn
 {
   public required int RecordIndex { get; init; }
+  public required uint DeclaredIndex { get; init; }
   public required string MonsterCode { get; init; }
   public required int MonsterRecordIndex { get; init; }
   public required string MonsterName { get; init; }
   public required float MonsterLevel { get; init; }
   public required int MonsterGrade { get; init; }
   public required int MonsterRaceCode { get; init; }
-  public required uint RegenTime { get; init; }
+  public required uint RegenTime { get; set; }
   public required uint RegenLimit { get; init; }
   public required uint RegenProp { get; init; }
   public required uint RegenMin { get; init; }
   public required uint StandardKill { get; init; }
   public required uint RegenMax { get; init; }
+  public byte[]? RawBytes { get; init; }
 }
 
 public sealed class ServerMapMonsterSpawnSet
 {
   public required int SetIndex { get; init; }
-  public required ServerMapMonsterSpawn[] Spawns { get; init; }
+  public required ServerMapMonsterSpawn[] Spawns { get; set; }
 }
 
 public sealed class ServerMapMonsterBlock
 {
   public required int RecordIndex { get; init; }
+  public required uint DeclaredIndex { get; init; }
   public required string Code { get; init; }
   public required int MinCount { get; init; }
   public required int MobCount { get; init; }
   public required int MaxCount { get; init; }
-  public required Vector3 WorldCenter { get; init; }
-  public required ServerMapMonsterDummyRef[] Dummies { get; init; }
-  public required ServerMapMonsterSpawnSet[] SpawnSets { get; init; }
+  public required Vector3 WorldCenter { get; set; }
+  public required ServerMapMonsterDummyRef[] Dummies { get; set; }
+  public required ServerMapMonsterSpawnSet[] SpawnSets { get; set; }
+  public byte[]? RawBytes { get; init; }
 }
 
 public sealed class ServerMapPortal
 {
   public required int RecordIndex { get; init; }
+  public required uint DeclaredIndex { get; init; }
   public required string Code { get; init; }
   public required string LinkMapCode { get; init; }
   public required string LinkPortalCode { get; init; }
@@ -115,6 +120,7 @@ public sealed class ServerMapPortal
   public required int NeedCharacterLevel { get; init; }
   public required int UpLevelLimit { get; init; }
   public required ServerDummyPosition Dummy { get; init; }
+  public byte[]? RawBytes { get; init; }
 }
 
 public sealed class ServerMapStore
@@ -162,9 +168,13 @@ public sealed class ServerMapData
   public required string ServerRootPath { get; init; }
   public required string MapFolderPath { get; init; }
   public required string ScriptFolderPath { get; init; }
+  public required string HelperScriptPath { get; init; }
+  public required string MonsterBlockTablePath { get; init; }
+  public required string PortalTablePath { get; init; }
+  public required int PortalTableFieldCount { get; init; }
   public required ServerMapDefinition MapDefinition { get; init; }
   public required ServerHelperObject[] Helpers { get; init; }
-  public required ServerDummyPosition[] MonsterDummies { get; init; }
+  public required ServerDummyPosition[] MonsterDummies { get; set; }
   public required ServerDummyPosition[] PortalDummies { get; init; }
   public required ServerDummyPosition[] StoreDummies { get; init; }
   public required ServerDummyPosition[] StartDummies { get; init; }
@@ -173,11 +183,11 @@ public sealed class ServerMapData
   public required ServerDummyPosition[] ResourceLowDummies { get; init; }
   public required ServerDummyPosition[] SafeDummies { get; init; }
   public required ServerMonsterDefinition[] MonsterDefinitions { get; init; }
-  public required ServerMapMonsterBlock[] MonsterBlocks { get; init; }
+  public required ServerMapMonsterBlock[] MonsterBlocks { get; set; }
   public required ServerMapPortal[] Portals { get; init; }
   public required ServerMapStore[] Stores { get; init; }
   public required ServerMapStartPoint[] StartPoints { get; init; }
   public required ServerMapResourceNode[] ResourceNodes { get; init; }
   public required ServerMapSafeZone[] SafeZones { get; init; }
-  public required int MonsterSpawnCount { get; init; }
+  public required int MonsterSpawnCount { get; set; }
 }

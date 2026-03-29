@@ -54,6 +54,9 @@ public static class ServerMapLoader
 
     string mapFolderPath = ResolveRequiredDirectory(mapRootPath, normalizedMapDefinition.FileName);
     string helperScriptPath = ResolveRequiredFile(mapFolderPath, $"{normalizedMapDefinition.FileName}.spt");
+    string monsterBlockTablePath = GetMonsterBlockTablePath(mapFolderPath, normalizedMapDefinition);
+    string portalTablePath = ResolvePortalTablePath(mapFolderPath, scriptRootPath, normalizedMapDefinition);
+    int portalTableFieldCount = ReadRecordTableFieldCount(portalTablePath, PortalRecordSize);
     string[] helperTokens = TokenizeText(File.ReadAllText(helperScriptPath));
     ServerHelperObject[] helpers = ReadHelperObjects(helperTokens);
     if (helpers.Length == 0)
@@ -68,7 +71,7 @@ public static class ServerMapLoader
     ServerDummyPosition[] resourceHighDummies = ReadDummyPositions(helperTokens, "*0dr", helpers, map);
     ServerDummyPosition[] resourceMiddleDummies = ReadDummyPositions(helperTokens, "*1dr", helpers, map);
     ServerDummyPosition[] resourceLowDummies = ReadDummyPositions(helperTokens, "*2dr", helpers, map);
-    ServerDummyPosition[] safeDummies = ReadDummyPositions(helperTokens, "*sa", helpers, map);
+    ServerDummyPosition[] safeDummies = Array.Empty<ServerDummyPosition>();
 
     Dictionary<string, ServerDummyPosition> monsterDummyByCode = BuildDummyLookup(monsterDummies);
     Dictionary<string, ServerDummyPosition> portalDummyByCode = BuildDummyLookup(portalDummies);
@@ -83,13 +86,17 @@ public static class ServerMapLoader
     ServerMapStore[] stores = ReadStores(scriptRootPath, normalizedMapDefinition, storeDummies, storeDummyByCode);
     ServerMapStartPoint[] startPoints = ReadStartPoints(normalizedMapDefinition, startDummies);
     ServerMapResourceNode[] resourceNodes = ReadResourceNodes(resourceHighDummies, resourceMiddleDummies, resourceLowDummies);
-    ServerMapSafeZone[] safeZones = ReadSafeZones(safeDummies);
+    ServerMapSafeZone[] safeZones = Array.Empty<ServerMapSafeZone>();
 
     return new ServerMapData
     {
       ServerRootPath = normalizedServerRoot,
       MapFolderPath = mapFolderPath,
       ScriptFolderPath = scriptRootPath,
+      HelperScriptPath = helperScriptPath,
+      MonsterBlockTablePath = monsterBlockTablePath,
+      PortalTablePath = portalTablePath,
+      PortalTableFieldCount = portalTableFieldCount,
       MapDefinition = normalizedMapDefinition,
       Helpers = helpers,
       MonsterDummies = monsterDummies,
@@ -415,7 +422,7 @@ public static class ServerMapLoader
     IReadOnlyDictionary<string, ServerDummyPosition> monsterDummyByCode,
     IReadOnlyDictionary<string, ServerMonsterDefinition> monsterDefinitionByCode)
   {
-    string blockTablePath = Path.Combine(mapFolderPath, $"{mapDefinition.FileName}-[BLOCK].dat");
+    string blockTablePath = GetMonsterBlockTablePath(mapFolderPath, mapDefinition);
     string? resolvedBlockTablePath = FindPathCaseInsensitive(blockTablePath);
     if (resolvedBlockTablePath == null)
     {
@@ -500,6 +507,7 @@ public static class ServerMapLoader
           spawns[activeIndex] = new ServerMapMonsterSpawn
           {
             RecordIndex = activeRecord.Index,
+            DeclaredIndex = activeRecord.DeclaredIndex,
             MonsterCode = activeRecord.Code,
             MonsterRecordIndex = monsterDefinition.RecordIndex,
             MonsterName = monsterDefinition.DisplayName,
@@ -512,6 +520,7 @@ public static class ServerMapLoader
             RegenMin = ReadUInt32(activeRecord.Bytes, 80),
             StandardKill = ReadUInt32(activeRecord.Bytes, 84),
             RegenMax = ReadUInt32(activeRecord.Bytes, 88),
+            RawBytes = (byte[])activeRecord.Bytes.Clone(),
           };
         }
 
@@ -526,6 +535,7 @@ public static class ServerMapLoader
       blocks.Add(new ServerMapMonsterBlock
       {
         RecordIndex = blockRecord.Index,
+        DeclaredIndex = blockRecord.DeclaredIndex,
         Code = blockRecord.Code,
         MinCount = ReadInt32(blockRecord.Bytes, 1432),
         MobCount = ReadInt32(blockRecord.Bytes, 1436),
@@ -533,6 +543,7 @@ public static class ServerMapLoader
         WorldCenter = ComputeAverageDummyCenter(dummyRefs),
         Dummies = dummyRefs.ToArray(),
         SpawnSets = spawnSets.ToArray(),
+        RawBytes = (byte[])blockRecord.Bytes.Clone(),
       });
     }
 
@@ -545,12 +556,7 @@ public static class ServerMapLoader
     ServerMapDefinition mapDefinition,
     IReadOnlyDictionary<string, ServerDummyPosition> portalDummyByCode)
   {
-    string portalPath = ResolveRequiredFile(
-      mapFolderPath,
-      scriptRootPath,
-      $"{mapDefinition.FileName}-[Portal].dat",
-      $"{mapDefinition.FileName}-Portal.dat",
-      $"{mapDefinition.FileName}-PORTAL.dat");
+    string portalPath = ResolvePortalTablePath(mapFolderPath, scriptRootPath, mapDefinition);
     ServerRecord[] portalRecords = ReadFixedRecords(portalPath, PortalRecordSize);
     ServerMapPortal[] portals = new ServerMapPortal[portalRecords.Length];
     for (int portalIndex = 0; portalIndex < portalRecords.Length; ++portalIndex)
@@ -564,6 +570,7 @@ public static class ServerMapLoader
       portals[portalIndex] = new ServerMapPortal
       {
         RecordIndex = record.Index,
+        DeclaredIndex = record.DeclaredIndex,
         Code = record.Code,
         LinkMapCode = ReadFixedString(record.Bytes, 68, 64),
         LinkPortalCode = ReadFixedString(record.Bytes, 132, 64),
@@ -572,6 +579,7 @@ public static class ServerMapLoader
         NeedCharacterLevel = ReadInt32(record.Bytes, 264),
         UpLevelLimit = ReadInt32(record.Bytes, 268),
         Dummy = dummy,
+        RawBytes = (byte[])record.Bytes.Clone(),
       };
     }
 
@@ -689,21 +697,6 @@ public static class ServerMapLoader
         Dummy = source[index],
       });
     }
-  }
-
-  private static ServerMapSafeZone[] ReadSafeZones(ServerDummyPosition[] safeDummies)
-  {
-    ServerMapSafeZone[] safeZones = new ServerMapSafeZone[safeDummies.Length];
-    for (int index = 0; index < safeDummies.Length; ++index)
-    {
-      safeZones[index] = new ServerMapSafeZone
-      {
-        Index = index,
-        Dummy = safeDummies[index],
-      };
-    }
-
-    return safeZones;
   }
 
   private static Dictionary<string, string> ReadDisplayNameLookup(
@@ -1019,6 +1012,21 @@ public static class ServerMapLoader
     return new Vector3(transformed.X, transformed.Y, transformed.Z);
   }
 
+  private static string GetMonsterBlockTablePath(string mapFolderPath, ServerMapDefinition mapDefinition)
+  {
+    return Path.GetFullPath(Path.Combine(mapFolderPath, $"{mapDefinition.FileName}-[BLOCK].dat"));
+  }
+
+  private static string ResolvePortalTablePath(string mapFolderPath, string scriptRootPath, ServerMapDefinition mapDefinition)
+  {
+    return ResolveRequiredFile(
+      mapFolderPath,
+      scriptRootPath,
+      $"{mapDefinition.FileName}-[Portal].dat",
+      $"{mapDefinition.FileName}-Portal.dat",
+      $"{mapDefinition.FileName}-PORTAL.dat");
+  }
+
   private static string ResolveRequiredDirectory(string rootPath, string childName)
   {
     string? resolved = FindPathCaseInsensitive(Path.Combine(rootPath, childName));
@@ -1102,6 +1110,27 @@ public static class ServerMapLoader
   private static uint ReadUInt32(byte[] bytes, int offset)
   {
     return BitConverter.ToUInt32(bytes, offset);
+  }
+
+  private static int ReadRecordTableFieldCount(string path, int expectedRecordSize)
+  {
+    using FileStream stream = File.OpenRead(path);
+    using BinaryReader reader = new(stream);
+
+    if (stream.Length < 12)
+    {
+      throw new InvalidDataException($"Record table '{path}' is too small.");
+    }
+
+    int recordCount = reader.ReadInt32();
+    int fieldCount = reader.ReadInt32();
+    int recordSize = reader.ReadInt32();
+    if (recordCount < 0 || fieldCount < 0 || recordSize != expectedRecordSize)
+    {
+      throw new InvalidDataException($"Record table '{path}' has an invalid header.");
+    }
+
+    return fieldCount;
   }
 
   private static int ReadInt32(byte[] bytes, int offset)
