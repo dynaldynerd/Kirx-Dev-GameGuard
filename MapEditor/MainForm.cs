@@ -2,6 +2,7 @@ using MapEditor.Formats;
 using MapEditor.Viewer;
 using OpenTK.Mathematics;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -20,19 +21,41 @@ internal sealed partial class MainForm : Form
   private const float BspTranslateStep = 50.0f;
   private const float BspScaleStepPercent = 5.0f;
   private const float BspRotateStepDegrees = 5.0f;
+  private const string DefaultServerRootPath = @"D:\RF Server\Server\Zone Server\RF_Bin";
   private SkySourceMode _skySourceMode = SkySourceMode.Sky2;
   private RenderPipelineMode _renderPipelineMode = RenderPipelineMode.R3Parity;
   private bool _suppressMapSelectionChanged;
   private string? _mapRootPath;
+  private string? _serverRootPath;
   private LoadedMap? _loadedMap;
   private MapDocument? _mapDocument;
   private string? _loadedBspPath;
   private string? _loadedEbpPath;
+  private EntityArchiveCacheInfo _lastEntityArchiveCache;
   private bool _suppressBoundaryCollisionValueChanged;
   private bool _suppressToolModeSync;
   private bool _suppressBspSelectionModeSync;
   private bool _strictLoadModeEnabled = true;
   private string _statusBaseText = "Ready. Ctrl+O open map folder | Select map in top combobox | Right mouse look | WASD move | Wheel zoom | F1 controls";
+  private Panel _viewerCanvasPanel = null!;
+  private Panel _serverInspectorOverlayPanel = null!;
+  private Label _serverInspectorSummaryLabel = null!;
+  private ComboBox _serverInspectorModeComboBox = null!;
+  private Panel _serverInspectorContentPanel = null!;
+  private Panel _serverMonsterPanel = null!;
+  private TextBox _serverMonsterSearchTextBox = null!;
+  private Label _serverMonsterDetailLabel = null!;
+  private Button _serverInspectorJumpButton = null!;
+  private ListView _serverSummaryListView = null!;
+  private ListView _serverMonsterListView = null!;
+  private ListView _serverPortalListView = null!;
+  private ListView _serverStoreListView = null!;
+  private ListView _serverStartListView = null!;
+  private ListView _serverResourceListView = null!;
+  private ListView _serverSafeListView = null!;
+  private string _serverMonsterSearchText = string.Empty;
+  private ServerInspectorMode _serverInspectorMode = ServerInspectorMode.Summary;
+  private bool _suppressServerSelectionSync;
 
   public MainForm()
     : this(Array.Empty<string>(), isDesignerCtor: true)
@@ -61,14 +84,15 @@ internal sealed partial class MainForm : Form
     _strictLoadModeMenuItem.Checked = true;
     _strictLoadModeMenuItem.Enabled = false;
     _strictLoadModeMenuItem.ToolTipText = "Strict load is always ON (client-parity mode).";
+    InitializeServerInspectorUi();
 
     _viewer = new MapViewerControl
     {
       Dock = DockStyle.Fill,
     };
-    _viewerHostPanel.Controls.Clear();
-    _viewerHostPanel.Controls.Add(_viewer);
+    _viewerCanvasPanel.Controls.Add(_viewer);
     _viewer.BringToFront();
+    _serverInspectorOverlayPanel.BringToFront();
     InitializeViewerBindings();
     SyncTeleportInputsFromCamera();
 
@@ -80,6 +104,7 @@ internal sealed partial class MainForm : Form
     LoadCameraPositionsFromSettings();
     FormClosing += OnMainFormClosing;
     UpdateUndoUiState();
+    RefreshServerInspector();
 
     if (args.Length > 0)
     {
@@ -87,9 +112,476 @@ internal sealed partial class MainForm : Form
     }
   }
 
+  private enum ServerInspectorMode
+  {
+    Monsters = 0,
+    Portals = 1,
+    Stores = 2,
+    Starts = 3,
+    Resources = 4,
+    Safe = 5,
+    Summary = 6,
+  }
+
+  private void InitializeServerInspectorUi()
+  {
+    _viewerHostPanel.SuspendLayout();
+    _viewerHostPanel.Controls.Clear();
+
+    _viewerCanvasPanel = new Panel
+    {
+      Dock = DockStyle.Fill,
+      BackColor = _viewerHostPanel.BackColor,
+    };
+    _viewerHintLabel.Dock = DockStyle.Fill;
+    _viewerCanvasPanel.Controls.Add(_viewerHintLabel);
+    _viewerCanvasPanel.Resize += (_, _) => ApplyServerInspectorSplitterDistance();
+
+    _serverInspectorOverlayPanel = new Panel
+    {
+      Width = 360,
+      Padding = new Padding(8),
+      BorderStyle = BorderStyle.FixedSingle,
+      BackColor = Color.FromArgb(245, 248, 252),
+      Visible = false,
+    };
+    Panel inspectorPanel = new()
+    {
+      Dock = DockStyle.Fill,
+      BackColor = _serverInspectorOverlayPanel.BackColor,
+    };
+    Label inspectorTitleLabel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 24,
+      Text = "Server Data",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverInspectorSummaryLabel = new Label
+    {
+      Dock = DockStyle.Top,
+      Height = 44,
+      Text = "Load File > Load > Server Folder to inspect server-side map data.",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverInspectorModeComboBox = new ComboBox
+    {
+      Dock = DockStyle.Top,
+      DropDownStyle = ComboBoxStyle.DropDownList,
+      Height = 28,
+    };
+    _serverInspectorModeComboBox.Items.AddRange(
+    [
+      new ServerInspectorModeItem("Monsters", ServerInspectorMode.Monsters),
+      new ServerInspectorModeItem("Portals", ServerInspectorMode.Portals),
+      new ServerInspectorModeItem("Stores", ServerInspectorMode.Stores),
+      new ServerInspectorModeItem("Starts", ServerInspectorMode.Starts),
+      new ServerInspectorModeItem("Resources", ServerInspectorMode.Resources),
+      new ServerInspectorModeItem("Safe", ServerInspectorMode.Safe),
+      new ServerInspectorModeItem("Summary", ServerInspectorMode.Summary),
+    ]);
+    _serverInspectorModeComboBox.SelectedIndexChanged += OnServerInspectorModeComboBoxSelectedIndexChanged;
+
+    _serverInspectorJumpButton = new Button
+    {
+      Dock = DockStyle.Top,
+      Height = 28,
+      Text = "Go To Selected Dummy",
+    };
+    _serverInspectorJumpButton.Click += (_, _) =>
+    {
+      ListView? activeListView = GetActiveServerListView();
+      if (activeListView != null)
+      {
+        JumpToSelectedServerItem(activeListView);
+      }
+    };
+
+    _serverInspectorContentPanel = new Panel
+    {
+      Dock = DockStyle.Fill,
+    };
+
+    _serverSummaryListView = CreateServerListView(("Field", 120), ("Value", 220));
+    _serverMonsterListView = CreateServerListView(("Dummy", 88), ("Monster", 164), ("Block", 76), ("Spawns", 56), ("Pos", 132));
+    _serverMonsterListView.SelectedIndexChanged += (_, _) => UpdateMonsterInspectorSelectionDetails();
+    _serverMonsterListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverPortalListView = CreateServerListView(("Code", 92), ("Link Map", 92), ("Link Portal", 92), ("Menu", 124), ("Need Lv", 60), ("Dummy", 84), ("Pos", 170));
+    _serverPortalListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverStoreListView = CreateServerListView(("Store", 92), ("NPC", 148), ("NPC Code", 96), ("Trade", 56), ("Angle", 56), ("Dummy", 84), ("Pos", 170));
+    _serverStoreListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverStartListView = CreateServerListView(("Index", 54), ("Dummy", 84), ("Pos", 180));
+    _serverStartListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverResourceListView = CreateServerListView(("Index", 54), ("Grade", 68), ("Dummy", 84), ("Pos", 180));
+    _serverResourceListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+    _serverSafeListView = CreateServerListView(("Index", 54), ("Dummy", 84), ("Pos", 180));
+    _serverSafeListView.SelectedIndexChanged += OnServerInspectorListSelectionChanged;
+
+    _serverMonsterPanel = new Panel
+    {
+      Dock = DockStyle.Fill,
+    };
+    Panel monsterSearchPanel = new()
+    {
+      Dock = DockStyle.Top,
+      Height = 28,
+      Padding = new Padding(0, 0, 0, 4),
+    };
+    Label monsterSearchLabel = new()
+    {
+      Dock = DockStyle.Left,
+      Width = 52,
+      Text = "Search",
+      TextAlign = ContentAlignment.MiddleLeft,
+    };
+    _serverMonsterSearchTextBox = new TextBox
+    {
+      Dock = DockStyle.Fill,
+      PlaceholderText = "Monster code or English name",
+    };
+    _serverMonsterSearchTextBox.TextChanged += OnServerMonsterSearchTextChanged;
+    monsterSearchPanel.Controls.Add(_serverMonsterSearchTextBox);
+    monsterSearchPanel.Controls.Add(monsterSearchLabel);
+
+    _serverMonsterDetailLabel = new Label
+    {
+      Dock = DockStyle.Bottom,
+      Height = 72,
+      Text = "Load a server folder to inspect monster spawns.",
+      TextAlign = ContentAlignment.TopLeft,
+    };
+
+    _serverMonsterPanel.Controls.Add(_serverMonsterListView);
+    _serverMonsterPanel.Controls.Add(_serverMonsterDetailLabel);
+    _serverMonsterPanel.Controls.Add(monsterSearchPanel);
+
+    inspectorPanel.Controls.Add(_serverInspectorContentPanel);
+    inspectorPanel.Controls.Add(_serverInspectorJumpButton);
+    inspectorPanel.Controls.Add(_serverInspectorModeComboBox);
+    inspectorPanel.Controls.Add(_serverInspectorSummaryLabel);
+    inspectorPanel.Controls.Add(inspectorTitleLabel);
+    _serverInspectorOverlayPanel.Controls.Add(inspectorPanel);
+    _viewerCanvasPanel.Controls.Add(_serverInspectorOverlayPanel);
+    _viewerHostPanel.Controls.Add(_viewerCanvasPanel);
+    ApplyServerInspectorSplitterDistance();
+    _viewerHostPanel.ResumeLayout(performLayout: true);
+    SetServerInspectorMode(ServerInspectorMode.Summary, syncComboBox: true);
+  }
+
+  private void ApplyServerInspectorSplitterDistance()
+  {
+    if (_viewerCanvasPanel == null || _viewerCanvasPanel.IsDisposed || _serverInspectorOverlayPanel == null || _serverInspectorOverlayPanel.IsDisposed)
+    {
+      return;
+    }
+
+    int availableWidth = _viewerCanvasPanel.ClientSize.Width;
+    int availableHeight = _viewerCanvasPanel.ClientSize.Height;
+    if (availableWidth <= 0 || availableHeight <= 0)
+    {
+      return;
+    }
+
+    const int margin = 8;
+    int overlayWidth = Math.Min(380, Math.Max(300, availableWidth / 3));
+    int overlayHeight = Math.Max(260, availableHeight - margin * 2);
+    _serverInspectorOverlayPanel.Bounds = new Rectangle(
+      Math.Max(margin, availableWidth - overlayWidth - margin),
+      margin,
+      overlayWidth,
+      overlayHeight);
+  }
+
+  private ListView CreateServerListView(params (string Title, int Width)[] columns)
+  {
+    ListView listView = new()
+    {
+      Dock = DockStyle.Fill,
+      FullRowSelect = true,
+      GridLines = true,
+      HideSelection = false,
+      MultiSelect = false,
+      UseCompatibleStateImageBehavior = false,
+      View = View.Details,
+    };
+    listView.ItemActivate += OnServerListItemActivate;
+
+    for (int index = 0; index < columns.Length; ++index)
+    {
+      (string title, int width) = columns[index];
+      listView.Columns.Add(title, width);
+    }
+
+    return listView;
+  }
+
+  private void OnServerInspectorModeComboBoxSelectedIndexChanged(object? sender, EventArgs e)
+  {
+    if (_serverInspectorModeComboBox.SelectedItem is ServerInspectorModeItem item)
+    {
+      SetServerInspectorMode(item.Mode, syncComboBox: false);
+    }
+  }
+
+  private void SetServerInspectorMode(ServerInspectorMode mode, bool syncComboBox)
+  {
+    _serverInspectorMode = mode;
+
+    if (syncComboBox && _serverInspectorModeComboBox != null)
+    {
+      for (int index = 0; index < _serverInspectorModeComboBox.Items.Count; ++index)
+      {
+        if (_serverInspectorModeComboBox.Items[index] is ServerInspectorModeItem item && item.Mode == mode)
+        {
+          if (_serverInspectorModeComboBox.SelectedIndex != index)
+          {
+            _serverInspectorModeComboBox.SelectedIndex = index;
+          }
+          break;
+        }
+      }
+    }
+
+    if (_serverInspectorContentPanel != null)
+    {
+      _serverInspectorContentPanel.SuspendLayout();
+      _serverInspectorContentPanel.Controls.Clear();
+      switch (mode)
+      {
+        case ServerInspectorMode.Monsters:
+          _serverInspectorContentPanel.Controls.Add(_serverMonsterPanel);
+          break;
+        case ServerInspectorMode.Portals:
+          _serverInspectorContentPanel.Controls.Add(_serverPortalListView);
+          break;
+        case ServerInspectorMode.Stores:
+          _serverInspectorContentPanel.Controls.Add(_serverStoreListView);
+          break;
+        case ServerInspectorMode.Starts:
+          _serverInspectorContentPanel.Controls.Add(_serverStartListView);
+          break;
+        case ServerInspectorMode.Resources:
+          _serverInspectorContentPanel.Controls.Add(_serverResourceListView);
+          break;
+        case ServerInspectorMode.Safe:
+          _serverInspectorContentPanel.Controls.Add(_serverSafeListView);
+          break;
+        default:
+          _serverInspectorContentPanel.Controls.Add(_serverSummaryListView);
+          break;
+      }
+      _serverInspectorContentPanel.ResumeLayout(performLayout: true);
+    }
+
+    UpdateServerOverlayModeFromInspector();
+  }
+
+  private void UpdateServerOverlayModeFromInspector()
+  {
+    if (_viewer == null)
+    {
+      return;
+    }
+
+    bool hasServerData = _loadedMap?.ServerData != null;
+    _viewer.ShowServerOverlay = hasServerData && _serverInspectorMode != ServerInspectorMode.Summary;
+    _viewer.ActiveServerOverlayFilter = _serverInspectorMode switch
+    {
+      ServerInspectorMode.Monsters => MapViewerControl.ServerOverlayFilter.Monsters,
+      ServerInspectorMode.Portals => MapViewerControl.ServerOverlayFilter.Portals,
+      ServerInspectorMode.Stores => MapViewerControl.ServerOverlayFilter.Stores,
+      ServerInspectorMode.Starts => MapViewerControl.ServerOverlayFilter.Starts,
+      ServerInspectorMode.Resources => MapViewerControl.ServerOverlayFilter.Resources,
+      ServerInspectorMode.Safe => MapViewerControl.ServerOverlayFilter.Safe,
+      _ => MapViewerControl.ServerOverlayFilter.None,
+    };
+    _viewer.SetSelectedServerDummy(TryGetSelectedServerInspectorItem(GetActiveServerListView())?.Dummy);
+    UpdateViewerServerInteraction();
+    UpdateServerInspectorActions();
+    _viewer.Invalidate();
+  }
+
+  private void OnServerInspectorListSelectionChanged(object? sender, EventArgs e)
+  {
+    if (_suppressServerSelectionSync || sender is not ListView listView)
+    {
+      return;
+    }
+
+    if (!ReferenceEquals(listView, GetActiveServerListView()))
+    {
+      return;
+    }
+
+    _viewer.SetSelectedServerDummy(TryGetSelectedServerInspectorItem(listView)?.Dummy);
+    UpdateServerInspectorActions();
+  }
+
+  private void UpdateServerInspectorActions()
+  {
+    ListView? activeListView = GetActiveServerListView();
+    bool hasSelection = TryGetSelectedServerInspectorItem(activeListView) != null;
+
+    if (_serverInspectorJumpButton != null)
+    {
+      _serverInspectorJumpButton.Enabled = hasSelection;
+    }
+  }
+
+  private void UpdateViewerServerInteraction()
+  {
+    if (_viewer == null)
+    {
+      return;
+    }
+
+    bool hasServerData = _loadedMap?.ServerData != null;
+    bool hasBspOrCollisionTool =
+      _mouseDrawCollisionButton.Checked ||
+      _selectCollisionButton.Checked ||
+      _bspSelectModeButton.Checked ||
+      _bspMoveModeButton.Checked ||
+      _bspScaleModeButton.Checked ||
+      _bspRotateModeButton.Checked;
+    _viewer.ServerInteractionEnabled = hasServerData && _serverInspectorMode != ServerInspectorMode.Summary && !hasBspOrCollisionTool;
+  }
+
+  private ListView? GetActiveServerListView()
+  {
+    return _serverInspectorMode switch
+    {
+      ServerInspectorMode.Monsters => _serverMonsterListView,
+      ServerInspectorMode.Portals => _serverPortalListView,
+      ServerInspectorMode.Stores => _serverStoreListView,
+      ServerInspectorMode.Starts => _serverStartListView,
+      ServerInspectorMode.Resources => _serverResourceListView,
+      ServerInspectorMode.Safe => _serverSafeListView,
+      ServerInspectorMode.Summary => _serverSummaryListView,
+      _ => null,
+    };
+  }
+
+  private IEnumerable<(ServerInspectorMode Mode, ListView ListView)> EnumerateServerInspectorLists()
+  {
+    yield return (ServerInspectorMode.Monsters, _serverMonsterListView);
+    yield return (ServerInspectorMode.Portals, _serverPortalListView);
+    yield return (ServerInspectorMode.Stores, _serverStoreListView);
+    yield return (ServerInspectorMode.Starts, _serverStartListView);
+    yield return (ServerInspectorMode.Resources, _serverResourceListView);
+    yield return (ServerInspectorMode.Safe, _serverSafeListView);
+  }
+
+  private static IServerInspectorItem? TryGetSelectedServerInspectorItem(ListView? listView)
+  {
+    if (listView == null || listView.SelectedItems.Count <= 0)
+    {
+      return null;
+    }
+
+    return listView.SelectedItems[0].Tag as IServerInspectorItem;
+  }
+
+  private void OnViewerServerDummySelectionChanged(ServerDummyPosition? dummy)
+  {
+    if (_loadedMap?.ServerData == null)
+    {
+      return;
+    }
+
+    SelectServerInspectorItem(dummy);
+    if (dummy != null)
+    {
+      _statusBaseText = $"Selected server dummy {dummy.Code} | Pos: ({dummy.EditedWorldCenter.X:F1},{dummy.EditedWorldCenter.Y:F1},{dummy.EditedWorldCenter.Z:F1})";
+      RefreshRuntimeStatus();
+    }
+  }
+
+  private void OnViewerServerDummyMoved(ServerDummyPosition dummy)
+  {
+    if (_loadedMap?.ServerData == null)
+    {
+      return;
+    }
+
+    RefreshServerInspector();
+    SelectServerInspectorItem(dummy);
+    _statusBaseText = $"Moved server dummy {dummy.Code} | Pos: ({dummy.EditedWorldCenter.X:F1},{dummy.EditedWorldCenter.Y:F1},{dummy.EditedWorldCenter.Z:F1})";
+    RefreshRuntimeStatus();
+  }
+
+  private void SelectServerInspectorItem(ServerDummyPosition? dummy)
+  {
+    _suppressServerSelectionSync = true;
+    try
+    {
+      foreach ((ServerInspectorMode mode, ListView listView) in EnumerateServerInspectorLists())
+      {
+        ListViewItem? match = FindServerInspectorListItemByDummy(listView, dummy);
+        if (match == null)
+        {
+          continue;
+        }
+
+        SetServerInspectorMode(mode, syncComboBox: true);
+        ClearListViewSelection(listView);
+        match.Selected = true;
+        match.Focused = true;
+        match.EnsureVisible();
+        _viewer.SetSelectedServerDummy(dummy);
+        UpdateServerInspectorActions();
+        return;
+      }
+
+      if (dummy != null && !string.IsNullOrWhiteSpace(_serverMonsterSearchText))
+      {
+        _serverMonsterSearchTextBox.Text = string.Empty;
+        SelectServerInspectorItem(dummy);
+        return;
+      }
+
+      foreach ((_, ListView listView) in EnumerateServerInspectorLists())
+      {
+        ClearListViewSelection(listView);
+      }
+      _viewer.SetSelectedServerDummy(null);
+      UpdateServerInspectorActions();
+    }
+    finally
+    {
+      _suppressServerSelectionSync = false;
+    }
+  }
+
+  private static ListViewItem? FindServerInspectorListItemByDummy(ListView listView, ServerDummyPosition? dummy)
+  {
+    if (dummy == null)
+    {
+      return null;
+    }
+
+    foreach (ListViewItem item in listView.Items)
+    {
+      if (item.Tag is IServerInspectorItem inspectorItem && ReferenceEquals(inspectorItem.Dummy, dummy))
+      {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
+  private static void ClearListViewSelection(ListView listView)
+  {
+    foreach (ListViewItem item in listView.Items)
+    {
+      item.Selected = false;
+    }
+  }
+
   private void WireUiEvents()
   {
     _openMapFolderMenuItem.Click += (_, _) => OpenMapRootFromDialog();
+    _openServerFolderMenuItem.Click += (_, _) => OpenServerRootFromDialog();
     _saveEbpOnlyMenuItem.Click += (_, _) => SaveCurrentEbpOnlyFromDialog();
     _saveMapAsMenuItem.Click += (_, _) => SaveCurrentMapAsFromDialog();
     _exportBlenderPackageMenuItem.Click += (_, _) => ExportBlenderPackageFromDialog();
@@ -237,6 +729,8 @@ internal sealed partial class MainForm : Form
     _viewer.BspTranslateRequested += OnViewerBspTranslateRequested;
     _viewer.BspScaleRequested += OnViewerBspScaleRequested;
     _viewer.BspRotateAxisRequested += OnViewerBspRotateAxisRequested;
+    _viewer.ServerDummySelectionChanged += OnViewerServerDummySelectionChanged;
+    _viewer.ServerDummyMoved += OnViewerServerDummyMoved;
     _northSouthFlipButton.CheckedChanged += (_, _) =>
     {
       _viewer.FlipNorthSouth = _northSouthFlipButton.Checked;
@@ -322,6 +816,7 @@ internal sealed partial class MainForm : Form
     _viewer.BspMoveModeEnabled = _bspMoveModeButton.Checked;
     _viewer.BspScaleModeEnabled = _bspScaleModeButton.Checked;
     _viewer.BspRotateModeEnabled = _bspRotateModeButton.Checked;
+    UpdateViewerServerInteraction();
     if (!_bspSelectModeButton.Checked &&
         !_bspMoveModeButton.Checked &&
         !_bspScaleModeButton.Checked &&
@@ -498,6 +993,617 @@ internal sealed partial class MainForm : Form
     }
 
     LoadMapRoot(dialog.SelectedPath, preferredBspPath: null, loadSelectedMap: true);
+  }
+
+  private void OpenServerRootFromDialog()
+  {
+    using FolderBrowserDialog dialog = new()
+    {
+      Description = "Select WorldServer RF_Bin folder (contains Map and Script)",
+      UseDescriptionForTitle = true,
+      ShowNewFolderButton = false,
+    };
+
+    string? initialPath = GetInitialServerRootPath();
+    if (!string.IsNullOrWhiteSpace(initialPath) && Directory.Exists(initialPath))
+    {
+      dialog.SelectedPath = initialPath;
+    }
+
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    LoadServerRoot(dialog.SelectedPath, showMessageOnSuccess: true);
+  }
+
+  private string? GetInitialServerRootPath()
+  {
+    if (!string.IsNullOrWhiteSpace(_serverRootPath) && Directory.Exists(_serverRootPath))
+    {
+      return _serverRootPath;
+    }
+
+    if (_loadedBspPath != null)
+    {
+      string? mapRoot = TryGetMapRootFromBspPath(_loadedBspPath);
+      if (!string.IsNullOrWhiteSpace(mapRoot))
+      {
+        DirectoryInfo? parent = Directory.GetParent(mapRoot);
+        if (parent != null && parent.Name.Equals("RF_Bin", StringComparison.OrdinalIgnoreCase))
+        {
+          return parent.FullName;
+        }
+      }
+    }
+
+    string candidate = Path.Combine(Environment.CurrentDirectory, "RF_Bin");
+    if (Directory.Exists(candidate))
+    {
+      return candidate;
+    }
+
+    if (Directory.Exists(DefaultServerRootPath))
+    {
+      return DefaultServerRootPath;
+    }
+
+    return null;
+  }
+
+  private void LoadServerRoot(string serverRootPath, bool showMessageOnSuccess)
+  {
+    string fullRoot = Path.GetFullPath(serverRootPath);
+    if (!Directory.Exists(fullRoot))
+    {
+      MessageBox.Show(this, $"Server root folder not found:{Environment.NewLine}{fullRoot}", "Load Server Folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+      return;
+    }
+
+    _serverRootPath = NormalizeDirectoryPath(fullRoot);
+    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedBspPath))
+    {
+      _statusBaseText = $"Server folder set: {_serverRootPath}";
+      RefreshRuntimeStatus();
+      RefreshServerInspector();
+      return;
+    }
+
+    if (TryApplyServerDataToCurrentMap(showErrorDialog: true, out string summary) && showMessageOnSuccess)
+    {
+      MessageBox.Show(this, summary, "Load Server Folder", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+  }
+
+  private bool TryApplyServerDataToCurrentMap(bool showErrorDialog, out string summary)
+  {
+    summary = string.Empty;
+    if (_loadedMap == null || string.IsNullOrWhiteSpace(_loadedBspPath) || string.IsNullOrWhiteSpace(_serverRootPath))
+    {
+      return false;
+    }
+
+    try
+    {
+      ServerMapData serverData = ServerMapLoader.Load(_loadedMap, _loadedBspPath, _serverRootPath);
+      _loadedMap = MapEditOperations.WithServerData(_loadedMap, serverData);
+      _mapDocument = MapDocument.FromLoadedMap(_loadedMap);
+      _viewer.ApplyServerDataEditedMap(_loadedMap);
+      _statusBaseText = BuildLoadedMapStatus(_loadedMap, _lastEntityArchiveCache, null);
+      RefreshRuntimeStatus();
+      SetServerInspectorMode(ServerInspectorMode.Monsters, syncComboBox: true);
+      RefreshServerInspector();
+      summary =
+        $"Loaded server data for {_loadedMap.Name}{Environment.NewLine}{Environment.NewLine}"
+        + $"Monster definitions: {serverData.MonsterDefinitions.Length:N0}{Environment.NewLine}"
+        + $"Monster blocks: {serverData.MonsterBlocks.Length:N0}{Environment.NewLine}"
+        + $"Monster spawns: {serverData.MonsterSpawnCount:N0}{Environment.NewLine}"
+        + $"Portals: {serverData.Portals.Length:N0}{Environment.NewLine}"
+        + $"Stores: {serverData.Stores.Length:N0}{Environment.NewLine}"
+        + $"Start points: {serverData.StartPoints.Length:N0}{Environment.NewLine}"
+        + $"Resources: {serverData.ResourceNodes.Length:N0}{Environment.NewLine}"
+        + $"Safe zones: {serverData.SafeZones.Length:N0}";
+      return true;
+    }
+    catch (Exception ex)
+    {
+      _loadedMap = MapEditOperations.WithServerData(_loadedMap, null);
+      _mapDocument = MapDocument.FromLoadedMap(_loadedMap);
+      _viewer.ApplyServerDataEditedMap(_loadedMap);
+      _statusBaseText = BuildLoadedMapStatus(_loadedMap, _lastEntityArchiveCache, $"ServerLoad: {ex.Message}");
+      RefreshRuntimeStatus();
+      SetServerInspectorMode(ServerInspectorMode.Summary, syncComboBox: true);
+      RefreshServerInspector();
+      if (showErrorDialog)
+      {
+        MessageBox.Show(this, ex.Message, "Load Server Folder Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      }
+
+      return false;
+    }
+  }
+
+  private void RefreshServerInspector()
+  {
+    if (_serverSummaryListView == null)
+    {
+      return;
+    }
+
+    ServerMapData? serverData = _loadedMap?.ServerData;
+    if (_serverInspectorOverlayPanel != null)
+    {
+      _serverInspectorOverlayPanel.Visible = serverData != null;
+      if (_serverInspectorOverlayPanel.Visible)
+      {
+        _serverInspectorOverlayPanel.BringToFront();
+      }
+    }
+
+    if (serverData != null)
+    {
+      _serverInspectorSummaryLabel.Text =
+        $"RF_Bin: {serverData.ServerRootPath}{Environment.NewLine}"
+        + $"Map: {serverData.MapDefinition.FileName} ({serverData.MapDefinition.Code})";
+    }
+    else if (!string.IsNullOrWhiteSpace(_serverRootPath) && _loadedMap != null)
+    {
+      _serverInspectorSummaryLabel.Text =
+        $"RF_Bin: {_serverRootPath}{Environment.NewLine}"
+        + "Current map has no attached server-side data.";
+    }
+    else if (!string.IsNullOrWhiteSpace(_serverRootPath))
+    {
+      _serverInspectorSummaryLabel.Text =
+        $"RF_Bin: {_serverRootPath}{Environment.NewLine}"
+        + "Open a map to inspect server-side records.";
+    }
+    else
+    {
+      _serverInspectorSummaryLabel.Text = "Load File > Load > Server Folder to inspect server-side map data.";
+    }
+
+    PopulateServerSummaryList(serverData);
+    PopulateMonsterInspectorList(serverData);
+    PopulatePortalInspectorList(serverData);
+    PopulateStoreInspectorList(serverData);
+    PopulateStartInspectorList(serverData);
+    PopulateResourceInspectorList(serverData);
+    PopulateSafeInspectorList(serverData);
+    UpdateMonsterInspectorSelectionDetails();
+    UpdateServerOverlayModeFromInspector();
+  }
+
+  private void PopulateServerSummaryList(ServerMapData? serverData)
+  {
+    _serverSummaryListView.BeginUpdate();
+    try
+    {
+      _serverSummaryListView.Items.Clear();
+      if (serverData == null)
+      {
+        AddServerListItem(_serverSummaryListView, null, "Server Root", _serverRootPath ?? "Not loaded");
+        AddServerListItem(_serverSummaryListView, null, "Map", _loadedMap?.Name ?? "No map loaded");
+        AddServerListItem(_serverSummaryListView, null, "Status", "No server-side map data attached");
+        return;
+      }
+
+      AddServerListItem(_serverSummaryListView, null, "Server Root", serverData.ServerRootPath);
+      AddServerListItem(_serverSummaryListView, null, "Map", $"{serverData.MapDefinition.FileName} ({serverData.MapDefinition.Code})");
+      AddServerListItem(_serverSummaryListView, null, "Script", serverData.ScriptFolderPath);
+      AddServerListItem(_serverSummaryListView, null, "Monster Def", serverData.MonsterDefinitions.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Monster Block", serverData.MonsterBlocks.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Monster Spawn", serverData.MonsterSpawnCount.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Portal", serverData.Portals.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Store", serverData.Stores.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Start", serverData.StartPoints.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Resource", serverData.ResourceNodes.Length.ToString("N0"));
+      AddServerListItem(_serverSummaryListView, null, "Safe", serverData.SafeZones.Length.ToString("N0"));
+    }
+    finally
+    {
+      _serverSummaryListView.EndUpdate();
+    }
+  }
+
+  private void PopulateMonsterInspectorList(ServerMapData? serverData)
+  {
+    _serverMonsterListView.BeginUpdate();
+    try
+    {
+      _serverMonsterListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      string filter = _serverMonsterSearchText.Trim();
+      for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+      {
+        ServerMapMonsterBlock block = serverData.MonsterBlocks[blockIndex];
+        if (block.Dummies.Length == 0)
+        {
+          continue;
+        }
+
+        List<string> monsterCodes = new();
+        List<string> monsterNames = new();
+        int spawnCount = 0;
+        bool matchesFilter = string.IsNullOrWhiteSpace(filter);
+        for (int setIndex = 0; setIndex < block.SpawnSets.Length; ++setIndex)
+        {
+          ServerMapMonsterSpawnSet spawnSet = block.SpawnSets[setIndex];
+          for (int spawnIndex = 0; spawnIndex < spawnSet.Spawns.Length; ++spawnIndex)
+          {
+            ServerMapMonsterSpawn spawn = spawnSet.Spawns[spawnIndex];
+            ++spawnCount;
+            if (!monsterCodes.Contains(spawn.MonsterCode, StringComparer.OrdinalIgnoreCase))
+            {
+              monsterCodes.Add(spawn.MonsterCode);
+            }
+
+            if (!string.IsNullOrWhiteSpace(spawn.MonsterName) &&
+                !monsterNames.Contains(spawn.MonsterName, StringComparer.OrdinalIgnoreCase))
+            {
+              monsterNames.Add(spawn.MonsterName);
+            }
+
+            if (!matchesFilter &&
+                (spawn.MonsterCode.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 spawn.MonsterName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+              matchesFilter = true;
+            }
+          }
+        }
+
+        if (!matchesFilter)
+        {
+          continue;
+        }
+
+        string monsterSummary = BuildMonsterSummary(monsterNames, monsterCodes);
+        for (int dummyIndex = 0; dummyIndex < block.Dummies.Length; ++dummyIndex)
+        {
+          ServerDummyPosition dummy = block.Dummies[dummyIndex].Dummy;
+          ServerMonsterInspectorItem monsterItem = new()
+          {
+            Label = $"monster dummy {dummy.Code}",
+            Dummy = dummy,
+            BlockCode = block.Code,
+            MonsterSummary = monsterSummary,
+            MonsterCodes = monsterCodes.ToArray(),
+            MonsterNames = monsterNames.ToArray(),
+            SpawnCount = spawnCount,
+            SetCount = block.SpawnSets.Length,
+          };
+          AddServerListItem(
+            _serverMonsterListView,
+            monsterItem,
+            dummy.Code,
+            monsterSummary,
+            block.Code,
+            spawnCount.ToString(),
+            FormatSourcePosition(dummy.EditedWorldCenter));
+        }
+      }
+    }
+    finally
+    {
+      _serverMonsterListView.EndUpdate();
+    }
+  }
+
+  private void OnServerMonsterSearchTextChanged(object? sender, EventArgs e)
+  {
+    _serverMonsterSearchText = _serverMonsterSearchTextBox.Text;
+    PopulateMonsterInspectorList(_loadedMap?.ServerData);
+    UpdateMonsterInspectorSelectionDetails();
+  }
+
+  private void UpdateMonsterInspectorSelectionDetails()
+  {
+    if (_serverMonsterDetailLabel == null)
+    {
+      return;
+    }
+
+    if (_loadedMap?.ServerData == null)
+    {
+      _serverMonsterDetailLabel.Text = "Load a server folder to inspect monster spawns.";
+      return;
+    }
+
+    if (_serverMonsterListView.SelectedItems.Count <= 0 ||
+        _serverMonsterListView.SelectedItems[0].Tag is not ServerMonsterInspectorItem monsterItem)
+    {
+      int visibleCount = _serverMonsterListView.Items.Count;
+      _serverMonsterDetailLabel.Text =
+        visibleCount > 0
+          ? $"Showing {visibleCount:N0} monster dummy areas. Select one to inspect or move its spawn box."
+          : "No monster dummy areas match the current search.";
+      return;
+    }
+
+    string names = monsterItem.MonsterNames.Length > 0
+      ? string.Join(", ", monsterItem.MonsterNames.Take(4))
+      : string.Join(", ", monsterItem.MonsterCodes.Take(4));
+    if ((monsterItem.MonsterNames.Length > 4) || (monsterItem.MonsterNames.Length == 0 && monsterItem.MonsterCodes.Length > 4))
+    {
+      names += ", ...";
+    }
+    _serverMonsterDetailLabel.Text =
+      $"Dummy: {monsterItem.Dummy.Code} | Block: {monsterItem.BlockCode} | Sets: {monsterItem.SetCount} | Spawns: {monsterItem.SpawnCount}{Environment.NewLine}"
+      + $"Monsters: {names}{Environment.NewLine}"
+      + $"Center: {FormatSourcePosition(monsterItem.Dummy.EditedWorldCenter)}";
+  }
+
+  private static string BuildMonsterSummary(IReadOnlyList<string> names, IReadOnlyList<string> codes)
+  {
+    IReadOnlyList<string> preferred = names.Count > 0 ? names : codes;
+    if (preferred.Count == 0)
+    {
+      return "Unknown";
+    }
+
+    if (preferred.Count == 1)
+    {
+      return preferred[0];
+    }
+
+    if (preferred.Count == 2)
+    {
+      return $"{preferred[0]}, {preferred[1]}";
+    }
+
+    return $"{preferred[0]}, {preferred[1]} +{preferred.Count - 2}";
+  }
+
+  private void PopulatePortalInspectorList(ServerMapData? serverData)
+  {
+    _serverPortalListView.BeginUpdate();
+    try
+    {
+      _serverPortalListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      for (int index = 0; index < serverData.Portals.Length; ++index)
+      {
+        ServerMapPortal portal = serverData.Portals[index];
+        ServerDummyInspectorItem inspectorItem = new()
+        {
+          Label = $"portal {portal.Code}",
+          Mode = ServerInspectorMode.Portals,
+          Dummy = portal.Dummy,
+        };
+        AddServerListItem(
+          _serverPortalListView,
+          inspectorItem,
+          portal.Code,
+          portal.LinkMapCode,
+          portal.LinkPortalCode,
+          portal.MenuText,
+          portal.NeedCharacterLevel.ToString(),
+          portal.Dummy.Code,
+          FormatSourcePosition(portal.Dummy.EditedWorldCenter));
+      }
+    }
+    finally
+    {
+      _serverPortalListView.EndUpdate();
+    }
+  }
+
+  private void PopulateStoreInspectorList(ServerMapData? serverData)
+  {
+    _serverStoreListView.BeginUpdate();
+    try
+    {
+      _serverStoreListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      for (int index = 0; index < serverData.Stores.Length; ++index)
+      {
+        ServerMapStore store = serverData.Stores[index];
+        ServerDummyInspectorItem inspectorItem = new()
+        {
+          Label = $"store {store.Code}",
+          Mode = ServerInspectorMode.Stores,
+          Dummy = store.Dummy,
+        };
+        AddServerListItem(
+          _serverStoreListView,
+          inspectorItem,
+          store.Code,
+          store.NpcName,
+          store.NpcCode,
+          store.TradeType.ToString(),
+          store.SetNpcAngle ? store.NpcAngle.ToString() : "-",
+          store.Dummy.Code,
+          FormatSourcePosition(store.Dummy.EditedWorldCenter));
+      }
+    }
+    finally
+    {
+      _serverStoreListView.EndUpdate();
+    }
+  }
+
+  private void PopulateStartInspectorList(ServerMapData? serverData)
+  {
+    _serverStartListView.BeginUpdate();
+    try
+    {
+      _serverStartListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      for (int index = 0; index < serverData.StartPoints.Length; ++index)
+      {
+        ServerMapStartPoint startPoint = serverData.StartPoints[index];
+        ServerDummyInspectorItem inspectorItem = new()
+        {
+          Label = $"start point {startPoint.Index}",
+          Mode = ServerInspectorMode.Starts,
+          Dummy = startPoint.Dummy,
+        };
+        AddServerListItem(
+          _serverStartListView,
+          inspectorItem,
+          startPoint.Index.ToString(),
+          startPoint.Dummy.Code,
+          FormatSourcePosition(startPoint.Dummy.EditedWorldCenter));
+      }
+    }
+    finally
+    {
+      _serverStartListView.EndUpdate();
+    }
+  }
+
+  private void PopulateResourceInspectorList(ServerMapData? serverData)
+  {
+    _serverResourceListView.BeginUpdate();
+    try
+    {
+      _serverResourceListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      for (int index = 0; index < serverData.ResourceNodes.Length; ++index)
+      {
+        ServerMapResourceNode resourceNode = serverData.ResourceNodes[index];
+        ServerDummyInspectorItem inspectorItem = new()
+        {
+          Label = $"resource {resourceNode.Index}",
+          Mode = ServerInspectorMode.Resources,
+          Dummy = resourceNode.Dummy,
+        };
+        AddServerListItem(
+          _serverResourceListView,
+          inspectorItem,
+          resourceNode.Index.ToString(),
+          resourceNode.Grade.ToString(),
+          resourceNode.Dummy.Code,
+          FormatSourcePosition(resourceNode.Dummy.EditedWorldCenter));
+      }
+    }
+    finally
+    {
+      _serverResourceListView.EndUpdate();
+    }
+  }
+
+  private void PopulateSafeInspectorList(ServerMapData? serverData)
+  {
+    _serverSafeListView.BeginUpdate();
+    try
+    {
+      _serverSafeListView.Items.Clear();
+      if (serverData == null)
+      {
+        return;
+      }
+
+      for (int index = 0; index < serverData.SafeZones.Length; ++index)
+      {
+        ServerMapSafeZone safeZone = serverData.SafeZones[index];
+        ServerDummyInspectorItem inspectorItem = new()
+        {
+          Label = $"safe zone {safeZone.Index}",
+          Mode = ServerInspectorMode.Safe,
+          Dummy = safeZone.Dummy,
+        };
+        AddServerListItem(
+          _serverSafeListView,
+          inspectorItem,
+          safeZone.Index.ToString(),
+          safeZone.Dummy.Code,
+          FormatSourcePosition(safeZone.Dummy.EditedWorldCenter));
+      }
+    }
+    finally
+    {
+      _serverSafeListView.EndUpdate();
+    }
+  }
+
+  private static void AddServerListItem(ListView listView, object? tag, params string[] values)
+  {
+    ListViewItem item = new(values);
+    if (tag != null)
+    {
+      item.Tag = tag;
+    }
+
+    listView.Items.Add(item);
+  }
+
+  private static string FormatSourcePosition(Vector3 position)
+  {
+    return FormattableString.Invariant($"{position.X:F1}, {position.Y:F1}, {position.Z:F1}");
+  }
+
+  private void OnServerListItemActivate(object? sender, EventArgs e)
+  {
+    if (sender is not ListView listView || listView.SelectedItems.Count <= 0)
+    {
+      return;
+    }
+
+    JumpToSelectedServerItem(listView);
+  }
+
+  private void JumpToSelectedServerItem(ListView listView)
+  {
+    ServerNavigationTarget? navigationTarget = TryGetSelectedServerNavigationTarget(listView);
+    if (!navigationTarget.HasValue)
+    {
+      return;
+    }
+
+    if (!TryJumpToServerTarget(navigationTarget.Value))
+    {
+      return;
+    }
+
+    SaveCurrentCameraPosition();
+    SyncTeleportInputsFromCamera();
+    _statusBaseText =
+      $"Jumped to {navigationTarget.Value.Label} | Pos: ({navigationTarget.Value.Position.X:F1},{navigationTarget.Value.Position.Y:F1},{navigationTarget.Value.Position.Z:F1})";
+    RefreshRuntimeStatus();
+    _viewer.Focus();
+  }
+
+  private static ServerNavigationTarget? TryGetSelectedServerNavigationTarget(ListView listView)
+  {
+    if (listView.SelectedItems.Count <= 0)
+    {
+      return null;
+    }
+
+    return listView.SelectedItems[0].Tag switch
+    {
+      IServerInspectorItem inspectorItem => new ServerNavigationTarget(inspectorItem.Label, inspectorItem.Dummy.EditedWorldCenter),
+      _ => null,
+    };
+  }
+
+  private bool TryJumpToServerTarget(ServerNavigationTarget navigationTarget)
+  {
+    Vector3 position = navigationTarget.Position;
+    return _viewer.TrySetCameraSourcePosition(position.X, position.Y + 180.0f, position.Z);
   }
 
   private void SaveCurrentMapAsFromDialog()
@@ -754,33 +1860,37 @@ internal sealed partial class MainForm : Form
     try
     {
       EntityArchiveCacheInfo archiveCache = EnsureEntityArchiveCacheForBsp(bspPath);
+      _lastEntityArchiveCache = archiveCache;
       LoadedMap map = BspLoader.Load(bspPath, ebpPath, _skySourceMode, _strictLoadModeEnabled);
       _editUndoHistory.Clear();
       _editRedoHistory.Clear();
+      _loadedBspPath = NormalizeMapPath(bspPath);
+      _loadedEbpPath = Path.GetFullPath(ebpPath);
+      string? serverLoadNote = null;
+      if (!string.IsNullOrWhiteSpace(_serverRootPath))
+      {
+        try
+        {
+          ServerMapData serverData = ServerMapLoader.Load(map, _loadedBspPath, _serverRootPath);
+          map = MapEditOperations.WithServerData(map, serverData);
+        }
+        catch (Exception ex)
+        {
+          serverLoadNote = $"ServerLoad: {ex.Message}";
+        }
+      }
+
       _loadedMap = map;
       _mapDocument = MapDocument.FromLoadedMap(map);
       _viewer.SetMap(map);
-      _loadedBspPath = NormalizeMapPath(bspPath);
-      _loadedEbpPath = Path.GetFullPath(ebpPath);
       RestoreCameraPositionForMap(_loadedBspPath);
       SyncTeleportInputsFromCamera();
       SyncSelectedMapToLoadedPath(_loadedBspPath);
       Text = $"RF MapEditor (Viewer) - {map.Name}";
-      string cacheTag = archiveCache.ArchiveCount > 0
-        ? $"{(archiveCache.WasCached ? "RPKCache:Hit" : "RPKCache:Build")} {archiveCache.ArchiveCount:N0}rpk/{archiveCache.AssetCount:N0}assets"
-        : "RPKCache:N/A";
-      _statusBaseText =
-        $"Loaded {map.Name} | BSP TriVerts: {map.BspTriangleVertices.Length:N0} | EBP Vertices: {map.CollisionVertices.Length:N0} | EBP Lines: {map.CollisionLines.Length:N0}"
-        + $" | RenderVerts: {map.BspRenderVertices.Length:N0}"
-        + $" | TextureBlobs: {map.SurfaceTextures.Length:N0} | LgtTex: {map.LightmapTextures.Length:N0}"
-        + $" | Fog: {(map.Environment.FogEnabled ? $"On({map.Environment.FogStart:F0}-{map.Environment.FogEnd:F0})" : "Off")} | ExtDummy: {map.ExtDummies.Length:N0}"
-        + $" | SkySource: {GetSkySourceName(_skySourceMode)} | SkyVerts: {map.SkyRenderVertices.Length:N0} | SkyTex: {map.SkySurfaceTextures.Length:N0}"
-        + $" | EntModels: {map.MapEntityModelCount:N0} | EntInst: {map.MapEntityInstanceCount:N0} | FxInst: {map.ParticleInstancePositions.Length:N0} | EntVerts: {map.EntityRenderVertices.Length:N0} | EntTex: {map.EntitySurfaceTextures.Length:N0}"
-        + $" | {cacheTag}"
-        + $" | Pipe: {GetRenderPipelineModeName(_renderPipelineMode)}"
-        + $" | StrictLoad: {(_strictLoadModeEnabled ? "On" : "Off")}"
-        + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
+      _statusBaseText = BuildLoadedMapStatus(map, archiveCache, serverLoadNote);
       RefreshRuntimeStatus();
+      SetServerInspectorMode(map.ServerData != null ? ServerInspectorMode.Monsters : ServerInspectorMode.Summary, syncComboBox: true);
+      RefreshServerInspector();
       UpdateUndoUiState();
     }
     catch (Exception ex)
@@ -791,6 +1901,8 @@ internal sealed partial class MainForm : Form
       _editRedoHistory.Clear();
       _statusBaseText = "Load failed.";
       RefreshRuntimeStatus();
+      SetServerInspectorMode(ServerInspectorMode.Summary, syncComboBox: true);
+      RefreshServerInspector();
       UpdateUndoUiState();
       string title = _strictLoadModeEnabled
         ? "Load Map Failed (Strict Validation)"
@@ -799,12 +1911,52 @@ internal sealed partial class MainForm : Form
     }
   }
 
+  private string BuildLoadedMapStatus(LoadedMap map, EntityArchiveCacheInfo archiveCache, string? serverLoadNote)
+  {
+    string cacheTag = archiveCache.ArchiveCount > 0
+      ? $"{(archiveCache.WasCached ? "RPKCache:Hit" : "RPKCache:Build")} {archiveCache.ArchiveCount:N0}rpk/{archiveCache.AssetCount:N0}assets"
+      : "RPKCache:N/A";
+
+    string status =
+      $"Loaded {map.Name} | BSP TriVerts: {map.BspTriangleVertices.Length:N0} | EBP Vertices: {map.CollisionVertices.Length:N0} | EBP Lines: {map.CollisionLines.Length:N0}"
+      + $" | RenderVerts: {map.BspRenderVertices.Length:N0}"
+      + $" | TextureBlobs: {map.SurfaceTextures.Length:N0} | LgtTex: {map.LightmapTextures.Length:N0}"
+      + $" | Fog: {(map.Environment.FogEnabled ? $"On({map.Environment.FogStart:F0}-{map.Environment.FogEnd:F0})" : "Off")} | ExtDummy: {map.ExtDummies.Length:N0}"
+      + $" | SkySource: {GetSkySourceName(_skySourceMode)} | SkyVerts: {map.SkyRenderVertices.Length:N0} | SkyTex: {map.SkySurfaceTextures.Length:N0}"
+      + $" | EntModels: {map.MapEntityModelCount:N0} | EntInst: {map.MapEntityInstanceCount:N0} | FxInst: {map.ParticleInstancePositions.Length:N0} | EntVerts: {map.EntityRenderVertices.Length:N0} | EntTex: {map.EntitySurfaceTextures.Length:N0}"
+      + $" | {cacheTag}"
+      + $" | Pipe: {GetRenderPipelineModeName(_renderPipelineMode)}"
+      + $" | StrictLoad: {(_strictLoadModeEnabled ? "On" : "Off")}"
+      + $" | Bounds: ({map.Bounds.Min.X:F0},{map.Bounds.Min.Y:F0},{map.Bounds.Min.Z:F0})..({map.Bounds.Max.X:F0},{map.Bounds.Max.Y:F0},{map.Bounds.Max.Z:F0})";
+
+    if (map.ServerData != null)
+    {
+      ServerMapData serverData = map.ServerData;
+      status +=
+        $" | Srv MonDef: {serverData.MonsterDefinitions.Length:N0}"
+        + $" | Srv MonBlk: {serverData.MonsterBlocks.Length:N0}"
+        + $" | Srv Spawn: {serverData.MonsterSpawnCount:N0}"
+        + $" | Srv Portal: {serverData.Portals.Length:N0}"
+        + $" | Srv Store: {serverData.Stores.Length:N0}"
+        + $" | Srv Start: {serverData.StartPoints.Length:N0}"
+        + $" | Srv Res: {serverData.ResourceNodes.Length:N0}"
+        + $" | Srv Safe: {serverData.SafeZones.Length:N0}";
+    }
+    else if (!string.IsNullOrWhiteSpace(serverLoadNote))
+    {
+      status += $" | {serverLoadNote}";
+    }
+
+    return status;
+  }
+
   private void ShowControls()
   {
     const string message =
       """
       Camera Controls
       - Ctrl+O: select map root folder
+      - Ctrl+Shift+O: select WorldServer RF_Bin folder for server-side map data
       - Ctrl+S: save current EBP only (collision changes)
       - Ctrl+Shift+S: save current loaded BSP/EBP as a new pair (+sidecars/entity)
       - Ctrl+M: edit map R3M materials
@@ -2513,6 +3665,39 @@ internal sealed partial class MainForm : Form
     public float X { get; init; }
     public float Y { get; init; }
     public float Z { get; init; }
+  }
+
+  private readonly record struct ServerInspectorModeItem(string Label, ServerInspectorMode Mode)
+  {
+    public override string ToString() => Label;
+  }
+
+  private readonly record struct ServerNavigationTarget(string Label, Vector3 Position);
+  private interface IServerInspectorItem
+  {
+    ServerInspectorMode Mode { get; }
+    string Label { get; }
+    ServerDummyPosition Dummy { get; }
+  }
+
+  private sealed class ServerDummyInspectorItem : IServerInspectorItem
+  {
+    public required ServerInspectorMode Mode { get; init; }
+    public required string Label { get; init; }
+    public required ServerDummyPosition Dummy { get; init; }
+  }
+
+  private sealed class ServerMonsterInspectorItem : IServerInspectorItem
+  {
+    public ServerInspectorMode Mode => ServerInspectorMode.Monsters;
+    public required string Label { get; init; }
+    public required ServerDummyPosition Dummy { get; init; }
+    public required string BlockCode { get; init; }
+    public required string MonsterSummary { get; init; }
+    public required string[] MonsterCodes { get; init; }
+    public required string[] MonsterNames { get; init; }
+    public required int SpawnCount { get; init; }
+    public required int SetCount { get; init; }
   }
 
   private readonly record struct MapListEntry(string Name, string FolderPath, string BspPath, string EbpPath);

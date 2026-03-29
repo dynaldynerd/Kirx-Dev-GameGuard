@@ -19,6 +19,7 @@ public sealed class MapDocument
   public MaterialDefinition[] EntityMaterials => _map.EntityMaterials;
   public R3TextureBlob[] EntityTextures => _map.EntitySurfaceTextures;
   public EntitySceneData EntityScene => _map.EntityScene;
+  public ServerMapData? ServerData => _map.ServerData;
 
   public static MapDocument FromLoadedMap(LoadedMap map)
   {

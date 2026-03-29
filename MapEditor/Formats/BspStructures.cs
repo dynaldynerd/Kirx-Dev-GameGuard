@@ -322,4 +322,5 @@ public sealed class LoadedMap
   public required BspLeafBounds[] BspLeafBounds { get; init; }
   public required Vector3[] CollisionVertices { get; init; }
   public required CollisionLine[] CollisionLines { get; init; }
+  public ServerMapData? ServerData { get; init; }
 }

@@ -846,6 +846,7 @@ public static class MapEditOperations
       BspLeafBounds = source.BspLeafBounds,
       CollisionVertices = collisionVertices,
       CollisionLines = collisionLines,
+      ServerData = source.ServerData,
     };
   }
 
@@ -898,6 +899,7 @@ public static class MapEditOperations
       BspLeafBounds = source.BspLeafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
+      ServerData = source.ServerData,
     };
   }
 
@@ -951,6 +953,7 @@ public static class MapEditOperations
       BspLeafBounds = source.BspLeafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
+      ServerData = source.ServerData,
     };
   }
 
@@ -1019,6 +1022,7 @@ public static class MapEditOperations
       BspLeafBounds = source.BspLeafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
+      ServerData = source.ServerData,
     };
   }
 
@@ -1072,6 +1076,60 @@ public static class MapEditOperations
       BspLeafBounds = source.BspLeafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
+      ServerData = source.ServerData,
+    };
+  }
+
+  public static LoadedMap WithServerData(
+    LoadedMap source,
+    ServerMapData? serverData)
+  {
+    return new LoadedMap
+    {
+      Name = source.Name,
+      BspPath = source.BspPath,
+      EbpPath = source.EbpPath,
+      BspBinaryLayout = source.BspBinaryLayout,
+      SkySourceMode = source.SkySourceMode,
+      Environment = source.Environment,
+      ExtDummies = source.ExtDummies,
+      Bounds = source.Bounds,
+      BspTriangleVertices = source.BspTriangleVertices,
+      BspRenderVertices = source.BspRenderVertices,
+      BspMaterialSpans = source.BspMaterialSpans,
+      BspSceneObjects = source.BspSceneObjects,
+      BspRenderVertexObjectIds = source.BspRenderVertexObjectIds,
+      BspRenderVertexLocalPositions = source.BspRenderVertexLocalPositions,
+      Materials = source.Materials,
+      MaterialSurfaceIds = source.MaterialSurfaceIds,
+      MaterialAlphaTypes = source.MaterialAlphaTypes,
+      SurfaceTextures = source.SurfaceTextures,
+      LightmapTextures = source.LightmapTextures,
+      SkyRenderVertices = source.SkyRenderVertices,
+      SkyMaterialSpans = source.SkyMaterialSpans,
+      SkyMaterials = source.SkyMaterials,
+      SkyMaterialSurfaceIds = source.SkyMaterialSurfaceIds,
+      SkyMaterialAlphaTypes = source.SkyMaterialAlphaTypes,
+      SkySurfaceTextures = source.SkySurfaceTextures,
+      SkySceneObjects = source.SkySceneObjects,
+      SkySceneMatGroups = source.SkySceneMatGroups,
+      EntityRenderVertices = source.EntityRenderVertices,
+      EntityMaterialSpans = source.EntityMaterialSpans,
+      EntityMaterials = source.EntityMaterials,
+      EntityMaterialSurfaceIds = source.EntityMaterialSurfaceIds,
+      EntityMaterialAlphaTypes = source.EntityMaterialAlphaTypes,
+      EntitySurfaceTextures = source.EntitySurfaceTextures,
+      EntityScene = source.EntityScene,
+      MapEntityModelCount = source.MapEntityModelCount,
+      MapEntityInstanceCount = source.MapEntityInstanceCount,
+      ParticleInstancePositions = source.ParticleInstancePositions,
+      ParticleInstances = source.ParticleInstances,
+      BspCollisionNormals = source.BspCollisionNormals,
+      BspCollisionNodes = source.BspCollisionNodes,
+      BspLeafBounds = source.BspLeafBounds,
+      CollisionVertices = source.CollisionVertices,
+      CollisionLines = source.CollisionLines,
+      ServerData = serverData,
     };
   }
 
@@ -1179,6 +1237,7 @@ public static class MapEditOperations
       BspLeafBounds = leafBounds,
       CollisionVertices = source.CollisionVertices,
       CollisionLines = source.CollisionLines,
+      ServerData = source.ServerData,
     };
   }
 

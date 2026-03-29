@@ -39,6 +39,30 @@ internal sealed class MapViewerControl : UserControl
     Rotate = 3,
   }
 
+  private enum ServerOverlayCategory
+  {
+    Monster = 0,
+    Portal = 1,
+    Store = 2,
+    Start = 3,
+    ResourceHigh = 4,
+    ResourceMiddle = 5,
+    ResourceLow = 6,
+    Safe = 7,
+  }
+
+  public enum ServerOverlayFilter
+  {
+    None = 0,
+    Monsters = 1,
+    Portals = 2,
+    Stores = 3,
+    Starts = 4,
+    Resources = 5,
+    Safe = 6,
+    All = 7,
+  }
+
   private const int MeshFloatStride = 10;
   private const int MeshByteStride = MeshFloatStride * 4;
 
@@ -91,6 +115,7 @@ internal sealed class MapViewerControl : UserControl
   private const int LensFlareTileColumns = 4;
   private const int LensFlareFloatStride = 8;
   private const int LensFlareByteStride = LensFlareFloatStride * 4;
+  private const int ServerOverlayCategoryCount = 8;
   private const float LensFlareDirectionScale = (1.0f / 2.8f) * 0.66f;
   private const float LensFlareRayDistance = 200000.0f;
   private const float LensSunScaleMultiplier = 1.35f;
@@ -111,6 +136,19 @@ internal sealed class MapViewerControl : UserControl
   ];
   private static readonly Vector3 BspSelectionColor = new(1.00f, 0.67f, 0.18f);
   private static readonly Vector3 BspSelectionXrayColor = new(1.00f, 0.98f, 0.32f);
+  private static readonly Vector3 ServerSelectionColor = new(1.00f, 0.30f, 0.08f);
+  private static readonly Vector3 ServerSelectionXrayColor = new(1.00f, 1.00f, 0.86f);
+  private static readonly Vector3[] ServerOverlayColors =
+  [
+    new Vector3(1.00f, 0.45f, 0.28f),
+    new Vector3(1.00f, 0.84f, 0.18f),
+    new Vector3(0.20f, 0.88f, 1.00f),
+    new Vector3(0.34f, 1.00f, 0.46f),
+    new Vector3(1.00f, 0.78f, 0.24f),
+    new Vector3(0.42f, 0.82f, 1.00f),
+    new Vector3(0.38f, 1.00f, 0.84f),
+    new Vector3(0.96f, 0.98f, 1.00f),
+  ];
   private const float BspSelectionLineWidthXray = 4.0f;
   private const float BspSelectionLineWidthFront = 2.5f;
   private const float BspSelectionPointSizeXray = 13.0f;
@@ -294,6 +332,21 @@ internal sealed class MapViewerControl : UserControl
   private int _particleUniformMvp;
   private int _particleUniformColor;
   private bool _showParticleMarkers = false;
+  private int _serverMarkerVao;
+  private int _serverMarkerVbo;
+  private int _serverMarkerVertexCount;
+  private readonly int[] _serverMarkerCategoryVertexCounts = new int[ServerOverlayCategoryCount];
+  private int _selectedServerMarkerVao;
+  private int _selectedServerMarkerVbo;
+  private int _selectedServerMarkerVertexCount;
+  private bool _showServerOverlay;
+  private ServerOverlayFilter _serverOverlayFilter = ServerOverlayFilter.None;
+  private bool _serverInteractionEnabled = true;
+  private bool _serverDummyDragging;
+  private Vector3 _serverDummyDragStartSource;
+  private Vector3 _serverDummyDragStartOffset;
+  private float _serverDummyDragPlaneY;
+  private ServerDummyPosition? _selectedServerDummy;
   private bool _bspSelectModeEnabled = true;
   private bool _bspMoveModeEnabled;
   private bool _bspScaleModeEnabled;
@@ -429,6 +482,8 @@ internal sealed class MapViewerControl : UserControl
   public event Action<Vector3>? BspTranslateRequested;
   public event Action<float>? BspScaleRequested;
   public event Action<Vector3, float>? BspRotateAxisRequested;
+  public event Action<ServerDummyPosition?>? ServerDummySelectionChanged;
+  public event Action<ServerDummyPosition>? ServerDummyMoved;
 
   public (float X, float Y, float Z) GetCameraDisplayPosition()
   {
@@ -552,6 +607,40 @@ internal sealed class MapViewerControl : UserControl
     }
 
     UpdateCameraOverlay();
+    _glControl.Invalidate();
+  }
+
+  public void ApplyServerDataEditedMap(LoadedMap map)
+  {
+    if (map == null)
+    {
+      return;
+    }
+
+    _map = map;
+    if (map.ServerData == null)
+    {
+      _selectedServerDummy = null;
+      _serverDummyDragging = false;
+    }
+    if (_glReady && TryMakeCurrent())
+    {
+      UpdateServerOverlayBuffers();
+      UpdateSelectedServerDummyBuffer();
+    }
+
+    UpdateCameraOverlay();
+    _glControl.Invalidate();
+  }
+
+  public void RefreshServerOverlay()
+  {
+    if (_glReady && TryMakeCurrent())
+    {
+      UpdateServerOverlayBuffers();
+      UpdateSelectedServerDummyBuffer();
+    }
+
     _glControl.Invalidate();
   }
 
@@ -679,6 +768,49 @@ internal sealed class MapViewerControl : UserControl
   {
     get => _showParticleMarkers;
     set => _showParticleMarkers = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool ShowServerOverlay
+  {
+    get => _showServerOverlay;
+    set => _showServerOverlay = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public ServerOverlayFilter ActiveServerOverlayFilter
+  {
+    get => _serverOverlayFilter;
+    set => _serverOverlayFilter = value;
+  }
+
+  [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+  public bool ServerInteractionEnabled
+  {
+    get => _serverInteractionEnabled;
+    set
+    {
+      if (_serverInteractionEnabled == value)
+      {
+        return;
+      }
+
+      _serverInteractionEnabled = value;
+      if (!_serverInteractionEnabled && _serverDummyDragging)
+      {
+        CancelServerDummyDrag(restoreOffset: false);
+      }
+    }
+  }
+
+  public void SetSelectedServerDummy(ServerDummyPosition? dummy)
+  {
+    _selectedServerDummy = dummy;
+    if (_glReady && TryMakeCurrent())
+    {
+      UpdateSelectedServerDummyBuffer();
+    }
+    _glControl.Invalidate();
   }
 
   [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -1536,6 +1668,8 @@ internal sealed class MapViewerControl : UserControl
     _collisionDrawDragging = false;
     _collisionDrawStartSnapped = false;
     _collisionDrawEndSnapped = false;
+    _serverDummyDragging = false;
+    _selectedServerDummy = null;
     _lastNearestEntityOverlayTickMs = long.MinValue;
     _lastNearestEntityOverlayText = "Nearest Ent: n/a";
     _lastNearestFxOverlayTickMs = long.MinValue;
@@ -1987,6 +2121,18 @@ internal sealed class MapViewerControl : UserControl
     _particleVbo = GL.GenBuffer();
     GL.BindVertexArray(_particleVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _particleVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _serverMarkerVao = GL.GenVertexArray();
+    _serverMarkerVbo = GL.GenBuffer();
+    GL.BindVertexArray(_serverMarkerVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _serverMarkerVbo);
+    GL.EnableVertexAttribArray(0);
+    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+    _selectedServerMarkerVao = GL.GenVertexArray();
+    _selectedServerMarkerVbo = GL.GenBuffer();
+    GL.BindVertexArray(_selectedServerMarkerVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _selectedServerMarkerVbo);
     GL.EnableVertexAttribArray(0);
     GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
     _collisionDrawPreviewVao = GL.GenVertexArray();
@@ -2634,6 +2780,17 @@ internal sealed class MapViewerControl : UserControl
       GL.Disable(EnableCap.Blend);
     }
 
+    if (_showServerOverlay && _serverMarkerVertexCount > 0 && _serverOverlayFilter != ServerOverlayFilter.None)
+    {
+      GL.Enable(EnableCap.DepthTest);
+      GL.UseProgram(_lineProgram);
+      GL.UniformMatrix4(_lineUniformMvp, true, ref mvp);
+      GL.BindVertexArray(_serverMarkerVao);
+      DrawServerOverlayMarkers();
+      DrawSelectedServerOverlayMarker();
+      GL.LineWidth(1.0f);
+    }
+
     if (_showCollisionOverlay && (_wallVertexCount > 0 || _wallFrozenVertexCount > 0))
     {
       GL.Enable(EnableCap.DepthTest);
@@ -2809,6 +2966,8 @@ internal sealed class MapViewerControl : UserControl
       _parityStaticEntityVertexCount = 0;
       _parityEntityVertexCount = 0;
       _particleVertexCount = 0;
+      _serverMarkerVertexCount = 0;
+      Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
       _wallVertexCount = 0;
       _wallFrozenVertexCount = 0;
       ClearWallGroupVertexCounts();
@@ -2945,6 +3104,8 @@ internal sealed class MapViewerControl : UserControl
       particlePositions,
       BufferUsageHint.DynamicDraw);
 
+    UpdateServerOverlayBuffers();
+
     UpdateCollisionDrawPreviewBuffer();
     UpdateCollisionSelectionBuffer();
     UpdateBspSelectionBuffer();
@@ -2962,10 +3123,15 @@ internal sealed class MapViewerControl : UserControl
       _bspSelectionLineVertexCount = 0;
       _bspSelectionPointVertexCount = 0;
       _collisionDrawDragging = false;
+      _serverMarkerVertexCount = 0;
+      _selectedServerMarkerVertexCount = 0;
+      Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
       return;
     }
 
     UploadCollisionWallBuffers(_map);
+    UpdateServerOverlayBuffers();
+    UpdateSelectedServerDummyBuffer();
 
     UpdateCollisionDrawPreviewBuffer();
     UpdateCollisionSelectionBuffer();
@@ -2986,6 +3152,9 @@ internal sealed class MapViewerControl : UserControl
       _bspSelectionLineVertexCount = 0;
       _bspSelectionPointVertexCount = 0;
       _collisionDrawDragging = false;
+      _serverMarkerVertexCount = 0;
+      _selectedServerMarkerVertexCount = 0;
+      Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
       ClearBspFloorSpatialIndex();
       ClearBspSelectionSpatialIndex();
       return;
@@ -2999,6 +3168,8 @@ internal sealed class MapViewerControl : UserControl
     GL.BindVertexArray(_lineVao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, _lineVbo);
     GL.BufferData(BufferTarget.ArrayBuffer, lineVertices.Length * 12, lineVertices, BufferUsageHint.DynamicDraw);
+    UpdateServerOverlayBuffers();
+    UpdateSelectedServerDummyBuffer();
 
     UpdateCollisionDrawPreviewBuffer();
     UpdateCollisionSelectionBuffer();
@@ -3042,6 +3213,106 @@ internal sealed class MapViewerControl : UserControl
   {
     Array.Clear(_wallGroupVertexCounts);
     Array.Clear(_wallFrozenGroupVertexCounts);
+  }
+
+  private void UpdateServerOverlayBuffers()
+  {
+    if (_map == null)
+    {
+      _serverMarkerVertexCount = 0;
+      _selectedServerMarkerVertexCount = 0;
+      Array.Clear(_serverMarkerCategoryVertexCounts, 0, _serverMarkerCategoryVertexCounts.Length);
+      return;
+    }
+
+    Vector3[] markerVertices = ConvertDisplayPositions(BuildServerOverlayMarkers(_map, _serverMarkerCategoryVertexCounts));
+    _serverMarkerVertexCount = markerVertices.Length;
+    GL.BindVertexArray(_serverMarkerVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _serverMarkerVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, markerVertices.Length * 12, markerVertices, BufferUsageHint.DynamicDraw);
+  }
+
+  private void UpdateSelectedServerDummyBuffer()
+  {
+    if (_map?.ServerData == null || _selectedServerDummy == null)
+    {
+      _selectedServerMarkerVertexCount = 0;
+      return;
+    }
+
+    if (!TryBuildDummyBox(_selectedServerDummy, _map.ServerData, out Vector3[] corners))
+    {
+      _selectedServerMarkerVertexCount = 0;
+      return;
+    }
+
+    Vector3[] markerVertices = ConvertDisplayPositions(BuildDummyBoxLineVertices(corners));
+    _selectedServerMarkerVertexCount = markerVertices.Length;
+    GL.BindVertexArray(_selectedServerMarkerVao);
+    GL.BindBuffer(BufferTarget.ArrayBuffer, _selectedServerMarkerVbo);
+    GL.BufferData(BufferTarget.ArrayBuffer, markerVertices.Length * 12, markerVertices, BufferUsageHint.DynamicDraw);
+  }
+
+  private void DrawServerOverlayMarkers()
+  {
+    int first = 0;
+    for (int categoryIndex = 0; categoryIndex < _serverMarkerCategoryVertexCounts.Length; ++categoryIndex)
+    {
+      int categoryVertexCount = _serverMarkerCategoryVertexCounts[categoryIndex];
+      if (categoryVertexCount <= 0)
+      {
+        continue;
+      }
+
+      if (!IsServerOverlayCategoryVisible((ServerOverlayCategory)categoryIndex))
+      {
+        first += categoryVertexCount;
+        continue;
+      }
+
+      GL.Uniform3(_lineUniformColor, ServerOverlayColors[categoryIndex]);
+      GL.LineWidth(categoryIndex == (int)ServerOverlayCategory.Monster ? 2.25f : 1.75f);
+      GL.DrawArrays(PrimitiveType.Lines, first, categoryVertexCount);
+      first += categoryVertexCount;
+    }
+  }
+
+  private void DrawSelectedServerOverlayMarker()
+  {
+    if (_selectedServerMarkerVertexCount <= 0)
+    {
+      return;
+    }
+
+    GL.BindVertexArray(_selectedServerMarkerVao);
+
+    GL.Disable(EnableCap.DepthTest);
+    GL.Uniform3(_lineUniformColor, ServerSelectionXrayColor);
+    GL.LineWidth(5.5f);
+    GL.DrawArrays(PrimitiveType.Lines, 0, _selectedServerMarkerVertexCount);
+
+    GL.Enable(EnableCap.DepthTest);
+    GL.Uniform3(_lineUniformColor, ServerSelectionColor);
+    GL.LineWidth(3.5f);
+    GL.DrawArrays(PrimitiveType.Lines, 0, _selectedServerMarkerVertexCount);
+  }
+
+  private bool IsServerOverlayCategoryVisible(ServerOverlayCategory category)
+  {
+    return _serverOverlayFilter switch
+    {
+      ServerOverlayFilter.None => false,
+      ServerOverlayFilter.Monsters => category == ServerOverlayCategory.Monster,
+      ServerOverlayFilter.Portals => category == ServerOverlayCategory.Portal,
+      ServerOverlayFilter.Stores => category == ServerOverlayCategory.Store,
+      ServerOverlayFilter.Starts => category == ServerOverlayCategory.Start,
+      ServerOverlayFilter.Resources =>
+        category == ServerOverlayCategory.ResourceHigh ||
+        category == ServerOverlayCategory.ResourceMiddle ||
+        category == ServerOverlayCategory.ResourceLow,
+      ServerOverlayFilter.Safe => category == ServerOverlayCategory.Safe,
+      _ => true,
+    };
   }
 
   private void UploadMapMesh(LoadedMap map)
@@ -7525,6 +7796,174 @@ internal sealed class MapViewerControl : UserControl
     return output.ToArray();
   }
 
+  private static Vector3[] BuildServerOverlayMarkers(LoadedMap map, int[] categoryVertexCounts)
+  {
+    Array.Clear(categoryVertexCounts, 0, categoryVertexCounts.Length);
+
+    ServerMapData? serverData = map.ServerData;
+    if (serverData == null)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    int estimatedVertexCount =
+      serverData.MonsterBlocks.Sum(static block => block.Dummies.Length) * 24 +
+      serverData.Portals.Length * 24 +
+      serverData.Stores.Length * 24 +
+      serverData.StartPoints.Length * 24 +
+      serverData.ResourceNodes.Length * 24 +
+      serverData.SafeZones.Length * 24;
+    if (estimatedVertexCount <= 0)
+    {
+      return Array.Empty<Vector3>();
+    }
+
+    List<Vector3> vertices = new(estimatedVertexCount);
+
+    for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+    {
+      ServerMapMonsterBlock block = serverData.MonsterBlocks[blockIndex];
+      for (int dummyIndex = 0; dummyIndex < block.Dummies.Length; ++dummyIndex)
+      {
+        AppendDummyBoxLines(vertices, categoryVertexCounts, ServerOverlayCategory.Monster, serverData, block.Dummies[dummyIndex].Dummy);
+      }
+    }
+
+    for (int portalIndex = 0; portalIndex < serverData.Portals.Length; ++portalIndex)
+    {
+      AppendDummyBoxLines(vertices, categoryVertexCounts, ServerOverlayCategory.Portal, serverData, serverData.Portals[portalIndex].Dummy);
+    }
+
+    for (int storeIndex = 0; storeIndex < serverData.Stores.Length; ++storeIndex)
+    {
+      AppendDummyBoxLines(vertices, categoryVertexCounts, ServerOverlayCategory.Store, serverData, serverData.Stores[storeIndex].Dummy);
+    }
+
+    for (int startIndex = 0; startIndex < serverData.StartPoints.Length; ++startIndex)
+    {
+      AppendDummyBoxLines(vertices, categoryVertexCounts, ServerOverlayCategory.Start, serverData, serverData.StartPoints[startIndex].Dummy);
+    }
+
+    for (int resourceIndex = 0; resourceIndex < serverData.ResourceNodes.Length; ++resourceIndex)
+    {
+      ServerMapResourceNode resourceNode = serverData.ResourceNodes[resourceIndex];
+      ServerOverlayCategory category = resourceNode.Grade switch
+      {
+        ServerResourceGrade.High => ServerOverlayCategory.ResourceHigh,
+        ServerResourceGrade.Middle => ServerOverlayCategory.ResourceMiddle,
+        _ => ServerOverlayCategory.ResourceLow,
+      };
+      AppendDummyBoxLines(vertices, categoryVertexCounts, category, serverData, resourceNode.Dummy);
+    }
+
+    for (int safeIndex = 0; safeIndex < serverData.SafeZones.Length; ++safeIndex)
+    {
+      AppendDummyBoxLines(vertices, categoryVertexCounts, ServerOverlayCategory.Safe, serverData, serverData.SafeZones[safeIndex].Dummy);
+    }
+
+    return vertices.ToArray();
+  }
+
+  private static void AppendDummyBoxLines(
+    List<Vector3> output,
+    int[] categoryVertexCounts,
+    ServerOverlayCategory category,
+    ServerMapData serverData,
+    ServerDummyPosition dummy)
+  {
+    if (!TryBuildDummyBox(dummy, serverData, out Vector3[] corners))
+    {
+      return;
+    }
+
+    AddLine(output, corners[0], corners[1]);
+    AddLine(output, corners[1], corners[2]);
+    AddLine(output, corners[2], corners[3]);
+    AddLine(output, corners[3], corners[0]);
+    AddLine(output, corners[4], corners[5]);
+    AddLine(output, corners[5], corners[6]);
+    AddLine(output, corners[6], corners[7]);
+    AddLine(output, corners[7], corners[4]);
+    AddLine(output, corners[0], corners[4]);
+    AddLine(output, corners[1], corners[5]);
+    AddLine(output, corners[2], corners[6]);
+    AddLine(output, corners[3], corners[7]);
+    categoryVertexCounts[(int)category] += 24;
+  }
+
+  private static Vector3[] BuildDummyBoxLineVertices(Vector3[] corners)
+  {
+    List<Vector3> vertices = new(24);
+    AddLine(vertices, corners[0], corners[1]);
+    AddLine(vertices, corners[1], corners[2]);
+    AddLine(vertices, corners[2], corners[3]);
+    AddLine(vertices, corners[3], corners[0]);
+    AddLine(vertices, corners[4], corners[5]);
+    AddLine(vertices, corners[5], corners[6]);
+    AddLine(vertices, corners[6], corners[7]);
+    AddLine(vertices, corners[7], corners[4]);
+    AddLine(vertices, corners[0], corners[4]);
+    AddLine(vertices, corners[1], corners[5]);
+    AddLine(vertices, corners[2], corners[6]);
+    AddLine(vertices, corners[3], corners[7]);
+    return vertices.ToArray();
+  }
+
+  private static bool TryBuildDummyBox(ServerDummyPosition dummy, ServerMapData serverData, out Vector3[] corners)
+  {
+    corners = Array.Empty<Vector3>();
+    if ((uint)dummy.HelperIndex >= (uint)serverData.Helpers.Length)
+    {
+      return false;
+    }
+
+    ServerHelperObject helper = serverData.Helpers[dummy.HelperIndex];
+    Vector3[] localCorners =
+    [
+      new Vector3(dummy.LocalMin.X, dummy.LocalMin.Y, dummy.LocalMin.Z),
+      new Vector3(dummy.LocalMax.X, dummy.LocalMin.Y, dummy.LocalMin.Z),
+      new Vector3(dummy.LocalMax.X, dummy.LocalMax.Y, dummy.LocalMin.Z),
+      new Vector3(dummy.LocalMin.X, dummy.LocalMax.Y, dummy.LocalMin.Z),
+      new Vector3(dummy.LocalMin.X, dummy.LocalMin.Y, dummy.LocalMax.Z),
+      new Vector3(dummy.LocalMax.X, dummy.LocalMin.Y, dummy.LocalMax.Z),
+      new Vector3(dummy.LocalMax.X, dummy.LocalMax.Y, dummy.LocalMax.Z),
+      new Vector3(dummy.LocalMin.X, dummy.LocalMax.Y, dummy.LocalMax.Z),
+    ];
+
+    Vector3 min = new(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+    Vector3 max = new(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+    for (int index = 0; index < localCorners.Length; ++index)
+    {
+      Vector3 worldCorner = TransformServerPoint(localCorners[index], helper.Transform) + dummy.EditOffset;
+      min = Vector3.ComponentMin(min, worldCorner);
+      max = Vector3.ComponentMax(max, worldCorner);
+    }
+
+    if (!IsFinite(min) || !IsFinite(max))
+    {
+      return false;
+    }
+
+    corners =
+    [
+      new Vector3(min.X, min.Y, min.Z),
+      new Vector3(max.X, min.Y, min.Z),
+      new Vector3(max.X, max.Y, min.Z),
+      new Vector3(min.X, max.Y, min.Z),
+      new Vector3(min.X, min.Y, max.Z),
+      new Vector3(max.X, min.Y, max.Z),
+      new Vector3(max.X, max.Y, max.Z),
+      new Vector3(min.X, max.Y, max.Z),
+    ];
+    return true;
+  }
+
+  private static Vector3 TransformServerPoint(Vector3 source, NumericsMatrix4 matrix)
+  {
+    NumericsVector3 transformed = NumericsVector3.Transform(new NumericsVector3(source.X, source.Y, source.Z), matrix);
+    return new Vector3(transformed.X, transformed.Y, transformed.Z);
+  }
+
   private static (Vector3[] NormalWalls, int[] NormalGroupCounts, Vector3[] FrozenWalls, int[] FrozenGroupCounts) BuildCollisionWalls(LoadedMap map)
   {
     List<Vector3>[] normalGroups = CreateCollisionWallGroups(map.CollisionLines.Length);
@@ -7648,6 +8087,12 @@ internal sealed class MapViewerControl : UserControl
     output.Add(a);
     output.Add(b);
     output.Add(c);
+  }
+
+  private static void AddLine(List<Vector3> output, Vector3 a, Vector3 b)
+  {
+    output.Add(a);
+    output.Add(b);
   }
 
   private static bool IsFinite(Vector3 v)
@@ -11388,9 +11833,270 @@ internal sealed class MapViewerControl : UserControl
     return IsFinite(point);
   }
 
+  private void CancelServerDummyDrag(bool restoreOffset)
+  {
+    if (restoreOffset && _selectedServerDummy != null)
+    {
+      _selectedServerDummy.EditOffset = _serverDummyDragStartOffset;
+      RefreshServerOverlay();
+    }
+
+    _serverDummyDragging = false;
+    _glControl.Capture = false;
+  }
+
+  private void SetSelectedServerDummyInternal(ServerDummyPosition? dummy, bool notify)
+  {
+    if (ReferenceEquals(_selectedServerDummy, dummy))
+    {
+      return;
+    }
+
+    _selectedServerDummy = dummy;
+    if (notify)
+    {
+      ServerDummySelectionChanged?.Invoke(dummy);
+    }
+
+    _glControl.Invalidate();
+  }
+
+  private bool TryPickVisibleServerDummy(Point mouseLocation, out ServerDummyPosition? dummy)
+  {
+    dummy = null;
+    if (_map?.ServerData is not ServerMapData serverData ||
+        _serverOverlayFilter == ServerOverlayFilter.None ||
+        !TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection))
+    {
+      return false;
+    }
+
+    float bestDistance = float.PositiveInfinity;
+    foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData))
+    {
+      if (!TryGetServerDummyBounds(candidate, serverData, out Vector3 boundsMin, out Vector3 boundsMax) ||
+          !TryIntersectRayWithAabb(rayOrigin, rayDirection, boundsMin, boundsMax, out float hitDistance))
+      {
+        continue;
+      }
+
+      if (hitDistance < bestDistance)
+      {
+        bestDistance = hitDistance;
+        dummy = candidate;
+      }
+    }
+
+    return dummy != null;
+  }
+
+  private bool TryPickSelectedServerDummy(Point mouseLocation)
+  {
+    if (_map?.ServerData is not ServerMapData serverData ||
+        _selectedServerDummy == null ||
+        !TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection) ||
+        !TryGetServerDummyBounds(_selectedServerDummy, serverData, out Vector3 boundsMin, out Vector3 boundsMax))
+    {
+      return false;
+    }
+
+    return TryIntersectRayWithAabb(rayOrigin, rayDirection, boundsMin, boundsMax, out _);
+  }
+
+  private bool TryProjectMouseToServerDragPlane(Point mouseLocation, out Vector3 point)
+  {
+    point = Vector3.Zero;
+    if (!TryBuildCameraRayInSource(mouseLocation, out Vector3 rayOrigin, out Vector3 rayDirection))
+    {
+      return false;
+    }
+
+    return TryIntersectRayWithPlaneY(rayOrigin, rayDirection, _serverDummyDragPlaneY, out point);
+  }
+
+  private IEnumerable<ServerDummyPosition> EnumerateVisibleServerDummies(ServerMapData serverData)
+  {
+    return EnumerateVisibleServerDummies(serverData, _serverOverlayFilter);
+  }
+
+  private static IEnumerable<ServerDummyPosition> EnumerateVisibleServerDummies(ServerMapData serverData, ServerOverlayFilter filter)
+  {
+    switch (filter)
+    {
+      case ServerOverlayFilter.Monsters:
+        for (int blockIndex = 0; blockIndex < serverData.MonsterBlocks.Length; ++blockIndex)
+        {
+          ServerMapMonsterBlock block = serverData.MonsterBlocks[blockIndex];
+          for (int dummyIndex = 0; dummyIndex < block.Dummies.Length; ++dummyIndex)
+          {
+            yield return block.Dummies[dummyIndex].Dummy;
+          }
+        }
+        yield break;
+      case ServerOverlayFilter.Portals:
+        for (int portalIndex = 0; portalIndex < serverData.Portals.Length; ++portalIndex)
+        {
+          yield return serverData.Portals[portalIndex].Dummy;
+        }
+        yield break;
+      case ServerOverlayFilter.Stores:
+        for (int storeIndex = 0; storeIndex < serverData.Stores.Length; ++storeIndex)
+        {
+          yield return serverData.Stores[storeIndex].Dummy;
+        }
+        yield break;
+      case ServerOverlayFilter.Starts:
+        for (int startIndex = 0; startIndex < serverData.StartPoints.Length; ++startIndex)
+        {
+          yield return serverData.StartPoints[startIndex].Dummy;
+        }
+        yield break;
+      case ServerOverlayFilter.Resources:
+        for (int resourceIndex = 0; resourceIndex < serverData.ResourceNodes.Length; ++resourceIndex)
+        {
+          yield return serverData.ResourceNodes[resourceIndex].Dummy;
+        }
+        yield break;
+      case ServerOverlayFilter.Safe:
+        for (int safeIndex = 0; safeIndex < serverData.SafeZones.Length; ++safeIndex)
+        {
+          yield return serverData.SafeZones[safeIndex].Dummy;
+        }
+        yield break;
+      case ServerOverlayFilter.All:
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Monsters))
+        {
+          yield return candidate;
+        }
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Portals))
+        {
+          yield return candidate;
+        }
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Stores))
+        {
+          yield return candidate;
+        }
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Starts))
+        {
+          yield return candidate;
+        }
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Resources))
+        {
+          yield return candidate;
+        }
+        foreach (ServerDummyPosition candidate in EnumerateVisibleServerDummies(serverData, ServerOverlayFilter.Safe))
+        {
+          yield return candidate;
+        }
+        yield break;
+    }
+  }
+
+  private static bool TryGetServerDummyBounds(
+    ServerDummyPosition dummy,
+    ServerMapData serverData,
+    out Vector3 boundsMin,
+    out Vector3 boundsMax)
+  {
+    boundsMin = Vector3.Zero;
+    boundsMax = Vector3.Zero;
+    if (!TryBuildDummyBox(dummy, serverData, out Vector3[] corners) || corners.Length == 0)
+    {
+      return false;
+    }
+
+    boundsMin = corners[0];
+    boundsMax = corners[0];
+    for (int index = 1; index < corners.Length; ++index)
+    {
+      boundsMin = Vector3.ComponentMin(boundsMin, corners[index]);
+      boundsMax = Vector3.ComponentMax(boundsMax, corners[index]);
+    }
+
+    return IsFinite(boundsMin) && IsFinite(boundsMax);
+  }
+
+  private static bool TryIntersectRayWithAabb(
+    Vector3 rayOrigin,
+    Vector3 rayDirection,
+    Vector3 boundsMin,
+    Vector3 boundsMax,
+    out float hitDistance)
+  {
+    hitDistance = 0.0f;
+
+    float tMin = 0.0f;
+    float tMax = float.PositiveInfinity;
+    if (!TryClipRayAabbAxis(rayOrigin.X, rayDirection.X, boundsMin.X, boundsMax.X, ref tMin, ref tMax) ||
+        !TryClipRayAabbAxis(rayOrigin.Y, rayDirection.Y, boundsMin.Y, boundsMax.Y, ref tMin, ref tMax) ||
+        !TryClipRayAabbAxis(rayOrigin.Z, rayDirection.Z, boundsMin.Z, boundsMax.Z, ref tMin, ref tMax))
+    {
+      return false;
+    }
+
+    hitDistance = tMin >= 0.0f ? tMin : tMax;
+    return float.IsFinite(hitDistance) && hitDistance >= 0.0f;
+  }
+
+  private static bool TryClipRayAabbAxis(
+    float origin,
+    float direction,
+    float min,
+    float max,
+    ref float tMin,
+    ref float tMax)
+  {
+    if (MathF.Abs(direction) < 0.000001f)
+    {
+      return origin >= min && origin <= max;
+    }
+
+    float invDirection = 1.0f / direction;
+    float t0 = (min - origin) * invDirection;
+    float t1 = (max - origin) * invDirection;
+    if (t0 > t1)
+    {
+      (t0, t1) = (t1, t0);
+    }
+
+    tMin = MathF.Max(tMin, t0);
+    tMax = MathF.Min(tMax, t1);
+    return tMax >= tMin;
+  }
+
   private void OnMouseDown(object? sender, MouseEventArgs e)
   {
     _glControl.Focus();
+
+    if (_serverInteractionEnabled && e.Button == MouseButtons.Left)
+    {
+      if (_selectedServerDummy != null &&
+          TryPickSelectedServerDummy(e.Location))
+      {
+        _serverDummyDragPlaneY = _selectedServerDummy.EditedWorldCenter.Y;
+        if (!TryProjectMouseToServerDragPlane(e.Location, out Vector3 startPoint))
+        {
+          return;
+        }
+
+        _serverDummyDragging = true;
+        _serverDummyDragStartSource = startPoint;
+        _serverDummyDragStartOffset = _selectedServerDummy.EditOffset;
+        _glControl.Capture = true;
+        return;
+      }
+
+      if (TryPickVisibleServerDummy(e.Location, out ServerDummyPosition? pickedDummy))
+      {
+        SetSelectedServerDummyInternal(pickedDummy, notify: true);
+      }
+      else
+      {
+        SetSelectedServerDummyInternal(null, notify: true);
+      }
+
+      return;
+    }
 
     if (_collisionSelectModeEnabled && e.Button == MouseButtons.Left)
     {
@@ -11591,6 +12297,30 @@ internal sealed class MapViewerControl : UserControl
 
   private void OnMouseUp(object? sender, MouseEventArgs e)
   {
+    if (_serverDummyDragging && e.Button == MouseButtons.Left)
+    {
+      if (_serverDummyDragging && _selectedServerDummy != null)
+      {
+        bool moved = false;
+        if (TryProjectMouseToServerDragPlane(e.Location, out Vector3 endPoint))
+        {
+          Vector3 delta = endPoint - _serverDummyDragStartSource;
+          _selectedServerDummy.EditOffset = _serverDummyDragStartOffset + delta;
+          RefreshServerOverlay();
+          moved = delta.LengthSquared > 0.0001f;
+        }
+
+        _serverDummyDragging = false;
+        _glControl.Capture = false;
+        if (moved)
+        {
+          ServerDummyMoved?.Invoke(_selectedServerDummy);
+        }
+      }
+
+      return;
+    }
+
     if (_collisionDrawModeEnabled && e.Button == MouseButtons.Left)
     {
       if (_collisionDrawDragging)
@@ -11691,6 +12421,17 @@ internal sealed class MapViewerControl : UserControl
 
   private void OnMouseMove(object? sender, MouseEventArgs e)
   {
+    if (_serverDummyDragging && _selectedServerDummy != null)
+    {
+      if (TryProjectMouseToServerDragPlane(e.Location, out Vector3 currentPoint))
+      {
+        Vector3 delta = currentPoint - _serverDummyDragStartSource;
+        _selectedServerDummy.EditOffset = _serverDummyDragStartOffset + delta;
+        RefreshServerOverlay();
+      }
+      return;
+    }
+
     if (_collisionDrawModeEnabled && _collisionDrawDragging)
     {
       if (TryPickSourcePoint(e.Location, preferFastPlane: true, preferredPlaneY: _collisionDrawStartSource.Y, out Vector3 currentPoint))
@@ -11752,6 +12493,10 @@ internal sealed class MapViewerControl : UserControl
     {
       _capturingLook = false;
       _glControl.Capture = false;
+      if (_serverDummyDragging)
+      {
+        CancelServerDummyDrag(restoreOffset: true);
+      }
       if (_bspMoveDragging)
       {
         _bspMoveDragging = false;
@@ -11853,6 +12598,14 @@ internal sealed class MapViewerControl : UserControl
         {
           GL.DeleteBuffer(_particleVbo);
         }
+        if (_serverMarkerVbo != 0)
+        {
+          GL.DeleteBuffer(_serverMarkerVbo);
+        }
+        if (_selectedServerMarkerVbo != 0)
+        {
+          GL.DeleteBuffer(_selectedServerMarkerVbo);
+        }
         if (_collisionDrawPreviewVbo != 0)
         {
           GL.DeleteBuffer(_collisionDrawPreviewVbo);
@@ -11904,6 +12657,14 @@ internal sealed class MapViewerControl : UserControl
         if (_particleVao != 0)
         {
           GL.DeleteVertexArray(_particleVao);
+        }
+        if (_serverMarkerVao != 0)
+        {
+          GL.DeleteVertexArray(_serverMarkerVao);
+        }
+        if (_selectedServerMarkerVao != 0)
+        {
+          GL.DeleteVertexArray(_selectedServerMarkerVao);
         }
         if (_collisionDrawPreviewVao != 0)
         {

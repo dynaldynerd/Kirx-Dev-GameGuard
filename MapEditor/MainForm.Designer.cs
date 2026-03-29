@@ -7,7 +7,9 @@ partial class MainForm
   private System.ComponentModel.IContainer components = null;
   private MenuStrip _mainMenuStrip = null!;
   private ToolStripMenuItem _fileMenuItem = null!;
+  private ToolStripMenuItem _loadMenuItem = null!;
   private ToolStripMenuItem _openMapFolderMenuItem = null!;
+  private ToolStripMenuItem _openServerFolderMenuItem = null!;
   private ToolStripMenuItem _saveEbpOnlyMenuItem = null!;
   private ToolStripMenuItem _saveMapAsMenuItem = null!;
   private ToolStripSeparator _fileBlenderSeparator = null!;
@@ -138,7 +140,9 @@ partial class MainForm
     components = new System.ComponentModel.Container();
     _mainMenuStrip = new MenuStrip();
     _fileMenuItem = new ToolStripMenuItem();
+    _loadMenuItem = new ToolStripMenuItem();
     _openMapFolderMenuItem = new ToolStripMenuItem();
+    _openServerFolderMenuItem = new ToolStripMenuItem();
     _saveEbpOnlyMenuItem = new ToolStripMenuItem();
     _saveMapAsMenuItem = new ToolStripMenuItem();
     _fileBlenderSeparator = new ToolStripSeparator();
@@ -269,7 +273,7 @@ partial class MainForm
 
     _fileMenuItem.DropDownItems.AddRange(new ToolStripItem[]
     {
-      _openMapFolderMenuItem,
+      _loadMenuItem,
       _saveEbpOnlyMenuItem,
       _saveMapAsMenuItem,
       _fileBlenderSeparator,
@@ -281,9 +285,21 @@ partial class MainForm
     _fileMenuItem.Name = "_fileMenuItem";
     _fileMenuItem.Text = "&File";
 
+    _loadMenuItem.DropDownItems.AddRange(new ToolStripItem[]
+    {
+      _openMapFolderMenuItem,
+      _openServerFolderMenuItem,
+    });
+    _loadMenuItem.Name = "_loadMenuItem";
+    _loadMenuItem.Text = "&Load";
+
     _openMapFolderMenuItem.Name = "_openMapFolderMenuItem";
     _openMapFolderMenuItem.ShortcutKeys = Keys.Control | Keys.O;
-    _openMapFolderMenuItem.Text = "&Open Map Folder...";
+    _openMapFolderMenuItem.Text = "&Map Folder...";
+
+    _openServerFolderMenuItem.Name = "_openServerFolderMenuItem";
+    _openServerFolderMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.O;
+    _openServerFolderMenuItem.Text = "&Server Folder...";
 
     _saveEbpOnlyMenuItem.Name = "_saveEbpOnlyMenuItem";
     _saveEbpOnlyMenuItem.ShortcutKeys = Keys.Control | Keys.S;
@@ -657,9 +673,9 @@ partial class MainForm
     _collisionStrip.Size = new Size(1600, 25);
     _collisionStrip.TabIndex = 2;
 
-    _collisionButton.Checked = true;
+    _collisionButton.Checked = false;
     _collisionButton.CheckOnClick = true;
-    _collisionButton.CheckState = CheckState.Checked;
+    _collisionButton.CheckState = CheckState.Unchecked;
     _collisionButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
     _collisionButton.Name = "_collisionButton";
     _collisionButton.Text = "Collision";
