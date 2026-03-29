@@ -503,7 +503,8 @@ CObjectTab::CObjectTab()
   : CPropertyPage(),
     m_btAuto(),
     m_trObject(),
-    m_bAutoUpdate(false)
+    m_bAutoUpdate(false),
+    m_pLastDisplayedObject(nullptr)
 {
 }
 
@@ -555,9 +556,25 @@ void CObjectTab::UpdateTab()
   m_trObject.DeleteAllItems();
 
   CGameObject *selected = CGameObject::s_pSelectObject;
+  const bool objectChanged = selected != m_pLastDisplayedObject;
+  auto finishUpdate = [this, selected, objectChanged]()
+  {
+    m_pLastDisplayedObject = selected;
+    if (!objectChanged)
+    {
+      return;
+    }
+
+    HTREEITEM firstItem = m_trObject.GetRootItem();
+    if (firstItem != nullptr)
+    {
+      m_trObject.EnsureVisible(firstItem);
+    }
+  };
   if (!selected)
   {
     m_trObject.InsertItem(_T("Nothing Selected Object"), TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -916,6 +933,7 @@ void CObjectTab::UpdateTab()
     m_trObject.Expand(masteryRoot, TVE_EXPAND);
     m_trObject.Expand(sfRoot, TVE_EXPAND);
     m_trObject.Expand(parameterRoot, TVE_EXPAND);
+    finishUpdate();
     return;
   }
 
@@ -1011,6 +1029,7 @@ void CObjectTab::UpdateTab()
     m_trObject.InsertItem(line, parameterRoot, TVI_LAST);
 
     m_trObject.Expand(parameterRoot, TVE_EXPAND);
+    finishUpdate();
     return;
   }
 
@@ -1046,6 +1065,7 @@ void CObjectTab::UpdateTab()
       static_cast<int>(itemBox->m_fCurPos[1]),
       static_cast<int>(itemBox->m_fCurPos[2]));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -1070,6 +1090,7 @@ void CObjectTab::UpdateTab()
       static_cast<int>(selected->m_fCurPos[1]),
       static_cast<int>(selected->m_fCurPos[2]));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -1093,6 +1114,7 @@ void CObjectTab::UpdateTab()
       static_cast<int>(regener->m_fCurPos[1]),
       static_cast<int>(regener->m_fCurPos[2]));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -1116,6 +1138,7 @@ void CObjectTab::UpdateTab()
       static_cast<int>(zone->m_fCurPos[1]),
       static_cast<int>(zone->m_fCurPos[2]));
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -1185,6 +1208,7 @@ void CObjectTab::UpdateTab()
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
     line.Format(_T("Master : %d"), g_Keeper->m_nMasterRace);
     m_trObject.InsertItem(line, TVI_ROOT, TVI_LAST);
+    finishUpdate();
     return;
   }
 
@@ -1212,6 +1236,7 @@ void CObjectTab::UpdateTab()
   line.Format(_T("CurSector: %d"), selected->GetCurSecNum());
   m_trObject.InsertItem(line, root, TVI_LAST);
   m_trObject.Expand(root, TVE_EXPAND);
+  finishUpdate();
 }
 
 void CObjectTab::OnButtonUpdate()
