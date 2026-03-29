@@ -400,12 +400,12 @@ BLOCK "StringFileInfo"
 {
 	BLOCK "041204B0"
 	{
-		VALUE "FileDescription", "GameServer MFC 응용 프로그램"
+		VALUE "FileDescription", "RF Online WorldServer"
 		VALUE "FileVersion", "1, 0, 0, 1"
-		VALUE "InternalName", "GameServer"
+		VALUE "InternalName", "WorldServer"
 		VALUE "LegalCopyright", "Copyright (C) 2001"
-		VALUE "OriginalFilename", "GameServer.EXE"
-		VALUE "ProductName", "GameServer 응용 프로그램"
+		VALUE "OriginalFilename", "WorldServer.exe"
+		VALUE "ProductName", "RF Online WorldServer"
 		VALUE "ProductVersion", "1, 0, 0, 1"
 	}
 }
