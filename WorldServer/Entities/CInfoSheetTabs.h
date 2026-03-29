@@ -4,6 +4,8 @@
 #include <afxdlgs.h>
 #include <afxwin.h>
 
+class CGameObject;
+
 class CMapTab : public CPropertyPage
 {
 public:
@@ -134,4 +136,5 @@ public:
   CButton m_btAuto;
   CTreeCtrl m_trObject;
   bool m_bAutoUpdate;
+  CGameObject *m_pLastDisplayedObject;
 };
