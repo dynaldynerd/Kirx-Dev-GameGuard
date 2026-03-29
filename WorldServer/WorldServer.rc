@@ -39,18 +39,18 @@ LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
   }
   POPUP "Help(&H)"
   {
-    MENUITEM "About GameServer(&A)...",  57664
+    MENUITEM "About WorldServer(&A)...",  57664
   }
 }
 
 100 DIALOG 0, 0, 235, 55
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "GameServer About"
+CAPTION "WorldServer About"
 LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
 FONT 9, "굴림"
 {
    CONTROL 128, -1, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 11, 17, 20, 20 
-   CONTROL "GameServer Version 1.0", -1, STATIC, SS_LEFT | SS_NOPREFIX | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 10, 119, 8 
+   CONTROL "WorldServer Version 1.0", -1, STATIC, SS_LEFT | SS_NOPREFIX | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 10, 119, 8 
    CONTROL "Copyright (C) 2001", -1, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 25, 119, 8 
    CONTROL "OK", 1, BUTTON, BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 178, 7, 50, 14 
 }
@@ -240,7 +240,7 @@ FONT 8, "MS Shell Dlg", FW_NORMAL, FALSE, 1
 STRINGTABLE
 LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
 {
-  128, 	"GameServer\n\nGameSe\n\n\nGameServer.Document\nGameSe Document"
+  128, 	"WorldServer\n\nWorldServer\n\n\nWorldServer.Document\nWorldServer Document"
 }
 
 STRINGTABLE
@@ -258,7 +258,7 @@ LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
 STRINGTABLE
 LANGUAGE LANG_KOREAN, SUBLANG_KOREAN
 {
-  57344, 	"GameServer"
+  57344, 	"WorldServer"
   57345, 	"준비"
 }
 
@@ -412,12 +412,12 @@ BLOCK "StringFileInfo"
 {
 	BLOCK "041204B0"
 	{
-		VALUE "FileDescription", "GameServer MFC 응용 프로그램"
+		VALUE "FileDescription", "RF Online WorldServer"
 		VALUE "FileVersion", "1, 0, 0, 1"
-		VALUE "InternalName", "GameServer"
+		VALUE "InternalName", "WorldServer"
 		VALUE "LegalCopyright", "Copyright (C) 2001"
-		VALUE "OriginalFilename", "GameServer.EXE"
-		VALUE "ProductName", "GameServer 응용 프로그램"
+		VALUE "OriginalFilename", "WorldServer.exe"
+		VALUE "ProductName", "RF Online WorldServer"
 		VALUE "ProductVersion", "1, 0, 0, 1"
 	}
 }

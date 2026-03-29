@@ -1932,12 +1932,13 @@ char CMainThread::Init()
   m_logLoadingError.Write("Network Init Complete!!");
   m_logLoadingError.Write("Map Load Start!!");
 
-  reportStartupPhase("Loading maps and event data...");
+  reportStartupPhase("Preparing map data...");
   if (!g_MapOper.Init())
   {
     MyMessageBox("CGameServerDoc Error", "g_MapOper.Init() == false");
     return false;
   }
+  reportStartupPhase("Loading monster respawn events...");
   if (!g_MonsterEventRespawn.SetEventRespawn())
   {
     MyMessageBox("CGameServerDoc Error", "Read Error Monster Respawn Script");
@@ -1945,11 +1946,13 @@ char CMainThread::Init()
   }
 
   char errCode[1028]{};
+  reportStartupPhase("Loading monster event sets...");
   if (!g_MonsterEventSet->LoadEventSet(errCode))
   {
     MyMessageBox("CGameServerDoc Error", "Read Error Event Set Script, Reason : %s", errCode);
     return false;
   }
+  reportStartupPhase("Loading monster event looting...");
   if (!g_MonsterEventSet->LoadEventSetLooting())
   {
     MyMessageBox("CGameServerDoc Error", "Read Error Event Set Looting Script");
