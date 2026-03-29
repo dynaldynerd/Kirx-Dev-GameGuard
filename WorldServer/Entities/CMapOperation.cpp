@@ -36,6 +36,24 @@ std::map<std::string, AreaList> g_strLMapMap;
 
 bool LoadRegionData(int nMapNum, char **ppszMapNameList, char *pszErrMsg);
 
+namespace
+{
+void PostMapStartupProgress(const char *phase, int currentIndex, int totalCount, const char *mapCode)
+{
+  char message[256]{};
+  if (mapCode && mapCode[0] != '\0')
+  {
+    sprintf_s(message, sizeof(message), "%s (%d/%d): %s", phase, currentIndex, totalCount, mapCode);
+  }
+  else
+  {
+    sprintf_s(message, sizeof(message), "%s (%d/%d)", phase, currentIndex, totalCount);
+  }
+
+  PostStartupProgress(message);
+}
+}
+
 CMapOperation::CMapOperation()
 {
   InitR3Engine(1);
@@ -437,6 +455,7 @@ bool CMapOperation::LoadMaps()
   for (int mapIndex = 0; mapIndex < this->m_nMapNum; ++mapIndex)
   {
     _map_fld *pMapSet = this->m_tblMapData.GetRecord(mapIndex);
+    PostMapStartupProgress("Loading maps", mapIndex + 1, this->m_nMapNum, pMapSet->m_strCode);
     this->m_Map[mapIndex].Init(pMapSet);
     ppszMapNameList[mapIndex] = pMapSet->m_strCode;
 
@@ -496,8 +515,10 @@ bool CMapOperation::LoadMaps()
     }
   }
 
+  PostStartupProgress("Checking map portal links...");
   this->CheckMapPortalLink();
 
+  PostStartupProgress("Loading map area index data...");
   if (LoadRegionData(this->m_nMapNum, ppszMapNameList, pszErrMsg))
     return true;
 
@@ -582,6 +603,7 @@ bool CMapOperation::LoadRegion()
   for (int k = 0; k < this->m_nStdMapNum; ++k)
   {
     CMapData *mapData = &this->m_Map[k];
+    PostMapStartupProgress("Loading map regions", k + 1, this->m_nStdMapNum, mapData->m_pMapSet->m_strCode);
     char Buffer[152];
     sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s.spt", mapData->m_pMapSet->m_strCode, mapData->m_pMapSet->m_strCode);
 
