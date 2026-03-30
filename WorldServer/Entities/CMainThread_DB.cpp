@@ -72,7 +72,7 @@ _worlddb_character_base_info_array characterData{};
     pRegedList[slotIndex].m_dwDalant = characterData.CharacterInfo[j].dwDalant;
     pRegedList[slotIndex].m_dwGold = characterData.CharacterInfo[j].dwGold;
     pRegedList[slotIndex].m_dwBaseShape = characterData.CharacterInfo[j].dwBaseShape;
-    pRegedList[slotIndex].m_dwLastConnTime = characterData.CharacterInfo[j].dwLastConnTime;
+    pRegedList[slotIndex].m_dwLastConnTime = static_cast<unsigned int>(characterData.CharacterInfo[j].dwLastConnTime);
     for (int m = 0; m < 8; ++m)
     {
       pRegedList[slotIndex].m_EquipKey[m].LoadDBKey(characterData.CharacterInfo[j].shEKArray[m]);
@@ -669,7 +669,7 @@ unsigned __int8 CMainThread::db_char_set_alive(
   pReged->m_dwDalant = baseInfo.dwDalant;
   pReged->m_dwGold = baseInfo.dwGold;
   pReged->m_dwBaseShape = baseInfo.dwBaseShape;
-  pReged->m_dwLastConnTime = baseInfo.dwLastConnTime;
+  pReged->m_dwLastConnTime = static_cast<unsigned int>(baseInfo.dwLastConnTime);
   for (int k = 0; k < 8; ++k)
   {
     pReged->m_EquipKey[k].LoadDBKey(baseInfo.shEKArray[k]);

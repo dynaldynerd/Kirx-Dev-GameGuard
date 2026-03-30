@@ -66,6 +66,7 @@ public:
   int Connect(unsigned int dwProID, unsigned int dwSocketIndex, in_addr dwIP, unsigned __int16 wPort);
   void OnLoop();
   void OnLoop_Receipt();
+  void SetUseCrypt(unsigned int dwProID, bool bUseCrypt);
   void ProcessLogFile(unsigned int dwProID, bool bRecv, bool bSend, bool bSystem);
   unsigned int GetCheckRecvTime(unsigned int dwProID, unsigned int dwSocketIndex);
 

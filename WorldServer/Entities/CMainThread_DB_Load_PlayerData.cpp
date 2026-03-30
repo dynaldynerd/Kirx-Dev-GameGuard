@@ -84,7 +84,7 @@ unsigned __int8 CMainThread::_db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *
   pCon->dbAvator.m_dwDalant = characterData.dwDalant;
   pCon->dbAvator.m_dwGold = characterData.dwGold;
   pCon->dbAvator.m_dwBaseShape = characterData.dwBaseShape;
-  pCon->dbAvator.m_dwLastConnTime = characterData.dwLastConnTime;
+  pCon->dbAvator.m_dwLastConnTime = static_cast<unsigned int>(characterData.dwLastConnTime);
   for ( int equipIndex = 0; equipIndex < 8; ++equipIndex )
   {
     pCon->dbAvator.m_EquipKey[equipIndex].LoadDBKey(characterData.shEKArray[equipIndex]);

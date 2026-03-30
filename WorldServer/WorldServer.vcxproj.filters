@@ -671,6 +671,12 @@
     <ClInclude Include="Entities\CCryptParamCrete.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\VCryptor.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\VCAES.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\CDarkHole.h">
       <Filter>Header Files\DarkHole</Filter>
     </ClInclude>
@@ -2956,6 +2962,12 @@
       <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CCryptParamCrete.cpp">
+      <Filter>Source Files\Security</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\VCryptor.cpp">
+      <Filter>Source Files\Security</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\VCAES.cpp">
       <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CDarkHole.cpp">

@@ -24,6 +24,9 @@ struct _FG_MSG_HEADER
 
 static_assert(sizeof(_FG_MSG_HEADER) == 6);
 
+struct VCryptorParam;
+class VCryptor;
+
 struct _SOCK_TYPE_PARAM
 {
   unsigned __int8 m_byProtocolID;
@@ -117,6 +120,8 @@ struct _NET_TYPE_PARAM : _SOCK_TYPE_PARAM
   unsigned int m_dwKeyCheckTerm;
   unsigned int m_dwProcessMsgNumPerLoop;
   char m_szModuleName[128];
+  unsigned __int8 m_CryptType;
+  VCryptorParam *m_pVCryptParam;
 
   _NET_TYPE_PARAM();
 };
@@ -151,7 +156,11 @@ struct _NET_BUFFER
   ~_NET_BUFFER();
   bool AllocBuffer(unsigned int nMaxSize, unsigned int nEtrSize, char *pTemp);
   char *GetPushPos();
-  char *GetPopPoint(bool *pbMiss);
+  char *GetPopPoint(
+    bool *pbMiss,
+    bool bCryptFrame,
+    unsigned __int16 *pwFrameSize,
+    unsigned __int16 *pwPayloadSize);
   char *GetSendPoint(int *pnSendSize, bool *pMiss);
   void AddPopPos(unsigned int dwAddSize);
   void Init();
@@ -284,6 +293,8 @@ public:
   void CompleteAnsyncConnect();
   bool PushKeyCheckList(unsigned int dwSerial, unsigned int dwIP, unsigned int *pdwKey, int nUseKeyNum);
   bool FindKeyFromWaitList(unsigned int dwSocketIndex, unsigned int dwSerial, unsigned int *pdwKey, int nUseKeyNum);
+  bool SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam);
+  void SetUseCrypt(bool bUseCrypt);
   bool wt_AcceptClient(unsigned int *pdwClientIndex);
   bool wt_CloseClient(unsigned int dwClientIndex);
   void _Receipt();
@@ -346,5 +357,10 @@ public:
   char *m_sTempSendBuffer;
   char *m_sTempRecvBuffer;
   unsigned int m_dwCurTime;
+  VCryptor *m_Cryptor;
+  char *m_DeCryptorBuffer;
+  char *m_EnCryptorBuffer;
+  char *m_TempBuffer;
+  bool m_bUseCrypt;
 };
 

@@ -165,7 +165,7 @@ CNetWorking::CNetWorking()
     m_pProcess[i] = &m_Process[i];
   }
 
-  m_bUseFG = true;
+  m_bUseFG = false;
   std::memset(m_szServerName, 0, sizeof(m_szServerName));
 }
 
@@ -212,8 +212,6 @@ bool CNetWorking::SetNetSystem(
   char *pszLogPath)
 {
   char szFileName[152]{};
-  char returnedString[28]{};
-  char filename[280]{};
 
   this->m_dwUseProcessNum = dwUseProcessNum;
   wsprintfA(this->m_szSystemName, "%s", szSystemName);
@@ -231,68 +229,13 @@ bool CNetWorking::SetNetSystem(
   const unsigned int korLocalTime = static_cast<unsigned int>(GetKorLocalTime());
   wsprintfA(szFileName, "%s\\%s_Sys%u.log", this->m_szLogPath, this->m_szSystemName, korLocalTime);
   this->m_LogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
-
-  const unsigned int fgLogTime = static_cast<unsigned int>(GetKorLocalTime());
-  wsprintfA(szFileName, "%s\\%s_CcrFgSys%u.log", this->m_szLogPath, this->m_szSystemName, fgLogTime);
-  g_FgLogFile.SetWriteLogFile(szFileName, 1, 1, 1, 1);
-
-  std::memset(returnedString, 0, 16);
-  GetPrivateProfileStringA("FireGuard Use", "Use", "TRUE", returnedString, 16, ".\\fireguard\\fgrs.ini");
-  this->m_bUseFG = std::strcmp(returnedString, "FALSE") != 0;
-
-  GetPrivateProfileStringA("System", "WorldName", "X", this->m_szServerName, 33, "..\\WorldInfo\\WorldInfo.ini");
-  if (this->m_szServerName[0] == 'X')
-  {
-    g_FgLogFile.Write("FG Error : WorldName Read Failed In \"WorldInfo.ini\" File");
-    return false;
-  }
+  this->m_bUseFG = false;
 
   for (int nIndex = 0; nIndex < static_cast<int>(this->m_dwUseProcessNum); ++nIndex)
   {
-    if (!this->m_Process[nIndex].SetProcess(nIndex, &pType[nIndex], this, this->m_bUseFG))
+    if (!this->m_Process[nIndex].SetProcess(nIndex, &pType[nIndex], this, false))
     {
       return false;
-    }
-
-    if (!nIndex)
-    {
-      std::memset(filename, 0, 260);
-      GetModuleFileNameA(nullptr, filename, 260);
-      char *slash = strrchr(filename, '\\');
-      if (slash)
-      {
-        *(slash + 1) = 0;
-      }
-      strcat_s(filename, 260, "fireguard\\");
-      const int pathLen = static_cast<int>(std::strlen(filename));
-      if (AddEnvVariable("path", filename, pathLen) <= 0)
-      {
-        this->m_LogFile.Write("SetNetSystem(%d) CCRFG SERVER : AddEnvVariable() Fail", nIndex);
-        return false;
-      }
-
-      if (this->m_bUseFG)
-      {
-        g_pfnCallBack.pfunc = CcrFgCallback;
-        const unsigned int nameLen = static_cast<unsigned int>(std::strlen(this->m_szServerName));
-        const int result = _CcrFG_rs_Initialize(
-          reinterpret_cast<int (__fastcall *)(int, void *, void *, int, void *)>(g_pfnCallBack.pfunc),
-          reinterpret_cast<unsigned __int8 *>(this->m_szServerName),
-          nameLen);
-        if (result < 1)
-        {
-          const unsigned int lastError = _CcrFG_rs_GetLastError();
-          this->m_LogFile.Write(
-            "SetNetSystem(%d) CCRFG SERVER : _CcrFG_rs_Initialize() Fail, nRet(%#x), _CcrFG_rs_GetLastError(%#x)",
-            nIndex,
-            result,
-            lastError);
-          return false;
-        }
-      }
-
-      g_FGSendData.pNetwork = this;
-      g_FGSendData.pTargetProc = &this->m_Process[nIndex];
     }
   }
 
@@ -342,6 +285,14 @@ void CNetWorking::OnLoop_Receipt()
   for (unsigned int index = 0; index < this->m_dwUseProcessNum; ++index)
   {
     this->m_Process[index].OnLoop_Receipt();
+  }
+}
+
+void CNetWorking::SetUseCrypt(unsigned int dwProID, bool bUseCrypt)
+{
+  if (dwProID < this->m_dwUseProcessNum)
+  {
+    this->m_Process[dwProID].SetUseCrypt(bUseCrypt);
   }
 }
 

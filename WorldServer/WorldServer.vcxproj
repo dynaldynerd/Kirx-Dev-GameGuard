@@ -342,6 +342,8 @@
     <ClInclude Include="Entities\CCryptor.h" />
     <ClInclude Include="Entities\CCryptParam.h" />
     <ClInclude Include="Entities\CCryptParamCrete.h" />
+    <ClInclude Include="Entities\VCryptor.h" />
+    <ClInclude Include="Entities\VCAES.h" />
     <ClInclude Include="Entities\CDarkHole.h" />
     <ClInclude Include="Entities\CDarkHoleChannel.h" />
     <ClInclude Include="Entities\CDarkHoleDungeonQuest.h" />
@@ -1111,6 +1113,8 @@
     <ClCompile Include="Entities\CCryptor.cpp" />
     <ClCompile Include="Entities\CCryptParam.cpp" />
     <ClCompile Include="Entities\CCryptParamCrete.cpp" />
+    <ClCompile Include="Entities\VCryptor.cpp" />
+    <ClCompile Include="Entities\VCAES.cpp" />
     <ClCompile Include="Entities\CDarkHole.cpp" />
     <ClCompile Include="Entities\CDarkHoleChannel.cpp" />
     <ClCompile Include="Entities\CDarkHoleDungeonQuest.cpp" />

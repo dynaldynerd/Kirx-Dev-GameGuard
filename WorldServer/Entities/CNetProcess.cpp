@@ -14,14 +14,16 @@
 #include <limits>
 #include <string>
 
-#include "FireGuard.h"
 #include "NetCheckPackets.h"
 #include "NetUtil.h"
+#include "VCryptor.h"
 
 #pragma comment(lib, "winmm.lib")
 
 namespace
 {
+  constexpr unsigned int kCryptPacketBufferSize = 20000;
+
   bool IsMulOk(size_t count, size_t size)
   {
     if (count == 0 || size == 0)
@@ -99,6 +101,12 @@ namespace
         out.push_back(' ');
       }
     }
+  }
+
+  void WriteCryptFrameHeader(char *buffer, unsigned __int16 frameSize, unsigned __int8 padSize)
+  {
+    std::memcpy(buffer, &frameSize, sizeof(frameSize));
+    buffer[2] = static_cast<char>(padSize);
   }
 
   void AppendPacketSnifferLogSend(
@@ -265,6 +273,8 @@ _NET_TYPE_PARAM::_NET_TYPE_PARAM()
   m_dwRecvBufferSize = 10000;
   m_bPassSendQueueFull = 0;
   m_bSendSafe = 0;
+  m_CryptType = 1;
+  m_pVCryptParam = nullptr;
 }
 
 _thread_parameter::_thread_parameter()
@@ -349,47 +359,72 @@ char *_NET_BUFFER::GetPushPos()
   return &m_sMainBuffer[m_dwPushPnt];
 }
 
-char *_NET_BUFFER::GetPopPoint(bool *pbMiss)
+char *_NET_BUFFER::GetPopPoint(
+  bool *pbMiss,
+  bool bCryptFrame,
+  unsigned __int16 *pwFrameSize,
+  unsigned __int16 *pwPayloadSize)
 {
   const int left = static_cast<int>(GetLeftLoadSize());
   const unsigned int popPoint = m_dwPopPnt;
+  const unsigned __int16 headerSize = bCryptFrame ? 3 : 2;
+
+  *pbMiss = false;
+  if (pwFrameSize)
+  {
+    *pwFrameSize = 0;
+  }
+  if (pwPayloadSize)
+  {
+    *pwPayloadSize = 0;
+  }
+
   if (!left)
   {
     return nullptr;
   }
 
-  if (static_cast<unsigned int>(left) >= 4)
+  if (static_cast<unsigned int>(left) < headerSize)
   {
-    const unsigned __int8 sizeLow = static_cast<unsigned __int8>(m_sMainBuffer[popPoint]);
-    const unsigned __int8 sizeHigh = static_cast<unsigned __int8>(m_sMainBuffer[(popPoint + 1) % m_nMaxSize]);
-    const unsigned __int16 size =
-      static_cast<unsigned __int16>(sizeLow | (static_cast<unsigned __int16>(sizeHigh) << 8));
-
-    if (static_cast<unsigned __int64>(size) >= 4)
-    {
-      if (size <= left)
-      {
-        if (size + popPoint <= m_nMaxSize)
-        {
-          return &m_sMainBuffer[popPoint];
-        }
-
-        const unsigned int tail = m_nMaxSize - popPoint;
-        std::memcpy(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
-        std::memcpy(&m_sTempBuffer[tail], m_sMainBuffer, size - tail);
-        return m_sTempBuffer;
-      }
-
-      *pbMiss = true;
-      return nullptr;
-    }
-
-    *pbMiss = false;
+    *pbMiss = true;
     return nullptr;
   }
 
-  *pbMiss = true;
-  return nullptr;
+  const unsigned __int8 sizeLow = static_cast<unsigned __int8>(m_sMainBuffer[popPoint]);
+  const unsigned __int8 sizeHigh = static_cast<unsigned __int8>(m_sMainBuffer[(popPoint + 1) % m_nMaxSize]);
+  const unsigned __int16 size =
+    static_cast<unsigned __int16>(sizeLow | (static_cast<unsigned __int16>(sizeHigh) << 8));
+
+  if (pwFrameSize)
+  {
+    *pwFrameSize = size;
+  }
+
+  if (size < headerSize)
+  {
+    return nullptr;
+  }
+
+  if (pwPayloadSize)
+  {
+    *pwPayloadSize = static_cast<unsigned __int16>(size - headerSize);
+  }
+
+  if (size > left)
+  {
+    *pbMiss = true;
+    return nullptr;
+  }
+
+  if (size + popPoint <= m_nMaxSize)
+  {
+    return &m_sMainBuffer[popPoint];
+  }
+
+  const unsigned int tail = m_nMaxSize - popPoint;
+  std::memcpy(m_sTempBuffer, &m_sMainBuffer[popPoint], tail);
+  std::memcpy(&m_sTempBuffer[tail], m_sMainBuffer, size - tail);
+  return m_sTempBuffer;
 }
 
 char *_NET_BUFFER::GetSendPoint(int *pnSendSize, bool *pMiss)
@@ -942,7 +977,7 @@ CNetProcess::CNetProcess()
   : m_nIndex(0),
     m_nOddMsgNum(0),
     m_nTryConnectCount(0),
-    m_bUseFG(true),
+    m_bUseFG(false),
     m_bSetProcess(false),
     m_nEventThreadNum(0),
     m_pNetwork(nullptr),
@@ -954,7 +989,12 @@ CNetProcess::CNetProcess()
     m_ndKeyCheck(nullptr),
     m_dwKeyCheckBufferList(nullptr),
     m_sTempSendBuffer(nullptr),
-    m_sTempRecvBuffer(nullptr)
+    m_sTempRecvBuffer(nullptr),
+    m_Cryptor(nullptr),
+    m_DeCryptorBuffer(nullptr),
+    m_EnCryptorBuffer(nullptr),
+    m_TempBuffer(nullptr),
+    m_bUseCrypt(false)
 {
   m_dwCurTime = timeGetTime();
 }
@@ -998,6 +1038,25 @@ int CNetProcess::LoadSendMsg(
   unsigned __int16 Src[8]{};
   Src[1] = *reinterpret_cast<unsigned __int16 *>(pbyType);
   Src[0] = static_cast<unsigned __int16>(nLen + 4);
+  const unsigned int remain = sendBuffer->m_nEtrSize + sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
+  if (Src[0] > remain)
+  {
+    m_LogFile[2].Write(
+      "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) Remain(%u)",
+      Socket->m_szID,
+      pbyType[0],
+      pbyType[1],
+      nLen,
+      remain);
+    return 0;
+  }
+
+  const int left = static_cast<int>(sendBuffer->GetLeftLoadSize());
+  if (static_cast<unsigned int>(Src[0]) + left > sendBuffer->m_nMaxSize)
+  {
+    m_pNetwork->ExpulsionSocket(m_nIndex, dwClientIndex, 3, nullptr);
+    return 0;
+  }
 
 #if 0 // packet log trace disabled (debug only)
   if (m_Type.m_bSendLogFile && m_nIndex == 0 && m_pNetwork && m_pNetwork->m_pProcess[0] == this)
@@ -1013,14 +1072,33 @@ int CNetProcess::LoadSendMsg(
   }
 #endif
 
-  if (m_nIndex || !m_bUseFG)
+  if (m_Cryptor && m_bUseCrypt)
   {
-    const unsigned int remain = sendBuffer->m_nEtrSize + sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
-    if (Src[0] > remain)
+    if (Src[0] > kCryptPacketBufferSize)
     {
       m_LogFile[2].Write(
-        "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) Remain(%u)",
+        "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) Max(%u)",
         Socket->m_szID,
+        pbyType[0],
+        pbyType[1],
+        nLen,
+        kCryptPacketBufferSize);
+      return 0;
+    }
+
+    unsigned __int8 padSize = static_cast<unsigned __int8>(Src[0] & 0xF);
+    if (padSize)
+    {
+      padSize = static_cast<unsigned __int8>(16 - padSize);
+    }
+
+    const unsigned __int16 cryptFrameSize = static_cast<unsigned __int16>(Src[0] + padSize + 3);
+    if (cryptFrameSize > remain)
+    {
+      m_LogFile[2].Write(
+        "LoadSendMsg ID(%s) CryptSize(%u) Type(%u,%u) Len(%u) Remain(%u)",
+        Socket->m_szID,
+        static_cast<unsigned int>(cryptFrameSize),
         pbyType[0],
         pbyType[1],
         nLen,
@@ -1028,103 +1106,49 @@ int CNetProcess::LoadSendMsg(
       return 0;
     }
 
-    const int left = static_cast<int>(sendBuffer->GetLeftLoadSize());
-    if (static_cast<unsigned int>(Src[0]) + left > sendBuffer->m_nMaxSize)
+    std::memcpy(m_TempBuffer, Src, 4uLL);
+    if (nLen)
     {
-      m_pNetwork->ExpulsionSocket(m_nIndex, dwClientIndex, 3, nullptr);
+      std::memcpy(m_TempBuffer + 4, szMsg, nLen);
+    }
+
+    if (!m_Cryptor->Encrypt(m_TempBuffer, Src[0], m_EnCryptorBuffer + 3, kCryptPacketBufferSize - 3))
+    {
+      m_LogFile[2].Write(
+        "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) : Cryptor->Encrypt fail",
+        Socket->m_szID,
+        pbyType[0],
+        pbyType[1],
+        nLen);
       return 0;
     }
 
-    std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], Src, 4uLL);
-    if (nLen)
-    {
-      std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt + 4], szMsg, nLen);
-    }
-
+    WriteCryptFrameHeader(m_EnCryptorBuffer, cryptFrameSize, padSize);
+    std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], m_EnCryptorBuffer, cryptFrameSize);
     const int tail = sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
-    if (tail < Src[0])
+    if (tail < cryptFrameSize)
     {
-      std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], Src[0] - tail);
+      std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], cryptFrameSize - tail);
     }
 
-    sendBuffer->AddPushPos(Src[0]);
+    sendBuffer->AddPushPos(cryptFrameSize);
     Socket->m_dwLastSendTime = m_dwCurTime;
     return 1;
   }
 
-  if (Src[0] > 20000)
-  {
-    m_LogFile[2].Write(
-      "LoadSendMsg ID(%s) Type(%u,%u) Len(%u) Max(%u)",
-      Socket->m_szID,
-      pbyType[0],
-      pbyType[1],
-      nLen,
-      20000u);
-    return 0;
-  }
-
-  std::memcpy(&g_FGSendData.sSendBuffer[2], Src, 4uLL);
-  g_FGSendData.wMsgSize = 6;
+  std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], Src, 4uLL);
   if (nLen)
   {
-    g_FGSendData.wMsgSize += nLen;
-    std::memcpy(&g_FGSendData.sSendBuffer[6], szMsg, nLen);
-  }
-  std::memcpy(g_FGSendData.sSendBuffer, &g_FGSendData.wMsgSize, 2uLL);
-
-  const int fgSize = _CcrFG_rs_EncryptPacket(
-    Socket->m_hFGContext,
-    reinterpret_cast<unsigned __int8 *>(g_FGSendData.sSendBuffer),
-    20000);
-  if (fgSize < 1)
-  {
-    if (fgSize)
-    {
-      const unsigned int lastError = _CcrFG_rs_GetLastError();
-      m_LogFile[2].Write(
-        "SendMsg Error : _CcrFG_rs_EncryptPacket : nFGSize(%#x), _CcrFG_rs_GetLastError(%#x)",
-        fgSize,
-        lastError);
-    }
-    else
-    {
-      m_LogFile[2].Write(
-        "SendMsg Warning : _CcrFG_rs_EncryptPacket : Before RecvMsg OverTime");
-    }
+    std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt + 4], szMsg, nLen);
   }
 
-  std::memcpy(g_FGSendData.sSendBuffer, &fgSize, 2uLL);
-
-  const unsigned int remain = sendBuffer->m_nEtrSize + sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
-  if (static_cast<unsigned int>(fgSize) > remain)
-  {
-    m_LogFile[2].Write(
-      "LoadSendMsg ID(%s) FGSize(%u) Type(%u,%u) Len(%u) Remain(%u)",
-      Socket->m_szID,
-      static_cast<unsigned int>(fgSize),
-      pbyType[0],
-      pbyType[1],
-      nLen,
-      remain);
-    return 0;
-  }
-
-  const int left = static_cast<int>(sendBuffer->GetLeftLoadSize());
-  if (static_cast<unsigned int>(fgSize) + left > sendBuffer->m_nMaxSize)
-  {
-    m_pNetwork->ExpulsionSocket(m_nIndex, dwClientIndex, 3, nullptr);
-    return 0;
-  }
-
-  std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], g_FGSendData.sSendBuffer, fgSize);
   const int tail = sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
-  if (tail < fgSize)
+  if (tail < Src[0])
   {
-    std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], fgSize - tail);
+    std::memcpy(sendBuffer->m_sMainBuffer, &sendBuffer->m_sMainBuffer[sendBuffer->m_nMaxSize], Src[0] - tail);
   }
 
-  sendBuffer->AddPushPos(static_cast<unsigned int>(fgSize));
+  sendBuffer->AddPushPos(Src[0]);
   Socket->m_dwLastSendTime = m_dwCurTime;
   return 1;
 }
@@ -1338,6 +1362,14 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     }
   }
 
+  if (m_Type.m_CryptType == 0)
+  {
+    if (!SetCryptor(m_Type.m_CryptType, m_Type.m_pVCryptParam))
+    {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -1415,6 +1447,26 @@ void CNetProcess::Release()
     operator delete(m_sTempRecvBuffer);
     m_sTempRecvBuffer = nullptr;
   }
+  if (m_Cryptor)
+  {
+    delete m_Cryptor;
+    m_Cryptor = nullptr;
+  }
+  if (m_DeCryptorBuffer)
+  {
+    operator delete(m_DeCryptorBuffer);
+    m_DeCryptorBuffer = nullptr;
+  }
+  if (m_EnCryptorBuffer)
+  {
+    operator delete(m_EnCryptorBuffer);
+    m_EnCryptorBuffer = nullptr;
+  }
+  if (m_TempBuffer)
+  {
+    operator delete(m_TempBuffer);
+    m_TempBuffer = nullptr;
+  }
   if (m_AnsyncConnectData)
   {
     operator delete(m_AnsyncConnectData);
@@ -1422,6 +1474,68 @@ void CNetProcess::Release()
   }
 
   m_bSetProcess = false;
+}
+
+bool CNetProcess::SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam)
+{
+  if (m_DeCryptorBuffer)
+  {
+    operator delete(m_DeCryptorBuffer);
+    m_DeCryptorBuffer = nullptr;
+  }
+  if (m_EnCryptorBuffer)
+  {
+    operator delete(m_EnCryptorBuffer);
+    m_EnCryptorBuffer = nullptr;
+  }
+  if (m_TempBuffer)
+  {
+    operator delete(m_TempBuffer);
+    m_TempBuffer = nullptr;
+  }
+  if (m_Cryptor)
+  {
+    delete m_Cryptor;
+    m_Cryptor = nullptr;
+  }
+
+  m_Cryptor = VCryptor::Create(byCryptType, pParam);
+  if (!m_Cryptor)
+  {
+    return false;
+  }
+
+  m_DeCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
+  m_EnCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
+  m_TempBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
+  if (!m_DeCryptorBuffer || !m_EnCryptorBuffer || !m_TempBuffer)
+  {
+    if (m_DeCryptorBuffer)
+    {
+      operator delete(m_DeCryptorBuffer);
+      m_DeCryptorBuffer = nullptr;
+    }
+    if (m_EnCryptorBuffer)
+    {
+      operator delete(m_EnCryptorBuffer);
+      m_EnCryptorBuffer = nullptr;
+    }
+    if (m_TempBuffer)
+    {
+      operator delete(m_TempBuffer);
+      m_TempBuffer = nullptr;
+    }
+    delete m_Cryptor;
+    m_Cryptor = nullptr;
+    return false;
+  }
+
+  return true;
+}
+
+void CNetProcess::SetUseCrypt(bool bUseCrypt)
+{
+  m_bUseCrypt = bUseCrypt;
 }
 
 void CNetProcess::CloseAll()
@@ -1787,11 +1901,14 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
   _NET_BUFFER *recvBuffer = &m_pRecvBuffer[wSocketIndex];
   int processed = 0;
   const DWORD now = timeGetTime();
+  const bool useCrypt = m_Cryptor && m_bUseCrypt;
 
   while (true)
   {
     bool miss = false;
-    char *popPoint = recvBuffer->GetPopPoint(&miss);
+    unsigned __int16 frameSize = 0;
+    unsigned __int16 payloadSize = 0;
+    char *popPoint = recvBuffer->GetPopPoint(&miss, useCrypt, &frameSize, &payloadSize);
     if (!popPoint)
     {
       if (miss)
@@ -1824,39 +1941,53 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
 
     _MSG_HEADER *msgHeader = reinterpret_cast<_MSG_HEADER *>(popPoint);
     unsigned __int16 msgSize = 0;
+    if (useCrypt)
+    {
+      if (frameSize < 3)
+      {
+        PushCloseNode(wSocketIndex);
+        return;
+      }
+
+      const unsigned __int8 padSize = static_cast<unsigned __int8>(popPoint[2]);
+      if (payloadSize < padSize)
+      {
+        PushCloseNode(wSocketIndex);
+        return;
+      }
+
+      const unsigned int plainSize = payloadSize - padSize;
+      if (!plainSize || plainSize > kCryptPacketBufferSize)
+      {
+        PushCloseNode(wSocketIndex);
+        return;
+      }
+
+      if (!m_Cryptor->Decrypt(popPoint + 3, plainSize, m_DeCryptorBuffer, kCryptPacketBufferSize))
+      {
+        m_LogFile[2].Write(
+          "Socket(%d): Cryptor->Decrypt fail, PlainSize(%u)",
+          wSocketIndex,
+          plainSize);
+        PushCloseNode(wSocketIndex);
+        return;
+      }
+
+      msgHeader = reinterpret_cast<_MSG_HEADER *>(m_DeCryptorBuffer);
+      popPoint = m_DeCryptorBuffer;
+      msgSize = frameSize;
+    }
+    else
+    {
+      msgSize = frameSize;
+    }
+
     if (!socket->m_bEnterCheck)
     {
       if (m_pNetwork->ExpulsionSocket(m_nIndex, wSocketIndex, 1, msgHeader))
       {
         return;
       }
-    }
-
-    if (m_nIndex || !m_bUseFG)
-    {
-      msgSize = msgHeader->m_wSize;
-    }
-    else
-    {
-      auto *fgHeader = reinterpret_cast<_FG_MSG_HEADER *>(popPoint);
-      g_FGRecvData.pRecvBuffer = popPoint;
-      g_FGRecvData.wMsgSize = fgHeader->m_MsgHeader.m_wSize + 2;
-      const unsigned __int16 fgSize = fgHeader->m_wFGSize;
-      const int decrypted = _CcrFG_rs_DecryptPacket(
-        socket->m_hFGContext,
-        reinterpret_cast<unsigned __int8 *>(popPoint),
-        fgSize);
-      if (decrypted < 1)
-      {
-        const unsigned int lastError = _CcrFG_rs_GetLastError();
-        m_LogFile[2].Write(
-          "RecvMsg Error : _CcrFG_rs_DecryptPacket : nFGSize(%#x), _CcrFG_rs_GetLastError(%#x)",
-          decrypted,
-          lastError);
-      }
-      msgHeader = &fgHeader->m_MsgHeader;
-      popPoint = reinterpret_cast<char *>(msgHeader);
-      msgSize = fgSize;
     }
 
     bool ok = true;

@@ -39,6 +39,7 @@
 #include "CRaceBossWinRate.h"
 #include "CTotalGuildRankManager.h"
 #include "CUnmannedTraderController.h"
+#include "VCAES.h"
 
 bool _TRADE_DB_BASE::_LIST::IsEmpty()
 {
@@ -3785,6 +3786,44 @@ bool CMainThread::ObjectInit()
 
 bool CMainThread::NetworkInit()
 {
+  static const VCAESParam kAopClientlineCryptParam = [] {
+    VCAESParam param{};
+
+    param.___u0.encKey = {
+      {
+        0x3C8173A8, 0x5D43BEDF, 0x4A9BEE6B, 0x6E6A18E8, 0x3C68C2D2, 0xD74D98D6,
+        0xDEC785A6, 0x83843B79, 0xC91FD512, 0xA775CDFA, 0x9B1D0F28, 0x4C5097FE,
+        0x8F4F3E8F, 0x0CCB05F6, 0xC5D4D0E4, 0x62A11D1E, 0xF9BC1236, 0xB5EC85C8,
+        0x45D8D65A, 0x4913D3AC, 0x8CC70348, 0xEE661E56, 0x17DA0C60, 0xA23689A8,
+        0x487F1460, 0x016CC7CC, 0x8DABC484, 0x63CDDAD2, 0x7417D6B2, 0xD6215F1A,
+        0xA5B0B696, 0xA4DC715A, 0x2977B5DE, 0x4ABA6F0C, 0x3EADB9BE, 0xE88CE6A4,
+        0xE13EFF0D, 0x45E28E57, 0x6C953B89, 0x262F5485, 0x1882ED3B, 0xF00E0B9F,
+        0x0A152481, 0x4FF7AAD6, 0x2362915F, 0x054DC5DA, 0x1DCF28E1, 0xEDC1237E,
+        0xF233D7D4, 0xBDC47D02, 0x9EA6EC5D, 0x9BEB2987, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      },
+      12,
+    };
+
+    param.decKey = {
+      {
+        0xB941C4ED, 0x638A6F54, 0x73D3B61A, 0xD8DD5DB0, 0xFF6A91DA, 0x64FCF78B,
+        0x50E416C1, 0x7C0C289B, 0x3418E14A, 0x2CE83E5A, 0x73F24C89, 0x3CC34BB7,
+        0xF92617EC, 0x4F31073E, 0xC3A9DA6D, 0x9B966651, 0x8C98DD53, 0x583FBC3C,
+        0xAF8E871B, 0x18F0DF10, 0xF7B13B27, 0xB77E580B, 0xEAF7596B, 0xB61710D2,
+        0x99FCD3C8, 0x5CE049B9, 0x3A8FCD81, 0xD4A7616F, 0x666F8438, 0xEE28ACEE,
+        0x23165A48, 0x40CF632C, 0xCD3EF6A6, 0x63D93964, 0xFDFE8773, 0xC51C9A71,
+        0x507EFE0D, 0x38E21D02, 0xA3731E49, 0x884728D6, 0x9B91034B, 0x2B34369F,
+        0x4579DE70, 0xAEE7CFC2, 0x6E4DE8EF, 0xEB9E11B2, 0x08B5252F, 0x689CE30F,
+        0x3C8170D8, 0x5D43BE0F, 0x4E96E96B, 0x6E6A18E8, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+      },
+      12,
+    };
+
+    return param;
+  }();
+
   _NET_TYPE_PARAM params[4];
 
   params[0].m_bServer = 1;
@@ -3817,6 +3856,8 @@ bool CMainThread::NetworkInit()
   }
   params[0].m_bSendSafe = true;
   strcpy_s(params[0].m_szModuleName, sizeof(params[0].m_szModuleName), "ClientLine");
+  params[0].m_CryptType = 0;
+  params[0].m_pVCryptParam = reinterpret_cast<VCryptorParam *>(const_cast<VCAESParam *>(&kAopClientlineCryptParam));
 
   params[1].m_bServer = 0;
   params[1].m_wSocketMaxNum = 1;
@@ -3861,6 +3902,10 @@ bool CMainThread::NetworkInit()
   if (!g_Network.SetNetSystem(4, params, systemName, logPath))
   {
     return false;
+  }
+  if (params[0].m_CryptType == 0)
+  {
+    g_Network.SetUseCrypt(0, true);
   }
   AddPassablePacket();
 
