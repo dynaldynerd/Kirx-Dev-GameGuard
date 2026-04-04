@@ -4212,7 +4212,7 @@ bool CNetworkEX::ChatOperatorRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatCircleRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_circle_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4275,7 +4275,7 @@ bool CNetworkEX::ChatFarRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatPartyRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_party_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4304,7 +4304,7 @@ bool CNetworkEX::ChatPartyRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatRaceRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_race_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4333,7 +4333,7 @@ bool CNetworkEX::ChatRaceRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatCheatRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_cheat_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4364,7 +4364,7 @@ bool CNetworkEX::ChatManageRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatMgrWhisperRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_mgr_whisper_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4391,18 +4391,18 @@ bool CNetworkEX::ChatMgrWhisperRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatMapRecvYesOrNo(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_toggle_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_map_recv_yesorno_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bLoad)
   {
-    player->m_bRecvMapChat = request->byRecvType == 0;
+    player->m_bRecvMapChat = request->byRecv == 0;
   }
   return true;
 }
 
 bool CNetworkEX::ChatMapRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_map_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4427,7 +4427,7 @@ bool CNetworkEX::ChatMapRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatRaceBossRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_raceboss_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4454,7 +4454,7 @@ bool CNetworkEX::ChatRaceBossRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatGuildEstSenRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_guild_est_sen_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4481,7 +4481,7 @@ bool CNetworkEX::ChatGuildEstSenRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatRePresentationRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_representation_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4508,18 +4508,18 @@ bool CNetworkEX::ChatRePresentationRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatAllRecvYesOrNo(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_toggle_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_all_recv_yesorno_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bLoad)
   {
-    player->m_bRecvAllChat = request->byRecvType == 0;
+    player->m_bRecvAllChat = request->byRecv == 0;
   }
   return true;
 }
 
 bool CNetworkEX::ChatAllRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_all_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4544,7 +4544,7 @@ bool CNetworkEX::ChatAllRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatGreetingMsg_GM(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_greeting_gm_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4586,7 +4586,7 @@ bool CNetworkEX::ChatGreetingMsg_GM(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_greeting_race_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4634,7 +4634,7 @@ bool CNetworkEX::ChatGreetingMsg_RACE(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatGreetingMsg_GUILD(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_greeting_guild_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4795,7 +4795,7 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatRaceBossCryRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_raceboss_cry_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -4822,7 +4822,7 @@ bool CNetworkEX::ChatRaceBossCryRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::ChatGmNoticeRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_chat_message_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_chat_gm_notice_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -5580,33 +5580,33 @@ CPlayer *player = &g_Player[n];
 
 bool CNetworkEX::PostContentRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_post_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_post_content_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    player->pc_PostContentRequest(request->dwPostIndex);
+    player->pc_PostContentRequest(request->dwPostSerial);
   }
   return true;
 }
 
 bool CNetworkEX::PostItemGoldRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_post_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_post_itemgold_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    player->pc_PostItemGoldRequest(request->dwPostIndex);
+    player->pc_PostItemGoldRequest(request->dwPostSerial);
   }
   return true;
 }
 
 bool CNetworkEX::PostDeleteRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_post_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_post_delete_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    player->pc_PostDeleteRequest(request->dwPostIndex);
+    player->pc_PostDeleteRequest(request->dwPostSerial);
   }
   return true;
 }
@@ -6200,7 +6200,7 @@ bool CNetworkEX::WeeklyGuildRankRequest(int n, char *pBuf)
 bool CNetworkEX::SetRaceBossCryMsgRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_set_race_boss_cry_msg_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_set_raceboss_cry_msg_request_clzo *>(pBuf);
   if (!player->m_bOper)
   {
     return true;
@@ -6218,7 +6218,7 @@ bool CNetworkEX::SetRaceBossCryMsgRequest(int n, char *pBuf)
 
   char message[65];
   memset(message, 0, sizeof(message));
-  strncpy_s(message, request->wszMessage, 64);
+  strncpy_s(message, request->wszCryMsg, 64);
   player->pc_SetRaceBossCryMsg(slotIndex, message);
   return true;
 }
@@ -7498,18 +7498,15 @@ bool CNetworkEX::ClassSkillRecallTeleportRequest(int n, char *pBuf)
 bool CNetworkEX::ThrowSkillRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_throw_skill_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_thorw_skill_request_clzo *>(pBuf);
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return true;
   }
 
-  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->byID), request->wIndex))
+  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->idDst.byID), request->idDst.wIndex))
   {
-    _CHRID targetId{};
-    targetId.byID = request->byID;
-    targetId.wIndex = request->wIndex;
-    targetId.dwSerial = request->dwSerial;
+    _CHRID targetId = request->idDst;
     player->pc_ThrowSkillRequest(
       request->wBulletSerial,
       &targetId,
@@ -7526,19 +7523,16 @@ bool CNetworkEX::ThrowSkillRequest(int n, char *pBuf)
 
 bool CNetworkEX::ThrowUnitRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_throw_unit_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_thorw_unit_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return true;
   }
 
-  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->byID), request->wIndex))
+  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->idDst.byID), request->idDst.wIndex))
   {
-    _CHRID targetId{};
-    targetId.byID = request->byID;
-    targetId.wIndex = request->wIndex;
-    targetId.dwSerial = request->dwSerial;
+    _CHRID targetId = request->idDst;
     player->pc_ThrowUnitRequest(&targetId, request->wConsumeItemSerial);
     return true;
   }
@@ -8452,7 +8446,7 @@ bool CNetworkEX::QuestSelectRewardReport(int n, char *pBuf)
 
 bool CNetworkEX::NPCDialogRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_npc_rec_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_npc_dialog_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -8461,7 +8455,7 @@ bool CNetworkEX::NPCDialogRequest(int n, char *pBuf)
 
   CItemStoreManager *storeMgr = CItemStoreManager::Instance();
   const unsigned int recordNum = storeMgr->m_tblItemStore.GetRecordNum();
-  const unsigned int recIndex = request->dwRecIndex;
+  const unsigned int recIndex = request->dwStoreIndex;
   if (recIndex >= recordNum)
   {
     return true;
@@ -8484,7 +8478,7 @@ bool CNetworkEX::NPCDialogRequest(int n, char *pBuf)
 
 bool CNetworkEX::NPCWatchingRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_npc_rec_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_npc_watching_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper)
   {
@@ -8493,7 +8487,7 @@ bool CNetworkEX::NPCWatchingRequest(int n, char *pBuf)
 
   CItemStoreManager *storeMgr = CItemStoreManager::Instance();
   const unsigned int recordNum = storeMgr->m_tblItemStore.GetRecordNum();
-  const unsigned int recIndex = request->dwRecIndex;
+  const unsigned int recIndex = request->dwStoreIndex;
   if (recIndex >= recordNum)
   {
     return true;
@@ -8516,7 +8510,7 @@ bool CNetworkEX::NPCWatchingRequest(int n, char *pBuf)
 
 bool CNetworkEX::NPCQuestListRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_npc_rec_index_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_npc_quest_list_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -8525,7 +8519,7 @@ bool CNetworkEX::NPCQuestListRequest(int n, char *pBuf)
 
   CItemStoreManager *storeMgr = CItemStoreManager::Instance();
   const unsigned int recordNum = storeMgr->m_tblItemStore.GetRecordNum();
-  const unsigned int recIndex = request->dwRecIndex;
+  const unsigned int recIndex = request->dwStoreIndex;
   if (recIndex >= recordNum)
   {
     return true;

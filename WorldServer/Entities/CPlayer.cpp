@@ -3051,8 +3051,8 @@ void CPlayer::SendMsg_GuildRoomOutResult(
 
 void CPlayer::SendMsg_RegistBindResult(char byRetCode)
 {
-  _exit_world_result_zocl msg{};
-  msg.dummy[0] = byRetCode;
+  _regist_bind_result_zocl msg{};
+  msg.byRetCode = byRetCode;
   unsigned __int8 type[2] = {8, 4};
   g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
@@ -10261,8 +10261,9 @@ void CPlayer::SetPvpPointLeak(long double dValue)
 
 void CPlayer::SendMsg_ResurrectInform()
 {
+  _player_resurrect_inform_zocl msg{};
+  msg.dwObjSerial = m_dwObjSerial;
   unsigned __int8 type[2] = {3, 48};
-  unsigned int msg = m_dwObjSerial;
   CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), false);
 }
 
@@ -11342,9 +11343,9 @@ void CPlayer::SendMsg_SelectClassResult(char byErrCode, unsigned __int16 wSelCla
 
   if (!byErrCode)
   {
-    _select_class_result_other_inform_zocl circleMsg{};
-    circleMsg.dwObjSerial = m_dwObjSerial;
-    circleMsg.wSelClassIndex = wSelClassIndex;
+    _change_class_other_zocl circleMsg{};
+    circleMsg.dwPlayerSerial = m_dwObjSerial;
+    circleMsg.wClassIndex = wSelClassIndex;
     unsigned __int8 circleType[2]{17, 8};
     this->CircleReport(
       circleType,

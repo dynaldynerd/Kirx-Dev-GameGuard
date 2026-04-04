@@ -336,9 +336,10 @@ void CItemBox::SendMsg_Create()
 
 void CItemBox::SendMsg_Destroy()
 {
-  unsigned __int16 index = m_ObjID.m_wIndex;
+  _itembox_destroy_zocl msg{};
+  msg.wIndex = m_ObjID.m_wIndex;
   unsigned __int8 pbyType[2] = {3, 28};
-  CircleReport(pbyType, reinterpret_cast<char *>(&index), 2, 0);
+  CircleReport(pbyType, reinterpret_cast<char *>(&msg), sizeof(msg), 0);
 }
 
 void CItemBox::SendMsg_StateChange()

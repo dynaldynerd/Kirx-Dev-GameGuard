@@ -892,8 +892,8 @@ int CGuildBattleController::CheatRegenStone(CPlayer *pkPlayer, int iRengenPos)
     return -1;
   }
 
-  _guild_battle_regen_stone_result_zocl msg{};
-  msg.nPortalInx = portalInx;
+  _guild_battle_notify_regen_ball_zocl msg{};
+  msg.iPortalInx = portalInx;
 
   unsigned __int8 type[2]{};
   type[0] = 27;

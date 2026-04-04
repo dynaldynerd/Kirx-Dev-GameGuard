@@ -607,10 +607,10 @@ struct _set_group_target_object_request_clzo
 
 // set_race_boss_cry_msg_request_clzo.h
 #pragma pack(push, 1)
-struct _set_race_boss_cry_msg_request_clzo
+struct _set_raceboss_cry_msg_request_clzo
 {
   char bySlot;
-  char wszMessage[64];
+  char wszCryMsg[65];
 };
 #pragma pack(pop)
 
@@ -625,25 +625,23 @@ struct _set_target_object_request_clzo
 };
 #pragma pack(pop)
 
-// throw_skill_request_clzo.h
+// thorw_skill_request_clzo.h
 #pragma pack(push, 1)
-struct _throw_skill_request_clzo
+struct _thorw_skill_request_clzo
 {
   unsigned __int16 wBulletSerial;
-  unsigned __int8 byID;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
+  _CHRID idDst;
+  char byAttackSerial;
   unsigned __int16 wConsumeItemSerial[3];
 };
 #pragma pack(pop)
 
-// throw_unit_request_clzo.h
+// thorw_unit_request_clzo.h
 #pragma pack(push, 1)
-struct _throw_unit_request_clzo
+struct _thorw_unit_request_clzo
 {
-  char byID;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
+  _CHRID idDst;
+  char byAttackSerial;
   unsigned __int16 wConsumeItemSerial[3];
 };
 #pragma pack(pop)
@@ -730,14 +728,6 @@ struct _unit_bullet_replace_request_clzo
   char bySlotIndex;
   char byPackIndex;
   char byBulletPart;
-};
-#pragma pack(pop)
-
-// cnetworkex_scalar_requests_clzo.h
-#pragma pack(push, 1)
-struct _apex_result_request_clzo
-{
-  unsigned int dwResult;
 };
 #pragma pack(pop)
 
@@ -866,9 +856,23 @@ struct _darkhole_open_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _post_index_request_clzo
+struct _post_content_request_clzo
 {
-  unsigned int dwPostIndex;
+  unsigned int dwPostSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _post_itemgold_request_clzo
+{
+  unsigned int dwPostSerial;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _post_delete_request_clzo
+{
+  unsigned int dwPostSerial;
 };
 #pragma pack(pop)
 
@@ -988,9 +992,23 @@ struct _unit_leave_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _npc_rec_index_request_clzo
+struct _npc_quest_list_request_clzo
 {
-  unsigned int dwRecIndex;
+  unsigned int dwStoreIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _npc_dialog_request_clzo
+{
+  unsigned int dwStoreIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _npc_watching_request_clzo
+{
+  unsigned int dwStoreIndex;
 };
 #pragma pack(pop)
 
@@ -1251,10 +1269,130 @@ struct _chat_operator_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _chat_message_request_clzo
+struct _chat_circle_request_clzo
 {
   char bySize;
-  char wszChatData[255];
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_party_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_race_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_cheat_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_manage_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_mgr_whisper_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_map_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_raceboss_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_guild_est_sen_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_representation_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_all_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_greeting_gm_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_greeting_race_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_greeting_guild_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_raceboss_cry_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_gm_notice_request_clzo
+{
+  char bySize;
+  char wszChatData[256];
 };
 #pragma pack(pop)
 
@@ -1287,9 +1425,16 @@ struct _chat_multi_far_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _chat_toggle_request_clzo
+struct _chat_map_recv_yesorno_clzo
 {
-  char byRecvType;
+  char byRecv;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _chat_all_recv_yesorno_clzo
+{
+  char byRecv;
 };
 #pragma pack(pop)
 
@@ -2088,6 +2233,410 @@ struct _buddy_del_result_clzo
 {
   char byRetCode;
   unsigned int dwSerial;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _animus_return_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _base_download_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _billing_info_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _buddy_download_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _cutting_complete_request_clzo
+{
+  char byNpcRace;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _d_trade_cancle_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _d_trade_lock_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _darkhole_clear_out_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _darkhole_giveup_out_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _enable_nuclear_control_request_clzo
+{
+  unsigned __int16 wNuclearSerial;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _exit_world_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_current_battle_info_request_clzo
+{
+  char byDummy;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_download_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_join_apply_cancel_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_self_leave_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _inven_download_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _mine_cancle_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _move_limit_map_zone_request_clzo
+{
+  unsigned int dwStoreIndex;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _move_to_own_stonemap_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _npclink_check_item_request_clzo
+{
+  _STORAGE_POS_INDIV Item;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _party_disjoint_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _party_leave_self_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pcbang_primium_coupon_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _personal_automine_invenui_open_clzo
+{
+  bool bIsOpen;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _player_revival_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pt_discharge_request_clzo
+{
+  char byClassType;
+  char wszAvatorName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pt_query_appoint_clzo
+{
+  char byClassType;
+  char wszAvatorName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pt_request_appoint_clzo
+{
+  char byClassType;
+  char wszAvatorName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pt_request_vote_clzo
+{
+  char byRank;
+  char wszAvatorName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pt_response_appoint_clzo
+{
+  char byResponse;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _quest_download_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _raceboss_cry_msg_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _radar_char_list_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _release_siege_mode_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _release_target_object_request_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _request_csi_goods_list_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _request_csi_sell_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _request_revival_jade_effect_clzo
+{
+  bool bUseEffect;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _select_nuclear_pos_request_clzo
+{
+  float zPos[3];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _special_download_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _time_limit_accum_logouttime_request_clzo
+{
+  char byRetCode;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _trunk_extend_request_clzo
+{
+  char byDummy;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _trunk_pw_hint_index_request_clzo
+{
+  char byDummy;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _tutorial_process_report_clzo
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _uilock_find_pw_request_clzo
+{
+  char uszHintAnswer[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _uilock_user_certify_request_clzo
+{
+  char szUILockPW[13];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _unit_return_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _unit_take_request_clzo
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _use_active_jade_request_clzo
+{
+  _STORAGE_POS_INDIV Item;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _use_guildroom_entrance_item_request_clzo
+{
+  char dummy[1];
 };
 #pragma pack(pop)
 

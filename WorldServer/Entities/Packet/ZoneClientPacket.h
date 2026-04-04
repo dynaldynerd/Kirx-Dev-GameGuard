@@ -886,12 +886,6 @@ struct _guild_battle_goal_result_zocl
 #pragma pack(pop)
 static_assert(sizeof(_guild_battle_goal_result_zocl) == 58, "guild battle goal packet size mismatch");
 
-// moved from IDA TRC send payload (27,69)
-struct _guild_battle_regen_stone_result_zocl
-{
-  int nPortalInx;
-};
-
 // guild_battle_suggest_request_result_zocl.h
 #pragma pack(push, 1)
 struct _guild_battle_suggest_request_result_zocl
@@ -3780,15 +3774,6 @@ struct _select_class_result_zocl
 {
   char byRetCode;
 };
-
-// moved from CMainThread.h
-#pragma pack(push, 1)
-struct _select_class_result_other_inform_zocl
-{
-  unsigned int dwObjSerial;
-  unsigned __int16 wSelClassIndex;
-};
-#pragma pack(pop)
 
 // moved from ZoneServer-GU.h (7004)
 struct _trunk_create_cost_is_free_result_zocl
@@ -7021,6 +7006,131 @@ struct _guild_battle_current_battle_info_result_zocl
   unsigned __int8 byLeftHour;
   unsigned __int8 byLeftMin;
   unsigned __int8 byLeftSec;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_notify_start_zocl
+{
+  char byDummy;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_notify_position_member_delete_zocl
+{
+  unsigned int dwObjSerial;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_fin_draw_result_zocl
+{
+  char wsz1PGuildName[17];
+  char wsz2PGuildName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_fin_win_result_zocl
+{
+  char wszWinGuildName[17];
+  char wszLoseGuildName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guild_battle_fin_lose_result_zocl
+{
+  char wszWinGuildName[17];
+  char wszLoseGuildName[17];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _guildroom_resttime_result_zocl
+{
+  char byReturnCode;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _itembox_destroy_zocl
+{
+  unsigned __int16 wIndex;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _messenger_enter_key_inform_zocl
+{
+  unsigned int dwAvatorSerial;
+  unsigned int dwKey[4];
+  unsigned int dwMessengerIP;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _notify_golden_dig_event_status_zocl
+{
+  char byRetCode;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _player_resurrect_inform_zocl
+{
+  unsigned int dwObjSerial;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _pvp_order_view_end_zocl
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _regist_bind_result_zocl
+{
+  char byRetCode;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _result_csi_sell_zocl
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _unmannedtrader_re_regist_taxrate_update_inform_zocl
+{
+  char byTaxRate;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer-GU.h
+#pragma pack(push, 1)
+struct _use_guildroom_entrance_item_result_zocl
+{
+  char dummy[1];
 };
 #pragma pack(pop)
 
