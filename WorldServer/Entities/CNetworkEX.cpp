@@ -4704,7 +4704,7 @@ bool CNetworkEX::ChatTradeRequestMsg(unsigned int n, char *pBuf)
     char tradeMsg[272]{};
     std::memcpy(tradeMsg, request->wszChatData, messageSize);
     tradeMsg[messageSize] = 0;
-    player->pc_ChatTradeRequestMsg(static_cast<unsigned __int8>(request->byRaceCode), tradeMsg);
+    player->pc_ChatTradeRequestMsg(static_cast<unsigned __int8>(request->bySubType), tradeMsg);
   }
   return true;
 }
@@ -7321,15 +7321,11 @@ bool CNetworkEX::ForceRequest(int n, char *pBuf)
     return true;
   }
 
-  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->byID), request->wIndex))
+  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->idDst.byID), request->idDst.wIndex))
   {
-    _CHRID targetId{};
-    targetId.byID = request->byID;
-    targetId.wIndex = request->wIndex;
-    targetId.dwSerial = request->dwSerial;
     player->pc_ForceRequest(
       request->wForceSerial,
-      &targetId,
+      &request->idDst,
       request->wConsumeItemSerial);
     return true;
   }
@@ -7389,19 +7385,15 @@ bool CNetworkEX::ClassSkillRequest(int n, char *pBuf)
     return true;
   }
 
-  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->byID), request->wIndex))
+  if (g_Main.GetObjectA(0, static_cast<unsigned __int8>(request->idDst.byID), request->idDst.wIndex))
   {
     const int skillIndex = request->wSkillIndex;
     const int recordNum = g_Main.m_tblEffectData[2].GetRecordNum();
     if (skillIndex < recordNum)
     {
-      _CHRID targetId{};
-      targetId.byID = request->byID;
-      targetId.wIndex = request->wIndex;
-      targetId.dwSerial = request->dwSerial;
       player->pc_ClassSkillRequest(
         request->wSkillIndex,
-        &targetId,
+        &request->idDst,
         request->wConsumeItemSerial);
       return true;
     }

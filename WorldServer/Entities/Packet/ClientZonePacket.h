@@ -424,9 +424,8 @@ struct _brief_pass_report_clzo
 struct _class_skill_request_clzo
 {
   unsigned __int16 wSkillIndex;
-  unsigned __int8 byID;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
+  _CHRID idDst;
+  char byAttackSerial;
   unsigned __int16 wConsumeItemSerial[3];
 };
 #pragma pack(pop)
@@ -461,9 +460,8 @@ struct _force_inven_change_request_clzo
 struct _force_request_clzo
 {
   unsigned __int16 wForceSerial;
-  unsigned __int8 byID;
-  unsigned __int16 wIndex;
-  unsigned int dwSerial;
+  _CHRID idDst;
+  char byAttackSerial;
   unsigned __int16 wConsumeItemSerial[3];
 };
 #pragma pack(pop)
@@ -1398,9 +1396,9 @@ struct _chat_gm_notice_request_clzo
 #pragma pack(push, 1)
 struct _chat_trade_request_clzo
 {
-  char byRaceCode;
+  char bySubType;
   char bySize;
-  char wszChatData[255];
+  char wszChatData[256];
 };
 #pragma pack(pop)
 
