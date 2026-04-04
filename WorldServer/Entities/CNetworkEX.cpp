@@ -4747,8 +4747,10 @@ bool CNetworkEX::ChatMultiFarRequest(unsigned int n, char *pBuf)
     return true;
   }
 
-  const unsigned __int8 transNum = request->byTransNum;
-  const unsigned __int8 *src = reinterpret_cast<const unsigned __int8 *>(&request->byTransNum) + 1;
+  const unsigned __int8 *src = reinterpret_cast<const unsigned __int8 *>(request->sData);
+  unsigned __int8 transNum = 0;
+  std::memcpy(&transNum, src, 1u);
+  ++src;
 
   if (transNum <= 4u)
   {
@@ -7925,7 +7927,7 @@ bool CNetworkEX::AnimusRecallRequest(int n, char *pBuf)
   }
 
   player->pc_AnimusRecallRequest(
-    request->wAnimusItemSerial,
+    static_cast<unsigned __int16>(request->dwAnimusItemSerial),
     request->wAnimusClientHP,
     request->wAnimusClientFP);
   return true;

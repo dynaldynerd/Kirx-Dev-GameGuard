@@ -977,8 +977,7 @@ struct _d_trade_ok_request_clzo
 #pragma pack(push, 1)
 struct _animus_recall_request_clzo
 {
-  unsigned __int16 wAnimusItemSerial;
-  unsigned __int16 wUnknown;
+  unsigned int dwAnimusItemSerial;
   unsigned __int16 wAnimusClientHP;
   unsigned __int16 wAnimusClientFP;
 };
@@ -1408,19 +1407,17 @@ struct _chat_trade_request_clzo
 #pragma pack(push, 1)
 struct _chat_far_request_clzo
 {
-  char wszName[16];
-  char byUnknown;
+  char wszName[17];
   char bySize;
-  char wszChatData[255];
+  char wszChatData[256];
 };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _chat_multi_far_request_clzo
 {
-  char byRaceCode;
-  char byUnknown;
-  unsigned __int8 byTransNum;
+  unsigned __int16 wSize;
+  char sData[500];
 };
 #pragma pack(pop)
 
