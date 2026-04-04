@@ -523,7 +523,7 @@ void CPlayer::SendMsg_DTradeAccomplishInform(bool bSucc, unsigned __int16 wStart
 
 void CPlayer::SendMsg_DTradeAskResult(char byErrCode)
 {
-  _d_trade_ask_result_zocl payload{};
+  _d_trade_ask_result_clzo payload{};
   payload.byErrCode = byErrCode;
   unsigned __int8 type[2] = {18, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(

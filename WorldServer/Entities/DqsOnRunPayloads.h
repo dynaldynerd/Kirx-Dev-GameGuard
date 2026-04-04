@@ -19,8 +19,9 @@ struct _qry_case_alive_char_payload
   char in_w_szName[17];
   unsigned __int8 in_bySlot;
   unsigned __int8 out_AliveAvator[270];
+  unsigned __int64 out_dwCanonicalLastConnTime;
 };
-static_assert(sizeof(_qry_case_alive_char_payload) == 296);
+static_assert(sizeof(_qry_case_alive_char_payload) == 304);
 
 struct _log_sheet_usernum
 {

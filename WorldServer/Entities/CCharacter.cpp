@@ -2297,10 +2297,10 @@ void CCharacter::_set_sf_cont(
 
 void CCharacter::SendMsg_StunInform()
 {
-  _character_stun_inform_zocl msg{};
-  msg.byObjID = static_cast<char>(m_ObjID.m_byID);
-  msg.wObjIndex = m_ObjID.m_wIndex;
-  msg.dwObjSerial = m_dwObjSerial;
+  _stun_inform_zocl msg{};
+  msg.idStun.byID = static_cast<char>(m_ObjID.m_byID);
+  msg.idStun.wIndex = m_ObjID.m_wIndex;
+  msg.idStun.dwSerial = m_dwObjSerial;
 
   unsigned __int8 packetType[2] = {17, 16};
   CircleReport(packetType, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);

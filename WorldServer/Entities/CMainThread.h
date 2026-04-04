@@ -905,6 +905,7 @@ public:
     unsigned int dwAccountSerial,
     _REGED *pRegedList,
     _NOT_ARRANGED_AVATOR_DB *pArrangedList,
+    unsigned __int64 *pdwCanonicalLastConnTime,
     const char *pszIP);
   unsigned __int8 db_Insert_Avator(
     unsigned int dwAccountSerial,
@@ -927,7 +928,8 @@ public:
     bool *pbExtTrunkAddItem,
     unsigned __int8 *pbyExtTrunkOldSlot,
     bool bAll,
-    unsigned int *pdwCheckSum);
+    unsigned int *pdwCheckSum,
+    unsigned __int64 *pdwCanonicalLastConnTime);
   char db_Update_Avator(
     unsigned int dwSerial,
     _AVATOR_DATA *pNewData,
@@ -1024,7 +1026,8 @@ public:
     unsigned int dwDalant,
     char *szReviveMapCode,
     unsigned __int8 byReviveStat,
-    _REGED *pReged);
+    _REGED *pReged,
+    unsigned __int64 *pdwCanonicalLastConnTime);
   unsigned __int8 db_Insert_ChangeClass_AfterInitClass(
     unsigned int dwCharacSerial,
     unsigned __int8 byType,
@@ -1075,7 +1078,7 @@ public:
   unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   unsigned __int8 _db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   unsigned __int8 _db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
-  unsigned __int8 _db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pData);
+  unsigned __int8 _db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pData, unsigned __int64 *pdwCanonicalLastConnTime);
   unsigned __int8 _db_Load_General(unsigned int dwSerial, unsigned __int8 byRace, _AVATOR_DATA *pData);
   unsigned __int8 _db_Load_Supplement(unsigned int dwSerial, _SUPPLEMENT_DB_BASE *pSupplement);
   unsigned __int8 _db_Load_TimeLimitInfo(unsigned int dwAccSerial, _TIMELIMITINFO_DB_BASE *pTimeLimit);

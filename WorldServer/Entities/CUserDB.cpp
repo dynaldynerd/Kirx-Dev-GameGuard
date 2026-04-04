@@ -112,6 +112,9 @@ CUserDB::CUserDB()
 {
   m_dwAccountSerial = static_cast<unsigned int>(-1);
   m_AvatorData.InitData();
+  std::memset(m_dwCanonicalRegedLastConnTime, 0, sizeof(m_dwCanonicalRegedLastConnTime));
+  m_dwCanonicalLastConnTime = 0;
+  m_dwCanonicalBackupLastConnTime = 0;
   m_bActive = false;
   m_bField = false;
   m_bChatLock = false;
@@ -132,6 +135,54 @@ CUserDB::CUserDB()
 
 CUserDB::~CUserDB()
 {
+}
+
+void CUserDB::SetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex, unsigned __int64 dwLastConnTime)
+{
+  if (bySlotIndex >= 3u)
+  {
+    return;
+  }
+
+  m_dwCanonicalRegedLastConnTime[bySlotIndex] = dwLastConnTime;
+  m_RegedList[bySlotIndex].m_dwLastConnTime = ClampLegacyLastConnTime(dwLastConnTime);
+}
+
+unsigned __int64 CUserDB::GetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex) const
+{
+  if (bySlotIndex >= 3u)
+  {
+    return 0;
+  }
+
+  return m_dwCanonicalRegedLastConnTime[bySlotIndex];
+}
+
+void CUserDB::SetCanonicalLastConnTime(unsigned __int64 dwLastConnTime)
+{
+  m_dwCanonicalLastConnTime = dwLastConnTime;
+  m_AvatorData.dbAvator.m_dwLastConnTime = ClampLegacyLastConnTime(dwLastConnTime);
+}
+
+unsigned __int64 CUserDB::GetCanonicalLastConnTime() const
+{
+  return m_dwCanonicalLastConnTime;
+}
+
+void CUserDB::SetCanonicalBackupLastConnTime(unsigned __int64 dwLastConnTime)
+{
+  m_dwCanonicalBackupLastConnTime = dwLastConnTime;
+  m_AvatorData_bk.dbAvator.m_dwLastConnTime = ClampLegacyLastConnTime(dwLastConnTime);
+}
+
+unsigned __int64 CUserDB::GetCanonicalBackupLastConnTime() const
+{
+  return m_dwCanonicalBackupLastConnTime;
+}
+
+void CUserDB::SyncCanonicalBackupLastConnTime()
+{
+  SetCanonicalBackupLastConnTime(m_dwCanonicalLastConnTime);
 }
 
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
@@ -171,6 +222,9 @@ void CUserDB::ParamInit()
   m_gidGlobal.dwSerial = static_cast<unsigned int>(-1);
   m_AvatorData.InitData();
   m_AvatorData_bk.InitData();
+  std::memset(m_dwCanonicalRegedLastConnTime, 0, sizeof(m_dwCanonicalRegedLastConnTime));
+  m_dwCanonicalLastConnTime = 0;
+  m_dwCanonicalBackupLastConnTime = 0;
   for (int j = 0; j < 3; ++j)
   {
     m_RegedList[j].init();
@@ -2647,6 +2701,7 @@ bool CUserDB::Select_Char_Request(unsigned __int8 bySlotIndex)
   _qry_sheet_load qry{};
   qry.dwAvatorSerial = m_RegedList[bySlotIndex].m_dwRecordNum;
   qry.dwCheckSum = 0;
+  qry.dwCanonicalLastConnTime = GetRegedCanonicalLastConnTime(bySlotIndex);
   std::memcpy(&qry.LoadData, &m_RegedList[bySlotIndex], 269);
 
   const int size = static_cast<int>(qry.size());
@@ -2685,7 +2740,7 @@ bool CUserDB::Alive_Char_Request(
 {
   if (m_RegedList[bySlotIndex].m_bySlotIndex != 255)
   {
-    Alive_Char_Complete(50, byCase, dwSerial, nullptr);
+    Alive_Char_Complete(50, byCase, dwSerial, nullptr, 0);
     return false;
   }
 
@@ -2702,7 +2757,7 @@ bool CUserDB::Alive_Char_Request(
     }
     if (!hasArranged)
     {
-      Alive_Char_Complete(50, byCase, dwSerial, nullptr);
+      Alive_Char_Complete(50, byCase, dwSerial, nullptr, 0);
       return false;
     }
   }
@@ -2731,7 +2786,7 @@ bool CUserDB::Alive_Char_Request(
     }
     if (!found)
     {
-      Alive_Char_Complete(57, byCase, dwSerial, nullptr);
+      Alive_Char_Complete(57, byCase, dwSerial, nullptr, 0);
       return false;
     }
   }
@@ -2740,7 +2795,7 @@ bool CUserDB::Alive_Char_Request(
   {
     if (*cursor == 32 || *cursor == 39)
     {
-      Alive_Char_Complete(47, byCase, dwSerial, nullptr);
+      Alive_Char_Complete(47, byCase, dwSerial, nullptr, 0);
       return true;
     }
     if (!*cursor)
@@ -2780,6 +2835,7 @@ void CUserDB::Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *
   {
     slotIndex = pInsertData->m_bySlotIndex;
     std::memcpy(&m_RegedList[slotIndex], pInsertData, 69);
+    SetRegedCanonicalLastConnTime(slotIndex, pInsertData->m_dwLastConnTime);
   }
 
   s_MgrLobbyHistory.add_char_complete(byRetCode, pInsertData, m_szLobbyHistoryFileName);
@@ -2971,6 +3027,7 @@ void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAv
   std::memcpy(&m_AvatorData_bk, pAvatorData, sizeof(m_AvatorData_bk));
   m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
   m_AvatorData_bk.dbQuest.dwListCnt = listCount;
+  SyncCanonicalBackupLastConnTime();
 
   const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
   for (unsigned int j = 0; j < addCount; ++j)
@@ -2990,7 +3047,8 @@ void CUserDB::Alive_Char_Complete(
   unsigned __int8 byRetCode,
   unsigned __int8 byCase,
   unsigned int dwSerial,
-  _REGED *pAliveAvator)
+  _REGED *pAliveAvator,
+  unsigned __int64 dwCanonicalLastConnTime)
 {
   m_bDBWaitState = false;
 
@@ -3004,6 +3062,7 @@ void CUserDB::Alive_Char_Complete(
       if (m_RegedList[slotIndex].m_bySlotIndex == 255)
       {
         std::memcpy(&m_RegedList[slotIndex], pAliveAvator, sizeof(m_RegedList[slotIndex]));
+        SetRegedCanonicalLastConnTime(slotIndex, dwCanonicalLastConnTime);
         m_RegedList[slotIndex].UpdateEquipLv();
         for (int j = 0; j < 50; ++j)
         {
@@ -3852,6 +3911,7 @@ void CUserDB::SendMsg_Inform_UILock()
 
 bool CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
 {
+  const unsigned __int64 currentCanonicalLastConnTime = m_dwCanonicalLastConnTime;
   _AVATOR_DATA snapshot{};
   snapshot = _AVATOR_DATA();
   std::memcpy(&snapshot, &this->m_AvatorData, sizeof(snapshot));
@@ -3869,6 +3929,7 @@ bool CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
     sizeof(this->m_AvatorData.dbAvator.m_fStartPos));
   this->m_AvatorData.dbAvator.m_dwTotalPlayMin = snapshot.dbAvator.m_dwTotalPlayMin;
   this->m_AvatorData.dbAvator.m_dwStartPlayTime = snapshot.dbAvator.m_dwStartPlayTime;
+  SetCanonicalLastConnTime(currentCanonicalLastConnTime);
   this->m_bNoneUpdateData = true;
   this->m_bDataUpdate = true;
   return true;
@@ -3878,18 +3939,23 @@ bool CUserDB::Update_CopyAll(_AVATOR_DATA *pSrc)
 void CUserDB::Reged_Char_Complete(
   unsigned __int8 byRetCode,
   _REGED *pRegedList,
-  _NOT_ARRANGED_AVATOR_DB *pArrangedList)
+  _NOT_ARRANGED_AVATOR_DB *pArrangedList,
+  const unsigned __int64 *pdwCanonicalLastConnTime)
 {
   m_bDBWaitState = false;
 
   if (!byRetCode)
   {
     std::memcpy(m_RegedList, pRegedList, sizeof(m_RegedList));
+    std::memset(m_dwCanonicalRegedLastConnTime, 0, sizeof(m_dwCanonicalRegedLastConnTime));
     for (int j = 0; j < 3; ++j)
     {
       _REGED *reged = &m_RegedList[j];
       if (m_RegedList[j].m_bySlotIndex != 255)
       {
+        const unsigned __int64 canonicalLastConnTime =
+          pdwCanonicalLastConnTime ? pdwCanonicalLastConnTime[j] : reged->m_dwLastConnTime;
+        SetRegedCanonicalLastConnTime(static_cast<unsigned __int8>(j), canonicalLastConnTime);
         reged->UpdateEquipLv();
       }
     }
@@ -3976,6 +4042,10 @@ void CUserDB::Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 by
   if (!byRetCode)
   {
     m_RegedList[bySlotIndex].m_bySlotIndex = 255;
+    if (bySlotIndex < 3u)
+    {
+      m_dwCanonicalRegedLastConnTime[bySlotIndex] = 0;
+    }
   }
 
   s_MgrLobbyHistory.del_char_complete(byRetCode, m_szLobbyHistoryFileName);
@@ -4002,7 +4072,8 @@ void CUserDB::Select_Char_Complete(
   long double dTrunkOldGold,
   bool bCreateTrunkFree,
   bool *pbExtTrunkAddItem,
-  unsigned __int8 byExtTrunkOldSlot)
+  unsigned __int8 byExtTrunkOldSlot,
+  unsigned __int64 dwCanonicalLastConnTime)
 {
   m_bDBWaitState = false;
   const DWORD now = GetTickCount();
@@ -4019,6 +4090,10 @@ void CUserDB::Select_Char_Complete(
   {
     std::memcpy(&m_AvatorData, pLoadData, sizeof(m_AvatorData));
     std::memcpy(&m_AvatorData_bk, pLoadData, sizeof(m_AvatorData_bk));
+    const unsigned __int64 canonicalLastConnTime =
+      dwCanonicalLastConnTime ? dwCanonicalLastConnTime : pLoadData->dbAvator.m_dwLastConnTime;
+    SetCanonicalLastConnTime(canonicalLastConnTime);
+    SetCanonicalBackupLastConnTime(canonicalLastConnTime);
 
     const unsigned int startCount = g_Main.m_dwStartNPCQuestCnt[m_AvatorData_bk.dbAvator.m_byRaceSexCode / 2];
     auto *startHistory = new (std::nothrow) _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY[startCount];

@@ -21,6 +21,7 @@ struct  _qry_sheet_load
   unsigned __int8 byRefinedCnt;
   bool bExtTrunkAddItem[40];
   unsigned __int8 byExtTrunkOldSlot;
+  unsigned __int64 dwCanonicalLastConnTime;
 
   _qry_sheet_load();
   ~_qry_sheet_load();
@@ -35,13 +36,13 @@ inline _qry_sheet_load::_qry_sheet_load()
   std::memset(this->bTrunkAddItem, 0, sizeof(this->bTrunkAddItem));
   this->bCreateTrunkFree = 0;
   std::memset(this->bExtTrunkAddItem, 0, sizeof(this->bExtTrunkAddItem));
+  this->dwCanonicalLastConnTime = 0;
 }
 
 inline _qry_sheet_load::~_qry_sheet_load() = default;
 
 inline int _qry_sheet_load::size() const
 {
-  // narrowing cast for thunk return parity
-  return static_cast<int>(37512LL);
+  return static_cast<int>(sizeof(*this));
 }
 

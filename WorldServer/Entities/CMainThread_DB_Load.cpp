@@ -32,7 +32,8 @@ unsigned __int8 CMainThread::db_Load_Avator(
   bool *pbExtTrunkAddItem,
   unsigned __int8 *pbyExtTrunkOldSlot,
   bool bAll,
-  unsigned int *pdwCheckSum)
+  unsigned int *pdwCheckSum,
+  unsigned __int64 *pdwCanonicalLastConnTime)
 {
   unsigned __int8 result = 0;
   if (pdwAddDalant)
@@ -48,7 +49,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
 
   if (bAll)
   {
-    result = _db_Load_Base(dwSerial, pData);
+    result = _db_Load_Base(dwSerial, pData, pdwCanonicalLastConnTime);
     if (result)
     {
       m_logSystemError.Write( "_db_Load_Base(%d) => failed ..{%d}", dwSerial, result);

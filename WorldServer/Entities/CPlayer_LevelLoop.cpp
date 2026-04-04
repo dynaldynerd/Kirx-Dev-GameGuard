@@ -1924,7 +1924,7 @@ int CPlayer::SetDamage(
 
 bool CPlayer::IsOverOneDay()
 {
-  const unsigned __int64 lastConnTime = this->m_pUserDB->m_AvatorData.dbAvator.m_dwLastConnTime;
+  const unsigned __int64 lastConnTime = this->m_pUserDB->GetCanonicalLastConnTime();
 
   char dateBuffer[48]{};
   char timeBuffer[48]{};

@@ -376,18 +376,6 @@ struct _unmannedtrader_search_list_request_clzo
 };
 #pragma pack(pop)
 
-// add_char_request_clzo.h
-#pragma pack(push, 1)
-struct _add_char_request_clzo
-{
-  unsigned __int8 bySlotIndex;
-  char wszCharName[17];
-  unsigned __int8 byRaceSexCode;
-  char wszClassCode[5];
-  unsigned int dwMakeCharKey;
-};
-#pragma pack(pop)
-
 // animus_command_request_clzo.h
 #pragma pack(push, 1)
 struct _animus_command_request_clzo
@@ -405,13 +393,12 @@ struct _animus_inven_change_request_clzo
 };
 #pragma pack(pop)
 
-// away_party_invitation_answer_request_clzo.h
+// away_party_join_invitation_answer_clzo.h
 #pragma pack(push, 1)
-struct _away_party_invitation_answer_request_clzo
+struct _away_party_join_invitation_answer_clzo
 {
   char byRetCode;
-  unsigned __int16 wBossIndex;
-  unsigned int dwBossSerial;
+  _CLID idBoss;
 };
 #pragma pack(pop)
 
@@ -444,17 +431,17 @@ struct _class_skill_request_clzo
 };
 #pragma pack(pop)
 
-// dtrade_ask_request_clzo.h
+// d_trade_ask_request_clzo.h
 #pragma pack(push, 1)
-struct _dtrade_ask_request_clzo
+struct _d_trade_ask_request_clzo
 {
   unsigned __int16 wDstIndex;
 };
 #pragma pack(pop)
 
-// dtrade_del_request_clzo.h
+// d_trade_del_request_clzo.h
 #pragma pack(push, 1)
-struct _dtrade_del_request_clzo
+struct _d_trade_del_request_clzo
 {
   char bySlotIndex;
 };
@@ -489,11 +476,11 @@ struct _gesture_request_clzo
 };
 #pragma pack(pop)
 
-// guild_honor_list_request_clzo.h
+// guild_honor_list_requst_clzo.h
 #pragma pack(push, 1)
-struct _guild_honor_list_request_clzo
+struct _guild_honor_list_requst_clzo
 {
-  char byDivision;
+  char byUI;
 };
 #pragma pack(pop)
 
@@ -565,21 +552,21 @@ struct _pvp_rank_list_request_clzo
 };
 #pragma pack(pop)
 
-// quest_giveup_request_clzo.h
+// quest_give_up_request_clzo.h
 #pragma pack(push, 1)
-struct _quest_giveup_request_clzo
+struct _quest_give_up_request_clzo
 {
   char byQuestDBSlot;
 };
 #pragma pack(pop)
 
-// quest_select_reward_report_clzo.h
+// quest_select_reward_repart_clzo.h
 #pragma pack(push, 1)
-struct _quest_select_reward_report_clzo
+struct _quest_select_reward_repart_clzo
 {
-  unsigned __int8 byQuestSlot;
-  unsigned __int8 bySelectItemSlotIndex;
-  unsigned __int8 byLinkQuestIndex;
+  char byQuestDBSlot;
+  char bySelectItemSlotIndex;
+  char byLinkQuestIndex;
 };
 #pragma pack(pop)
 
@@ -591,11 +578,11 @@ struct _release_group_target_object_request_clzo
 };
 #pragma pack(pop)
 
-// request_change_tax_rate_request_clzo.h
+// pt_request_change_tax_rate_clzo.h
 #pragma pack(push, 1)
-struct _request_change_tax_rate_request_clzo
+struct _pt_request_change_tax_rate_clzo
 {
-  char byTaxRate;
+  char byNextTax;
 };
 #pragma pack(pop)
 
@@ -724,13 +711,13 @@ struct _uilock_init_request_clzo
 };
 #pragma pack(pop)
 
-// uilock_update_request_clzo.h
+// uilock_update_info_request_clzo.h
 #pragma pack(push, 1)
-struct _uilock_update_request_clzo
+struct _uilock_update_info_request_clzo
 {
-  char uszUILockPWOld[13];
+  char uszUILockPW_Old[13];
   char uszUILockPW[13];
-  char uszUILockPWConfirm[13];
+  char uszUILockPW_Confirm[13];
   char byHintIndex;
   char uszHintAnswer[17];
 };
@@ -762,7 +749,7 @@ struct _new_pos_start_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _goto_base_portal_request_clzo
+struct _goto_baseportal_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
@@ -776,10 +763,56 @@ struct _goto_avator_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _move_portal_request_clzo
+struct _moveout_user_request_zone
 {
-  char byPortalIndex;
-  unsigned __int16 wConsumeSerial[3];
+  char byNextZoneType;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _reged_char_request_zone
+{
+  char dummy[1];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _add_char_request_zone
+{
+  char bySlotIndex;
+  char wszCharName[17];
+  char byRaceSexCode;
+  char szClassCode[5];
+  unsigned int dwBaseShape;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _del_char_request_zone
+{
+  char bySlotIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _sel_char_request_zone
+{
+  char bySlotIndex;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _protocol_ver_not_equal_zone
+{
+  char sDum;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct _move_potal_request_clzo
+{
+  char byPotalIndex;
+  unsigned __int16 wConsumeItemSerial[3];
 };
 #pragma pack(pop)
 
@@ -840,9 +873,9 @@ struct _post_index_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _post_return_confirm_request_clzo
+struct _post_return_confirm_clzo
 {
-  unsigned int dwPostSerial;
+  unsigned int dwSerial;
 };
 #pragma pack(pop)
 
@@ -854,21 +887,21 @@ struct _transform_siege_mode_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _transship_renew_ticket_request_clzo
+struct _trans_ship_renew_ticket_request_clzo
 {
-  unsigned __int16 wTicketSerial;
+  unsigned __int16 wTicketItemSerial;
 };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _party_join_invitation_request_clzo
+struct _party_join_invitation_clzo
 {
   unsigned __int16 wDstIndex;
 };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _party_join_application_request_clzo
+struct _party_join_application_clzo
 {
   unsigned __int16 wBossIndex;
 };
@@ -931,7 +964,7 @@ struct _d_trade_answer_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _dtrade_ok_request_clzo
+struct _d_trade_ok_request_clzo
 {
   unsigned int dwKey[4];
 };
@@ -1081,7 +1114,7 @@ struct _add_bag_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _use_recover_loss_exp_item_request_clzo
+struct _use_recover_lossexp_item_request_clzo
 {
   unsigned __int16 wItemSerial;
 };
@@ -1096,9 +1129,9 @@ struct _exchange_item_request_clzo
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-struct _use_firecracker_item_request_clzo
+struct _use_fire_cracker_item_request_clzo
 {
-  unsigned __int16 wItemSerial;
+  unsigned __int16 wSerial;
 };
 #pragma pack(pop)
 
@@ -1172,6 +1205,12 @@ struct _trunk_hint_answer_request_clzo
 
 static_assert(sizeof(_new_pos_start_request_clzo) == 1);
 static_assert(sizeof(_goto_avator_request_clzo) == 17);
+static_assert(sizeof(_moveout_user_request_zone) == 1);
+static_assert(sizeof(_reged_char_request_zone) == 1);
+static_assert(sizeof(_add_char_request_zone) == 28);
+static_assert(sizeof(_del_char_request_zone) == 1);
+static_assert(sizeof(_sel_char_request_zone) == 1);
+static_assert(sizeof(_protocol_ver_not_equal_zone) == 1);
 static_assert(sizeof(_init_class_request_clzo) == 1);
 static_assert(sizeof(_party_join_invitation_answer_clzo) == 6);
 static_assert(sizeof(_party_join_application_answer_clzo) == 6);
@@ -1189,13 +1228,6 @@ static_assert(sizeof(_whisper_block_report_clzo) == 1);
 static_assert(sizeof(_trade_block_report_clzo) == 1);
 static_assert(sizeof(_guild_battle_block_report_clzo) == 1);
 static_assert(sizeof(_trunk_hint_answer_request_clzo) == 17);
-
-#pragma pack(push, 1)
-struct _char_slot_request_clzo
-{
-  char bySlotIndex;
-};
-#pragma pack(pop)
 
 #pragma pack(push, 1)
 struct _alter_window_info_request_clzo
@@ -1796,15 +1828,6 @@ struct _player_stop_clzo
 };
 #pragma pack(pop)
 static_assert(sizeof(_player_stop_clzo) == 16);
-
-// moved from CMainThread.h
-#pragma pack(push, 1)
-struct _move_potal_request_clzo
-{
-  char byPotalIndex;
-  unsigned __int16 wConsumeItemSerial[3];
-};
-#pragma pack(pop)
 
 // moved from CMainThread.h
 #pragma pack(push, 1)

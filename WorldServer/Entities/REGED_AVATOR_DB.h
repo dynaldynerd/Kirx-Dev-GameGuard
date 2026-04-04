@@ -2,6 +2,15 @@
 
 #include "IdaCompat.h"
 
+constexpr unsigned __int64 kMaxLegacyLastConnTime = 4212312359ULL;
+
+inline unsigned int ClampLegacyLastConnTime(unsigned __int64 canonicalLastConnTime)
+{
+  const unsigned __int64 clampedLastConnTime =
+    canonicalLastConnTime > kMaxLegacyLastConnTime ? kMaxLegacyLastConnTime : canonicalLastConnTime;
+  return static_cast<unsigned int>(clampedLastConnTime);
+}
+
 struct _EQUIPKEY
 {
   __int16 zItemIndex;

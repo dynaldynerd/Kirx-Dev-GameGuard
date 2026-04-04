@@ -1428,8 +1428,8 @@ void CMonster::ChangeApparition(bool bApparition, unsigned int dwAfterKillTerm)
 
 void CMonster::SendMsg_Change_MonsterTarget(CCharacter *pChar)
 {
-  _monster_change_target_zocl msg{};
-  msg.dwMonsterSerial = m_dwObjSerial;
+  _monster_change_target_player_zocl msg{};
+  msg.dwSerial = m_dwObjSerial;
   msg.dwTargetSerial = static_cast<unsigned int>(-1);
   if (pChar && !pChar->m_ObjID.m_byID)
   {

@@ -3744,11 +3744,9 @@ struct _object_real_fixpositon_zocl
 
 // moved from CMainThread.h
 #pragma pack(push, 1)
-struct _character_stun_inform_zocl
+struct _stun_inform_zocl
 {
-  char byObjID;
-  unsigned __int16 wObjIndex;
-  unsigned int dwObjSerial;
+  _CHRID idStun;
 };
 #pragma pack(pop)
 
@@ -3925,7 +3923,7 @@ struct _move_potal_result_zocl
 
 // moved from CMainThread.h
 #pragma pack(push, 1)
-struct _return_gate_destroy_inform_zocl
+struct _close_return_gate_inform_zocl
 {
   unsigned int dwObjSerial;
 };
@@ -4126,9 +4124,9 @@ struct _monster_change_rotate_zocl
 
 // moved from CMainThread.h
 #pragma pack(push, 1)
-struct _monster_change_target_zocl
+struct _monster_change_target_player_zocl
 {
-  unsigned int dwMonsterSerial;
+  unsigned int dwSerial;
   unsigned int dwTargetSerial;
 };
 #pragma pack(pop)
@@ -5596,9 +5594,9 @@ struct _make_trap_result_zocl
 };
 #pragma pack(pop)
 
-// moved from CMainThread.h
+// AOP uses the `_clzo` suffix for this zone->client packet name.
 #pragma pack(push, 1)
-struct _d_trade_ask_result_zocl
+struct _d_trade_ask_result_clzo
 {
   char byErrCode;
 };

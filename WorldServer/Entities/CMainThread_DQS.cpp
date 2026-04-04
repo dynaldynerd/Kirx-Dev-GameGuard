@@ -119,6 +119,7 @@ void CMainThread::OnDQSRun()
           regedQuery->dwAccountSerial,
           regedQuery->RegedData,
           regedQuery->ArrangedData,
+          regedQuery->dwCanonicalLastConnTime,
           regedQuery->in_szIP);
         break;
       }
@@ -156,7 +157,8 @@ void CMainThread::OnDQSRun()
           loadQuery->bExtTrunkAddItem,
           &loadQuery->byExtTrunkOldSlot,
           0,
-          &loadQuery->dwCheckSum);
+          &loadQuery->dwCheckSum,
+          &loadQuery->dwCanonicalLastConnTime);
         if (queryEntry->m_byResult
           || (CUserDB::ReRangeClientIndex(&loadQuery->LoadData),
               CUserDB::CheckDQSLoadCharacterData(&loadQuery->LoadData)))
@@ -402,7 +404,8 @@ void CMainThread::OnDQSRun()
           aliveCharQuery->in_dwSerial,
           aliveCharQuery->in_w_szName,
           aliveCharQuery->in_bySlot,
-          reinterpret_cast<_REGED *>(aliveCharQuery->out_AliveAvator));
+          reinterpret_cast<_REGED *>(aliveCharQuery->out_AliveAvator),
+          &aliveCharQuery->out_dwCanonicalLastConnTime);
         break;
       }
       case 24:
@@ -2027,7 +2030,8 @@ void CMainThread::Reged_Avator_Complete(_DB_QRY_SYN_DATA *pData)
     user->Reged_Char_Complete(
       pData->m_byResult,
       regedQuery->RegedData,
-      regedQuery->ArrangedData);
+      regedQuery->ArrangedData,
+      regedQuery->dwCanonicalLastConnTime);
   }
 }
 
@@ -2070,7 +2074,8 @@ void CMainThread::Select_Avator_Complete(_DB_QRY_SYN_DATA *pData)
       loadQuery->dTrunkOldGold,
       loadQuery->bCreateTrunkFree,
       loadQuery->bExtTrunkAddItem,
-      loadQuery->byExtTrunkOldSlot);
+      loadQuery->byExtTrunkOldSlot,
+      loadQuery->dwCanonicalLastConnTime);
     _db_complete_event_classrefine(
       pData->m_idWorld.wIndex,
       pData->m_idWorld.dwSerial,
@@ -2179,7 +2184,8 @@ void CMainThread::Alive_Char_Complete(_DB_QRY_SYN_DATA *pData)
       pData->m_byResult,
       aliveCharQuery->in_byCase,
       aliveCharQuery->in_dwSerial,
-      reinterpret_cast<_REGED *>(aliveCharQuery->out_AliveAvator));
+      reinterpret_cast<_REGED *>(aliveCharQuery->out_AliveAvator),
+      aliveCharQuery->out_dwCanonicalLastConnTime);
   }
 }
 void CMainThread::SendWebRaceBossSMS(_DB_QRY_SYN_DATA *pData)

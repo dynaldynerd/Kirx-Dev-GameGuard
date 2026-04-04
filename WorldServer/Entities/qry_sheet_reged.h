@@ -10,6 +10,7 @@ struct  _qry_sheet_reged
   unsigned int dwAccountSerial;
   _REGED RegedData[3];
   _NOT_ARRANGED_AVATOR_DB ArrangedData[50];
+  unsigned __int64 dwCanonicalLastConnTime[3];
   char in_szIP[16];
 
   _qry_sheet_reged();
@@ -23,6 +24,5 @@ inline _qry_sheet_reged::~_qry_sheet_reged() = default;
 
 inline int _qry_sheet_reged::size() const
 {
-  // narrowing cast for thunk return parity
-  return static_cast<int>(4280LL);
+  return static_cast<int>(sizeof(*this));
 }

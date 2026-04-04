@@ -171,7 +171,7 @@ void CReturnGate::SendMsg_FixPosition(int n)
 
 void CReturnGate::SendMsg_Destroy()
 {
-  _return_gate_destroy_inform_zocl msg{};
+  _close_return_gate_inform_zocl msg{};
   msg.dwObjSerial = m_dwObjSerial;
   unsigned __int8 pbyType[2];
   std::memset(pbyType, 8, sizeof(pbyType));

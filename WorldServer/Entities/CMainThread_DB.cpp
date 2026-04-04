@@ -26,9 +26,14 @@ unsigned __int8 CMainThread::db_Reged_Avator(
   unsigned int dwAccountSerial,
   _REGED *pRegedList,
   _NOT_ARRANGED_AVATOR_DB *pArrangedList,
+  unsigned __int64 *pdwCanonicalLastConnTime,
   const char *pszIP)
 {
 _worlddb_character_base_info_array characterData{};
+  if (pdwCanonicalLastConnTime)
+  {
+    std::memset(pdwCanonicalLastConnTime, 0, sizeof(unsigned __int64) * 3);
+  }
   unsigned __int8 result = m_pWorldDB->Select_CharacterBaseInfoBySerial(
     dwAccountSerial,
     &characterData);
@@ -72,7 +77,11 @@ _worlddb_character_base_info_array characterData{};
     pRegedList[slotIndex].m_dwDalant = characterData.CharacterInfo[j].dwDalant;
     pRegedList[slotIndex].m_dwGold = characterData.CharacterInfo[j].dwGold;
     pRegedList[slotIndex].m_dwBaseShape = characterData.CharacterInfo[j].dwBaseShape;
-    pRegedList[slotIndex].m_dwLastConnTime = static_cast<unsigned int>(characterData.CharacterInfo[j].dwLastConnTime);
+    if (pdwCanonicalLastConnTime)
+    {
+      pdwCanonicalLastConnTime[slotIndex] = characterData.CharacterInfo[j].dwLastConnTime;
+    }
+    pRegedList[slotIndex].m_dwLastConnTime = ClampLegacyLastConnTime(characterData.CharacterInfo[j].dwLastConnTime);
     for (int m = 0; m < 8; ++m)
     {
       pRegedList[slotIndex].m_EquipKey[m].LoadDBKey(characterData.CharacterInfo[j].shEKArray[m]);
@@ -604,7 +613,8 @@ unsigned __int8 CMainThread::db_char_set_alive(
   unsigned int dwDalant,
   char *szReviveMapCode,
   unsigned __int8 byReviveStat,
-  _REGED *pReged)
+  _REGED *pReged,
+  unsigned __int64 *pdwCanonicalLastConnTime)
 {
   unsigned __int8 charNum[16]{};
   unsigned __int8 result = m_pWorldDB->Select_CharNumInWorld(dwSerial, charNum);
@@ -669,7 +679,11 @@ unsigned __int8 CMainThread::db_char_set_alive(
   pReged->m_dwDalant = baseInfo.dwDalant;
   pReged->m_dwGold = baseInfo.dwGold;
   pReged->m_dwBaseShape = baseInfo.dwBaseShape;
-  pReged->m_dwLastConnTime = static_cast<unsigned int>(baseInfo.dwLastConnTime);
+  if (pdwCanonicalLastConnTime)
+  {
+    *pdwCanonicalLastConnTime = baseInfo.dwLastConnTime;
+  }
+  pReged->m_dwLastConnTime = ClampLegacyLastConnTime(baseInfo.dwLastConnTime);
   for (int k = 0; k < 8; ++k)
   {
     pReged->m_EquipKey[k].LoadDBKey(baseInfo.shEKArray[k]);

@@ -2391,7 +2391,7 @@ bool CNetworkEX::Stop(unsigned int n, char *pBuf)
 
 bool CNetworkEX::GotoBasePortalRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_goto_base_portal_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_goto_baseportal_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -2437,7 +2437,7 @@ bool CNetworkEX::GotoAvatorRequest(unsigned int n, const _goto_avator_request_cl
 
 bool CNetworkEX::MovePortalRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_move_portal_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_move_potal_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -2445,8 +2445,8 @@ bool CNetworkEX::MovePortalRequest(unsigned int n, char *pBuf)
   }
 
   player->pc_MovePortal(
-    static_cast<int>(static_cast<unsigned __int8>(request->byPortalIndex)),
-    request->wConsumeSerial);
+    static_cast<int>(static_cast<unsigned __int8>(request->byPotalIndex)),
+    request->wConsumeItemSerial);
   return true;
 }
 
@@ -3492,7 +3492,7 @@ bool CNetworkEX::AddBagRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::UseRecoverLossExpItemRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_use_recover_loss_exp_item_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_use_recover_lossexp_item_request_clzo *>(pBuf);
   auto *player = &g_Player[n];
   if (player->m_bOper)
   {
@@ -3632,19 +3632,19 @@ bool CNetworkEX::CombineExItemAcceptRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::UseFireCrackerItemRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_use_firecracker_item_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_use_fire_cracker_item_request_clzo *>(pBuf);
   auto *player = &g_Player[n];
   if (!player->m_bOper)
   {
     return true;
   }
 
-  const int result = player->pc_UseFireCracker(request->wItemSerial);
+  const int result = player->pc_UseFireCracker(request->wSerial);
   const int errorCode = (result < 0) ? result : 0;
 
   _use_fire_cracker_item_result_zocl sendMsg{};
   sendMsg.cRet = static_cast<char>(errorCode);
-  sendMsg.wSerial = request->wItemSerial;
+  sendMsg.wSerial = request->wSerial;
   unsigned __int8 type[2]{7, 38};
   g_Network.m_pProcess[0]->LoadSendMsg(
     player->m_ObjID.m_wIndex,
@@ -3934,7 +3934,9 @@ bool CNetworkEX::EnterWorldRequest(unsigned int n, _MSG_HEADER *pMsgHeader, char
 
 bool CNetworkEX::MoveLobbyRequest(unsigned int n, char *pBuf)
 {
-if (!g_Player[n].m_bLive)
+  const auto *request = reinterpret_cast<const _moveout_user_request_zone *>(pBuf);
+  (void)request;
+  if (!g_Player[n].m_bLive)
   {
     return true;
   }
@@ -3949,7 +3951,9 @@ if (!g_Player[n].m_bLive)
 
 bool CNetworkEX::RegedCharRequest(unsigned int n, char *pBuf)
 {
-if (!g_UserDB[n].m_bActive)
+  const auto *request = reinterpret_cast<const _reged_char_request_zone *>(pBuf);
+  (void)request;
+  if (!g_UserDB[n].m_bActive)
   {
     return true;
   }
@@ -3964,7 +3968,7 @@ if (!g_UserDB[n].m_bActive)
 
 bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_add_char_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_add_char_request_zone *>(pBuf);
   if (!g_UserDB[n].m_bActive)
   {
     return true;
@@ -3980,7 +3984,7 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
     {
       if (static_cast<unsigned __int8>(request->byRaceSexCode) < 5u)
       {
-        if (std::strlen(request->wszClassCode) <= 4)
+        if (std::strlen(request->szClassCode) <= 4)
         {
           if (Major_Add_Character)
           {
@@ -3991,8 +3995,8 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
                 charName,
                 static_cast<unsigned __int8>(request->bySlotIndex),
                 static_cast<unsigned __int8>(request->byRaceSexCode),
-                request->wszClassCode,
-                request->dwMakeCharKey))
+                request->szClassCode,
+                request->dwBaseShape))
           {
             char buffer[144]{};
             sprintf_s(buffer, "CLOSE>> AddCharRequest ID:%s", g_UserDB[n].m_szAccountID);
@@ -4015,7 +4019,7 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::DelCharRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_char_slot_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_del_char_request_zone *>(pBuf);
   if (!g_UserDB[n].m_bActive)
   {
     return true;
@@ -4040,7 +4044,7 @@ bool CNetworkEX::DelCharRequest(unsigned int n, char *pBuf)
 
 bool CNetworkEX::SelCharRequest(unsigned int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_char_slot_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_sel_char_request_zone *>(pBuf);
   if (!g_UserDB[n].m_bActive)
   {
     return true;
@@ -5609,11 +5613,11 @@ bool CNetworkEX::PostDeleteRequest(int n, char *pBuf)
 
 bool CNetworkEX::PostReturnConfirmRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_post_return_confirm_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_post_return_confirm_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    player->pc_PostReturnConfirmRequest(request->dwPostSerial);
+    player->pc_PostReturnConfirmRequest(request->dwSerial);
   }
   return true;
 }
@@ -6264,11 +6268,11 @@ bool CNetworkEX::TransformSiegeModeRequest(int n, char *pBuf)
 
 bool CNetworkEX::TransShipRenewTicketRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_transship_renew_ticket_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_trans_ship_renew_ticket_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (player->m_bOper)
   {
-    player->pc_TransShipRenewTicketRequest(request->wTicketSerial);
+    player->pc_TransShipRenewTicketRequest(request->wTicketItemSerial);
   }
 
   return true;
@@ -6856,10 +6860,10 @@ CPlayer *player = &g_Player[n];
 bool CNetworkEX::RequestChangeTaxRate(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_request_change_tax_rate_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_pt_request_change_tax_rate_clzo *>(pBuf);
   if (player->m_bOper)
   {
-    player->pc_RequestChangeTaxRate(static_cast<unsigned __int8>(request->byTaxRate));
+    player->pc_RequestChangeTaxRate(static_cast<unsigned __int8>(request->byNextTax));
   }
   return true;
 }
@@ -6901,13 +6905,13 @@ bool CNetworkEX::RequestUILockUserCertify(int n, char *pBuf)
 bool CNetworkEX::RequestUILockUpdateInfo(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_uilock_update_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_uilock_update_info_request_clzo *>(pBuf);
   if (player->m_bOper)
   {
     player->pc_RequestUILockUpdate(
-      request->uszUILockPWOld,
+      request->uszUILockPW_Old,
       request->uszUILockPW,
-      request->uszUILockPWConfirm,
+      request->uszUILockPW_Confirm,
       static_cast<unsigned __int8>(request->byHintIndex),
       request->uszHintAnswer);
   }
@@ -7070,7 +7074,7 @@ CPlayer *player = &g_Player[n];
 
 bool CNetworkEX::PartyJoinInvitation(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_party_join_invitation_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_party_join_invitation_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -7120,7 +7124,7 @@ bool CNetworkEX::PartyJoinInvitationAnswer(int n, _party_join_invitation_answer_
 
 bool CNetworkEX::PartyJoinApplication(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_party_join_application_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_party_join_application_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -7284,20 +7288,17 @@ bool CNetworkEX::AwayPartyInvitation(int n, const _away_party_invitation_request
 bool CNetworkEX::AwayPartyInvitationAnswer(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_away_party_invitation_answer_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_away_party_join_invitation_answer_clzo *>(pBuf);
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
     return true;
   }
 
-  const unsigned __int16 bossIndex = request->wBossIndex;
+  const unsigned __int16 bossIndex = request->idBoss.wIndex;
   if (bossIndex < MAX_PLAYER)
   {
-    _CLID bossId{};
-    bossId.wIndex = request->wBossIndex;
-    bossId.dwSerial = request->dwBossSerial;
     player->pc_AwayPartyJoinInvitationAnswer(
-      &bossId,
+      &request->idBoss,
       static_cast<unsigned __int8>(request->byRetCode));
     return true;
   }
@@ -7742,7 +7743,7 @@ CPlayer *player = &g_Player[n];
 bool CNetworkEX::DTradeAskRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_dtrade_ask_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_d_trade_ask_request_clzo *>(pBuf);
   const unsigned __int16 dstIndex = request->wDstIndex;
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode || player->m_bCorpse)
   {
@@ -7864,7 +7865,7 @@ bool CNetworkEX::DTradeAddRequest(int n, char *pBuf)
 bool CNetworkEX::DTradeDelRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_dtrade_del_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_d_trade_del_request_clzo *>(pBuf);
   if (!player->m_bOper || player->m_bCorpse)
   {
     return true;
@@ -7909,7 +7910,7 @@ bool CNetworkEX::DTradeBetRequest(int n, char *pBuf)
 
 bool CNetworkEX::DTradeOKRequest(int n, char *pBuf)
 {
-  auto *request = reinterpret_cast<_dtrade_ok_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_d_trade_ok_request_clzo *>(pBuf);
   CPlayer *player = &g_Player[n];
   if (!player->m_bOper || player->m_bCorpse)
   {
@@ -8400,13 +8401,13 @@ bool CNetworkEX::SelectWaitedQuestReport(int n, char *pBuf)
 bool CNetworkEX::QuestSelectRewardReport(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_quest_select_reward_report_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_quest_select_reward_repart_clzo *>(pBuf);
   if (!player->m_bOper || player->m_pmTrd.bDTradeMode)
   {
     return true;
   }
 
-  const unsigned __int8 questSlot = static_cast<unsigned __int8>(request->byQuestSlot);
+  const unsigned __int8 questSlot = static_cast<unsigned __int8>(request->byQuestDBSlot);
   if (questSlot < 30)
   {
     const unsigned __int8 rewardSlot = static_cast<unsigned __int8>(request->bySelectItemSlotIndex);
@@ -8580,7 +8581,7 @@ bool CNetworkEX::NPCQuestRequest(int n, char *pBuf)
 bool CNetworkEX::QuestGiveupRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_quest_giveup_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_quest_give_up_request_clzo *>(pBuf);
   if (!player->m_bOper)
   {
     return true;
@@ -9110,10 +9111,10 @@ CPlayer *player = &g_Player[n];
 bool CNetworkEX::GuildHonorListRequest(int n, char *pBuf)
 {
   CPlayer *player = &g_Player[n];
-  auto *request = reinterpret_cast<_guild_honor_list_request_clzo *>(pBuf);
+  auto *request = reinterpret_cast<_guild_honor_list_requst_clzo *>(pBuf);
   if (player->m_bLoad)
   {
-    player->pc_GuildHonorListRequest(request->byDivision);
+    player->pc_GuildHonorListRequest(request->byUI);
   }
   return true;
 }

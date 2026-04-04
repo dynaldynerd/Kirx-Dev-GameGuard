@@ -76,6 +76,16 @@ public:
   unsigned int m_dwRequestMoveCharacterSerialList[3];
   unsigned int m_dwTournamentCharacterSerialList[3];
   char m_szLobbyHistoryFileName[64];
+  unsigned __int64 m_dwCanonicalRegedLastConnTime[3];
+  unsigned __int64 m_dwCanonicalLastConnTime;
+  unsigned __int64 m_dwCanonicalBackupLastConnTime;
+  void SetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex, unsigned __int64 dwLastConnTime);
+  unsigned __int64 GetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex) const;
+  void SetCanonicalLastConnTime(unsigned __int64 dwLastConnTime);
+  unsigned __int64 GetCanonicalLastConnTime() const;
+  void SetCanonicalBackupLastConnTime(unsigned __int64 dwLastConnTime);
+  unsigned __int64 GetCanonicalBackupLastConnTime() const;
+  void SyncCanonicalBackupLastConnTime();
   void Init(unsigned __int16 index);
   void DummyCreate(unsigned int dwSerial);
   void ParamInit();
@@ -243,7 +253,11 @@ public:
   void TotalPlayMinCheck();
   bool UpdateContUserSave(bool bDirect);
   void Insert_Char_Complete(unsigned __int8 byRetCode, _REGED_AVATOR_DB *pInsertData);
-  void Reged_Char_Complete(unsigned __int8 byRetCode, _REGED *pRegedList, _NOT_ARRANGED_AVATOR_DB *pArrangedList);
+  void Reged_Char_Complete(
+    unsigned __int8 byRetCode,
+    _REGED *pRegedList,
+    _NOT_ARRANGED_AVATOR_DB *pArrangedList,
+    const unsigned __int64 *pdwCanonicalLastConnTime);
   void Delete_Char_Complete(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex);
   void Select_Char_Complete(
     unsigned __int8 byRetCode,
@@ -258,14 +272,16 @@ public:
     long double dTrunkOldGold,
     bool bCreateTrunkFree,
     bool *pbExtTrunkAddItem,
-    unsigned __int8 byExtTrunkOldSlot);
+    unsigned __int8 byExtTrunkOldSlot,
+    unsigned __int64 dwCanonicalLastConnTime);
   void Lobby_Char_Complete(unsigned __int8 byRetCode);
   void Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData);
   void Alive_Char_Complete(
     unsigned __int8 byRetCode,
     unsigned __int8 byCase,
     unsigned int dwSerial,
-    _REGED *pAliveAvator);
+    _REGED *pAliveAvator,
+    unsigned __int64 dwCanonicalLastConnTime);
   _AVATOR_DATA *IsContPushBefore();
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
