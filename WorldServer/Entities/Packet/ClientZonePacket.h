@@ -407,7 +407,7 @@ struct _away_party_join_invitation_answer_clzo
 struct _boss_sms_msg_request_clzo
 {
   char bySize;
-  char wszChatData[48];
+  char wszChatData[49];
 };
 #pragma pack(pop)
 
@@ -1179,9 +1179,9 @@ struct _use_recall_teleport_item_request_clzo
 #pragma pack(push, 1)
 struct _character_rename_cash_request_clzo
 {
-  char bChange;
+  bool bChange;
   _STORAGE_POS_INDIV Item;
-  char szNewName[16];
+  char strCharacterName[17];
 };
 #pragma pack(pop)
 
@@ -1263,7 +1263,7 @@ struct _chat_operator_request_clzo
 {
   char byRaceCode;
   char bySize;
-  char wszChatData[255];
+  char wszChatData[256];
 };
 #pragma pack(pop)
 

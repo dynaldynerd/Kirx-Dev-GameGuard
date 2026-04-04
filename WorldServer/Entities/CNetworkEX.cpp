@@ -3815,9 +3815,9 @@ bool CNetworkEX::CharacterRenameCash(unsigned int n, char *pBuf)
   }
 
   char newName[17]{};
-  strncpy_s(newName, sizeof(newName), request->szNewName, 16);
+  strncpy_s(newName, sizeof(newName), request->strCharacterName, 16);
   player->pc_CharacterRenameCash(
-    static_cast<bool>(request->bChange),
+    request->bChange,
     &request->Item,
     newName);
   return true;

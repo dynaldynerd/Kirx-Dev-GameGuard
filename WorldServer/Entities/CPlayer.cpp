@@ -11170,7 +11170,7 @@ int _other_shape_part_zocl::size()
 int _base_download_result_zocl::size()
 {
   // narrowing cast for thunk return parity
-  return static_cast<int>(byRetCode ? 1u : 258u);
+  return static_cast<int>(byRetCode ? 1u : 274u);
 }
 
 _inven_download_result_zocl::_inven_download_result_zocl()
@@ -13402,19 +13402,19 @@ void CPlayer::SendMsg_BaseDownloadResult()
       msg.wClassHistory[j] = static_cast<unsigned __int16>(-1);
     }
   }
-  msg.wHP = this->m_Param.GetHP();
-  msg.wSP = this->m_Param.GetSP();
-  msg.wFP = this->m_Param.GetFP();
-  msg.wDP = this->m_Param.GetDP();
+  msg.dwHP = this->m_Param.GetHP();
+  msg.dwSP = this->m_Param.GetSP();
+  msg.dwFP = this->m_Param.GetFP();
+  msg.dwDP = this->m_Param.GetDP();
   msg.dPvpPoint = this->m_Param.GetPvPPoint();
   msg.dPvpCashBag = this->m_kPvpOrderView.GetPvpCash();
   msg.dPvpTempCash = m_kPvpOrderView.GetPvpTempCash();
   msg.dwPvpRank = this->m_Param.m_dbChar.m_dwRank;
   msg.byPvpClass = this->m_Param.m_byPvPGrade;
-  msg.wMaxHP = this->m_nMaxPoint[0];
-  msg.wMaxSP = this->m_nMaxPoint[2];
-  msg.wMaxFP = this->m_nMaxPoint[1];
-  msg.wMaxDP = static_cast<unsigned __int16>(GetMaxDP());
+  msg.dwMaxHP = this->m_nMaxPoint[0];
+  msg.dwMaxSP = this->m_nMaxPoint[2];
+  msg.dwMaxFP = this->m_nMaxPoint[1];
+  msg.dwMaxDP = GetMaxDP();
 
   const int mapCode = this->m_Param.GetMapCode();
   unsigned __int16 *record =
