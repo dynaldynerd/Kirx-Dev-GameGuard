@@ -127,6 +127,7 @@ void CPlayer::SendMsg_RemainTimeInform(__int16 iType, int lRemainTime, _SYSTEMTI
 {
   _remaintime_inform_zocl payload{};
   payload.iType = iType;
+  payload.byPaymentType = 0;
   payload.lRemainMin = lRemainTime;
   if (pstEndDate)
   {

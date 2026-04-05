@@ -660,11 +660,16 @@ void CUserDB::SendMsg_BillingInfo()
 
   _current_billing_type_inform_zocl msg{};
   msg.iType = m_BillingInfo.iType;
+  msg.byPaymentType = 0;
   msg.lRemainMin = m_BillingInfo.lRemainTime;
   std::memcpy(&msg.stEndDate, &m_BillingInfo.stEndDate, sizeof(msg.stEndDate));
 
   unsigned __int8 pbyType[2]{29, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_idWorld.wIndex, pbyType, reinterpret_cast<char *>(&msg), 22);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_idWorld.wIndex,
+    pbyType,
+    reinterpret_cast<char *>(&msg),
+    static_cast<unsigned __int16>(sizeof(msg)));
 }
 
 void CUserDB::SetRemainTime(int lRemainTime)

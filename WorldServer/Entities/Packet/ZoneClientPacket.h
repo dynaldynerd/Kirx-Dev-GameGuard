@@ -4540,6 +4540,7 @@ struct _animus_act_heal_inform_zocl
 struct _current_billing_type_inform_zocl
 {
   __int16 iType;
+  char byPaymentType;
   int lRemainMin;
   _SYSTEMTIME stEndDate;
 };
@@ -6442,6 +6443,7 @@ struct _release_siege_mode_other_inform_zocl
 struct _remaintime_inform_zocl
 {
   __int16 iType;
+  char byPaymentType;
   int lRemainMin;
   _SYSTEMTIME stEndDate;
 };
