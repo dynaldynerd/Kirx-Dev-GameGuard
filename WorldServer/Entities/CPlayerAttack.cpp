@@ -431,51 +431,117 @@ void CPlayerAttack::AttackUnit(_attack_param *pParam)
     }
 
     int normalAttack = m_pp->nAddAttPnt + static_cast<int>(_CalcGenAttPnt(false));
-    normalAttack =
-      static_cast<int>(static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_UNIT_ATTACK));
-
-    if (!m_pAttPlayer->m_bInGuildBattle)
+    if (m_pAttPlayer->m_bGeneratorAttack)
     {
-      const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
-      const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
-      CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
-      const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
-      if (bossType)
+      int generatorAttack = m_pAttPlayer->m_pmWpn.nGaMinAF;
+      const int attackSpan = m_pAttPlayer->m_pmWpn.nGaMaxAF - m_pAttPlayer->m_pmWpn.nGaMinAF;
+      if (attackSpan > 0)
       {
-        if (bossType == 2 || bossType == 6)
+        generatorAttack = (rand() % attackSpan) + m_pAttPlayer->m_pmWpn.nGaMinAF + 1;
+      }
+
+      float generatorAttackRate = m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNIT_ATTACK);
+      if (!m_pAttPlayer->m_bInGuildBattle)
+      {
+        const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+        const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
+        CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+        const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
+        if (bossType)
         {
-          normalAttack = static_cast<int>(static_cast<float>(normalAttack) * 1.2f);
+          if (bossType == 2 || bossType == 6)
+          {
+            generatorAttackRate += 0.2f;
+          }
         }
+        else
+        {
+          generatorAttackRate += 0.3f;
+        }
+      }
+
+      m_pAttPlayer->m_EP.SetLock(false);
+      if (m_pp->nClass)
+      {
+        generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_RANGED_ATTACK) - 1.0f;
       }
       else
       {
-        normalAttack = static_cast<int>(static_cast<float>(normalAttack) * 1.3f);
+        generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_CLOSE_RANGE_ATTACK) - 1.0f;
       }
-    }
+      generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_ATTACK_FORCE) - 1.0f;
+      generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_41) - 1.0f;
+      generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_42) - 1.0f;
+      generatorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_43) - 1.0f;
+      if (generatorAttackRate < 1.0f)
+      {
+        generatorAttackRate = 1.0f;
+      }
 
-    float defSum = 0.0f;
-    for (int part = 0; part < 5; ++part)
+      generatorAttack = static_cast<int>(static_cast<float>(generatorAttack) * generatorAttackRate);
+
+      float extraGeneratorAttackRate = 1.0f;
+      if (m_pp->nClass)
+      {
+        extraGeneratorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_63) - 1.0f;
+      }
+      else
+      {
+        extraGeneratorAttackRate += m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_62) - 1.0f;
+      }
+      generatorAttack = static_cast<int>(static_cast<float>(generatorAttack) * extraGeneratorAttackRate);
+      m_pAttPlayer->m_EP.SetLock(true);
+
+      normalAttack += generatorAttack;
+    }
+    else
     {
-      defSum = static_cast<float>(m_pAttPlayer->GetDefFC(part, m_pAttPlayer, nullptr));
+      normalAttack =
+        static_cast<int>(static_cast<float>(normalAttack) * m_pAttChar->m_EP.GetEff_Rate(EFF_RATE_UNIT_ATTACK));
+
+      if (!m_pAttPlayer->m_bInGuildBattle)
+      {
+        const unsigned int dwSerial = m_pAttPlayer->m_Param.GetCharSerial();
+        const int raceCode = static_cast<int>(m_pAttPlayer->m_Param.GetRaceCode());
+        CPvpUserAndGuildRankingSystem *ranking = CPvpUserAndGuildRankingSystem::Instance();
+        const unsigned __int8 bossType = ranking->GetBossType(raceCode, dwSerial);
+        if (bossType)
+        {
+          if (bossType == 2 || bossType == 6)
+          {
+            normalAttack = static_cast<int>(static_cast<float>(normalAttack) * 1.2f);
+          }
+        }
+        else
+        {
+          normalAttack = static_cast<int>(static_cast<float>(normalAttack) * 1.3f);
+        }
+      }
+
+      float defSum = 0.0f;
+      for (int part = 0; part < 5; ++part)
+      {
+        defSum = static_cast<float>(m_pAttPlayer->GetDefFC(part, m_pAttPlayer, nullptr));
+      }
+      const float defAvg = defSum / 5.0f;
+      const float addDef = defAvg * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_44) - 1.0f);
+
+      const float attackFcA = GetAttackFC(m_pAttPlayer, 2u, true, true);
+      const float addAttackA = attackFcA * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_43) - 1.0f);
+
+      const float attackFcB0 = GetAttackFC(m_pAttPlayer, 0, true, true);
+      const float attackFcB1 = GetAttackFC(m_pAttPlayer, 1u, true, true);
+      const float addAttackB =
+        (attackFcB0 + attackFcB1) * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_41) - 1.0f);
+
+      const float attackFcC0 = GetAttackFC(m_pAttPlayer, 0, false, true);
+      const float attackFcC1 = GetAttackFC(m_pAttPlayer, 1u, false, true);
+      const float addAttackC =
+        (attackFcC0 + attackFcC1) * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_42) - 1.0f);
+
+      normalAttack =
+        static_cast<int>(static_cast<float>(normalAttack) + addAttackA + addDef + addAttackB + addAttackC);
     }
-    const float defAvg = defSum / 5.0f;
-    const float addDef = defAvg * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_44) - 1.0f);
-
-    const float attackFcA = GetAttackFC(m_pAttPlayer, 2u, true, true);
-    const float addAttackA = attackFcA * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_43) - 1.0f);
-
-    const float attackFcB0 = GetAttackFC(m_pAttPlayer, 0, true, true);
-    const float attackFcB1 = GetAttackFC(m_pAttPlayer, 1u, true, true);
-    const float addAttackB =
-      (attackFcB0 + attackFcB1) * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_41) - 1.0f);
-
-    const float attackFcC0 = GetAttackFC(m_pAttPlayer, 0, false, true);
-    const float attackFcC1 = GetAttackFC(m_pAttPlayer, 1u, false, true);
-    const float addAttackC =
-      (attackFcC0 + attackFcC1) * (m_pAttPlayer->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_42) - 1.0f);
-
-    normalAttack =
-      static_cast<int>(static_cast<float>(normalAttack) + addAttackA + addDef + addAttackB + addAttackC);
 
     if (effectGroup >= 0)
     {

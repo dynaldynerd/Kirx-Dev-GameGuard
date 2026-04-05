@@ -1644,7 +1644,7 @@ bool CPlayer::dev_view_method(char *pwszDstName)
     standNames[target->m_byStandType]);
 
   log.Write(">> RATE ############");
-  for (int index = 0; index < 62; ++index)
+  for (int index = 0; index < 66; ++index)
   {
     const float rate = target->m_EP.GetEff_Rate(index);
     log.Write("%d\t : %f", index, rate);
@@ -1665,7 +1665,7 @@ bool CPlayer::dev_view_method(char *pwszDstName)
   }
 
   log.Write(">> HAVE ############");
-  for (int index = 0; index < 83; ++index)
+  for (int index = 0; index < 92; ++index)
   {
     const float have = target->m_EP.GetEff_Have(index);
     log.Write("%d\t : %f", index, have);

@@ -3105,6 +3105,46 @@ int CPlayer::GetDefFC(int nAttactPart, CCharacter *pAttChar, int *pnConvertPart)
   if (IsRidingUnit())
   {
     defenseValue = static_cast<float>(m_nUnitDefFc) * m_fUnitPv_DefFc;
+    if (m_bGeneratorDefense)
+    {
+      CCharacter *playerAttacker = nullptr;
+      if (pAttChar && pAttChar->m_ObjID.m_byID == 0)
+      {
+        playerAttacker = pAttChar;
+      }
+
+      float generatorDefenseBase = 1.0f;
+      if (playerAttacker)
+      {
+        for (int partIndex = 0; partIndex < 5; ++partIndex)
+        {
+          _STORAGE_LIST::_db_con *equipItem = &m_Param.m_dbEquip.m_pStorageList[partIndex];
+          if (!equipItem->m_bLoad)
+          {
+            continue;
+          }
+
+          _DfnEquipItem_fld *equipRecord =
+            static_cast<_DfnEquipItem_fld *>(g_Main.m_tblItemData[partIndex].GetRecord(equipItem->m_wItemIndex));
+          if (equipRecord)
+          {
+            generatorDefenseBase += equipRecord->m_fDefFc;
+          }
+        }
+      }
+
+      defenseValue += generatorDefenseBase / 5.0f;
+
+      m_EP.SetLock(false);
+      defenseValue += m_EP.GetEff_Rate(EFF_RATE_ARMOR_DEFENSE) - 1.0f;
+      if (m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_91) > 0.0f)
+      {
+        defenseValue += generatorDefenseBase * (m_EP.GetEff_Rate(EFF_RATE_FINAL_DEFENSE) - 1.0f);
+        defenseValue += m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_65) - 1.0f;
+      }
+      defenseValue *= m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_44);
+      m_EP.SetLock(true);
+    }
   }
   else
   {

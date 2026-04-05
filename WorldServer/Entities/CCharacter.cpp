@@ -78,7 +78,7 @@ void _effect_parameter::InitEffParam()
   {
     return;
   }
-  for (int j = 0; j < 62; ++j)
+  for (int j = 0; j < 66; ++j)
   {
     m_pDataParam->m_fEff_Rate[j] = 1.0f;
   }
@@ -90,7 +90,7 @@ void _effect_parameter::InitEffParam()
   {
     m_pDataParam->m_bEff_State[j] = 0;
   }
-  for (int j = 0; j < 83; ++j)
+  for (int j = 0; j < 92; ++j)
   {
     m_pDataParam->m_fEff_Have[j] = 0.0f;
   }
@@ -103,7 +103,7 @@ void _effect_parameter::InitEffHave()
     return;
   }
 
-  for (int j = 0; j < 83; ++j)
+  for (int j = 0; j < 92; ++j)
   {
     m_pDataParam->m_fEff_Have[j] = 0.0f;
   }
@@ -131,7 +131,7 @@ float _effect_parameter::GetEff_Rate(unsigned int nParamIndex)
   {
     return FLOAT_1_0;
   }
-  if (m_bLock && nParamIndex >= 41 && nParamIndex <= 44)
+  if (m_bLock && ((nParamIndex >= 41 && nParamIndex <= 44) || (nParamIndex >= 62 && nParamIndex <= 64)))
   {
     return m_pDataParam->m_fEff_Rate[nParamIndex];
   }
@@ -139,7 +139,7 @@ float _effect_parameter::GetEff_Rate(unsigned int nParamIndex)
   {
     return FLOAT_1_0;
   }
-  if (nParamIndex < 62)
+  if (nParamIndex < 66)
   {
     return m_pDataParam->m_fEff_Rate[nParamIndex];
   }
@@ -173,7 +173,7 @@ float _effect_parameter::GetEff_Have(unsigned int nParamIndex)
   {
     return 0.0f;
   }
-  if (nParamIndex <= 82)
+  if (nParamIndex < 92)
   {
     return m_pDataParam->m_fEff_Have[nParamIndex];
   }
@@ -184,7 +184,7 @@ bool _effect_parameter::SetEff_Rate(unsigned int nParamIndex, float fVar, bool b
 {
   if (!m_pDataParam)
     return false;
-  if (nParamIndex >= 62)
+  if (nParamIndex >= 66)
     return false;
   m_pDataParam->m_fEff_Rate[nParamIndex] =
     bAdd ? (m_pDataParam->m_fEff_Rate[nParamIndex] + fVar)

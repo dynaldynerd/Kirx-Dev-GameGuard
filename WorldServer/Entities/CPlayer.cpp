@@ -8283,7 +8283,7 @@ void CPlayer::SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd)
         for (int j = 0; j < record->m_nEffectDataNum; ++j)
         {
           const int effCode = record->m_EffectData[j].nEffCode;
-          if (static_cast<unsigned int>(effCode) <= 82u)
+          if (static_cast<unsigned int>(effCode) <= 91u)
           {
             const signed __int64 dur = static_cast<signed __int64>(pItem->m_dwDur);
             float durValue = static_cast<float>(static_cast<int>(dur));
@@ -8316,7 +8316,7 @@ void CPlayer::SetHaveEffectUseTime(_STORAGE_LIST::_db_con *pItem, bool bAdd)
           const int effCode = record->m_EffectData[k].nEffCode;
           if (effCode > -1)
           {
-            if (effCode < 83)
+            if (effCode < 92)
             {
               const signed __int64 durForCmp = static_cast<signed __int64>(pItem->m_dwDur);
               float durValueForCmp = static_cast<float>(static_cast<int>(durForCmp));
@@ -9544,7 +9544,7 @@ void CPlayer::SetHaveEffect(char bLogin)
   const float prevHave4 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_4);
   const float prevHave77 = m_EP.GetEff_Have(EFF_HAVE_UNKNOWN_77);
 
-  for (int effCode = 12; effCode < 83; ++effCode)
+  for (int effCode = 12; effCode < 92; ++effCode)
   {
     if ((effCode < 59 || effCode > 65) && m_EP.m_pDataParam->m_fEff_Have[effCode] != 0.0f)
     {
@@ -9615,7 +9615,7 @@ void CPlayer::SetHaveEffect(char bLogin)
             if (effectCode > -1
                 && (effectCode < 59 || effectCode > 65)
                 && (!IsRidingUnit() || effectCode >= 29 || effectCode <= 32)
-                && effectCode < 83
+                && effectCode < 92
                 && m_EP.m_pDataParam->m_fEff_Have[effectCode]
                   < record->m_EffectData[effIndex].fEffUnitMax)
             {
@@ -9657,7 +9657,7 @@ void CPlayer::SetHaveEffect(char bLogin)
   m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_8] += FLOAT_1_0;
   m_EP.m_pDataParam->m_fEff_Have[EFF_HAVE_UNKNOWN_9] += FLOAT_1_0;
 
-  for (int effCode = 12; effCode < 83; ++effCode)
+  for (int effCode = 12; effCode < 92; ++effCode)
   {
     if ((effCode < 59 || effCode > 65) && m_EP.m_pDataParam->m_fEff_Have[effCode] != 0.0f)
     {
@@ -9866,6 +9866,18 @@ void CPlayer::apply_have_item_std_effect(int nEffCode, float fVal, bool bAdd, in
       {
         SetEquipJadeEffect(80, fVal, bAdd);
       }
+      break;
+    case 88:
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_62, fVal, bAdd);
+      break;
+    case 89:
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_63, fVal, bAdd);
+      break;
+    case 90:
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_64, fVal, bAdd);
+      break;
+    case 91:
+      m_EP.SetEff_Rate(EFF_RATE_UNKNOWN_65, fVal, bAdd);
       break;
     default:
       return;

@@ -14,6 +14,7 @@
 #include "CObjectList.h"
 #include "CPlayer.h"
 #include "CPvpUserAndGuildRankingSystem.h"
+#include "BulletItem_fld.h"
 #include "WeaponItem_fld.h"
 #include "force_fld.h"
 #include "skill_fld.h"
@@ -333,28 +334,32 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
     auto *animus = reinterpret_cast<CAnimus *>(m_pAttChar);
     if (animus && animus->m_pMaster)
     {
-      const float attackFc0 = GetAttackFC(animus->m_pMaster, 2u, true, false);
-      const float effRate0 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_57);
-      const float add0 = attackFc0 * (effRate0 - 1.0f);
+      float communionAttackBonus = 0.0f;
+      for (int slotIndex = 0; slotIndex < 7; ++slotIndex)
+      {
+        _STORAGE_LIST::_db_con *embellishItem = &animus->m_pMaster->m_Param.m_dbEmbellish.m_pStorageList[slotIndex];
+        if (!embellishItem->m_bLoad || embellishItem->m_byTableCode != 10)
+        {
+          continue;
+        }
 
-      const float attackFc1 = GetAttackFC(animus->m_pMaster, 0, true, false);
-      const float effRate1 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_58);
-      const float add1 = attackFc1 * (effRate1 - 1.0f);
+        _BulletItem_fld *bulletField =
+          static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(embellishItem->m_wItemIndex));
+        if (!bulletField || std::strcmp(bulletField->m_strBulletType, "Q"))
+        {
+          continue;
+        }
 
-      const float attackFc2 = GetAttackFC(animus->m_pMaster, 0, false, false);
-      const float effRate2 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_59);
-      const float add2 = attackFc2 * (effRate2 - 1.0f);
+        const float communionAttackValue = bulletField->m_fGAAF;
+        animus->m_pMaster->Emb_AlterDurPoint(2u, embellishItem->m_byStorageIndex, -1, false, true);
+        communionAttackBonus =
+          (communionAttackValue * ((animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK) - 1.0f) * 2.0f))
+          * communionAttackValue;
+        break;
+      }
 
-      const float attackFc3 = GetAttackFC(animus->m_pMaster, 1u, true, false);
-      const float effRate3 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_60);
-      const float add3 = attackFc3 * (effRate3 - 1.0f);
-
-      const float attackFc4 = GetAttackFC(animus->m_pMaster, 1u, false, false);
-      const float effRate4 = animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_UNKNOWN_61);
-      const float add4 = attackFc4 * (effRate4 - 1.0f);
-
-      normalAttack = (((normalAttack + add0) + add1) + add2) + add3 + add4;
-      effAttack = (((effAttack + add0) + add1) + add2) + add3 + add4;
+      normalAttack += communionAttackBonus;
+      effAttack += communionAttackBonus;
     }
   }
 

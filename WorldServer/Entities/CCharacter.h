@@ -55,10 +55,10 @@ struct _effect_parameter
 
 struct _effect_parameter::__param_data
 {
-  float m_fEff_Rate[62];
+  float m_fEff_Rate[66];
   float m_fEff_Plus[42];
   char m_bEff_State[29];
-  float m_fEff_Have[83];
+  float m_fEff_Have[92];
 };
 
 struct _tmp_effected_list
