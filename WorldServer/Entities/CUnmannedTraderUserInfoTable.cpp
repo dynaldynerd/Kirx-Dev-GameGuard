@@ -16,6 +16,7 @@
 #include "qry_case_unmandtrader_cancelitem.h"
 #include "qry_case_unmandtrader_buy_get_info.h"
 #include "qry_case_unmandtrader_cheat_updateregisttime.h"
+#include "qry_case_unmandtrader_log_in_proc_update_complete.h"
 #include "qry_case_unmandtrader_re_registsingleitem.h"
 #include "qry_case_unmandtrader_re_registsingleitem_roll_back.h"
 #include "qry_case_unmandtrader_registsingleitem.h"
@@ -428,6 +429,42 @@ void CUnmannedTraderUserInfoTable::CompleteReprice(
   {
     user->ClearRequest();
     user->CompleteReprice(byRet, pLoadData, m_pkLogger);
+  }
+}
+
+void CUnmannedTraderUserInfoTable::CompleteUpdateRegistSellUpdateWaitItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pLoadData,
+  int nListIndex)
+{
+  CUnmannedTraderUserInfo *user = FindUser(pLoadData->wInx, pLoadData->dwSeller);
+  if (!user || user->IsNull())
+  {
+    return;
+  }
+
+  const _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pLoadData->List[nListIndex];
+  switch (entry.byProcRet)
+  {
+    case 96:
+      user->LockedItemSetUnlock(&entry, this->m_pkLogger);
+      break;
+    case 207:
+      Log(
+        "CUnmannedTraderUserInfoTable::CompleteUpdateRegistSellUpdateWaitItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Buyer Info None\r\n",
+        pLoadData->dwSeller,
+        entry.dwRegistSerial,
+        entry.wItemSerial);
+      break;
+    default:
+      Log(
+        "CUnmannedTraderUserInfoTable::CompleteUpdateRegistSellUpdateWaitItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Return Value(%d) Invalid\r\n",
+        pLoadData->dwSeller,
+        entry.dwRegistSerial,
+        entry.wItemSerial,
+        entry.byProcRet);
+      break;
   }
 }
 

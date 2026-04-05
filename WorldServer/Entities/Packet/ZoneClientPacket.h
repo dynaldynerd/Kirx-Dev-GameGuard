@@ -2147,6 +2147,16 @@ struct _unmannedtrader_continue_item_inform_zocl
 };
 #pragma pack(pop)
 
+// unmannedtrader_waiting_register_item_notify_register_success_zocl.h
+#pragma pack(push, 1)
+struct _unmannedtrader_waiting_register_item_notify_register_success_zocl
+{
+  unsigned int dwRegedSerial;
+  unsigned __int16 wItemSerial;
+  int size() const;
+};
+#pragma pack(pop)
+
 // unmannedtrader_re_regist_result_zocl.h
 #pragma pack(push, 1)
 struct _unmannedtrader_re_regist_result_zocl

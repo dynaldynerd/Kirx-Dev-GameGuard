@@ -62,6 +62,9 @@ public:
   void CompleteCancelRegist(unsigned __int8 byRet, _qry_case_unmandtrader_cancelitem *pLoadData);
   void CompleteTimeOutClear(_qry_case_unmandtrader_time_out_cancelitem *pLoadData);
   void CompleteReprice(unsigned __int8 byRet, _qry_case_unmandtrader_update_reprice *pLoadData);
+  void CompleteUpdateRegistSellUpdateWaitItem(
+    _qry_case_unmandtrader_log_in_proc_update_complete *pLoadData,
+    int nListIndex);
   void ClearRequest(unsigned __int16 wInx, unsigned int dwOwner);
   void CompleteBuy(
     unsigned __int8 byRet,

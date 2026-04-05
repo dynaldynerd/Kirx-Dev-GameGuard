@@ -793,6 +793,11 @@ int _unmannedtrader_continue_item_inform_zocl::size() const
   return static_cast<int>(102 - 10LL * (10 - byNum));
 }
 
+int _unmannedtrader_waiting_register_item_notify_register_success_zocl::size() const
+{
+  return 6;
+}
+
 int _unmannedtrader_re_regist_result_zocl::size()
 {
   if (byNum > 10)

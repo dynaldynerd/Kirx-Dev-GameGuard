@@ -48,6 +48,7 @@
 #include "unmannedtrader_re_regist_result_zocl.h"
 #include "unmannedtrader_regist_item_success_result_zocl.h"
 #include "unmannedtrader_search_list_request_clzo.h"
+#include "unmannedtrader_waiting_register_item_notify_register_success_zocl.h"
 
 #include <algorithm>
 #include <cstring>
@@ -1396,6 +1397,9 @@ void CUnmannedTraderUserInfo::PrcoSellUpdateWaitItem(
       if (inventoryItem)
       {
         pkResult->List[pkResult->wNum].byProcUpdate = 92;
+        pkResult->List[pkResult->wNum].byProcRet = 96;
+        pkResult->List[pkResult->wNum].wItemSerial = loadItem.GetItemSerial();
+        pkResult->List[pkResult->wNum].bySellTurm = loadItem.GetSellTurm();
         pkResult->List[pkResult->wNum].dwBuyer = 0;
         pkResult->List[pkResult->wNum].dwRegistSerial = loadItem.GetRegistSerial();
         pkResult->List[pkResult->wNum++].byUpdateState = 1;
@@ -1457,6 +1461,9 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
 
     if (inventoryItem)
     {
+      entry.byProcRet = 96;
+      entry.wItemSerial = loadItem.GetItemSerial();
+      entry.bySellTurm = loadItem.GetSellTurm();
       entry.byProcUpdate = 92;
       entry.byUpdateState = 1;
       loadItem.ClearBuyerInfo();
@@ -3053,6 +3060,22 @@ void CUnmannedTraderUserInfo::SendSellInfom(
   g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&msg), sizeof(msg));
 }
 
+void CUnmannedTraderUserInfo::SendWaitingRegisterItemNotifyRegisterSuccess(
+  unsigned __int16 wInx,
+  unsigned int dwRegistSerial,
+  unsigned __int16 wItemSerial)
+{
+  _unmannedtrader_waiting_register_item_notify_register_success_zocl inform{};
+  inform.dwRegedSerial = dwRegistSerial;
+  inform.wItemSerial = wItemSerial;
+
+  unsigned __int8 pbyType[16]{};
+  pbyType[0] = 30;
+  pbyType[1] = 40;
+  const unsigned __int16 len = static_cast<unsigned __int16>(inform.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&inform), len);
+}
+
 void CUnmannedTraderUserInfo::SendNotifyCloseItem(
   unsigned __int16 wInx,
   unsigned __int16 wItemSerial,
@@ -3071,5 +3094,83 @@ _unmannedtrader_close_item_inform_zocl inform{};
   pbyType[1] = 27;
   const unsigned __int16 len = static_cast<unsigned __int16>(inform.size());
   g_Network.m_pProcess[0]->LoadSendMsg(wInx, pbyType, reinterpret_cast<char *>(&inform), len);
+}
+
+void CUnmannedTraderUserInfo::LockedItemSetUnlock(
+  const _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+  CLogFile *pkLogger)
+{
+  CPlayer *owner = FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::LockedItemSetUnlock()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Owner Log out!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  bool bSendNotify = true;
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pLoadData->wItemSerial);
+  if (!inventoryItem)
+  {
+    bSendNotify = false;
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::LockedItemSetUnlock()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Item None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+
+  auto regInfo = Find(pLoadData->dwRegistSerial);
+  if (regInfo == this->m_vecRegistItemInfo.end())
+  {
+    bSendNotify = false;
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::LockedItemSetUnlock()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+  else if (regInfo->GetItemSerial() != pLoadData->wItemSerial)
+  {
+    bSendNotify = false;
+    if (inventoryItem)
+    {
+      inventoryItem->lock(false);
+    }
+    regInfo->Clear();
+    regInfo->SetState(7u);
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::LockedItemSetUnlock()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo ItemSerial different!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+
+  if (bSendNotify)
+  {
+    SendWaitingRegisterItemNotifyRegisterSuccess(
+      owner->m_ObjID.m_wIndex,
+      pLoadData->dwRegistSerial,
+      pLoadData->wItemSerial);
+  }
 }
 

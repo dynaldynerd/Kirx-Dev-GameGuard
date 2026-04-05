@@ -7,12 +7,19 @@ struct _qry_case_unmandtrader_log_in_proc_update_complete
   struct __list
   {
     unsigned __int8 byProcRet;
+    unsigned __int16 wItemSerial;
+    unsigned __int8 bySellTurm;
     unsigned __int8 byProcUpdate;
-    unsigned __int16 wPadding;
     unsigned int dwBuyer;
     unsigned int dwRegistSerial;
     unsigned __int8 byUpdateState;
-    unsigned __int8 byPadding[3];
+    unsigned __int8 byPadding0[3];
+    unsigned int dwPrice;
+    unsigned int dwTax;
+    unsigned int dwAccountSerial;
+    char szAccountID[21];
+    char wszName[17];
+    __int64 dbresulttime;
   };
 
   unsigned __int16 wInx;
@@ -27,5 +34,5 @@ struct _qry_case_unmandtrader_log_in_proc_update_complete
 using _qry_case_unmandtrader_log_in_proc_update_complete_create =
   _qry_case_unmandtrader_log_in_proc_update_complete;
 
-static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete::__list) == 16);
-static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete) == 332);
+static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete::__list) == 80);
+static_assert(sizeof(_qry_case_unmandtrader_log_in_proc_update_complete) == 1616);

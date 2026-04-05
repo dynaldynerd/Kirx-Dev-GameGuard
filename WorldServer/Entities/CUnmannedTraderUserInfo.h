@@ -3,6 +3,7 @@
 #include "IdaCompat.h"
 #include "CUnmannedTraderRegistItemInfo.h"
 #include "CUnmannedTraderRequestLimiter.h"
+#include "qry_case_unmandtrader_log_in_proc_update_complete.h"
 #include <vector>
 
 class CPlayer;
@@ -15,7 +16,6 @@ struct _unmannedtrader_buy_item_request_clzo;
 struct _unmannedtrader_re_regist_request_clzo;
 struct _unmannedtrader_search_list_request_clzo;
 struct _qry_case_unmandtrader_cheat_updateregisttime;
-struct _qry_case_unmandtrader_log_in_proc_update_complete;
 struct _qry_case_unmandtrader_cancelitem;
 struct _lt_qry_case_unmandtrader_select_list;
 struct _qry_case_unmandtrader_registsingleitem;
@@ -224,12 +224,19 @@ public:
     unsigned int dwAddDalant,
     unsigned int dwTaxDalant,
     unsigned int dwTotalDalant);
+  void SendWaitingRegisterItemNotifyRegisterSuccess(
+    unsigned __int16 wInx,
+    unsigned int dwRegistSerial,
+    unsigned __int16 wItemSerial);
   void SendNotifyCloseItem(
     unsigned __int16 wInx,
     unsigned __int16 wItemSerial,
     unsigned int dwRegistSerial,
     unsigned int dwPrice,
     unsigned __int8 byTaxRate);
+  void LockedItemSetUnlock(
+    const _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+    CLogFile *pkLogger);
   CPlayer *FindOwner();
   unsigned __int16 GetIndex();
   bool IsLogInState();

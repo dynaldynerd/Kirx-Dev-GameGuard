@@ -997,8 +997,11 @@ unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(
   for (int j = 0; j < pData->wNum; ++j)
   {
     _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
-    entry.byProcRet = 0;
     unsigned __int8 state = entry.byProcUpdate;
+    if (state != 92)
+    {
+      entry.byProcRet = 0;
+    }
     switch (state - 37)
     {
       case 0:
@@ -1465,18 +1468,24 @@ void CUnmannedTraderController::CompleteBuyComplete(_qry_case_unmandtrader_buy_u
 
 void CUnmannedTraderController::CompleteLogInCompete(_qry_case_unmandtrader_log_in_proc_update_complete *pData)
 {
-  if (!pData->bAllSuccess)
+  Log(
+    "CUnmannedTraderController::CompleteLogInCompete( BYTE byRet, char * pLoadData )\r\n"
+    "\t\tType(%u) wInx(%u) dwSeller(%u)\r\n",
+    pData->byType,
+    pData->wInx,
+    pData->dwSeller);
+
+  for (int j = 0; j < pData->wNum; ++j)
   {
-    Log(
-      "CUnmannedTraderController::CompleteLogInCompete( BYTE byRet, char * pLoadData )\r\n"
-      "\t\tType(%u) wInx(%u) dwSeller(%u)\r\n",
-      pData->byType,
-      pData->wInx,
-      pData->dwSeller);
-    for (int j = 0; j < pData->wNum; ++j)
+    const _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
+    if (entry.byProcUpdate == 255)
     {
-      const _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
-      if (entry.byProcUpdate != 255 && entry.byProcRet)
+      continue;
+    }
+
+    if (entry.byProcUpdate == 92)
+    {
+      if (entry.byProcRet == 1)
       {
         Log(
           "\t\t(%d)Nth Regist Serial(%u) dwBuyer(%u) UpdateState(%u) byProcUpdate(%u) DB Error!\r\n",
@@ -1485,7 +1494,23 @@ void CUnmannedTraderController::CompleteLogInCompete(_qry_case_unmandtrader_log_
           entry.dwBuyer,
           entry.byUpdateState,
           entry.byProcUpdate);
+        continue;
       }
+
+      CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
+      table->CompleteUpdateRegistSellUpdateWaitItem(pData, j);
+      continue;
+    }
+
+    if (entry.byProcRet)
+    {
+      Log(
+        "\t\t(%d)Nth Regist Serial(%u) dwBuyer(%u) UpdateState(%u) byProcUpdate(%u) DB Error!\r\n",
+        j,
+        entry.dwRegistSerial,
+        entry.dwBuyer,
+        entry.byUpdateState,
+        entry.byProcUpdate);
     }
   }
 }
