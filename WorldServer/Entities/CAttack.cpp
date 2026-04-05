@@ -351,10 +351,24 @@ void CAttack::AttackGen(_attack_param *pParam, bool bMustMiss, bool bUseEffBulle
         }
 
         const float communionAttackValue = bulletField->m_fGAAF;
-        animus->m_pMaster->Emb_AlterDurPoint(2u, embellishItem->m_byStorageIndex, -1, false, true);
-        communionAttackBonus =
-          (communionAttackValue * ((animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK) - 1.0f) * 2.0f))
-          * communionAttackValue;
+        const unsigned __int16 leftDur =
+          static_cast<unsigned __int16>(
+            animus->m_pMaster->Emb_AlterDurPoint(2u, embellishItem->m_byStorageIndex, -1, false, true));
+        if (leftDur)
+        {
+          animus->m_pMaster->SendMsg_AlterWeaponBulletInform(embellishItem->m_wSerial, leftDur);
+        }
+        else
+        {
+          CPlayer::s_MgrItemHistory.consume_del_item(
+            animus->m_pMaster->m_ObjID.m_wIndex,
+            embellishItem,
+            animus->m_pMaster->m_szItemHistoryFileName);
+        }
+        const float communionAttackFc = GetAttackFC(animus->m_pMaster, 2u, true, false);
+        const float communionAttackRate =
+          (animus->m_pMaster->m_EP.GetEff_Rate(EFF_RATE_FORCE_ATTACK) - 1.0f) * 2.0f;
+        communionAttackBonus = communionAttackFc * communionAttackRate * communionAttackValue;
         break;
       }
 
