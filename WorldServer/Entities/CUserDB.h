@@ -79,6 +79,8 @@ public:
   unsigned __int64 m_dwCanonicalRegedLastConnTime[3];
   unsigned __int64 m_dwCanonicalLastConnTime;
   unsigned __int64 m_dwCanonicalBackupLastConnTime;
+  unsigned __int64 m_dwCanonicalUnitCutTime[4];
+  unsigned __int64 m_dwCanonicalBackupUnitCutTime[4];
   void SetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex, unsigned __int64 dwLastConnTime);
   unsigned __int64 GetRegedCanonicalLastConnTime(unsigned __int8 bySlotIndex) const;
   void SetCanonicalLastConnTime(unsigned __int64 dwLastConnTime);
@@ -86,6 +88,11 @@ public:
   void SetCanonicalBackupLastConnTime(unsigned __int64 dwLastConnTime);
   unsigned __int64 GetCanonicalBackupLastConnTime() const;
   void SyncCanonicalBackupLastConnTime();
+  void SetCanonicalUnitCutTime(unsigned __int8 bySlotIndex, unsigned __int64 dwCutTime);
+  unsigned __int64 GetCanonicalUnitCutTime(unsigned __int8 bySlotIndex) const;
+  void SetCanonicalBackupUnitCutTime(unsigned __int8 bySlotIndex, unsigned __int64 dwCutTime);
+  unsigned __int64 GetCanonicalBackupUnitCutTime(unsigned __int8 bySlotIndex) const;
+  void SyncCanonicalBackupUnitCutTime();
   void Init(unsigned __int16 index);
   void DummyCreate(unsigned int dwSerial);
   void ParamInit();
@@ -273,9 +280,13 @@ public:
     bool bCreateTrunkFree,
     bool *pbExtTrunkAddItem,
     unsigned __int8 byExtTrunkOldSlot,
-    unsigned __int64 dwCanonicalLastConnTime);
+    unsigned __int64 dwCanonicalLastConnTime,
+    const unsigned __int64 *pdwCanonicalUnitCutTime);
   void Lobby_Char_Complete(unsigned __int8 byRetCode);
-  void Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData);
+  void Cont_UserSave_Complete(
+    unsigned __int8 byResult,
+    _AVATOR_DATA *pAvatorData,
+    const unsigned __int64 *pdwCanonicalUnitCutTime);
   void Alive_Char_Complete(
     unsigned __int8 byRetCode,
     unsigned __int8 byCase,
@@ -283,6 +294,7 @@ public:
     _REGED *pAliveAvator,
     unsigned __int64 dwCanonicalLastConnTime);
   _AVATOR_DATA *IsContPushBefore();
+  const unsigned __int64 *GetPendingContSaveCanonicalUnitCutTime() const;
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
   static void ReRangeClientIndex(_AVATOR_DATA *pData);

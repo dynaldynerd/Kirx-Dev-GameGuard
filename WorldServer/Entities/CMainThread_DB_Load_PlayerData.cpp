@@ -3,6 +3,7 @@
 #include "CMainThread.h"
 
 #include "CCheckSumCharacAccountTrunkData.h"
+#include "WorldServerUtil.h"
 
 #include <cstring>
 #include <cstdio>
@@ -768,6 +769,7 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
   pDbSupplement->bLastAttBuff = supplementInfo.bLastAttBuff;
   pDbSupplement->dwBufPotionEndTime = supplementInfo.dwBufPotionEndTime;
   pDbSupplement->dwRaceBuffClear = supplementInfo.dwRaceBuffClear;
+  pDbSupplement->dwGuildEntryDelay = supplementInfo.dwGuildEntryDelay;
   if ( this->m_pWorldDB->Select_Supplement_Ex(dwSerial, &supplementInfo) )
     return 24;
   pDbSupplement->byVoted = supplementInfo.byVoted;
@@ -963,7 +965,10 @@ unsigned __int8 CMainThread::_db_Load_UI(
   return 0;
 }
 
-unsigned __int8 CMainThread::_db_Load_Unit( unsigned int dwSerial, _UNIT_DB_BASE *pCon)
+unsigned __int8 CMainThread::_db_Load_Unit(
+  unsigned int dwSerial,
+  _UNIT_DB_BASE *pCon,
+  unsigned __int64 *pdwCanonicalUnitCutTime)
 {
   _worlddb_unit_info_array unitInfoArray;
   unsigned __int8 dbResult;
@@ -981,6 +986,8 @@ unsigned __int8 CMainThread::_db_Load_Unit( unsigned int dwSerial, _UNIT_DB_BASE
   }
   for ( int unitIndex = 0; unitIndex < 4; ++unitIndex )
   {
+    if ( pdwCanonicalUnitCutTime )
+      pdwCanonicalUnitCutTime[unitIndex] = unitInfoArray.UnitInfo[unitIndex].dwCutTime;
     pCon->m_List[unitIndex].byFrame = unitInfoArray.UnitInfo[unitIndex].byFrame;
     if ( pCon->m_List[unitIndex].byFrame != 255 )
     {
@@ -994,7 +1001,7 @@ unsigned __int8 CMainThread::_db_Load_Unit( unsigned int dwSerial, _UNIT_DB_BASE
       pCon->m_List[unitIndex].dwBullet[0] = unitInfoArray.UnitInfo[unitIndex].dwBullet[0];
       pCon->m_List[unitIndex].dwBullet[1] = unitInfoArray.UnitInfo[unitIndex].dwBullet[1];
       pCon->m_List[unitIndex].nPullingFee = unitInfoArray.UnitInfo[unitIndex].nPullingFee;
-      pCon->m_List[unitIndex].dwCutTime = unitInfoArray.UnitInfo[unitIndex].dwCutTime;
+      pCon->m_List[unitIndex].dwCutTime = ClampLegacyKorLocalTime(unitInfoArray.UnitInfo[unitIndex].dwCutTime);
       for ( int spareIndex = 0; spareIndex < 8; ++spareIndex )
         pCon->m_List[unitIndex].dwSpare[spareIndex] = unitInfoArray.UnitInfo[unitIndex].dwSpare[spareIndex];
     }

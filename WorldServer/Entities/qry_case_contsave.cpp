@@ -9,6 +9,5 @@ _qry_case_contsave::~_qry_case_contsave() = default;
 
 int _qry_case_contsave::size()
 {
-  // narrowing cast for thunk return parity
-  return static_cast<int>(74440LL);
+  return static_cast<int>(sizeof(*this));
 }

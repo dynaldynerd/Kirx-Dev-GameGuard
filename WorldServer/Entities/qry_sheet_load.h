@@ -22,6 +22,7 @@ struct  _qry_sheet_load
   bool bExtTrunkAddItem[40];
   unsigned __int8 byExtTrunkOldSlot;
   unsigned __int64 dwCanonicalLastConnTime;
+  unsigned __int64 dwCanonicalUnitCutTime[4];
 
   _qry_sheet_load();
   ~_qry_sheet_load();
@@ -37,6 +38,7 @@ inline _qry_sheet_load::_qry_sheet_load()
   this->bCreateTrunkFree = 0;
   std::memset(this->bExtTrunkAddItem, 0, sizeof(this->bExtTrunkAddItem));
   this->dwCanonicalLastConnTime = 0;
+  std::memset(this->dwCanonicalUnitCutTime, 0, sizeof(this->dwCanonicalUnitCutTime));
 }
 
 inline _qry_sheet_load::~_qry_sheet_load() = default;

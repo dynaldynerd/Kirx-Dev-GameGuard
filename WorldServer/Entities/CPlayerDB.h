@@ -128,6 +128,7 @@ public:
   unsigned __int8 m_byExtTrunkSlotNum;
   int m_nMakeTrapMaxNum;
   long double m_dPvpPointLeak;
+  unsigned __int64 m_dwGuildEntryDelay;
   bool m_bLastAttBuff;
   unsigned __int16 m_wSerialCount;
   CPlayer *m_pThis;

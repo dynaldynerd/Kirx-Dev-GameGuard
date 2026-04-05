@@ -712,6 +712,7 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
   m_PostStorage.Init();
   m_ReturnPostStorage.Init();
   m_dPvpPointLeak = 0.0;
+  m_dwGuildEntryDelay = 0;
 }
 
 bool CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
@@ -1285,6 +1286,7 @@ bool CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
   }
 
   this->m_dPvpPointLeak = pData->dbSupplement.dPvpPointLeak;
+  this->m_dwGuildEntryDelay = pData->dbSupplement.dwGuildEntryDelay;
   return true;
 }
 

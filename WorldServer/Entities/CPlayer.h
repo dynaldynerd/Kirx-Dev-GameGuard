@@ -282,7 +282,7 @@ struct  _UNIT_DB_BASE
       _unit_bullet_param m_SpareBulletParam[8];
     };
     int nPullingFee;
-    unsigned __int64 dwCutTime;
+    unsigned int dwCutTime;
     unsigned __int16 wBooster;
 
     _LIST();
@@ -1430,7 +1430,7 @@ public:
   void pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem);
   void pc_UnitSellRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
   void pc_UnitPartTuningRequest(unsigned __int8 bySlotIndex, unsigned __int8 byTuningNum, _tuning_data *pTuningData, int bUseNPCLinkIntem);
-  void pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem);
+  void pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem, int bUnitRepairOut);
   void pc_UnitBulletFillRequest(unsigned __int8 bySlotIndex, unsigned __int16 *pwBulletIndex, int bUseNPCLinkIntem);
   void pc_UnitPackFillRequest(
     unsigned __int8 bySlotIndex,
@@ -1641,9 +1641,12 @@ public:
   unsigned __int16 CalcCurFPRate();
   unsigned __int16 CalcCurSPRate();
   unsigned __int64 GetStateFlag();
+  unsigned __int64 GetStateFlagEx();
   void SetStateFlag();
+  void SetStateFlagEx();
   void SenseState();
   void SendMsg_StateInform(unsigned __int64 dwStateFlag);
+  void SendMsg_StateInformEx(unsigned __int64 dwStateFlagEx);
   bool IsPunished(unsigned __int8 byType, bool bSend);
   bool IsMapLoading();
   bool IsRidingShip();
@@ -1908,6 +1911,8 @@ public:
   void pc_ExchangeItem(unsigned __int16 wManualIndex, unsigned __int16 wItemSerial);
   void pc_CombineItemEx(_combine_ex_item_request_clzo *pRecv);
   void pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv);
+  __int64 GetCombineExItemRequestClientTimeSerial();
+  void SetCombineExItemRequestClientTimeSerial(__int64 clientTimeSerial);
   int pc_UseFireCracker(unsigned __int16 wItemSerial);
   unsigned __int8 pc_UserSoccerBall(unsigned __int16 wItemSerial, unsigned __int16 *wItemIndex);
   bool pc_UseRadarItem(_STORAGE_POS_INDIV *pItem, unsigned __int16 *pConsumeSerial);
@@ -2626,6 +2631,7 @@ public:
   _BUDDY_LIST m_pmBuddy;
   CQuestMgr m_QuestMgr;
   ItemCombineMgr m_ItemCombineMgr;
+  __int64 m_CombineExItemRequestClientTimeSerial;
   unsigned __int8 m_byMapInModeBuffer;
   int m_nVoteSerial;
   unsigned int m_dwLastCheckRegionTime;
@@ -2665,11 +2671,18 @@ public:
   bool m_bAfterEffect;
   bool m_bSFDelayNotCheck;
   _RENAME_POTION_USE_INFO m_ReNamePotionUseInfo;
+  bool m_bCommunionEffectAnimus;
+  unsigned __int8 m_byCommunionStep;
+  bool m_bGeneratorAttack;
+  unsigned __int8 m_byUnitEffectAttackStep;
+  bool m_bGeneratorDefense;
+  unsigned __int8 m_byUnitEffectDefenseStep;
   CPlayer::CashChangeStateFlag m_CashChangeStateFlag;
   _NPCQuestIndexTempData m_NPCQuestIndexTempData;
   unsigned __int16 m_wVisualVer;
   int m_nLastBeatenPart;
   unsigned __int64 m_dwLastState;
+  unsigned __int64 m_dwLastStateEx;
   unsigned int m_dwExpRate;
   int m_nAddDfnMstByClass;
   int m_nAddPointByClass[4];

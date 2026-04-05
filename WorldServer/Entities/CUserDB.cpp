@@ -115,6 +115,8 @@ CUserDB::CUserDB()
   std::memset(m_dwCanonicalRegedLastConnTime, 0, sizeof(m_dwCanonicalRegedLastConnTime));
   m_dwCanonicalLastConnTime = 0;
   m_dwCanonicalBackupLastConnTime = 0;
+  std::memset(m_dwCanonicalUnitCutTime, 0, sizeof(m_dwCanonicalUnitCutTime));
+  std::memset(m_dwCanonicalBackupUnitCutTime, 0, sizeof(m_dwCanonicalBackupUnitCutTime));
   m_bActive = false;
   m_bField = false;
   m_bChatLock = false;
@@ -185,6 +187,56 @@ void CUserDB::SyncCanonicalBackupLastConnTime()
   SetCanonicalBackupLastConnTime(m_dwCanonicalLastConnTime);
 }
 
+void CUserDB::SetCanonicalUnitCutTime(unsigned __int8 bySlotIndex, unsigned __int64 dwCutTime)
+{
+  if (bySlotIndex >= 4u)
+  {
+    return;
+  }
+
+  m_dwCanonicalUnitCutTime[bySlotIndex] = dwCutTime;
+  m_AvatorData.dbUnit.m_List[bySlotIndex].dwCutTime = ClampLegacyKorLocalTime(dwCutTime);
+}
+
+unsigned __int64 CUserDB::GetCanonicalUnitCutTime(unsigned __int8 bySlotIndex) const
+{
+  if (bySlotIndex >= 4u)
+  {
+    return 0;
+  }
+
+  return m_dwCanonicalUnitCutTime[bySlotIndex];
+}
+
+void CUserDB::SetCanonicalBackupUnitCutTime(unsigned __int8 bySlotIndex, unsigned __int64 dwCutTime)
+{
+  if (bySlotIndex >= 4u)
+  {
+    return;
+  }
+
+  m_dwCanonicalBackupUnitCutTime[bySlotIndex] = dwCutTime;
+  m_AvatorData_bk.dbUnit.m_List[bySlotIndex].dwCutTime = ClampLegacyKorLocalTime(dwCutTime);
+}
+
+unsigned __int64 CUserDB::GetCanonicalBackupUnitCutTime(unsigned __int8 bySlotIndex) const
+{
+  if (bySlotIndex >= 4u)
+  {
+    return 0;
+  }
+
+  return m_dwCanonicalBackupUnitCutTime[bySlotIndex];
+}
+
+void CUserDB::SyncCanonicalBackupUnitCutTime()
+{
+  for (unsigned __int8 slotIndex = 0; slotIndex < 4u; ++slotIndex)
+  {
+    SetCanonicalBackupUnitCutTime(slotIndex, m_dwCanonicalUnitCutTime[slotIndex]);
+  }
+}
+
 CUserDB *SearchAvatorWithName(CUserDB *pList, int nMax, char *pwszName)
 {
   const unsigned __int8 nameLen = static_cast<unsigned __int8>(std::strlen(pwszName));
@@ -225,6 +277,8 @@ void CUserDB::ParamInit()
   std::memset(m_dwCanonicalRegedLastConnTime, 0, sizeof(m_dwCanonicalRegedLastConnTime));
   m_dwCanonicalLastConnTime = 0;
   m_dwCanonicalBackupLastConnTime = 0;
+  std::memset(m_dwCanonicalUnitCutTime, 0, sizeof(m_dwCanonicalUnitCutTime));
+  std::memset(m_dwCanonicalBackupUnitCutTime, 0, sizeof(m_dwCanonicalBackupUnitCutTime));
   for (int j = 0; j < 3; ++j)
   {
     m_RegedList[j].init();
@@ -1138,6 +1192,7 @@ bool CUserDB::Update_UnitInsert(unsigned __int8 bySlotIndex, _UNIT_DB_BASE::_LIS
     if (m_AvatorData.dbUnit.m_List[bySlotIndex].byFrame == 255)
     {
       std::memcpy(&m_AvatorData.dbUnit.m_List[bySlotIndex], pData, sizeof(m_AvatorData.dbUnit.m_List[bySlotIndex]));
+      m_dwCanonicalUnitCutTime[bySlotIndex] = pData->dwCutTime;
       m_bDataUpdate = true;
       return true;
     }
@@ -1170,6 +1225,7 @@ bool CUserDB::Update_UnitDelete(unsigned __int8 bySlotIndex)
     }
 
     m_AvatorData.dbUnit.m_List[bySlotIndex].DelUnit();
+    m_dwCanonicalUnitCutTime[bySlotIndex] = 0;
     m_bDataUpdate = true;
     return true;
   }
@@ -2379,15 +2435,35 @@ bool CUserDB::Lobby_Char_Request()
   _qry_sheet_lobby qry;
   qry.dwAvatorSerial = m_dwSerial;
   std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+  std::memcpy(qry.dwCanonicalNewUnitCutTime, m_dwCanonicalUnitCutTime, sizeof(qry.dwCanonicalNewUnitCutTime));
 
   _AVATOR_DATA *contData = IsContPushBefore();
+  const unsigned __int64 *pendingCanonicalUnitCutTime = GetPendingContSaveCanonicalUnitCutTime();
   if (contData)
   {
     std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
+    if (pendingCanonicalUnitCutTime)
+    {
+      std::memcpy(
+        qry.dwCanonicalOldUnitCutTime,
+        pendingCanonicalUnitCutTime,
+        sizeof(qry.dwCanonicalOldUnitCutTime));
+    }
+    else
+    {
+      std::memcpy(
+        qry.dwCanonicalOldUnitCutTime,
+        m_dwCanonicalBackupUnitCutTime,
+        sizeof(qry.dwCanonicalOldUnitCutTime));
+    }
   }
   else
   {
     std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+    std::memcpy(
+      qry.dwCanonicalOldUnitCutTime,
+      m_dwCanonicalBackupUnitCutTime,
+      sizeof(qry.dwCanonicalOldUnitCutTime));
   }
 
   qry.bUpdateRefineCnt = false;
@@ -2891,6 +2967,26 @@ _AVATOR_DATA *CUserDB::IsContPushBefore()
   return nullptr;
 }
 
+const unsigned __int64 *CUserDB::GetPendingContSaveCanonicalUnitCutTime() const
+{
+  if (!m_pDBPushData || !m_pDBPushData->m_bUse || m_pDBPushData->m_byQryCase != 12)
+  {
+    return nullptr;
+  }
+  if (std::memcmp(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
+  {
+    return nullptr;
+  }
+
+  const auto *query = reinterpret_cast<const _qry_case_contsave *>(m_pDBPushData->m_sData);
+  if (query->dwAvatorSerial != m_dwSerial)
+  {
+    return nullptr;
+  }
+
+  return query->dwCanonicalNewUnitCutTime;
+}
+
 void CUserDB::Exit_Account_Request()
 {
   CNationSettingManager::Instance()->OnDisConnectSession(m_idWorld.wIndex);
@@ -2913,15 +3009,35 @@ void CUserDB::Exit_Account_Request()
       _qry_sheet_logout qry{};
       qry.dwAvatorSerial = m_dwSerial;
       std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
+      std::memcpy(qry.dwCanonicalNewUnitCutTime, m_dwCanonicalUnitCutTime, sizeof(qry.dwCanonicalNewUnitCutTime));
 
       _AVATOR_DATA *contData = IsContPushBefore();
+      const unsigned __int64 *pendingCanonicalUnitCutTime = GetPendingContSaveCanonicalUnitCutTime();
       if (contData)
       {
         std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
+        if (pendingCanonicalUnitCutTime)
+        {
+          std::memcpy(
+            qry.dwCanonicalOldUnitCutTime,
+            pendingCanonicalUnitCutTime,
+            sizeof(qry.dwCanonicalOldUnitCutTime));
+        }
+        else
+        {
+          std::memcpy(
+            qry.dwCanonicalOldUnitCutTime,
+            m_dwCanonicalBackupUnitCutTime,
+            sizeof(qry.dwCanonicalOldUnitCutTime));
+        }
       }
       else
       {
         std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
+        std::memcpy(
+          qry.dwCanonicalOldUnitCutTime,
+          m_dwCanonicalBackupUnitCutTime,
+          sizeof(qry.dwCanonicalOldUnitCutTime));
       }
 
       qry.bCheckLowHigh = !m_bNoneUpdateData;
@@ -2979,6 +3095,8 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
   m_bDataUpdate = false;
   m_AvatorData.InitData();
   m_AvatorData_bk.InitData();
+  std::memset(m_dwCanonicalUnitCutTime, 0, sizeof(m_dwCanonicalUnitCutTime));
+  std::memset(m_dwCanonicalBackupUnitCutTime, 0, sizeof(m_dwCanonicalBackupUnitCutTime));
   for (int j = 0; j < 3; ++j)
   {
     m_RegedList[j].init();
@@ -3014,7 +3132,10 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
   g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&report), len);
 }
 
-void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAvatorData)
+void CUserDB::Cont_UserSave_Complete(
+  unsigned __int8 byResult,
+  _AVATOR_DATA *pAvatorData,
+  const unsigned __int64 *pdwCanonicalUnitCutTime)
 {
   if (byResult)
   {
@@ -3028,6 +3149,17 @@ void CUserDB::Cont_UserSave_Complete(unsigned __int8 byResult, _AVATOR_DATA *pAv
   m_AvatorData_bk.dbQuest.m_StartHistory = startHistory;
   m_AvatorData_bk.dbQuest.dwListCnt = listCount;
   SyncCanonicalBackupLastConnTime();
+  if (pdwCanonicalUnitCutTime)
+  {
+    for (unsigned __int8 slotIndex = 0; slotIndex < 4u; ++slotIndex)
+    {
+      SetCanonicalBackupUnitCutTime(slotIndex, pdwCanonicalUnitCutTime[slotIndex]);
+    }
+  }
+  else
+  {
+    SyncCanonicalBackupUnitCutTime();
+  }
 
   const unsigned int addCount = m_AvatorData.dbQuest.dwListCnt - m_AvatorData_bk.dbQuest.dwListCnt;
   for (unsigned int j = 0; j < addCount; ++j)
@@ -4073,7 +4205,8 @@ void CUserDB::Select_Char_Complete(
   bool bCreateTrunkFree,
   bool *pbExtTrunkAddItem,
   unsigned __int8 byExtTrunkOldSlot,
-  unsigned __int64 dwCanonicalLastConnTime)
+  unsigned __int64 dwCanonicalLastConnTime,
+  const unsigned __int64 *pdwCanonicalUnitCutTime)
 {
   m_bDBWaitState = false;
   const DWORD now = GetTickCount();
@@ -4094,6 +4227,13 @@ void CUserDB::Select_Char_Complete(
       dwCanonicalLastConnTime ? dwCanonicalLastConnTime : pLoadData->dbAvator.m_dwLastConnTime;
     SetCanonicalLastConnTime(canonicalLastConnTime);
     SetCanonicalBackupLastConnTime(canonicalLastConnTime);
+    for (unsigned __int8 slotIndex = 0; slotIndex < 4u; ++slotIndex)
+    {
+      const unsigned __int64 canonicalUnitCutTime =
+        pdwCanonicalUnitCutTime ? pdwCanonicalUnitCutTime[slotIndex] : pLoadData->dbUnit.m_List[slotIndex].dwCutTime;
+      SetCanonicalUnitCutTime(slotIndex, canonicalUnitCutTime);
+      SetCanonicalBackupUnitCutTime(slotIndex, canonicalUnitCutTime);
+    }
 
     const unsigned int startCount = g_Main.m_dwStartNPCQuestCnt[m_AvatorData_bk.dbAvator.m_byRaceSexCode / 2];
     auto *startHistory = new (std::nothrow) _QUEST_DB_BASE::_START_NPC_QUEST_HISTORY[startCount];

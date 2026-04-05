@@ -169,6 +169,27 @@ bool IsNearGuildRoomNpc(CPlayer *player)
 
   return false;
 }
+
+unsigned __int64 GetCurrentUnixTimeSeconds()
+{
+  const std::time_t currentTime = std::time(nullptr);
+  if (currentTime <= 0)
+  {
+    return 0;
+  }
+
+  return static_cast<unsigned __int64>(currentTime);
+}
+
+bool IsGuildEntryDelayExpired(CPlayer *player)
+{
+  if (!player)
+  {
+    return true;
+  }
+
+  return player->m_Param.m_dwGuildEntryDelay <= GetCurrentUnixTimeSeconds();
+}
 } // namespace
 
 
@@ -176,6 +197,7 @@ void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
 {
   _guild_join_apply_result_zocl packet{};
   packet.byRetCode = byRetCode;
+  packet.dwRemainingTime = 0;
   if (pApplyGuild)
   {
     packet.dwGuildSerial = pApplyGuild->m_dwSerial;
@@ -185,6 +207,15 @@ void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
   {
     packet.dwGuildSerial = static_cast<unsigned int>(-1);
     packet.wszGuildName[0] = 0;
+  }
+
+  if (static_cast<unsigned __int8>(byRetCode) == 209u)
+  {
+    const unsigned __int64 currentTimeValue = GetCurrentUnixTimeSeconds();
+    if (this->m_Param.m_dwGuildEntryDelay > currentTimeValue)
+    {
+      packet.dwRemainingTime = static_cast<unsigned int>(1000ULL * (this->m_Param.m_dwGuildEntryDelay - currentTimeValue));
+    }
   }
 
   unsigned __int8 type[2] = {27, 7};
@@ -1186,6 +1217,10 @@ void CPlayer::pc_GuildJoinApplyRequest(char *pwszGuildName)
     else if (this->m_Param.GetRaceCode() != static_cast<int>(applyGuild->GetRace()))
     {
       result = 70;
+    }
+    else if (!IsGuildEntryDelayExpired(this))
+    {
+      result = static_cast<unsigned __int8>(-47);
     }
     else if (g_Main.IsReleaseServiceMode() && this->m_byUserDgr)
     {

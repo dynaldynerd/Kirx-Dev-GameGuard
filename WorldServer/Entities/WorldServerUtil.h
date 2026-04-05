@@ -69,6 +69,13 @@ bool GetDateStrAfterDay(char *szDate, int iBuffSize, unsigned __int16 wDayAfter)
 bool IsDayChanged(int *iOldDay);
 bool GetDateTimeStr(char *szTime);
 unsigned long long GetKorLocalTime();
+constexpr unsigned __int64 kMaxLegacyKorLocalTime = 4212312359ULL;
+inline unsigned int ClampLegacyKorLocalTime(unsigned __int64 korLocalTime)
+{
+  const unsigned __int64 clampedKorLocalTime =
+    korLocalTime > kMaxLegacyKorLocalTime ? kMaxLegacyKorLocalTime : korLocalTime;
+  return static_cast<unsigned int>(clampedKorLocalTime);
+}
 int GetCurrentHour();
 int GetCurrentMin();
 int GetCurrentSec();

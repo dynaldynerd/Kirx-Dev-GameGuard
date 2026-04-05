@@ -9,6 +9,8 @@ struct  _qry_sheet_lobby
   unsigned int dwAvatorSerial;
   _AVATOR_DATA NewData;
   _AVATOR_DATA OldData;
+  unsigned __int64 dwCanonicalNewUnitCutTime[4];
+  unsigned __int64 dwCanonicalOldUnitCutTime[4];
   bool bUpdateRefineCnt;
   unsigned __int8 byRefinedCnt;
   unsigned int dwRefineDate;
@@ -24,6 +26,5 @@ inline _qry_sheet_lobby::~_qry_sheet_lobby() = default;
 
 inline int _qry_sheet_lobby::size() const
 {
-  // narrowing cast for thunk return parity
-  return static_cast<int>(74440LL);
+  return static_cast<int>(sizeof(*this));
 }

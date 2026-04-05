@@ -89,6 +89,8 @@ struct _worlddb_character_supplement_info
   unsigned int dwAccumPlayTime;
   unsigned int dwLastResetDate;
   unsigned int dwActionPoint[3];
+  unsigned __int64 dwGuildEntryDelay;
+  unsigned __int8 byPlayerInteg;
 };
 
 struct _worlddb_time_limit_info

@@ -32,6 +32,8 @@ struct _qry_sheet_logout
   unsigned int dwAvatorSerial;
   _AVATOR_DATA NewData;
   _AVATOR_DATA OldData;
+  unsigned __int64 dwCanonicalNewUnitCutTime[4];
+  unsigned __int64 dwCanonicalOldUnitCutTime[4];
   bool bCheckLowHigh;
   bool bUpdateRefineCnt;
   unsigned __int8 byRefinedCnt;

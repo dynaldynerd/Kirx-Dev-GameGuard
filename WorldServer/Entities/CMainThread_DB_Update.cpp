@@ -23,7 +23,9 @@ char CMainThread::db_Update_Avator(
   unsigned int dwSerial,
   _AVATOR_DATA *pNewData,
   _AVATOR_DATA *pOldData,
-  bool bCheckLowHigh)
+  bool bCheckLowHigh,
+  const unsigned __int64 *pdwCanonicalNewUnitCutTime,
+  const unsigned __int64 *pdwCanonicalOldUnitCutTime)
 {
   static constexpr size_t kQuerySize = 65536;
   static constexpr size_t kNpcQuestQuerySize = 131072;
@@ -107,7 +109,13 @@ char CMainThread::db_Update_Avator(
   }
 
   if ((static_cast<int>(pNewData->dbAvator.m_byRaceSexCode) >> 1) == 0
-      && !_db_Update_Unit(dwSerial, pNewData, pOldData, pszUnitQuery))
+      && !_db_Update_Unit(
+        dwSerial,
+        pNewData,
+        pOldData,
+        pszUnitQuery,
+        pdwCanonicalNewUnitCutTime,
+        pdwCanonicalOldUnitCutTime))
   {
     m_logSystemError.Write( "db_Update_Avator(sr:%d) => _db_Update_Unit..failed ..", dwSerial);
     return 24;
@@ -1206,6 +1214,11 @@ char CMainThread::_db_Update_Supplement(
       pNewData->dbSupplement.wScanerCnt);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
+  if (pOldData->dbSupplement.dwGuildEntryDelay != pNewData->dbSupplement.dwGuildEntryDelay)
+  {
+    sprintf_s(buffer, 128, " GuildEntryDelay = %I64u,", pNewData->dbSupplement.dwGuildEntryDelay);
+    strcat_s(pSzQuery, nBufferSize, buffer);
+  }
   for (int index = 0; index < 3; ++index)
   {
     if (pOldData->dbSupplement.dwActionPoint[index] != pNewData->dbSupplement.dwActionPoint[index])
@@ -1350,7 +1363,9 @@ char CMainThread::_db_Update_Unit(
   unsigned int dwSerial,
   _AVATOR_DATA *pNewData,
   _AVATOR_DATA *pOldData,
-  char *pSzQuery)
+  char *pSzQuery,
+  const unsigned __int64 *pdwCanonicalNewUnitCutTime,
+  const unsigned __int64 *pdwCanonicalOldUnitCutTime)
 {
   char source[136]{};
   char *buffer = pSzQuery;
@@ -1494,14 +1509,18 @@ char CMainThread::_db_Update_Unit(
           pNewData->dbUnit.m_List[unitIndex].nPullingFee);
         std::strcat(buffer, source);
       }
-      if (pNewData->dbUnit.m_List[unitIndex].dwCutTime != pOldData->dbUnit.m_List[unitIndex].dwCutTime)
+      const unsigned __int64 newCanonicalCutTime =
+        pdwCanonicalNewUnitCutTime ? pdwCanonicalNewUnitCutTime[unitIndex] : pNewData->dbUnit.m_List[unitIndex].dwCutTime;
+      const unsigned __int64 oldCanonicalCutTime =
+        pdwCanonicalOldUnitCutTime ? pdwCanonicalOldUnitCutTime[unitIndex] : pOldData->dbUnit.m_List[unitIndex].dwCutTime;
+      if (newCanonicalCutTime != oldCanonicalCutTime)
       {
         sprintf_s(
           source,
           sizeof(source),
           "Cut_%d=%I64u,",
           unitIndex,
-          pNewData->dbUnit.m_List[unitIndex].dwCutTime);
+          newCanonicalCutTime);
         std::strcat(buffer, source);
       }
     }

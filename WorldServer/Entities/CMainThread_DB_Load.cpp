@@ -33,7 +33,8 @@ unsigned __int8 CMainThread::db_Load_Avator(
   unsigned __int8 *pbyExtTrunkOldSlot,
   bool bAll,
   unsigned int *pdwCheckSum,
-  unsigned __int64 *pdwCanonicalLastConnTime)
+  unsigned __int64 *pdwCanonicalLastConnTime,
+  unsigned __int64 *pdwCanonicalUnitCutTime)
 {
   unsigned __int8 result = 0;
   if (pdwAddDalant)
@@ -92,7 +93,7 @@ unsigned __int8 CMainThread::db_Load_Avator(
 
   if (!(static_cast<int>(pData->dbAvator.m_byRaceSexCode) >> 1))
   {
-    result = _db_Load_Unit(dwSerial, &pData->dbUnit);
+    result = _db_Load_Unit(dwSerial, &pData->dbUnit, pdwCanonicalUnitCutTime);
     if (result)
     {
       m_logSystemError.Write( "_db_Load_Unit(%d) => failed ..{%d}", dwSerial, result);

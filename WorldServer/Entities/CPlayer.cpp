@@ -1,6 +1,9 @@
 #include "pch.h"
 
 #include "CPlayer.h"
+
+#include <ctime>
+
 #include "CAttack.h"
 #include "CPartyModeKillMonsterExpNotify.h"
 #include "CPlayerAttack.h"
@@ -1660,6 +1663,12 @@ char CPlayer::Init(_object_id *pID)
   m_tmrGroupTargeting.BeginTimer(10000);
   m_bAfterEffect = false;
   m_bSFDelayNotCheck = false;
+  m_bCommunionEffectAnimus = false;
+  m_byCommunionStep = 0;
+  m_bGeneratorAttack = false;
+  m_byUnitEffectAttackStep = 0;
+  m_bGeneratorDefense = false;
+  m_byUnitEffectDefenseStep = 0;
   m_tmrEffectStartTime.BeginTimer(3600000);
   m_tmrEffectEndTime.BeginTimer(60000);
   // Yorozuya fix (non-IDA parity): periodic set-item refresh.
@@ -1669,6 +1678,7 @@ char CPlayer::Init(_object_id *pID)
   m_MoveHackInfo.m_dwWarningEndTime = 0;
   m_MoveHackInfo.m_fLastSpeed = 0.0f;
   m_MoveHackInfo.m_nCountWarning = 0;
+  m_CombineExItemRequestClientTimeSerial = 0;
   // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
   std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
   // Yorozuya fix (non-IDA parity): reset normal attack delay tracking.
@@ -1748,8 +1758,15 @@ bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_byMapInModeBuffer = 0;
   this->m_pBeforeTownCheckMap = nullptr;
   this->m_bCreateComplete = 0;
+  this->m_bCommunionEffectAnimus = false;
+  this->m_byCommunionStep = 0;
+  this->m_bGeneratorAttack = false;
+  this->m_byUnitEffectAttackStep = 0;
+  this->m_bGeneratorDefense = false;
+  this->m_byUnitEffectDefenseStep = 0;
   this->m_bUpCheckEquipEffect = 1;
   this->m_bDownCheckEquipEffect = 0;
+  this->m_CombineExItemRequestClientTimeSerial = 0;
   std::memset(this->m_byEffectEquipCode, 0, sizeof(this->m_byEffectEquipCode));
   // Yorozuya fix (non-IDA parity): reset per-force attack delay tracking.
   std::memset(this->m_dwForceAttackDelayEnd, 0, sizeof(this->m_dwForceAttackDelayEnd));
@@ -4644,9 +4661,40 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
       {
         SetSiege(nullptr);
       }
+
+      const unsigned __int8 communionStep = GetItemUpgedLv(pkItem->m_dwLv);
+      if (communionStep <= 7u)
+      {
+        m_byCommunionStep = communionStep;
+      }
+      else
+      {
+        m_byCommunionStep = 0;
+      }
     }
     CalcEquipSpeed();
     CalcEquipMaxDP(0);
+  }
+  if (byStorageCode == 2)
+  {
+    int communionIndex = 0;
+    for (int index = 0; index < 7; ++index)
+    {
+      const _STORAGE_LIST::_db_con *embellish = &m_Param.m_dbEmbellish.m_pStorageList[index];
+      if (!embellish->m_bLoad || embellish->m_byTableCode != 10)
+      {
+        continue;
+      }
+
+      const _BulletItem_fld *record =
+        static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(embellish->m_wItemIndex));
+      if (record && std::strcmp(record->m_strBulletType, "Q") == 0)
+      {
+        communionIndex = index + 1;
+      }
+    }
+
+    m_bCommunionEffectAnimus = communionIndex != 0;
   }
 
   if (!byStorageCode && pkItem->m_byTableCode == 18)
@@ -4672,11 +4720,6 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
   {
     const unsigned __int8 raceCode = static_cast<unsigned char>(m_Param.GetRaceCode());
     m_Param.m_dbExtTrunk.m_byItemSlotRace[storageIndex] = raceCode;
-  }
-
-  if (byStorageCode == 1 || byStorageCode == 2)
-  {
-    UpdateActiveSetItemEffects();
   }
 
   return pkItem;
@@ -4835,15 +4878,36 @@ bool CPlayer::Emb_DelStorage(
       SetSiege(nullptr);
     }
   }
-
-  if (byStorageCode == 1 || byStorageCode == 2)
-  {
-    UpdateActiveSetItemEffects();
-  }
-
   if (bDelete)
   {
     SendMsg_DeleteStorageInform(byStorageCode, pkItem->m_wSerial);
+  }
+
+  if (byStorageCode == 1 && pkItem->m_byTableCode == 6)
+  {
+    m_byCommunionStep = 0;
+  }
+
+  if (byStorageCode == 2)
+  {
+    int communionIndex = 0;
+    for (int index = 0; index < 7; ++index)
+    {
+      const _STORAGE_LIST::_db_con *embellish = &m_Param.m_dbEmbellish.m_pStorageList[index];
+      if (!embellish->m_bLoad || embellish->m_byTableCode != 10)
+      {
+        continue;
+      }
+
+      const _BulletItem_fld *record =
+        static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(embellish->m_wItemIndex));
+      if (record && std::strcmp(record->m_strBulletType, "Q") == 0)
+      {
+        communionIndex = index + 1;
+      }
+    }
+
+    m_bCommunionEffectAnimus = communionIndex != 0;
   }
   return true;
 }
@@ -5255,6 +5319,14 @@ void CPlayer::NetClose(bool bMoveOutLobby)
   m_MoveHackInfo.m_dwWarningEndTime = 0;
   m_MoveHackInfo.m_fLastSpeed = 0.0f;
   m_MoveHackInfo.m_nCountWarning = 0;
+  m_bCommunionEffectAnimus = false;
+  m_byCommunionStep = 0;
+  m_bGeneratorAttack = false;
+  m_byUnitEffectAttackStep = 0;
+  m_bGeneratorDefense = false;
+  m_byUnitEffectDefenseStep = 0;
+  m_dwLastStateEx = 0;
+  m_CombineExItemRequestClientTimeSerial = 0;
   std::memset(m_dwForceAttackDelayEnd, 0, sizeof(m_dwForceAttackDelayEnd));
   m_dwNormalAttackDelayEnd = 0;
   m_dwSiegeAttackDelayEnd = 0;
@@ -5733,11 +5805,12 @@ void CPlayer::SendMsg_NewViewOther(unsigned __int8 byViewType)
   msg.byRaceCode = static_cast<unsigned __int8>(m_Param.GetRaceSexCode());
   msg.byViewType = byViewType;
   msg.dwStateFlag = GetStateFlag();
+  msg.dwStateFlagEx = GetStateFlagEx();
   msg.wLastEffectCode = m_wLastContEffect;
   msg.byColor = m_byGuildBattleColorInx;
 
   unsigned __int8 type[2] = {3, 36};
-  CircleReport(type, reinterpret_cast<char *>(&msg), 27, false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), false);
 }
 
 void CPlayer::SetLastAttBuff(bool bSet)
@@ -5890,6 +5963,11 @@ unsigned __int16 CPlayer::CalcCurSPRate()
 unsigned __int64 CPlayer::GetStateFlag()
 {
   return m_dwLastState;
+}
+
+unsigned __int64 CPlayer::GetStateFlagEx()
+{
+  return m_dwLastStateEx;
 }
 
 void CPlayer::SetStateFlag()
@@ -6126,10 +6204,112 @@ void CPlayer::SetStateFlag()
   m_dwLastState = state;
 }
 
+void CPlayer::SetStateFlagEx()
+{
+  if (!m_pPartyMgr)
+  {
+    return;
+  }
+
+  unsigned __int64 stateEx = 0;
+  const unsigned __int64 bit = 1;
+
+  if (m_bGeneratorAttack)
+  {
+    if (m_byUnitEffectAttackStep)
+    {
+      if (m_byUnitEffectAttackStep > 3u)
+      {
+        if (m_byUnitEffectAttackStep > 6u)
+        {
+          if (m_byUnitEffectAttackStep <= 7u)
+          {
+            stateEx |= bit << 3;
+          }
+        }
+        else
+        {
+          stateEx |= bit << 2;
+        }
+      }
+      else
+      {
+        stateEx |= bit << 1;
+      }
+    }
+    else
+    {
+      stateEx |= bit;
+    }
+  }
+
+  if (m_bGeneratorDefense)
+  {
+    if (m_byUnitEffectDefenseStep)
+    {
+      if (m_byUnitEffectDefenseStep > 0xFu)
+      {
+        if (m_byUnitEffectDefenseStep > 0x1Eu)
+        {
+          if (m_byUnitEffectDefenseStep <= 0x23u)
+          {
+            stateEx |= bit << 7;
+          }
+        }
+        else
+        {
+          stateEx |= bit << 6;
+        }
+      }
+      else
+      {
+        stateEx |= bit << 5;
+      }
+    }
+    else
+    {
+      stateEx |= bit << 4;
+    }
+  }
+
+  if (m_bCommunionEffectAnimus)
+  {
+    if (m_byCommunionStep)
+    {
+      if (m_byCommunionStep > 3u)
+      {
+        if (m_byCommunionStep > 6u)
+        {
+          if (m_byCommunionStep <= 7u)
+          {
+            stateEx |= bit << 11;
+          }
+        }
+        else
+        {
+          stateEx |= bit << 10;
+        }
+      }
+      else
+      {
+        stateEx |= bit << 9;
+      }
+    }
+    else
+    {
+      stateEx |= bit << 8;
+    }
+  }
+
+  m_dwLastStateEx = stateEx;
+}
+
 void CPlayer::SenseState()
 {
   const unsigned __int64 oldState = GetStateFlag();
   SetStateFlag();
+  const unsigned __int64 oldStateEx = GetStateFlagEx();
+  SetStateFlagEx();
   if (oldState != m_dwLastState)
   {
     // Yorozuya fix implementation (non-IDA): refresh view when transparency-related flags are cleared.
@@ -6151,6 +6331,11 @@ void CPlayer::SenseState()
     }
     SendMsg_StateInform(m_dwLastState);
   }
+
+  if (oldStateEx != m_dwLastStateEx)
+  {
+    SendMsg_StateInformEx(m_dwLastStateEx);
+  }
 }
 
 void CPlayer::SendMsg_StateInform(unsigned __int64 dwStateFlag)
@@ -6162,6 +6347,17 @@ void CPlayer::SendMsg_StateInform(unsigned __int64 dwStateFlag)
 
   unsigned __int8 type[2] = {4, 25};
   CircleReport(type, reinterpret_cast<char *>(&msg), 12, true);
+}
+
+void CPlayer::SendMsg_StateInformEx(unsigned __int64 dwStateFlagEx)
+{
+  _state_inform_ex_zocl msg{};
+
+  msg.dwSerial = m_dwObjSerial;
+  msg.dwStateEx = dwStateFlagEx;
+
+  unsigned __int8 type[2] = {4, 41};
+  CircleReport(type, reinterpret_cast<char *>(&msg), sizeof(msg), true);
 }
 
 bool CPlayer::IsPunished(unsigned __int8 byType, bool bSend)
@@ -8029,9 +8225,11 @@ void CPlayer::ForcePullUnit(bool bLogout)
 
   if (bLogout && m_bOper)
   {
-    m_pUsingUnit->dwCutTime = GetKorLocalTime();
+    const unsigned __int64 currentCutTime = GetKorLocalTime();
+    m_pUsingUnit->dwCutTime = ClampLegacyKorLocalTime(currentCutTime);
     if (m_pUserDB)
     {
+      m_pUserDB->SetCanonicalUnitCutTime(m_pUsingUnit->bySlotIndex, currentCutTime);
       m_pUserDB->Update_UnitData(m_pUsingUnit->bySlotIndex, m_pUsingUnit);
     }
   }
@@ -14484,6 +14682,7 @@ bool CPlayer::IntoMap(unsigned __int8 byMapInMode)
   }
 
   SetStateFlag();
+  SetStateFlagEx();
   CheckPos_Region();
   return true;
 }
@@ -14545,6 +14744,13 @@ bool CPlayer::Create()
   CheckPos_Region();
   this->m_wVisualVer = 1;
   this->m_dwLastState = 0;
+  this->m_dwLastStateEx = 0;
+  this->m_bCommunionEffectAnimus = false;
+  this->m_byCommunionStep = 0;
+  this->m_bGeneratorAttack = false;
+  this->m_byUnitEffectAttackStep = 0;
+  this->m_bGeneratorDefense = false;
+  this->m_byUnitEffectDefenseStep = 0;
   this->m_pBeforeDungeonMap = nullptr;
   this->m_nLastBeatenPart = 0;
   this->m_pUsingUnit = nullptr;
@@ -25822,6 +26028,16 @@ void CPlayer::pc_CombineItemEx(_combine_ex_item_request_clzo *pRecv)
   SendMsg_CombineItemExResult(&send);
 }
 
+__int64 CPlayer::GetCombineExItemRequestClientTimeSerial()
+{
+  return m_CombineExItemRequestClientTimeSerial;
+}
+
+void CPlayer::SetCombineExItemRequestClientTimeSerial(__int64 clientTimeSerial)
+{
+  m_CombineExItemRequestClientTimeSerial = clientTimeSerial;
+}
+
 void CPlayer::pc_CombineItemExAccept(_combine_ex_item_accept_request_clzo *pRecv)
 {
   _combine_ex_item_accept_result_zocl send{};
@@ -26873,7 +27089,15 @@ void CPlayer::pc_GuildSelfLeaveRequest()
     }
     if (pushed)
     {
+      const std::time_t currentTime = std::time(nullptr);
+      const unsigned __int64 currentUnixTime = currentTime > 0 ? static_cast<unsigned __int64>(currentTime) : 0;
+      const unsigned __int64 guildEntryDelay = currentUnixTime + g_Main.m_dwGuildEntryDelay;
       m_Param.m_bGuildLock = true;
+      m_Param.m_dwGuildEntryDelay = guildEntryDelay;
+      if (m_pUserDB)
+      {
+        m_pUserDB->m_AvatorData.dbSupplement.dwGuildEntryDelay = guildEntryDelay;
+      }
     }
     else
     {

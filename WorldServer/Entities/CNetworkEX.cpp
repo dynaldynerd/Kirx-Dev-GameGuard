@@ -3578,6 +3578,13 @@ bool CNetworkEX::CombineExItemRequest(unsigned int n, char *pBuf)
     return true;
   }
 
+  if (request->clientTimeSerial <= player->GetCombineExItemRequestClientTimeSerial())
+  {
+    return false;
+  }
+
+  player->SetCombineExItemRequestClientTimeSerial(request->clientTimeSerial);
+
   if (request->byCombineSlotNum <= 5u)
   {
     const unsigned int recordNum = ItemCombineMgr::ms_tbl_ItemCombine.GetRecordNum();
@@ -8096,7 +8103,7 @@ bool CNetworkEX::UnitFrameRepairRequest(int n, char *pBuf)
   const unsigned __int8 slotIndex = static_cast<unsigned __int8>(request->bySlotIndex);
   if (slotIndex < 4u)
   {
-    player->pc_UnitFrameRepairRequest(slotIndex, request->bUseNPCLinkIntem);
+    player->pc_UnitFrameRepairRequest(slotIndex, request->bUseNPCLinkIntem, request->bUnitRepairOut);
     return true;
   }
 

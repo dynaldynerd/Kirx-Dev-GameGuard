@@ -35,6 +35,14 @@ bool CUserDB::UpdateContUserSave(bool bDirect)
   pQryData.dwAvatorSerial = this->m_dwSerial;
   std::memcpy(&pQryData.NewData, &this->m_AvatorData, sizeof(pQryData.NewData));
   std::memcpy(&pQryData.OldData, &this->m_AvatorData_bk, sizeof(pQryData.OldData));
+  std::memcpy(
+    pQryData.dwCanonicalNewUnitCutTime,
+    this->m_dwCanonicalUnitCutTime,
+    sizeof(pQryData.dwCanonicalNewUnitCutTime));
+  std::memcpy(
+    pQryData.dwCanonicalOldUnitCutTime,
+    this->m_dwCanonicalBackupUnitCutTime,
+    sizeof(pQryData.dwCanonicalOldUnitCutTime));
   pQryData.bUpdateRefineCnt = 0;
 
   unsigned int wIndex = this->m_idWorld.wIndex;

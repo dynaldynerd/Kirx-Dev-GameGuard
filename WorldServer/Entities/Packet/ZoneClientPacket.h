@@ -4556,6 +4556,7 @@ struct _other_new_view_zocl
   char byRaceCode;
   char byViewType;
   unsigned __int64 dwStateFlag;
+  unsigned __int64 dwStateFlagEx;
   unsigned __int16 wLastEffectCode;
   char byColor;
 };
@@ -4718,6 +4719,7 @@ struct _player_fixpositon_zocl
   __int16 zCur[3];
   unsigned __int16 wLastEffectCode;
   unsigned __int64 dwStateFlag;
+  unsigned __int64 dwStateFlagEx;
   char byColor;
 };
 #pragma pack(pop)
@@ -4734,6 +4736,7 @@ struct _player_real_move_zocl
   __int16 zTar[2];
   unsigned __int16 wLastEffectCode;
   unsigned __int64 dwStateFlag;
+  unsigned __int64 dwStateFlagEx;
   __int16 nAddSpeed;
   char byDirect;
   char byColor;
@@ -4849,6 +4852,15 @@ struct _state_inform_zocl
 {
   unsigned int dwSerial;
   unsigned __int64 dwState;
+};
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h (8520)
+#pragma pack(push, 1)
+struct _state_inform_ex_zocl
+{
+  unsigned int dwSerial;
+  unsigned __int64 dwStateEx;
 };
 #pragma pack(pop)
 
@@ -5867,6 +5879,7 @@ struct _propose_vote_result_zocl
 struct _guild_join_apply_result_zocl
 {
   char byRetCode;
+  unsigned int dwRemainingTime;
   unsigned int dwGuildSerial;
   char wszGuildName[17];
 };

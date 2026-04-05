@@ -28,5 +28,5 @@ _qry_sheet_logout::~_qry_sheet_logout() = default;
 
 int _qry_sheet_logout::size()
 {
-  return 74444;
+  return static_cast<int>(sizeof(*this));
 }

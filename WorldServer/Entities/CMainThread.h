@@ -826,6 +826,7 @@ public:
   int m_nSleepValue;
   int m_nSleepIgnore;
   bool m_bCheckSumActive;
+  unsigned __int64 m_dwGuildEntryDelay;
   unsigned __int8 m_byWebAgentServerNetInx;
   bool m_bConnectedWebAgentServer;
   unsigned __int8 m_byControllServerNetInx;
@@ -929,12 +930,15 @@ public:
     unsigned __int8 *pbyExtTrunkOldSlot,
     bool bAll,
     unsigned int *pdwCheckSum,
-    unsigned __int64 *pdwCanonicalLastConnTime);
+    unsigned __int64 *pdwCanonicalLastConnTime,
+    unsigned __int64 *pdwCanonicalUnitCutTime);
   char db_Update_Avator(
     unsigned int dwSerial,
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
-    bool bCheckLowHigh);
+    bool bCheckLowHigh,
+    const unsigned __int64 *pdwCanonicalNewUnitCutTime,
+    const unsigned __int64 *pdwCanonicalOldUnitCutTime);
   unsigned __int8 db_Update_PostStorage(
     unsigned int dwAvatorSerial,
     _AVATOR_DATA *pNewData,
@@ -1083,7 +1087,10 @@ public:
   unsigned __int8 _db_Load_Supplement(unsigned int dwSerial, _SUPPLEMENT_DB_BASE *pSupplement);
   unsigned __int8 _db_Load_TimeLimitInfo(unsigned int dwAccSerial, _TIMELIMITINFO_DB_BASE *pTimeLimit);
   unsigned __int8 _db_Load_Inven(unsigned int dwSerial, unsigned __int8 byBagNum, _INVEN_DB_BASE *pInven);
-  unsigned __int8 _db_Load_Unit(unsigned int dwSerial, _UNIT_DB_BASE *pUnit);
+  unsigned __int8 _db_Load_Unit(
+    unsigned int dwSerial,
+    _UNIT_DB_BASE *pUnit,
+    unsigned __int64 *pdwCanonicalUnitCutTime);
   unsigned __int8 _db_Load_UI(unsigned int dwSerial, _LINK_DB_BASE *pLink, _SFCONT_DB_BASE *pSfcont);
   unsigned __int8 _db_Load_Quest(unsigned int dwSerial, _QUEST_DB_BASE *pQuest);
   unsigned __int8 _db_Load_NpcQuest_History(unsigned int dwSerial, _QUEST_DB_BASE *pQuest);
@@ -1141,7 +1148,9 @@ public:
     unsigned int dwSerial,
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
-    char *pSzQuery);
+    char *pSzQuery,
+    const unsigned __int64 *pdwCanonicalNewUnitCutTime,
+    const unsigned __int64 *pdwCanonicalOldUnitCutTime);
   char _db_Update_UI(
     unsigned int dwSerial,
     _AVATOR_DATA *pNewData,
@@ -2187,6 +2196,7 @@ struct   _SUPPLEMENT_DB_BASE
   unsigned int dwAccumPlayTime;
   unsigned int dwLastResetDate;
   unsigned int dwActionPoint[3];
+  unsigned __int64 dwGuildEntryDelay;
 
   void Init();
 };

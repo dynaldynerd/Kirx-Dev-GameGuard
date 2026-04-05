@@ -244,6 +244,13 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
     m_pParkingUnit = nullptr;
     m_EP.SetLock(true);
     m_pmWpn.FixUnit(m_pUsingUnit);
+
+    _STORAGE_LIST::_db_con *weapon = m_Param.m_dbEquip.m_pStorageList + 6;
+    if (weapon->m_bLoad)
+    {
+      m_pmWpn.FixWeapon(weapon);
+    }
+
     m_nUnitDefFc = 0;
 
     for (int j = 0; j < 6; ++j)
@@ -256,6 +263,47 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
           m_nUnitDefFc += record->m_nDefFc;
         }
       }
+    }
+
+    for (int inventoryIndex = 0; inventoryIndex < static_cast<int>(m_Param.GetUseSlot()); ++inventoryIndex)
+    {
+      _STORAGE_LIST::_db_con *item = &m_Param.m_dbInven.m_pStorageList[inventoryIndex];
+      if (item->m_bLoad)
+      {
+        if (item->m_wItemIndex == 328)
+        {
+          m_bGeneratorAttack = true;
+        }
+        else if (item->m_wItemIndex == 329)
+        {
+          m_bGeneratorDefense = true;
+        }
+      }
+    }
+
+    if (weapon->m_bLoad)
+    {
+      m_byUnitEffectAttackStep = GetItemUpgedLv(weapon->m_dwLv);
+      if (!m_byUnitEffectAttackStep || m_byUnitEffectAttackStep > 7u)
+      {
+        m_byUnitEffectAttackStep = 0;
+      }
+    }
+
+    char totalDefenseStep = 0;
+    for (int equipmentIndex = 0; equipmentIndex < 4; ++equipmentIndex)
+    {
+      _STORAGE_LIST::_db_con *equip = &m_Param.m_dbEquip.m_pStorageList[equipmentIndex];
+      if (equip->m_bLoad)
+      {
+        totalDefenseStep += static_cast<char>(GetItemUpgedLv(equip->m_dwLv));
+      }
+    }
+
+    m_byUnitEffectDefenseStep = static_cast<unsigned __int8>(totalDefenseStep);
+    if (!m_byUnitEffectDefenseStep || m_byUnitEffectDefenseStep > 35u)
+    {
+      m_byUnitEffectDefenseStep = 0;
     }
   }
   else
@@ -282,6 +330,11 @@ void CPlayer::Emb_RidindUnit(bool bRiding, CParkingUnit *pCreateUnit)
     {
       m_pmWpn.FixWeapon(nullptr);
     }
+
+    m_bGeneratorAttack = false;
+    m_bGeneratorDefense = false;
+    m_byUnitEffectAttackStep = 0;
+    m_byUnitEffectDefenseStep = 0;
   }
 
   CalcDefTol();
@@ -516,7 +569,8 @@ void CPlayer::CheckUnitCutTime()
   for (int index = 0; index < 4; ++index)
   {
     _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];
-    if (unit->byFrame != 255 && unit->dwCutTime && now - unit->dwCutTime < 5)
+    const unsigned __int64 unitCutTime = this->m_pUserDB->GetCanonicalUnitCutTime(static_cast<unsigned __int8>(index));
+    if (unit->byFrame != 255 && unitCutTime && now - unitCutTime < 5)
     {
       unit->nPullingFee = 0;
       SendMsg_UnitAlterFeeInform(index, 0);
@@ -532,9 +586,10 @@ void CPlayer::CheckUnitCutTime()
   for (int index = 0; index < 4; ++index)
   {
     _UNIT_DB_BASE::_LIST *unit = &this->m_Param.m_UnitDB.m_List[index];
-    if (unit->byFrame != 255 && unit->dwCutTime)
+    if (unit->byFrame != 255 && this->m_pUserDB->GetCanonicalUnitCutTime(static_cast<unsigned __int8>(index)))
     {
       unit->dwCutTime = 0;
+      this->m_pUserDB->SetCanonicalUnitCutTime(static_cast<unsigned __int8>(index), 0);
       this->m_pUserDB->Update_UnitData(index, unit);
     }
   }
@@ -1321,7 +1376,7 @@ void CPlayer::pc_UnitPartTuningRequest(
     reinterpret_cast<int *>(consumeMoney));
 }
 
-void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem)
+void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPCLinkIntem, int bUnitRepairOut)
 {
   if (!m_pUserDB)
   {
@@ -1414,6 +1469,17 @@ void CPlayer::pc_UnitFrameRepairRequest(unsigned __int8 bySlotIndex, int bUseNPC
         const unsigned long long taxedCost =
           static_cast<unsigned long long>(taxRate) * static_cast<unsigned long long>(static_cast<unsigned int>(scaledCost));
         consumeDalant = static_cast<unsigned int>(brokenBonus) + static_cast<unsigned int>(taxedCost / 10000u);
+
+        if (bUnitRepairOut == 1)
+        {
+          resultCode = 43;
+          this->SendMsg_UnitFrameRepairResult(
+            static_cast<char>(resultCode),
+            static_cast<char>(bySlotIndex),
+            newGauge,
+            consumeDalant);
+          return;
+        }
 
         if (consumeDalant > m_Param.GetDalant())
         {

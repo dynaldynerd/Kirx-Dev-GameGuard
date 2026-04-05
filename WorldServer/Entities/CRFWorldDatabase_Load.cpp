@@ -1057,7 +1057,7 @@ int CRFWorldDatabase::Select_Supplement(
   SQLLEN indicator = 0;
   SQLRETURN ret = 0;
 
-  sprintf_s(buffer, sizeof(buffer), "{ CALL pSelect_Supplement_20080428( %d ) }", dwSerial);
+  sprintf_s(buffer, sizeof(buffer), "{ CALL pSelect_Supplement_DataInteg( %d ) }", dwSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1070,10 +1070,18 @@ int CRFWorldDatabase::Select_Supplement(
       ret = SQLFetch(m_hStmtSelect);
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
-        ret = SQLGetData(m_hStmtSelect, 1u, 8, pSupplement, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, 8, &pSupplement->dPvpPointLeak, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65529), &pSupplement->bLastAttBuff, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_UBIGINT, &pSupplement->dwBufPotionEndTime, 0, &indicator);
         ret = SQLGetData(m_hStmtSelect, 4u, 4, &pSupplement->dwRaceBuffClear, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_UBIGINT, &pSupplement->dwGuildEntryDelay, 0, &indicator);
+        ret = SQLGetData(
+          m_hStmtSelect,
+          6u,
+          static_cast<SQLSMALLINT>(65530),
+          &pSupplement->byPlayerInteg,
+          0,
+          &indicator);
         if (m_hStmtSelect)
         {
           SQLCloseCursor(m_hStmtSelect);

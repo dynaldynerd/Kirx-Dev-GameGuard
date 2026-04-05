@@ -3581,6 +3581,9 @@ void CMainThread::gm_MainThreadControl()
     m_nLimUserNum = MAX_PLAYER;
   }
 
+  m_dwGuildEntryDelay = static_cast<unsigned __int64>(
+    GetPrivateProfileIntA("Guild Entry Delay", "DelayTime", 0, ".\\Initialize\\WorldSystem.ini"));
+
   char returnedString[32]{};
   GetPrivateProfileStringA("System", "CheckSum", "TRUE", returnedString, sizeof(returnedString), ".\\Initialize\\WorldSystem.ini");
   m_bCheckSumActive = (strcmp(returnedString, "TRUE") == 0);

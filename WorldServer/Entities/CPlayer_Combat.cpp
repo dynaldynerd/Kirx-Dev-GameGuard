@@ -3003,6 +3003,7 @@ void CPlayer::SendMsg_FixPosition(int n)
   FloatToShort(m_fCurPos, msg.zCur, 3);
   msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
   msg.dwStateFlag = GetStateFlag();
+  msg.dwStateFlagEx = GetStateFlagEx();
   msg.byColor = m_byGuildBattleColorInx;
 
   unsigned __int8 type[2] = {4, 9};
@@ -3043,6 +3044,7 @@ void CPlayer::SendMsg_RealMovePoint(int n)
   msg.zTar[1] = static_cast<__int16>(static_cast<int>(m_fTarPos[2]));
   msg.wLastEffectCode = static_cast<unsigned __int16>(m_wLastContEffect);
   msg.dwStateFlag = GetStateFlag();
+  msg.dwStateFlagEx = GetStateFlagEx();
   msg.nAddSpeed = static_cast<__int16>(static_cast<int>(GetAddSpeed()));
   msg.byDirect = m_byMoveDirect;
   msg.byColor = m_byGuildBattleColorInx;

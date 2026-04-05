@@ -131,6 +131,7 @@ struct _combine_ex_item_request_clzo
   unsigned __int8 byCombineSlotNum;
   _list iCombineSlot[5];
   int bUseNpcLink;
+  __int64 clientTimeSerial;
 };
 #pragma pack(pop)
 
@@ -1706,6 +1707,7 @@ struct _unit_frame_repair_request_clzo
 {
   char bySlotIndex;
   int bUseNPCLinkIntem;
+  int bUnitRepairOut;
 };
 #pragma pack(pop)
 

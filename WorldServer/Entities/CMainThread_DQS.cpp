@@ -158,7 +158,8 @@ void CMainThread::OnDQSRun()
           &loadQuery->byExtTrunkOldSlot,
           0,
           &loadQuery->dwCheckSum,
-          &loadQuery->dwCanonicalLastConnTime);
+          &loadQuery->dwCanonicalLastConnTime,
+          loadQuery->dwCanonicalUnitCutTime);
         if (queryEntry->m_byResult
           || (CUserDB::ReRangeClientIndex(&loadQuery->LoadData),
               CUserDB::CheckDQSLoadCharacterData(&loadQuery->LoadData)))
@@ -184,7 +185,9 @@ void CMainThread::OnDQSRun()
           logoutQuery->dwAvatorSerial,
           &logoutQuery->NewData,
           &logoutQuery->OldData,
-          logoutQuery->bCheckLowHigh);
+          logoutQuery->bCheckLowHigh,
+          logoutQuery->dwCanonicalNewUnitCutTime,
+          logoutQuery->dwCanonicalOldUnitCutTime);
         db_Update_PostStorage(logoutQuery->dwAvatorSerial, &logoutQuery->NewData, &logoutQuery->OldData);
         if (logoutQuery->bUpdateRefineCnt)
         {
@@ -204,7 +207,9 @@ void CMainThread::OnDQSRun()
           lobbyQuery->dwAvatorSerial,
           &lobbyQuery->NewData,
           &lobbyQuery->OldData,
-          1);
+          1,
+          lobbyQuery->dwCanonicalNewUnitCutTime,
+          lobbyQuery->dwCanonicalOldUnitCutTime);
         db_Update_PostStorage(lobbyQuery->dwAvatorSerial, &lobbyQuery->NewData, &lobbyQuery->OldData);
         if (lobbyQuery->bUpdateRefineCnt)
         {
@@ -274,7 +279,9 @@ void CMainThread::OnDQSRun()
           contSaveQuery->dwAvatorSerial,
           &contSaveQuery->NewData,
           &contSaveQuery->OldData,
-          1);
+          1,
+          contSaveQuery->dwCanonicalNewUnitCutTime,
+          contSaveQuery->dwCanonicalOldUnitCutTime);
         if (contSaveQuery->bUpdateRefineCnt)
         {
           queryEntry->m_byResult = _db_update_event_classrefine(
@@ -2075,7 +2082,8 @@ void CMainThread::Select_Avator_Complete(_DB_QRY_SYN_DATA *pData)
       loadQuery->bCreateTrunkFree,
       loadQuery->bExtTrunkAddItem,
       loadQuery->byExtTrunkOldSlot,
-      loadQuery->dwCanonicalLastConnTime);
+      loadQuery->dwCanonicalLastConnTime,
+      loadQuery->dwCanonicalUnitCutTime);
     _db_complete_event_classrefine(
       pData->m_idWorld.wIndex,
       pData->m_idWorld.dwSerial,
@@ -2165,7 +2173,10 @@ void CMainThread::Cont_UserSave_Complete(_DB_QRY_SYN_DATA *pData)
     }
     else
     {
-      user->Cont_UserSave_Complete(pData->m_byResult, &contSaveQuery->NewData);
+      user->Cont_UserSave_Complete(
+        pData->m_byResult,
+        &contSaveQuery->NewData,
+        contSaveQuery->dwCanonicalNewUnitCutTime);
       if (contSaveQuery->bUpdateRefineCnt)
       {
         _db_complete_update_event_classrefine(pData->m_idWorld.wIndex, pData->m_idWorld.dwSerial);
