@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../AHNHS_TRANS_BUFFER.h"
 #include "../CHRID.h"
 #include "../IdaCompat.h"
 #include "../StoragePos.h"
@@ -1597,6 +1598,25 @@ struct _pt_automine_selectore_clzo
   unsigned __int8 bySelected;
 };
 static_assert(sizeof(_pt_automine_selectore_clzo) == 1);
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _hs_msg_res_qry_clzo
+{
+  _AHNHS_TRANS_BUFFER AuthKey;
+};
+static_assert(sizeof(_hs_msg_res_qry_clzo) == 402);
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _npr_msg_res_qry_clzo
+{
+  char packet[4096];
+  unsigned int packetSize;
+};
+static_assert(sizeof(_npr_msg_res_qry_clzo) == 4100);
 #pragma pack(pop)
 
 // moved from CMainThread.h

@@ -1874,6 +1874,9 @@
     <ClInclude Include="Entities\HACKSHEILD_PARAM_ANTICP.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\AHNHS_TRANS_BUFFER.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\holy_keeper_attackable_inform_zocl.h">
       <Filter>Header Files\Packets\ZoneClient</Filter>
     </ClInclude>

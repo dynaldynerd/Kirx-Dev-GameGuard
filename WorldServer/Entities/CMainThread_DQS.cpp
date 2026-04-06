@@ -1310,6 +1310,9 @@ void CMainThread::OnDQSRun()
       }
       case 171:
       {
+        // TODO(aop415 non-parity): AOP OnDQSRun no longer uses case 171 from
+        // CUserDB::Exit_Account_Request. Keep the current lobby-logout query path
+        // until the old logout/lobby-history flow is intentionally retired.
         auto *lobbyLogoutQuery = reinterpret_cast<_qry_case_lobby_logout *>(queryEntry->m_sData);
         queryEntry->m_byResult = _db_Select_RegeAvator_For_Lobby_Logout(lobbyLogoutQuery);
         break;
@@ -2002,6 +2005,9 @@ void CMainThread::DQSCompleteProcess()
       }
       case 171:
       {
+        // TODO(aop415 non-parity): AOP DQSCompleteProcess no longer uses case 171 from
+        // CUserDB::Exit_Account_Request. Keep the current completion path paired with
+        // the legacy request flow until that behavior is explicitly removed.
         auto *lobbyLogoutQuery = reinterpret_cast<_qry_case_lobby_logout *>(pData->m_sData);
         Complete_Select_RegeAvator_For_Lobby_Logout(lobbyLogoutQuery);
         break;

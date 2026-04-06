@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../CPlayer.h"
+#include "../AHNHS_TRANS_BUFFER.h"
 #include "../DB_LOAD_AUTOMINE_MACHINE.h"
 #include "../DqsDbStructs.h"
 #include "../IdaCompat.h"
@@ -3190,6 +3191,43 @@ struct _hs_msg_ack_guid_ack_msg_zocl
 {
   unsigned __int16 wSeq;
 };
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _hs_msg_req_qry_zocl
+{
+  _AHNHS_TRANS_BUFFER AuthKey;
+};
+static_assert(sizeof(_hs_msg_req_qry_zocl) == 402);
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _hs_msg_notify_zocl
+{
+  char byRet;
+};
+static_assert(sizeof(_hs_msg_notify_zocl) == 1);
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _npr_msg_req_qry_zocl
+{
+  char packet[4096];
+  unsigned int packetSize;
+};
+static_assert(sizeof(_npr_msg_req_qry_zocl) == 4100);
+#pragma pack(pop)
+
+// moved from ZoneServer_Regular_1_0_x64.h
+#pragma pack(push, 1)
+struct _npr_msg_notify_zocl
+{
+  unsigned int byRet;
+};
+static_assert(sizeof(_npr_msg_notify_zocl) == 4);
+#pragma pack(pop)
 
 // moved from CMainThread.h
 #pragma pack(push, 1)

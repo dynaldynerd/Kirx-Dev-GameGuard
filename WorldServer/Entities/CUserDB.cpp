@@ -3002,6 +3002,9 @@ void CUserDB::Exit_Account_Request()
 
     if (m_dwSerial == static_cast<unsigned int>(-1))
     {
+      // TODO(aop415 non-parity): AOP removed the legacy no-avatar logout DQS case 171 path
+      // from Exit_Account_Request and tears down directly. Keep the GU/current 171 flow
+      // for now until the logout/lobby-history behavior is revalidated end-to-end.
       _qry_case_lobby_logout qry{};
       qry.dwAccountSerial = m_dwAccountSerial;
       strcpy_s(qry.szLobbyHistoryFileName, sizeof(qry.szLobbyHistoryFileName), m_szLobbyHistoryFileName);

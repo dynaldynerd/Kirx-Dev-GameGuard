@@ -250,6 +250,7 @@
     <ClInclude Include="Entities\AreaList.h" />
     <ClInclude Include="Entities\AsyncLogTypes.h" />
     <ClInclude Include="Entities\atrade_taxrate_result_zocl.h" />
+    <ClInclude Include="Entities\AHNHS_TRANS_BUFFER.h" />
     <ClInclude Include="Entities\attack_count_result_zocl.h" />
     <ClInclude Include="Entities\attack_force_result_zocl.h" />
     <ClInclude Include="Entities\attack_gen_result_zocl.h" />

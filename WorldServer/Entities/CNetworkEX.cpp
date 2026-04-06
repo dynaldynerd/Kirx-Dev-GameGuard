@@ -1956,6 +1956,14 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       }
       break;
     }
+    case 96:
+    {
+      _npr_msg_notify_zocl p{};
+      char type[2] = {97,4};
+      g_Network.m_pProcess[0]->LoadSendMsg(n, reinterpret_cast<unsigned __int8 *>(type), reinterpret_cast<char *>(&p), sizeof(p));
+      result = true;
+      break;
+    }
     case 97:
     {
       CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
