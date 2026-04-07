@@ -11,6 +11,7 @@
 #include "attack_param.h"
 #include "D3DXMATRIX.h"
 #include "EntityTypes.h"
+#include "ItemIntegrityInfo.h"
 #include "Packet/ClientZonePacket.h"
 
 #include <utility>
@@ -827,6 +828,21 @@ public:
   int m_nSleepIgnore;
   bool m_bCheckSumActive;
   unsigned __int64 m_dwGuildEntryDelay;
+  _ITEM_INTEGRITY_INFO m_ResourceItemInteg;
+  _ITEM_INTEGRITY_INFO m_BootyItemInteg;
+  _ITEM_INTEGRITY_INFO m_WeaponItemInteg;
+  _ITEM_INTEGRITY_INFO m_SiegeKitItemInteg;
+  _ITEM_INTEGRITY_INFO m_BulletItemInteg;
+  _ITEM_INTEGRITY_INFO m_UpperItemInteg;
+  _ITEM_INTEGRITY_INFO m_LowerItemInteg;
+  _ITEM_INTEGRITY_INFO m_GauntletItemInteg;
+  _ITEM_INTEGRITY_INFO m_ShoeItemInteg;
+  _ITEM_INTEGRITY_INFO m_HelmetItemInteg;
+  _ITEM_INTEGRITY_INFO m_ShieldItemInteg;
+  _ITEM_INTEGRITY_INFO m_BoxItemInteg;
+  _ITEM_INTEGRITY_INFO m_AmuletItemInteg;
+  _ITEM_INTEGRITY_INFO m_RingItemInteg;
+  _ITEM_INTEGRITY_INFO m_PotionItemInteg;
   unsigned __int8 m_byWebAgentServerNetInx;
   bool m_bConnectedWebAgentServer;
   unsigned __int8 m_byControllServerNetInx;
@@ -1361,6 +1377,8 @@ private:
   int LoadWorldSystemINI();
   int LoadWorldInfoINI();
   void LoadItemConsumeINI();
+  void LoadItemIntegrityINI();
+  void LoadItemIntegrityInfo(_ITEM_INTEGRITY_INFO *pInfo, const char *pszSection, const char *pszPath);
   bool CheckDefine();
   bool check_dbsyn_data_size();
   char DataFileInit();
@@ -1961,6 +1979,7 @@ struct   _TRUNK_DB_BASE
   _LIST m_List[100];
   unsigned __int8 byExtSlotNum;
   _LIST m_ExtList[40];
+  unsigned __int8 byTrunkInteg;
 
   void Init();
 };
@@ -2197,6 +2216,7 @@ struct   _SUPPLEMENT_DB_BASE
   unsigned int dwLastResetDate;
   unsigned int dwActionPoint[3];
   unsigned __int64 dwGuildEntryDelay;
+  unsigned __int8 byPlayerInteg;
 
   void Init();
 };

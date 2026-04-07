@@ -890,6 +890,9 @@
     <ClInclude Include="Entities\CItemStore.h">
       <Filter>Header Files\Item</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\ItemIntegrityInfo.h">
+      <Filter>Header Files\Item</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\CItemStoreManager.h">
       <Filter>Header Files\Item</Filter>
     </ClInclude>

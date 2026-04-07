@@ -1633,6 +1633,14 @@ public:
   void SendMsg_NewViewOther(unsigned __int8 byViewType);
   void SetLastAttBuff(bool bSet);
   bool IsLastAttBuff();
+  void SetGuildEntryDelay(unsigned __int64 dwGuildEntryDelay);
+  void SetPlayerInteg(unsigned __int8 byPlayerInteg);
+  void UpdatePlayerInteg(unsigned __int8 byPlayerInteg);
+  void UpdateTrunkInteg(unsigned __int8 byTrunkInteg);
+  bool ApplyInventoryItemIntegrity();
+  bool ApplyEquipmentItemIntegrity();
+  bool ApplyTrunkItemIntegrityPart1();
+  bool ApplyTrunkItemIntegrityPart2();
   void SetShapeAllBuffer();
   int GetLevel();
   int GetHP();

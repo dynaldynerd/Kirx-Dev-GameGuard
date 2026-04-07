@@ -1938,6 +1938,22 @@ bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
     this->m_kPcBangCoupon.LoadData(m_pUserDB->m_dwAccountSerial, p_dbPlayTimeInPcbang);
 
     this->SetLastAttBuff(this->m_pUserDB->m_AvatorData.dbSupplement.bLastAttBuff);
+    this->SetGuildEntryDelay(this->m_pUserDB->m_AvatorData.dbSupplement.dwGuildEntryDelay);
+    this->SetPlayerInteg(this->m_pUserDB->m_AvatorData.dbSupplement.byPlayerInteg);
+    const unsigned __int8 trunkInteg = this->m_pUserDB->m_AvatorData.dbTrunk.byTrunkInteg;
+    if (!this->m_Param.m_byPlayerInteg)
+    {
+      this->ApplyInventoryItemIntegrity();
+      this->ApplyEquipmentItemIntegrity();
+      this->UpdatePlayerInteg(1);
+      if (!trunkInteg)
+      {
+        this->ApplyTrunkItemIntegrityPart1();
+        this->ApplyTrunkItemIntegrityPart2();
+        this->UpdateTrunkInteg(1);
+      }
+    }
+
     // Yorozuya fix (non-IDA parity): clear last-attack buff if not in guild and not destroyer.
     if (!this->m_Param.m_pGuild && this->m_Param.GetCharSerial() != g_HolySys.GetDestroyerSerial())
     {
@@ -5825,6 +5841,1090 @@ void CPlayer::SetLastAttBuff(bool bSet)
 bool CPlayer::IsLastAttBuff()
 {
   return m_Param.m_bLastAttBuff;
+}
+
+void CPlayer::SetGuildEntryDelay(unsigned __int64 dwGuildEntryDelay)
+{
+  m_Param.m_dwGuildEntryDelay = dwGuildEntryDelay;
+}
+
+void CPlayer::SetPlayerInteg(unsigned __int8 byPlayerInteg)
+{
+  m_Param.m_byPlayerInteg = byPlayerInteg;
+}
+
+void CPlayer::UpdatePlayerInteg(unsigned __int8 byPlayerInteg)
+{
+  if (m_pUserDB && !m_Param.m_byPlayerInteg)
+  {
+    m_pUserDB->Update_PlayerInteg(byPlayerInteg);
+  }
+}
+
+void CPlayer::UpdateTrunkInteg(unsigned __int8 byTrunkInteg)
+{
+  if (m_pUserDB)
+  {
+    m_pUserDB->Update_TrunkInteg(byTrunkInteg);
+  }
+}
+
+bool CPlayer::ApplyInventoryItemIntegrity()
+{
+  if (!m_pUserDB)
+  {
+    return false;
+  }
+
+  for (int inventoryIndex = 0; inventoryIndex < 100; ++inventoryIndex)
+  {
+    _INVEN_DB_BASE::_LIST &inventoryItem = m_pUserDB->m_AvatorData.dbInven.m_List[inventoryIndex];
+    if (!inventoryItem.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con &storageItem = m_Param.m_dbInven.m_pStorageList[inventoryIndex];
+    switch (inventoryItem.Key.byTableCode)
+    {
+      case 0:
+        for (int index = 0; index < g_Main.m_UpperItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_UpperItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_UpperItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(0, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 1:
+        for (int index = 0; index < g_Main.m_LowerItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_LowerItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_LowerItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(1, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 2:
+        for (int index = 0; index < g_Main.m_GauntletItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_GauntletItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_GauntletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(2, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 3:
+        for (int index = 0; index < g_Main.m_ShoeItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_ShoeItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShoeItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(3, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 4:
+        for (int index = 0; index < g_Main.m_HelmetItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_HelmetItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_HelmetItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(4, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 5:
+        for (int index = 0; index < g_Main.m_ShieldItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_ShieldItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShieldItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(5, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 6:
+        for (int index = 0; index < g_Main.m_WeaponItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_WeaponItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_WeaponItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(6, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 8:
+        for (int index = 0; index < g_Main.m_RingItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_RingItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_RingItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(8, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 9:
+        for (int index = 0; index < g_Main.m_AmuletItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_AmuletItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_AmuletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(9, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 10:
+        for (int index = 0; index < g_Main.m_BulletItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_BulletItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BulletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(10, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 13:
+        for (int index = 0; index < g_Main.m_PotionItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_PotionItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_PotionItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(13, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 18:
+        for (int index = 0; index < g_Main.m_ResourceItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_ResourceItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ResourceItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(18, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 20:
+        for (int index = 0; index < g_Main.m_BootyItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_BootyItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BootyItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(20, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 27:
+        for (int index = 0; index < g_Main.m_SiegeKitItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_SiegeKitItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_SiegeKitItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(27, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 31:
+        for (int index = 0; index < g_Main.m_BoxItemInteg.m_nCount; ++index)
+        {
+          if (inventoryItem.Key.wItemIndex == g_Main.m_BoxItemInteg.m_nBeforeIndex[index])
+          {
+            inventoryItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BoxItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = inventoryItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(31, inventoryItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  return true;
+}
+
+bool CPlayer::ApplyEquipmentItemIntegrity()
+{
+  if (!m_pUserDB)
+  {
+    return false;
+  }
+
+  for (int equipIndex = 0; equipIndex < 7; ++equipIndex)
+  {
+    _EQUIPKEY &equipKey = m_pUserDB->m_AvatorData.dbAvator.m_EquipKey[equipIndex];
+    if (!equipKey.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con &storageItem = m_Param.m_dbEquip.m_pStorageList[equipIndex];
+    unsigned __int16 itemIndex = static_cast<unsigned __int16>(equipKey.zItemIndex);
+    switch (equipIndex)
+    {
+      case 0:
+        for (int index = 0; index < g_Main.m_UpperItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_UpperItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_UpperItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(0, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 1:
+        for (int index = 0; index < g_Main.m_LowerItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_LowerItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_LowerItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(1, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 2:
+        for (int index = 0; index < g_Main.m_GauntletItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_GauntletItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_GauntletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(2, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 3:
+        for (int index = 0; index < g_Main.m_ShoeItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_ShoeItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_ShoeItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(3, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 4:
+        for (int index = 0; index < g_Main.m_HelmetItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_HelmetItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_HelmetItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(4, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 5:
+        for (int index = 0; index < g_Main.m_ShieldItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_ShieldItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_ShieldItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(5, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 6:
+        for (int index = 0; index < g_Main.m_WeaponItemInteg.m_nCount; ++index)
+        {
+          if (itemIndex == g_Main.m_WeaponItemInteg.m_nBeforeIndex[index])
+          {
+            itemIndex = static_cast<unsigned __int16>(g_Main.m_WeaponItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = itemIndex;
+            if (!TimeItem::FindTimeRec(6, itemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    equipKey.zItemIndex = static_cast<__int16>(itemIndex);
+  }
+
+  for (int embellishIndex = 0; embellishIndex < 7; ++embellishIndex)
+  {
+    _EQUIP_DB_BASE::_EMBELLISH_LIST &embellishItem = m_pUserDB->m_AvatorData.dbEquip.m_EmbellishList[embellishIndex];
+    if (!embellishItem.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con &storageItem = m_Param.m_dbEmbellish.m_pStorageList[embellishIndex];
+    switch (embellishItem.Key.byTableCode)
+    {
+      case 10:
+        for (int index = 0; index < g_Main.m_BulletItemInteg.m_nCount; ++index)
+        {
+          if (embellishItem.Key.wItemIndex == g_Main.m_BulletItemInteg.m_nBeforeIndex[index])
+          {
+            embellishItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BulletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = embellishItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(10, embellishItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 9:
+        for (int index = 0; index < g_Main.m_AmuletItemInteg.m_nCount; ++index)
+        {
+          if (embellishItem.Key.wItemIndex == g_Main.m_AmuletItemInteg.m_nBeforeIndex[index])
+          {
+            embellishItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_AmuletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = embellishItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(9, embellishItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 8:
+        for (int index = 0; index < g_Main.m_RingItemInteg.m_nCount; ++index)
+        {
+          if (embellishItem.Key.wItemIndex == g_Main.m_RingItemInteg.m_nBeforeIndex[index])
+          {
+            embellishItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_RingItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = embellishItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(8, embellishItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  return true;
+}
+
+bool CPlayer::ApplyTrunkItemIntegrityPart1()
+{
+  if (!m_pUserDB)
+  {
+    return false;
+  }
+
+  for (int trunkIndex = 0; trunkIndex < 100; ++trunkIndex)
+  {
+    _TRUNK_DB_BASE::_LIST &trunkItem = m_pUserDB->m_AvatorData.dbTrunk.m_List[trunkIndex];
+    if (!trunkItem.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con &storageItem = m_Param.m_dbTrunk.m_pStorageList[trunkIndex];
+    switch (trunkItem.Key.byTableCode)
+    {
+      case 0:
+        for (int index = 0; index < g_Main.m_UpperItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_UpperItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_UpperItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(0, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 1:
+        for (int index = 0; index < g_Main.m_LowerItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_LowerItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_LowerItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(1, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 2:
+        for (int index = 0; index < g_Main.m_GauntletItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_GauntletItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_GauntletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(2, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 3:
+        for (int index = 0; index < g_Main.m_ShoeItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_ShoeItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShoeItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(3, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 4:
+        for (int index = 0; index < g_Main.m_HelmetItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_HelmetItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_HelmetItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(4, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 5:
+        for (int index = 0; index < g_Main.m_ShieldItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_ShieldItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShieldItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(5, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 6:
+        for (int index = 0; index < g_Main.m_WeaponItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_WeaponItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_WeaponItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(6, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 8:
+        for (int index = 0; index < g_Main.m_RingItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_RingItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_RingItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(8, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 9:
+        for (int index = 0; index < g_Main.m_AmuletItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_AmuletItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_AmuletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(9, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 10:
+        for (int index = 0; index < g_Main.m_BulletItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_BulletItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BulletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(10, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 13:
+        for (int index = 0; index < g_Main.m_PotionItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_PotionItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_PotionItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(13, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 18:
+        for (int index = 0; index < g_Main.m_ResourceItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_ResourceItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ResourceItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(18, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 20:
+        for (int index = 0; index < g_Main.m_BootyItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_BootyItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BootyItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(20, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 27:
+        for (int index = 0; index < g_Main.m_SiegeKitItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_SiegeKitItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_SiegeKitItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(27, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 31:
+        for (int index = 0; index < g_Main.m_BoxItemInteg.m_nCount; ++index)
+        {
+          if (trunkItem.Key.wItemIndex == g_Main.m_BoxItemInteg.m_nBeforeIndex[index])
+          {
+            trunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BoxItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = trunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(31, trunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  return true;
+}
+
+bool CPlayer::ApplyTrunkItemIntegrityPart2()
+{
+  if (!m_pUserDB)
+  {
+    return false;
+  }
+
+  for (int extTrunkIndex = 0; extTrunkIndex < 40; ++extTrunkIndex)
+  {
+    _TRUNK_DB_BASE::_LIST &extTrunkItem = m_pUserDB->m_AvatorData.dbTrunk.m_ExtList[extTrunkIndex];
+    if (!extTrunkItem.Key.IsFilled())
+    {
+      continue;
+    }
+
+    _STORAGE_LIST::_db_con &storageItem = m_Param.m_dbExtTrunk.m_pStorageList[extTrunkIndex];
+    switch (extTrunkItem.Key.byTableCode)
+    {
+      case 0:
+        for (int index = 0; index < g_Main.m_UpperItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_UpperItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_UpperItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(0, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 1:
+        for (int index = 0; index < g_Main.m_LowerItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_LowerItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_LowerItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(1, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 2:
+        for (int index = 0; index < g_Main.m_GauntletItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_GauntletItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_GauntletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(2, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 3:
+        for (int index = 0; index < g_Main.m_ShoeItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_ShoeItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShoeItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(3, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 4:
+        for (int index = 0; index < g_Main.m_HelmetItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_HelmetItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_HelmetItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(4, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 5:
+        for (int index = 0; index < g_Main.m_ShieldItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_ShieldItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ShieldItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(5, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 6:
+        for (int index = 0; index < g_Main.m_WeaponItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_WeaponItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_WeaponItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(6, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 8:
+        for (int index = 0; index < g_Main.m_RingItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_RingItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_RingItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(8, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 9:
+        for (int index = 0; index < g_Main.m_AmuletItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_AmuletItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_AmuletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(9, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 10:
+        for (int index = 0; index < g_Main.m_BulletItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_BulletItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BulletItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(10, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 13:
+        for (int index = 0; index < g_Main.m_PotionItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_PotionItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_PotionItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(13, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 18:
+        for (int index = 0; index < g_Main.m_ResourceItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_ResourceItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_ResourceItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(18, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 20:
+        for (int index = 0; index < g_Main.m_BootyItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_BootyItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BootyItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(20, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 27:
+        for (int index = 0; index < g_Main.m_SiegeKitItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_SiegeKitItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_SiegeKitItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(27, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      case 31:
+        for (int index = 0; index < g_Main.m_BoxItemInteg.m_nCount; ++index)
+        {
+          if (extTrunkItem.Key.wItemIndex == g_Main.m_BoxItemInteg.m_nBeforeIndex[index])
+          {
+            extTrunkItem.Key.wItemIndex = static_cast<unsigned __int16>(g_Main.m_BoxItemInteg.m_nChangedIndex[index]);
+            storageItem.m_wItemIndex = extTrunkItem.Key.wItemIndex;
+            if (!TimeItem::FindTimeRec(31, extTrunkItem.Key.wItemIndex))
+            {
+              storageItem.m_dwT = static_cast<unsigned int>(-1);
+              storageItem.m_byCsMethod = 0;
+              storageItem.m_dwLendRegdTime = static_cast<unsigned int>(-1);
+            }
+            break;
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  return true;
 }
 
 int CPlayer::GetLevel()

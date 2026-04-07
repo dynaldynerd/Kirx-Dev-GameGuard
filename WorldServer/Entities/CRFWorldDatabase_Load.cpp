@@ -1447,7 +1447,7 @@ unsigned __int8 CRFWorldDatabase::Select_AccountTrunk(
   SQLRETURN ret = 0;
   int column = 0;
 
-  sprintf_s(buffer, "{ CALL pSelect_AccountTrunk_20061115_%d( %d ) }", byRace, dwAccountSerial);
+  sprintf_s(buffer, "{ CALL pSelect_AccountTrunk_TrunkInteg_%d( %d ) }", byRace, dwAccountSerial);
   if (m_bSaveDBLog)
   {
     Log(buffer);
@@ -1479,6 +1479,7 @@ unsigned __int8 CRFWorldDatabase::Select_AccountTrunk(
           ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65511), &pTrunkData->trunkKey[j].lnUID, 0, &indicator);
           ret = SQLGetData(m_hStmtSelect, ++column, 4, &pTrunkData->trunkKey[j].dwT, 0, &indicator);
         }
+        ret = SQLGetData(m_hStmtSelect, ++column, static_cast<SQLSMALLINT>(65530), &pTrunkData->byTrunkInteg, 0, &indicator);
         if (m_hStmtSelect)
         {
           SQLCloseCursor(m_hStmtSelect);

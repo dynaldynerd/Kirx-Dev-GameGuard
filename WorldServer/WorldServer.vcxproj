@@ -415,6 +415,7 @@
     <ClInclude Include="Entities\CItemDropMgr.h" />
     <ClInclude Include="Entities\CItemLootTable.h" />
     <ClInclude Include="Entities\CItemStore.h" />
+    <ClInclude Include="Entities\ItemIntegrityInfo.h" />
     <ClInclude Include="Entities\CItemStoreManager.h" />
     <ClInclude Include="Entities\CItemUpgradeTable.h" />
     <ClInclude Include="Entities\class_fld.h" />

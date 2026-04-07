@@ -348,6 +348,17 @@ void CUserDB::Update_LastAttBuff(bool bSet)
   m_AvatorData.dbSupplement.bLastAttBuff = bSet;
 }
 
+void CUserDB::Update_PlayerInteg(unsigned __int8 byPlayerInteg)
+{
+  m_AvatorData.dbSupplement.byPlayerInteg = byPlayerInteg;
+}
+
+void CUserDB::Update_TrunkInteg(unsigned __int8 byTrunkInteg)
+{
+  m_AvatorData.dbTrunk.byTrunkInteg = byTrunkInteg;
+  m_bDataUpdate = true;
+}
+
 bool CUserDB::Update_Stat(unsigned __int8 byStatIndex, unsigned int dwNewCum, bool bUpdate)
 {
 if (byStatIndex < 80)

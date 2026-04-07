@@ -1219,6 +1219,11 @@ char CMainThread::_db_Update_Supplement(
     sprintf_s(buffer, 128, " GuildEntryDelay = %I64u,", pNewData->dbSupplement.dwGuildEntryDelay);
     strcat_s(pSzQuery, nBufferSize, buffer);
   }
+  if (pOldData->dbSupplement.byPlayerInteg != pNewData->dbSupplement.byPlayerInteg)
+  {
+    sprintf_s(buffer, 128, " PlayerInteg = %d,", pNewData->dbSupplement.byPlayerInteg);
+    strcat_s(pSzQuery, nBufferSize, buffer);
+  }
   for (int index = 0; index < 3; ++index)
   {
     if (pOldData->dbSupplement.dwActionPoint[index] != pNewData->dbSupplement.dwActionPoint[index])
@@ -2017,6 +2022,11 @@ char CMainThread::_db_Update_Trunk(
   if (pNewData->dbTrunk.bySlotNum != pOldData->dbTrunk.bySlotNum)
   {
     sprintf_s(source, sizeof(source), "EstSlot=%d,", pNewData->dbTrunk.bySlotNum);
+    std::strcat(buffer, source);
+  }
+  if (pNewData->dbTrunk.byTrunkInteg != pOldData->dbTrunk.byTrunkInteg)
+  {
+    sprintf_s(source, sizeof(source), "TrunkInteg=%d,", pNewData->dbTrunk.byTrunkInteg);
     std::strcat(buffer, source);
   }
 

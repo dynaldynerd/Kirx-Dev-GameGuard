@@ -2217,6 +2217,7 @@ int CMainThread::LoadINI()
   }
 
   LoadItemConsumeINI();
+  LoadItemIntegrityINI();
   return true;
 }
 
@@ -2438,6 +2439,65 @@ void CMainThread::LoadItemConsumeINI()
   m_bAllRaceChatMoneyConsume = strcmp(itemConsume, "TRUE") == 0;
   m_dwAllRaceChatMoney = static_cast<unsigned int>(
     GetPrivateProfileIntA("AllRaceChat", "Money", 0, ".\\Initialize\\ItemConsume.ini"));
+}
+
+void CMainThread::LoadItemIntegrityINI()
+{
+  LoadItemIntegrityInfo(&m_ResourceItemInteg, "ResourceItem", ".\\Initialize\\IndexInteg\\ResourceItem.ini");
+  LoadItemIntegrityInfo(&m_BootyItemInteg, "bootYItem", ".\\Initialize\\IndexInteg\\bootYItem.ini");
+  LoadItemIntegrityInfo(&m_WeaponItemInteg, "WeaponItem", ".\\Initialize\\IndexInteg\\WeaponItem.ini");
+  LoadItemIntegrityInfo(&m_SiegeKitItemInteg, "SiegeKitItem", ".\\Initialize\\IndexInteg\\SiegeKitItem.ini");
+  LoadItemIntegrityInfo(&m_BulletItemInteg, "BulletItem", ".\\Initialize\\IndexInteg\\BulletItem.ini");
+  LoadItemIntegrityInfo(&m_UpperItemInteg, "UpperItem", ".\\Initialize\\IndexInteg\\UpperItem.ini");
+  LoadItemIntegrityInfo(&m_LowerItemInteg, "LowerItem", ".\\Initialize\\IndexInteg\\LowerItem.ini");
+  LoadItemIntegrityInfo(&m_GauntletItemInteg, "GauntletItem", ".\\Initialize\\IndexInteg\\GauntletItem.ini");
+  LoadItemIntegrityInfo(&m_ShoeItemInteg, "ShoeItem", ".\\Initialize\\IndexInteg\\ShoeItem.ini");
+  LoadItemIntegrityInfo(&m_HelmetItemInteg, "HelmetItem", ".\\Initialize\\IndexInteg\\HelmetItem.ini");
+  LoadItemIntegrityInfo(&m_ShieldItemInteg, "shielDItem", ".\\Initialize\\IndexInteg\\shielDItem.ini");
+  LoadItemIntegrityInfo(&m_BoxItemInteg, "BoxItem", ".\\Initialize\\IndexInteg\\BoxItem.ini");
+  LoadItemIntegrityInfo(&m_AmuletItemInteg, "AmuletItem", ".\\Initialize\\IndexInteg\\AmuletItem.ini");
+  LoadItemIntegrityInfo(&m_RingItemInteg, "rIngItem", ".\\Initialize\\IndexInteg\\rIngItem.ini");
+  LoadItemIntegrityInfo(&m_PotionItemInteg, "PotionItem", ".\\Initialize\\IndexInteg\\PotionItem.ini");
+}
+
+void CMainThread::LoadItemIntegrityInfo(_ITEM_INTEGRITY_INFO *pInfo, const char *pszSection, const char *pszPath)
+{
+  pInfo->Init();
+  pInfo->m_nCount = static_cast<int>(GetPrivateProfileIntA(pszSection, "Count", 0, pszPath));
+  if (pInfo->m_nCount > _ITEM_INTEGRITY_INFO::kMaxEntries)
+  {
+    pInfo->m_nCount = _ITEM_INTEGRITY_INFO::kMaxEntries;
+  }
+
+  char keyName[48]{};
+  char beforeString[10]{};
+  char changedString[10]{};
+  for (int index = 0; index < pInfo->m_nCount; ++index)
+  {
+    std::memset(keyName, 0, sizeof(keyName));
+    std::memset(beforeString, 0, sizeof(beforeString));
+    std::sprintf(keyName, "Before%d", index);
+    GetPrivateProfileStringA(
+      pszSection,
+      keyName,
+      "-1",
+      beforeString,
+      static_cast<DWORD>(sizeof(beforeString)),
+      pszPath);
+    pInfo->m_nBeforeIndex[index] = std::atoi(beforeString);
+
+    std::memset(keyName, 0, sizeof(keyName));
+    std::memset(changedString, 0, sizeof(changedString));
+    std::sprintf(keyName, "Change%d", index);
+    GetPrivateProfileStringA(
+      pszSection,
+      keyName,
+      "-1",
+      changedString,
+      static_cast<DWORD>(sizeof(changedString)),
+      pszPath);
+    pInfo->m_nChangedIndex[index] = std::atoi(changedString);
+  }
 }
 
 bool CMainThread::CheckDefine()

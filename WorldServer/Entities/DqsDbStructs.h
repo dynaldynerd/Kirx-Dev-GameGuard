@@ -220,6 +220,7 @@ struct _worlddb_trunk_info
   __trunk_key trunkKey[100];
   unsigned __int8 byExtSlotNum;
   __trunk_key ExttrunkKey[40];
+  unsigned __int8 byTrunkInteg;
 };
 
 struct _worlddb_trade_info

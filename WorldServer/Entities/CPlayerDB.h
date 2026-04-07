@@ -126,10 +126,12 @@ public:
   unsigned __int8 m_byTrunkHintIndex;
   char m_wszTrunkHintAnswer[17];
   unsigned __int8 m_byExtTrunkSlotNum;
+  unsigned __int8 m_byTrunkInteg;
   int m_nMakeTrapMaxNum;
   long double m_dPvpPointLeak;
   unsigned __int64 m_dwGuildEntryDelay;
   bool m_bLastAttBuff;
+  unsigned __int8 m_byPlayerInteg;
   unsigned __int16 m_wSerialCount;
   CPlayer *m_pThis;
   char m_aszName[17];

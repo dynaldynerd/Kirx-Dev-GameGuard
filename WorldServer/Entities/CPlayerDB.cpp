@@ -711,8 +711,10 @@ void CPlayerDB::InitPlayerDB(CPlayer *pThis)
   }
   m_PostStorage.Init();
   m_ReturnPostStorage.Init();
+  m_byTrunkInteg = 0;
   m_dPvpPointLeak = 0.0;
   m_dwGuildEntryDelay = 0;
+  m_byPlayerInteg = 0;
 }
 
 bool CPlayerDB::ConvertAvatorDB(_AVATOR_DATA *pData)
@@ -1113,6 +1115,8 @@ bool CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
   this->m_byTrunkHintIndex = pData->dbTrunk.byHintIndex;
   std::strcpy(this->m_wszTrunkHintAnswer, pData->dbTrunk.wszHintAnswer);
   this->m_byTrunkSlotNum = pData->dbTrunk.bySlotNum;
+  this->m_byTrunkInteg = pData->dbTrunk.byTrunkInteg;
+  pOutData->dbTrunk.byTrunkInteg = pData->dbTrunk.byTrunkInteg;
 
   for (int index = 0; index < this->m_byTrunkSlotNum; ++index)
   {
@@ -1287,6 +1291,8 @@ bool CPlayerDB::ConvertGeneralDB(_AVATOR_DATA *pData, _AVATOR_DATA *pOutData)
 
   this->m_dPvpPointLeak = pData->dbSupplement.dPvpPointLeak;
   this->m_dwGuildEntryDelay = pData->dbSupplement.dwGuildEntryDelay;
+  this->m_byPlayerInteg = pData->dbSupplement.byPlayerInteg;
+  pOutData->dbSupplement.byPlayerInteg = pData->dbSupplement.byPlayerInteg;
   return true;
 }
 

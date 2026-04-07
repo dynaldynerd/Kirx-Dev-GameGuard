@@ -770,6 +770,7 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
   pDbSupplement->dwBufPotionEndTime = supplementInfo.dwBufPotionEndTime;
   pDbSupplement->dwRaceBuffClear = supplementInfo.dwRaceBuffClear;
   pDbSupplement->dwGuildEntryDelay = supplementInfo.dwGuildEntryDelay;
+  pDbSupplement->byPlayerInteg = supplementInfo.byPlayerInteg;
   if ( this->m_pWorldDB->Select_Supplement_Ex(dwSerial, &supplementInfo) )
     return 24;
   pDbSupplement->byVoted = supplementInfo.byVoted;
@@ -899,6 +900,7 @@ unsigned __int8 CMainThread::_db_Load_Trunk(
       pTrunk->m_List[slotIndex].lnUID = trunkData.trunkKey[slotIndex].lnUID;
     }
   }
+  pTrunk->byTrunkInteg = trunkData.byTrunkInteg;
   trunkExtendResult = this->m_pWorldDB->Select_AccountTrunkExtend(dwAccountSerial, &trunkData);
   if ( trunkExtendResult == 1 )
     return 24;
