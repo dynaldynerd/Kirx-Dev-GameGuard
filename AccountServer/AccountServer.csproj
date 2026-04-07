@@ -42,8 +42,11 @@
     <EmbeddedResource Include="scheme\RF_User_mssql.sql">
       <LogicalName>AccountServer.Schemas.RF_User_mssql.sql</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="scheme\RF_World_mssql.sql">
-      <LogicalName>AccountServer.Schemas.RF_World_mssql.sql</LogicalName>
+    <EmbeddedResource Include="scheme\RF_World2232_mssql.sql">
+      <LogicalName>AccountServer.Schemas.RF_World2232_mssql.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="scheme\RF_WorldAOP415_mssql.sql">
+      <LogicalName>AccountServer.Schemas.RF_WorldAOP415_mssql.sql</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="scheme\RF_User_mariadb.sql">
       <LogicalName>AccountServer.Schemas.RF_User_mariadb.sql</LogicalName>

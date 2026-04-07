@@ -17,6 +17,7 @@ namespace AccountServer
         public WorldDatabaseInstallForm(string databaseName, string? serverAddress = null, bool trustedConnection = true)
         {
             InitializeComponent();
+            BindSchemaOptions();
             BindCountryOptions();
             _databaseName = databaseName;
             txtDatabaseName.Text = databaseName;
@@ -27,12 +28,26 @@ namespace AccountServer
             UpdateCredentialUi();
         }
 
+        private void BindSchemaOptions()
+        {
+            cmbSchema.DisplayMember = nameof(WorldDatabaseSchemaOption.DisplayName);
+            cmbSchema.ValueMember = nameof(WorldDatabaseSchemaOption.Key);
+            cmbSchema.DataSource = WorldDatabaseSchemaOptions.All;
+            cmbSchema.SelectedItem = WorldDatabaseSchemaOptions.Default;
+        }
+
         private void BindCountryOptions()
         {
             cmbCountry.DisplayMember = nameof(WorldDatabaseCollationOption.DisplayName);
             cmbCountry.ValueMember = nameof(WorldDatabaseCollationOption.Key);
             cmbCountry.DataSource = WorldDatabaseCollationOptions.All;
             cmbCountry.SelectedItem = WorldDatabaseCollationOptions.Default;
+        }
+
+        private WorldDatabaseSchemaOption GetSelectedSchemaOption()
+        {
+            return cmbSchema.SelectedItem as WorldDatabaseSchemaOption
+                ?? WorldDatabaseSchemaOptions.Default;
         }
 
         private WorldDatabaseCollationOption GetSelectedCollationOption()
@@ -117,7 +132,8 @@ namespace AccountServer
 
         private async Task<bool> InstallWorldDatabaseAsync()
         {
-            string script = await EmbeddedSqlScripts.LoadTextAsync("AccountServer.Schemas.RF_World_mssql.sql").ConfigureAwait(true);
+            WorldDatabaseSchemaOption schemaOption = GetSelectedSchemaOption();
+            string script = await EmbeddedSqlScripts.LoadTextAsync(schemaOption.ResourceName).ConfigureAwait(true);
             script = RewriteInstallScriptDatabaseName(script, DefaultDatabaseName, _databaseName);
             WorldDatabaseCollationOption collationOption = GetSelectedCollationOption();
             script = RewriteInstallScriptCollation(script, collationOption.SqlServerCollation);
@@ -137,6 +153,7 @@ namespace AccountServer
                     string prompt =
                         $"The world database '{_databaseName}' already exists.\n\n" +
                         "Reinstalling will delete the existing database and create it again from the bundled RF_World schema.\n\n" +
+                        $"Selected schema: {schemaOption.Summary}\n" +
                         $"Selected country: {collationOption.Summary}\n\n" +
                         "Do you want to continue?";
 

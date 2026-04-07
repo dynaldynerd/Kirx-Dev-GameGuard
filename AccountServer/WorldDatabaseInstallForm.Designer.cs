@@ -12,6 +12,8 @@ namespace AccountServer
         private Label lblTitle = null!;
         private Label lblDatabaseName = null!;
         private TextBox txtDatabaseName = null!;
+        private Label lblSchema = null!;
+        private ComboBox cmbSchema = null!;
         private Label lblCountry = null!;
         private ComboBox cmbCountry = null!;
         private Label lblServerAddress = null!;
@@ -40,6 +42,8 @@ namespace AccountServer
             lblTitle = new Label();
             lblDatabaseName = new Label();
             txtDatabaseName = new TextBox();
+            lblSchema = new Label();
+            cmbSchema = new ComboBox();
             lblCountry = new Label();
             cmbCountry = new ComboBox();
             lblServerAddress = new Label();
@@ -82,47 +86,65 @@ namespace AccountServer
             txtDatabaseName.Size = new Size(239, 23);
             txtDatabaseName.TabIndex = 2;
             // 
+            // lblSchema
+            // 
+            lblSchema.AutoSize = true;
+            lblSchema.Location = new Point(16, 82);
+            lblSchema.Name = "lblSchema";
+            lblSchema.Size = new Size(87, 15);
+            lblSchema.TabIndex = 3;
+            lblSchema.Text = "Schema Version";
+            // 
+            // cmbSchema
+            // 
+            cmbSchema.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbSchema.FormattingEnabled = true;
+            cmbSchema.Location = new Point(129, 79);
+            cmbSchema.Name = "cmbSchema";
+            cmbSchema.Size = new Size(239, 23);
+            cmbSchema.TabIndex = 4;
+            // 
             // lblCountry
             // 
             lblCountry.AutoSize = true;
-            lblCountry.Location = new Point(16, 82);
+            lblCountry.Location = new Point(16, 114);
             lblCountry.Name = "lblCountry";
             lblCountry.Size = new Size(47, 15);
-            lblCountry.TabIndex = 3;
+            lblCountry.TabIndex = 5;
             lblCountry.Text = "Country";
             // 
             // cmbCountry
             // 
             cmbCountry.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbCountry.FormattingEnabled = true;
-            cmbCountry.Location = new Point(129, 79);
+            cmbCountry.Location = new Point(129, 111);
             cmbCountry.Name = "cmbCountry";
             cmbCountry.Size = new Size(239, 23);
-            cmbCountry.TabIndex = 4;
+            cmbCountry.TabIndex = 6;
             // 
             // lblServerAddress
             // 
             lblServerAddress.AutoSize = true;
-            lblServerAddress.Location = new Point(16, 114);
+            lblServerAddress.Location = new Point(16, 146);
             lblServerAddress.Name = "lblServerAddress";
             lblServerAddress.Size = new Size(82, 15);
-            lblServerAddress.TabIndex = 5;
+            lblServerAddress.TabIndex = 7;
             lblServerAddress.Text = "Server Address";
             // 
             // txtServerAddress
             // 
-            txtServerAddress.Location = new Point(129, 111);
+            txtServerAddress.Location = new Point(129, 143);
             txtServerAddress.Name = "txtServerAddress";
             txtServerAddress.Size = new Size(239, 23);
-            txtServerAddress.TabIndex = 6;
+            txtServerAddress.TabIndex = 8;
             // 
             // chkTrustedConnection
             // 
             chkTrustedConnection.AutoSize = true;
-            chkTrustedConnection.Location = new Point(129, 143);
+            chkTrustedConnection.Location = new Point(129, 175);
             chkTrustedConnection.Name = "chkTrustedConnection";
             chkTrustedConnection.Size = new Size(124, 19);
-            chkTrustedConnection.TabIndex = 7;
+            chkTrustedConnection.TabIndex = 9;
             chkTrustedConnection.Text = "Trusted Connection";
             chkTrustedConnection.UseVisualStyleBackColor = true;
             chkTrustedConnection.CheckedChanged += TrustedConnectionChanged;
@@ -130,35 +152,35 @@ namespace AccountServer
             // lblUsername
             // 
             lblUsername.AutoSize = true;
-            lblUsername.Location = new Point(16, 174);
+            lblUsername.Location = new Point(16, 206);
             lblUsername.Name = "lblUsername";
             lblUsername.Size = new Size(60, 15);
-            lblUsername.TabIndex = 8;
+            lblUsername.TabIndex = 10;
             lblUsername.Text = "Username";
             // 
             // txtUsername
             // 
-            txtUsername.Location = new Point(129, 171);
+            txtUsername.Location = new Point(129, 203);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(239, 23);
-            txtUsername.TabIndex = 9;
+            txtUsername.TabIndex = 11;
             // 
             // lblPassword
             // 
             lblPassword.AutoSize = true;
-            lblPassword.Location = new Point(16, 203);
+            lblPassword.Location = new Point(16, 235);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new Size(57, 15);
-            lblPassword.TabIndex = 10;
+            lblPassword.TabIndex = 12;
             lblPassword.Text = "Password";
             // 
             // txtPassword
             // 
-            txtPassword.Location = new Point(129, 200);
+            txtPassword.Location = new Point(129, 232);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '*';
             txtPassword.Size = new Size(239, 23);
-            txtPassword.TabIndex = 11;
+            txtPassword.TabIndex = 13;
             // 
             // panelButtons
             // 
@@ -166,11 +188,11 @@ namespace AccountServer
             panelButtons.Controls.Add(btnCancel);
             panelButtons.Dock = DockStyle.Bottom;
             panelButtons.FlowDirection = FlowDirection.RightToLeft;
-            panelButtons.Location = new Point(0, 243);
+            panelButtons.Location = new Point(0, 275);
             panelButtons.Name = "panelButtons";
             panelButtons.Padding = new Padding(10);
             panelButtons.Size = new Size(384, 50);
-            panelButtons.TabIndex = 12;
+            panelButtons.TabIndex = 14;
             // 
             // btnInstall
             // 
@@ -200,7 +222,7 @@ namespace AccountServer
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCancel;
-            ClientSize = new Size(384, 293);
+            ClientSize = new Size(384, 325);
             Controls.Add(panelButtons);
             Controls.Add(txtPassword);
             Controls.Add(lblPassword);
@@ -211,6 +233,8 @@ namespace AccountServer
             Controls.Add(lblServerAddress);
             Controls.Add(cmbCountry);
             Controls.Add(lblCountry);
+            Controls.Add(cmbSchema);
+            Controls.Add(lblSchema);
             Controls.Add(txtDatabaseName);
             Controls.Add(lblDatabaseName);
             Controls.Add(lblTitle);
