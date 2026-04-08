@@ -6,6 +6,6 @@
 #pragma pack(push, 1)
 struct  _NameTxt_fld : _base_fld
 {
-  char m_NameTag[11][64];
+  char m_NameTag[9][64];
 };
 #pragma pack(pop)

@@ -88,7 +88,7 @@ bool CPotionMgr::SetPotionDataName()
 
   char errMsg[160]{};
   CRecordData potionEffectNames;
-  if (!potionEffectNames.ReadRecord(".\\script\\PotionItemEffect_str.dat", 772, errMsg))
+  if (!potionEffectNames.ReadRecord(".\\script\\PotionItemEffect_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("CPotionMgr::SetPotionDataName()", "PotionItemEffect Name Data Load Error, ErrorMsg(%s)", errMsg);
     return false;
@@ -117,7 +117,7 @@ bool CPotionMgr::SetPotionDataName()
   }
 
   CRecordData checkEffectNames;
-  if (!checkEffectNames.ReadRecord(".\\script\\CheckPotionEffect_str.dat", 772, errMsg))
+  if (!checkEffectNames.ReadRecord(".\\script\\CheckPotionEffect_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox(
       "CPotionMgr::SetPotionDataName()",
