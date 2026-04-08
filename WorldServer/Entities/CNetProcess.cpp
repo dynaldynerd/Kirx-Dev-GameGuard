@@ -1054,22 +1054,6 @@ int CNetProcess::LoadSendMsg(
   const int left = static_cast<int>(sendBuffer->GetLeftLoadSize());
   if (static_cast<unsigned int>(Src[0]) + left > sendBuffer->m_nMaxSize)
   {
-    const unsigned int queued = left > 0 ? static_cast<unsigned int>(left) : 0;
-    const unsigned int freeSize = queued < sendBuffer->m_nMaxSize ? sendBuffer->m_nMaxSize - queued : 0;
-    m_LogFile[2].Write(
-      "SendQueueOverflow ID(%s) Type(%u,%u) Len(%u) Packet(%u) Queued(%u) Free(%u) Max(%u) Pop(%u/%u) Push(%u/%u)",
-      Socket->m_szID,
-      pbyType[0],
-      pbyType[1],
-      nLen,
-      static_cast<unsigned int>(Src[0]),
-      queued,
-      freeSize,
-      sendBuffer->m_nMaxSize,
-      sendBuffer->m_dwPopRot,
-      sendBuffer->m_dwPopPnt,
-      sendBuffer->m_dwPushRot,
-      sendBuffer->m_dwPushPnt);
     m_pNetwork->ExpulsionSocket(m_nIndex, dwClientIndex, 3, nullptr);
     return 0;
   }
