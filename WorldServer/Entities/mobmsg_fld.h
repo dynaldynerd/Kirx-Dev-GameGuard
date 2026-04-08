@@ -7,6 +7,6 @@
 struct  _mobmsg_fld : _base_fld
 {
   int m_nUsingNum;
-  char m_strMobMessage[110][2560];
+  char m_strMobMessage[90][2560];
 };
 #pragma pack(pop)

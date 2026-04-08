@@ -2575,7 +2575,7 @@ char CMainThread::DataFileInit()
   }
 
   CRecordData mobMessage;
-  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", 281672, szErrCode))
+  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", 230472, szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
