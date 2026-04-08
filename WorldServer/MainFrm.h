@@ -31,6 +31,7 @@ protected:
     afx_msg void OnDestroy();
     afx_msg void OnPaint();
     afx_msg void OnSettingsDatabase();
+    afx_msg void OnSettingsChangeServerName();
     afx_msg void OnSettingsAutostart();
     afx_msg void OnUpdateSettingsAutostart(CCmdUI *pCmdUI);
 

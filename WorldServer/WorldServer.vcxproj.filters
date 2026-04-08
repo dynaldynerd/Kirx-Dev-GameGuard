@@ -1229,6 +1229,9 @@
     <ClInclude Include="Entities\DatabaseSetupDlg.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\ServerNameDlg.h">
+      <Filter>Header Files\Infrastructure</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\CObjectSearchDlg.h">
       <Filter>Header Files\Infrastructure</Filter>
     </ClInclude>
@@ -3484,6 +3487,9 @@
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\DatabaseSetupDlg.cpp">
+      <Filter>Source Files\Infrastructure</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\ServerNameDlg.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CObjectSearchDlg.cpp">

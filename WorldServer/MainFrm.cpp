@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "Entities/DatabaseSetupDlg.h"
+#include "Entities/ServerNameDlg.h"
 #include "Entities/CGameServerDoc.h"
 #include "Entities/CMainThread.h"
 #include "Entities/CMapDisplay.h"
@@ -57,6 +58,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
   ON_WM_DESTROY()
   ON_WM_PAINT()
   ON_COMMAND(ID_SETTINGS_DATABASE, &CMainFrame::OnSettingsDatabase)
+  ON_COMMAND(ID_SETTINGS_CHANGE_SERVER_NAME, &CMainFrame::OnSettingsChangeServerName)
   ON_COMMAND(ID_SETTINGS_AUTOSTART, &CMainFrame::OnSettingsAutostart)
   ON_UPDATE_COMMAND_UI(ID_SETTINGS_AUTOSTART, &CMainFrame::OnUpdateSettingsAutostart)
 END_MESSAGE_MAP()
@@ -231,6 +233,17 @@ void CMainFrame::OnSettingsDatabase()
   {
     AfxMessageBox(L"Setup files updated. Restart WorldServer for the changes to take effect.");
   }
+}
+
+void CMainFrame::OnSettingsChangeServerName()
+{
+  CServerNameDlg dialog(this);
+  if (dialog.DoModal() != IDOK)
+  {
+    return;
+  }
+
+  AfxMessageBox(L"Server name saved to WorldInfo.ini. Restart WorldServer for the change to take effect.");
 }
 
 void CMainFrame::OnSettingsAutostart()
