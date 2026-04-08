@@ -1054,6 +1054,22 @@ int CNetProcess::LoadSendMsg(
   const int left = static_cast<int>(sendBuffer->GetLeftLoadSize());
   if (static_cast<unsigned int>(Src[0]) + left > sendBuffer->m_nMaxSize)
   {
+    const unsigned int queued = left > 0 ? static_cast<unsigned int>(left) : 0;
+    const unsigned int freeSize = queued < sendBuffer->m_nMaxSize ? sendBuffer->m_nMaxSize - queued : 0;
+    m_LogFile[2].Write(
+      "SendQueueOverflow ID(%s) Type(%u,%u) Len(%u) Packet(%u) Queued(%u) Free(%u) Max(%u) Pop(%u/%u) Push(%u/%u)",
+      Socket->m_szID,
+      pbyType[0],
+      pbyType[1],
+      nLen,
+      static_cast<unsigned int>(Src[0]),
+      queued,
+      freeSize,
+      sendBuffer->m_nMaxSize,
+      sendBuffer->m_dwPopRot,
+      sendBuffer->m_dwPopPnt,
+      sendBuffer->m_dwPushRot,
+      sendBuffer->m_dwPushPnt);
     m_pNetwork->ExpulsionSocket(m_nIndex, dwClientIndex, 3, nullptr);
     return 0;
   }
@@ -2138,6 +2154,21 @@ void CNetProcess::_SendLoop(unsigned int n)
     }
     else if (ret == 10035)
     {
+      if (socket->m_bSendable)
+      {
+        const int queued = sendBuffer->GetLeftLoadSize();
+        const unsigned int queuedSize = queued > 0 ? static_cast<unsigned int>(queued) : 0;
+        const unsigned int freeSize = queuedSize < sendBuffer->m_nMaxSize ? sendBuffer->m_nMaxSize - queuedSize : 0;
+        m_LogFile[2].Write(
+          "SendWouldBlock ID(%s) Sock(%u) Ret(%d) SendSize(%u) Queued(%u) Free(%u) Max(%u)",
+          socket->m_szID,
+          n,
+          ret,
+          static_cast<unsigned int>(sendSize),
+          queuedSize,
+          freeSize,
+          sendBuffer->m_nMaxSize);
+      }
       socket->m_bSendable = false;
       socket->m_dwSendBlockTime = timeGetTime();
     }
@@ -2525,6 +2556,18 @@ void CNetProcess::SendThread(void *pv)
         {
           continue;
         }
+        _NET_BUFFER *sendBuffer = &process->m_pSendBuffer[dwIndex];
+        const int queued = sendBuffer->GetLeftLoadSize();
+        const unsigned int queuedSize = queued > 0 ? static_cast<unsigned int>(queued) : 0;
+        const unsigned int freeSize = queuedSize < sendBuffer->m_nMaxSize ? sendBuffer->m_nMaxSize - queuedSize : 0;
+        process->m_LogFile[2].Write(
+          "SendUnblock ID(%s) Sock(%u) BlockMs(%u) Queued(%u) Free(%u) Max(%u)",
+          socket->m_szID,
+          dwIndex,
+          elapsed,
+          queuedSize,
+          freeSize,
+          sendBuffer->m_nMaxSize);
         socket->m_bSendable = true;
       }
 
