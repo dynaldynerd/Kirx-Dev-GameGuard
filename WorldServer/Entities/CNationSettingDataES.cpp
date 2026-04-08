@@ -6,5 +6,5 @@
 
 int CNationSettingDataES::GetCashItemPrice(_CashShop_str_fld *pFld)
 {
-  return pFld->m_nspa_Price;
+  return pFld->m_ntpe_Price;
 }

@@ -15,7 +15,5 @@ struct  _CashShop_str_fld : _base_fld
   int m_nphi_Price;
   int m_nrus_Price;
   int m_ntpe_Price;
-  int m_nspa_Price;
-  int m_ntha_Price;
 };
 #pragma pack(pop)

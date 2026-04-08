@@ -1966,7 +1966,10 @@ bool CashItemRemoteStore::LoadNationalPrice(CRecordData *krecPrice)
 {
   char errorMessage[144];
   std::memset(errorMessage, 0, 128);
-  if (krecPrice->ReadRecord(".\\script\\CashShop_str.dat", 112, errorMessage))
+  if (krecPrice->ReadRecord(
+        ".\\script\\CashShop_str.dat",
+        static_cast<int>(sizeof(_CashShop_str_fld)),
+        errorMessage))
   {
     return true;
   }
