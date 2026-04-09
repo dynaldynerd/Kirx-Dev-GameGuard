@@ -8,6 +8,7 @@ struct  _npc_fld : _base_fld
 {
   char m_strName[64];
   int m_nRace;
+  int m_bWarType;
   float m_fTarDecType;
   float m_fLevel;
   float m_fExt;
