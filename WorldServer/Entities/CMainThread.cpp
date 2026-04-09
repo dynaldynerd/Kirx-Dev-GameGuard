@@ -2428,7 +2428,7 @@ char CMainThread::DataFileInit()
   }
 
   CRecordData mobMessage;
-  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", 281672, szErrCode))
+  if (!mobMessage.ReadRecord(".\\Script\\MobMessage_str.dat", static_cast<int>(sizeof(_mobmsg_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2640,7 +2640,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData itemNameTables[37];
   for (int j = 0; j < 37; ++j)
   {
-    if (!itemNameTables[j].ReadRecord(itemNameFiles[j], 772, errMsg))
+    if (!itemNameTables[j].ReadRecord(itemNameFiles[j], static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -2810,7 +2810,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData effectNameTables[4];
   for (int j = 0; j < 4; ++j)
   {
-    if (!effectNameTables[j].ReadRecord(effectNameFiles[j], 772, errMsg))
+    if (!effectNameTables[j].ReadRecord(effectNameFiles[j], static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -2868,7 +2868,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData classNames;
-  if (!classNames.ReadRecord(".\\Script\\Class_str.dat", 772, errMsg))
+  if (!classNames.ReadRecord(".\\Script\\Class_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Class Name Data Load Error");
     return false;
@@ -2903,7 +2903,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData playerNames;
-  if (!playerNames.ReadRecord(".\\Script\\PlayerCharacter_str.dat", 772, errMsg))
+  if (!playerNames.ReadRecord(".\\Script\\PlayerCharacter_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Player Character Name Data Load Error");
     return false;
@@ -2938,7 +2938,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData monsterNames;
-  if (!monsterNames.ReadRecord(".\\Script\\MonsterCharacter_str.dat", 772, errMsg))
+  if (!monsterNames.ReadRecord(".\\Script\\MonsterCharacter_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Monster Character Name Data Load Error");
     return false;
@@ -2973,7 +2973,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData npcNames;
-  if (!npcNames.ReadRecord(".\\Script\\NPCharacter_str.dat", 772, errMsg))
+  if (!npcNames.ReadRecord(".\\Script\\NPCharacter_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "NPC Name Data Load Error");
     return false;
@@ -3008,7 +3008,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData animusNames;
-  if (!animusNames.ReadRecord(".\\Script\\AnimusItem_str.dat", 772, errMsg))
+  if (!animusNames.ReadRecord(".\\Script\\AnimusItem_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Animus Item Name Data Load Error");
     return false;
@@ -3049,7 +3049,7 @@ bool CMainThread::SetGlobalDataName()
   CRecordData unitPartNames[6];
   for (int j = 0; j < 6; ++j)
   {
-    if (!unitPartNames[j].ReadRecord(unitPartFiles[j], 772, errMsg))
+    if (!unitPartNames[j].ReadRecord(unitPartFiles[j], static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
     {
       MyMessageBox(
         "SetGlobalDataName()",
@@ -3103,7 +3103,7 @@ bool CMainThread::SetGlobalDataName()
   }
 
   CRecordData unitBulletNames;
-  if (!unitBulletNames.ReadRecord(".\\Script\\UnitBullet_str.dat", 772, errMsg))
+  if (!unitBulletNames.ReadRecord(".\\Script\\UnitBullet_str.dat", static_cast<int>(sizeof(_NameTxt_fld)), errMsg))
   {
     MyMessageBox("SetGlobalDataName()", "Unit Bullet Name Data Load Error");
     return false;
