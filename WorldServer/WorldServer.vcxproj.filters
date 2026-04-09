@@ -803,6 +803,9 @@
     <ClInclude Include="Entities\CHackShieldExSystem.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\CCSAuth3.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\character_disconnect_result_wrac.h">
       <Filter>Header Files\Packets\WorldAccount</Filter>
     </ClInclude>
@@ -1884,6 +1887,12 @@
       <Filter>Header Files\Packets\ClientZone</Filter>
     </ClInclude>
     <ClInclude Include="Entities\HACKSHEILD_PARAM_ANTICP.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\CnProtectSystem.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\NPROTECT_PARAM_VER_30.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
     <ClInclude Include="Entities\AHNHS_TRANS_BUFFER.h">
@@ -3099,6 +3108,9 @@
     <ClCompile Include="Entities\CHackShieldExSystem.cpp">
       <Filter>Source Files\Security</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\CCSAuth3.cpp">
+      <Filter>Source Files\Security</Filter>
+    </ClCompile>
     <ClCompile Include="Entities\CHashMapPtrPool.cpp">
       <Filter>Source Files\Infrastructure</Filter>
     </ClCompile>
@@ -3461,6 +3473,9 @@
     </ClCompile>
     <ClCompile Include="Entities\CNationSettingManager.cpp">
       <Filter>Source Files\Nation</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\CnProtectSystem.cpp">
+      <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\CNetCriticalSection.cpp">
       <Filter>Source Files\Network</Filter>
@@ -3986,6 +4001,9 @@
     </ClCompile>
     <ClCompile Include="Entities\INationGameGuardSystem.cpp">
       <Filter>Source Files\Nation</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\NPROTECT_PARAM_VER_30.cpp">
+      <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\insert_next_quest_inform_zocl.cpp">
       <Filter>Source Files\Packets\ZoneClient</Filter>

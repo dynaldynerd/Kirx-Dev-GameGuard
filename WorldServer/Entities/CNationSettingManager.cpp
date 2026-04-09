@@ -5,6 +5,8 @@
 #include "CNationSettingData.h"
 #include "CNationSettingDataNULL.h"
 #include "CNationSettingFactoryGroup.h"
+#include "CHackShieldExSystem.h"
+#include "CnProtectSystem.h"
 #include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
 
@@ -46,6 +48,40 @@ int CNationSettingManager::Init(int nationCode, const char *nationCodeStr, bool 
   if (m_pData->Init())
   {
     return -3;
+  }
+
+  delete m_pData->m_pGameGuardSystem;
+  m_pData->m_pGameGuardSystem = nullptr;
+
+  const int gameGuardType = GetPrivateProfileIntA("GameGuard", "Type", 0, ".\\Initialize\\GameGuard.ini");
+  switch (gameGuardType)
+  {
+    case 0:
+      break;
+    case 1:
+    {
+      CHackShieldExSystem *pHackShieldExSystem = new CHackShieldExSystem();
+      if (!pHackShieldExSystem->Init<HACKSHEILD_PARAM_ANTICPX_5381>(true))
+      {
+        delete pHackShieldExSystem;
+        return -4;
+      }
+      m_pData->m_pGameGuardSystem = pHackShieldExSystem;
+      break;
+    }
+    case 2:
+    {
+      CnProtectSystem *pnProtectSystem = new CnProtectSystem();
+      if (!pnProtectSystem->Init<NPROTECT_PARAM_VER_30>(true, true))
+      {
+        delete pnProtectSystem;
+        return -4;
+      }
+      m_pData->m_pGameGuardSystem = pnProtectSystem;
+      break;
+    }
+    default:
+      return -4;
   }
 
   return 0;

@@ -1,35 +1,34 @@
 #include "pch.h"
 
-#include "WorldServerUtil.h"
-
 #include "HACKSHEILD_PARAM_ANTICP.h"
 
+#include <crtdbg.h>
 #include <cstring>
 
 #include "CAsyncLogger.h"
+#include "CHackShieldExSystem.h"
+#include "CNetProcess.h"
 #include "CUserDB.h"
-#include "GlobalObjectDefs.h"
 #include "GlobalObjects.h"
+#include "Packet/ClientZonePacket.h"
+#include "Packet/ZoneClientPacket.h"
+#include "WorldServerUtil.h"
 #include "enter_world_result_zone.h"
 
 namespace
 {
-using AntiCpMakeGuidReqMsgFn = unsigned int(__cdecl *)(void *pOutMsg, unsigned __int8 *pGuidClientInfo);
-using AntiCpMakeReqMsgFn = int(__cdecl *)(
-  _HSHIELD_CLIENT_CONTEXT *pContext,
-  void *pOutMsg,
-  unsigned __int8 *pGuidClientInfo,
-  unsigned int dwType);
-using AntiCpAnalyzeGuidAckMsgFn = unsigned int(__cdecl *)(
-  char *pMsg,
-  unsigned __int8 *pGuidClientInfo,
-  _HSHIELD_CLIENT_CONTEXT *pContext);
-using AntiCpAnalyzeAckMsgFn = unsigned int(__cdecl *)(
-  _HSHIELD_CLIENT_CONTEXT *pContext,
-  char *pMsg,
-  unsigned __int8 *pGuidClientInfo);
+using AhnHSCreateServerObjectFn = unsigned __int64(__cdecl *)(const char *hsbPath);
+using AhnHSCloseServerHandleFn = void(__cdecl *)(unsigned __int64 hServer);
+using AhnHSCreateClientObjectFn = unsigned __int64(__cdecl *)(unsigned __int64 hServer);
+using AhnHSCloseClientHandleFn = void(__cdecl *)(unsigned __int64 hClient);
+using AhnHSMakeRequestFn = unsigned int(__cdecl *)(unsigned __int64 hClient, _AHNHS_TRANS_BUFFER *pRequestBuffer);
+using AhnHSVerifyResponseExFn = unsigned int(__cdecl *)(
+  unsigned __int64 hClient,
+  const void *pResponse,
+  unsigned int nLength,
+  unsigned int *pErrorCode);
 
-HMODULE _ResolveAntiCpModule()
+HMODULE ResolveHackShieldModule()
 {
   static HMODULE s_hModule = nullptr;
   if (s_hModule)
@@ -38,22 +37,22 @@ HMODULE _ResolveAntiCpModule()
   }
 
   const char *kCandidateModules[] = {
-    "AntiCpSvr.dll",
     "EhSvc.dll",
     "HackShield.dll",
+    "HShield.dll",
+    "AntiCpSvr.dll",
   };
 
   for (const char *moduleName : kCandidateModules)
   {
-    HMODULE module = GetModuleHandleA(moduleName);
-    if (!module)
+    HMODULE hModule = GetModuleHandleA(moduleName);
+    if (!hModule)
     {
-      module = LoadLibraryA(moduleName);
+      hModule = LoadLibraryA(moduleName);
     }
-
-    if (module)
+    if (hModule)
     {
-      s_hModule = module;
+      s_hModule = hModule;
       return s_hModule;
     }
   }
@@ -61,154 +60,106 @@ HMODULE _ResolveAntiCpModule()
   return nullptr;
 }
 
-FARPROC _ResolveAntiCpProc(const char *procNameUnderscore, const char *procNameNoUnderscore)
+FARPROC ResolveHackShieldProc(const char *pszName)
 {
-  HMODULE module = _ResolveAntiCpModule();
-  if (!module)
+  HMODULE hModule = ResolveHackShieldModule();
+  if (!hModule)
   {
     return nullptr;
   }
 
-  FARPROC proc = GetProcAddress(module, procNameUnderscore);
+  FARPROC proc = GetProcAddress(hModule, pszName);
   if (proc)
   {
     return proc;
   }
 
-  return GetProcAddress(module, procNameNoUnderscore);
-}
-
-AntiCpMakeGuidReqMsgFn _ResolveMakeGuidReqMsg()
-{
-  static AntiCpMakeGuidReqMsgFn s_fn = nullptr;
-  static bool s_resolved = false;
-  if (!s_resolved)
+  if (pszName[0] == '_')
   {
-    s_resolved = true;
-    s_fn = reinterpret_cast<AntiCpMakeGuidReqMsgFn>(
-      _ResolveAntiCpProc("_AntiCpSvr_MakeGuidReqMsg", "AntiCpSvr_MakeGuidReqMsg"));
+    return GetProcAddress(hModule, pszName + 1);
   }
-  return s_fn;
-}
 
-AntiCpMakeReqMsgFn _ResolveMakeReqMsg()
-{
-  static AntiCpMakeReqMsgFn s_fn = nullptr;
-  static bool s_resolved = false;
-  if (!s_resolved)
-  {
-    s_resolved = true;
-    s_fn = reinterpret_cast<AntiCpMakeReqMsgFn>(
-      _ResolveAntiCpProc("_AntiCpSvr_MakeReqMsg", "AntiCpSvr_MakeReqMsg"));
-  }
-  return s_fn;
-}
-
-AntiCpAnalyzeGuidAckMsgFn _ResolveAnalyzeGuidAckMsg()
-{
-  static AntiCpAnalyzeGuidAckMsgFn s_fn = nullptr;
-  static bool s_resolved = false;
-  if (!s_resolved)
-  {
-    s_resolved = true;
-    s_fn = reinterpret_cast<AntiCpAnalyzeGuidAckMsgFn>(
-      _ResolveAntiCpProc("_AntiCpSvr_AnalyzeGuidAckMsg", "AntiCpSvr_AnalyzeGuidAckMsg"));
-  }
-  return s_fn;
-}
-
-AntiCpAnalyzeAckMsgFn _ResolveAnalyzeAckMsg()
-{
-  static AntiCpAnalyzeAckMsgFn s_fn = nullptr;
-  static bool s_resolved = false;
-  if (!s_resolved)
-  {
-    s_resolved = true;
-    s_fn = reinterpret_cast<AntiCpAnalyzeAckMsgFn>(
-      _ResolveAntiCpProc("_AntiCpSvr_AnalyzeAckMsg", "AntiCpSvr_AnalyzeAckMsg"));
-  }
-  return s_fn;
+  char altName[128]{};
+  altName[0] = '_';
+  strcpy_s(altName + 1, sizeof(altName) - 1, pszName);
+  return GetProcAddress(hModule, altName);
 }
 
 const char *_KickReason(unsigned __int8 byReason)
 {
-  if (byReason == 1)
-  {
-    return "KICK_REASON_CRC_ACK_DELAY";
-  }
-
   switch (byReason)
   {
-    case 2:
-      return "KICK_REASON_FIRST_GUID_INVALID";
-    case 3:
-      return "KICK_REASON_CRC_ACK_INVALID";
-    case 4:
+    case 1:
       return "KICK_REASON_NOT_HACKSHEILD_CLIENT";
+    case 2:
+      return "KICK_REASON_CREATE_FAILED_CLIENT_HANDLE";
+    case 3:
+      return "KICK_REASON_CREATE_FAILED_MAKE_REQUEST";
+    case 4:
+      return "KICK_REASON_INVALID_VERIFY_STATE";
+    case 5:
+      return "KICK_REASON_HACKING_DETECTED";
+    case 6:
+      return "KICK_REASON_ACK_DELAY";
     default:
       return "What ??? ";
   }
 }
 } // namespace
 
-HACKSHEILD_PARAM_ANTICP::HACKSHEILD_PARAM_ANTICP()
+unsigned __int64 HACKSHEILD_PARAM_ANTICPX_5381::ms_hServer = 0;
+
+HACKSHEILD_PARAM_ANTICPX_5381::HACKSHEILD_PARAM_ANTICPX_5381()
+  : m_nSocketIndex(-1), m_dwLastSyncQryTime(0), m_byVerifyState(0), m_hClient(0), m_stRequestBuf{}
 {
-  Init();
 }
 
-void HACKSHEILD_PARAM_ANTICP::Init()
+void HACKSHEILD_PARAM_ANTICPX_5381::Init()
 {
   m_nSocketIndex = -1;
   m_dwLastSyncQryTime = 0;
   m_byVerifyState = 0;
-  std::memset(&m_CrcInfo, 0, sizeof(m_CrcInfo));
-  std::memset(m_byGUIDClientInfo, 0, sizeof(m_byGUIDClientInfo));
+  m_hClient = 0;
+  std::memset(&m_stRequestBuf, 0, sizeof(m_stRequestBuf));
 }
 
-void HACKSHEILD_PARAM_ANTICP::CheckClient()
+void HACKSHEILD_PARAM_ANTICPX_5381::CheckClient(bool bFirstChecker)
 {
-  char reqPayload[160]{};
-  unsigned int reqType = (m_byVerifyState == 2) ? 15u : 1u;
-  AntiCpMakeReqMsgFn makeReqMsg = _ResolveMakeReqMsg();
-  const int reqResult = makeReqMsg ? makeReqMsg(&m_CrcInfo, reqPayload, m_byGUIDClientInfo, reqType) : -1;
-  m_dwLastSyncQryTime = GetLoopTime();
-
-  if (reqResult)
+  const unsigned int dwRet = AhnHS_MakeRequest(m_hClient, &m_stRequestBuf);
+  if (dwRet)
   {
-    CAsyncLogger *logger = CAsyncLogger::Instance();
-    logger->FormatLog(
-      CAsyncLogger::ALT_HACKSHIELD_SYSTEM_LOG,
-      "_AntiCpSvr_MakeReqMsg n(%d) Err(%u) Error!",
-      m_nSocketIndex,
-      reqResult);
+    Kick(3, dwRet);
     return;
   }
 
-  m_byVerifyState = 3;
+  m_dwLastSyncQryTime = GetLoopTime();
 
-  _hs_msg_make_crc_req_msg_zocl msg{};
-  msg.wSeq = 0;
-  std::memcpy(msg.byReqMsg, reqPayload, sizeof(msg.byReqMsg));
+  _hs_msg_req_qry_zocl send{};
+  if (bFirstChecker)
+  {
+    m_byVerifyState = 1;
+  }
+  else
+  {
+    m_byVerifyState = 3;
+  }
 
-  unsigned __int8 type[2]{};
-  type[0] = 98;
-  type[1] = 4;
+  std::memcpy(&send, &m_stRequestBuf, sizeof(send));
+  unsigned __int8 byType[2]{98, 2};
   g_Network.m_pProcess[0]->LoadSendMsg(
     m_nSocketIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+    byType,
+    reinterpret_cast<char *>(&send),
+    static_cast<unsigned __int16>(sizeof(send)));
 }
 
-void HACKSHEILD_PARAM_ANTICP::Kick(unsigned __int8 byReason, unsigned int dwRet)
+void HACKSHEILD_PARAM_ANTICPX_5381::Kick(unsigned __int8 byReason, unsigned int dwRet)
 {
-  const char *reason = _KickReason(byReason);
-  CAsyncLogger *logger = CAsyncLogger::Instance();
-  logger->FormatLog(
+  CAsyncLogger::Instance()->FormatLog(
     CAsyncLogger::ALT_HACKSHIELD_SYSTEM_LOG,
-    "HACKSHEILD_PARAM_ANTICP::Kick n(%d) Reason ( %s ), ( %u ) Kick!",
+    "HACKSHEILD_PARAM_ANTICPX_5381::Kick n(%d) Reason ( %s ), ( %u ) Kick!",
     m_nSocketIndex,
-    reason,
+    _KickReason(byReason),
     dwRet);
 
   if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
@@ -216,112 +167,92 @@ void HACKSHEILD_PARAM_ANTICP::Kick(unsigned __int8 byReason, unsigned int dwRet)
     return;
   }
 
-  CUserDB *user = &g_UserDB[m_nSocketIndex];
-  if (byReason == 4)
+  CUserDB *pUserDB = &g_UserDB[m_nSocketIndex];
+  if (byReason == 1)
   {
-    _enter_world_result_zone result{};
-    result.byResult = static_cast<unsigned __int8>(-14);
-    result.byUserGrade = 0;
-    result.bySvrType = g_Main.m_byWorldType;
+    _enter_world_result_zone send{};
+    send.byResult = static_cast<unsigned __int8>(-14);
+    send.byUserGrade = 0;
+    send.bySvrType = g_Main.m_byWorldType;
 
-    unsigned __int8 type[2]{};
-    type[0] = 1;
-    type[1] = 2;
+    unsigned __int8 byType[2]{1, 2};
     g_Network.m_pProcess[0]->LoadSendMsg(
-      user->m_idWorld.wIndex,
-      type,
-      reinterpret_cast<char *>(&result),
-      static_cast<unsigned __int16>(result.size()));
-    user->ForceCloseCommand(14, -1, true, "HackShield Kick");
-    return;
+      pUserDB->m_idWorld.wIndex,
+      byType,
+      reinterpret_cast<char *>(&send),
+      send.size());
+    pUserDB->ForceCloseCommand(14, 0xFFFFFFFF, true, "HackShield Kick");
   }
-
-  if (m_byVerifyState && user->m_bActive)
+  else if (m_byVerifyState && pUserDB->m_bActive)
   {
-    user->ForceCloseCommand(14, -1, false, "HackShield Kick");
+    pUserDB->ForceCloseCommand(14, 0xFFFFFFFF, false, "HackShield Kick");
   }
 }
 
-bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ServerCheckSum_Request(unsigned int nIndex)
+bool HACKSHEILD_PARAM_ANTICPX_5381::OnRecvSession_First_MakeRequest(int nIndex)
 {
-  Init();
-
-  char guidRequest[20]{};
-  _hs_msg_make_guid_req_msg_zocl msg{};
-  AntiCpMakeGuidReqMsgFn makeGuidReqMsg = _ResolveMakeGuidReqMsg();
-  const unsigned int ret = makeGuidReqMsg ? makeGuidReqMsg(guidRequest, m_byGUIDClientInfo) : 1u;
-  msg.wSeq = static_cast<unsigned __int16>(ret);
-  std::memcpy(msg.byGuidReqMsg, guidRequest, sizeof(msg.byGuidReqMsg));
-
-  unsigned __int8 type[2]{};
-  type[0] = 98;
-  type[1] = 2;
+  m_nSocketIndex = nIndex;
+  _hs_msg_notify_zocl send{};
+  send.byRet = 102;
+  unsigned __int8 byType[2]{98, 4};
   g_Network.m_pProcess[0]->LoadSendMsg(
-    nIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
-
-  if (ret)
-  {
-    Kick(2u, ret);
-    Init();
-    return true;
-  }
-
-  m_nSocketIndex = static_cast<int>(nIndex);
-  m_byVerifyState = 1;
+    m_nSocketIndex,
+    byType,
+    reinterpret_cast<char *>(&send),
+    static_cast<unsigned __int16>(sizeof(send)));
+  m_dwLastSyncQryTime = GetLoopTime();
+  m_byVerifyState = 4;
   return true;
 }
 
-bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg)
+bool HACKSHEILD_PARAM_ANTICPX_5381::OnRecvSession_VerifyResponse(unsigned __int64 tSize, _hs_msg_res_qry_clzo *pMsg)
 {
-  if (tSize != 342)
+  if (tSize != sizeof(_hs_msg_res_qry_clzo))
   {
     return false;
   }
-
   if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
   {
     return false;
   }
 
-  if (m_byVerifyState == 1)
+  if (m_byVerifyState == 1 || m_byVerifyState == 3)
   {
-    AntiCpAnalyzeGuidAckMsgFn analyzeGuidAckMsg = _ResolveAnalyzeGuidAckMsg();
-    const unsigned int ret = analyzeGuidAckMsg ? analyzeGuidAckMsg(pMsg + 2, m_byGUIDClientInfo, &m_CrcInfo) : 1u;
-    if (ret)
+    unsigned int dwErrorCode = 0;
+    const unsigned int dwRet = AhnHS_VerifyResponseEx(m_hClient, pMsg, pMsg->AuthKey.nLength, &dwErrorCode);
+    _hs_msg_notify_zocl send{};
+    send.byRet = static_cast<char>(dwRet);
+    if (dwRet == 101)
     {
-      Kick(2u, ret);
+      Kick(5, dwErrorCode);
+      return true;
+    }
+
+    if (m_byVerifyState == 1)
+    {
+      unsigned __int8 byType[2]{98, 4};
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        m_nSocketIndex,
+        byType,
+        reinterpret_cast<char *>(&send),
+        static_cast<unsigned __int16>(sizeof(send)));
+      m_byVerifyState = 2;
     }
     else
     {
-      _hs_msg_ack_guid_ack_msg_zocl msg{};
-      msg.wSeq = 0;
-
-      unsigned __int8 type[2]{};
-      type[0] = 98;
-      type[1] = 6;
-      g_Network.m_pProcess[0]->LoadSendMsg(
-        m_nSocketIndex,
-        type,
-        reinterpret_cast<char *>(&msg),
-        static_cast<unsigned __int16>(sizeof(msg)));
-      m_byVerifyState = 2;
+      m_byVerifyState = 4;
     }
-    return true;
   }
 
-  Kick(2u, -1);
   return true;
 }
 
-bool HACKSHEILD_PARAM_ANTICP::IsLogPass()
+bool HACKSHEILD_PARAM_ANTICPX_5381::IsLogPass()
 {
   return m_byVerifyState >= 2;
 }
 
-bool HACKSHEILD_PARAM_ANTICP::OnCheckSession_FirstVerify(int n)
+bool HACKSHEILD_PARAM_ANTICPX_5381::OnCheckSession_FirstVerify(int n)
 {
   if (IsLogPass())
   {
@@ -329,40 +260,33 @@ bool HACKSHEILD_PARAM_ANTICP::OnCheckSession_FirstVerify(int n)
   }
 
   m_nSocketIndex = n;
-  Kick(4u, 0);
+  Kick(1, 0);
   return false;
 }
 
-void HACKSHEILD_PARAM_ANTICP::OnConnect(int nIndex)
+void HACKSHEILD_PARAM_ANTICPX_5381::OnConnect(int nIndex)
 {
-  // this is not a stub
   (void)nIndex;
   Init();
+  m_hClient = AhnHS_CreateClientObject(ms_hServer);
+  _ASSERTE(m_hClient != 0);
 }
 
-void HACKSHEILD_PARAM_ANTICP::OnDisConnect()
+void HACKSHEILD_PARAM_ANTICPX_5381::OnDisConnect()
 {
-  // this is not a stub
+  if (m_hClient)
+  {
+    AhnHS_CloseClientHandle(m_hClient);
+  }
   Init();
 }
 
-void HACKSHEILD_PARAM_ANTICP::OnLoop()
+void HACKSHEILD_PARAM_ANTICPX_5381::OnLoop()
 {
-  if (m_byVerifyState == 2 || m_byVerifyState == 4)
-  {
-    if (GetLoopTime() > m_dwLastSyncQryTime + 300000)
-    {
-      CheckClient();
-    }
-  }
-  else if (m_byVerifyState == 3 && GetLoopTime() > m_dwLastSyncQryTime + 180000)
-  {
-    unsigned int currentLoopTime = GetLoopTime();
-    Kick(1u, currentLoopTime - (m_dwLastSyncQryTime + 180000));
-  }
+  // Intentional non-parity: mock HackShield never sends active challenge packets.
 }
 
-bool HACKSHEILD_PARAM_ANTICP::OnRecvSession(
+bool HACKSHEILD_PARAM_ANTICPX_5381::OnRecvSession(
   CHackShieldExSystem *mgr,
   int nIndex,
   unsigned __int8 byProtocol,
@@ -370,48 +294,67 @@ bool HACKSHEILD_PARAM_ANTICP::OnRecvSession(
   char *pMsg)
 {
   (void)mgr;
-  if (byProtocol == 1)
-  {
-    return OnRecvSession_ServerCheckSum_Request(static_cast<unsigned int>(nIndex));
-  }
-  if (byProtocol == 3)
-  {
-    return OnRecvSession_ClientCheckSum_Response(tSize, pMsg);
-  }
-  if (byProtocol == 5)
-  {
-    return OnRecvSession_ClientCrc_Response(tSize, pMsg);
-  }
-  return false;
+  (void)byProtocol;
+  (void)tSize;
+  (void)pMsg;
+
+  // Intentional non-parity: mock HackShield accepts any client packet and returns success notify.
+  m_nSocketIndex = nIndex;
+  _hs_msg_notify_zocl send{};
+  send.byRet = 102;
+  unsigned __int8 byType[2]{98, 4};
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_nSocketIndex,
+    byType,
+    reinterpret_cast<char *>(&send),
+    static_cast<unsigned __int16>(sizeof(send)));
+  m_dwLastSyncQryTime = GetLoopTime();
+  m_byVerifyState = 4;
+  return true;
 }
 
-bool HACKSHEILD_PARAM_ANTICP::OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg)
+unsigned __int64 AhnHS_CreateServerObject(const char *hsbPath)
 {
-  if (tSize != 74)
-  {
-    return false;
-  }
+  static auto fn = reinterpret_cast<AhnHSCreateServerObjectFn>(ResolveHackShieldProc("_AhnHS_CreateServerObject"));
+  return fn ? fn(hsbPath) : 0;
+}
 
-  if (m_nSocketIndex < 0 || m_nSocketIndex >= MAX_PLAYER)
+void AhnHS_CloseServerHandle(unsigned __int64 hServer)
+{
+  static auto fn = reinterpret_cast<AhnHSCloseServerHandleFn>(ResolveHackShieldProc("_AhnHS_CloseServerHandle"));
+  if (fn && hServer)
   {
-    return false;
+    fn(hServer);
   }
+}
 
-  if (m_byVerifyState == 3)
+unsigned __int64 AhnHS_CreateClientObject(unsigned __int64 hServer)
+{
+  static auto fn = reinterpret_cast<AhnHSCreateClientObjectFn>(ResolveHackShieldProc("_AhnHS_CreateClientObject"));
+  return fn ? fn(hServer) : 0;
+}
+
+void AhnHS_CloseClientHandle(unsigned __int64 hClient)
+{
+  static auto fn = reinterpret_cast<AhnHSCloseClientHandleFn>(ResolveHackShieldProc("_AhnHS_CloseClientHandle"));
+  if (fn && hClient)
   {
-    AntiCpAnalyzeAckMsgFn analyzeAckMsg = _ResolveAnalyzeAckMsg();
-    const unsigned int ret = analyzeAckMsg ? analyzeAckMsg(&m_CrcInfo, pMsg + 2, m_byGUIDClientInfo) : 1u;
-    if (ret)
-    {
-      Kick(3u, ret);
-    }
-    else
-    {
-      m_byVerifyState = 4;
-    }
-    return true;
+    fn(hClient);
   }
+}
 
-  Kick(3u, -1);
-  return true;
+unsigned int AhnHS_MakeRequest(unsigned __int64 hClient, _AHNHS_TRANS_BUFFER *pRequestBuffer)
+{
+  static auto fn = reinterpret_cast<AhnHSMakeRequestFn>(ResolveHackShieldProc("_AhnHS_MakeRequest"));
+  return fn ? fn(hClient, pRequestBuffer) : 1;
+}
+
+unsigned int AhnHS_VerifyResponseEx(
+  unsigned __int64 hClient,
+  const void *pResponse,
+  unsigned int nLength,
+  unsigned int *pErrorCode)
+{
+  static auto fn = reinterpret_cast<AhnHSVerifyResponseExFn>(ResolveHackShieldProc("_AhnHS_VerifyResponseEx"));
+  return fn ? fn(hClient, pResponse, nLength, pErrorCode) : 101;
 }

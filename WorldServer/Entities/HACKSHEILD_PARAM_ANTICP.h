@@ -2,40 +2,70 @@
 
 #include "IdaCompat.h"
 
-struct _HSHIELD_CLIENT_CONTEXT
-{
-  void *pGameCrc;
-  void *pHShieldCrc;
-  void *pEngineCrc;
-};
+#include "AHNHS_TRANS_BUFFER.h"
 
-class HACKSHEILD_PARAM_ANTICP
+class CHackShieldExSystem;
+struct _hs_msg_res_qry_clzo;
+
+class BASE_HACKSHEILD_PARAM
 {
 public:
-  HACKSHEILD_PARAM_ANTICP();
+  virtual bool IsLogPass() = 0;
+  virtual bool OnCheckSession_FirstVerify(int n) = 0;
+  virtual void OnConnect(int n) = 0;
+  virtual void OnLoop() = 0;
+  virtual void OnDisConnect() = 0;
+  virtual bool OnRecvSession(
+    CHackShieldExSystem *mgr,
+    int n,
+    unsigned __int8 byProtocol,
+    unsigned __int64 tSize,
+    char *pMsg) = 0;
+};
+
+static_assert(sizeof(BASE_HACKSHEILD_PARAM) == 8);
+
+class HACKSHEILD_PARAM_ANTICPX_5381 : public BASE_HACKSHEILD_PARAM
+{
+public:
+  HACKSHEILD_PARAM_ANTICPX_5381();
 
   void Init();
-  void CheckClient();
+  void CheckClient(bool bFirstChecker);
   void Kick(unsigned __int8 byReason, unsigned int dwRet);
-  bool IsLogPass();
-  bool OnCheckSession_FirstVerify(int n);
-  void OnConnect(int nIndex);
-  void OnDisConnect();
-  void OnLoop();
+  bool OnRecvSession_First_MakeRequest(int nIndex);
+  bool OnRecvSession_VerifyResponse(unsigned __int64 tSize, _hs_msg_res_qry_clzo *pMsg);
+  bool IsLogPass() override;
+  bool OnCheckSession_FirstVerify(int n) override;
+  void OnConnect(int nIndex) override;
+  void OnDisConnect() override;
+  void OnLoop() override;
   bool OnRecvSession(
-    class CHackShieldExSystem *mgr,
+    CHackShieldExSystem *mgr,
     int nIndex,
     unsigned __int8 byProtocol,
     unsigned __int64 tSize,
-    char *pMsg);
-  bool OnRecvSession_ServerCheckSum_Request(unsigned int nIndex);
-  bool OnRecvSession_ClientCheckSum_Response(unsigned __int64 tSize, char *pMsg);
-  bool OnRecvSession_ClientCrc_Response(unsigned __int64 tSize, char *pMsg);
+    char *pMsg) override;
+
+  static unsigned __int64 ms_hServer;
 
   int m_nSocketIndex;
   unsigned int m_dwLastSyncQryTime;
   unsigned __int8 m_byVerifyState;
-  _HSHIELD_CLIENT_CONTEXT m_CrcInfo;
-  unsigned __int8 m_byGUIDClientInfo[20];
+  unsigned __int64 m_hClient;
+  _AHNHS_TRANS_BUFFER m_stRequestBuf;
 };
+
+static_assert(sizeof(HACKSHEILD_PARAM_ANTICPX_5381) == 0x1B8);
+
+unsigned __int64 AhnHS_CreateServerObject(const char *hsbPath);
+void AhnHS_CloseServerHandle(unsigned __int64 hServer);
+unsigned __int64 AhnHS_CreateClientObject(unsigned __int64 hServer);
+void AhnHS_CloseClientHandle(unsigned __int64 hClient);
+unsigned int AhnHS_MakeRequest(unsigned __int64 hClient, _AHNHS_TRANS_BUFFER *pRequestBuffer);
+unsigned int AhnHS_VerifyResponseEx(
+  unsigned __int64 hClient,
+  const void *pResponse,
+  unsigned int nLength,
+  unsigned int *pErrorCode);
 

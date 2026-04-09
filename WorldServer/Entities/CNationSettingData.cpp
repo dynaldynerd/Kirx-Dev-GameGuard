@@ -5,6 +5,7 @@
 #include "CNetworkEX.h"
 #include "CPlayer.h"
 #include "CUserDB.h"
+#include "INationGameGuardSystem.h"
 #include "NameTxt_fld.h"
 #include "Packet/ZoneAccountPacket.h"
 
@@ -35,7 +36,11 @@ CNationSettingData::CNationSettingData()
   std::memset(m_szVaildKey, 0, sizeof(m_szVaildKey));
 }
 
-CNationSettingData::~CNationSettingData() = default;
+CNationSettingData::~CNationSettingData()
+{
+  delete m_pGameGuardSystem;
+  m_pGameGuardSystem = nullptr;
+}
 
 int CNationSettingData::Init()
 {

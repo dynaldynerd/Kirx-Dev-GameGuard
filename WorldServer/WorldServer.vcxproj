@@ -386,6 +386,7 @@
     <ClInclude Include="Entities\CGuildRoomInfo.h" />
     <ClInclude Include="Entities\CGuildRoomSystem.h" />
     <ClInclude Include="Entities\CHackShieldExSystem.h" />
+    <ClInclude Include="Entities\CCSAuth3.h" />
     <ClInclude Include="Entities\character_disconnect_result_wrac.h" />
     <ClInclude Include="Entities\CHashMapPtrPool.h" />
     <ClInclude Include="Entities\chat_far_failure_zocl.h" />
@@ -749,6 +750,8 @@
     <ClInclude Include="Entities\guildroom_out_result_zocl.h" />
     <ClInclude Include="Entities\guildroom_rent_request_clzo.h" />
     <ClInclude Include="Entities\HACKSHEILD_PARAM_ANTICP.h" />
+    <ClInclude Include="Entities\CnProtectSystem.h" />
+    <ClInclude Include="Entities\NPROTECT_PARAM_VER_30.h" />
     <ClInclude Include="Entities\holy_keeper_attackable_inform_zocl.h" />
     <ClInclude Include="Entities\holy_quest_report_wrac.h" />
     <ClInclude Include="Entities\ICsSendInterface.h" />
@@ -1157,6 +1160,7 @@
     <ClCompile Include="Entities\CGuildRoomInfo.cpp" />
     <ClCompile Include="Entities\CGuildRoomSystem.cpp" />
     <ClCompile Include="Entities\CHackShieldExSystem.cpp" />
+    <ClCompile Include="Entities\CCSAuth3.cpp" />
     <ClCompile Include="Entities\CHashMapPtrPool.cpp" />
     <ClCompile Include="Entities\chat_steal_message_gm_zocl.cpp" />
     <ClCompile Include="Entities\CheatCommands.cpp" />
@@ -1279,6 +1283,7 @@
     <ClCompile Include="Entities\CNationSettingFactoryTW.cpp" />
     <ClCompile Include="Entities\CNationSettingFactoryUS.cpp" />
     <ClCompile Include="Entities\CNationSettingManager.cpp" />
+    <ClCompile Include="Entities\CnProtectSystem.cpp" />
     <ClCompile Include="Entities\CNetCriticalSection.cpp" />
     <ClCompile Include="Entities\CNetIndexList.cpp" />
     <ClCompile Include="Entities\CNetProcess.cpp" />
@@ -1455,6 +1460,7 @@
     <ClCompile Include="Entities\HACKSHEILD_PARAM_ANTICP.cpp" />
     <ClCompile Include="Entities\ICsSendInterface.cpp" />
     <ClCompile Include="Entities\INationGameGuardSystem.cpp" />
+    <ClCompile Include="Entities\NPROTECT_PARAM_VER_30.cpp" />
     <ClCompile Include="Entities\insert_next_quest_inform_zocl.cpp" />
     <ClCompile Include="Entities\item_fanfare_zocl.cpp" />
     <ClCompile Include="Entities\itembox_take_add_result_zocl.cpp" />

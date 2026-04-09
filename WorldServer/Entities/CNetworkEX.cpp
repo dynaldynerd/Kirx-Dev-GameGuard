@@ -1957,19 +1957,12 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
       break;
     }
     case 96:
-    {
-      _npr_msg_notify_zocl p{};
-      char type[2] = {97,4};
-      g_Network.m_pProcess[0]->LoadSendMsg(n, reinterpret_cast<unsigned __int8 *>(type), reinterpret_cast<char *>(&p), sizeof(p));
-      result = true;
-      break;
-    }
     case 97:
-    {
-      CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-      result = manager->RecvGameGuardData(n, pMsgHeader, pMsg);
-      break;
-    }
+      {
+        CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+        result = manager->RecvGameGuardData(n, pMsgHeader, pMsg);
+        break;
+      }
     case 98:
     {
       const unsigned __int8 subType = pMsgHeader->m_byType[1];
