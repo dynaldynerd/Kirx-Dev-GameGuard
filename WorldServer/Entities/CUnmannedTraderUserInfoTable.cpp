@@ -445,8 +445,17 @@ void CUnmannedTraderUserInfoTable::CompleteUpdateRegistSellUpdateWaitItem(
   const _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pLoadData->List[nListIndex];
   switch (entry.byProcRet)
   {
+    case 0:
+      user->CompleteRegistWaitingSellUpdateItemWhenLogInRegisterSuccess(&pLoadData->List[nListIndex], this->m_pkLogger);
+      break;
+    case 1:
+      user->CompleteRegistWaitingSellUpdateItemWhenLogInCancelRegist(&pLoadData->List[nListIndex], this->m_pkLogger);
+      break;
     case 96:
       user->LockedItemSetUnlock(&entry, this->m_pkLogger);
+      break;
+    case 206:
+      user->CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem(&pLoadData->List[nListIndex], this->m_pkLogger);
       break;
     case 207:
       Log(
@@ -455,6 +464,9 @@ void CUnmannedTraderUserInfoTable::CompleteUpdateRegistSellUpdateWaitItem(
         pLoadData->dwSeller,
         entry.dwRegistSerial,
         entry.wItemSerial);
+      break;
+    case 208:
+      user->CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem(nListIndex, pLoadData, this->m_pkLogger);
       break;
     default:
       Log(

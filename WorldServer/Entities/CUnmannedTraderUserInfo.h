@@ -169,6 +169,19 @@ public:
     unsigned __int8 *pbyProcRet);
   void CompleteUpdateCheatRegistTime(_qry_case_unmandtrader_cheat_updateregisttime *pLoadData);
   void CompleteReRegistRollBack(_qry_case_unmandtrader_re_registsingleitem_roll_back *pData, CLogFile *pkLogger);
+  void CompleteRegistWaitingSellUpdateItemWhenLogInRegisterSuccess(
+    _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+    CLogFile *pkLogger);
+  void CompleteRegistWaitingSellUpdateItemWhenLogInCancelRegist(
+    _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+    CLogFile *pkLogger);
+  void CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem(
+    _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+    CLogFile *pkLogger);
+  void CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem(
+    int nthIndex,
+    _qry_case_unmandtrader_log_in_proc_update_complete *pLoadData,
+    CLogFile *pkLogger);
   unsigned __int8 CheckSellComplete(
     CPlayer *pkSellPlayer,
     CPlayer *pkBuyer,

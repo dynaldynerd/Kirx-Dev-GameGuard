@@ -2635,6 +2635,461 @@ void CUnmannedTraderUserInfo::CompleteReRegistRollBack(
   CountRegistItem();
 }
 
+void CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInRegisterSuccess(
+  _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+  CLogFile *pkLogger)
+{
+  CPlayer *owner = FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInRegisterSuccess()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Owner Log out!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  bool success = true;
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pLoadData->wItemSerial);
+  if (!inventoryItem)
+  {
+    success = false;
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Item None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+
+  auto regInfo = Find(pLoadData->dwRegistSerial);
+  if (regInfo == this->m_vecRegistItemInfo.end())
+  {
+    success = false;
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+  else if (regInfo->GetItemSerial() != pLoadData->wItemSerial)
+  {
+    success = false;
+    if (inventoryItem)
+    {
+      inventoryItem->lock(false);
+    }
+    regInfo->Clear();
+    regInfo->SetState(7u);
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo ItemSerial different!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+
+  if (success)
+  {
+    regInfo->SetState(1u);
+    CountRegistItem();
+
+    CPlayer::s_MgrItemHistory.reg_ut_trade_waitingsellupdateitem_RegisterSuccess(
+      owner->m_ObjID.m_wIndex,
+      pLoadData->dwRegistSerial,
+      inventoryItem,
+      regInfo->GetPrice(),
+      regInfo->GetTax(),
+      owner->m_Param.GetDalant(),
+      owner->m_szItemHistoryFileName);
+
+    unsigned __int8 byDivision = 0;
+    unsigned __int8 byClass = 0;
+    unsigned __int8 bySubClass = 0;
+    unsigned int dwListIndex = 0;
+    if (CUnmannedTraderGroupItemInfoTable::Instance()->GetGroupID(
+          inventoryItem->m_byTableCode,
+          inventoryItem->m_wItemIndex,
+          &byDivision,
+          &byClass,
+          &bySubClass,
+          &dwListIndex))
+    {
+      _unmannedtrader_regist_item_success_result_zocl result{};
+      result.wItemSerial = pLoadData->wItemSerial;
+      result.dwPrice = pLoadData->dwPrice;
+      result.dwRegedSerial = pLoadData->dwRegistSerial;
+      result.dwListIndex = dwListIndex;
+      result.dwTax = pLoadData->dwTax;
+      result.dwLeftDalant = owner->m_Param.GetDalant();
+      result.wSepaSerial = static_cast<unsigned __int16>(-1);
+      result.bySepaAmount = 0;
+
+      unsigned __int8 type[16]{};
+      type[0] = 30;
+      type[1] = 28;
+      g_Network.m_pProcess[0]->LoadSendMsg(
+        this->m_wInx,
+        type,
+        reinterpret_cast<char *>(&result),
+        static_cast<unsigned __int16>(result.size()));
+
+      CUnmannedTraderGroupItemInfoTable::Instance()->IncreaseVersion(byDivision, byClass);
+    }
+    else if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderController::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner : (%u)%s\r\n"
+        "\t\tCUnmannedTraderGroupItemInfoTable::Instance()->GetGroupID()\r\n"
+        "\t\tTableCode(%u), ItemIndex(%u) It's not Exist!\r\n"
+        "\t\tIt's Ignored Sending Result and Increasing Version\r\n",
+        this->m_dwUserSerial,
+        owner->m_Param.GetCharNameA(),
+        inventoryItem->m_byTableCode,
+        inventoryItem->m_wItemIndex);
+    }
+  }
+  else
+  {
+    CUnmannedTraderItemState::PushUpdateState(0, pLoadData->dwRegistSerial, 7u, this->m_dwUserSerial, 0xFFFFu, 0xFFu, 0xFFFFu);
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Clear Regist Info, State Update -> CANCELREGISTFORSERVERINTERNALERROR\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+}
+
+void CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInCancelRegist(
+  _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+  CLogFile *pkLogger)
+{
+  CPlayer *owner = FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInCancelRegist()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Owner Log out!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pLoadData->wItemSerial);
+  if (inventoryItem)
+  {
+    inventoryItem->lock(false);
+  }
+  else if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+      "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Item None\r\n",
+      this->m_dwUserSerial,
+      pLoadData->dwRegistSerial,
+      pLoadData->wItemSerial);
+  }
+
+  auto regInfo = Find(pLoadData->dwRegistSerial);
+  if (regInfo == this->m_vecRegistItemInfo.end())
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  if (regInfo->GetItemSerial() == pLoadData->wItemSerial)
+  {
+    regInfo->Clear();
+    regInfo->SetState(7u);
+    if (inventoryItem)
+    {
+      CPlayer::s_MgrItemHistory.reg_ut_trade_waitingsellupdateitem_RegisterFailed_CancelItem(
+        pLoadData->dwRegistSerial,
+        inventoryItem,
+        owner->m_szItemHistoryFileName);
+    }
+    SendCancelRegistSuccessResult(owner->m_ObjID.m_wIndex, pLoadData->wItemSerial, pLoadData->dwRegistSerial);
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Cancel Regist Success\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+  else if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogIn()\r\n"
+      "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo ItemSerial different!\r\n",
+      this->m_dwUserSerial,
+      pLoadData->dwRegistSerial,
+      pLoadData->wItemSerial);
+  }
+}
+
+void CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete::__list *pLoadData,
+  CLogFile *pkLogger)
+{
+  CPlayer *owner = FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Owner Log out!\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(pLoadData->wItemSerial);
+  if (inventoryItem)
+  {
+    inventoryItem->lock(false);
+  }
+  else if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem()\r\n"
+      "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Item None\r\n",
+      this->m_dwUserSerial,
+      pLoadData->dwRegistSerial,
+      pLoadData->wItemSerial);
+  }
+
+  auto regInfo = Find(pLoadData->dwRegistSerial);
+  if (regInfo == this->m_vecRegistItemInfo.end())
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo None\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+    return;
+  }
+
+  if (regInfo->GetItemSerial() == pLoadData->wItemSerial)
+  {
+    regInfo->Clear();
+    regInfo->SetState(7u);
+    if (inventoryItem)
+    {
+      CPlayer::s_MgrItemHistory.reg_ut_trade_waitingsellupdateitem_InvalidState_CancelItem(
+        pLoadData->dwRegistSerial,
+        inventoryItem,
+        owner->m_szItemHistoryFileName);
+    }
+    SendCancelRegistSuccessResult(owner->m_ObjID.m_wIndex, pLoadData->wItemSerial, pLoadData->dwRegistSerial);
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Cancel Regist Success\r\n",
+        this->m_dwUserSerial,
+        pLoadData->dwRegistSerial,
+        pLoadData->wItemSerial);
+    }
+  }
+  else if (pkLogger)
+  {
+    pkLogger->Write(
+      "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInInvalidStateItem()\r\n"
+      "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo ItemSerial different!\r\n",
+      this->m_dwUserSerial,
+      pLoadData->dwRegistSerial,
+      pLoadData->wItemSerial);
+  }
+}
+
+void CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem(
+  int nthIndex,
+  _qry_case_unmandtrader_log_in_proc_update_complete *pLoadData,
+  CLogFile *pkLogger)
+{
+  _qry_case_unmandtrader_log_in_proc_update_complete::__list *result = &pLoadData->List[nthIndex];
+  CPlayer *owner = FindOwner();
+  if (!owner || !owner->m_bOper)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Owner Log out!\r\n",
+        this->m_dwUserSerial,
+        result->dwRegistSerial,
+        result->wItemSerial);
+    }
+    return;
+  }
+
+  auto regInfo = Find(result->dwRegistSerial);
+  if (regInfo == this->m_vecRegistItemInfo.end())
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) UTRegistInfo None\r\n",
+        this->m_dwUserSerial,
+        result->dwRegistSerial,
+        result->wItemSerial);
+    }
+    return;
+  }
+
+  _STORAGE_LIST::_db_con *inventoryItem = owner->m_Param.m_dbInven.GetPtrFromSerial(result->wItemSerial);
+  if (!inventoryItem)
+  {
+    if (pkLogger)
+    {
+      pkLogger->Write(
+        "CUnmannedTraderUserInfo::CompleteRegistWaitingSellUpdateItemWhenLogInSoldItem()\r\n"
+        "\t\tOwner(%u) UTRegisterSerial(%u) wItemSerial(%u) Item None\r\n",
+        this->m_dwUserSerial,
+        result->dwRegistSerial,
+        result->wItemSerial);
+    }
+    return;
+  }
+
+  regInfo->SellComplete(
+    result->dwPrice,
+    result->dwBuyer,
+    result->dwTax,
+    result->dbresulttime,
+    result->wszName,
+    result->szAccountID);
+  CountRegistItem();
+
+  const unsigned int realSellDalant = result->dwPrice - result->dwTax;
+  owner->AddDalant(static_cast<int>(realSellDalant), true);
+  CUnmannedTraderItemState::PushUpdateState(0, result->dwRegistSerial, 3u, this->m_dwUserSerial, result->wItemSerial, 0xFFu, 0xFFFFu);
+
+  _unmannedtrader_Sell_Wait_item_inform_zocl inform{};
+  inform.List[0].wItemSerial = result->wItemSerial;
+  inform.List[0].dwSellDalant = realSellDalant;
+  inform.List[0].dwTax = result->dwTax;
+  inform.dwTotalSellDalant += inform.List[0].dwSellDalant;
+  inform.dwTotalTaxDalant += inform.List[0].dwTax;
+  inform.byNum = 1;
+  inform.dwCurInvenDalant = owner->m_Param.GetDalant();
+
+  unsigned __int8 type[16]{};
+  type[0] = 30;
+  type[1] = 26;
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_wInx,
+    type,
+    reinterpret_cast<char *>(&inform),
+    GetSellWaitInformSize(inform));
+
+  if (!owner->Emb_DelStorage(0, inventoryItem->m_byStorageIndex, false, true, "CUnmannedTraderUserInfo::SellComplete()"))
+  {
+    g_Main.m_logSystemError.Write(
+      "CUnmannedTraderUserInfo::SellComplete() : User(%u) pkSellPlayer->Emb_DelStorage() Fail!",
+      this->m_dwUserSerial);
+  }
+
+  const int level = owner->m_Param.GetLevel();
+  if (level == 30 || level == 40 || level == 50 || level == 60)
+  {
+    CMoneySupplyMgr::Instance()->UpdateFeeMoneyData(
+      static_cast<unsigned __int8>(owner->m_Param.GetRaceCode()),
+      level,
+      result->dwTax);
+  }
+
+  char resultDate[64]{};
+  std::time_t resultTime = static_cast<std::time_t>(result->dbresulttime);
+  std::tm *localTime = std::localtime(&resultTime);
+  if (localTime)
+  {
+    sprintf_s(
+      resultDate,
+      sizeof(resultDate),
+      "%04d-%02d-%02d %02d:%02d:%02d",
+      localTime->tm_year + 1900,
+      localTime->tm_mon + 1,
+      localTime->tm_mday,
+      localTime->tm_hour,
+      localTime->tm_min,
+      localTime->tm_sec);
+  }
+  else
+  {
+    sprintf_s(resultDate, sizeof(resultDate), "Invalid(%u)", static_cast<unsigned int>(result->dbresulttime));
+  }
+
+  CPlayer::s_MgrItemHistory.reg_ut_trade_waitingsellupdateitem_Sold(
+    result->wszName,
+    result->dwBuyer,
+    result->szAccountID,
+    result->dwRegistSerial,
+    inventoryItem,
+    resultDate,
+    realSellDalant,
+    result->dwTax,
+    owner->m_Param.GetDalant(),
+    owner->m_Param.GetGold(),
+    owner->m_szItemHistoryFileName);
+
+  _base_fld *record = g_Main.m_tblItemData[inventoryItem->m_byTableCode].GetRecord(inventoryItem->m_wItemIndex);
+  g_Main.m_logAutoTrade.Write(
+    "%s %s >> sell (%u) user(%u)%s -> user(%u)%s price(%u) tax(%u)",
+    record->m_strCode,
+    resultDate,
+    result->dwRegistSerial,
+    result->dwBuyer,
+    result->wszName,
+    owner->m_dwObjSerial,
+    owner->m_Param.GetCharNameA(),
+    result->dwPrice,
+    result->dwTax);
+}
+
 unsigned __int8 CUnmannedTraderUserInfo::CheckSellComplete(
   CPlayer *pkSellPlayer,
   CPlayer *pkBuyer,

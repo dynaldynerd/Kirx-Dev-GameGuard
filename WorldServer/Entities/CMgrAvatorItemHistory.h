@@ -305,6 +305,34 @@ public:
     unsigned int dwfee,
     unsigned int dwLeftDalant,
     char *pszFileName);
+  void reg_ut_trade_waitingsellupdateitem_RegisterSuccess(
+    int n,
+    unsigned int dwRegistSerial,
+    _STORAGE_LIST::_db_con *pRegItem,
+    unsigned int dwPrice,
+    unsigned int dwfee,
+    unsigned int dwLeftDalant,
+    char *pszFileName);
+  void reg_ut_trade_waitingsellupdateitem_RegisterFailed_CancelItem(
+    unsigned int dwRegistSerial,
+    _STORAGE_LIST::_db_con *pRegItem,
+    char *pszFileName);
+  void reg_ut_trade_waitingsellupdateitem_InvalidState_CancelItem(
+    unsigned int dwRegistSerial,
+    _STORAGE_LIST::_db_con *pRegItem,
+    char *pszFileName);
+  void reg_ut_trade_waitingsellupdateitem_Sold(
+    const char *szBuyerName,
+    unsigned int dwBuyerSerial,
+    const char *szBuyerID,
+    unsigned int dwRegistSerial,
+    _STORAGE_LIST::_db_con *pItem,
+    char *szResultDate,
+    unsigned int dwPrice,
+    unsigned int dwTax,
+    unsigned int dwLeftDalant,
+    unsigned int dwLeftGold,
+    char *pszFileName);
   void auto_trade_sell(
     const char *szBuyerName,
     unsigned int dwBuyerSerial,

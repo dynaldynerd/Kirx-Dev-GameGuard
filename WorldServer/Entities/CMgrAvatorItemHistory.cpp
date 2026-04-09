@@ -2777,6 +2777,143 @@ void CMgrAvatorItemHistory::re_reg_auto_trade(
   WriteFile(pszFileName, sData);
 }
 
+void CMgrAvatorItemHistory::reg_ut_trade_waitingsellupdateitem_RegisterSuccess(
+  int n,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  unsigned int dwPrice,
+  unsigned int dwfee,
+  unsigned int dwLeftDalant,
+  char *pszFileName)
+{
+  (void)n;
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "REG_AUTO_TRADE_WAITINGSELLUPDATEITEM_REGISTER_BY_SERVER_WHEN_LOGIN: reg(%u) %s_%I64u_@%s[%I64u] pr(D:%u), tax(D:%u) $D:%u [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    dwPrice,
+    dwfee,
+    dwLeftDalant,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::reg_ut_trade_waitingsellupdateitem_RegisterFailed_CancelItem(
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "REG_UT_TRADE_WAITINGSELLUPDATEITEM_REGISTERFAILED_CANCELITEM: reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::reg_ut_trade_waitingsellupdateitem_InvalidState_CancelItem(
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pRegItem,
+  char *pszFileName)
+{
+  _base_fld *record = g_Main.m_tblItemData[pRegItem->m_byTableCode].GetRecord(pRegItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pRegItem->m_byTableCode, pRegItem->m_dwLv);
+
+  sprintf_s(
+    sData,
+    sizeof(sData),
+    "REG_UT_TRADE_WAITINGSELLUPDATEITEM_INVALIDSTATE_CANCELITEM: reg(%u) %s_%I64u_@%s[%I64u] [%s %s]\r\n",
+    dwRegistSerial,
+    record->m_strCode,
+    pRegItem->m_dwDur,
+    upgradeInfo,
+    pRegItem->m_lnUID,
+    m_szCurDate,
+    m_szCurTime);
+
+  WriteFile(pszFileName, sData);
+}
+
+void CMgrAvatorItemHistory::reg_ut_trade_waitingsellupdateitem_Sold(
+  const char *szBuyerName,
+  unsigned int dwBuyerSerial,
+  const char *szBuyerID,
+  unsigned int dwRegistSerial,
+  _STORAGE_LIST::_db_con *pItem,
+  char *szResultDate,
+  unsigned int dwPrice,
+  unsigned int dwTax,
+  unsigned int dwLeftDalant,
+  unsigned int dwLeftGold,
+  char *pszFileName)
+{
+  sData[0] = 0;
+  sBuf[0] = 0;
+  if (szResultDate)
+  {
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "REG_AUTO_TRADE_WAITINGSELLUPDATEITEM_SOLD_BY_SERVER_WHEN_LOGIN TRADE(SELL): login sell selldate(%s) reg(%u) buyer(%s:%u id:%s) recv(D:%u) tax(%u) $D:%u $G:%u [%s %s]\r\n",
+      szResultDate,
+      dwRegistSerial,
+      szBuyerName,
+      dwBuyerSerial,
+      szBuyerID,
+      dwPrice,
+      dwTax,
+      dwLeftDalant,
+      dwLeftGold,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  else
+  {
+    sprintf_s(
+      sBuf,
+      sizeof(sBuf),
+      "REG_AUTO_TRADE_WAITINGSELLUPDATEITEM_SOLD_BY_SERVER_WHEN_LOGIN TRADE(SELL): login sell selldate(invalid) reg(%u) buyer(%s:%u id:%s) recv(D:%u) tax(%u) $D:%u $G:%u [%s %s]\r\n",
+      dwRegistSerial,
+      szBuyerName,
+      dwBuyerSerial,
+      szBuyerID,
+      dwPrice,
+      dwTax,
+      dwLeftDalant,
+      dwLeftGold,
+      m_szCurDate,
+      m_szCurTime);
+  }
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  _base_fld *record = g_Main.m_tblItemData[pItem->m_byTableCode].GetRecord(pItem->m_wItemIndex);
+  const char *upgradeInfo = DisplayItemUpgInfo(pItem->m_byTableCode, pItem->m_dwLv);
+  sprintf_s(sBuf, sizeof(sBuf), "\t- %s_%I64u_@%s[%I64u]\r\n", record->m_strCode, pItem->m_dwDur, upgradeInfo, pItem->m_lnUID);
+  strcat_s(sData, sizeof(sData), sBuf);
+
+  WriteFile(pszFileName, sData);
+}
+
 void CMgrAvatorItemHistory::auto_trade_sell(
   const char *szBuyerName,
   unsigned int dwBuyerSerial,
