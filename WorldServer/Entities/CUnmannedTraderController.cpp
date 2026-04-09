@@ -1539,18 +1539,6 @@ void CUnmannedTraderController::CompleteLogInCompete(_qry_case_unmandtrader_log_
 
     if (entry.byProcUpdate == 92)
     {
-      if (entry.byProcRet == 1)
-      {
-        Log(
-          "\t\t(%d)Nth Regist Serial(%u) dwBuyer(%u) UpdateState(%u) byProcUpdate(%u) DB Error!\r\n",
-          j,
-          entry.dwRegistSerial,
-          entry.dwBuyer,
-          entry.byUpdateState,
-          entry.byProcUpdate);
-        continue;
-      }
-
       CUnmannedTraderUserInfoTable *table = CUnmannedTraderUserInfoTable::Instance();
       table->CompleteUpdateRegistSellUpdateWaitItem(pData, j);
       continue;
