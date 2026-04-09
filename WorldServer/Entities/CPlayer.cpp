@@ -4414,6 +4414,27 @@ bool CPlayer::IsUseReleaseRaceBuffPotion()
   return m_dwRaceBuffClearKey == key;
 }
 
+bool CPlayer::IsUseReleaseRaceBuffPotionInLastWar()
+{
+  unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
+  if (byNumOfTime == 1)
+  {
+    byNumOfTime = static_cast<unsigned __int8>(g_HolySys.m_ScheculeData.m_nTotalSchedule);
+  }
+  else
+  {
+    --byNumOfTime;
+  }
+
+  const unsigned __int8 startDay = g_HolySys.GetStartDay();
+  const unsigned __int8 startMonth = g_HolySys.GetStartMonth();
+  const unsigned __int16 startYear = g_HolySys.GetStartYear();
+
+  MiningTicket::_AuthKeyTicket key;
+  key.Set(startYear, startMonth, startDay, 0, byNumOfTime);
+  return m_dwRaceBuffClearKey == key;
+}
+
 void CPlayer::SetUseReleaseRaceBuffPotion()
 {
   const unsigned __int8 byNumOfTime = g_HolySys.GetNumOfTime();
@@ -4425,6 +4446,12 @@ void CPlayer::SetUseReleaseRaceBuffPotion()
   m_dwRaceBuffClearKey.Set(startYear, startMonth, startDay, byHour, byNumOfTime);
   m_pUserDB->m_AvatorData.dbSupplement.dwRaceBuffClear = m_dwRaceBuffClearKey.___u0.uiData;
   m_pUserDB->m_bDataUpdate = true;
+}
+
+void CPlayer::Dev_HS_SetNumOfTime(char nNumOfTime)
+{
+  m_dwRaceBuffClearKey.___u0.uiData =
+    (static_cast<unsigned int>(nNumOfTime) & 0xFu) | (m_dwRaceBuffClearKey.___u0.uiData & 0xFFFFFFF0u);
 }
 
 void CPlayer::SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode)
@@ -23210,12 +23237,194 @@ float CPlayer::GetPartyExpDistributionRate(int iPartyMemberLevel, int iMaxLevel,
   return rate * static_cast<float>(diff);
 }
 
+void CPlayer::CalcExpForAnimus(CMonster *pDst, int nDam, CPartyModeKillMonsterExpNotify *kPartyExpNotify)
+{
+  if (pDst->m_ObjID.m_byID != 1 || nDam <= 0 || IsInTown())
+  {
+    return;
+  }
+
+  bool bGetAttackExp = true;
+  const int dstLevel = static_cast<int>(pDst->GetLevel());
+  const bool bPlayerGetExp = IsPassExpLimitLvDiff(dstLevel, &bGetAttackExp);
+  _monster_fld *record = pDst->m_pMonRec;
+  if (!record)
+  {
+    return;
+  }
+
+  int remainHp = static_cast<int>(pDst->GetHP()) - nDam;
+  if (pDst->IsBossMonster())
+  {
+    bGetAttackExp = false;
+  }
+
+  if (bGetAttackExp && bPlayerGetExp)
+  {
+    int currentDamage = nDam;
+    if (remainHp < 0)
+    {
+      remainHp = 0;
+      currentDamage = static_cast<int>(pDst->GetHP());
+    }
+
+    const float attackExp = (record->m_fExt * 0.69999999f) * (static_cast<float>(currentDamage) / record->m_fMaxHP);
+    if (IsRidingUnit())
+    {
+      AlterExp(attackExp * UNIT_HIT_EXP, false, false, false);
+      const float unitExp = attackExp / 180.0f;
+      const int monsterLevel = static_cast<int>(pDst->GetLevel());
+      Emb_AlterStat(6u, 0, static_cast<int>(unitExp + static_cast<float>(monsterLevel)), 0, "CPlayer::CalcExp()--0", 1);
+    }
+    else
+    {
+      AlterExp(attackExp, false, false, false);
+    }
+  }
+
+  if (remainHp < 0)
+  {
+    remainHp = 0;
+  }
+
+  if (remainHp)
+  {
+    return;
+  }
+
+  float killExp = 0.0f;
+  if (pDst->GetEmotionState() == 4)
+  {
+    killExp = record->m_fExt * 0.5f;
+  }
+  else
+  {
+    killExp = record->m_fExt * 0.30000001f;
+  }
+
+  if (m_pPartyMgr->IsPartyMode())
+  {
+    CPlayer *members[8]{};
+    const unsigned __int8 memberCount = _GetPartyMemberInCircle(members, 8, true);
+    if (memberCount)
+    {
+      killExp *= s_fExpDivUnderParty_Kill[memberCount - 1];
+    }
+
+    int maxLevel = 0;
+    int secondLevel = 0;
+    float totalLevel = 0.0f;
+    for (int memberIndex = 0; memberIndex < memberCount; ++memberIndex)
+    {
+      const int memberLevel = static_cast<int>(members[memberIndex]->GetLevel());
+      totalLevel += static_cast<float>(memberLevel);
+      if (memberLevel <= maxLevel)
+      {
+        if (memberLevel > secondLevel)
+        {
+          secondLevel = memberLevel;
+        }
+      }
+      else
+      {
+        secondLevel = maxLevel;
+        maxLevel = memberLevel;
+      }
+    }
+
+    if (totalLevel > 1.0f)
+    {
+      kPartyExpNotify->SetKillMonsterFlag();
+      for (int memberIndex = 0; memberIndex < memberCount; ++memberIndex)
+      {
+        const int memberLevel = static_cast<int>(members[memberIndex]->GetLevel());
+        float addKillExp = (killExp * static_cast<float>(memberLevel)) / totalLevel;
+        const float partyRate = GetPartyExpDistributionRate(memberLevel, maxLevel, secondLevel);
+        addKillExp += partyRate * addKillExp;
+        if (addKillExp >= 1.0f)
+        {
+          if (members[memberIndex]->IsRidingUnit())
+          {
+            if (bPlayerGetExp)
+            {
+              members[memberIndex]->AlterExp(addKillExp, false, false, false);
+              kPartyExpNotify->Add(members[memberIndex], addKillExp);
+              const float unitExp = addKillExp / 180.0f;
+              const int monsterLevel = static_cast<int>(pDst->GetLevel());
+              members[memberIndex]->Emb_AlterStat(
+                6u,
+                0,
+                static_cast<int>(unitExp + static_cast<float>(monsterLevel)),
+                0,
+                "CPlayer::CalcExp()--2",
+                1);
+            }
+          }
+          else
+          {
+            if (bPlayerGetExp)
+            {
+              members[memberIndex]->AlterExp(addKillExp, false, false, false);
+              kPartyExpNotify->Add(members[memberIndex], addKillExp);
+            }
+
+            if (members[memberIndex]->m_pRecalledAnimusChar)
+            {
+              const int recalledAnimusLevel = members[memberIndex]->m_pRecalledAnimusChar->GetLevel();
+              const int monsterLevel = static_cast<int>(pDst->GetLevel());
+              if (std::abs(recalledAnimusLevel - monsterLevel) <= 10)
+              {
+                const int animusExp = static_cast<int>((addKillExp / 5000.0f) + static_cast<float>(monsterLevel));
+                members[memberIndex]->m_pRecalledAnimusChar->AlterExp(animusExp);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  else if (IsRidingUnit())
+  {
+    if (bPlayerGetExp)
+    {
+      AlterExp(killExp, false, false, false);
+      const float unitExp = killExp / 180.0f;
+      const int monsterLevel = static_cast<int>(pDst->GetLevel());
+      Emb_AlterStat(6u, 0, static_cast<int>(unitExp + static_cast<float>(monsterLevel)), 0, "CPlayer::CalcExp()--1", 1);
+    }
+  }
+  else
+  {
+    if (bPlayerGetExp)
+    {
+      AlterExp(killExp, false, false, false);
+    }
+
+    if (m_pRecalledAnimusChar)
+    {
+      const int recalledAnimusLevel = m_pRecalledAnimusChar->GetLevel();
+      const int monsterLevel = static_cast<int>(pDst->GetLevel());
+      if (std::abs(recalledAnimusLevel - monsterLevel) <= 10)
+      {
+        const int animusExp = static_cast<int>((killExp / 5000.0f) + static_cast<float>(monsterLevel));
+        m_pRecalledAnimusChar->AlterExp(animusExp);
+      }
+    }
+  }
+}
+
 void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify *kPartyExpNotify)
 {
   auto *pMon = static_cast<CMonster *>(pDst);
   if (pMon->m_ObjID.m_byID == 1 && nDam > 0 && !IsInTown())
   {
     bool bGetAttackExp = true;
+    if (GetObjRace() == 1)
+    {
+      CalcExpForAnimus(pMon, nDam, kPartyExpNotify);
+      return;
+    }
+
     const int dstLevel = static_cast<int>(pMon->GetLevel());
     if (IsPassExpLimitLvDiff(dstLevel, &bGetAttackExp))
     {
@@ -23240,6 +23449,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         const float baseExp = (record->m_fExt * 0.69999999f) * (static_cast<float>(dam) / record->m_fMaxHP);
         if (IsRidingUnit())
         {
+          AlterExp(baseExp * UNIT_HIT_EXP, 0, 0, 0);
           const float expUnit = baseExp / 180.0f;
           const int level = static_cast<int>(pMon->GetLevel());
           Emb_AlterStat(6u, 0, static_cast<int>(expUnit + static_cast<float>(level)), 0, "CPlayer::CalcExp()--0", 1);
@@ -23307,6 +23517,8 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
               {
                 if (members[j]->IsRidingUnit())
                 {
+                  members[j]->AlterExp(fExp, 0, 0, 0);
+                  kPartyExpNotify->Add(members[j], fExp);
                   const float expUnit = fExp / 180.0f;
                   const int monLevel = static_cast<int>(pMon->GetLevel());
                   members[j]->Emb_AlterStat(
@@ -23328,6 +23540,7 @@ void CPlayer::CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify
         }
         else if (IsRidingUnit())
         {
+          AlterExp(killExp, 0, 0, 0);
           const float expUnit = killExp / 180.0f;
           const int level = static_cast<int>(pMon->GetLevel());
           Emb_AlterStat(6u, 0, static_cast<int>(expUnit + static_cast<float>(level)), 0, "CPlayer::CalcExp()--1", 1);

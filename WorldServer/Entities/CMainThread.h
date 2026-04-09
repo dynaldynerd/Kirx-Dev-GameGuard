@@ -694,6 +694,7 @@ struct _server_rate_ini_data
   float PlayerExpRate;
   float DarkHoleRewardRate;
   float PlayerLostExp;
+  float UnitHitExp;
   float PremiumMiningSpeed;
   float PremiumPlayerExp;
   float PremiumAnimusExp;
@@ -855,6 +856,7 @@ public:
   _ITEM_INTEG_INFO Amulet;
   _ITEM_INTEG_INFO Ring;
   _ITEM_INTEG_INFO Potion;
+  unsigned int m_dwGuildPower[6];
   unsigned __int8 m_byWebAgentServerNetInx;
   bool m_bConnectedWebAgentServer;
   unsigned __int8 m_byControllServerNetInx;
@@ -1409,6 +1411,7 @@ private:
   void LoadAmuletDataInteg();
   void LoadRingDataInteg();
   void LoadPotionDataInteg();
+  void LoadGuildGradePower();
   bool CheckDefine();
   bool check_dbsyn_data_size();
   char DataFileInit();

@@ -1958,22 +1958,9 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
     }
     case 96:
     case 97:
-      {
-        CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
-        result = manager->RecvGameGuardData(n, pMsgHeader, pMsg);
-        break;
-      }
-    case 98:
     {
-      const unsigned __int8 subType = pMsgHeader->m_byType[1];
-      if (subType == 1)
-      {
-        result = Apex_R(n, pMsgHeader->m_wSize, pMsg);
-      }
-      else
-      {
-        result = subType == 2 && Apex_T(n, pMsgHeader->m_wSize, pMsg);
-      }
+      CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
+      result = manager->RecvGameGuardData(n, pMsgHeader, pMsg);
       break;
     }
     default:

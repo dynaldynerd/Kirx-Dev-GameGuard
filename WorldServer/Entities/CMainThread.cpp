@@ -2273,6 +2273,7 @@ int CMainThread::LoadINI()
   LoadAmuletDataInteg();
   LoadRingDataInteg();
   LoadPotionDataInteg();
+  LoadGuildGradePower();
   return true;
 }
 
@@ -2836,6 +2837,17 @@ void CMainThread::LoadPotionDataInteg()
     Potion.m_nChange[n] = std::atoi(szChangeIndexTemp);
   }
 }
+
+void CMainThread::LoadGuildGradePower()
+{
+  m_dwGuildPower[0] = GetPrivateProfileIntA("Guild Calc", "GuildGrade2", 300, ".\\Initialize\\WorldSystem.ini");
+  m_dwGuildPower[1] = GetPrivateProfileIntA("Guild Calc", "GuildGrade3", 1500, ".\\Initialize\\WorldSystem.ini");
+  m_dwGuildPower[2] = GetPrivateProfileIntA("Guild Calc", "GuildGrade4", 3000, ".\\Initialize\\WorldSystem.ini");
+  m_dwGuildPower[3] = GetPrivateProfileIntA("Guild Calc", "GuildGrade5", 10000, ".\\Initialize\\WorldSystem.ini");
+  m_dwGuildPower[4] = GetPrivateProfileIntA("Guild Calc", "GuildGrade6", 25000, ".\\Initialize\\WorldSystem.ini");
+  m_dwGuildPower[5] = GetPrivateProfileIntA("Guild Calc", "GuildGrade7", 30000, ".\\Initialize\\WorldSystem.ini");
+}
+
 bool CMainThread::CheckDefine()
 {
   return true; //this is not stub, original code is already like this
@@ -5047,6 +5059,9 @@ bool CMainThread::LoadServerRateINIFile()
     "./initialize/ServerRate.ini");
   m_ServerRateLoad.m_IniData.DarkHoleRewardRate = static_cast<float>(atof(returnedString));
 
+  GetPrivateProfileStringA("Server Rate", "UnitHitExp", "1.0", returnedString, 16, "./initialize/ServerRate.ini");
+  m_ServerRateLoad.m_IniData.UnitHitExp = static_cast<float>(atof(returnedString));
+
   GetPrivateProfileStringA(
     "Premium PCRoom Rate",
     "ItemRootRate",
@@ -5176,6 +5191,7 @@ void CMainThread::SetServerRate()
   PLAYER_EXP_RATE = m_ServerRateLoad.m_IniData.PlayerExpRate;
   TSVR_ADD_DARKHOLE_REWARD_RATE = m_ServerRateLoad.m_IniData.DarkHoleRewardRate;
   PLAYER_LOST_EXP = m_ServerRateLoad.m_IniData.PlayerLostExp;
+  UNIT_HIT_EXP = m_ServerRateLoad.m_IniData.UnitHitExp;
   PCBANG_PRIMIUM_FAVOR::MINING_SPEED = m_ServerRateLoad.m_IniData.PremiumMiningSpeed;
   PCBANG_PRIMIUM_FAVOR::PLAYER_EXP = m_ServerRateLoad.m_IniData.PremiumPlayerExp;
   PCBANG_PRIMIUM_FAVOR::ANIMUS_EXP = m_ServerRateLoad.m_IniData.PremiumAnimusExp;

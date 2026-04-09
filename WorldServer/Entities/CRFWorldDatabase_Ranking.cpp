@@ -1885,42 +1885,52 @@ bool CRFWorldDatabase::Update_GuildRank_Step2( char *szDate)
     szDate);
   if ( this->ExecUpdateQuery( queryBuffer, 0) )
   {
-    sprintf_s(queryBuffer, 1024, "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= 300", szDate);
+    sprintf_s(
+      queryBuffer,
+      1024,
+      "update tbl_GuildRank%s set Grade = 2 where rate <= 95 and GuildPower >= %d",
+      szDate,
+      g_Main.m_dwGuildPower[0]);
     if ( this->ExecUpdateQuery( queryBuffer, 0) )
     {
       sprintf_s(
         queryBuffer,
         1024,
-        "update tbl_GuildRank%s set Grade = 3 where rate <= 85 and GuildPower >= 1500",
-        szDate);
+        "update tbl_GuildRank%s set Grade = 3 where rate <= 85 and GuildPower >= %d",
+        szDate,
+        g_Main.m_dwGuildPower[1]);
       if ( this->ExecUpdateQuery( queryBuffer, 0) )
       {
         sprintf_s(
           queryBuffer,
           1024,
-          "update tbl_GuildRank%s set Grade = 4 where rate <= 65 and GuildPower >= 3000",
-          szDate);
+          "update tbl_GuildRank%s set Grade = 4 where rate <= 65 and GuildPower >= %d",
+          szDate,
+          g_Main.m_dwGuildPower[2]);
         if ( this->ExecUpdateQuery( queryBuffer, 0) )
         {
           sprintf_s(
             queryBuffer,
             1024,
-            "update tbl_GuildRank%s set Grade = 5 where rate <= 35 and GuildPower >= 10000",
-            szDate);
+            "update tbl_GuildRank%s set Grade = 5 where rate <= 35 and GuildPower >= %d",
+            szDate,
+            g_Main.m_dwGuildPower[3]);
           if ( this->ExecUpdateQuery( queryBuffer, 0) )
           {
             sprintf_s(
               queryBuffer,
               1024,
-              "update tbl_GuildRank%s set Grade = 6 where rate <= 15 and GuildPower >= 25000",
-              szDate);
+              "update tbl_GuildRank%s set Grade = 6 where rate <= 15 and GuildPower >= %d",
+              szDate,
+              g_Main.m_dwGuildPower[4]);
             if ( this->ExecUpdateQuery( queryBuffer, 0) )
             {
               sprintf_s(
                 queryBuffer,
                 1024,
-                "update tbl_GuildRank%s set Grade = 7 where rate <= 5 and GuildPower >= 30000",
-                szDate);
+                "update tbl_GuildRank%s set Grade = 7 where rate <= 5 and GuildPower >= %d",
+                szDate,
+                g_Main.m_dwGuildPower[5]);
               if ( this->ExecUpdateQuery( queryBuffer, 0) )
               {
                 this->FmtLog(

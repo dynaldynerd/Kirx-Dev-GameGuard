@@ -45,6 +45,7 @@ public:
   void SendMsg_Attack_Gen(CAttack *pAT);
   void SendMsg_LevelUp();
   void SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAddHP);
+  void SendMsg_NotifyGetExpInfo(unsigned __int64 dwOldExp, __int64 nAlterExp, unsigned __int64 dwCurExp);
   void AlterMode_MasterReport(unsigned __int8 byMode);
   void AlterHP_MasterReport();
   void AlterFP_MasterReport();
@@ -75,7 +76,7 @@ public:
   CCharacter *SearchNearEnemy();
   CCharacter *SearchNearPlayerAttack();
   int GetAttackPart();
-  void CalcAttExp(CAttack *pAT);
+  void CalcAttExpForPlayer(CAttack *pAT);
   void make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex);
   void AlterExp(__int64 nAddExp);
   void CalcDefExp(CCharacter *pAttackObj, int nDamage);

@@ -268,7 +268,7 @@ void CPlayer::SendMsg_AnimusExpInform()
     static_cast<unsigned __int16>(sizeof(msg)));
 }
 
-void CPlayer::SendMsg_AnimusModeInform(char byMode)
+void CPlayer::SendMsg_AnimusModeInform(unsigned __int8 byMode)
 {
   _animus_command_inform_zocl msg{};
   msg.byStateCode = byMode;
@@ -344,12 +344,12 @@ bool CPlayer::SF_RecoverAllReturnStateAnimusHPFull(CCharacter *pDstObj, float fE
   return changedCount > 0;
 }
 
-void CPlayer::AlterHP_Animus(__int16 nNewHP)
+void CPlayer::AlterHP_Animus(unsigned __int16 nNewHP)
 {
   if (m_pRecalledAnimusItem)
   {
     unsigned int *packedLevel = &m_pRecalledAnimusItem->m_dwLv;
-    *reinterpret_cast<unsigned __int16 *>(packedLevel) = static_cast<unsigned __int16>(nNewHP);
+    *reinterpret_cast<unsigned __int16 *>(packedLevel) = nNewHP;
     SendMsg_AnimusHPInform();
     if (m_pUserDB)
     {
@@ -359,12 +359,12 @@ void CPlayer::AlterHP_Animus(__int16 nNewHP)
   }
 }
 
-void CPlayer::AlterFP_Animus(__int16 nNewFP)
+void CPlayer::AlterFP_Animus(unsigned __int16 nNewFP)
 {
   if (m_pRecalledAnimusItem)
   {
     unsigned int *packedLevel = &m_pRecalledAnimusItem->m_dwLv;
-    *(reinterpret_cast<unsigned __int16 *>(packedLevel) + 1) = static_cast<unsigned __int16>(nNewFP);
+    *(reinterpret_cast<unsigned __int16 *>(packedLevel) + 1) = nNewFP;
     SendMsg_AnimusFPInform();
     if (m_pUserDB)
     {
@@ -421,14 +421,14 @@ void CPlayer::AlterMode_Animus(unsigned __int8 byMode)
 {
   if (m_pRecalledAnimusItem)
   {
-    SendMsg_AnimusModeInform(static_cast<char>(byMode));
+    SendMsg_AnimusModeInform(byMode);
   }
 }
 
-void CPlayer::SendMsg_AnimusRecallWaitTimeFree(char bFree)
+void CPlayer::SendMsg_AnimusRecallWaitTimeFree(bool bFree)
 {
   _animus_recall_wait_time_free_inform_zocl msg{};
-  msg.bFree = (bFree != 0);
+  msg.bFree = bFree;
 
   unsigned __int8 type[2] = {22, 13};
   g_Network.m_pProcess[0]->LoadSendMsg(
@@ -472,7 +472,7 @@ void CPlayer::SendMsg_AnimusRecallResult(unsigned __int8 byResultCode, unsigned 
     static_cast<unsigned __int16>(sizeof(packet)));
 }
 
-void CPlayer::SendMsg_AnimusInvenChange(char byErrCode)
+void CPlayer::SendMsg_AnimusInvenChange(unsigned __int8 byErrCode)
 {
   _animus_inven_change_result_zocl msg{};
   msg.byErrCode = byErrCode;
@@ -628,7 +628,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 0"))
     {
-      this->SendMsg_AnimusInvenChange(static_cast<char>(255));
+      this->SendMsg_AnimusInvenChange(0xFF);
       return;
     }
 
@@ -639,7 +639,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
       if (!this->Emb_AddStorage(sourceStorage->m_nListCode, &replaceBackup, true, false))
       {
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
+        this->SendMsg_AnimusInvenChange(0xFF);
         return;
       }
       if (!this->Emb_DelStorage(
@@ -656,7 +656,7 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
+        this->SendMsg_AnimusInvenChange(0xFF);
         return;
       }
     }
@@ -675,14 +675,14 @@ void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 w
           false,
           "CPlayer::pc_AnimusInvenChange() -- 1 Fail");
         this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-        this->SendMsg_AnimusInvenChange(static_cast<char>(255));
+        this->SendMsg_AnimusInvenChange(0xFF);
         return;
       }
     }
     else if (!this->Emb_AddStorage(targetStorage->m_nListCode, &sourceBackup, true, false))
     {
       this->Emb_AddStorage(sourceStorage->m_nListCode, &sourceBackup, true, false);
-      this->SendMsg_AnimusInvenChange(static_cast<char>(255));
+      this->SendMsg_AnimusInvenChange(0xFF);
       return;
     }
     this->Emb_EquipLink();

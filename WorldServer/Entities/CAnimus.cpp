@@ -362,7 +362,7 @@ void CAnimus::AlterHP_MasterReport()
 {
   if (m_pMaster)
   {
-    m_pMaster->AlterHP_Animus(static_cast<__int16>(m_nHP));
+    m_pMaster->AlterHP_Animus(static_cast<unsigned __int16>(m_nHP));
   }
 }
 
@@ -370,7 +370,7 @@ void CAnimus::AlterFP_MasterReport()
 {
   if (m_pMaster)
   {
-    m_pMaster->AlterFP_Animus(static_cast<__int16>(m_nFP));
+    m_pMaster->AlterFP_Animus(static_cast<unsigned __int16>(m_nFP));
   }
 }
 
@@ -636,158 +636,118 @@ void CAnimus::make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _a
   pAP->nMaxAttackPnt = m_nMaxAttackPnt;
 }
 
-void CAnimus::CalcAttExp(CAttack *pAT)
+void CAnimus::CalcAttExpForPlayer(CAttack *pAT)
 {
-  const int animusLevel = static_cast<int>(GetLevel());
-  const bool isInanna = m_byRoleCode == 3;
-  if (isInanna)
+  bool bPlayerGetExp = true;
+  bool bAnimusGetExp = true;
+  const int level = GetLevel();
+  if (!m_pMaster || (level - 1 >= 50 && m_pMaster->GetLevel() < level - 1))
   {
-    AnimusDebugLog(
-      "InannaExp: CalcAttExp start animusSerial=%u role=%u level=%d masterLevel=%d damageCount=%d inTown=%d",
-      m_dwObjSerial,
-      m_byRoleCode,
-      animusLevel,
-      m_pMaster ? static_cast<int>(m_pMaster->GetLevel()) : -1,
-      pAT ? pAT->m_nDamagedObjNum : -1,
-      IsInTown() ? 1 : 0);
+    bAnimusGetExp = false;
   }
 
-  if (!m_pMaster)
+  bool bGetAttackExp = false;
+  for (int i = 0; i < pAT->m_nDamagedObjNum; ++i)
   {
-    if (isInanna)
+    CCharacter *pDst = pAT->m_DamList[i].m_pChar;
+    const int damage = pAT->m_DamList[i].m_nDamage;
+    bPlayerGetExp = m_pMaster->IsPassExpLimitLvDiff(pDst->GetLevel(), &bGetAttackExp);
+    if (std::abs(GetLevel() - pDst->GetLevel()) > 10)
     {
-      AnimusDebugLog("InannaExp: CalcAttExp early return (master null)");
-    }
-    return;
-  }
-  if (!(animusLevel - 1 < 50 || m_pMaster->GetLevel() >= animusLevel - 1))
-  {
-    if (isInanna)
-    {
-      AnimusDebugLog(
-        "InannaExp: CalcAttExp early return (level gate) animusLevel=%d masterLevel=%d",
-        animusLevel,
-        static_cast<int>(m_pMaster->GetLevel()));
-    }
-    return;
-  }
-
-  for (int j = 0; j < pAT->m_nDamagedObjNum; ++j)
-  {
-    CMonster *monster = static_cast<CMonster *>(pAT->m_DamList[j].m_pChar);
-    const int damage = pAT->m_DamList[j].m_nDamage;
-    if (monster->m_ObjID.m_byID != 1 || damage <= 1 || IsInTown())
-    {
-      continue;
+      bAnimusGetExp = false;
     }
 
-    const int targetLevel = static_cast<int>(monster->GetLevel());
-    if (std::abs(animusLevel - targetLevel) > 10)
+    if ((bPlayerGetExp || bAnimusGetExp) && pDst->m_ObjID.m_byID == 1 && damage > 1 && !IsInTown())
     {
-      continue;
-    }
-
-    _monster_fld *monsterRecord = reinterpret_cast<_monster_fld *>(monster->m_pRecordSet);
-    const int monsterCurrentHP = static_cast<int>(monster->GetHP());
-    int remainHP = monsterCurrentHP - damage;
-    int appliedDamage = damage;
-    if (remainHP < 0)
-    {
-      remainHP = 0;
-      appliedDamage = monsterCurrentHP;
-    }
-
-    const float baseExp = monsterRecord->m_fExt;
-    const float maxHP = monsterRecord->m_fMaxHP;
-    const float damageExp = (baseExp * 0.69999999f) * (static_cast<float>(appliedDamage) / maxHP);
-    const int damageExpAdd = static_cast<int>((damageExp / 500.0f) + static_cast<float>(targetLevel));
-    if (isInanna)
-    {
-      AnimusDebugLog(
-        "InannaExp: CalcAttExp damageGain targetSerial=%u targetLevel=%d damage=%d appliedDamage=%d addExp=%d remainHP=%d",
-        monster->m_dwObjSerial,
-        targetLevel,
-        damage,
-        appliedDamage,
-        damageExpAdd,
-        remainHP);
-    }
-    AlterExp(damageExpAdd);
-
-    if (remainHP != 0)
-    {
-      continue;
-    }
-
-    float killExp = 0.0f;
-    if (monster->GetEmotionState() == 4)
-    {
-      killExp = baseExp * 0.5f;
-    }
-    else
-    {
-      killExp = baseExp * 0.30000001f;
-    }
-
-    if (m_pMaster->m_pPartyMgr && m_pMaster->m_pPartyMgr->IsPartyMode())
-    {
-      CPlayer *partyMembers[16]{};
-      const unsigned __int8 partyMemberCount = m_pMaster->_GetPartyMemberInCircle(partyMembers, 8, true);
-      if (partyMemberCount)
+      _monster_fld *pMonRec = reinterpret_cast<_monster_fld *>(pDst->m_pRecordSet);
+      CMonster *pMon = static_cast<CMonster *>(pDst);
+      int nLeftHP = pDst->GetHP() - damage;
+      int nCurDam = damage;
+      if (nLeftHP < 0)
       {
-        killExp *= CPlayer::s_fExpDivUnderParty_Kill[partyMemberCount - 1];
+        nLeftHP = 0;
+        nCurDam = pMon->GetHP();
       }
 
-      float levelWeightSum = 0.0f;
-      float levelWeights[16]{};
-      for (int k = 0; k < partyMemberCount; ++k)
+      const float fSetExt = (pMonRec->m_fExt * 0.69999999f) * (static_cast<float>(nCurDam) / pMonRec->m_fMaxHP);
+      if (bAnimusGetExp)
       {
-        const int partyLevel = static_cast<int>(partyMembers[k]->GetLevel());
-        levelWeights[k] = std::pow(static_cast<float>(partyLevel), 3.0f);
-        levelWeightSum += levelWeights[k];
+        const int nAddExp = static_cast<int>((fSetExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+        AlterExp(nAddExp);
       }
 
-      for (int k = 0; k < partyMemberCount; ++k)
+      if (!nLeftHP)
       {
-        const float shareExp = (killExp * levelWeights[k]) / levelWeightSum;
-        if (partyMembers[k] == m_pMaster)
+        float fKillExt = pMon->GetEmotionState() == 4 ? pMonRec->m_fExt * 0.5f : pMonRec->m_fExt * 0.30000001f;
+        if (m_pMaster->m_pPartyMgr->IsPartyMode())
         {
-          const int selfAddExp = static_cast<int>((shareExp / 500.0f) + static_cast<float>(targetLevel));
-          if (isInanna)
+          CPlayer *pMember[8]{};
+          const unsigned __int8 byPartyNum = m_pMaster->_GetPartyMemberInCircle(pMember, 8, true);
+          if (byPartyNum)
           {
-            AnimusDebugLog(
-              "InannaExp: CalcAttExp killShare selfAddExp=%d targetLevel=%d shareExp=%f partyCount=%u",
-              selfAddExp,
-              targetLevel,
-              shareExp,
-              partyMemberCount);
+            fKillExt *= CPlayer::s_fExpDivUnderParty_Kill[byPartyNum - 1];
           }
-          AlterExp(selfAddExp);
-        }
 
-        if (partyMembers[k]->IsRidingUnit())
-        {
-          const int riderAddExp = static_cast<int>((shareExp / 180.0f) + static_cast<float>(targetLevel));
-          partyMembers[k]->Emb_AlterStat(6u, 0, riderAddExp, 0, nullptr, true);
+          float fTotalLv = 0.0f;
+          float fPowMemLv[11]{};
+          for (int k = 0; k < byPartyNum; ++k)
+          {
+            fPowMemLv[k] = std::pow(static_cast<float>(pMember[k]->GetLevel()), 3.0f);
+            fTotalLv += fPowMemLv[k];
+          }
+
+          for (int k = 0; k < byPartyNum; ++k)
+          {
+            const float fAddKillExt = (fKillExt * fPowMemLv[k]) / fTotalLv;
+            if (pMember[k] == m_pMaster)
+            {
+              if (bAnimusGetExp)
+              {
+                const int addExp = static_cast<int>((fAddKillExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+                AlterExp(addExp);
+              }
+              if (bPlayerGetExp)
+              {
+                m_pMaster->AlterExp(fAddKillExt, false, false, false);
+              }
+            }
+
+            if (pMember[k]->IsRidingUnit())
+            {
+              if (bPlayerGetExp)
+              {
+                pMember[k]->AlterExp(fAddKillExt, false, false, false);
+                const int addExp = static_cast<int>((fAddKillExt / 180.0f) + static_cast<float>(pMon->GetLevel()));
+                pMember[k]->Emb_AlterStat(6u, 0, addExp, 0, nullptr, true);
+              }
+            }
+            else
+            {
+              if (bPlayerGetExp)
+              {
+                pMember[k]->AlterExp(fAddKillExt, false, false, false);
+              }
+              if (pMember[k] != m_pMaster && pMember[k]->m_pRecalledAnimusChar)
+              {
+                const int addExp = static_cast<int>((fAddKillExt / 5000.0f) + static_cast<float>(pMon->GetLevel()));
+                pMember[k]->m_pRecalledAnimusChar->AlterExp(addExp);
+              }
+            }
+          }
         }
         else
         {
-          partyMembers[k]->AlterExp(shareExp, false, false, false);
+          if (bAnimusGetExp)
+          {
+            const int addExp = static_cast<int>((fKillExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+            AlterExp(addExp);
+          }
+          if (bPlayerGetExp)
+          {
+            m_pMaster->AlterExp(fKillExt, false, false, false);
+          }
         }
       }
-    }
-    else
-    {
-      const int killAddExp = static_cast<int>((killExp / 500.0f) + static_cast<float>(targetLevel));
-      if (isInanna)
-      {
-        AnimusDebugLog(
-          "InannaExp: CalcAttExp killSolo addExp=%d targetLevel=%d killExp=%f",
-          killAddExp,
-          targetLevel,
-          killExp);
-      }
-      AlterExp(killAddExp);
     }
   }
 }
@@ -865,7 +825,7 @@ bool CAnimus::Attack(int skill)
     SendMsg_Attack_Gen(&attack);
     if (!attack.m_bFailure && m_byRoleCode != 1)
     {
-      CalcAttExp(&attack);
+      CalcAttExpForPlayer(&attack);
     }
 
     for (int j = 0; j < attack.m_nDamagedObjNum; ++j)
@@ -1283,6 +1243,29 @@ void CAnimus::SendMsg_AnimusActHealInform(unsigned int dwDstSerial, __int16 nAdd
   CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
 }
 
+void CAnimus::SendMsg_NotifyGetExpInfo(unsigned __int64 dwOldExp, __int64 nAlterExp, unsigned __int64 dwCurExp)
+{
+  if (!g_Main.IsReleaseServiceMode())
+  {
+    static unsigned int s_AnimusExpNotifyIndex = 0;
+
+    _trans_gm_msg_inform_zocl msg{};
+    std::memset(&msg, 0, sizeof(msg));
+    msg.wMsgSize = _snprintf(
+      msg.wszChatData,
+      255,
+      "%u Animus Old Exp     : %d\n   Animus Alter Exp   : %d\n   Animus Cur Exp     : %d\n",
+      ++s_AnimusExpNotifyIndex,
+      static_cast<int>(dwOldExp),
+      static_cast<int>(nAlterExp),
+      static_cast<int>(dwCurExp));
+
+    unsigned __int8 type[2] = {2, 13};
+    const unsigned __int16 length = static_cast<unsigned __int16>(msg.size());
+    g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), length);
+  }
+}
+
 void CAnimus::MasterAttack_MasterInform(CCharacter *pDst)
 {
   if (!m_pTarget)
@@ -1381,44 +1364,29 @@ unsigned __int8 CAnimus::GetMaxLevel()
 
 void CAnimus::AlterExp(__int64 nAddExp)
 {
-  const bool isInanna = m_byRoleCode == 3;
-  const unsigned __int64 beforeExp = m_dwExp;
-  if (isInanna)
-  {
-    AnimusDebugLog(
-      "InannaExp: AlterExp start addExp=%lld beforeExp=%llu level=%d masterSerial=%u",
-      nAddExp,
-      beforeExp,
-      static_cast<int>(GetLevel()),
-      m_pMaster ? m_pMaster->m_dwObjSerial : 0u);
-  }
-
   if (m_pMaster && m_pMaster->m_bOper)
   {
-    const int level = static_cast<int>(GetLevel());
-    if (level < GetMaxLevel())
+    if (GetLevel() < GetMaxLevel())
     {
       double playerPenalty = DOUBLE_1_0;
-      if (m_pMaster && m_pMaster->m_bOper)
-      {
-        playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_pMaster->m_id.wIndex);
-      }
+      playerPenalty = g_Main.m_pTimeLimitMgr->GetPlayerPenalty(m_pMaster->m_id.wIndex);
 
-      const __int64 originalAddExp = nAddExp;
-      int alteredExp = 0;
-      if (m_pMaster && m_pMaster->IsApplyPcbangPrimium())
+      const __int64 baseExp = nAddExp;
+      int addExpWithRate = 0;
+      if (m_pMaster->IsApplyPcbangPrimium())
       {
-        alteredExp = static_cast<int>(static_cast<float>(static_cast<int>(nAddExp))
-                                      + static_cast<float>(
-                                          static_cast<int>(originalAddExp) * (PCBANG_PRIMIUM_FAVOR::ANIMUS_EXP - 1.0f)));
+        addExpWithRate = static_cast<int>(
+          static_cast<float>(static_cast<int>(nAddExp))
+          + static_cast<float>(static_cast<int>(baseExp) * (PCBANG_PRIMIUM_FAVOR::ANIMUS_EXP - 1.0f)));
       }
       else
       {
-        alteredExp = static_cast<int>(static_cast<float>(static_cast<int>(nAddExp))
-                                      + static_cast<float>(static_cast<int>(originalAddExp) * (ANIMUS_EXP_RATE - 1.0f)));
+        addExpWithRate = static_cast<int>(
+          static_cast<float>(static_cast<int>(nAddExp))
+          + static_cast<float>(static_cast<int>(baseExp) * (ANIMUS_EXP_RATE - 1.0f)));
       }
 
-      const double scaledExp = static_cast<double>(alteredExp) * playerPenalty;
+      const double scaledExp = static_cast<double>(addExpWithRate) * playerPenalty;
       unsigned __int64 addExp = static_cast<unsigned int>(static_cast<int>(scaledExp));
       if (static_cast<int>(scaledExp) && m_pRecord->m_nForLvUpExp - m_dwExp < addExp)
       {
@@ -1460,6 +1428,7 @@ void CAnimus::AlterExp(__int64 nAddExp)
 
       if (addExp)
       {
+        const unsigned __int64 oldExp = m_dwExp;
         const unsigned __int64 newExp = addExp + m_dwExp;
         _animus_fld *newAnimusField = GetAnimusFldFromExp(m_byClassCode, newExp);
         if (newAnimusField == m_pRecord)
@@ -1485,17 +1454,9 @@ void CAnimus::AlterExp(__int64 nAddExp)
             m_nMaxFP = m_pRecord->m_nMaxFP;
           }
         }
+        SendMsg_NotifyGetExpInfo(oldExp, addExp, m_dwExp);
       }
     }
-  }
-
-  if (isInanna)
-  {
-    AnimusDebugLog(
-      "InannaExp: AlterExp end beforeExp=%llu afterExp=%llu delta=%lld",
-      beforeExp,
-      m_dwExp,
-      static_cast<__int64>(m_dwExp - beforeExp));
   }
 }
 

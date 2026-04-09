@@ -179,6 +179,7 @@ float ANIMUS_EXP_RATE = 1.0f;
 float PLAYER_EXP_RATE = 1.0f;
 float PLAYER_LOST_EXP = 1.0f;
 float TSVR_ADD_DARKHOLE_REWARD_RATE = 1.0f;
+float UNIT_HIT_EXP = 1.0f;
 unsigned __int8 Major_Bind_HQ = 0;
 unsigned __int8 Major_Sette_Mine_Elan_Map = 0;
 unsigned __int8 Major_Scroll_Item = 0;

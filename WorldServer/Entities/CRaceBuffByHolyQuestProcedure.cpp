@@ -128,7 +128,7 @@ bool CRaceBuffByHolyQuestProcedure::RequestSubProcCancelRaceBuff()
       const bool haveMentalTicket = g_Player[j].IsHaveMentalTicket();
       const unsigned __int8 race = static_cast<unsigned __int8>(g_Player[j].m_Param.GetRaceCode());
       const int resultType = m_kBuffHolyQestResultInfo.GetResultType(race, haveMentalTicket);
-      if (resultType >= 0)
+      if (resultType >= 0 && !g_Player[j].IsUseReleaseRaceBuffPotionInLastWar())
       {
         const unsigned int continueCnt = m_kBuffHolyQestResultInfo.GetContinueCnt(resultType);
         m_kBuffInfo.Release(continueCnt, resultType, &g_Player[j]);

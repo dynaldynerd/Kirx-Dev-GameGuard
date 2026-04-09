@@ -1280,7 +1280,7 @@ public:
     unsigned __int8 byChildAmount,
     char nRet);
   void SendMsg_ForceInvenChange(char byErrCode);
-  void SendMsg_AnimusInvenChange(char byErrCode);
+  void SendMsg_AnimusInvenChange(unsigned __int8 byErrCode);
   void pc_SkillRequest(unsigned __int8 bySkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
   void pc_ClassSkillRequest(unsigned __int16 wSkillIndex, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
   void pc_ForceRequest(unsigned __int16 wForceSerial, _CHRID *pidDst, unsigned __int16 *pConsumeSerial);
@@ -1423,8 +1423,8 @@ public:
   void pc_AnimusCommandRequest(unsigned __int8 byCommandCode);
   void pc_AnimusTargetRequest(unsigned __int8 byObjectID, unsigned __int16 wObjectIndex, unsigned int dwObjectSerial);
   void Return_AnimusAsk(unsigned __int8 byReturnType);
-  void AlterHP_Animus(__int16 nNewHP);
-  void AlterFP_Animus(__int16 nNewFP);
+  void AlterHP_Animus(unsigned __int16 nNewHP);
+  void AlterFP_Animus(unsigned __int16 nNewFP);
   void AlterExp_Animus(__int64 nAlterExp);
   void AlterMode_Animus(unsigned __int8 byMode);
   void pc_UnitFrameBuyRequest(unsigned __int8 byFrameCode, int bUseNPCLinkIntem);
@@ -1622,7 +1622,9 @@ public:
     unsigned __int8 byNumOfTime);
   void CheckMentalTakeAndUpdateLastMetalTicket(const char *strItemCode);
   bool IsUseReleaseRaceBuffPotion();
+  bool IsUseReleaseRaceBuffPotionInLastWar();
   void SetUseReleaseRaceBuffPotion();
+  void Dev_HS_SetNumOfTime(char nNumOfTime);
   bool IsOverOneDay();
   unsigned int SumMinuteOne(_SYSTEMTIME *tm);
   unsigned int SumMinuteBetween(_SYSTEMTIME *tmLast, _SYSTEMTIME *tmLocal);
@@ -2159,8 +2161,8 @@ public:
   void SendMsg_AnimusHPInform();
   void SendMsg_AnimusFPInform();
   void SendMsg_AnimusExpInform();
-  void SendMsg_AnimusModeInform(char byMode);
-  void SendMsg_AnimusRecallWaitTimeFree(char bFree);
+  void SendMsg_AnimusModeInform(unsigned __int8 byMode);
+  void SendMsg_AnimusRecallWaitTimeFree(bool bFree);
   void SendMsg_MineCompleteResult(
     char byErrCode,
     unsigned __int8 byNewOreIndex,
@@ -2411,6 +2413,7 @@ public:
   void _check_dst_param_after_attack(int nTotalDam, CCharacter *pTarget);
   bool IsPassExpLimitLvDiff(int iDstLevel, bool *bGetAttackExp);
   float GetPartyExpDistributionRate(int iPartyMemberLevel, int iMaxLevel, int i2ndLevel);
+  void CalcExpForAnimus(CMonster *pDst, int nDam, CPartyModeKillMonsterExpNotify *kPartyExpNotify);
   void CalcExp(CCharacter *pDst, int nDam, CPartyModeKillMonsterExpNotify *kPartyExpNotify);
   void SendMsg_AttackResult_Gen(CAttack *pAt, unsigned __int16 wBulletIndex);
   void SendMsg_AttackResult_Skill(unsigned __int8 byEffectCode, CPlayerAttack *pAt, unsigned __int16 wBulletIndex);
