@@ -34,5 +34,5 @@ public:
 
   STATE m_eState;
 
-  static wchar_t *ms_wszStateName[15];
+  static wchar_t *ms_wszStateName[16];
 };

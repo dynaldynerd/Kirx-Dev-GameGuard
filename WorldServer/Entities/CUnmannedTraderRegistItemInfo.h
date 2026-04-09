@@ -47,6 +47,7 @@ public:
   bool IsRegist();
   bool IsSellWait();
   bool IsSellUpdateWait();
+  bool IsWaitingRegistingSellUpdateItemWhenLogIn();
   bool IsOverRegistTime();
   unsigned __int16 GetItemIndex();
   unsigned __int16 GetItemSerial();

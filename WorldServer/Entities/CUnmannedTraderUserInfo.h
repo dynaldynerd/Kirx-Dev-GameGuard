@@ -122,6 +122,7 @@ public:
     _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
     unsigned __int8 byGroupType,
     CLogFile *pkLogger);
+  void SetCompleteInfo(CLogFile *pkLogger);
   void ProcSellWaitItem(
     _qry_case_unmandtrader_log_in_proc_update_complete *pkResult,
     unsigned __int8 byGroupType,

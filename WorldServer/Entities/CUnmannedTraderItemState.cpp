@@ -21,9 +21,10 @@ namespace
   wchar_t s_utState12[] = L"Regist Fail For Server Internal Error";
   wchar_t s_utState13[] = L"Close For Pass Time Wait Reregistration";
   wchar_t s_utState14[] = L"NULL";
+  wchar_t s_utState15[] = L"NULL";
 }
 
-wchar_t *CUnmannedTraderItemState::ms_wszStateName[15] = {
+wchar_t *CUnmannedTraderItemState::ms_wszStateName[16] = {
   s_utState0,
   s_utState1,
   s_utState2,
@@ -39,6 +40,7 @@ wchar_t *CUnmannedTraderItemState::ms_wszStateName[15] = {
   s_utState12,
   s_utState13,
   s_utState14,
+  s_utState15,
 };
 
 CUnmannedTraderItemState::CUnmannedTraderItemState()
@@ -59,7 +61,7 @@ void CUnmannedTraderItemState::Clear()
 
 bool CUnmannedTraderItemState::Set(unsigned __int8 byState)
 {
-  if (byState >= 14)
+  if (byState >= 15)
   {
     return false;
   }
@@ -74,7 +76,7 @@ unsigned int CUnmannedTraderItemState::GetState() const
 
 unsigned int CUnmannedTraderItemState::GetMaxStateCnt()
 {
-  return 14;
+  return 15;
 }
 
 wchar_t **CUnmannedTraderItemState::GetStateStrList()
@@ -84,11 +86,11 @@ wchar_t **CUnmannedTraderItemState::GetStateStrList()
 
 wchar_t *CUnmannedTraderItemState::GetStateStrW(unsigned int uiInx)
 {
-  if (uiInx <= 14)
+  if (uiInx <= 15)
   {
     return CUnmannedTraderItemState::ms_wszStateName[uiInx];
   }
-  return CUnmannedTraderItemState::ms_wszStateName[14];
+  return CUnmannedTraderItemState::ms_wszStateName[15];
 }
 
 bool CUnmannedTraderItemState::PushUpdateState(

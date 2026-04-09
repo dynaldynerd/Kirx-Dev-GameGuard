@@ -384,6 +384,11 @@ bool CUnmannedTraderRegistItemInfo::IsSellUpdateWait()
   return m_kState.GetState() == 10;
 }
 
+bool CUnmannedTraderRegistItemInfo::IsWaitingRegistingSellUpdateItemWhenLogIn()
+{
+  return m_kState.GetState() == 14;
+}
+
 bool CUnmannedTraderRegistItemInfo::IsOverRegistTime()
 {
   return GetLeftSec() == 0;
