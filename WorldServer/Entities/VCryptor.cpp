@@ -2,28 +2,15 @@
 
 #include "VCryptor.h"
 
-#include <new>
+#include <cstring>
 
-#include "VCAES.h"
-
-VCryptor *VCryptor::Create(unsigned __int8 byCryptType, VCryptorParam *pParam)
+void AES_KEY::Set(int rounds_, unsigned int *rd_key_)
 {
-  if (byCryptType != 0 || !pParam)
+  if (!rd_key_)
   {
-    return nullptr;
+    return;
   }
 
-  VCAES *cryptor = new (std::nothrow) VCAES();
-  if (!cryptor)
-  {
-    return nullptr;
-  }
-
-  if (!cryptor->Init(pParam))
-  {
-    delete cryptor;
-    return nullptr;
-  }
-
-  return cryptor;
+  rounds = rounds_;
+  std::memcpy(rd_key, rd_key_, sizeof(rd_key));
 }

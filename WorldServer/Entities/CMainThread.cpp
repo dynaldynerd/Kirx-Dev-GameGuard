@@ -1874,6 +1874,12 @@ char CMainThread::Init()
     1,
     3600000);
   CAsyncLogger::Instance()->Regist(
+    CAsyncLogger::ALT_NPROTECT_LOG,
+    "..\\ZoneServerLog\\SystemLog\\nProtect",
+    "nProtectLog",
+    1,
+    3600000);
+  CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_APEX_SYSTEM_LOG,
     "..\\ZoneServerLog\\SystemLog\\Apex",
     "Apex_System",
@@ -1897,6 +1903,18 @@ char CMainThread::Init()
     "BuyCashItemHistory",
     1,
     3600000);
+  CAsyncLogger::Instance()->Regist(
+    CAsyncLogger::ALT_CHAT_LOG,
+    "..\\ZoneServerLog\\SystemLog\\ChatLog",
+    "Chat_SysLog",
+    1,
+    86400000);
+  CAsyncLogger::Instance()->Regist(
+    CAsyncLogger::ALT_POST_LOG,
+    "..\\ZoneServerLog\\SystemLog\\PostLog",
+    "Post_SysLog",
+    1,
+    86400000);
 
   m_logLoadingError.Write("Server Load Start!!");
 
@@ -2203,6 +2221,21 @@ char CMainThread::Init()
     m_logLoadingError.Write("CGoldenBoxItemMgr::Instance()->Initialize() Fail!");
     return false;
   }
+  if (!LoadPlayerLevelLimitINI())
+  {
+    MyMessageBox("CMainThread::Init() : ", "CMainThread::LoadPlayerLevelLimitINI() Fail!");
+    m_logLoadingError.Write("CMainThread::LoadPlayerLevelLimitINI() Fail");
+    return false;
+  }
+  if (!LoadFlyIni())
+  {
+    MyMessageBox("CMainThread::Init() : ", "CMainThread::LoadFlyIni() Fail!");
+    m_logLoadingError.Write("CMainThread::LoadFlyIni() Fail!");
+    return false;
+  }
+
+  ChatUseLog();
+  PostLog();
 
   return true;
 }
@@ -2224,7 +2257,22 @@ int CMainThread::LoadINI()
   }
 
   LoadItemConsumeINI();
-  LoadItemIntegrityINI();
+  LoadGuildEntryDelay();
+  LoadResDataInteg();
+  LoadBootyDataInteg();
+  LoadWeaponDataInteg();
+  LoadSiegeDataInteg();
+  LoadBulletDataInteg();
+  LoadUpperDataInteg();
+  LoadLowerDataInteg();
+  LoadGauntletDataInteg();
+  LoadShoeDataInteg();
+  LoadHelmetDataInteg();
+  LoadShieldDataInteg();
+  LoadBoxDataInteg();
+  LoadAmuletDataInteg();
+  LoadRingDataInteg();
+  LoadPotionDataInteg();
   return true;
 }
 
@@ -2448,65 +2496,346 @@ void CMainThread::LoadItemConsumeINI()
     GetPrivateProfileIntA("AllRaceChat", "Money", 0, ".\\Initialize\\ItemConsume.ini"));
 }
 
-void CMainThread::LoadItemIntegrityINI()
+char CMainThread::LoadPlayerLevelLimitINI()
 {
-  LoadItemIntegrityInfo(&m_ResourceItemInteg, "ResourceItem", ".\\Initialize\\IndexInteg\\ResourceItem.ini");
-  LoadItemIntegrityInfo(&m_BootyItemInteg, "bootYItem", ".\\Initialize\\IndexInteg\\bootYItem.ini");
-  LoadItemIntegrityInfo(&m_WeaponItemInteg, "WeaponItem", ".\\Initialize\\IndexInteg\\WeaponItem.ini");
-  LoadItemIntegrityInfo(&m_SiegeKitItemInteg, "SiegeKitItem", ".\\Initialize\\IndexInteg\\SiegeKitItem.ini");
-  LoadItemIntegrityInfo(&m_BulletItemInteg, "BulletItem", ".\\Initialize\\IndexInteg\\BulletItem.ini");
-  LoadItemIntegrityInfo(&m_UpperItemInteg, "UpperItem", ".\\Initialize\\IndexInteg\\UpperItem.ini");
-  LoadItemIntegrityInfo(&m_LowerItemInteg, "LowerItem", ".\\Initialize\\IndexInteg\\LowerItem.ini");
-  LoadItemIntegrityInfo(&m_GauntletItemInteg, "GauntletItem", ".\\Initialize\\IndexInteg\\GauntletItem.ini");
-  LoadItemIntegrityInfo(&m_ShoeItemInteg, "ShoeItem", ".\\Initialize\\IndexInteg\\ShoeItem.ini");
-  LoadItemIntegrityInfo(&m_HelmetItemInteg, "HelmetItem", ".\\Initialize\\IndexInteg\\HelmetItem.ini");
-  LoadItemIntegrityInfo(&m_ShieldItemInteg, "shielDItem", ".\\Initialize\\IndexInteg\\shielDItem.ini");
-  LoadItemIntegrityInfo(&m_BoxItemInteg, "BoxItem", ".\\Initialize\\IndexInteg\\BoxItem.ini");
-  LoadItemIntegrityInfo(&m_AmuletItemInteg, "AmuletItem", ".\\Initialize\\IndexInteg\\AmuletItem.ini");
-  LoadItemIntegrityInfo(&m_RingItemInteg, "rIngItem", ".\\Initialize\\IndexInteg\\rIngItem.ini");
-  LoadItemIntegrityInfo(&m_PotionItemInteg, "PotionItem", ".\\Initialize\\IndexInteg\\PotionItem.ini");
+  char szTemp[40]{};
+  GetPrivateProfileStringA(
+    "Player Level Limit",
+    "USE",
+    "FALSE",
+    szTemp,
+    10,
+    ".\\Initialize\\WorldSystem.ini");
+  m_bLimitPlayerLevel = strcmp(szTemp, "FALSE") != 0;
+  m_byLimitPlayerLevel = static_cast<unsigned __int8>(
+    GetPrivateProfileIntA("Player Level Limit", "Player_Level_Limit", 0, ".\\Initialize\\WorldSystem.ini"));
+  return true;
 }
 
-void CMainThread::LoadItemIntegrityInfo(_ITEM_INTEGRITY_INFO *pInfo, const char *pszSection, const char *pszPath)
+char CMainThread::LoadFlyIni()
 {
-  pInfo->Init();
-  pInfo->m_nCount = static_cast<int>(GetPrivateProfileIntA(pszSection, "Count", 0, pszPath));
-  if (pInfo->m_nCount > _ITEM_INTEGRITY_INFO::kMaxEntries)
-  {
-    pInfo->m_nCount = _ITEM_INTEGRITY_INFO::kMaxEntries;
-  }
+  char szTemp[40]{};
+  GetPrivateProfileStringA("Fly", "Fly_Block", "TRUE", szTemp, 10, ".\\Initialize\\WorldSystem.ini");
+  m_bFlyOnOff = strcmp(szTemp, "FALSE") != 0;
+  GetPrivateProfileStringA("Fly", "Fly_Log", "TRUE", szTemp, 10, ".\\Initialize\\WorldSystem.ini");
+  m_bFlyLog = strcmp(szTemp, "FALSE") != 0;
+  GetPrivateProfileStringA("Fly", "Fly_User_Cut", "TRUE", szTemp, 10, ".\\Initialize\\WorldSystem.ini");
+  m_bFlyUserCut = strcmp(szTemp, "FALSE") != 0;
+  return true;
+}
 
-  char keyName[48]{};
-  char beforeString[10]{};
-  char changedString[10]{};
-  for (int index = 0; index < pInfo->m_nCount; ++index)
-  {
-    std::memset(keyName, 0, sizeof(keyName));
-    std::memset(beforeString, 0, sizeof(beforeString));
-    std::sprintf(keyName, "Before%d", index);
-    GetPrivateProfileStringA(
-      pszSection,
-      keyName,
-      "-1",
-      beforeString,
-      static_cast<DWORD>(sizeof(beforeString)),
-      pszPath);
-    pInfo->m_nBeforeIndex[index] = std::atoi(beforeString);
+char CMainThread::ChatUseLog()
+{
+  CAsyncLogger::Instance()->Regist(
+    CAsyncLogger::ALT_CHAT_LOG,
+    "..\\ZoneServerLog\\ServiceLog\\ChatUseLog",
+    "ChatUseLog",
+    1,
+    86400000);
+  return true;
+}
 
-    std::memset(keyName, 0, sizeof(keyName));
-    std::memset(changedString, 0, sizeof(changedString));
-    std::sprintf(keyName, "Change%d", index);
-    GetPrivateProfileStringA(
-      pszSection,
-      keyName,
-      "-1",
-      changedString,
-      static_cast<DWORD>(sizeof(changedString)),
-      pszPath);
-    pInfo->m_nChangedIndex[index] = std::atoi(changedString);
+char CMainThread::PostLog()
+{
+  CAsyncLogger::Instance()->Regist(
+    CAsyncLogger::ALT_POST_LOG,
+    "..\\ZoneServerLog\\ServiceLog\\PostLog",
+    "PostLog",
+    1,
+    86400000);
+  return true;
+}
+
+void CMainThread::LoadGuildEntryDelay()
+{
+  m_dwGuildEntryDelay = static_cast<unsigned __int64>(
+    GetPrivateProfileIntA("Guild Entry Delay", "DelayTime", 0, ".\\Initialize\\WorldSystem.ini"));
+}
+
+void CMainThread::LoadResDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("ResourceItem", "Count", 0, ".\\Initialize\\IndexInteg\\ResourceItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Res.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("ResourceItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\ResourceItem.ini");
+    Res.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("ResourceItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\ResourceItem.ini");
+    Res.m_nChange[n] = std::atoi(szChangeIndexTemp);
   }
 }
 
+void CMainThread::LoadBootyDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("bootYItem", "Count", 0, ".\\Initialize\\IndexInteg\\bootYItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Booty.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("bootYItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\bootYItem.ini");
+    Booty.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("bootYItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\bootYItem.ini");
+    Booty.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadWeaponDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("WeaponItem", "Count", 0, ".\\Initialize\\IndexInteg\\WeaponItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Weapon.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("WeaponItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\WeaponItem.ini");
+    Weapon.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("WeaponItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\WeaponItem.ini");
+    Weapon.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadSiegeDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("SiegeKitItem", "Count", 0, ".\\Initialize\\IndexInteg\\SiegeKitItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Siege.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("SiegeKitItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\SiegeKitItem.ini");
+    Siege.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("SiegeKitItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\SiegeKitItem.ini");
+    Siege.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadBulletDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("BulletItem", "Count", 0, ".\\Initialize\\IndexInteg\\BulletItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Bullet.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("BulletItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\BulletItem.ini");
+    Bullet.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("BulletItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\BulletItem.ini");
+    Bullet.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadUpperDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("UpperItem", "Count", 0, ".\\Initialize\\IndexInteg\\UpperItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Upper.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("UpperItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\UpperItem.ini");
+    Upper.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("UpperItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\UpperItem.ini");
+    Upper.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadLowerDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("LowerItem", "Count", 0, ".\\Initialize\\IndexInteg\\LowerItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Lower.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("LowerItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\LowerItem.ini");
+    Lower.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("LowerItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\LowerItem.ini");
+    Lower.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadGauntletDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("GauntletItem", "Count", 0, ".\\Initialize\\IndexInteg\\GauntletItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Gauntlet.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("GauntletItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\GauntletItem.ini");
+    Gauntlet.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("GauntletItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\GauntletItem.ini");
+    Gauntlet.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadShoeDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("ShoeItem", "Count", 0, ".\\Initialize\\IndexInteg\\ShoeItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Shoe.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("ShoeItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\ShoeItem.ini");
+    Shoe.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("ShoeItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\ShoeItem.ini");
+    Shoe.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadHelmetDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("HelmetItem", "Count", 0, ".\\Initialize\\IndexInteg\\HelmetItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Helmet.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("HelmetItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\HelmetItem.ini");
+    Helmet.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("HelmetItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\HelmetItem.ini");
+    Helmet.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadShieldDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("shielDItem", "Count", 0, ".\\Initialize\\IndexInteg\\shielDItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Shield.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("shielDItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\shielDItem.ini");
+    Shield.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("shielDItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\shielDItem.ini");
+    Shield.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadBoxDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("BoxItem", "Count", 0, ".\\Initialize\\IndexInteg\\BoxItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Box.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("BoxItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\BoxItem.ini");
+    Box.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("BoxItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\BoxItem.ini");
+    Box.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadAmuletDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("AmuletItem", "Count", 0, ".\\Initialize\\IndexInteg\\AmuletItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Amulet.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("AmuletItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\AmuletItem.ini");
+    Amulet.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("AmuletItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\AmuletItem.ini");
+    Amulet.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadRingDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("rIngItem", "Count", 0, ".\\Initialize\\IndexInteg\\rIngItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Ring.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("rIngItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\rIngItem.ini");
+    Ring.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("rIngItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\rIngItem.ini");
+    Ring.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
+
+void CMainThread::LoadPotionDataInteg()
+{
+  const int nCount = GetPrivateProfileIntA("PotionItem", "Count", 0, ".\\Initialize\\IndexInteg\\PotionItem.ini");
+  char szItemTemp[10]{};
+  CHAR szBeforeIndexTemp[48]{};
+  CHAR szChangeIndexTemp[28]{};
+
+  Potion.m_nCount = nCount;
+  for (int n = 0; n < nCount; ++n)
+  {
+    std::sprintf(szItemTemp, "Before%d", n);
+    GetPrivateProfileStringA("PotionItem", szItemTemp, "-1", szBeforeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\PotionItem.ini");
+    Potion.m_nBefore[n] = std::atoi(szBeforeIndexTemp);
+    std::sprintf(szItemTemp, "Change%d", n);
+    GetPrivateProfileStringA("PotionItem", szItemTemp, "-1", szChangeIndexTemp, 10u, ".\\Initialize\\IndexInteg\\PotionItem.ini");
+    Potion.m_nChange[n] = std::atoi(szChangeIndexTemp);
+  }
+}
 bool CMainThread::CheckDefine()
 {
   return true; //this is not stub, original code is already like this
@@ -3656,9 +3985,6 @@ void CMainThread::gm_MainThreadControl()
     m_nLimUserNum = MAX_PLAYER;
   }
 
-  m_dwGuildEntryDelay = static_cast<unsigned __int64>(
-    GetPrivateProfileIntA("Guild Entry Delay", "DelayTime", 0, ".\\Initialize\\WorldSystem.ini"));
-
   char returnedString[32]{};
   GetPrivateProfileStringA("System", "CheckSum", "TRUE", returnedString, sizeof(returnedString), ".\\Initialize\\WorldSystem.ini");
   m_bCheckSumActive = (strcmp(returnedString, "TRUE") == 0);
@@ -3864,50 +4190,39 @@ bool CMainThread::ObjectInit()
 
 bool CMainThread::NetworkInit()
 {
-  static const VCAESParam kAopClientlineCryptParam = [] {
-    VCAESParam param{};
-
-    param.___u0.encKey = {
-      {
-        0x3C8173A8, 0x5D43BEDF, 0x4A9BEE6B, 0x6E6A18E8, 0x3C68C2D2, 0xD74D98D6,
-        0xDEC785A6, 0x83843B79, 0xC91FD512, 0xA775CDFA, 0x9B1D0F28, 0x4C5097FE,
-        0x8F4F3E8F, 0x0CCB05F6, 0xC5D4D0E4, 0x62A11D1E, 0xF9BC1236, 0xB5EC85C8,
-        0x45D8D65A, 0x4913D3AC, 0x8CC70348, 0xEE661E56, 0x17DA0C60, 0xA23689A8,
-        0x487F1460, 0x016CC7CC, 0x8DABC484, 0x63CDDAD2, 0x7417D6B2, 0xD6215F1A,
-        0xA5B0B696, 0xA4DC715A, 0x2977B5DE, 0x4ABA6F0C, 0x3EADB9BE, 0xE88CE6A4,
-        0xE13EFF0D, 0x45E28E57, 0x6C953B89, 0x262F5485, 0x1882ED3B, 0xF00E0B9F,
-        0x0A152481, 0x4FF7AAD6, 0x2362915F, 0x054DC5DA, 0x1DCF28E1, 0xEDC1237E,
-        0xF233D7D4, 0xBDC47D02, 0x9EA6EC5D, 0x9BEB2987, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-      },
-      12,
-    };
-
-    param.decKey = {
-      {
-        0xB941C4ED, 0x638A6F54, 0x73D3B61A, 0xD8DD5DB0, 0xFF6A91DA, 0x64FCF78B,
-        0x50E416C1, 0x7C0C289B, 0x3418E14A, 0x2CE83E5A, 0x73F24C89, 0x3CC34BB7,
-        0xF92617EC, 0x4F31073E, 0xC3A9DA6D, 0x9B966651, 0x8C98DD53, 0x583FBC3C,
-        0xAF8E871B, 0x18F0DF10, 0xF7B13B27, 0xB77E580B, 0xEAF7596B, 0xB61710D2,
-        0x99FCD3C8, 0x5CE049B9, 0x3A8FCD81, 0xD4A7616F, 0x666F8438, 0xEE28ACEE,
-        0x23165A48, 0x40CF632C, 0xCD3EF6A6, 0x63D93964, 0xFDFE8773, 0xC51C9A71,
-        0x507EFE0D, 0x38E21D02, 0xA3731E49, 0x884728D6, 0x9B91034B, 0x2B34369F,
-        0x4579DE70, 0xAEE7CFC2, 0x6E4DE8EF, 0xEB9E11B2, 0x08B5252F, 0x689CE30F,
-        0x3C8170D8, 0x5D43BE0F, 0x4E96E96B, 0x6E6A18E8, 0x00000000, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-      },
-      12,
-    };
-
-    return param;
-  }();
-
+  static int ServerEncKey_Rounds = 12;
+  static unsigned int ServerEncKey_RDKey[60] = {
+    0x3C8173A8, 0x5D43BEDF, 0x4A9BEE6B, 0x6E6A18E8, 0x3C68C2D2, 0xD74D98D6, 0xDEC785A6, 0x83843B79,
+    0xC91FD512, 0xA775CDFA, 0x9B1D0F28, 0x4C5097FE, 0x8F4F3E8F, 0x0CCB05F6, 0xC5D4D0E4, 0x62A11D1E,
+    0xF9BC1236, 0xB5EC85C8, 0x45D8D65A, 0x4913D3AC, 0x8CC70348, 0xEE661E56, 0x17DA0C60, 0xA23689A8,
+    0x487F1460, 0x016CC7CC, 0x8DABC484, 0x63CDDAD2, 0x7417D6B2, 0xD6215F1A, 0xA5B0B696, 0xA4DC715A,
+    0x2977B5DE, 0x4ABA6F0C, 0x3EADB9BE, 0xE88CE6A4, 0xE13EFF0D, 0x45E28E57, 0x6C953B89, 0x262F5485,
+    0x1882ED3B, 0xF00E0B9F, 0x0A152481, 0x4FF7AAD6, 0x2362915F, 0x054DC5DA, 0x1DCF28E1, 0xEDC1237E,
+    0xF233D7D4, 0xBDC47D02, 0x9EA6EC5D, 0x9BEB2987, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  };
+  static int ClientDecKey_Rounds = 12;
+  static unsigned int ClientDecKey_RDKey[60] = {
+    0xB941C4ED, 0x638A6F54, 0x73D3B61A, 0xD8DD5DB0, 0xFF6A91DA, 0x64FCF78B, 0x50E416C1, 0x7C0C289B,
+    0x3418E14A, 0x2CE83E5A, 0x73F24C89, 0x3CC34BB7, 0xF92617EC, 0x4F31073E, 0xC3A9DA6D, 0x9B966651,
+    0x8C98DD53, 0x583FBC3C, 0xAF8E871B, 0x18F0DF10, 0xF7B13B27, 0xB77E580B, 0xEAF7596B, 0xB61710D2,
+    0x99FCD3C8, 0x5CE049B9, 0x3A8FCD81, 0xD4A7616F, 0x666F8438, 0xEE28ACEE, 0x23165A48, 0x40CF632C,
+    0xCD3EF6A6, 0x63D93964, 0xFDFE8773, 0xC51C9A71, 0x507EFE0D, 0x38E21D02, 0xA3731E49, 0x884728D6,
+    0x9B91034B, 0x2B34369F, 0x4579DE70, 0xAEE7CFC2, 0x6E4DE8EF, 0xEB9E11B2, 0x08B5252F, 0x689CE30F,
+    0x3C8170D8, 0x5D43BE0F, 0x4E96E96B, 0x6E6A18E8, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+  };
   _NET_TYPE_PARAM params[4];
+  VCAESParam cParam;
 
   params[0].m_bServer = 1;
   params[0].m_wSocketMaxNum = MAX_PLAYER;
   params[0].m_bRealSockCheck = 1;
   params[0].m_bSystemLogFile = 1;
+  if (m_bReleaseServiceMode)
+  {
+    params[0].m_byRecvThreadNum = 8;
+  }
 #if 0 // packet log trace disabled (debug only)
   params[0].m_bRecvLogFile = 1;
   params[0].m_bSendLogFile = 1;
@@ -3915,10 +4230,6 @@ bool CMainThread::NetworkInit()
   params[0].m_bRecvLogFile = 0;
   params[0].m_bSendLogFile = 0;
 #endif
-  if (m_bReleaseServiceMode)
-  {
-    params[0].m_byRecvThreadNum = 8;
-  }
   params[0].m_byRecvSleepTime = 10;
   params[0].m_bySendSleepTime = 2;
   params[0].m_wPort = m_wGatePort;
@@ -3927,6 +4238,10 @@ bool CMainThread::NetworkInit()
   params[0].m_dwSocketRecycleTerm = 30000;
   params[0].m_bOddMsgDisconnect = 1;
   params[0].m_dwProcessMsgNumPerLoop = 20;
+  cParam.___u0.encKey.Set(ServerEncKey_Rounds, ServerEncKey_RDKey);
+  cParam.decKey.Set(ClientDecKey_Rounds, ClientDecKey_RDKey);
+  params[0].m_CryptType = 0;
+  params[0].m_pVCryptParam = reinterpret_cast<VCryptorParam *>(&cParam);
   if (m_bReleaseServiceMode)
   {
     params[0].m_dwSendBufferSize = 40000;
@@ -3934,19 +4249,16 @@ bool CMainThread::NetworkInit()
   }
   params[0].m_bSendSafe = true;
   strcpy_s(params[0].m_szModuleName, sizeof(params[0].m_szModuleName), "ClientLine");
-  params[0].m_CryptType = 0;
-  params[0].m_pVCryptParam = reinterpret_cast<VCryptorParam *>(const_cast<VCAESParam *>(&kAopClientlineCryptParam));
 
   params[1].m_bServer = 0;
+  params[1].m_bAnSyncConnect = 1;
   params[1].m_wSocketMaxNum = 1;
+  params[1].m_bSvrToS = 1;
   params[1].m_bRealSockCheck = 1;
   params[1].m_bSystemLogFile = 1;
   params[1].m_bOddMsgWriteLog = 1;
   params[1].m_byRecvThreadNum = 1;
   params[1].m_byRecvSleepTime = 1;
-  params[1].m_bySendSleepTime = 1;
-  params[1].m_bSvrToS = 1;
-  params[1].m_bAnSyncConnect = 1;
   strcpy_s(params[1].m_szModuleName, sizeof(params[1].m_szModuleName), "AccountLine");
 
   params[2].m_bServer = 1;
@@ -3981,10 +4293,7 @@ bool CMainThread::NetworkInit()
   {
     return false;
   }
-  if (params[0].m_CryptType == 0)
-  {
-    g_Network.SetUseCrypt(0, true);
-  }
+  g_Network.SetCryptUsage(0, true);
   AddPassablePacket();
 
   return true;

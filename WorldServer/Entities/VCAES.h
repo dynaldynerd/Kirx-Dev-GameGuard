@@ -10,9 +10,15 @@ union VCAESParamBase
 
 struct VCAESParam
 {
+  VCAESParam();
+
+  void Clear();
+
   VCAESParamBase ___u0;
   AES_KEY decKey;
 };
+
+static_assert(sizeof(VCAESParam) == 488);
 
 class VCAES : public VCryptor
 {
@@ -28,3 +34,5 @@ public:
 public:
   VCAESParam m_Param;
 };
+
+static_assert(sizeof(VCAES) == 496);

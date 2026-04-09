@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "IdaCompat.h"
 #include "GlobalObjectDefs.h"
@@ -11,7 +11,6 @@
 #include "attack_param.h"
 #include "D3DXMATRIX.h"
 #include "EntityTypes.h"
-#include "ItemIntegrityInfo.h"
 #include "Packet/ClientZonePacket.h"
 
 #include <utility>
@@ -725,6 +724,13 @@ struct  _server_rate_realtime_load
 class  CMainThread
 {
 public:
+  struct _ITEM_INTEG_INFO
+  {
+    int m_nCount;
+    int m_nBefore[300];
+    int m_nChange[300];
+  };
+
   _SRAND m_Rand;
   _WAIT_ENTER_ACCOUNT m_WaitEnterAccount[2532];
   CRFWorldDatabase *m_pWorldDB;
@@ -827,22 +833,28 @@ public:
   int m_nSleepValue;
   int m_nSleepIgnore;
   bool m_bCheckSumActive;
+  int m_bLimitPlayerLevel;
+  unsigned __int8 m_byLimitPlayerLevel;
+  bool m_bFlyOnOff;
+  bool m_bFlyLog;
+  bool m_bFlyUserCut;
   unsigned __int64 m_dwGuildEntryDelay;
-  _ITEM_INTEGRITY_INFO m_ResourceItemInteg;
-  _ITEM_INTEGRITY_INFO m_BootyItemInteg;
-  _ITEM_INTEGRITY_INFO m_WeaponItemInteg;
-  _ITEM_INTEGRITY_INFO m_SiegeKitItemInteg;
-  _ITEM_INTEGRITY_INFO m_BulletItemInteg;
-  _ITEM_INTEGRITY_INFO m_UpperItemInteg;
-  _ITEM_INTEGRITY_INFO m_LowerItemInteg;
-  _ITEM_INTEGRITY_INFO m_GauntletItemInteg;
-  _ITEM_INTEGRITY_INFO m_ShoeItemInteg;
-  _ITEM_INTEGRITY_INFO m_HelmetItemInteg;
-  _ITEM_INTEGRITY_INFO m_ShieldItemInteg;
-  _ITEM_INTEGRITY_INFO m_BoxItemInteg;
-  _ITEM_INTEGRITY_INFO m_AmuletItemInteg;
-  _ITEM_INTEGRITY_INFO m_RingItemInteg;
-  _ITEM_INTEGRITY_INFO m_PotionItemInteg;
+  unsigned __int8 m_byPlayerInteg;
+  _ITEM_INTEG_INFO Res;
+  _ITEM_INTEG_INFO Booty;
+  _ITEM_INTEG_INFO Weapon;
+  _ITEM_INTEG_INFO Siege;
+  _ITEM_INTEG_INFO Bullet;
+  _ITEM_INTEG_INFO Upper;
+  _ITEM_INTEG_INFO Lower;
+  _ITEM_INTEG_INFO Gauntlet;
+  _ITEM_INTEG_INFO Shoe;
+  _ITEM_INTEG_INFO Helmet;
+  _ITEM_INTEG_INFO Shield;
+  _ITEM_INTEG_INFO Box;
+  _ITEM_INTEG_INFO Amulet;
+  _ITEM_INTEG_INFO Ring;
+  _ITEM_INTEG_INFO Potion;
   unsigned __int8 m_byWebAgentServerNetInx;
   bool m_bConnectedWebAgentServer;
   unsigned __int8 m_byControllServerNetInx;
@@ -1377,8 +1389,26 @@ private:
   int LoadWorldSystemINI();
   int LoadWorldInfoINI();
   void LoadItemConsumeINI();
-  void LoadItemIntegrityINI();
-  void LoadItemIntegrityInfo(_ITEM_INTEGRITY_INFO *pInfo, const char *pszSection, const char *pszPath);
+  char LoadPlayerLevelLimitINI();
+  char LoadFlyIni();
+  char ChatUseLog();
+  char PostLog();
+  void LoadGuildEntryDelay();
+  void LoadResDataInteg();
+  void LoadBootyDataInteg();
+  void LoadWeaponDataInteg();
+  void LoadSiegeDataInteg();
+  void LoadBulletDataInteg();
+  void LoadUpperDataInteg();
+  void LoadLowerDataInteg();
+  void LoadGauntletDataInteg();
+  void LoadShoeDataInteg();
+  void LoadHelmetDataInteg();
+  void LoadShieldDataInteg();
+  void LoadBoxDataInteg();
+  void LoadAmuletDataInteg();
+  void LoadRingDataInteg();
+  void LoadPotionDataInteg();
   bool CheckDefine();
   bool check_dbsyn_data_size();
   char DataFileInit();

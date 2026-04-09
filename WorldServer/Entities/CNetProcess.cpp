@@ -16,6 +16,8 @@
 
 #include "NetCheckPackets.h"
 #include "NetUtil.h"
+#include "VCHeader.h"
+#include "VCrypt.h"
 #include "VCryptor.h"
 
 #pragma comment(lib, "winmm.lib")
@@ -101,12 +103,6 @@ namespace
         out.push_back(' ');
       }
     }
-  }
-
-  void WriteCryptFrameHeader(char *buffer, unsigned __int16 frameSize, unsigned __int8 padSize)
-  {
-    std::memcpy(buffer, &frameSize, sizeof(frameSize));
-    buffer[2] = static_cast<char>(padSize);
   }
 
   void AppendPacketSnifferLogSend(
@@ -361,9 +357,9 @@ char *_NET_BUFFER::GetPushPos()
 
 char *_NET_BUFFER::GetPopPoint(
   bool *pbMiss,
-  bool bCryptFrame,
   unsigned __int16 *pwFrameSize,
-  unsigned __int16 *pwPayloadSize)
+  unsigned __int16 *pwPayloadSize,
+  bool bCryptFrame)
 {
   const int left = static_cast<int>(GetLeftLoadSize());
   const unsigned int popPoint = m_dwPopPnt;
@@ -997,6 +993,9 @@ CNetProcess::CNetProcess()
     m_bUseCrypt(false)
 {
   m_dwCurTime = timeGetTime();
+  m_DeCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
+  m_EnCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
+  m_TempBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
 }
 
 CNetProcess::~CNetProcess()
@@ -1123,7 +1122,7 @@ int CNetProcess::LoadSendMsg(
       return 0;
     }
 
-    WriteCryptFrameHeader(m_EnCryptorBuffer, cryptFrameSize, padSize);
+    reinterpret_cast<VCHeader *>(m_EnCryptorBuffer)->set(cryptFrameSize, padSize);
     std::memcpy(&sendBuffer->m_sMainBuffer[sendBuffer->m_dwPushPnt], m_EnCryptorBuffer, cryptFrameSize);
     const int tail = sendBuffer->m_nMaxSize - sendBuffer->m_dwPushPnt;
     if (tail < cryptFrameSize)
@@ -1364,7 +1363,14 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
 
   if (m_Type.m_CryptType == 0)
   {
-    if (!SetCryptor(m_Type.m_CryptType, m_Type.m_pVCryptParam))
+    VCrypt *crypt = VCrypt::GetInstance();
+    if (!crypt)
+    {
+      return false;
+    }
+
+    m_Cryptor = crypt->Alloc(m_Type.m_CryptType, m_Type.m_pVCryptParam);
+    if (!m_Cryptor)
     {
       return false;
     }
@@ -1449,7 +1455,7 @@ void CNetProcess::Release()
   }
   if (m_Cryptor)
   {
-    delete m_Cryptor;
+    operator delete(m_Cryptor);
     m_Cryptor = nullptr;
   }
   if (m_DeCryptorBuffer)
@@ -1478,62 +1484,23 @@ void CNetProcess::Release()
 
 bool CNetProcess::SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam)
 {
-  if (m_DeCryptorBuffer)
-  {
-    operator delete(m_DeCryptorBuffer);
-    m_DeCryptorBuffer = nullptr;
-  }
-  if (m_EnCryptorBuffer)
-  {
-    operator delete(m_EnCryptorBuffer);
-    m_EnCryptorBuffer = nullptr;
-  }
-  if (m_TempBuffer)
-  {
-    operator delete(m_TempBuffer);
-    m_TempBuffer = nullptr;
-  }
   if (m_Cryptor)
   {
-    delete m_Cryptor;
+    operator delete(m_Cryptor);
     m_Cryptor = nullptr;
   }
 
-  m_Cryptor = VCryptor::Create(byCryptType, pParam);
-  if (!m_Cryptor)
+  VCrypt *crypt = VCrypt::GetInstance();
+  if (!crypt)
   {
     return false;
   }
 
-  m_DeCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
-  m_EnCryptorBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
-  m_TempBuffer = static_cast<char *>(operator new(kCryptPacketBufferSize));
-  if (!m_DeCryptorBuffer || !m_EnCryptorBuffer || !m_TempBuffer)
-  {
-    if (m_DeCryptorBuffer)
-    {
-      operator delete(m_DeCryptorBuffer);
-      m_DeCryptorBuffer = nullptr;
-    }
-    if (m_EnCryptorBuffer)
-    {
-      operator delete(m_EnCryptorBuffer);
-      m_EnCryptorBuffer = nullptr;
-    }
-    if (m_TempBuffer)
-    {
-      operator delete(m_TempBuffer);
-      m_TempBuffer = nullptr;
-    }
-    delete m_Cryptor;
-    m_Cryptor = nullptr;
-    return false;
-  }
-
-  return true;
+  m_Cryptor = crypt->Alloc(byCryptType, pParam);
+  return m_Cryptor != nullptr;
 }
 
-void CNetProcess::SetUseCrypt(bool bUseCrypt)
+void CNetProcess::SetCryptUsage(bool bUseCrypt)
 {
   m_bUseCrypt = bUseCrypt;
 }
@@ -1908,7 +1875,7 @@ void CNetProcess::_PopRecvMsg(unsigned __int16 wSocketIndex)
     bool miss = false;
     unsigned __int16 frameSize = 0;
     unsigned __int16 payloadSize = 0;
-    char *popPoint = recvBuffer->GetPopPoint(&miss, useCrypt, &frameSize, &payloadSize);
+    char *popPoint = recvBuffer->GetPopPoint(&miss, &frameSize, &payloadSize, useCrypt);
     if (!popPoint)
     {
       if (miss)

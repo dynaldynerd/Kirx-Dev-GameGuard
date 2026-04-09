@@ -671,6 +671,12 @@
     <ClInclude Include="Entities\CCryptParamCrete.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\VCHeader.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\VCrypt.h">
+      <Filter>Header Files\Security</Filter>
+    </ClInclude>
     <ClInclude Include="Entities\VCryptor.h">
       <Filter>Header Files\Security</Filter>
     </ClInclude>
@@ -2974,6 +2980,12 @@
       <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\VCryptor.cpp">
+      <Filter>Source Files\Security</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\VCHeader.cpp">
+      <Filter>Source Files\Security</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\VCrypt.cpp">
       <Filter>Source Files\Security</Filter>
     </ClCompile>
     <ClCompile Include="Entities\VCAES.cpp">

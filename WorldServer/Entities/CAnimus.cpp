@@ -4,6 +4,7 @@
 #include "ObjectCreateSetData.h"
 #include "AnimusItem_fld.h"
 #include "animus_fld.h"
+#include "BulletItem_fld.h"
 #include "CAttack.h"
 #include "CMonster.h"
 #include "CPartyPlayer.h"
@@ -166,6 +167,31 @@ bool CAnimus::Create(_animus_create_setdata *pData)
   {
     m_tmNextEatMasterFP = timeGetTime() + 1000;
   }
+
+  int communionIndex = 0;
+  for (int index = 0; index < 7; ++index)
+  {
+    _STORAGE_LIST::_db_con *communionItem = &m_pMaster->m_Param.m_dbEmbellish.m_pStorageList[index];
+    if (communionItem->m_bLoad && communionItem->m_byTableCode == 10)
+    {
+      _BulletItem_fld *record =
+        static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(communionItem->m_wItemIndex));
+      if (record && std::strcmp(record->m_strBulletType, "Q") == 0)
+      {
+        communionIndex = index + 1;
+      }
+    }
+  }
+
+  if (communionIndex)
+  {
+    m_pMaster->m_bCommunionEffectAnimus = true;
+  }
+  else
+  {
+    m_pMaster->m_bCommunionEffectAnimus = false;
+  }
+
   ++CAnimus::s_nLiveNum;
   return true;
 }

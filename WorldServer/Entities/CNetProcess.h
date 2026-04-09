@@ -158,9 +158,9 @@ struct _NET_BUFFER
   char *GetPushPos();
   char *GetPopPoint(
     bool *pbMiss,
-    bool bCryptFrame,
     unsigned __int16 *pwFrameSize,
-    unsigned __int16 *pwPayloadSize);
+    unsigned __int16 *pwPayloadSize,
+    bool bCryptFrame);
   char *GetSendPoint(int *pnSendSize, bool *pMiss);
   void AddPopPos(unsigned int dwAddSize);
   void Init();
@@ -176,6 +176,8 @@ struct _NET_BUFFER
   CNetCriticalSection m_csPop;
   char *m_sTempBuffer;
 };
+
+static_assert(sizeof(_NET_BUFFER) == 120);
 
 struct _ANSYNC_CONNECT_DATA
 {
@@ -294,7 +296,7 @@ public:
   bool PushKeyCheckList(unsigned int dwSerial, unsigned int dwIP, unsigned int *pdwKey, int nUseKeyNum);
   bool FindKeyFromWaitList(unsigned int dwSocketIndex, unsigned int dwSerial, unsigned int *pdwKey, int nUseKeyNum);
   bool SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam);
-  void SetUseCrypt(bool bUseCrypt);
+  void SetCryptUsage(bool bUseCrypt);
   bool wt_AcceptClient(unsigned int *pdwClientIndex);
   bool wt_CloseClient(unsigned int dwClientIndex);
   void _Receipt();

@@ -288,11 +288,11 @@ void CNetWorking::OnLoop_Receipt()
   }
 }
 
-void CNetWorking::SetUseCrypt(unsigned int dwProID, bool bUseCrypt)
+void CNetWorking::SetCryptUsage(unsigned int dwProID, bool bUseCrypt)
 {
   if (dwProID < this->m_dwUseProcessNum)
   {
-    this->m_Process[dwProID].SetUseCrypt(bUseCrypt);
+    this->m_Process[dwProID].SetCryptUsage(bUseCrypt);
   }
 }
 
@@ -3586,12 +3586,12 @@ bool CNetworkEX::CombineExItemRequest(unsigned int n, char *pBuf)
     return true;
   }
 
-  if (request->clientTimeSerial <= player->GetCombineExItemRequestClientTimeSerial())
+  if (request->clientTimeSerial <= player->GetClientTimeSerial_combine_ex_item_request_clzo())
   {
     return false;
   }
 
-  player->SetCombineExItemRequestClientTimeSerial(request->clientTimeSerial);
+  player->SetClientTimeSerial_combine_ex_item_request_clzo(request->clientTimeSerial);
 
   if (request->byCombineSlotNum <= 5u)
   {

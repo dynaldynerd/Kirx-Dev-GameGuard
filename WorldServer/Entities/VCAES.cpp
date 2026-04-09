@@ -293,8 +293,18 @@ namespace
   }
 }
 
+VCAESParam::VCAESParam()
+{
+  Clear();
+}
+
+void VCAESParam::Clear()
+{
+  std::memset(this, 0, sizeof(*this));
+}
+
 VCAES::VCAES()
-  : m_Param{}
+  : m_Param()
 {
 }
 

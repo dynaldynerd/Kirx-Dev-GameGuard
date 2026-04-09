@@ -118,6 +118,7 @@ public:
   void SetRadarDelay(unsigned int dwDelay);
   void Update_PvpPointLeak(long double dValue);
   void Update_LastAttBuff(bool bSet);
+  void Update_GuildEntryDelay(unsigned int dwAvartorSerial);
   void Update_PlayerInteg(unsigned __int8 byPlayerInteg);
   void Update_TrunkInteg(unsigned __int8 byTrunkInteg);
   bool Update_UserFatigue(unsigned int dwFatigue);

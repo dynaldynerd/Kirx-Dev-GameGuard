@@ -348,6 +348,15 @@ void CUserDB::Update_LastAttBuff(bool bSet)
   m_AvatorData.dbSupplement.bLastAttBuff = bSet;
 }
 
+void CUserDB::Update_GuildEntryDelay(unsigned int dwAvartorSerial)
+{
+  (void)dwAvartorSerial;
+
+  const std::time_t currentTime = std::time(nullptr);
+  const unsigned __int64 currentUnixTime = currentTime > 0 ? static_cast<unsigned __int64>(currentTime) : 0;
+  m_AvatorData.dbSupplement.dwGuildEntryDelay = g_Main.m_dwGuildEntryDelay + currentUnixTime;
+}
+
 void CUserDB::Update_PlayerInteg(unsigned __int8 byPlayerInteg)
 {
   m_AvatorData.dbSupplement.byPlayerInteg = byPlayerInteg;
