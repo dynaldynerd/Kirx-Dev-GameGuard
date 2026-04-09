@@ -370,7 +370,23 @@ void _server_rate_realtime_load::Init(unsigned int dwReadTerm)
   m_tmDataFileCheckTime.BeginTimer(dwReadTerm);
 }
 
-CMainThread::CMainThread() = default;
+CMainThread::CMainThread()
+{
+  m_pWorldDB = nullptr;
+  m_bVerCheck = false;
+  m_bFreeServer = false;
+  m_lServerClosingState = 0;
+  m_lShutdownPendingLogoutCount = 0;
+
+  strcpy_s(CMainThread::ms_szClientVerCheck, sizeof(CMainThread::ms_szClientVerCheck), "X");
+  strcpy_s(m_szWorldName, sizeof(m_szWorldName), "noname");
+  strcpy_s(m_wszWorldName, sizeof(m_wszWorldName), "noname");
+
+  m_iOldDay = GetCurDay();
+  std::memset(m_dwStartNPCQuestCnt, 0, sizeof(m_dwStartNPCQuestCnt));
+  m_bReleaseServiceMode = false;
+  m_bExcuteService = true;
+}
 
 CMainThread::~CMainThread()
 {
