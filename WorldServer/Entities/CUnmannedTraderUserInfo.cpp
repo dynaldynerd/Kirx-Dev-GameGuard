@@ -1507,7 +1507,7 @@ void CUnmannedTraderUserInfo::CompleteCreate(CLogFile *pkLogger)
   CPlayer::s_MgrItemHistory.ClearLogBuffer();
   PrcoSellUpdateWaitItem(&updateInfo, 0, pkLogger);
   SetCompleteInfo(pkLogger);
-  NotifyRegistItem();
+  NotifyRegistItem(&updateInfo);
   ProcSellWaitItem(&updateInfo, 0, pkLogger);
   NotifyCloseItem(&updateInfo, pkLogger);
   ClearLoadItemInfo();
@@ -3219,6 +3219,56 @@ void CUnmannedTraderUserInfo::NotifyRegistItem()
         listIndex);
       ++info.byNum;
     }
+  }
+
+  unsigned __int8 pbyType[16]{};
+  pbyType[0] = 30;
+  pbyType[1] = 25;
+  const unsigned __int16 len = static_cast<unsigned __int16>(info.size());
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_wInx, pbyType, reinterpret_cast<char *>(&info), len);
+}
+
+void CUnmannedTraderUserInfo::NotifyRegistItem(
+  _qry_case_unmandtrader_log_in_proc_update_complete *pkResult)
+{
+  unsigned __int8 byDivision[32]{};
+  unsigned __int8 byClass[32]{};
+  unsigned __int8 bySubClass[44]{};
+  byDivision[0] = static_cast<unsigned __int8>(-1);
+  byClass[0] = static_cast<unsigned __int8>(-1);
+  bySubClass[0] = static_cast<unsigned __int8>(-1);
+
+  _unmannedtrader_Regist_item_inform_zocl info{};
+  for (int index = 0; index < this->m_byMaxRegistCnt; ++index)
+  {
+    CUnmannedTraderRegistItemInfo &item = this->m_vecRegistItemInfo[index];
+    if (!item.IsRegist())
+    {
+      continue;
+    }
+
+    info.List[info.byNum].bWaitingRegister = 0;
+    info.List[info.byNum].wItemSerial = item.GetItemSerial();
+    info.List[info.byNum].dwRegistSerial = item.GetRegistSerial();
+    info.List[info.byNum].dwPrice = item.GetPrice();
+    info.List[info.byNum].dwLeftSec = static_cast<unsigned int>(item.GetLeftSec());
+    info.List[info.byNum].dwListIndex = 0;
+
+    unsigned int *listIndex = &info.List[info.byNum].dwListIndex;
+    const unsigned __int16 itemIndex = item.GetItemIndex();
+    const unsigned __int8 tableCode = item.GetTableCode();
+    CUnmannedTraderGroupItemInfoTable::Instance()->GetGroupID(
+      tableCode,
+      itemIndex,
+      byDivision,
+      byClass,
+      bySubClass,
+      listIndex);
+
+    pkResult->List[pkResult->wNum].byProcUpdate = 96;
+    pkResult->List[pkResult->wNum].wItemSerial = info.List[info.byNum].wItemSerial;
+    pkResult->List[pkResult->wNum++].dwRegistSerial = info.List[info.byNum].dwRegistSerial;
+    ++info.byNum;
   }
 
   unsigned __int8 pbyType[16]{};

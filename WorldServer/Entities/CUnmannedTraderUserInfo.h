@@ -213,6 +213,7 @@ public:
     CLogFile *pkLogger,
     unsigned __int16 *wAddItemSerial);
   void NotifyRegistItem();
+  void NotifyRegistItem(_qry_case_unmandtrader_log_in_proc_update_complete *pkResult);
   void SendRegistItemSuccessResult(
     unsigned int dwLeftDalant,
     unsigned __int16 wInx,
