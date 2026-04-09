@@ -11,6 +11,7 @@
 #include "CMapData.h"
 #include "CHolyScheduleData.h"
 #include "CHolyStoneSaveData.h"
+#include "Quest_fld.h"
 #include "GlobalObjects.h"
 #include "WorldServerUtil.h"
 
@@ -30,7 +31,7 @@ bool CHolyStoneSystemDataMgr::LoadIni(CHolyStoneSystem *clsHolyStoneSystem)
   char pszErrMsg[160]{};
   if (!clsHolyStoneSystem->m_tblQuest.ReadRecord(
         ".\\script\\HolyStoneKeepperQuest.dat",
-        2408,
+        static_cast<int>(sizeof(_Quest_fld)),
         pszErrMsg))
   {
     MyMessageBox("CHolyStoneSystem Data init", pszErrMsg);

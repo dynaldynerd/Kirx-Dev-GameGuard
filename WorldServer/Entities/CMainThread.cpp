@@ -68,6 +68,11 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "FIRECRACKER_fld.h"
 #include "FaceItem_fld.h"
 #include "ForceItem_fld.h"
+#include "class_fld.h"
+#include "grade_fld.h"
+#include "exp_fld.h"
+#include "monster_fld.h"
+#include "monster_sp_fld.h"
 #include "GuardTowerItem_fld.h"
 #include "MakeToolItem_fld.h"
 #include "MapItem_fld.h"
@@ -108,6 +113,8 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "UnitPart_fld.h"
 #include "UnitBullet_fld.h"
 #include "AnimusItem_fld.h"
+#include "ItemCombineData_fld.h"
+#include "ItemExchangeData_fld.h"
 #include "ItemMakeData_fld.h"
 #include "EditData_fld.h"
 #include "BulletItem_fld.h"
@@ -2526,10 +2533,15 @@ char CMainThread::DataFileInit()
     ".\\script\\ClassSkill.dat",
     ".\\script\\BulletItemEffect.dat",
   };
-  const unsigned int effectSizes[] = {1168, 1088, 1168, 1168};
+  const int effectSizes[] = {
+    static_cast<int>(sizeof(_skill_fld)),
+    static_cast<int>(sizeof(_force_fld)),
+    static_cast<int>(sizeof(_skill_fld)),
+    static_cast<int>(sizeof(_skill_fld)),
+  };
   for (int i = 0; i < 4; ++i)
   {
-    if (!m_tblEffectData[i].ReadRecord(effectFiles[i], static_cast<int>(effectSizes[i]), szErrCode))
+    if (!m_tblEffectData[i].ReadRecord(effectFiles[i], effectSizes[i], szErrCode))
     {
       MyMessageBox("DatafileInit", szErrCode);
       return false;
@@ -2553,22 +2565,22 @@ char CMainThread::DataFileInit()
     return false;
   }
 
-  if (!m_tblClass.ReadRecord(".\\Script\\Class.dat", 2256, szErrCode))
+  if (!m_tblClass.ReadRecord(".\\Script\\Class.dat", static_cast<int>(sizeof(_class_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblGrade.ReadRecord(".\\Script\\Grade.dat", 76, szErrCode))
+  if (!m_tblGrade.ReadRecord(".\\Script\\Grade.dat", static_cast<int>(sizeof(_grade_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblPlayer.ReadRecord(".\\Script\\PlayerCharacter.dat", 168, szErrCode))
+  if (!m_tblPlayer.ReadRecord(".\\Script\\PlayerCharacter.dat", static_cast<int>(sizeof(_player_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblMonster.ReadRecord(".\\Script\\MonsterCharacter.dat", 2484, szErrCode))
+  if (!m_tblMonster.ReadRecord(".\\Script\\MonsterCharacter.dat", static_cast<int>(sizeof(_monster_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2597,17 +2609,17 @@ char CMainThread::DataFileInit()
     }
   }
 
-  if (!m_tblNPC.ReadRecord(".\\Script\\NPCharacter.dat", 488, szErrCode))
+  if (!m_tblNPC.ReadRecord(".\\Script\\NPCharacter.dat", static_cast<int>(sizeof(_npc_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblAnimus.ReadRecord(".\\Script\\AnimusItem.dat", 392, szErrCode))
+  if (!m_tblAnimus.ReadRecord(".\\Script\\AnimusItem.dat", static_cast<int>(sizeof(_AnimusItem_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblExp.ReadRecord(".\\Script\\Exp.dat", 260, szErrCode))
+  if (!m_tblExp.ReadRecord(".\\Script\\Exp.dat", static_cast<int>(sizeof(_exp_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2626,17 +2638,17 @@ char CMainThread::DataFileInit()
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemMakeData.ReadRecord(".\\Script\\ItemMakeData.dat", 556, szErrCode))
+  if (!m_tblItemMakeData.ReadRecord(".\\Script\\ItemMakeData.dat", static_cast<int>(sizeof(_ItemMakeData_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemCombineData.ReadRecord(".\\Script\\ItemCombine.dat", 208, szErrCode))
+  if (!m_tblItemCombineData.ReadRecord(".\\Script\\ItemCombine.dat", static_cast<int>(sizeof(_ItemCombineData_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblItemExchangeData.ReadRecord(".\\Script\\BoxItemOut.dat", 1044, szErrCode))
+  if (!m_tblItemExchangeData.ReadRecord(".\\Script\\BoxItemOut.dat", static_cast<int>(sizeof(_ItemExchangeData_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
@@ -2658,29 +2670,32 @@ char CMainThread::DataFileInit()
   };
   for (int i = 0; i < 6; ++i)
   {
-    if (!m_tblUnitPart[i].ReadRecord(unitPartFiles[i], 516, szErrCode))
+    if (!m_tblUnitPart[i].ReadRecord(unitPartFiles[i], static_cast<int>(sizeof(_UnitPart_fld)), szErrCode))
     {
       MyMessageBox("DatafileInit", szErrCode);
       return false;
     }
   }
 
-  if (!m_tblUnitBullet.ReadRecord(".\\script\\UnitBullet.dat", 356, szErrCode))
+  if (!m_tblUnitBullet.ReadRecord(".\\script\\UnitBullet.dat", static_cast<int>(sizeof(_UnitBullet_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblUnitFrame.ReadRecord(".\\script\\UnitFrame.dat", 648, szErrCode))
+  if (!m_tblUnitFrame.ReadRecord(".\\script\\UnitFrame.dat", static_cast<int>(sizeof(_UnitFrame_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_tblEditData.ReadRecord(".\\script\\EditData.dat", 2108, szErrCode))
+  if (!m_tblEditData.ReadRecord(".\\script\\EditData.dat", static_cast<int>(sizeof(_EditData_fld)), szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;
   }
-  if (!m_MonsterBaseSPData.ReadRecord(".\\script\\MonsterCharacterAI.dat", 176, szErrCode))
+  if (!m_MonsterBaseSPData.ReadRecord(
+        ".\\script\\MonsterCharacterAI.dat",
+        static_cast<int>(sizeof(_monster_sp_fld)),
+        szErrCode))
   {
     MyMessageBox("DatafileInit", szErrCode);
     return false;

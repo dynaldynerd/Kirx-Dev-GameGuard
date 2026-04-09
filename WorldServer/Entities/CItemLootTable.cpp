@@ -44,7 +44,7 @@ CItemLootTable::~CItemLootTable()
 
 bool CItemLootTable::ReadRecord(const char *fileName, CRecordData *itemTables, char *errCode)
 {
-  if (!m_tblLoot.ReadRecord(fileName, 1684, errCode))
+  if (!m_tblLoot.ReadRecord(fileName, static_cast<int>(sizeof(_ItemLooting_fld)), errCode))
   {
     return false;
   }

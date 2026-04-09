@@ -579,7 +579,7 @@ bool CMapData::_LoadMonBlk(char *pszMapCode, _map_fld *pMapFld)
     }
 
     sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s-[BLOCK].dat", pszMapCode, pszMapCode);
-    if (!this->m_tbMonBlk.ReadRecord(Buffer, 1444, pszErrMsg))
+    if (!this->m_tbMonBlk.ReadRecord(Buffer, static_cast<int>(sizeof(_mon_block_fld)), pszErrMsg))
     {
         this->m_nMonBlockNum = 0;
         return true;
@@ -686,7 +686,7 @@ bool CMapData::_LoadMonBlk(char *pszMapCode, _map_fld *pMapFld)
             else
                 sprintf_s(Buffer, sizeof(Buffer), ".\\Map\\%s\\%s.dat", pszMapCode, pBlkRec->m_strCode);
 
-            if (!this->m_mb[k].m_ptbMonBlock[n].ReadRecord(Buffer, 92, pszErrMsg))
+            if (!this->m_mb[k].m_ptbMonBlock[n].ReadRecord(Buffer, static_cast<int>(sizeof(_mon_active_fld)), pszErrMsg))
             {
                 MyMessageBox("CMapData Error", pszErrMsg);
                 return false;
@@ -753,7 +753,7 @@ bool CMapData::_LoadPortal(char *pszMapCode)
     if (!this->ConvertLocalToWorldDummy(&this->m_tbPortalDumPos, false)) return false;
 
     sprintf_s(Buffer, sizeof(Buffer), ".\\map\\%s\\%s-[Portal].dat", pszMapCode, pszMapCode);
-    if (!this->m_tbPortal.ReadRecord(Buffer, 376, pszErrMsg))
+    if (!this->m_tbPortal.ReadRecord(Buffer, static_cast<int>(sizeof(_portal_fld)), pszErrMsg))
     {
         MyMessageBox("CMapData Error", pszErrMsg);
         return false;

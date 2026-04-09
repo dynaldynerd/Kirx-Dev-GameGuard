@@ -21,7 +21,7 @@ CItemUpgradeTable::~CItemUpgradeTable()
 
 bool CItemUpgradeTable::ReadRecord(const char *fileName, CRecordData *resTable, char *errCode)
 {
-  if (!m_tblItemUpgrade.ReadRecord(fileName, 216, errCode))
+  if (!m_tblItemUpgrade.ReadRecord(fileName, static_cast<int>(sizeof(_ItemUpgrade_fld)), errCode))
   {
     return false;
   }

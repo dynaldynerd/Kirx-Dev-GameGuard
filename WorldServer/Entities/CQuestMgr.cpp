@@ -228,7 +228,10 @@ bool CQuestMgr::LoadQuestData()
     char pszErrMsg[160];
     for (int j = 0; j < 9; ++j)
     {
-        if (!CQuestMgr::s_tblQuestHappenEvent[j].ReadRecord(szFile[j], 2184, pszErrMsg))
+        if (!CQuestMgr::s_tblQuestHappenEvent[j].ReadRecord(
+              szFile[j],
+              static_cast<int>(sizeof(_QuestHappenEvent_fld)),
+              pszErrMsg))
         {
             MyMessageBox("CQuestMgr Data Load", "%s Load Error", szFile[j]);
             ServerProgramExit("CQuestMgr Data Load", 0);
@@ -239,7 +242,7 @@ bool CQuestMgr::LoadQuestData()
     {
         CQuestMgr::s_tblQuest = new CRecordData();
     }
-    if(!CQuestMgr::s_tblQuest->ReadRecord(".\\script\\Quest.dat", 2408, pszErrMsg))
+    if(!CQuestMgr::s_tblQuest->ReadRecord(".\\script\\Quest.dat", static_cast<int>(sizeof(_Quest_fld)), pszErrMsg))
     {
         MyMessageBox("CQuestMgr Data Load", "Quest.dat Load Error");
         ServerProgramExit("CQuestMgr Data Load", 0);

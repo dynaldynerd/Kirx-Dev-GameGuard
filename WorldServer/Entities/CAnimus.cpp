@@ -77,7 +77,10 @@ bool CAnimus::SetStaticMember()
   char errMsg[136]{};
   for (int nAnimusClass = 0; nAnimusClass < 8; ++nAnimusClass)
   {
-    if (!CAnimus::s_tblParameter[nAnimusClass].ReadRecord(kFiles[nAnimusClass], 440, errMsg))
+    if (!CAnimus::s_tblParameter[nAnimusClass].ReadRecord(
+          kFiles[nAnimusClass],
+          static_cast<int>(sizeof(_animus_fld)),
+          errMsg))
     {
       MyMessageBox("CAnimus::SetStaticMember", errMsg);
       return false;

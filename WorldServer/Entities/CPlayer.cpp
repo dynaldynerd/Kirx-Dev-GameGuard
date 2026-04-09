@@ -99,6 +99,8 @@
 #include "SiegeKitItem_fld.h"
 #include "ItemMakeData_fld.h"
 #include "ItemCombineData_fld.h"
+#include "ItemCombine_exp_fld.h"
+#include "ItemCombine_link_fld.h"
 #include "ItemExchangeData_fld.h"
 #include "UnitFrame_fld.h"
 #include "UnitPart_fld.h"
@@ -631,17 +633,17 @@ bool ItemCombineMgr::LoadData()
   if (ItemCombineMgr::ms_tbl_ItemCombine.ReadRecord_Ex(
         ".\\script\\CombineTable.dat",
         ".\\script\\CombineTable2.dat",
-      968,
+        static_cast<int>(sizeof(_ItemCombine_exp_fld)),
         szMessage))
   {
     if (ItemCombineMgr::ms_tbl_ItemCombine_Link_Stuff.ReadRecord(
           ".\\script\\LinkedStuff.dat",
-      6468,
+          static_cast<int>(sizeof(_ItemCombine_link_fld)),
           szMessage))
     {
       if (ItemCombineMgr::ms_tbl_ItemCombine_Link_Result.ReadRecord(
             ".\\script\\LinkedResult.dat",
-      6468,
+            static_cast<int>(sizeof(_ItemCombine_link_fld)),
             szMessage))
       {
         return true;
@@ -1269,22 +1271,22 @@ bool LoadMasteryLimFile(char *pszErrMsg)
     for (int masteryIndex = 0; masteryIndex < 3; ++masteryIndex)
     {
       if (!CPlayer::s_tblLimMastery[masteryIndex][classIndex].ReadRecord(
-            files[classIndex], 232, pszErrMsg))
+            files[classIndex], static_cast<int>(sizeof(_MasteryLimit_fld)), pszErrMsg))
       {
         return false;
       }
       if (!CPlayer::s_tblLimMasteryContinue[masteryIndex][classIndex].ReadRecord(
-            files[classIndex], 232, pszErrMsg))
+            files[classIndex], static_cast<int>(sizeof(_MasteryLimit_fld)), pszErrMsg))
       {
         return false;
       }
       if (!CPlayer::s_tblLimMasteryCum[masteryIndex][classIndex].ReadRecord(
-            files[classIndex], 232, pszErrMsg))
+            files[classIndex], static_cast<int>(sizeof(_MasteryLimit_fld)), pszErrMsg))
       {
         return false;
       }
       if (!CPlayer::s_tblLimMasteryCumContinue[masteryIndex][classIndex].ReadRecord(
-            files[classIndex], 232, pszErrMsg))
+            files[classIndex], static_cast<int>(sizeof(_MasteryLimit_fld)), pszErrMsg))
       {
         return false;
       }
