@@ -1895,7 +1895,10 @@ const char *logDir = "..\\ZoneServerLog\\SystemLog\\PartiallyPaid";
 bool CashItemRemoteStore::_ReadGoods()
 {
   char errorMessage[160];
-  if (_kRecGoods.ReadRecord(".\\Script\\CashShop.dat", 240, errorMessage))
+  if (_kRecGoods.ReadRecord(
+        ".\\Script\\CashShop.dat",
+        static_cast<int>(sizeof(_CashShop_fld)),
+        errorMessage))
   {
     if (_MakeLinkTable(errorMessage, 128))
     {

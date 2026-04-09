@@ -32,7 +32,7 @@ bool CSUItemSystem::SUItemSystem_Init()
   char pszErrMsg[144] = {};
 
   Class_Init();
-  if (m_SUOrigin[0].ReadRecord(".\\script\\SetItemEff.dat", 1028, pszErrMsg))
+  if (m_SUOrigin[0].ReadRecord(".\\script\\SetItemEff.dat", static_cast<int>(sizeof(_SetItemEff_fld)), pszErrMsg))
   {
     m_bLoadData[0] = true;
     if (m_SetItemType.SetItemType_Init(m_SUOrigin))

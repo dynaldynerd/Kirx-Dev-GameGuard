@@ -59,9 +59,15 @@ bool CPotionMgr::DatafileInit()
 {
     char pszErrMsg[144]; // [rsp+30h] [rbp-A8h] BYREF
 
-    if (m_tblPotionEffectData.ReadRecord(".\\script\\PotionItemEffect.dat", 1168, pszErrMsg))
+    if (m_tblPotionEffectData.ReadRecord(
+          ".\\script\\PotionItemEffect.dat",
+          static_cast<int>(sizeof(_skill_fld)),
+          pszErrMsg))
     {
-        if (m_tblPotionCheckData.ReadRecord(".\\script\\CheckPotionEffect.dat", 220, pszErrMsg))
+        if (m_tblPotionCheckData.ReadRecord(
+              ".\\script\\CheckPotionEffect.dat",
+              static_cast<int>(sizeof(_CheckPotion_fld)),
+              pszErrMsg))
         {
             return true;
         }

@@ -97,7 +97,10 @@ bool CItemStoreManager::Init(int nNormalListNum, int nInstanceListNum)
   this->m_MapItemStoreList = new (std::nothrow) CMapItemStoreList[nNormalListNum];
 
   char pszErrMsg[144]{};
-  if (this->m_tblItemStore.ReadRecord(".\\Script\\StoreList.dat", 14284, pszErrMsg))
+  if (this->m_tblItemStore.ReadRecord(
+        ".\\Script\\StoreList.dat",
+        static_cast<int>(sizeof(_StoreList_fld)),
+        pszErrMsg))
   {
     if (nInstanceListNum > 0)
     {

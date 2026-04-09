@@ -55,7 +55,7 @@ bool TimeItem::Init()
 bool TimeItem::ReadGoods()
 {
   char errMsg[144]{};
-  if (!_kRecTimeItem.ReadRecord(".\\Script\\TimerItem.dat", 140, errMsg))
+  if (!_kRecTimeItem.ReadRecord(".\\Script\\TimerItem.dat", static_cast<int>(sizeof(_TimeItem_fld)), errMsg))
   {
     MyMessageBox("TimeItem", errMsg);
     return false;

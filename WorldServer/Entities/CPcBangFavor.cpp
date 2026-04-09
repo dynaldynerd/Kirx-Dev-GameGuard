@@ -46,7 +46,7 @@ int CPcBangFavor::Initialzie()
 int CPcBangFavor::LoadPcBangData()
 {
   char pszErrMsg[144] = {};
-  if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", 676, pszErrMsg))
+  if (m_tblPcRoomData.ReadRecord(".\\script\\PcRoom.dat", static_cast<int>(sizeof(_PcRoom_fld)), pszErrMsg))
   {
     return 1;
   }

@@ -30,7 +30,7 @@ COreCuttingTable::~COreCuttingTable()
 
 bool COreCuttingTable::ReadRecord(const char *fileName, CRecordData *oreTable, CRecordData *resTable, char *errCode)
 {
-  if (!m_tblOreCutting.ReadRecord(fileName, 136, errCode))
+  if (!m_tblOreCutting.ReadRecord(fileName, static_cast<int>(sizeof(_OreCutting_fld)), errCode))
   {
     return false;
   }
