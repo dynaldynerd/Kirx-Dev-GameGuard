@@ -866,6 +866,7 @@ public:
   unsigned __int8 m_byWorldType;
   bool m_bReleaseServiceMode;
   bool m_bExcuteService;
+  unsigned __int8 m_byServiceCompanyMode;
   RFEventBase *m_pRFEvent_ClassRefine;
   CNotifyNotifyRaceLeaderSownerUTaxrate m_kEtcNotifyInfo;
   CBattleTournamentInfo m_BattleTournamentInfo;

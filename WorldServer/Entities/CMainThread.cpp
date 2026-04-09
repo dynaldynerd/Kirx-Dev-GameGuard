@@ -2356,6 +2356,45 @@ int CMainThread::LoadWorldInfoINI()
     return -2;
   }
 
+  char companyType[12]{};
+  GetPrivateProfileStringA(
+    "ServerMode",
+    "CompanyType",
+    "X",
+    companyType,
+    static_cast<DWORD>(sizeof(companyType)),
+    kWorldInfoIniPath);
+  if (_stricmp(companyType, "Developing") == 0)
+  {
+    if (m_bReleaseServiceMode)
+    {
+      m_byServiceCompanyMode = 2;
+    }
+    else
+    {
+      m_byServiceCompanyMode = 1;
+    }
+  }
+  else if (_stricmp(companyType, "Publishing") == 0)
+  {
+    if (m_bReleaseServiceMode)
+    {
+      m_byServiceCompanyMode = 12;
+    }
+    else
+    {
+      m_byServiceCompanyMode = 11;
+    }
+  }
+  else
+  {
+    MyMessageBox(
+      "CMainThread::LoadWorldSystemINI()",
+      "WorldInfo.ini\r\n[ServerMode]\r\nCompanyType = %s Invalid!!",
+      companyType);
+    return -2;
+  }
+
   char executeService[6]{};
   GetPrivateProfileStringA(
     "ServerMode",
