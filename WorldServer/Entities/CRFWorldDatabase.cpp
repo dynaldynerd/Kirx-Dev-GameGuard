@@ -6456,6 +6456,82 @@ unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderResultBuyerInfo(
   return 1;
 }
 
+unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderItemAmount(
+  unsigned int dwRegistSerial,
+  unsigned __int64 *pdwAmount)
+{
+  char buffer[260]{};
+  sprintf_s(buffer, "{ CALL pSelect_utSingleiteminfoAmount ( %u ) }", dwRegistSerial);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        SQLLEN indicator = 0;
+        *pdwAmount = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_UBIGINT, pdwAmount, 0, &indicator);
+        if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          if (m_bSaveDBLog)
+          {
+            FmtLog("%s Success", buffer);
+          }
+          return 0;
+        }
+
+        ErrorMsgLog(ret, buffer, "SQLGetData", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return 1;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
+}
+
 bool CRFWorldDatabase::Regist_UnmannedTraderSingleItem(
   unsigned int dwRegSerial,
   const _unmannedtrader_registsingleitem *kInfo,

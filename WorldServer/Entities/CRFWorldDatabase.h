@@ -748,6 +748,7 @@ public:
     unsigned __int8 byType,
     unsigned int dwRegistSerial,
     _unmannedtrader_result_buyerinfo *kData);
+  unsigned __int8 Select_UnmannedTraderItemAmount(unsigned int dwRegistSerial, unsigned __int64 *pdwAmount);
   unsigned __int8 Select_UnmannedTraderRegister(
     unsigned __int8 byType,
     unsigned int dwRegistSerial,
