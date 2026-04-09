@@ -14,18 +14,14 @@ struct _qry_case_unmandtrader_re_registsingleitem
     unsigned __int8 byClass1;
     unsigned __int8 byClass2;
     unsigned __int8 byClass3;
-    unsigned __int8 byPadding0;
     unsigned int dwPrice;
     unsigned int dwRegistSerial;
     unsigned __int8 byUpdateState;
-    unsigned __int8 byPadding1[3];
   };
 
   unsigned __int8 byType;
-  unsigned __int8 byPadding0;
   unsigned __int16 wInx;
   unsigned __int8 byNum;
-  unsigned __int8 byPadding1[3];
   unsigned int dwOwnerSerial;
   __list List[10];
 

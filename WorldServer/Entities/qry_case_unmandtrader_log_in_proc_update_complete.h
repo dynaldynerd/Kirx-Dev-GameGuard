@@ -13,7 +13,6 @@ struct _qry_case_unmandtrader_log_in_proc_update_complete
     unsigned int dwBuyer;
     unsigned int dwRegistSerial;
     unsigned __int8 byUpdateState;
-    unsigned __int8 byPadding0[3];
     unsigned int dwPrice;
     unsigned int dwTax;
     unsigned int dwAccountSerial;
@@ -23,7 +22,6 @@ struct _qry_case_unmandtrader_log_in_proc_update_complete
   };
 
   unsigned __int16 wInx;
-  unsigned __int16 wPadding0;
   unsigned int dwSeller;
   bool bAllSuccess;
   unsigned __int8 byType;

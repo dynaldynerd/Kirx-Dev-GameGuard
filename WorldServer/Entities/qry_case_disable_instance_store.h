@@ -5,7 +5,6 @@
 struct _qry_case_disable_instance_store_entry
 {
   unsigned __int8 byResult;
-  unsigned __int8 byPadding[3];
   unsigned int dwDBSerial;
 };
 

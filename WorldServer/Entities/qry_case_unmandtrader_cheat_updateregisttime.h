@@ -8,7 +8,6 @@ struct _qry_case_unmandtrader_cheat_updateregisttime
   {
     unsigned __int8 byProcRet;
     unsigned __int8 byState;
-    unsigned __int16 wPadding;
     unsigned int dwRegistSerial;
   };
 

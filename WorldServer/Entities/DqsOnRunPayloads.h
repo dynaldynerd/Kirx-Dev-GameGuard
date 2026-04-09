@@ -14,7 +14,6 @@ struct _qry_case_post_serial_check;
 struct _qry_case_alive_char_payload
 {
   unsigned __int8 in_byCase;
-  unsigned __int8 byPadding[3];
   unsigned int in_dwSerial;
   char in_w_szName[17];
   unsigned __int8 in_bySlot;

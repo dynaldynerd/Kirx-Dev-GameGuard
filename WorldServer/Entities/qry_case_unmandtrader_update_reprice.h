@@ -6,14 +6,11 @@ struct _qry_case_unmandtrader_update_reprice
 {
   unsigned int dwOldPrice;
   unsigned __int16 wInx;
-  unsigned __int16 wPadding0;
   unsigned int dwOwnerSerial;
   unsigned __int16 wItemSerial;
-  unsigned __int16 wPadding1;
   unsigned int dwTax;
   unsigned __int8 byProcRet;
   unsigned __int8 byType;
-  unsigned __int8 byPadding2[2];
   unsigned int dwRegistSerial;
   unsigned int dwNewPrice;
 

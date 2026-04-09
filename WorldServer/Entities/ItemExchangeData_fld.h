@@ -12,12 +12,20 @@ struct _ItemExchangeData_fld : _base_fld
   struct _output
   {
     char m_strOutCode[8];
-    unsigned __int8 m_byDur;
-    unsigned __int8 m_byPadding[3];
+    union
+    {
+      int m_nPdProCnt;
+      struct
+      {
+        unsigned __int8 m_byDur;
+      };
+    };
     unsigned int m_dwProb;
   };
   #pragma pack(pop)
   _output m_listOutput[61];
 };
+
+static_assert(sizeof(_ItemExchangeData_fld::_output) == 16);
 
 #pragma pack(pop)

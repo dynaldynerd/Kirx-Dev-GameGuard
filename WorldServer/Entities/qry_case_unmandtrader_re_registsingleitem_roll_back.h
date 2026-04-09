@@ -8,7 +8,6 @@ struct _qry_case_unmandtrader_re_registsingleitem_roll_back
   {
     unsigned __int8 byProcRet;
     unsigned __int8 byState;
-    unsigned __int16 wPadding;
     unsigned int dwRegistSerial;
   };
 
@@ -16,7 +15,6 @@ struct _qry_case_unmandtrader_re_registsingleitem_roll_back
   unsigned __int8 byNum;
   unsigned __int16 wInx;
   bool bAllSuccess;
-  unsigned __int8 byPadding0[3];
   unsigned int dwOwnerSerial;
   __list List[10];
 };
