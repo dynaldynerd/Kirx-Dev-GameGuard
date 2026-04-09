@@ -1769,11 +1769,11 @@ void CUnmannedTraderUserInfo::NotifyCloseItem(
       regItem = owner->m_Param.m_dbInven.GetPtrFromSerial(loadItem.GetItemSerial());
       if (regItem)
       {
-        CPlayer::s_MgrItemHistory.time_out_cancel_auto_trade(
+        CPlayer::s_MgrItemHistory.login_cancel_auto_trade(
           owner->m_ObjID.m_wIndex,
           loadItem.GetRegistSerial(),
           regItem,
-          owner->m_szItemHistoryFileName);
+          loadItem.GetResultTime());
 
         inform.List[inform.byNum].dwPrice = loadItem.GetPrice();
         inform.List[inform.byNum].wItemSerial = loadItem.GetItemSerial();
