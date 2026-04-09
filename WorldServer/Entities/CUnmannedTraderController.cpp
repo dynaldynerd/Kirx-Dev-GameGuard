@@ -36,6 +36,7 @@
 #include "unmannedtrader_buy_item_info.h"
 #include "unmannedtrader_buy_item_result_zocl.h"
 #include "unmannedtrader_registsingleitem.h"
+#include "unmannedtrader_result_buyerinfo.h"
 #include "unmannedtrader_seller_info.h"
 #include "unmannedtrader_stade_id_info.h"
 
@@ -993,16 +994,14 @@ unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(
   pData->bAllSuccess = true;
   SYSTEMTIME systemTime{};
   GetLocalTime(&systemTime);
+  unsigned __int8 currentState = static_cast<unsigned __int8>(-1);
+  unsigned __int8 queryRet = 0;
 
   for (int j = 0; j < pData->wNum; ++j)
   {
     _qry_case_unmandtrader_log_in_proc_update_complete::__list &entry = pData->List[j];
-    unsigned __int8 state = entry.byProcUpdate;
-    if (state != 92)
-    {
-      entry.byProcRet = 0;
-    }
-    switch (state - 37)
+    entry.byProcRet = 0;
+    switch (entry.byProcUpdate - 37)
     {
       case 0:
       case 45:
@@ -1021,17 +1020,72 @@ unsigned __int8 CUnmannedTraderController::UpdateLogInComplete(
         }
         break;
       case 55:
-        if (!g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
+        currentState = static_cast<unsigned __int8>(-1);
+        queryRet = CheckDBItemState(
+          pData->byType,
+          entry.dwRegistSerial,
+          &currentState,
+          &entry.byProcRet);
+        (void)queryRet;
+        if (entry.byProcRet == 40)
+        {
+          if (currentState == 10)
+          {
+            if (g_Main.m_pWorldDB->Update_UnmannedTraderResutlInfo(
+                  pData->byType,
+                  entry.dwRegistSerial,
+                  entry.byUpdateState,
+                  0,
+                  0,
+                  &systemTime))
+            {
+              entry.byProcRet = 0;
+            }
+            else
+            {
+              entry.byProcRet = 1;
+              pData->bAllSuccess = false;
+            }
+          }
+          else if (currentState == 4)
+          {
+            _unmannedtrader_result_buyerinfo resultBuyerInfo{};
+            queryRet = g_Main.m_pWorldDB->Select_UnmannedTraderResultBuyerInfo(
               pData->byType,
               entry.dwRegistSerial,
-              entry.byUpdateState,
-              0,
-              0,
-              &systemTime))
-        {
-          entry.byProcRet = 1;
-          pData->bAllSuccess = false;
+              &resultBuyerInfo);
+            if (queryRet)
+            {
+              entry.byProcRet = static_cast<unsigned __int8>(-49);
+              pData->bAllSuccess = false;
+            }
+            else
+            {
+              entry.byProcRet = static_cast<unsigned __int8>(-48);
+              pData->bAllSuccess = false;
+              entry.dwPrice = resultBuyerInfo.dwPrice;
+              entry.dwTax = resultBuyerInfo.dwTax;
+              entry.dwBuyer = resultBuyerInfo.dwBuyer;
+              entry.dwAccountSerial = resultBuyerInfo.dwAccountSerial;
+              strcpy_s(entry.szAccountID, resultBuyerInfo.szAccountID);
+              strcpy_s(entry.wszName, resultBuyerInfo.wszName);
+              entry.dbresulttime = resultBuyerInfo.dbresulttime;
+            }
+          }
+          else
+          {
+            entry.byProcRet = static_cast<unsigned __int8>(-50);
+          }
         }
+        else
+        {
+          entry.byProcRet = static_cast<unsigned __int8>(-50);
+        }
+        break;
+      case 59:
+        entry.byProcUpdate = 92;
+        pData->bAllSuccess = false;
+        entry.byProcRet = 96;
         break;
       default:
         break;

@@ -14,6 +14,7 @@
 #include "total_guild_rank_info.h"
 #include "unmannedtrader_buy_item_info.h"
 #include "unmannedtrader_registsingleitem.h"
+#include "unmannedtrader_result_buyerinfo.h"
 #include "unmannedtrader_seller_info.h"
 #include "weeklyguildrank_owner_info.h"
 #include "sel_patriarch_elect_state.h"
@@ -6337,6 +6338,122 @@ bool CRFWorldDatabase::Update_UnmannedTraderResutlInfo(
     kCurTime->wSecond,
     kCurTime->wMilliseconds);
   return ExecUpdateQuery(buffer, true);
+}
+
+unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderResultBuyerInfo(
+  unsigned __int8 byType,
+  unsigned int dwRegistSerial,
+  _unmannedtrader_result_buyerinfo *kData)
+{
+  char buffer[260]{};
+  sprintf_s(buffer, "{ CALL pSelect_utresultbuyerinfo( %u, %u ) }", byType, dwRegistSerial);
+  if (m_bSaveDBLog)
+  {
+    Log(buffer);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        SQLLEN indicator = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, kData, 0, &indicator);
+        if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+        {
+          ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_ULONG, &kData->dwTax, 0, &indicator);
+          if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+          {
+            ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_ULONG, &kData->dwBuyer, 0, &indicator);
+            if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+            {
+              ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_ULONG, &kData->dwAccountSerial, 0, &indicator);
+              if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+              {
+                ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_CHAR, kData->szAccountID, 21, &indicator);
+                if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+                {
+                  ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_CHAR, kData->wszName, 17, &indicator);
+                  if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+                  {
+                    SQL_TIMESTAMP_STRUCT timestamp{};
+                    ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_TYPE_TIMESTAMP, &timestamp, 0, &indicator);
+                    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+                    {
+                      tm timeInfo{};
+                      timeInfo.tm_year = static_cast<int>(timestamp.year) - 1900;
+                      timeInfo.tm_mon = static_cast<int>(timestamp.month) - 1;
+                      timeInfo.tm_mday = static_cast<int>(timestamp.day);
+                      timeInfo.tm_hour = static_cast<int>(timestamp.hour);
+                      timeInfo.tm_min = static_cast<int>(timestamp.minute);
+                      timeInfo.tm_sec = static_cast<int>(timestamp.second);
+                      timeInfo.tm_isdst = -1;
+
+                      kData->dbresulttime = mktime_3(&timeInfo);
+                      if (kData->dbresulttime == -1)
+                      {
+                        kData->dbresulttime = 0;
+                      }
+
+                      if (m_hStmtSelect)
+                      {
+                        SQLCloseCursor(m_hStmtSelect);
+                      }
+                      if (m_bSaveDBLog)
+                      {
+                        FmtLog("%s Success", buffer);
+                      }
+                      return 0;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        ErrorMsgLog(ret, buffer, "SQLGetData", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return 1;
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, buffer, "SQLFetch", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return result;
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, buffer, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", buffer);
+  return 1;
 }
 
 bool CRFWorldDatabase::Regist_UnmannedTraderSingleItem(

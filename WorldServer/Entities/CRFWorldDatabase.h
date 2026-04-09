@@ -38,6 +38,7 @@ struct _worlddb_npc_quest_complete_history;
 struct _worlddb_ore_cutting;
 struct _worlddb_pcbang_favor_item;
 struct _worlddb_potion_delay_info;
+struct _unmannedtrader_result_buyerinfo;
 struct _worlddb_quest_array;
 struct _worlddb_sf_delay_info;
 struct _worlddb_time_limit_info;
@@ -743,6 +744,10 @@ public:
     unsigned int dwBuyer,
     unsigned int dwTax,
     const _SYSTEMTIME *kCurTime);
+  unsigned __int8 Select_UnmannedTraderResultBuyerInfo(
+    unsigned __int8 byType,
+    unsigned int dwRegistSerial,
+    _unmannedtrader_result_buyerinfo *kData);
   unsigned __int8 Select_UnmannedTraderRegister(
     unsigned __int8 byType,
     unsigned int dwRegistSerial,
