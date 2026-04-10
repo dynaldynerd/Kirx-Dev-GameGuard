@@ -204,7 +204,7 @@ void CPlayer::SendMsg_GuildJoinApplyResult(char byRetCode, CGuild *pApplyGuild)
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    0x1Au);
 }
 
 void CPlayer::SendMsg_GuildJoinApplyCancelResult(char byRetCode)
@@ -212,7 +212,7 @@ void CPlayer::SendMsg_GuildJoinApplyCancelResult(char byRetCode)
   _guild_join_apply_cancel_result_zocl payload{};
   payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), 1u);
 }
 
 void CPlayer::SendMsg_GuildJoinApplyRejectInform()
@@ -220,7 +220,7 @@ void CPlayer::SendMsg_GuildJoinApplyRejectInform()
   _guild_join_apply_reject_inform_zocl payload{};
   payload.sDum = 0;
   unsigned __int8 type[2] = {27, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload.sDum), 1u);
 }
 
 void CPlayer::SendMsg_GuildJoinAcceptFail(char byRetCode, unsigned int dwApplierSerial)
@@ -234,7 +234,7 @@ void CPlayer::SendMsg_GuildJoinAcceptFail(char byRetCode, unsigned int dwApplier
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    5u);
 }
 
 void CPlayer::SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int8 byRetCode)
@@ -248,7 +248,7 @@ void CPlayer::SendMsg_VoteResult(unsigned int dwMatterVoteSynKey, unsigned __int
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    5u);
 }
 
 
@@ -258,7 +258,7 @@ void CPlayer::SendMsg_CancelSuggestResult(char byRetCode)
   _guild_cancel_suggest_result_zocl payload{};
   payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 22};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), 1u);
 }
 
 void CPlayer::SendMsg_GuildSetHonorResult(char byRetCode)
@@ -266,7 +266,7 @@ void CPlayer::SendMsg_GuildSetHonorResult(char byRetCode)
   _guild_honor_set_result_zocl payload{};
   payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 114};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), 1u);
 }
 
 void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
@@ -281,7 +281,7 @@ void CPlayer::SendMsg_GuildPushMoneyResult(char byRetCode)
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    9u);
 }
 
 
@@ -290,7 +290,7 @@ void CPlayer::SendMsg_OfferSuggestResult(char byRetCode)
   _guild_offer_suggest_result_zocl payload{};
   payload.byRetCode = byRetCode;
   unsigned __int8 type[2] = {27, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), 1u);
 }
 
 
@@ -306,7 +306,7 @@ void CPlayer::SendMsg_GuildRoomRentResult(unsigned __int8 byRetCode, unsigned __
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    3u);
 }
 
 void CPlayer::SendMsg_GuildRoomEnterResult(unsigned __int8 byRetCode, unsigned __int8 bySubRetCode, unsigned __int8 byMapIndex, unsigned __int16 wMapLayer, float *pPos, int nRestTime)
@@ -324,7 +324,7 @@ void CPlayer::SendMsg_GuildRoomEnterResult(unsigned __int8 byRetCode, unsigned _
     this->m_ObjID.m_wIndex,
     type,
     reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+    0xFu);
 }
 
 void CPlayer::SendMsg_GuildRoomRestTimeResult()
@@ -339,7 +339,7 @@ void CPlayer::SendMsg_GuildEstablishFail(char byRetCode)
   msg.byRetCode = byRetCode;
 
   unsigned __int8 type[2] = {27, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_GuildJoinOtherInform()
@@ -350,7 +350,7 @@ void CPlayer::SendMsg_GuildJoinOtherInform()
   msg.wVisualVersion = this->m_wVisualVer;
 
   unsigned __int8 type[2] = {27, 39};
-  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), false);
+  CircleReport(type, reinterpret_cast<char *>(&msg), 10u, false);
 }
 
 
