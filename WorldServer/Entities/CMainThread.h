@@ -1304,8 +1304,8 @@ public:
   void Load_Content_Complete(char *pData);
   void CompleteUpdateVoteAvailable(char *pData);
   void CompleteUpdatePlayerVoteInfo(char *pData);
-  void CompleteUpdateServerToken(char *pData);
-  void CompleteUpdateSetLimitRun(char byRet, char *pData);
+  void CompleteUpdateServerToken(_qry_case_update_server_reset_token *pData);
+  void CompleteUpdateSetLimitRun(char byRet, _manage_client_limit_run_request_acwr *pData);
   void Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   void Complete_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   void Complete_db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);

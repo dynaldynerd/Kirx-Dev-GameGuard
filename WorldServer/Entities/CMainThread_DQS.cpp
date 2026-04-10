@@ -1954,7 +1954,7 @@ void CMainThread::DQSCompleteProcess()
       case 152:
       {
         auto *updateServerResetTokenQuery = reinterpret_cast<_qry_case_update_server_reset_token *>(pData->m_sData);
-        CompleteUpdateServerToken(reinterpret_cast<char *>(updateServerResetTokenQuery));
+        CompleteUpdateServerToken(updateServerResetTokenQuery);
         break;
       }
       case 153:
@@ -1994,7 +1994,7 @@ void CMainThread::DQSCompleteProcess()
       case 161:
       {
         auto *limitRunRequest = reinterpret_cast<_manage_client_limit_run_request_acwr *>(pData->m_sData);
-        CompleteUpdateSetLimitRun(pData->m_byResult, reinterpret_cast<char *>(limitRunRequest));
+        CompleteUpdateSetLimitRun(pData->m_byResult, limitRunRequest);
         break;
       }
       case 165:
@@ -2746,19 +2746,17 @@ void CMainThread::CompleteUpdatePlayerVoteInfo(char *pData)
   }
 }
 
-void CMainThread::CompleteUpdateServerToken(char *pData)
+void CMainThread::CompleteUpdateServerToken(_qry_case_update_server_reset_token *pData)
 {
-  auto *updateServerResetTokenQuery = reinterpret_cast<_qry_case_update_server_reset_token *>(pData);
-  g_Main.m_dwServerResetToken = updateServerResetTokenQuery->dwServerToken;
+  g_Main.m_dwServerResetToken = pData->dwServerToken;
 }
 
-void CMainThread::CompleteUpdateSetLimitRun(char byRet, char *pData)
+void CMainThread::CompleteUpdateSetLimitRun(char byRet, _manage_client_limit_run_request_acwr *pData)
 {
-  auto *limitRunRequest = reinterpret_cast<_manage_client_limit_run_request_acwr *>(pData);
   _manage_client_limit_run_result_wrac result{};
   result.byRet = static_cast<unsigned __int8>(byRet);
-  std::memcpy(&result.idLocal, limitRunRequest, sizeof(result.idLocal));
-  result.byLoginServerIndex = limitRunRequest->byCode;
+  std::memcpy(&result.idLocal, pData, sizeof(result.idLocal));
+  result.byLoginServerIndex = pData->byCode;
 
   unsigned __int8 type[16]{};
   type[0] = 1;
