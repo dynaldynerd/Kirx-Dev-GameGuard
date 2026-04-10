@@ -823,6 +823,8 @@ public:
   CLogFile m_logHack;
   CLogFile m_logPvP;
   CLogFile m_logMonNum;
+  CLogFile m_logAPIBilling;
+  CLogFile m_logRenewalData;
   CMyTimer m_tmPreCloseCountdown;
   int m_nPreCloseCountdownSeconds;
   CMyTimer m_tmForceUserExit;

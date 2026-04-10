@@ -1882,6 +1882,10 @@ char CMainThread::Init()
   m_logMonNum.SetWriteLogFile(buffer, 1, 0, 1, 1);
   sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\ServiceLog\\CheckBilling_%u.log", korLocalTime);
   m_logBillCheck.SetWriteLogFile(buffer, 1, 0, 1, 1);
+  sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\BillingLog\\APIBilling_%u.log", korLocalTime);
+  m_logAPIBilling.SetWriteLogFile(buffer, 1, 1, 1, 1);
+  sprintf_s(buffer, sizeof(buffer), "..\\ZoneServerLog\\CharLog\\RenewalData%u.log", korLocalTime);
+  m_logRenewalData.SetWriteLogFile(buffer, 1, 1, 1, 1);
 
   CAsyncLogger::Instance()->Regist(
     CAsyncLogger::ALT_HACKSHIELD_SYSTEM_LOG,
