@@ -1932,13 +1932,13 @@ void CMainThread::DQSCompleteProcess()
       case 149:
       {
         auto *updateVoteAvailableQuery = reinterpret_cast<_qry_case_update_vote_available *>(pData->m_sData);
-        CompleteUpdateVoteAvailable(reinterpret_cast<char *>(updateVoteAvailableQuery));
+        CompleteUpdateVoteAvailable(updateVoteAvailableQuery);
         break;
       }
       case 150:
       {
         auto *updatePlayerVoteInfoQuery = reinterpret_cast<_qry_case_update_player_vote_info *>(pData->m_sData);
-        CompleteUpdatePlayerVoteInfo(reinterpret_cast<char *>(updatePlayerVoteInfoQuery));
+        CompleteUpdatePlayerVoteInfo(updatePlayerVoteInfoQuery);
         break;
       }
       case 151:
@@ -2721,28 +2721,26 @@ void CMainThread::Load_Content_Complete(char *pData)
     }
   }
 }
-void CMainThread::CompleteUpdateVoteAvailable(char *pData)
+void CMainThread::CompleteUpdateVoteAvailable(_qry_case_update_vote_available *pData)
 {
-  auto *updateVoteAvailableQuery = reinterpret_cast<_qry_case_update_vote_available *>(pData);
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, updateVoteAvailableQuery->dwCharSerial);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pData->dwCharSerial);
   if (player && player->m_bOper)
   {
-    player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable = updateVoteAvailableQuery->byVoteEnable;
+    player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable = pData->byVoteEnable;
   }
 }
 
-void CMainThread::CompleteUpdatePlayerVoteInfo(char *pData)
+void CMainThread::CompleteUpdatePlayerVoteInfo(_qry_case_update_player_vote_info *pData)
 {
-  auto *updatePlayerVoteInfoQuery = reinterpret_cast<_qry_case_update_player_vote_info *>(pData);
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, updatePlayerVoteInfoQuery->dwCharSerial);
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pData->dwCharSerial);
   if (player && player->m_bOper)
   {
-    player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable = updatePlayerVoteInfoQuery->byVoteEnable;
-    player->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime = updatePlayerVoteInfoQuery->dwAccumPlayTime;
-    player->m_pUserDB->m_AvatorData.dbSupplement.byVoted = updatePlayerVoteInfoQuery->byIsVoted;
-    player->m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt = updatePlayerVoteInfoQuery->wScaner;
+    player->m_pUserDB->m_AvatorData.dbSupplement.VoteEnable = pData->byVoteEnable;
+    player->m_pUserDB->m_AvatorData.dbSupplement.dwAccumPlayTime = pData->dwAccumPlayTime;
+    player->m_pUserDB->m_AvatorData.dbSupplement.byVoted = pData->byIsVoted;
+    player->m_pUserDB->m_AvatorData.dbSupplement.wScanerCnt = pData->wScaner;
     player->m_pUserDB->m_AvatorData.dbSupplement.dwScanerGetDate =
-      static_cast<unsigned int>(updatePlayerVoteInfoQuery->dwScanerData);
+      static_cast<unsigned int>(pData->dwScanerData);
   }
 }
 
