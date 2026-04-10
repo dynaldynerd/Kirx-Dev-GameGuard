@@ -296,6 +296,7 @@ public:
   bool PushKeyCheckList(unsigned int dwSerial, unsigned int dwIP, unsigned int *pdwKey, int nUseKeyNum);
   bool FindKeyFromWaitList(unsigned int dwSocketIndex, unsigned int dwSerial, unsigned int *pdwKey, int nUseKeyNum);
   bool SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam);
+  void SetCrypt(unsigned __int8 byCryptType, VCryptorParam *pVCryptParam);
   void SetCryptUsage(bool bUseCrypt);
   bool wt_AcceptClient(unsigned int *pdwClientIndex);
   bool wt_CloseClient(unsigned int dwClientIndex);

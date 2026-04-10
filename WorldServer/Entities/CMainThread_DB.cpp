@@ -14,6 +14,7 @@
 #include "GlobalObjects.h"
 #include "economy_history_data.h"
 #include "qry_case_cash_limsale.h"
+#include "param_cash.h"
 #include "qry_logout.h"
 #include "WorldServerUtil.h"
 
@@ -1000,6 +1001,62 @@ unsigned __int8 CMainThread::check_min_max_guild_money(
   return 0;
 }
 
+char CMainThread::_CheckGuildCheckSum(
+  unsigned int dwSerial,
+  char *wszGuildName,
+  long double *dDalant,
+  long double *dGold)
+{
+  CCheckSumGuildData dbValue(dwSerial);
+  CCheckSumGuildData sourceValue(dwSerial);
+
+  if (!m_bCheckSumActive)
+  {
+    return 1;
+  }
+
+  sourceValue.Encode(*dDalant, *dGold);
+  int result = static_cast<int>(dbValue.Load(m_pWorldDB, &sourceValue));
+  if (result < 0)
+  {
+    m_logLoadingError.Write("Guild(%u, %s) CheckSum Load Fail!", dwSerial, wszGuildName);
+    return 0;
+  }
+
+  if (result == 0)
+  {
+    result = static_cast<int>(dbValue.CheckDiff(m_pWorldDB, wszGuildName, &sourceValue));
+    if (result < 0)
+    {
+      m_logLoadingError.Write("Guild(%u, %s) CheckSum Insert Fail!", dwSerial, wszGuildName);
+      return 0;
+    }
+  }
+
+  if (result > 0)
+  {
+    const long double correctedDalant = dbValue.GetDalant();
+    const long double correctedGold = dbValue.GetGold();
+    m_logLoadingError.Write(
+      "Guild(%u, %s) Diff Value  dalant(%f) -> %f, Gold(%f) -> %f",
+      dwSerial,
+      wszGuildName,
+      static_cast<double>(correctedDalant),
+      static_cast<double>(*dDalant),
+      static_cast<double>(correctedGold),
+      static_cast<double>(*dGold));
+
+    *dDalant = correctedDalant;
+    *dGold = correctedGold;
+    if (!m_pWorldDB->UpdateGuildMoney(dwSerial, *dDalant, *dGold))
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 unsigned __int8 CMainThread::_db_load_event_classrefine(
   unsigned int dwAvatorSerial,
   unsigned __int8 *byRefinedCnt,
@@ -1490,6 +1547,29 @@ unsigned __int8 CMainThread::_db_Update_Data_For_Trade(_qry_case_update_data_for
     }
   }
   return 0;
+}
+
+char CMainThread::_db_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet)
+{
+  if (!pSheet)
+  {
+    return 0;
+  }
+
+  for (int n = 0; n < pSheet->nBuyNum; ++n)
+  {
+    _base_fld *record = g_Main.m_tblItemData[pSheet->data[n].byTblCode].GetRecord(pSheet->data[n].wItemIndex);
+    char *itemName = GetItemKorName(pSheet->data[n].byTblCode, pSheet->data[n].wItemIndex);
+    pSheet->data[n].byRet = !m_pWorldDB->Insert_TestServer_CashItem_Buy_Log(
+      pSheet->in_dwAvatorSerial,
+      pSheet->byLv,
+      record->m_strCode,
+      itemName,
+      pSheet->data[n].byOverlapNum,
+      pSheet->data[n].dwCost);
+  }
+
+  return 1;
 }
 
 bool CMainThread::_db_Update_MacroData(

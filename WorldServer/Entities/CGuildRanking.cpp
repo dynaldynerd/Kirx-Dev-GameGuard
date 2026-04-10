@@ -3,7 +3,6 @@
 #include "CGuildRanking.h"
 
 #include "CLogFile.h"
-#include "CCheckSumGuildData.h"
 #include "GlobalObjects.h"
 #include "qry_case_rank_racerank_guildrank.h"
 #include "WorldServerUtil.h"
@@ -311,55 +310,7 @@ bool CGuildRanking::CheckGuildCheckSum(
   long double *dDalant,
   long double *dGold)
 {
-  CCheckSumGuildData guildChecksum(dwSerial);
-  CCheckSumGuildData sourceValue(dwSerial);
-  int result = 0;
-
-  if (!g_Main.m_bCheckSumActive)
-  {
-    return true;
-  }
-
-  sourceValue.Encode(*dDalant, *dGold);
-  result = static_cast<int>(guildChecksum.Load(g_Main.m_pWorldDB, &sourceValue));
-  if (result < 0)
-  {
-    g_Main.m_logLoadingError.Write("Guild(%u, %s) CheckSum Load Fail!", dwSerial, wszGuildName);
-    return false;
-  }
-
-  if (result == 0)
-  {
-    result = static_cast<int>(guildChecksum.CheckDiff(g_Main.m_pWorldDB, wszGuildName, &sourceValue));
-    if (result < 0)
-    {
-      g_Main.m_logLoadingError.Write("Guild(%u, %s) CheckSum Insert Fail!", dwSerial, wszGuildName);
-      return false;
-    }
-  }
-
-  if (result > 0)
-  {
-    const long double correctedDalant = guildChecksum.GetDalant();
-    const long double correctedGold = guildChecksum.GetGold();
-    g_Main.m_logLoadingError.Write(
-      "Guild(%u, %s) Diff Value  dalant(%f) -> %f, Gold(%f) -> %f",
-      dwSerial,
-      wszGuildName,
-      static_cast<double>(correctedDalant),
-      static_cast<double>(*dDalant),
-      static_cast<double>(correctedGold),
-      static_cast<double>(*dGold));
-
-    *dDalant = correctedDalant;
-    *dGold = correctedGold;
-    if (!g_Main.m_pWorldDB->UpdateGuildMoney(dwSerial, *dDalant, *dGold))
-    {
-      return false;
-    }
-  }
-
-  return true;
+  return g_Main._CheckGuildCheckSum(dwSerial, wszGuildName, dDalant, dGold) != 0;
 }
 
 void CGuildRanking::CheckMaxGuildMoney(

@@ -1344,6 +1344,15 @@ void CMainThread::OnDQSRun()
         queryEntry->m_byResult = _db_Update_Data_For_Trade(updateDataForTradeQuery);
         break;
       }
+      case 201:
+      {
+        auto *cashItemBuyLog = reinterpret_cast<_param_cashitem_dblog *>(queryEntry->m_sData);
+        if (!_db_TestServer_CashItem_Buy_Log(cashItemBuyLog))
+        {
+          queryEntry->m_byResult = 24;
+        }
+        break;
+      }
       default:
         break;
     }

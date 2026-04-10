@@ -78,6 +78,146 @@ bool CRFWorldDatabase::Insert_SettlementOwnerLog(
   return ExecUpdateQuery(buffer, true);
 }
 
+char CRFWorldDatabase::Insert_TestServer_CashItem_Buy_Log(
+  unsigned int dwSerial,
+  unsigned __int8 byLv,
+  char *szItemCode,
+  char *szItemName,
+  unsigned __int8 byNum,
+  unsigned int dwCost)
+{
+  char buffer[1024]{};
+  SYSTEMTIME systemTime{};
+  GetLocalTime(&systemTime);
+
+  sprintf_s(
+    buffer,
+    "{ CALL Prc_RFONLINE_TestServer_Buy_Log(%u, %d, '%s', '%s', %d, %d, '%04d-%02d-%02d %02d:%02d:%02d') }",
+    dwSerial,
+    byLv,
+    szItemCode,
+    szItemName,
+    byNum,
+    dwCost,
+    systemTime.wYear,
+    systemTime.wMonth,
+    systemTime.wDay,
+    systemTime.wHour,
+    systemTime.wMinute,
+    systemTime.wSecond);
+  return ExecUpdateQuery(buffer, true);
+}
+
+char CRFWorldDatabase::Check_AccountIDWithOnNetID(
+  unsigned int dwAccountSerial,
+  char *szAccountID,
+  char *szAccountOldID)
+{
+  SQLLEN indicator = 0;
+  char query[260]{};
+
+  CNationSettingManager *nationSetting = CTSingleton<CNationSettingManager>::Instance();
+  const int nationCode = nationSetting ? nationSetting->GetNationCode() : 0;
+  if (nationCode == 840)
+  {
+    sprintf_s(
+      query,
+      "declare @Ret int exec pUpdateAccountIDWithOnNetID_20121120 %d, '%s', '%s', @Ret output select @Ret",
+      dwAccountSerial,
+      szAccountID,
+      szAccountOldID);
+  }
+  else if (nationCode == 410)
+  {
+    sprintf_s(
+      query,
+      "declare @Ret int exec pUpdateAccountIDWithOnNetID_20120920 %d, '%s', @Ret output select @Ret",
+      dwAccountSerial,
+      szAccountID);
+  }
+  else
+  {
+    return 0;
+  }
+
+  if (m_bSaveDBLog)
+  {
+    Log(query);
+  }
+
+  if (m_hStmtSelect || ReConnectDataBase())
+  {
+    SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(query), SQL_NTS);
+    if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+    {
+      ret = SQLFetch(m_hStmtSelect);
+      if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+      {
+        int resultValue = 0;
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &resultValue, 0, &indicator);
+        if (!ret || ret == SQL_SUCCESS_WITH_INFO)
+        {
+          if (m_hStmtSelect)
+          {
+            SQLCloseCursor(m_hStmtSelect);
+          }
+          if (m_bSaveDBLog)
+          {
+            FmtLog("%s Success", query);
+          }
+          return resultValue == 3;
+        }
+
+        unsigned __int8 result = 0;
+        if (ret == SQL_NO_DATA)
+        {
+          result = 2;
+        }
+        else
+        {
+          ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
+          ErrorAction(ret, m_hStmtSelect);
+          result = 1;
+        }
+        if (m_hStmtSelect)
+        {
+          SQLCloseCursor(m_hStmtSelect);
+        }
+        return static_cast<char>(result);
+      }
+
+      unsigned __int8 result = 0;
+      if (ret == SQL_NO_DATA)
+      {
+        result = 2;
+      }
+      else
+      {
+        ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
+        ErrorAction(ret, m_hStmtSelect);
+        result = 1;
+      }
+      if (m_hStmtSelect)
+      {
+        SQLCloseCursor(m_hStmtSelect);
+      }
+      return static_cast<char>(result);
+    }
+
+    if (ret == SQL_NO_DATA)
+    {
+      return 2;
+    }
+
+    ErrorMsgLog(ret, query, "SQLExecDirectA", m_hStmtSelect);
+    ErrorAction(ret, m_hStmtSelect);
+    return 1;
+  }
+
+  ErrFmtLog("ReConnectDataBase Fail. Query : %s", query);
+  return 1;
+}
+
 unsigned __int8 CRFWorldDatabase::Select_UnmannedTraderSearchGroupTotalRowCount(
   unsigned __int8 byType,
   unsigned __int8 byRace,
@@ -319,6 +459,16 @@ bool CRFWorldDatabase::Insert_NpcData(unsigned int dwSerial, unsigned int *pNpcD
     pNpcData[4],
     pNpcData[5]);
   return ExecUpdateQuery(buffer, true);
+}
+
+char CRFWorldDatabase::Update_DataIntegTrunk(unsigned int dwAccountSerial)
+{
+  char query[528]{};
+  sprintf_s(
+    query,
+    "UPDATE tbl_supplement SET PlayerInteg = 1 FROM tbl_supplement a JOIN tbl_base b ON a.Serial = b.Serial WHERE b.AccountSerial = %d",
+    dwAccountSerial);
+  return ExecUpdateQuery(query, true);
 }
 
 unsigned __int8 CRFWorldDatabase::Select_NpcData(unsigned int dwSerial, unsigned int *pNpcData)

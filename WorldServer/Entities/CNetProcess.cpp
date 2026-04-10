@@ -1500,6 +1500,12 @@ bool CNetProcess::SetCryptor(unsigned __int8 byCryptType, VCryptorParam *pParam)
   return m_Cryptor != nullptr;
 }
 
+void CNetProcess::SetCrypt(unsigned __int8 byCryptType, VCryptorParam *pVCryptParam)
+{
+  m_Type.m_CryptType = byCryptType;
+  m_Type.m_pVCryptParam = pVCryptParam;
+}
+
 void CNetProcess::SetCryptUsage(bool bUseCrypt)
 {
   m_bUseCrypt = bUseCrypt;

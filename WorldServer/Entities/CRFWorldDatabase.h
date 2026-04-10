@@ -381,11 +381,20 @@ public:
 
   bool Insert_NpcData(unsigned int dwSerial);
   bool Insert_NpcData(unsigned int dwSerial, unsigned int *pNpcData);
+  char Check_AccountIDWithOnNetID(unsigned int dwAccountSerial, char *szAccountID, char *szAccountOldID);
   unsigned __int8 Select_NpcData(unsigned int dwSerial, unsigned int *pNpcData);
   bool Update_NpcData(unsigned int dwSerial, unsigned int *pNpcData);
+  char Update_DataIntegTrunk(unsigned int dwAccountSerial);
   bool Insert_AnimusData(unsigned int dwSerial, long double *pVal);
   unsigned __int8 Select_AnimusData(unsigned int dwSerial, unsigned __int8 byRace, long double *pVal);
   bool Update_AnimusData(unsigned int dwSerial, unsigned __int8 byRace, long double *pAnimusData);
+  char Insert_TestServer_CashItem_Buy_Log(
+    unsigned int dwSerial,
+    unsigned __int8 byLv,
+    char *szItemCode,
+    char *szItemName,
+    unsigned __int8 byNum,
+    unsigned int dwCost);
   bool Insert_NpcLog(unsigned int dwSerial, char *wszName, unsigned int dwIndex, unsigned int dwOrgVal, unsigned int dwChgVal);
   bool Insert_AnimusLog(
     unsigned int dwSerial,

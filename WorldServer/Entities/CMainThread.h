@@ -1099,6 +1099,11 @@ public:
     long double *dCurTotalGold,
     unsigned __int8 *pbyDate);
   unsigned __int8 check_min_max_guild_money(unsigned int dwGuildSerial, long double *pdDalant, long double *pdGold);
+  char _CheckGuildCheckSum(
+    unsigned int dwSerial,
+    char *wszGuildName,
+    long double *dDalant,
+    long double *dGold);
   unsigned __int8 _db_load_event_classrefine(
     unsigned int dwAvatorSerial,
     unsigned __int8 *byRefinedCnt,
@@ -1120,6 +1125,7 @@ public:
   unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   unsigned __int8 _db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   unsigned __int8 _db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
+  char _db_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet);
   unsigned __int8 _db_Load_Base(unsigned int dwSerial, _AVATOR_DATA *pData, unsigned __int64 *pdwCanonicalLastConnTime);
   unsigned __int8 _db_Load_General(unsigned int dwSerial, unsigned __int8 byRace, _AVATOR_DATA *pData);
   unsigned __int8 _db_Load_Supplement(unsigned int dwSerial, _SUPPLEMENT_DB_BASE *pSupplement);

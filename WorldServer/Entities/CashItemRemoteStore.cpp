@@ -4322,9 +4322,8 @@ void CashItemRemoteStore::_buybygold_complete(
     reinterpret_cast<char *>(Send),
     Send->size());
 
-  const unsigned __int64 taskSize = static_cast<unsigned __int64>(pSheet->size());
-  CCashDBWorkManager *cashWorkManager = CTSingleton<CCashDBWorkManager>::Instance();
-  cashWorkManager->PushTask(3, reinterpret_cast<unsigned __int8 *>(pSheet), taskSize);
+  const int taskSize = pSheet->size();
+  g_Main.PushDQSData(-1, nullptr, 201, reinterpret_cast<char *>(pSheet), taskSize);
 
   if (pSheet->in_bLimited_Sale && pSrc->byEventType == 5)
   {
