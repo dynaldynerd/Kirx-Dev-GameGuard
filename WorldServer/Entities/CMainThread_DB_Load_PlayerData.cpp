@@ -749,21 +749,37 @@ unsigned __int8 CMainThread::_db_Load_Supplement(
         unsigned int dwSerial,
         _SUPPLEMENT_DB_BASE *pDbSupplement)
 {
-  _worlddb_character_supplement_info supplementInfo;
+  _worlddb_character_supplement_info supplementInfo{};
   unsigned __int8 dbResult;
   unsigned __int64 scannerCounter;
   char scannerBuffer[88];
   char scannerCountString[28];
 
+  m_logRenewalData.Write(
+    "Before Select_Supplement(), Serial : %d, PlayerInteg : %d",
+    dwSerial,
+    supplementInfo.byPlayerInteg);
   dbResult = this->m_pWorldDB->Select_Supplement(dwSerial, &supplementInfo);
+  m_logRenewalData.Write(
+    "After Select_Supplement(), Serial : %d, PlayerInteg : %d",
+    dwSerial,
+    supplementInfo.byPlayerInteg);
   if ( dbResult == 1 )
     return 24;
   if ( dbResult == 2 )
   {
     if ( !this->m_pWorldDB->Insert_Supplement(dwSerial) )
       return 24;
+    m_logRenewalData.Write(
+      "Before Select_Supplement(), Serial : %d, PlayerInteg : %d",
+      dwSerial,
+      supplementInfo.byPlayerInteg);
     if ( this->m_pWorldDB->Select_Supplement(dwSerial, &supplementInfo) )
       return 24;
+    m_logRenewalData.Write(
+      "After Select_Supplement(), Serial : %d, PlayerInteg : %d",
+      dwSerial,
+      supplementInfo.byPlayerInteg);
   }
   pDbSupplement->dPvpPointLeak = supplementInfo.dPvpPointLeak;
   pDbSupplement->bLastAttBuff = supplementInfo.bLastAttBuff;
