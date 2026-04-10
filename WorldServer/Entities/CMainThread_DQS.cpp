@@ -1509,7 +1509,7 @@ void CMainThread::DQSCompleteProcess()
       case 57:
       {
         auto *loadGuildBattleTotalRecordQuery = reinterpret_cast<_qry_case_load_guildbattle_totalrecord *>(pData->m_sData);
-        CompleteLoadGuildBattleTotalRecord(pData->m_byResult, reinterpret_cast<char *>(loadGuildBattleTotalRecordQuery));
+        CompleteLoadGuildBattleTotalRecord(pData->m_byResult, loadGuildBattleTotalRecordQuery);
         break;
       }
       case 58:
@@ -2445,25 +2445,26 @@ void CMainThread::UpdateReservedGuildBattleSchedule(_DB_QRY_SYN_DATA *pData)
     &updateReservedScheduleQuery->byLoadDataStartPosition);
 }
 
-void CMainThread::CompleteLoadGuildBattleTotalRecord(unsigned __int8 byRet, char *pLoadData)
+void CMainThread::CompleteLoadGuildBattleTotalRecord(
+  unsigned __int8 byRet,
+  _qry_case_load_guildbattle_totalrecord *pLoadData)
 {
-  auto *loadGuildBattleTotalRecordQuery = reinterpret_cast<_qry_case_load_guildbattle_totalrecord *>(pLoadData);
   if (!byRet)
   {
-    CGuild *guild = GetGuildDataFromSerial(g_Guild, 500, loadGuildBattleTotalRecordQuery->dwGuildSerial);
+    CGuild *guild = GetGuildDataFromSerial(g_Guild, 500, pLoadData->dwGuildSerial);
     if (guild)
     {
       guild->UpdateGuildBattleWinCnt(
-        loadGuildBattleTotalRecordQuery->dwTotWinCnt,
-        loadGuildBattleTotalRecordQuery->dwTotDrawCnt,
-        loadGuildBattleTotalRecordQuery->dwTotLoseCnt);
+        pLoadData->dwTotWinCnt,
+        pLoadData->dwTotDrawCnt,
+        pLoadData->dwTotLoseCnt);
     }
     else
     {
       m_logSystemError.Write(
         "CMainThread::CompleteLoadGuildBattleTotalRecord( BYTE byRet(%u), char * pLoadData ) :GetGuildDataFromSerial( g_Guild, MAX_GUILD, pSheet->dwGuildSerial(%u) ) == NULL!",
-        loadGuildBattleTotalRecordQuery->dwGuildSerial,
-        loadGuildBattleTotalRecordQuery->dwGuildSerial);
+        pLoadData->dwGuildSerial,
+        pLoadData->dwGuildSerial);
     }
   }
 }

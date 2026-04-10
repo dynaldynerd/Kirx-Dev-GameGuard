@@ -79,6 +79,7 @@ struct _SOUND_ENTITIES_LIST;
 struct _LEAF_SOUND_ENTITIES_LIST_INFO;
 struct _uilock_init_result_acwr;
 struct _uilock_update_result_acwr;
+struct _qry_case_load_guildbattle_totalrecord;
 struct _BSP_NODE;
 struct _BSP_LEAF;
 struct _TOOL_COL_LINE;
@@ -1297,7 +1298,7 @@ public:
   void OutDestGuildbattleCost(_DB_QRY_SYN_DATA *pData);
   void InGuildbattleRewardMoney(_DB_QRY_SYN_DATA *pData);
   void UpdateReservedGuildBattleSchedule(_DB_QRY_SYN_DATA *pData);
-  void CompleteLoadGuildBattleTotalRecord(unsigned __int8 byRet, char *pLoadData);
+  void CompleteLoadGuildBattleTotalRecord(unsigned __int8 byRet, _qry_case_load_guildbattle_totalrecord *pLoadData);
   void InAtradTaxMoney(_DB_QRY_SYN_DATA *pData);
   void Load_PostStorage_Complete(char *pData);
   void Load_ReturnPost_Complete(char *pData);
