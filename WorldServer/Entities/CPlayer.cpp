@@ -5731,7 +5731,7 @@ void CPlayer::SendMsg_AnimusReturnResult(
   msg.byReturnType = byReturnType;
 
   unsigned __int8 type[2] = {22, 4};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 bool CPlayer::mgr_tracing(int bOper)

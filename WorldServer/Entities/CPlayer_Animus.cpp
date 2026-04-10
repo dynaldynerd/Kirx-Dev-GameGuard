@@ -223,11 +223,7 @@ void CPlayer::SendMsg_AnimusHPInform()
   msg.wLeftHP = static_cast<unsigned __int16>(this->m_pRecalledAnimusChar->m_nHP);
 
   unsigned __int8 type[2] = {22, 9};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::SendMsg_AnimusFPInform()
@@ -242,11 +238,7 @@ void CPlayer::SendMsg_AnimusFPInform()
   msg.wLeftFP = static_cast<unsigned __int16>(this->m_pRecalledAnimusChar->m_nFP);
 
   unsigned __int8 type[2] = {22, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::SendMsg_AnimusExpInform()
@@ -261,11 +253,7 @@ void CPlayer::SendMsg_AnimusExpInform()
   msg.dwExp = this->m_pRecalledAnimusChar->m_dwExp;
 
   unsigned __int8 type[2] = {22, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xAu);
 }
 
 void CPlayer::SendMsg_AnimusModeInform(unsigned __int8 byMode)
@@ -274,11 +262,7 @@ void CPlayer::SendMsg_AnimusModeInform(unsigned __int8 byMode)
   msg.byStateCode = byMode;
 
   unsigned __int8 type[2] = {22, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::Return_AnimusAsk(unsigned __int8 byReturnType)
@@ -431,11 +415,7 @@ void CPlayer::SendMsg_AnimusRecallWaitTimeFree(bool bFree)
   msg.bFree = bFree;
 
   unsigned __int8 type[2] = {22, 13};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_AnimusTargetResult(char byRetCode)
@@ -444,11 +424,7 @@ void CPlayer::SendMsg_AnimusTargetResult(char byRetCode)
   msg.byResultCode = byRetCode;
 
   unsigned __int8 type[2] = {22, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_AnimusRecallResult(unsigned __int8 byResultCode, unsigned __int16 wLeftFP, CAnimus *pNewAnimus)
@@ -465,11 +441,7 @@ void CPlayer::SendMsg_AnimusRecallResult(unsigned __int8 byResultCode, unsigned 
   }
 
   unsigned __int8 type[2] = {22, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x13u);
 }
 
 void CPlayer::SendMsg_AnimusInvenChange(unsigned __int8 byErrCode)
@@ -478,11 +450,7 @@ void CPlayer::SendMsg_AnimusInvenChange(unsigned __int8 byErrCode)
   msg.byErrCode = byErrCode;
 
   unsigned __int8 pbyType[2] = {13, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    this->m_ObjID.m_wIndex,
-    pbyType,
-    reinterpret_cast<char *>(&msg),
-    static_cast<unsigned __int16>(sizeof(msg)));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::pc_AnimusInvenChange(_STORAGE_POS_INDIV *pItem, unsigned __int16 wReplaceSerial)
