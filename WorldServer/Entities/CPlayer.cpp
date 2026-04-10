@@ -11841,7 +11841,7 @@ void CPlayer::SendMsg_UnitAlterFeeInform(char bySlotIndex, unsigned int dwPullin
   msg.dwPullingFee = dwPullingFee;
 
   unsigned __int8 type[2] = {23, 21};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5u);
 }
 
 void CPlayer::_UpdateUnitDebt(unsigned __int8 bySlotIndex, unsigned int dwPull)
@@ -11879,7 +11879,7 @@ void CPlayer::SendMsg_UnitForceReturnInform(char bySlotIndex, unsigned int dwDeb
   msg.dwDebt = dwDebt;
 
   unsigned __int8 type[2] = {23, 27};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 5u);
 }
 
 void CPlayer::AddDalant(int dwPush, bool bApply)

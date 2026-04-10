@@ -165,7 +165,7 @@ void CPlayer::SendMsg_UnitReturnResult(char byRetCode, unsigned int dwPayDalant)
   packet.dwNewDalant = this->m_Param.GetDalant();
 
   unsigned __int8 type[2] = {23, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 9u);
 }
 
 void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
@@ -174,7 +174,7 @@ void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
   packet.byRetCode = byRetCode;
 
   unsigned __int8 type[2] = {23, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
 }
 
 void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
@@ -183,7 +183,7 @@ void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
   packet.bySlotIndex = bySlotIndex;
 
   unsigned __int8 type[2] = {23, 26};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
 }
 
 void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
@@ -354,7 +354,7 @@ void CPlayer::SendMsg_UnitRideChange(bool bTake, CParkingUnit *pUnit)
   FloatToShort(this->m_fCurPos, payload.zNewPos, 3);
 
   unsigned __int8 type[2] = {3, 35};
-  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), 19u, false);
 }
 
 void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char byUnitSlotIndex, unsigned __int16 wKeyIndex, unsigned __int16 wKeySerial, unsigned int *pdwConsumMoney)
@@ -506,7 +506,7 @@ void CPlayer::SendMsg_UnitTakeResult(char byRetCode)
   _unit_take_result_zocl packet{};
   packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
 }
 
 void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
@@ -514,7 +514,7 @@ void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
   _unit_leave_result_zocl packet{};
   packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
 }
 
 void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
@@ -601,11 +601,7 @@ void CPlayer::SendMsg_AlterBooster()
   packet.wBoosterGauge = m_pUsingUnit->wBooster;
 
   unsigned __int8 type[2]{23, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(
-    m_ObjID.m_wIndex,
-    type,
-    reinterpret_cast<char *>(&packet),
-    static_cast<unsigned __int16>(sizeof(packet)));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 3u);
 }
 
 void CPlayer::AutoCharge_Booster()
