@@ -189,7 +189,7 @@ void CPlayer::SendData_PartyMemberHP()
     if (partyMembers[index] != this->m_pPartyMgr)
     {
       g_Network.m_pProcess[0]->LoadSendMsg(
-        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), 6u);
     }
   }
 }
@@ -218,7 +218,7 @@ void CPlayer::SendData_PartyMemberFP()
     if (partyMembers[index] != this->m_pPartyMgr)
     {
       g_Network.m_pProcess[0]->LoadSendMsg(
-        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), 6u);
     }
   }
 }
@@ -247,7 +247,7 @@ void CPlayer::SendData_PartyMemberSP()
     if (partyMembers[index] != this->m_pPartyMgr)
     {
       g_Network.m_pProcess[0]->LoadSendMsg(
-        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), 6u);
     }
   }
 }
@@ -278,7 +278,7 @@ void CPlayer::SendData_PartyMemberEffect(unsigned __int8 byAlterCode, unsigned _
     if (partyMembers[index] != this->m_pPartyMgr)
     {
       g_Network.m_pProcess[0]->LoadSendMsg(
-        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
+        partyMembers[index]->m_wZoneIndex, type, reinterpret_cast<char *>(&packet), 8u);
     }
   }
 }
@@ -313,7 +313,7 @@ void CPlayer::SendMsg_BuddyAddFail(char byRetCode, char *pwszDstName)
   std::strcpy(msg.wszDstName, pwszDstName);
 
   unsigned __int8 type[2] = {31, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x12u);
 }
 
 void CPlayer::SendMsg_BuddyAddAsk(
@@ -328,7 +328,7 @@ void CPlayer::SendMsg_BuddyAddAsk(
   std::strcpy(msg.wszAskerName, pwszAskerName);
 
   unsigned __int8 type[2] = {31, 11};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x17u);
 }
 
 void CPlayer::SendMsg_BuddyAddAnswerResult(
@@ -353,7 +353,7 @@ void CPlayer::SendMsg_BuddyAddAnswerResult(
   }
 
   unsigned __int8 type[2] = {31, 13};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x1Du);
 }
 
 void CPlayer::SendMsg_PartyLeaveSelfResult(CPartyPlayer *pLeaver, bool bWorldExit)
@@ -373,7 +373,7 @@ void CPlayer::SendMsg_PartySuccessResult(CPartyPlayer *pSuccessor)
   msg.dwSuccessorSerial = pSuccessor ? pSuccessor->m_id.dwSerial : static_cast<unsigned int>(-1);
 
   unsigned __int8 type[2] = {16, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
@@ -384,7 +384,7 @@ void CPlayer::SendMsg_PartyJoinInvitationQuestion(unsigned __int16 wJoinerIndex)
   msg.idBoss.dwSerial = m_dwObjSerial;
 
   unsigned __int8 type[2] = {16, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), 6u);
 }
 
 void CPlayer::SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner)
@@ -395,7 +395,7 @@ void CPlayer::SendMsg_PartyJoinApplicationQuestion(CPlayer *pJoiner)
   msg.idApplicant.dwSerial = pJoiner->m_dwObjSerial;
 
   unsigned __int8 type[2] = {16, 5};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 6u);
 }
 
 void CPlayer::SendMsg_PartyJoinJoinerResult()
@@ -441,14 +441,14 @@ void CPlayer::SendMsg_PartyJoinMemberResult(CPartyPlayer *pJoiner, char byLootSh
   msg.wIndex = pJoiner->m_id.wIndex;
 
   unsigned __int8 type[2] = {16, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0x18u);
 }
 
 void CPlayer::SendMsg_PartyJoinFailLevel()
 {
   _party_join_fail_level_inform_zocl msg{};
   unsigned __int8 type[2] = {16, 66};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg.sDum), 1u);
 }
 
 void CPlayer::SendMsg_AwayPartyRequestResult(char byRetCode)
@@ -456,7 +456,7 @@ void CPlayer::SendMsg_AwayPartyRequestResult(char byRetCode)
   _away_party_invitation_result_zocl msg{};
   msg.byRetCode = byRetCode;
   unsigned __int8 type[2] = {16, 32};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
@@ -468,7 +468,7 @@ void CPlayer::SendMsg_AwayPartyInvitationQuestion(unsigned __int16 wJoinerIndex)
   std::strcpy(msg.wszCharName, m_Param.GetCharNameA());
 
   unsigned __int8 type[2] = {16, 33};
-  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(wJoinerIndex, type, reinterpret_cast<char *>(&msg), 0x17u);
 }
 
 void CPlayer::SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver)
@@ -478,7 +478,7 @@ void CPlayer::SendMsg_PartyLeaveCompulsionResult(CPartyPlayer *pLeaver)
   msg.dwExiterSerial = pLeaver ? pLeaver->m_id.dwSerial : static_cast<unsigned int>(-1);
 
   unsigned __int8 type[2] = {16, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::SendMsg_PartyDisjointResult(char bSuccess)
@@ -486,7 +486,7 @@ void CPlayer::SendMsg_PartyDisjointResult(char bSuccess)
   _party_disjoint_result_zocl msg{};
   msg.bySuccess = bSuccess;
   unsigned __int8 type[2] = {16, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_PartyLockResult(char byRet)
@@ -494,7 +494,7 @@ void CPlayer::SendMsg_PartyLockResult(char byRet)
   _party_lock_result_zocl msg{};
   msg.byLock = byRet;
   unsigned __int8 type[2] = {16, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendMsg_PartyAlterLootShareResult(char byLootShareMode)
@@ -502,7 +502,7 @@ void CPlayer::SendMsg_PartyAlterLootShareResult(char byLootShareMode)
   _alter_party_loot_share_result_zocl msg{};
   msg.byLootShareMode = byLootShareMode;
   unsigned __int8 type[2] = {16, 29};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 void CPlayer::SendData_PartyMemberInfo(unsigned __int16 wDstIndex)
