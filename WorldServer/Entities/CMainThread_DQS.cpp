@@ -1607,19 +1607,19 @@ void CMainThread::DQSCompleteProcess()
       case 79:
       {
         auto *postStorageListQuery = reinterpret_cast<_qry_case_post_storage_list_get *>(pData->m_sData);
-        Load_PostStorage_Complete(reinterpret_cast<char *>(postStorageListQuery));
+        Load_PostStorage_Complete(postStorageListQuery);
         break;
       }
       case 80:
       {
         auto *postReturnListQuery = reinterpret_cast<_qry_case_post_return_list_get *>(pData->m_sData);
-        Load_ReturnPost_Complete(reinterpret_cast<char *>(postReturnListQuery));
+        Load_ReturnPost_Complete(postReturnListQuery);
         break;
       }
       case 82:
       {
         auto *postContentQuery = reinterpret_cast<_qry_case_post_content_get *>(pData->m_sData);
-        Load_Content_Complete(reinterpret_cast<char *>(postContentQuery));
+        Load_Content_Complete(postContentQuery);
         break;
       }
       case 85:
@@ -2475,15 +2475,14 @@ void CMainThread::InAtradTaxMoney(_DB_QRY_SYN_DATA *pData)
   CUnmannedTraderTaxRateManager *manager = CUnmannedTraderTaxRateManager::Instance();
   manager->DQSCompleteInAtradTaxMoney(inATradeTaxQuery->byRace, reinterpret_cast<char *>(inATradeTaxQuery));
 }
-void CMainThread::Load_PostStorage_Complete(char *pData)
+void CMainThread::Load_PostStorage_Complete(_qry_case_post_storage_list_get *pData)
 {
-  auto *postStorageListQuery = reinterpret_cast<_qry_case_post_storage_list_get *>(pData);
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postStorageListQuery->dwMasterSerial);
-  if (postStorageListQuery->byProcRet == 1)
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pData->dwMasterSerial);
+  if (pData->byProcRet == 1)
   {
     m_logSystemError.Write(
       "Load_PostStorage_Complete() : Select_PostStorageList(Serial:%d) => failed",
-      postStorageListQuery->dwMasterSerial);
+      pData->dwMasterSerial);
 
     if (player && player->m_bLoad)
     {
@@ -2491,7 +2490,7 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
     }
   }
 
-  if (player && player->m_bLoad && postStorageListQuery->byProcRet != 1)
+  if (player && player->m_bLoad && pData->byProcRet != 1)
   {
     // Post load fix (non-IDA): ignore stale or duplicate case-79 completions.
     if (player->m_bPostLoad || !player->m_bPostLoading)
@@ -2500,11 +2499,11 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
     }
 
     CPostStorage *postStorage = &player->m_Param.m_PostStorage;
-    unsigned int count = postStorageListQuery->dwCount;
+    unsigned int count = pData->dwCount;
 
     for (unsigned int n = 0; n < count; ++n)
     {
-      _qry_case_post_storage_list_get::__list *entry = &postStorageListQuery->List[n];
+      _qry_case_post_storage_list_get::__list *entry = &pData->List[n];
       if (entry->wStorageIndex != 255)
       {
         postStorage->AddPostTitleDataByStorageIndex(
@@ -2524,7 +2523,7 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
 
     for (unsigned int n = 0; n < count; ++n)
     {
-      _qry_case_post_storage_list_get::__list *entry = &postStorageListQuery->List[n];
+      _qry_case_post_storage_list_get::__list *entry = &pData->List[n];
       if (entry->wStorageIndex == 255)
       {
         postStorage->AddPostTitleData(
@@ -2610,15 +2609,14 @@ void CMainThread::Load_PostStorage_Complete(char *pData)
     PushDQSData(-1, nullptr, 80, reinterpret_cast<char *>(&qry), size);
   }
 }
-void CMainThread::Load_ReturnPost_Complete(char *pData)
+void CMainThread::Load_ReturnPost_Complete(_qry_case_post_return_list_get *pData)
 {
-  auto *postReturnListQuery = reinterpret_cast<_qry_case_post_return_list_get *>(pData);
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postReturnListQuery->dwMasterSerial);
-  if (postReturnListQuery->byProcRet == 1)
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pData->dwMasterSerial);
+  if (pData->byProcRet == 1)
   {
     m_logSystemError.Write(
       "Load_ReturnPost_Complete() : Select_ReturnPost(Serial:%d) => failed",
-      postReturnListQuery->dwMasterSerial);
+      pData->dwMasterSerial);
 
     if (player && player->m_bLoad)
     {
@@ -2626,7 +2624,7 @@ void CMainThread::Load_ReturnPost_Complete(char *pData)
     }
   }
 
-  if (player && player->m_bLoad && postReturnListQuery->byProcRet != 1)
+  if (player && player->m_bLoad && pData->byProcRet != 1)
   {
     // Post load fix (non-IDA): case 80 only completes the active load chain once.
     if (player->m_bPostLoad || !player->m_bPostLoading)
@@ -2635,10 +2633,10 @@ void CMainThread::Load_ReturnPost_Complete(char *pData)
     }
 
     CPostReturnStorage *returnStorage = &player->m_Param.m_ReturnPostStorage;
-    unsigned int count = postReturnListQuery->dwCount;
+    unsigned int count = pData->dwCount;
     for (unsigned int j = 0; j < count; ++j)
     {
-      _qry_case_post_return_list_get::__list *entry = &postReturnListQuery->List[j];
+      _qry_case_post_return_list_get::__list *entry = &pData->List[j];
       CPostData *post = returnStorage->AddReturnPost(
         entry->byErr,
         entry->dwSerial,
@@ -2692,27 +2690,26 @@ void CMainThread::Load_ReturnPost_Complete(char *pData)
   }
 }
 
-void CMainThread::Load_Content_Complete(char *pData)
+void CMainThread::Load_Content_Complete(_qry_case_post_content_get *pData)
 {
-  auto *postContentQuery = reinterpret_cast<_qry_case_post_content_get *>(pData);
-  if (postContentQuery->byProcRet == 1)
+  if (pData->byProcRet == 1)
   {
     m_logSystemError.Write(
       "Load_Content_Complete() : Select_PostContent() : MasterSerial=%d ,PostSerial=%d",
-      postContentQuery->dwMasterSerial,
-      postContentQuery->dwSerial);
+      pData->dwMasterSerial,
+      pData->dwSerial);
   }
 
-  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, postContentQuery->dwMasterSerial);
-  if (player && player->m_bOper && postContentQuery->byProcRet != 1)
+  CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pData->dwMasterSerial);
+  if (player && player->m_bOper && pData->byProcRet != 1)
   {
-    CPostData *post = player->m_Param.m_PostStorage.GetPostDataFromInx(postContentQuery->dwIndex);
+    CPostData *post = player->m_Param.m_PostStorage.GetPostDataFromInx(pData->dwIndex);
     if (post)
     {
-      post->SetPostContent(postContentQuery->wszContent);
+      post->SetPostContent(pData->wszContent);
       player->SendMsg_PostContent(
         0,
-        postContentQuery->dwIndex,
+        pData->dwIndex,
         post->m_wszContent,
         post->m_Key.byTableCode,
         post->m_Key.wItemIndex,
