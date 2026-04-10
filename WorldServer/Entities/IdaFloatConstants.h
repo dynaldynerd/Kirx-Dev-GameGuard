@@ -5,6 +5,7 @@ static constexpr float FLOAT_1_0 = 1.0f;
 static constexpr float FLOAT_0_5 = 0.5f;
 static constexpr float FLOAT_1_1 = 1.1f;
 static constexpr float FLOAT_N1_0 = -1.0f;
+static constexpr float FLOAT_0_47999999 = 0.479999989f;
 static constexpr float FLOAT_0_60000002 = 0.600000024f;
 static constexpr float FLOAT_8_0 = 8.0f;
 static constexpr float FLOAT_255_0 = 255.0f;

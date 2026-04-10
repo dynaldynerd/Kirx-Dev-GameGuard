@@ -13585,7 +13585,7 @@ void CPlayer::pc_SelectClassRequest(unsigned __int16 wSelClassIndex, unsigned __
         m_fUnitPv_AttFc = 1.1f;
         CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
         manager->SetUnitPassiveValue(&m_fUnitPv_DefFc);
-        m_fUnitPv_RepPr = 0.60000002f;
+        m_fUnitPv_RepPr = FLOAT_0_47999999;
       }
       CalcAddPointByClass();
       m_nAddDfnMstByClass = 0;
@@ -16025,7 +16025,7 @@ bool CPlayer::Create()
     this->m_fUnitPv_AttFc = FLOAT_1_1;
     CNationSettingManager *manager = CTSingleton<CNationSettingManager>::Instance();
     manager->SetUnitPassiveValue(&this->m_fUnitPv_DefFc);
-    this->m_fUnitPv_RepPr = FLOAT_0_60000002;
+    this->m_fUnitPv_RepPr = FLOAT_0_47999999;
   }
 
   std::memcpy(this->m_fBeforeDungeonPos, this->m_fCurPos, sizeof(this->m_fBeforeDungeonPos));
