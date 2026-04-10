@@ -217,7 +217,7 @@ void CPlayer::SendMsg_AlterHPInform()
   payload.wHP = static_cast<unsigned __int16>(this->GetHP());
 
   unsigned __int8 type[2] = {11, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), sizeof(payload));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&payload), 2u);
 }
 
 void CPlayer::SendMsg_Level(char nLevel)
@@ -686,7 +686,7 @@ void CPlayer::SendMsg_SetFPInform()
   _set_fp_inform_zocl fp{};
   fp.wFP = static_cast<unsigned __int16>(this->m_Param.GetFP());
   unsigned __int8 type[2] = {17, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&fp), sizeof(fp));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&fp), 2u);
 }
 
 void CPlayer::SendMsg_SetSPInform()
@@ -694,7 +694,7 @@ void CPlayer::SendMsg_SetSPInform()
   _set_sp_inform_zocl sp{};
   sp.wSP = static_cast<unsigned __int16>(this->m_Param.GetSP());
   unsigned __int8 type[2] = {17, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&sp), sizeof(sp));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&sp), 2u);
 }
 
 void CPlayer::SendMsg_AlterSPInform()
@@ -702,7 +702,7 @@ void CPlayer::SendMsg_AlterSPInform()
   _alter_sp_inform_zocl sp{};
   sp.wNewSP = static_cast<unsigned __int16>(GetSP());
   unsigned __int8 type[2] = {11, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&sp), sizeof(sp));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&sp), 2u);
 }
 
 void CPlayer::SendMsg_AlterTol()
@@ -710,7 +710,7 @@ void CPlayer::SendMsg_AlterTol()
   _alter_tol_inform_zocl tol{};
   std::memcpy(tol.zTol, this->m_zLastTol, sizeof(tol.zTol));
   unsigned __int8 type[2] = {11, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&tol), sizeof(tol));
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&tol), 8u);
 }
 
 void CPlayer::OnLoop_Static()
@@ -1600,7 +1600,7 @@ void CPlayer::SendMsg_SetHPInform()
   _set_hp_inform_zocl hp{};
   hp.wHP = static_cast<unsigned __int16>(m_Param.GetHP());
   unsigned __int8 type[2] = {17, 13};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&hp), sizeof(hp));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&hp), 2u);
 }
 
 int CPlayer::SetDamage(
