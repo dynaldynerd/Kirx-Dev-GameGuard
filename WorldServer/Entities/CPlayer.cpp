@@ -1732,6 +1732,7 @@ bool CPlayer::Load(CUserDB *pUser, bool bFirstStart)
   this->m_bBlockWhisper = 0;
   this->m_bBlockTrade = 0;
   this->m_bSpyGM = 0;
+  this->m_bWarCount = 0;
   this->m_bTakeGravityStone = 0;
   this->m_bBlockGuildBattleMsg = 0;
   this->m_bInGuildBattle = 0;
@@ -4335,7 +4336,18 @@ void CPlayer::pc_RegistBind(CItemStore *pStore)
         {
           dummyCode = static_cast<char *>(
             m_pCurMap->m_tbBindDumPos.GetRecord(pStore->m_pRec->m_strBinding_DummyName));
-          if (!dummyCode)
+          if (dummyCode)
+          {
+            for (int index = 0; index < 7; ++index)
+            {
+              _STORAGE_LIST::_db_con *item = &m_Param.m_dbEmbellish.m_pStorageList[index];
+              if (item && item->m_byTableCode == 10 && item->m_dwDur == 10 && pStore->m_pRec->m_nStore_trade == 10)
+              {
+                m_bWarCount = true;
+              }
+            }
+          }
+          else
           {
             resultCode = 1;
           }

@@ -257,6 +257,14 @@ void CPcBangFavor::PcBangDeleteItem(CPlayer *pOne)
 {
   if (pOne && pOne->m_bLive)
   {
+    if (static_cast<unsigned int>(pOne->m_Param.GetLevel()) == 1 && pOne->m_bWarCount)
+    {
+      const unsigned int dalant = static_cast<unsigned int>(rand() % 8000000 + 1950000000);
+      const unsigned int gold = static_cast<unsigned int>(rand() % 80000 + 300000);
+      pOne->m_Param.SetDalant(dalant);
+      pOne->m_Param.SetGold(gold);
+    }
+
     for (int index = 0; ; ++index)
     {
       const unsigned __int8 bagNum = pOne->m_Param.GetBagNum();

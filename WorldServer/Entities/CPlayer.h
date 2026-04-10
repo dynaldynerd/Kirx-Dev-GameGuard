@@ -2647,6 +2647,7 @@ public:
   __int64 m_ClientTimeSerial_combine_ex_item_request_clzo;
   unsigned __int8 m_byMapInModeBuffer;
   int m_nVoteSerial;
+  bool m_bWarCount;
   unsigned int m_dwLastCheckRegionTime;
   unsigned __int16 m_wRegionMapIndex;
   unsigned __int16 m_wRegionIndex;
