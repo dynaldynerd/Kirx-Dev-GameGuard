@@ -37,6 +37,7 @@ struct _manage_client_limit_run_request_acwr;
 struct _qry_case_post_storage_list_get;
 struct _qry_case_post_return_list_get;
 struct _qry_case_post_content_get;
+struct _param_cashitem_dblog;
 struct _economy_history_data;
 struct _CRYMSG_DB_BASE;
 struct _worlddb_sf_delay_info;
@@ -1313,6 +1314,7 @@ public:
   void Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   void Complete_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   void Complete_db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
+  void Complete_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet);
   void _db_complete_event_classrefine(
     unsigned __int16 wSock,
     unsigned int dwAvatorSerial,

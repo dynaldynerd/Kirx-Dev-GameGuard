@@ -37,6 +37,7 @@
 #include "GuildBattleTypes.h"
 #include "lt_qry_case_unmandtrader_select_list.h"
 #include "Packet/ZoneAccountPacket.h"
+#include "param_cash.h"
 #include "insert_trc_info.h"
 #include "qry_case_inputgmoney.h"
 #include "PatriarchElectProcessor.h"
@@ -2024,6 +2025,12 @@ void CMainThread::DQSCompleteProcess()
         Complete_db_Update_Data_For_Trade(updateDataForTradeQuery);
         break;
       }
+      case 201:
+      {
+        auto *cashItemBuyLog = reinterpret_cast<_param_cashitem_dblog *>(pData->m_sData);
+        Complete_TestServer_CashItem_Buy_Log(cashItemBuyLog);
+        break;
+      }
       default:
         break;
     }
@@ -2789,6 +2796,28 @@ void CMainThread::Complete_db_Update_Data_For_Trade(_qry_case_update_data_for_tr
       player->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwDalant = player->m_pUserDB->m_AvatorData.dbAvator.m_dwDalant;
       player->m_pUserDB->m_AvatorData_bk.dbAvator.m_dwGold = player->m_pUserDB->m_AvatorData.dbAvator.m_dwGold;
       player->m_pUserDB->m_AvatorData_bk.dbInven = player->m_pUserDB->m_AvatorData.dbInven;
+    }
+  }
+}
+
+void CMainThread::Complete_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet)
+{
+  if (!pSheet)
+  {
+    return;
+  }
+
+  for (int n = 0; n < pSheet->nBuyNum; ++n)
+  {
+    if (pSheet->data[n].byRet)
+    {
+      m_logSystemError.Write(
+        "Failed Insert_TestServer_CashItem_Buy_Log >> tblcode:%d itemidx:%d num:%d cost:%d discount:%d",
+        pSheet->data[n].byTblCode,
+        pSheet->data[n].wItemIndex,
+        pSheet->data[n].byOverlapNum,
+        pSheet->data[n].dwCost,
+        pSheet->data[n].iCashDiscount);
     }
   }
 }
