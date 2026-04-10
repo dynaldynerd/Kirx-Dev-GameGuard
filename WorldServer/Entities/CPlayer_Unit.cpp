@@ -543,7 +543,6 @@ float CPlayer::GetAddSpeed()
 
 void CPlayer::BreakCloakBooster()
 {
-  _sf_continous *cont = EquipItemSFAgent.GetEquipSFCont(7);
   EquipItemSFAgent.ReleaseSFCont(7);
 }
 
@@ -554,7 +553,7 @@ bool CPlayer::IsUseCloakBooster()
 
 void CPlayer::Cheet_BufEffectEnd()
 {
-  const unsigned long long endTime = GetKorLocalTime();
+  const unsigned int endTime = static_cast<unsigned int>(GetKorLocalTime());
   this->m_PotionBufUse.SetExtPotionEndTime(endTime);
 }
 
