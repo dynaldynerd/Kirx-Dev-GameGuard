@@ -810,7 +810,7 @@ void CMainThread::GetTommorrowStr(char *szTommorrow)
   const unsigned int year = static_cast<unsigned int>(localTime.tm_year + 1900);
   const unsigned int month = static_cast<unsigned int>(localTime.tm_mon + 1);
   const unsigned int day = static_cast<unsigned int>(localTime.tm_mday);
-  sprintf_s(szTommorrow, sizeof(szTommorrow), "%04u%02u%02u", year, month, day);
+  std::sprintf(szTommorrow, "%04u%02u%02u", year, month, day);
 }
 
 void CMainThread::pc_UserChatBlockResult(char byBlockResult, _CLID *pcidTarget, _CLID *pcidGM, int bLogin)
