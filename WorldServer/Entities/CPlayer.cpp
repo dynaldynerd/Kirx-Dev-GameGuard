@@ -12916,7 +12916,7 @@ unsigned __int8 CPlayer::pc_InitClass()
     _TRAP_PARAM::_param *trap = &m_pmTrp.m_Item[j];
     if (trap->isLoad() && trap->pItem->m_dwObjSerial == trap->dwSerial)
     {
-      trap->pItem->Destroy();
+      trap->pItem->Destroy(4u);
     }
   }
 
