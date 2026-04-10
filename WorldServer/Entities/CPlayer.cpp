@@ -4487,7 +4487,7 @@ void CPlayer::SendMsg_MapEnvInform(char byMapCode, unsigned int dwMapEnvCode)
   unsigned __int8 type[2]{};
   type[0] = 8;
   type[1] = 5;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 9u);
 }
 
 void CPlayer::SendMsg_MineCancle()
@@ -4498,7 +4498,7 @@ void CPlayer::SendMsg_MineCancle()
 
   _mine_cancle_result_zocl msg{};
   msg.sDum = 0;
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg.sDum), 1u);
 }
 
 void CPlayer::SendMsg_HonorGuildMark(char byRank)
@@ -4510,7 +4510,7 @@ void CPlayer::SendMsg_HonorGuildMark(char byRank)
   unsigned __int8 type[2]{};
   type[0] = 27;
   type[1] = 122;
-  CircleReport(type, reinterpret_cast<char *>(&msg), static_cast<unsigned __int16>(sizeof(msg)), true);
+  CircleReport(type, reinterpret_cast<char *>(&msg), 5u, true);
 }
 
 void CPlayer::SendMsg_DeleteStorageInform(char byStorageCode, unsigned __int16 wSerial)
@@ -4532,7 +4532,7 @@ void CPlayer::SendMsg_BuddhaEventMsg(char byErrorCode)
   msg.byErrorCode = byErrorCode;
 
   unsigned __int8 type[2]{59, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 1u);
 }
 
 bool CPlayer::OutOfMap(CMapData *pIntoMap, unsigned __int16 wLayerIndex, unsigned __int8 byMapOutType, float *pfStartPos)
@@ -5757,7 +5757,7 @@ void CPlayer::SendMsg_AlterItemDurInform(char byStorageCode, unsigned __int16 wI
   msg.dwDur = dwDur;
 
   unsigned __int8 type[2] = {7, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 0xBu);
 }
 
 void CPlayer::SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int16 wLeftHP)
@@ -5768,7 +5768,7 @@ void CPlayer::SendMsg_AlterTowerHP(unsigned __int16 wItemSerial, unsigned __int1
   msg.wLeftHP = wLeftHP;
 
   unsigned __int8 type[2] = {17, 22};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 4u);
 }
 
 void CPlayer::_TowerDestroy(CGuardTower *pTowerObj)
@@ -28223,7 +28223,7 @@ void CPlayer::SendMsg_MakeItemCheatSendButtonEnable(char bEnableSendButton)
   _make_item_cheatcode_setui_zocl msg{};
   msg.bEnableMakeUiButton = bEnableSendButton != 0;
   unsigned __int8 type[2] = {7, 34};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg.bEnableMakeUiButton), 1u);
 }
 
 void CPlayer::SendMsg_AlterMoneyInform(char byReasonCode)
@@ -28235,7 +28235,7 @@ void CPlayer::SendMsg_AlterMoneyInform(char byReasonCode)
   msg.dwDalant = m_Param.GetDalant();
 
   unsigned __int8 type[2] = {11, 19};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), sizeof(msg));
+  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&msg), 9u);
 }
 
 void CPlayer::RecallRandomPositionInRange(
