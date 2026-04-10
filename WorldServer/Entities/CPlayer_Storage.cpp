@@ -128,7 +128,7 @@ void CPlayer::SendMsg_DamageResult(_STORAGE_LIST::_db_con *pItem)
   packet.wLeftDurPoint = static_cast<unsigned __int16>(pItem->m_dwDur);
 
   unsigned __int8 type[2] = {5, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 5u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_ItemStorageRefresh(unsigned __int8 byStorageCode)
@@ -151,7 +151,7 @@ void CPlayer::SendMsg_ItemStorageRefresh(unsigned __int8 byStorageCode)
   }
 
   unsigned __int8 type[2] = {3, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0xCAu);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UsPotionResultOther(
@@ -176,11 +176,11 @@ void CPlayer::SendMsg_UsPotionResultOther(
   unsigned __int8 type[2] = {7, 108};
   if (bCircle)
   {
-    this->CircleReport(type, reinterpret_cast<char *>(&packet), 23u, true);
+    this->CircleReport(type, reinterpret_cast<char *>(&packet), sizeof(packet), true);
   }
   else
   {
-    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 23u);
+    g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
   }
 }
 
@@ -197,7 +197,7 @@ void CPlayer::SendMsg_ResSeparation(char byErrCode, _STORAGE_LIST::_db_con *pSta
     packet.byChildAmount = static_cast<char>(pNewOre->m_dwDur);
   }
 
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), 7u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_PotionSeparation(
@@ -215,7 +215,7 @@ void CPlayer::SendMsg_PotionSeparation(
   packet.wChildSerial = wChildSerial;
   packet.byChildAmount = static_cast<char>(byChildAmount);
 
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet.sErrorCode), 7u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_ResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStartOre, _STORAGE_LIST::_db_con *pTargetOre)
@@ -231,7 +231,7 @@ void CPlayer::SendMsg_ResDivision(char byErrCode, _STORAGE_LIST::_db_con *pStart
     packet.byChildAmount = static_cast<char>(pTargetOre->m_dwDur);
   }
 
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), 7u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_PotionDivision(
@@ -249,7 +249,7 @@ void CPlayer::SendMsg_PotionDivision(
   packet.wChildSerial = wChildSerial;
   packet.byChildAmount = static_cast<char>(byChildAmount);
 
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet.sErrorCode), 7u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_ForceInvenChange(char byErrCode)
@@ -257,7 +257,7 @@ void CPlayer::SendMsg_ForceInvenChange(char byErrCode)
   unsigned __int8 pbyType[2] = {13, 3};
   _force_inven_change_result_zocl packet{};
   packet.byErrCode = byErrCode;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, pbyType, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_RevivalOfJade(unsigned __int16 wSuccRate)
@@ -266,7 +266,7 @@ void CPlayer::SendMsg_RevivalOfJade(unsigned __int16 wSuccRate)
   _inform_revival_jade_effect_zocl packet{};
 
   unsigned __int8 type[2] = {3, 58};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UseJadeResult(unsigned __int8 byErrCode, unsigned __int16 wItemSerial)
@@ -276,7 +276,7 @@ void CPlayer::SendMsg_UseJadeResult(unsigned __int8 byErrCode, unsigned __int16 
   packet.wSerial = wItemSerial;
 
   unsigned __int8 type[2] = {7, 65};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 6u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_NotifyEffectForGetItem(
@@ -319,7 +319,7 @@ void CPlayer::SendMsg_NewMovePotionResult()
   packet.bStone = true;
 
   unsigned __int8 type[2] = {17, 45};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet.bStone), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_JadeEffectErr(char byErrorCode)
@@ -327,7 +327,7 @@ void CPlayer::SendMsg_JadeEffectErr(char byErrorCode)
   unsigned __int8 type[2] = {59, 4};
   _notify_jade_effect_error_zocl packet{};
   packet.byErrorCode = byErrorCode;
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::pc_ResSeparation(unsigned __int16 wStartSerial, unsigned __int8 byMoveAmount)

@@ -165,7 +165,7 @@ void CPlayer::SendMsg_UnitReturnResult(char byRetCode, unsigned int dwPayDalant)
   packet.dwNewDalant = this->m_Param.GetDalant();
 
   unsigned __int8 type[2] = {23, 16};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 9u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
@@ -174,7 +174,7 @@ void CPlayer::SendMsg_UnitBulletReplaceResult(char byRetCode)
   packet.byRetCode = byRetCode;
 
   unsigned __int8 type[2] = {23, 24};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
@@ -183,7 +183,7 @@ void CPlayer::SendMsg_UnitDestroy(char bySlotIndex)
   packet.bySlotIndex = bySlotIndex;
 
   unsigned __int8 type[2] = {23, 26};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::_UnitDestroy(unsigned __int8 byUnitSlot)
@@ -354,7 +354,7 @@ void CPlayer::SendMsg_UnitRideChange(bool bTake, CParkingUnit *pUnit)
   FloatToShort(this->m_fCurPos, payload.zNewPos, 3);
 
   unsigned __int8 type[2] = {3, 35};
-  this->CircleReport(type, reinterpret_cast<char *>(&payload), 19u, false);
+  this->CircleReport(type, reinterpret_cast<char *>(&payload), static_cast<unsigned __int16>(sizeof(payload)), false);
 }
 
 void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char byUnitSlotIndex, unsigned __int16 wKeyIndex, unsigned __int16 wKeySerial, unsigned int *pdwConsumMoney)
@@ -372,7 +372,11 @@ void CPlayer::SendMsg_UnitFrameBuyResult(char byRetCode, char byFrameCode, char 
   packet.dwConsumMoney[1] = pdwConsumMoney[1];
 
   unsigned __int8 type[2] = {23, 2};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x3Eu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitSellResult(char byRetCode, char bySlotIndex, unsigned __int16 wKeySerial, int nAddMoney, unsigned int dwTotalNonpay, unsigned int dwSumDalant, unsigned int dwSumGold)
@@ -388,7 +392,11 @@ void CPlayer::SendMsg_UnitSellResult(char byRetCode, char bySlotIndex, unsigned 
   packet.dwLeftMoney[1] = dwSumGold;
 
   unsigned __int8 type[2] = {23, 4};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x40u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int *pnCost)
@@ -405,7 +413,11 @@ void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int
   packet.dwLeftMoney[1] = this->m_Param.GetGold();
 
   unsigned __int8 type[2] = {23, 6};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x48u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, unsigned int dwNewGauge, unsigned int dwConsumDalant)
@@ -419,7 +431,11 @@ void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, un
   packet.dwLeftDalant = this->m_Param.GetDalant();
 
   unsigned __int8 type[2] = {23, 8};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0xEu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitBulletFillResult(char byRetCode, char bySlotIndex, unsigned __int16 *pwBulletIndex, unsigned int *pdwConsumMoney)
@@ -436,7 +452,11 @@ void CPlayer::SendMsg_UnitBulletFillResult(char byRetCode, char bySlotIndex, uns
   packet.dwLeftMoney[1] = this->m_Param.GetGold();
 
   unsigned __int8 type[2] = {23, 10};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x3Eu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitPackFillResult(unsigned __int8 byRetCode, unsigned __int8 bySlotIndex, unsigned __int8 byFillNum, _unit_pack_fill_request_clzo::__list *pList, unsigned int *pdwConsumMoney)
@@ -456,7 +476,11 @@ void CPlayer::SendMsg_UnitPackFillResult(unsigned __int8 byRetCode, unsigned __i
   packet.dwLeftMoney[1] = this->m_Param.GetGold();
 
   unsigned __int8 type[2] = {23, 12};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0x53u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitDeliveryResult(char byRetCode, char bySlotIndex, unsigned int dwParkingUnitSerial, unsigned int dwPayDalant)
@@ -470,7 +494,11 @@ void CPlayer::SendMsg_UnitDeliveryResult(char byRetCode, char bySlotIndex, unsig
   packet.dwLeftDalant = this->m_Param.GetDalant();
 
   unsigned __int8 type[2] = {23, 14};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 0xFu);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    this->m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::SendMsg_UnitTakeResult(char byRetCode)
@@ -478,7 +506,7 @@ void CPlayer::SendMsg_UnitTakeResult(char byRetCode)
   _unit_take_result_zocl packet{};
   packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 18};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
@@ -486,7 +514,7 @@ void CPlayer::SendMsg_UnitLeaveResult(char byRetCode)
   _unit_leave_result_zocl packet{};
   packet.byRetCode = byRetCode;
   unsigned __int8 type[2] = {23, 20};
-  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 1u);
+  g_Network.m_pProcess[0]->LoadSendMsg(this->m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), sizeof(packet));
 }
 
 void CPlayer::SendMsg_AlterUnitHPInform(char bySlotIndex, unsigned int dwGauge)
@@ -573,7 +601,11 @@ void CPlayer::SendMsg_AlterBooster()
   packet.wBoosterGauge = m_pUsingUnit->wBooster;
 
   unsigned __int8 type[2]{23, 25};
-  g_Network.m_pProcess[0]->LoadSendMsg(m_ObjID.m_wIndex, type, reinterpret_cast<char *>(&packet), 3u);
+  g_Network.m_pProcess[0]->LoadSendMsg(
+    m_ObjID.m_wIndex,
+    type,
+    reinterpret_cast<char *>(&packet),
+    static_cast<unsigned __int16>(sizeof(packet)));
 }
 
 void CPlayer::AutoCharge_Booster()
