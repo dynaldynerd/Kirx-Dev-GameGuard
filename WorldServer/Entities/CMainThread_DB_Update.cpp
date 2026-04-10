@@ -567,6 +567,29 @@ unsigned __int8 CMainThread::db_Update_PostStorage(
   return 0;
 }
 
+char CMainThread::_db_Update_NpcData(unsigned int dwSerial, _AVATOR_DATA *pAvatorData, char *pSzNpcQuery)
+{
+  unsigned int dwNpcData[14]{};
+  dwNpcData[0] = m_CheckSum.EncodeValue(0, dwSerial, pAvatorData->dbAvator.m_dwDalant);
+  dwNpcData[1] = m_CheckSum.EncodeValue(1, dwSerial, pAvatorData->dbAvator.m_dwGold);
+  dwNpcData[2] = m_CheckSum.EncodeValue(2, dwSerial, pAvatorData->dbAvator.m_byLevel);
+  dwNpcData[3] = m_CheckSum.EncodeValue(3, dwSerial, pAvatorData->dbStat.m_dwDamWpCnt[0]);
+  dwNpcData[4] = m_CheckSum.EncodeValue(4, dwSerial, pAvatorData->dbStat.m_dwDefenceCnt);
+  dwNpcData[5] = m_CheckSum.EncodeValue(5, dwSerial, pAvatorData->dbStat.m_dwDamWpCnt[1]);
+
+  std::sprintf(
+    pSzNpcQuery,
+    "update tbl_NpcData set Npc0 = %d, Npc1 = %d, Npc2 = %d, Npc3 = %d, Npc4 = %d, Npc5 = %d where Serial=%d ",
+    dwNpcData[0],
+    dwNpcData[1],
+    dwNpcData[2],
+    dwNpcData[3],
+    dwNpcData[4],
+    dwNpcData[5],
+    dwSerial);
+  return 1;
+}
+
 char CMainThread::_db_Update_Base(
   unsigned int dwSerial,
   _AVATOR_DATA *pNewData,

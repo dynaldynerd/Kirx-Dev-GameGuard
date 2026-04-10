@@ -1218,6 +1218,10 @@ public:
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
     char *pSzQuery);
+  char _db_Update_NpcData(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pAvatorData,
+    char *pSzNpcQuery);
   bool _db_Update_MacroData(
     unsigned int dwSerial,
     _AIOC_A_MACRODATA *pNewData,

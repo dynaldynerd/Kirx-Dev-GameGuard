@@ -76,6 +76,7 @@ public:
   CCharacter *SearchNearEnemy();
   CCharacter *SearchNearPlayerAttack();
   int GetAttackPart();
+  void CalcAttExp(CAttack *pAT);
   void CalcAttExpForPlayer(CAttack *pAT);
   void make_gen_attack_param(CCharacter *pDst, unsigned __int8 byPart, _attack_param *pAP, int nSkillIndex);
   void AlterExp(__int64 nAddExp);

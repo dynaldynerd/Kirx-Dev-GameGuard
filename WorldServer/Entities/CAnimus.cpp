@@ -752,6 +752,94 @@ void CAnimus::CalcAttExpForPlayer(CAttack *pAT)
   }
 }
 
+void CAnimus::CalcAttExp(CAttack *pAT)
+{
+  const int level = GetLevel();
+  if (!m_pMaster || (level - 1 >= 50 && m_pMaster->GetLevel() < level - 1))
+  {
+    return;
+  }
+
+  for (int i = 0; i < pAT->m_nDamagedObjNum; ++i)
+  {
+    CCharacter *pDst = pAT->m_DamList[i].m_pChar;
+    const int damage = pAT->m_DamList[i].m_nDamage;
+    if (pDst->m_ObjID.m_byID != 1 || damage <= 1 || IsInTown())
+    {
+      continue;
+    }
+
+    if (std::abs(GetLevel() - pDst->GetLevel()) > 10)
+    {
+      continue;
+    }
+
+    _monster_fld *pMonRec = reinterpret_cast<_monster_fld *>(pDst->m_pRecordSet);
+    CMonster *pMon = static_cast<CMonster *>(pDst);
+    int nLeftHP = pDst->GetHP() - damage;
+    int nCurDam = damage;
+    if (nLeftHP < 0)
+    {
+      nLeftHP = 0;
+      nCurDam = pMon->GetHP();
+    }
+
+    const float fSetExt = (pMonRec->m_fExt * 0.69999999f) * (static_cast<float>(nCurDam) / pMonRec->m_fMaxHP);
+    const int nAddExp = static_cast<int>((fSetExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+    AlterExp(nAddExp);
+
+    if (nLeftHP)
+    {
+      continue;
+    }
+
+    float fKillExt = pMon->GetEmotionState() == 4 ? pMonRec->m_fExt * 0.5f : pMonRec->m_fExt * 0.30000001f;
+    if (m_pMaster->m_pPartyMgr->IsPartyMode())
+    {
+      CPlayer *pMember[8]{};
+      const unsigned __int8 byPartyNum = m_pMaster->_GetPartyMemberInCircle(pMember, 8, true);
+      if (byPartyNum)
+      {
+        fKillExt *= CPlayer::s_fExpDivUnderParty_Kill[byPartyNum - 1];
+      }
+
+      float fTotalLv = 0.0f;
+      float fPowMemLv[11]{};
+      for (int k = 0; k < byPartyNum; ++k)
+      {
+        fPowMemLv[k] = static_cast<float>(std::pow(static_cast<float>(pMember[k]->GetLevel()), 3.0f));
+        fTotalLv += fPowMemLv[k];
+      }
+
+      for (int k = 0; k < byPartyNum; ++k)
+      {
+        const float fAddKillExt = (fKillExt * fPowMemLv[k]) / fTotalLv;
+        if (pMember[k] == m_pMaster)
+        {
+          const int addExp = static_cast<int>((fAddKillExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+          AlterExp(addExp);
+        }
+
+        if (pMember[k]->IsRidingUnit())
+        {
+          pMember[k]->AlterExp(fAddKillExt, false, false, false);
+          const int addExp = static_cast<int>((fAddKillExt / 180.0f) + static_cast<float>(pMon->GetLevel()));
+          pMember[k]->Emb_AlterStat(6u, 0, addExp, 0, nullptr, true);
+        }
+        else
+        {
+          pMember[k]->AlterExp(fAddKillExt, false, false, false);
+        }
+      }
+    }
+    else
+    {
+      const int addExp = static_cast<int>((fKillExt / 500.0f) + static_cast<float>(pMon->GetLevel()));
+      AlterExp(addExp);
+    }
+  }
+}
+
 bool CAnimus::IsValidTarget()
 {
   if (!m_pTarget)
