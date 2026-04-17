@@ -1356,28 +1356,6 @@ unsigned __int8 CMainThread::_db_Update_GoldBoxItem(
   return 0;
 }
 
-unsigned __int8 CMainThread::_db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet)
-{
-  _rege_char_data regeCharData{};
-  pSheet->byDBRet = m_pWorldDB->Select_RegeAvator_For_Lobby_Logout(pSheet->dwAccountSerial, &regeCharData);
-  if (pSheet->byDBRet)
-  {
-    return 24;
-  }
-
-  pSheet->nRegeNum = regeCharData.nCharNum;
-  for (int j = 0; j < pSheet->nRegeNum; ++j)
-  {
-    pSheet->RegeList[j].bySlotIndex = regeCharData.RegeList[j].bySlotIndex;
-    pSheet->RegeList[j].dwCharSerial = regeCharData.RegeList[j].dwCharSerial;
-    pSheet->RegeList[j].nLevel = regeCharData.RegeList[j].nLevel;
-    pSheet->RegeList[j].dwDalant = regeCharData.RegeList[j].dwDalant;
-    pSheet->RegeList[j].dwGold = regeCharData.RegeList[j].dwGold;
-    strcpy_s(pSheet->RegeList[j].szCharName, sizeof(pSheet->RegeList[j].szCharName), regeCharData.RegeList[j].szCharName);
-  }
-  return 0;
-}
-
 char CMainThread::_db_Update_Inven(
   unsigned int dwSerial,
   _AVATOR_DATA *pNewData,

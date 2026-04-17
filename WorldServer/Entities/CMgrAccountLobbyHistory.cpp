@@ -167,54 +167,6 @@ void CMgrAccountLobbyHistory::enter_lobby(
   WriteFile(pszFileName, sLData);
 }
 
-void CMgrAccountLobbyHistory::lobby_disconnect(_qry_case_lobby_logout *pRegeData, char *pszFileName)
-{
-  sLData[0] = 0;
-  const bool ok = pRegeData->byDBRet == 0;
-  const char *result = ok ? "SUCCESS" : "ERROR";
-  sprintf_s(
-    sLBuf,
-    sizeof(sLBuf),
-    "Lobby Logout RegedDB Result: %d (%s)\r\n",
-    pRegeData->byDBRet,
-    result);
-  strcat_s(sLData, sLBuf);
-  sprintf_s(sLBuf, sizeof(sLBuf), "AccountSerial: %d\r\n", pRegeData->dwAccountSerial);
-  strcat_s(sLData, sLBuf);
-  if (ok)
-  {
-    sprintf_s(sLBuf, sizeof(sLBuf), "CharNum: %d\r\n", pRegeData->nRegeNum);
-    strcat_s(sLData, sLBuf);
-    for (int j = 0; j < 3; ++j)
-    {
-      if (pRegeData->RegeList[j].bySlotIndex != 255)
-      {
-        sprintf_s(
-          sLBuf,
-          sizeof(sLBuf),
-          "[Slot%d]\r\nNAME: %s\r\nCharSR: %d\r\nLV: %d\r\n$D: %d\r\n$G: %d\r\n\r\n",
-          j,
-          pRegeData->RegeList[j].szCharName,
-          pRegeData->RegeList[j].dwCharSerial,
-          pRegeData->RegeList[j].nLevel,
-          pRegeData->RegeList[j].dwDalant,
-          pRegeData->RegeList[j].dwGold);
-        strcat_s(sLData, sLBuf);
-      }
-    }
-  }
-
-  sprintf_s(
-    sLBuf,
-    sizeof(sLBuf),
-    "Lobby Logout RegedDB Complete [%s %s]\r\n",
-    m_szCurDate,
-    m_szCurTime);
-  strcat_s(sLData, sLBuf);
-  strcat_s(sLData, "\r\n\t============\r\n\r\n");
-  WriteFile(pszFileName, sLData);
-}
-
 void CMgrAccountLobbyHistory::reged_char_request(char *pszFileName)
 {
   sLData[0] = '\0';

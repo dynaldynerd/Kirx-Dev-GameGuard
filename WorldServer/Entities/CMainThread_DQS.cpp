@@ -186,9 +186,7 @@ void CMainThread::OnDQSRun()
           logoutQuery->dwAvatorSerial,
           &logoutQuery->NewData,
           &logoutQuery->OldData,
-          logoutQuery->bCheckLowHigh,
-          logoutQuery->dwCanonicalNewUnitCutTime,
-          logoutQuery->dwCanonicalOldUnitCutTime);
+          logoutQuery->bCheckLowHigh);
         db_Update_PostStorage(logoutQuery->dwAvatorSerial, &logoutQuery->NewData, &logoutQuery->OldData);
         if (logoutQuery->bUpdateRefineCnt)
         {
@@ -208,9 +206,7 @@ void CMainThread::OnDQSRun()
           lobbyQuery->dwAvatorSerial,
           &lobbyQuery->NewData,
           &lobbyQuery->OldData,
-          1,
-          lobbyQuery->dwCanonicalNewUnitCutTime,
-          lobbyQuery->dwCanonicalOldUnitCutTime);
+          1);
         db_Update_PostStorage(lobbyQuery->dwAvatorSerial, &lobbyQuery->NewData, &lobbyQuery->OldData);
         if (lobbyQuery->bUpdateRefineCnt)
         {
@@ -276,7 +272,7 @@ void CMainThread::OnDQSRun()
       case 12:
       {
         auto *contSaveQuery = reinterpret_cast<_qry_case_contsave *>(queryEntry->m_sData);
-        queryEntry->m_byResult = db_Update_Avator(
+        queryEntry->m_byResult = db_Update_Avator_WithCanonicalUnitCutTime(
           contSaveQuery->dwAvatorSerial,
           &contSaveQuery->NewData,
           &contSaveQuery->OldData,
@@ -1309,15 +1305,6 @@ void CMainThread::OnDQSRun()
           &goldenBoxItemQuery->OldData);
         break;
       }
-      case 171:
-      {
-        // TODO(aop415 non-parity): AOP OnDQSRun no longer uses case 171 from
-        // CUserDB::Exit_Account_Request. Keep the current lobby-logout query path
-        // until the old logout/lobby-history flow is intentionally retired.
-        auto *lobbyLogoutQuery = reinterpret_cast<_qry_case_lobby_logout *>(queryEntry->m_sData);
-        queryEntry->m_byResult = _db_Select_RegeAvator_For_Lobby_Logout(lobbyLogoutQuery);
-        break;
-      }
       case 172:
       {
         auto *insertOreLogQuery = reinterpret_cast<_qry_case_insert_orelog *>(queryEntry->m_sData);
@@ -2011,15 +1998,6 @@ void CMainThread::DQSCompleteProcess()
       {
         CGoldenBoxItemMgr *mgr = CGoldenBoxItemMgr::Instance();
         mgr->BoxItemDataCopy();
-        break;
-      }
-      case 171:
-      {
-        // TODO(aop415 non-parity): AOP DQSCompleteProcess no longer uses case 171 from
-        // CUserDB::Exit_Account_Request. Keep the current completion path paired with
-        // the legacy request flow until that behavior is explicitly removed.
-        auto *lobbyLogoutQuery = reinterpret_cast<_qry_case_lobby_logout *>(pData->m_sData);
-        Complete_Select_RegeAvator_For_Lobby_Logout(lobbyLogoutQuery);
         break;
       }
       case 175:
@@ -2779,11 +2757,6 @@ void CMainThread::CompleteUpdateSetLimitRun(char byRet, _manage_client_limit_run
     reinterpret_cast<char *>(&result),
     static_cast<unsigned __int16>(sizeof(result)));
 }
-void CMainThread::Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet)
-{
-  CUserDB::s_MgrLobbyHistory.lobby_disconnect(pSheet, pSheet->szLobbyHistoryFileName);
-}
-
 void CMainThread::Complete_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet)
 {
   CPlayer *player = GetPtrPlayerFromSerial(g_Player, 2532, pSheet->dwSerial);

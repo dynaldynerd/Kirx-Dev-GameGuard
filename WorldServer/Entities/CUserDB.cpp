@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
+#include <mmsystem.h>
 
 #include "CMapOperation.h"
 #include "CNationSettingManager.h"
@@ -2356,7 +2357,7 @@ bool CUserDB::Enter_Account(
   }
 
   m_bActive = true;
-  m_dwOperLobbyTime = GetTickCount();
+  m_dwOperLobbyTime = timeGetTime();
   m_dwAccountSerial = dwAccountSerial;
   std::strcpy(m_szAccountID, waitData->m_szAccountID);
   m_byUserDgr = waitData->m_byUserDgr;
@@ -2426,15 +2427,6 @@ bool CUserDB::Enter_Account(
     g_Network.m_pProcess[1]->LoadSendMsg(0, type, reinterpret_cast<char *>(&request), len);
   }
 
-  s_MgrLobbyHistory.GetNewFileName(m_dwAccountSerial, m_szLobbyHistoryFileName);
-  s_MgrLobbyHistory.enter_lobby(
-    m_dwAccountSerial,
-    m_szAccountID,
-    m_byUserDgr,
-    m_dwIP,
-    true,
-    m_szLobbyHistoryFileName);
-
   _enter_world_result_zone result{};
   result.byResult = retCode;
   result.byUserGrade = m_byUserDgr;
@@ -2460,35 +2452,14 @@ bool CUserDB::Lobby_Char_Request()
   _qry_sheet_lobby qry;
   qry.dwAvatorSerial = m_dwSerial;
   std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
-  std::memcpy(qry.dwCanonicalNewUnitCutTime, m_dwCanonicalUnitCutTime, sizeof(qry.dwCanonicalNewUnitCutTime));
-
   _AVATOR_DATA *contData = IsContPushBefore();
-  const unsigned __int64 *pendingCanonicalUnitCutTime = GetPendingContSaveCanonicalUnitCutTime();
   if (contData)
   {
     std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
-    if (pendingCanonicalUnitCutTime)
-    {
-      std::memcpy(
-        qry.dwCanonicalOldUnitCutTime,
-        pendingCanonicalUnitCutTime,
-        sizeof(qry.dwCanonicalOldUnitCutTime));
-    }
-    else
-    {
-      std::memcpy(
-        qry.dwCanonicalOldUnitCutTime,
-        m_dwCanonicalBackupUnitCutTime,
-        sizeof(qry.dwCanonicalOldUnitCutTime));
-    }
   }
   else
   {
     std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
-    std::memcpy(
-      qry.dwCanonicalOldUnitCutTime,
-      m_dwCanonicalBackupUnitCutTime,
-      sizeof(qry.dwCanonicalOldUnitCutTime));
   }
 
   qry.bUpdateRefineCnt = false;
@@ -2992,26 +2963,6 @@ _AVATOR_DATA *CUserDB::IsContPushBefore()
   return nullptr;
 }
 
-const unsigned __int64 *CUserDB::GetPendingContSaveCanonicalUnitCutTime() const
-{
-  if (!m_pDBPushData || !m_pDBPushData->m_bUse || m_pDBPushData->m_byQryCase != 12)
-  {
-    return nullptr;
-  }
-  if (std::memcmp(&m_idWorld, &m_pDBPushData->m_idWorld, sizeof(_CLID)))
-  {
-    return nullptr;
-  }
-
-  const auto *query = reinterpret_cast<const _qry_case_contsave *>(m_pDBPushData->m_sData);
-  if (query->dwAvatorSerial != m_dwSerial)
-  {
-    return nullptr;
-  }
-
-  return query->dwCanonicalNewUnitCutTime;
-}
-
 void CUserDB::Exit_Account_Request()
 {
   CNationSettingManager::Instance()->OnDisConnectSession(m_idWorld.wIndex);
@@ -3022,14 +2973,6 @@ void CUserDB::Exit_Account_Request()
 
     if (m_dwSerial == static_cast<unsigned int>(-1))
     {
-      // TODO(aop415 non-parity): AOP removed the legacy no-avatar logout DQS case 171 path
-      // from Exit_Account_Request and tears down directly. Keep the GU/current 171 flow
-      // for now until the logout/lobby-history behavior is revalidated end-to-end.
-      _qry_case_lobby_logout qry{};
-      qry.dwAccountSerial = m_dwAccountSerial;
-      strcpy_s(qry.szLobbyHistoryFileName, sizeof(qry.szLobbyHistoryFileName), m_szLobbyHistoryFileName);
-      const int size = static_cast<int>(qry.size());
-      g_Main.PushDQSData(-1, nullptr, 171, reinterpret_cast<char *>(&qry), size);
       Exit_Account_Complete(0);
     }
     else
@@ -3037,35 +2980,14 @@ void CUserDB::Exit_Account_Request()
       _qry_sheet_logout qry{};
       qry.dwAvatorSerial = m_dwSerial;
       std::memcpy(&qry.NewData, &m_AvatorData, sizeof(qry.NewData));
-      std::memcpy(qry.dwCanonicalNewUnitCutTime, m_dwCanonicalUnitCutTime, sizeof(qry.dwCanonicalNewUnitCutTime));
-
       _AVATOR_DATA *contData = IsContPushBefore();
-      const unsigned __int64 *pendingCanonicalUnitCutTime = GetPendingContSaveCanonicalUnitCutTime();
       if (contData)
       {
         std::memcpy(&qry.OldData, contData, sizeof(qry.OldData));
-        if (pendingCanonicalUnitCutTime)
-        {
-          std::memcpy(
-            qry.dwCanonicalOldUnitCutTime,
-            pendingCanonicalUnitCutTime,
-            sizeof(qry.dwCanonicalOldUnitCutTime));
-        }
-        else
-        {
-          std::memcpy(
-            qry.dwCanonicalOldUnitCutTime,
-            m_dwCanonicalBackupUnitCutTime,
-            sizeof(qry.dwCanonicalOldUnitCutTime));
-        }
       }
       else
       {
         std::memcpy(&qry.OldData, &m_AvatorData_bk, sizeof(qry.OldData));
-        std::memcpy(
-          qry.dwCanonicalOldUnitCutTime,
-          m_dwCanonicalBackupUnitCutTime,
-          sizeof(qry.dwCanonicalOldUnitCutTime));
       }
 
       qry.bCheckLowHigh = !m_bNoneUpdateData;
@@ -3123,8 +3045,6 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
   m_bDataUpdate = false;
   m_AvatorData.InitData();
   m_AvatorData_bk.InitData();
-  std::memset(m_dwCanonicalUnitCutTime, 0, sizeof(m_dwCanonicalUnitCutTime));
-  std::memset(m_dwCanonicalBackupUnitCutTime, 0, sizeof(m_dwCanonicalBackupUnitCutTime));
   for (int j = 0; j < 3; ++j)
   {
     m_RegedList[j].init();
@@ -3144,14 +3064,6 @@ void CUserDB::Lobby_Char_Complete(unsigned __int8 byRetCode)
     s_MoveLobbyDelay.Push(m_idWorld.wIndex, m_idWorld.dwSerial);
     m_byUILock = 1;
   }
-
-  s_MgrLobbyHistory.enter_lobby(
-    m_dwAccountSerial,
-    m_szAccountID,
-    m_byUserDgr,
-    m_dwIP,
-    0,
-    m_szLobbyHistoryFileName);
 
   _enter_lobby_report_wrac report{};
   std::memcpy(&report, &m_gidGlobal, sizeof(report));

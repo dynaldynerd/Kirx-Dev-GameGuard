@@ -23,6 +23,15 @@ char CMainThread::db_Update_Avator(
   unsigned int dwSerial,
   _AVATOR_DATA *pNewData,
   _AVATOR_DATA *pOldData,
+  bool bCheckLowHigh)
+{
+  return db_Update_Avator_WithCanonicalUnitCutTime(dwSerial, pNewData, pOldData, bCheckLowHigh, nullptr, nullptr);
+}
+
+char CMainThread::db_Update_Avator_WithCanonicalUnitCutTime(
+  unsigned int dwSerial,
+  _AVATOR_DATA *pNewData,
+  _AVATOR_DATA *pOldData,
   bool bCheckLowHigh,
   const unsigned __int64 *pdwCanonicalNewUnitCutTime,
   const unsigned __int64 *pdwCanonicalOldUnitCutTime)

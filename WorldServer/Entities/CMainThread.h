@@ -171,7 +171,6 @@ struct _qry_case_select_patriarch_comm;
 struct _qry_case_guildroom_insert;
 struct _qry_case_guildroom_update;
 struct _qry_case_update_guildmaster;
-struct _qry_case_lobby_logout;
 struct _db_golden_box_item;
 struct _worlddb_economy_history_info;
 struct _animus_fld;
@@ -974,6 +973,11 @@ public:
     unsigned int dwSerial,
     _AVATOR_DATA *pNewData,
     _AVATOR_DATA *pOldData,
+    bool bCheckLowHigh);
+  char db_Update_Avator_WithCanonicalUnitCutTime(
+    unsigned int dwSerial,
+    _AVATOR_DATA *pNewData,
+    _AVATOR_DATA *pOldData,
     bool bCheckLowHigh,
     const unsigned __int64 *pdwCanonicalNewUnitCutTime,
     const unsigned __int64 *pdwCanonicalOldUnitCutTime);
@@ -1122,7 +1126,6 @@ public:
   unsigned __int8 _db_Update_Cash_LimSale(_db_cash_limited_sale *pNewData, _db_cash_limited_sale *pOldData);
   unsigned __int8 _db_Update_Set_Limit_Run();
   unsigned __int8 _db_Update_GoldBoxItem(int nDBSerial, _db_golden_box_item *pNewData, _db_golden_box_item *pOldData);
-  unsigned __int8 _db_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   unsigned __int8 _db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   unsigned __int8 _db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
   char _db_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet);
@@ -1321,7 +1324,6 @@ public:
   void CompleteUpdatePlayerVoteInfo(_qry_case_update_player_vote_info *pData);
   void CompleteUpdateServerToken(_qry_case_update_server_reset_token *pData);
   void CompleteUpdateSetLimitRun(char byRet, _manage_client_limit_run_request_acwr *pData);
-  void Complete_Select_RegeAvator_For_Lobby_Logout(_qry_case_lobby_logout *pSheet);
   void Complete_db_Update_Data_For_Post_Send(_qry_case_update_data_for_post_send *pSheet);
   void Complete_db_Update_Data_For_Trade(_qry_case_update_data_for_trade *pSheet);
   void Complete_TestServer_CashItem_Buy_Log(_param_cashitem_dblog *pSheet);

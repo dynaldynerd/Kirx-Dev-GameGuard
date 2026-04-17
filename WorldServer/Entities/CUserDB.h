@@ -297,7 +297,6 @@ public:
     _REGED *pAliveAvator,
     unsigned __int64 dwCanonicalLastConnTime);
   _AVATOR_DATA *IsContPushBefore();
-  const unsigned __int64 *GetPendingContSaveCanonicalUnitCutTime() const;
   void Exit_Account_Request();
   void Exit_Account_Complete(unsigned __int8 byRetCode);
   static void ReRangeClientIndex(_AVATOR_DATA *pData);
