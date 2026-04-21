@@ -25,6 +25,15 @@ Settings/appsettings.account.json
 tools/
 docs/
 dist/
+RFClient/build/
+RFClient/**/Client Debug/
+RFClient/**/*.scc
+RFClient/**/*.opt
+RFClient/**/*.plg
+RFClient/**/*.aps
+RFClient/**/*.ncb
+RFClient/**/*.dsp
+RFClient/**/*.dsw
 ZoneResource/
 WorldServerIdaPro/
 /WorldServer/x64/

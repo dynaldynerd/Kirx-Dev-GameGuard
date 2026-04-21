@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="App">
+      <UniqueIdentifier>{7D7E2D92-7AB4-4FD9-8BF8-4EF7FB87A5C0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine">
+      <UniqueIdentifier>{C3A0E419-8B37-4A33-B4E0-C10F0B4B961A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine\\1stclass">
+      <UniqueIdentifier>{CF11B24A-21A1-49D8-9BC1-D87ABEF0F7E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine\\2ndclass">
+      <UniqueIdentifier>{36D2920F-685A-432B-A0D5-16C2B99F0E95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine\\common">
+      <UniqueIdentifier>{8334A9AF-5162-4902-974E-9D11E08DAE03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine\\d3d">
+      <UniqueIdentifier>{291A8D7D-B1E6-4C65-AD81-8D277321E3DE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="R3Engine\\extension">
+      <UniqueIdentifier>{77B9799E-4A4C-4D7E-8BD1-21410CF97D3F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RFClientApp.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\*.h">
+      <Filter>R3Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\1stclass\*.h">
+      <Filter>R3Engine\1stclass</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\2ndclass\*.h">
+      <Filter>R3Engine\2ndclass</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\common\*.h">
+      <Filter>R3Engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\d3d\include\*.h">
+      <Filter>R3Engine\d3d</Filter>
+    </ClInclude>
+    <ClInclude Include="R3Engine\extension\*.h">
+      <Filter>R3Engine\extension</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LegacyCrtCompat.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="RFClientApp.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="WinMain.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="R3Engine\1stclass\*.cpp">
+      <Filter>R3Engine\1stclass</Filter>
+    </ClCompile>
+    <ClCompile Include="R3Engine\2ndclass\*.cpp">
+      <Filter>R3Engine\2ndclass</Filter>
+    </ClCompile>
+    <ClCompile Include="R3Engine\common\*.cpp">
+      <Filter>R3Engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="R3Engine\d3d\*.cpp">
+      <Filter>R3Engine\d3d</Filter>
+    </ClCompile>
+    <ClCompile Include="R3Engine\extension\*.cpp">
+      <Filter>R3Engine\extension</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="R3Engine\winmain.rc">
+      <Filter>R3Engine</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
