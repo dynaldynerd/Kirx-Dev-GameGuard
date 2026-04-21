@@ -5160,7 +5160,9 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_ULONG, &p[j].dwRank, 0LL, &ind);
+        int rank = 0;
+        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_SLONG, &rank, 0LL, &ind);
+        p[j].dwRank = static_cast<unsigned int>(rank);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5223,7 +5225,9 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_ULONG, &p[j].dwAvatorSerial, 0LL, &ind);
+        int avatorSerial = 0;
+        ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_SLONG, &avatorSerial, 0LL, &ind);
+        p[j].dwAvatorSerial = static_cast<unsigned int>(avatorSerial);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5265,7 +5269,9 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_ULONG, &p[j].dwGuildSerial, 0LL, &ind);
+        int guildSerial = 0;
+        ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_SLONG, &guildSerial, 0LL, &ind);
+        p[j].dwGuildSerial = static_cast<unsigned int>(guildSerial);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5307,7 +5313,9 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
+        int winCount = 0;
+        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_SLONG, &winCount, 0LL, &ind);
+        p[j].dwWinCnt = static_cast<unsigned int>(winCount);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5328,7 +5336,9 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchCandidate(
           return result;
         }
 
-        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
+        int score = 0;
+        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_SLONG, &score, 0LL, &ind);
+        p[j].dwScore = static_cast<unsigned int>(score);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           unsigned __int8 result = 0;
@@ -5474,15 +5484,25 @@ unsigned __int8 CRFWorldDatabase::Select_PatriarchGroup(unsigned __int8 byRace, 
         }
 
         ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_UTINYINT, &p[j].byRace, 0LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_ULONG, &p[j].dwRank, 0LL, &ind);
+        int rank = 0;
+        ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_SLONG, &rank, 0LL, &ind);
+        p[j].dwRank = static_cast<unsigned int>(rank);
         ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_UTINYINT, &p[j].byLevel, 0LL, &ind);
         ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_DOUBLE, &p[j].dPvpPoint, 0LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_ULONG, &p[j].dwAvatorSerial, 0LL, &ind);
+        int avatorSerial = 0;
+        ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_SLONG, &avatorSerial, 0LL, &ind);
+        p[j].dwAvatorSerial = static_cast<unsigned int>(avatorSerial);
         ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_CHAR, p[j].wszName, 17LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_ULONG, &p[j].dwGuildSerial, 0LL, &ind);
+        int guildSerial = 0;
+        ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_SLONG, &guildSerial, 0LL, &ind);
+        p[j].dwGuildSerial = static_cast<unsigned int>(guildSerial);
         ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_CHAR, p[j].wszGuildName, 17LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_ULONG, &p[j].dwWinCnt, 0LL, &ind);
-        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &p[j].dwScore, 0LL, &ind);
+        int winCount = 0;
+        ret = SQLGetData(m_hStmtSelect, 10, SQL_C_SLONG, &winCount, 0LL, &ind);
+        p[j].dwWinCnt = static_cast<unsigned int>(winCount);
+        int score = 0;
+        ret = SQLGetData(m_hStmtSelect, 11, SQL_C_SLONG, &score, 0LL, &ind);
+        p[j].dwScore = static_cast<unsigned int>(score);
 
         int classType = 0;
         ret = SQLGetData(m_hStmtSelect, 12, SQL_C_SLONG, &classType, 0LL, &ind);
