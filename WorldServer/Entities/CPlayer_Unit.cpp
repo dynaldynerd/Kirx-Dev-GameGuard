@@ -422,6 +422,23 @@ void CPlayer::SendMsg_UnitPartTuningResult(char byRetCode, char bySlotIndex, int
 
 void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, unsigned int dwNewGauge, unsigned int dwConsumDalant)
 {
+  unsigned __int8 type[2] = {23, 8};
+  if (byRetCode == 0)
+  {
+    // Intentional non-IDA parity: the client expects the success variant with a 1-byte gap for unit repair.
+    _unit_frame_repair_result2_zocl packet{};
+    packet.byRetCode = byRetCode;
+    packet.bySlotIndex = bySlotIndex;
+    packet.dwNewGauge = dwNewGauge;
+    packet.dwConsumDalant = dwConsumDalant;
+    packet.dwLeftDalant = this->m_Param.GetDalant();
+    g_Network.m_pProcess[0]->LoadSendMsg(
+      this->m_ObjID.m_wIndex,
+      type,
+      reinterpret_cast<char *>(&packet),
+      static_cast<unsigned __int16>(sizeof(packet)));
+    return;
+  }
 
   _unit_frame_repair_result_zocl packet{};
   packet.byRetCode = byRetCode;
@@ -429,8 +446,6 @@ void CPlayer::SendMsg_UnitFrameRepairResult(char byRetCode, char bySlotIndex, un
   packet.dwNewGauge = dwNewGauge;
   packet.dwConsumDalant = dwConsumDalant;
   packet.dwLeftDalant = this->m_Param.GetDalant();
-
-  unsigned __int8 type[2] = {23, 8};
   g_Network.m_pProcess[0]->LoadSendMsg(
     this->m_ObjID.m_wIndex,
     type,

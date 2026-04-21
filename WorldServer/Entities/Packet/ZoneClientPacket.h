@@ -5097,6 +5097,19 @@ struct _unit_frame_repair_result_zocl
 
 // moved from CMainThread.h
 #pragma pack(push, 1)
+struct _unit_frame_repair_result2_zocl
+{
+  char byRetCode;
+  char bySlotIndex;
+  unsigned int dwNewGauge;
+  unsigned int dwConsumDalant;
+  char gap;
+  unsigned int dwLeftDalant;
+};
+#pragma pack(pop)
+
+// moved from CMainThread.h
+#pragma pack(push, 1)
 struct _unit_bullet_fill_result_zocl
 {
   char byRetCode;
