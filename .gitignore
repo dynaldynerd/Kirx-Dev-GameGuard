@@ -3,7 +3,6 @@ obj/
 */bin/
 */obj/
 .vs/
-.vscode/
 AGENTS.md
 *.user
 *.suo
