@@ -1253,7 +1253,7 @@ bool CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
       ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwEmblemMark, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dDalant, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dGold, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwMasterSerial, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_LONG, &pGuildInfo->GuildData[index].dwMasterSerial, 0, &strLenOrInd);
       ret = SQLGetData(
         m_hStmtSelect,
         10,
