@@ -545,7 +545,7 @@ bool CRFWorldDatabase::Select_PostStorageRecordCheck()
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLLEN indicator = 0;
-        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, targetValue, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, targetValue, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -620,7 +620,7 @@ bool CRFWorldDatabase::Select_PostStorageEmptyRecordSerial(unsigned int *pdwStor
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLLEN indicator = 0;
-        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, targetValue, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, targetValue, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           *pdwStorageSerial = targetValue[0];
@@ -690,7 +690,7 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
     "update tbl_PostStorage set postinx=%d,owner=%d,dck=0,poststate=%d,sendname='%s',recvname='%s',title='%s',content='%s'"
     ",k=%d,d=%I64d,u=%d,gold=%d,err=%d,uid=%I64d,sindex=%d where serial=%d";
 
-  unsigned __int8 targetValue[44]{};
+  int postCount = 0;
   char buffer[1056]{};
   memset(buffer, 0, 1024);
 
@@ -739,10 +739,10 @@ bool CRFWorldDatabase::Update_PostStorageSendToRecver(
     }
 
     SQLLEN indicator = 0;
-    ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_TINYINT, targetValue, 0, &indicator);
+    ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &postCount, 0, &indicator);
     if (!ret || ret == SQL_SUCCESS_WITH_INFO)
     {
-      *pbyNumber = targetValue[0];
+      *pbyNumber = static_cast<unsigned __int8>(postCount);
       if (m_hStmtSelect)
       {
         SQLCloseCursor(m_hStmtSelect);

@@ -28,34 +28,42 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoBySerial(
     {
       while (true)
       {
+        __int64 lastConnTime = 0;
+        __int64 itemUid = 0;
         ret = SQLFetch(m_hStmtSelect);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
           break;
         }
 
-        SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pCharacterDataArray->CharacterInfo[count].dwSerial, 0, &indicator);
+        int slotIndex = 0;
+        int race = 0;
+        int level = 0;
+        int equipmentKey = 0;
+        SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &pCharacterDataArray->CharacterInfo[count].dwSerial, 0, &indicator);
         SQLGetData(
           m_hStmtSelect,
           2u,
           SQL_C_CHAR,
-          &pCharacterDataArray->CharacterInfo[count],
+          pCharacterDataArray->CharacterInfo[count].wszName,
           17,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           3u,
-          SQL_C_UTINYINT,
-          &pCharacterDataArray->CharacterInfo[count].bySlotIndex,
+          SQL_C_LONG,
+          &slotIndex,
           0,
           &indicator);
+        pCharacterDataArray->CharacterInfo[count].bySlotIndex = static_cast<unsigned __int8>(slotIndex);
         SQLGetData(
           m_hStmtSelect,
           4u,
-          SQL_C_UTINYINT,
-          &pCharacterDataArray->CharacterInfo[count].byRace,
+          SQL_C_LONG,
+          &race,
           0,
           &indicator);
+        pCharacterDataArray->CharacterInfo[count].byRace = static_cast<unsigned __int8>(race);
         SQLGetData(
           m_hStmtSelect,
           5u,
@@ -66,74 +74,80 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfoBySerial(
         SQLGetData(
           m_hStmtSelect,
           6u,
-          SQL_C_UTINYINT,
-          &pCharacterDataArray->CharacterInfo[count].byLevel,
+          SQL_C_LONG,
+          &level,
           0,
           &indicator);
+        pCharacterDataArray->CharacterInfo[count].byLevel = static_cast<unsigned __int8>(level);
         SQLGetData(
           m_hStmtSelect,
           7u,
-          SQL_C_ULONG,
+          SQL_C_LONG,
           &pCharacterDataArray->CharacterInfo[count].dwDalant,
           0,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           8u,
-          SQL_C_ULONG,
+          SQL_C_LONG,
           &pCharacterDataArray->CharacterInfo[count].dwGold,
           0,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           9u,
-          SQL_C_ULONG,
+          SQL_C_LONG,
           &pCharacterDataArray->CharacterInfo[count].dwBaseShape,
           0,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           10u,
-          SQL_C_UBIGINT,
-          &pCharacterDataArray->CharacterInfo[count].dwLastConnTime,
+          SQL_C_SBIGINT,
+          &lastConnTime,
           0,
           &indicator);
+        pCharacterDataArray->CharacterInfo[count].dwLastConnTime = static_cast<unsigned __int64>(lastConnTime);
         for (int j = 0; j < 8; ++j)
         {
+          equipmentKey = 0;
           SQLGetData(
             m_hStmtSelect,
             j + 11,
-            SQL_C_SSHORT,
-            &pCharacterDataArray->CharacterInfo[count].shEKArray[j],
+            SQL_C_LONG,
+            &equipmentKey,
             0,
             &indicator);
+          pCharacterDataArray->CharacterInfo[count].shEKArray[j] = static_cast<__int16>(equipmentKey);
         }
         for (int j = 0; j < 8; ++j)
         {
           SQLGetData(
             m_hStmtSelect,
             j + 19,
-            SQL_C_ULONG,
+            SQL_C_LONG,
             &pCharacterDataArray->CharacterInfo[count].dwEUArray[j],
             0,
             &indicator);
         }
         for (int j = 0; j < 8; ++j)
         {
+          itemUid = 0;
           SQLGetData(
             m_hStmtSelect,
             j + 27,
             SQL_C_SBIGINT,
-            &pCharacterDataArray->CharacterInfo[count].lnUIDArray[j],
+            &itemUid,
             0,
             &indicator);
+          pCharacterDataArray->CharacterInfo[count].lnUIDArray[j] = static_cast<unsigned __int64>(itemUid);
         }
         for (int j = 0; j < 8; ++j)
         {
           SQLGetData(
             m_hStmtSelect,
             j + 35,
-            SQL_C_ULONG,
+            SQL_C_LONG,
             &pCharacterDataArray->CharacterInfo[count].dwETArray[j],
             0,
             &indicator);
@@ -201,59 +215,73 @@ unsigned __int8 CRFWorldDatabase::Select_CharacterBaseInfo(
     SQLRETURN ret = SQLExecDirectA(m_hStmtSelect, reinterpret_cast<SQLCHAR *>(buffer), SQL_NTS);
     if (!ret || ret == SQL_SUCCESS_WITH_INFO)
     {
+      __int64 lastConnTime = 0;
+      __int64 itemUid = 0;
+      int slotIndex = 0;
+      int race = 0;
+      int level = 0;
+      int equipmentKey = 0;
       ret = SQLFetch(m_hStmtSelect);
       if (!ret || ret == SQL_SUCCESS_WITH_INFO)
       {
         SQLGetData(m_hStmtSelect, ++column, SQL_C_CHAR, pCharacterData, 17, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &pCharacterData->bySlotIndex, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &pCharacterData->byRace, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &slotIndex, 0, &indicator);
+        pCharacterData->bySlotIndex = static_cast<unsigned __int8>(slotIndex);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &race, 0, &indicator);
+        pCharacterData->byRace = static_cast<unsigned __int8>(race);
         SQLGetData(m_hStmtSelect, ++column, SQL_C_CHAR, pCharacterData->szClassCode, 5, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_UTINYINT, &pCharacterData->byLevel, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwDalant, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwGold, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwBaseShape, 0, &indicator);
-        SQLGetData(m_hStmtSelect, ++column, SQL_C_UBIGINT, &pCharacterData->dwLastConnTime, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &level, 0, &indicator);
+        pCharacterData->byLevel = static_cast<unsigned __int8>(level);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &pCharacterData->dwDalant, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &pCharacterData->dwGold, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &pCharacterData->dwBaseShape, 0, &indicator);
+        SQLGetData(m_hStmtSelect, ++column, SQL_C_SBIGINT, &lastConnTime, 0, &indicator);
+        pCharacterData->dwLastConnTime = static_cast<unsigned __int64>(lastConnTime);
         for (int j = 0; j < 8; ++j)
         {
+          equipmentKey = 0;
           SQLGetData(
             m_hStmtSelect,
             ++column,
-            SQL_C_SSHORT,
-            &pCharacterData->shEKArray[j],
+            SQL_C_LONG,
+            &equipmentKey,
             0,
             &indicator);
+          pCharacterData->shEKArray[j] = static_cast<__int16>(equipmentKey);
         }
         for (int j = 0; j < 8; ++j)
         {
           SQLGetData(
             m_hStmtSelect,
             ++column,
-            SQL_C_ULONG,
+            SQL_C_LONG,
             &pCharacterData->dwEUArray[j],
             0,
             &indicator);
         }
         for (int j = 0; j < 8; ++j)
         {
+          itemUid = 0;
           SQLGetData(
             m_hStmtSelect,
             ++column,
             SQL_C_SBIGINT,
-            &pCharacterData->lnUIDArray[j],
+            &itemUid,
             0,
             &indicator);
+          pCharacterData->lnUIDArray[j] = static_cast<unsigned __int64>(itemUid);
         }
         for (int j = 0; j < 8; ++j)
         {
           SQLGetData(
             m_hStmtSelect,
             ++column,
-            SQL_C_ULONG,
+            SQL_C_LONG,
             &pCharacterData->dwETArray[j],
             0,
             &indicator);
         }
-        ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_ULONG, &pCharacterData->dwCheckSum, 0, &indicator);
+        ret = SQLGetData(m_hStmtSelect, ++column, SQL_C_LONG, &pCharacterData->dwCheckSum, 0, &indicator);
         if (!ret || ret == SQL_SUCCESS_WITH_INFO)
         {
           if (m_hStmtSelect)
@@ -323,6 +351,8 @@ unsigned __int8 CRFWorldDatabase::Select_NotArrangeCharacter(
     {
       while (true)
       {
+        int level = 0;
+        int raceSexCode = 0;
         ret = SQLFetch(m_hStmtSelect);
         if (ret && ret != SQL_SUCCESS_WITH_INFO)
         {
@@ -332,35 +362,37 @@ unsigned __int8 CRFWorldDatabase::Select_NotArrangeCharacter(
         SQLGetData(
           m_hStmtSelect,
           1u,
-          SQL_C_ULONG,
-          &pCharData->ArrangeChar[count],
+          SQL_C_LONG,
+          &pCharData->ArrangeChar[count].dwSerial,
           0,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           2u,
-          SQL_C_UTINYINT,
-          &pCharData->ArrangeChar[count].byLv,
+          SQL_C_LONG,
+          &level,
           0,
           &indicator);
+        pCharData->ArrangeChar[count].byLv = static_cast<unsigned __int8>(level);
         SQLGetData(
           m_hStmtSelect,
           3u,
-          SQL_C_UTINYINT,
-          &pCharData->ArrangeChar[count].byRaceSexCode,
+          SQL_C_LONG,
+          &raceSexCode,
           0,
           &indicator);
+        pCharData->ArrangeChar[count].byRaceSexCode = static_cast<unsigned __int8>(raceSexCode);
         SQLGetData(
           m_hStmtSelect,
           4u,
-          SQL_C_ULONG,
+          SQL_C_LONG,
           &pCharData->ArrangeChar[count].dwDalant,
           0,
           &indicator);
         SQLGetData(
           m_hStmtSelect,
           5u,
-          SQL_C_ULONG,
+          SQL_C_LONG,
           &pCharData->ArrangeChar[count].dwGold,
           0,
           &indicator);

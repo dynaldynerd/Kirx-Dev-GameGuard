@@ -854,7 +854,7 @@ bool CRFWorldDatabase::Select_GuildSerial(
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), pdwGuildSerial, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, SQL_C_LONG, pdwGuildSerial, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
@@ -1218,6 +1218,7 @@ bool CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
   SQLRETURN ret = SQL_ERROR;
   char query[10244]{};
   int index = 0;
+  short guildGrade = 0;
 
   sprintf_s(
     query,
@@ -1245,12 +1246,13 @@ bool CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
       {
         break;
       }
-      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pGuildInfo->GuildData[index], 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_UTINYINT, &pGuildInfo->GuildData[index].byGuildGrade, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &pGuildInfo->GuildData[index], 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_SHORT, &guildGrade, 0, &strLenOrInd);
+      pGuildInfo->GuildData[index].byGuildGrade = static_cast<unsigned __int8>(guildGrade);
       ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_UTINYINT, &pGuildInfo->GuildData[index].byRace, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_CHAR, pGuildInfo->GuildData[index].wszGuildName, 17, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwEmblemBack, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwEmblemMark, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_LONG, &pGuildInfo->GuildData[index].dwEmblemBack, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_LONG, &pGuildInfo->GuildData[index].dwEmblemMark, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dDalant, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 8u, SQL_C_DOUBLE, &pGuildInfo->GuildData[index].dGold, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 9u, SQL_C_LONG, &pGuildInfo->GuildData[index].dwMasterSerial, 0, &strLenOrInd);
@@ -1261,9 +1263,9 @@ bool CRFWorldDatabase::Select_AllGuildData(_worlddb_guild_info *pGuildInfo)
         &pGuildInfo->GuildData[index].byMasterPrevGrade,
         0,
         &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 11, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotWin, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 12, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotDraw, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 13, SQL_C_ULONG, &pGuildInfo->GuildData[index].dwTotLose, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 11, SQL_C_LONG, &pGuildInfo->GuildData[index].dwTotWin, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 12, SQL_C_LONG, &pGuildInfo->GuildData[index].dwTotDraw, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 13, SQL_C_LONG, &pGuildInfo->GuildData[index].dwTotLose, 0, &strLenOrInd);
       ret = SQLGetData(
         m_hStmtSelect,
         14,
@@ -1305,7 +1307,9 @@ bool CRFWorldDatabase::Select_GuildMemberData(
   SQLRETURN ret = SQL_ERROR;
   char query[260]{};
   int index = 0;
+  int level = 0;
   double pvpPoint[3]{};
+  short guildRank = 0;
 
   sprintf_s(
     query,
@@ -1335,7 +1339,7 @@ bool CRFWorldDatabase::Select_GuildMemberData(
         break;
       }
 
-      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_ULONG, &pGuildMemberInfo->MemberData[index], 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 1u, SQL_C_LONG, &pGuildMemberInfo->MemberData[index], 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_DOUBLE, pvpPoint, 0, &strLenOrInd);
       ret = SQLGetData(
         m_hStmtSelect,
@@ -1347,17 +1351,19 @@ bool CRFWorldDatabase::Select_GuildMemberData(
       ret = SQLGetData(
         m_hStmtSelect,
         4u,
-        SQL_C_USHORT,
-        &pGuildMemberInfo->MemberData[index].wRank,
+        SQL_C_SHORT,
+        &guildRank,
         0,
         &strLenOrInd);
+      pGuildMemberInfo->MemberData[index].wRank = static_cast<unsigned __int16>(guildRank);
       ret = SQLGetData(
         m_hStmtSelect,
         5u,
-        SQL_C_UTINYINT,
-        &pGuildMemberInfo->MemberData[index].byLv,
+        SQL_C_LONG,
+        &level,
         0,
         &strLenOrInd);
+      pGuildMemberInfo->MemberData[index].byLv = static_cast<unsigned __int8>(level);
       ret = SQLGetData(
         m_hStmtSelect,
         6u,
@@ -1440,7 +1446,7 @@ bool CRFWorldDatabase::Select_GuildMoneyIOData(
       ret = SQLGetData(m_hStmtSelect, 2u, SQL_C_DOUBLE, ioGold, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 3u, SQL_C_DOUBLE, leftDalant, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 4u, SQL_C_DOUBLE, leftGold, 0, &strLenOrInd);
-      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_ULONG, &pGuildIOData->IOData[index].dwIOerSerial, 0, &strLenOrInd);
+      ret = SQLGetData(m_hStmtSelect, 5u, SQL_C_LONG, &pGuildIOData->IOData[index].dwIOerSerial, 0, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 6u, SQL_C_CHAR, &pGuildIOData->IOData[index], 17, &strLenOrInd);
       ret = SQLGetData(m_hStmtSelect, 7u, SQL_C_CHAR, rawDate, 9, &strLenOrInd);
       if (ret && ret != SQL_SUCCESS_WITH_INFO)
@@ -1600,6 +1606,7 @@ bool CRFWorldDatabase::SelectAllGuildSerialGrade(
   SQLLEN strLenOrIndPtr;
   SQLRETURN sqlStatus;
   char queryBuffer[10256];
+  short guildGrade = 0;
 
   *pdwCount = 0;
   sprintf_s(queryBuffer, "select top %u [Serial], [Grade] from [dbo].[tbl_guild] where [DCK]=0 order by serial", 500);
@@ -1619,7 +1626,8 @@ bool CRFWorldDatabase::SelectAllGuildSerialGrade(
             break;
         }
         sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, 4, &pdwSerial[*pdwCount], 0LL, &strLenOrIndPtr);
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, static_cast<SQLSMALLINT>(65521), &pbyGrade[*pdwCount], 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 2u, SQL_C_SHORT, &guildGrade, 0LL, &strLenOrIndPtr);
+        pbyGrade[*pdwCount] = static_cast<unsigned __int8>(guildGrade);
         ++*pdwCount;
       }
       if ( this->m_hStmtSelect )
@@ -1667,7 +1675,7 @@ bool CRFWorldDatabase::Update_CharSlot( unsigned int dwAvatorSerial)
       sqlStatus = SQLFetch(this->m_hStmtSelect);
       if ( !sqlStatus || sqlStatus == 1 )
       {
-        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, static_cast<SQLSMALLINT>(65518), &accountSerial, 0LL, &strLenOrIndPtr);
+        sqlStatus = SQLGetData(this->m_hStmtSelect, 1u, SQL_C_LONG, &accountSerial, 0LL, &strLenOrIndPtr);
         if ( !sqlStatus || sqlStatus == 1 )
         {
           if ( this->m_hStmtSelect )
