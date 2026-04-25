@@ -7015,7 +7015,7 @@ float CPlayer::GetMoveSpeed()
     {
       case 0:
       {
-        for (int j = 4; j < 6; ++j)//changed to 4 and ignore armor unit part movespeed to match client speed logic
+        for (int j = 3; j < 6; ++j)//changed to 3 to include MAU arms and ignore armor unit part movespeed to match client speed logic
         {
           _UnitPart_fld *partRecord =
             reinterpret_cast<_UnitPart_fld *>(g_Main.m_tblUnitPart[j].GetRecord(m_pUsingUnit->byPart[j]));
