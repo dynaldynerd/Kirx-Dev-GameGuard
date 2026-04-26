@@ -3,10 +3,10 @@
 ## 💖 Support this project
 
 ### Crypto (Recommended)
-- USDT (TRC20): `YOUR_ADDRESS_HERE`
+- USDT (TRC20): `TAiR5W8Qrsz6QQX25G7rWAq6ZqeYP9VzhQ`
 ⚠️ Make sure to use TRC20 network
 
-- Binance ID : 1225316330
+- Binance ID : `1225316330`
 
 
 This repository contains the Account, Login, and World server projects plus shared libraries and tools.
