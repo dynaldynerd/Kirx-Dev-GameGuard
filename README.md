@@ -8,6 +8,7 @@
 
 - Binance ID : `1225316330`
 
+### Non-Crypto
 - Saweria : https://saweria.co/likertuban
 
 
