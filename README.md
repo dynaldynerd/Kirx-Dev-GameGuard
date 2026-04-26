@@ -8,6 +8,8 @@
 
 - Binance ID : `1225316330`
 
+- Saweria : https://saweria.co/likertuban
+
 
 ## Solution
 This repository contains the Account, Login, and World server projects plus shared libraries and tools.
