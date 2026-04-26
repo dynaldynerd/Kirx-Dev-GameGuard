@@ -24,7 +24,97 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CCharacterDataMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CGameProgress.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CGP_LogIn.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CGP_MainGame.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CGP_Title.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CItemDataMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientDataPath.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CLand.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CResourceDataMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CObject.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CResObject.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CCharacter.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlayer.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CBaseNpc.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CMonster.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CCharacterMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
     <ClInclude Include="RFClientApp.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="RFClientUI.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="EdfFile.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="UIGlobal.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\CharacterDB.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ClientZonePacket.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\CNetworkMgr.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\DqsDbStructs.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetCheckPackets.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetProcess.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Protocol.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Pt_Zone_Client.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\REGED_AVATOR_DB.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ZoneClientPacket.h">
       <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="R3Engine\*.h">
@@ -47,10 +137,76 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CCharacterDataMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CGameProgress.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CGP_LogIn.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CGP_MainGame.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CGP_Title.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CItemDataMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientDataPath.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CLand.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CResourceDataMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CObject.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CResObject.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CCharacter.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CPlayer.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CBaseNpc.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CMonster.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CCharacterMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
     <ClCompile Include="LegacyCrtCompat.cpp">
       <Filter>App</Filter>
     </ClCompile>
+    <ClCompile Include="EdfFile.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="UIGlobal.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\CNetworkMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetCheckPackets.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
     <ClCompile Include="RFClientApp.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="RFClientUI.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteMgr.cpp">
       <Filter>App</Filter>
     </ClCompile>
     <ClCompile Include="WinMain.cpp">

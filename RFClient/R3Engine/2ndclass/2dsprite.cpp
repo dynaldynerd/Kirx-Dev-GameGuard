@@ -33,17 +33,15 @@ void CSprite::InitPageSprite(WORD xl,WORD yl)	//하나의 텍스쳐로 여러가지 스프라�
 	mPageSPrite=TRUE;
 }
 
-void CSprite::SetPage(DWORD page)	//하나의 텍스쳐로 여러가지 스프라이트를 적용할경우.
+void CSprite::SetPage(DWORD page)	//????? ?????? ???????? ??????????? ????????.
 {
 	if( mFrames[0] <= page )
 	{
-		Warning("현재 로딩된 페이지개수보다 큰 page를 지정했습니다.","");
+		Warning("Requested sprite page exceeds the loaded sprite page count.","");
 		return;
 	}
 	mPage = page;
 }
-
-
 extern void SetDDSTexSizeDebug(DWORD size);
 
 void CSprite::RestoreTexMemSprite()
@@ -52,22 +50,22 @@ void CSprite::RestoreTexMemSprite()
 	float version;
 	BYTE *buf;
 
-	if( mIsLoadedTexMem )	//텍스쳐 메모리에 있으면
+	if( mIsLoadedTexMem )	//????? ????? ??????
 		return;
 	FILE *fp=fopen(mFileName,"rb");
 
 	if( fp == NULL )
 	{
-		Warning(mFileName,"<-를 열수없습니다. or 먼저 LoadSprite를 하세요.");
+		Warning(mFileName,"<- file not found, or LoadSprite was not called first.");
 		return;
 	}
 	fread(&version, 4, 1,fp);
 	if( version != _VERSION )
-		Error(mFileName,"<-버젼이 이전 버전입니다.");
+		Error(mFileName,"<- sprite version mismatch.");
 
 	fread(&mActions, 4, 1,fp);
 	if( _MAX_ACTIONS <= mActions)
-		Error(mFileName,"<-현재 지정된 최대 액션수를 넘었습니다ㅡ,.ㅡ.");
+		Error(mFileName,"<- sprite action count exceeds the engine limit.");
 	for(i=0; i<mActions; i++)
 	{
 		fread(&mFrames[i], 4, 1,fp);
@@ -90,7 +88,7 @@ void CSprite::RestoreTexMemSprite()
 			buf=(BYTE *)Dmalloc(mFrameInfo[i][j].Size);
 			fread(buf,mFrameInfo[i][j].Size,1,fp);
 
-			SetDDSTexSizeDebug(mFrameInfo[i][j].Size);	//디버그용...
+			SetDDSTexSizeDebug(mFrameInfo[i][j].Size);	//??????...
 			mFrameInfo[i][j].Tex=GetDDSTexFromBuffer(mFrameInfo[i][j].XL,mFrameInfo[i][j].YL
 				,mFrameInfo[i][j].Format,buf);
 			Dfree(buf);

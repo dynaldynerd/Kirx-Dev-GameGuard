@@ -1034,33 +1034,37 @@ void *GetDDSTexFromBuffer(WORD xl,WORD yl,DWORD format,BYTE *buf)
 	LPDIRECT3DTEXTURE8 ptex;
 	D3DLOCKED_RECT rect,src_rect;
 	DWORD one_trans;
+	DWORD line_cnt;
+	DWORD i;
 	HRESULT hr;
 
 //	state->mBestSpriteTextureFormat = D3DFMT_R5G6B5;
 
-	if( state->mBestSpriteTextureFormat == D3DFMT_DXT1 && format == D3DFMT_DXT1 )
+	if( format == D3DFMT_DXT1 || format == D3DFMT_DXT3 || format == D3DFMT_DXT5 )
 	{
 		hr=D3DXCreateTexture(
 			GetD3dDevice(),
 			xl,		yl,		1,		0,
-			state->mBestSpriteTextureFormat,
+			(_D3DFORMAT)format,
 			D3DPOOL_MANAGED,
 			&ptex);
 
 		if( hr != D3D_OK )
-			Error("텍스쳐 포맷 not support!","");
+			Error("Sprite texture format not supported.","");
 
 		ptex->LockRect(0,&rect,0,0);
 
 		if( format == D3DFMT_DXT1 )
-			one_trans = xl/2;
+			one_trans = (((DWORD)xl + 3) / 4) * 8;
 		else
-			one_trans = xl;
+			one_trans = (((DWORD)xl + 3) / 4) * 16;
+		line_cnt = ((DWORD)yl + 3) / 4;
+		if( line_cnt == 0 )
+			line_cnt = 1;
 
-		for(int i=0; i<yl; i++)
+		for(i=0; i<line_cnt; i++)
 		{
-	//		memcpy(&((BYTE*)rect.pBits)[i*rect.Pitch],&buf[i*xl],one_trans );
-			memcpy(&((BYTE*)rect.pBits)[i*one_trans],&buf[i*one_trans],one_trans );
+			memcpy(&((BYTE*)rect.pBits)[i*rect.Pitch],&buf[i*one_trans],one_trans );
 		}
 		ptex->UnlockRect(0);
 	}
@@ -1074,31 +1078,33 @@ void *GetDDSTexFromBuffer(WORD xl,WORD yl,DWORD format,BYTE *buf)
 			&ptex);
 
 		if( hr != D3D_OK )
-			Error("텍스쳐 포맷 not support!","");
+			Error("Sprite texture format not supported.","");
 
 		LPDIRECT3DSURFACE8 psurf,ptar;
 
 		GetD3dDevice()->CreateImageSurface(xl,yl,(_D3DFORMAT)format,&psurf);
-		if( format == D3DFMT_DXT1 )
-		{
-			one_trans = xl/2;
-		}
-		else
 		if( format == D3DFMT_A8R8G8B8 )
 		{
 			one_trans = xl*4;
 		}
 		else
+		if( format == D3DFMT_A1R5G5B5 || format == D3DFMT_R5G6B5 )
 		{
-			Warning("아직 R3엔진에서 지원안하는 포맷입니다.","");
+			one_trans = xl*2;
+		}
+		else
+		{
+			Warning("This sprite texture format is not supported by R3Engine yet.","");
+			psurf->Release();
+			ptex->Release();
 			return NULL;
 		}
+		line_cnt = yl;
 
 		psurf->LockRect(&rect,0,0);
-		for(DWORD i=0; i<yl; i++)
+		for(i=0; i<line_cnt; i++)
 		{
-	//		memcpy(&((BYTE*)rect.pBits)[i*rect.Pitch],&buf[i*xl],one_trans );
-			memcpy(&((BYTE*)rect.pBits)[i*one_trans],&buf[i*one_trans],one_trans );
+			memcpy(&((BYTE*)rect.pBits)[i*rect.Pitch],&buf[i*one_trans],one_trans );
 		}
 		psurf->UnlockRect();
 		hr = GetD3dDevice()->CreateImageSurface(xl,yl,(_D3DFORMAT)format,&ptar);
@@ -1115,16 +1121,12 @@ void *GetDDSTexFromBuffer(WORD xl,WORD yl,DWORD format,BYTE *buf)
 		if( format == D3DFMT_A8R8G8B8 )
 			one_trans = xl*4;
 		else
-		if( format == D3DFMT_A1R5G5B5 )
 			one_trans = xl*2;
-		else
-		if( format == D3DFMT_DXT1 )
-			one_trans = xl/2;
 
 		ptar->LockRect(&src_rect,0,0);
-		ptex->LockRect(0,&rect,0,0);	//텍스쳐 lock
+		ptex->LockRect(0,&rect,0,0);	//????? lock
 
-		for( i=0; i<yl; i++)
+		for( i=0; i<line_cnt; i++)
 		{
 			if( i*rect.Pitch > stDebugSize )
 			{
@@ -1142,7 +1144,6 @@ void *GetDDSTexFromBuffer(WORD xl,WORD yl,DWORD format,BYTE *buf)
 	}
 	return (void *)ptex;
 }
-
 #include "2dsprite.h"
 
 typedef struct{

@@ -17,8 +17,9 @@ void (*WarningMessageProc)(char *message)=NULL;
 int No_warning=0;
 void error_malloc(char *function)
 {
+	UNREFERENCED_PARAMETER(function);
 	//on_error();
-	MessageBox(NULL,"Out of memory","Error",MB_OK+
+	MessageBoxA(NULL,"Out of memory","RFClient Error",MB_OK+
 					MB_ICONSTOP);
 	exit(1);
 }
@@ -41,16 +42,19 @@ void Error(char *mes,char *mes1)
 	strcat(imsi,mes1);
 
 	fp = fopen("error_message.txt","wt");
-	fprintf(fp,"%s%s",mes,mes1);
-	fclose(fp);
+	if( fp )
+	{
+		fprintf(fp,"%s%s",mes,mes1);
+		fclose(fp);
+	}
 	if( ErrorMessageProc )
 	{
-		strcat(imsi,"<-에러");
+		strcat(imsi," <- error");
 		ErrorMessageProc(imsi);
 	}
 	else
 	{
-		MessageBox(NULL,imsi,"message",MB_OK+
+		MessageBoxA(NULL,imsi,"RFClient Error",MB_OK+
 					MB_ICONSTOP);
 		exit(1);
 	}
@@ -58,18 +62,26 @@ void Error(char *mes,char *mes1)
 
 void Warning(char *mes,char *mes1)
 {
+	FILE *fp;
 	char imsi[256];
 	if(No_warning)
 		return;
 	strcpy(imsi,mes);
 	strcat(imsi,mes1);
+
+	fp = fopen("warning_message.txt","at");
+	if( fp )
+	{
+		fprintf(fp,"%s%s\n",mes,mes1);
+		fclose(fp);
+	}
 	if( WarningMessageProc )
 	{
-		strcat(imsi,"<-에러");
+		strcat(imsi," <- warning");
 		WarningMessageProc(imsi);
 	}
 	else
-		MessageBox(NULL,imsi,"message",MB_OK);
+		MessageBoxA(NULL,imsi,"RFClient Warning",MB_OK);
 }
 
 void PutMessage(char *mes,char *mes1)
@@ -77,7 +89,7 @@ void PutMessage(char *mes,char *mes1)
 	char imsi[256];
 	strcpy(imsi,mes);
 	strcat(imsi,mes1);
-	MessageBox(NULL,imsi,"message",MB_OK);
+	MessageBoxA(NULL,imsi,"RFClient Message",MB_OK);
 }
 
 void FatalError(char *message,char *function)
@@ -86,7 +98,7 @@ void FatalError(char *message,char *function)
 	strcpy(imsi,message);
 	strcat(imsi,function);
 
-	MessageBox(NULL,imsi,"message",MB_OK+MB_ICONSTOP);
+	MessageBoxA(NULL,imsi,"RFClient Fatal Error",MB_OK+MB_ICONSTOP);
 	exit(1);
 }
 
@@ -112,6 +124,6 @@ void error_fatal_printf(char *function,char *format,...)
 	}
 
 	// Tell them about it
-	MessageBox(NULL,message,"Fatal error",MB_OK+MB_ICONSTOP);
+	MessageBoxA(NULL,message,"RFClient Fatal Error",MB_OK+MB_ICONSTOP);
 	exit(1);
 }

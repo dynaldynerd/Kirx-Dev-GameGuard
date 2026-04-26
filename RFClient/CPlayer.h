@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#include "Character.h"
+#include "CCharacter.h"
 #include "ResourceData.h"
 
 enum
@@ -20,31 +20,27 @@ enum
 
 #define ID_DEFAULT_BONE_AC 4
 
-class CRFClientPlayer
+class CPlayer : public CCharacter
 {
 public:
-  CRFClientPlayer();
-  ~CRFClientPlayer();
+  CPlayer();
+  virtual ~CPlayer();
 
-  bool Initialize(IDirect3DDevice8 *pi_pD3DDevice);
+  bool Initialize(void);
   void Shutdown();
 
   bool LoadAccretia();
-  void FrameMove();
-  void Render();
-  void CreateShadow();
-  void SetMoveMode(bool pi_bMoving, BYTE pi_byMoveMode);
+  BOOL Animation(DWORD pi_dwAniFrame = static_cast<DWORD>(-1)) override;
+  void FrameMove() override;
+  BOOL Render() override;
+  void CreateShadow() override;
+  void SetMoveMode(bool pi_bMoving,
+                   BYTE pi_byMoveMode,
+                   bool pi_bUseMoveAniDirection = false,
+                   float pi_fFacingRotY = 0.0f,
+                   float pi_fMoveRotY = 0.0f);
   void SetWalkMode(BYTE pi_byWalkMode);
-
-  void SetPosition(float pi_fX, float pi_fY, float pi_fZ);
-  void GetPosition(float po_pfPos[3]) const;
-  void SetRotY(float pi_fRotY);
-  void SetMapColor(DWORD pi_dwMapColor);
   BYTE GetWalkMode() const;
-  float GetRotY() const;
-  void GetCameraTarget(float po_pfTarget[3]) const;
-  float GetCameraExtent() const;
-  void GetScaleAddPos(float *po_pfScale, float *po_pfAddPos) const;
   bool IsLoaded() const;
 
 private:
@@ -56,20 +52,19 @@ private:
   bool SetAnimation(ChAnimation *pi_pAnimation);
   bool LoadTexturePath(const char *pi_pTexturePath);
   bool LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData);
-  static bool IsValidBBoxHeight(float pi_fHeight);
   static bool IsTextureFileName(const char *pi_pFileName);
 
 private:
-  ChInterface *m_pCharIF;
-  AnimationManager *m_pAnimationMgr;
-  TextureManager *m_pTextureMgr;
-  CObjectManager *m_pBoneMgr;
-  CObjectManager *m_pBodyPartMgr;
-  CHARACTEROBJECT *m_pBone;
   CHARACTEROBJECT *m_pMesh[MAX_DEFAULT_PART];
   ChAnimation *m_pStandAni;
   ChAnimation *m_pWalkAni;
   ChAnimation *m_pRunAni;
+  ChAnimation *m_pBwWalkAni;
+  ChAnimation *m_pLfWalkAni;
+  ChAnimation *m_pRtWalkAni;
+  ChAnimation *m_pBwRunAni;
+  ChAnimation *m_pLfRunAni;
+  ChAnimation *m_pRtRunAni;
   ChAnimation *m_pCurAni;
   bool m_bInitialized;
   bool m_bLoaded;
@@ -77,12 +72,6 @@ private:
   bool m_bPreparedTextureCache;
   bool m_bUseBoneRender;
   BYTE m_byWalkMode;
-  DWORD m_dwMapColor;
-  float m_fBoneFrame;
-  float m_vecPos[3];
-  float m_fRotY;
-  float m_vecBBoxMin[3];
-  float m_vecBBoxMax[3];
   char m_szBoneName[MAX_PATH];
   char m_szBBoxName[MAX_PATH];
   char m_szAniName[MAX_PATH];

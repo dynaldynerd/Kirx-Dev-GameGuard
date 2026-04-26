@@ -46,8 +46,10 @@
     <OutDir>D:\Private Files\playrf\RFOnline\</OutDir>
     <IntDir>$(ProjectDir)build\$(Configuration)\</IntDir>
     <TargetName>RF_Online</TargetName>
+    <TargetExt>.exe</TargetExt>
+    <LocalDebuggerCommand>$(OutDir)$(TargetName)$(TargetExt)</LocalDebuggerCommand>
     <LocalDebuggerWorkingDirectory>D:\Private Files\playrf\RFOnline\</LocalDebuggerWorkingDirectory>
-    <LocalDebuggerCommandArguments>NeutralB</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments></LocalDebuggerCommandArguments>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -110,23 +112,73 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CCharacterDataMgr.h" />
+    <ClInclude Include="CGameProgress.h" />
+    <ClInclude Include="CGP_LogIn.h" />
+    <ClInclude Include="CGP_MainGame.h" />
+    <ClInclude Include="CGP_Title.h" />
+    <ClInclude Include="CItemDataMgr.h" />
+    <ClInclude Include="ClientDataPath.h" />
+    <ClInclude Include="CLand.h" />
+    <ClInclude Include="CResourceDataMgr.h" />
+    <ClInclude Include="CBaseNpc.h" />
+    <ClInclude Include="CCharacter.h" />
+    <ClInclude Include="CCharacterMgr.h" />
+    <ClInclude Include="CMonster.h" />
+    <ClInclude Include="CObject.h" />
+    <ClInclude Include="CPlayer.h" />
+    <ClInclude Include="CResObject.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="DataFile.h" />
+    <ClInclude Include="EdfFile.h" />
+    <ClInclude Include="RFClientUI.h" />
     <ClInclude Include="RFClientApp.h" />
-    <ClInclude Include="RFClientPlayer.h" />
     <ClInclude Include="ResourceData.h" />
+    <ClInclude Include="Network\CharacterDB.h" />
+    <ClInclude Include="Network\ClientZonePacket.h" />
+    <ClInclude Include="Network\CNetworkMgr.h" />
+    <ClInclude Include="Network\DqsDbStructs.h" />
+    <ClInclude Include="Network\NetCheckPackets.h" />
+    <ClInclude Include="Network\NetProcess.h" />
+    <ClInclude Include="Network\Protocol.h" />
+    <ClInclude Include="Network\Pt_Zone_Client.h" />
+    <ClInclude Include="Network\REGED_AVATOR_DB.h" />
+    <ClInclude Include="Network\ZoneClientPacket.h" />
     <ClInclude Include="R3Engine\*.h" />
     <ClInclude Include="R3Engine\1stclass\*.h" />
     <ClInclude Include="R3Engine\2ndclass\*.h" />
     <ClInclude Include="R3Engine\common\*.h" />
     <ClInclude Include="R3Engine\d3d\include\*.h" />
     <ClInclude Include="R3Engine\extension\*.h" />
+    <ClInclude Include="SpriteMgr.h" />
+    <ClInclude Include="UIGlobal.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CCharacterDataMgr.cpp" />
+    <ClCompile Include="CGameProgress.cpp" />
+    <ClCompile Include="CGP_LogIn.cpp" />
+    <ClCompile Include="CGP_MainGame.cpp" />
+    <ClCompile Include="CGP_Title.cpp" />
+    <ClCompile Include="CItemDataMgr.cpp" />
+    <ClCompile Include="ClientDataPath.cpp" />
+    <ClCompile Include="CLand.cpp" />
+    <ClCompile Include="CResourceDataMgr.cpp" />
+    <ClCompile Include="CBaseNpc.cpp" />
+    <ClCompile Include="CCharacter.cpp" />
+    <ClCompile Include="CCharacterMgr.cpp" />
+    <ClCompile Include="CMonster.cpp" />
+    <ClCompile Include="CObject.cpp" />
+    <ClCompile Include="CPlayer.cpp" />
+    <ClCompile Include="CResObject.cpp" />
     <ClCompile Include="DataFile.cpp" />
+    <ClCompile Include="EdfFile.cpp" />
     <ClCompile Include="LegacyCrtCompat.cpp" />
-    <ClCompile Include="RFClientPlayer.cpp" />
+    <ClCompile Include="Network\CNetworkMgr.cpp" />
+    <ClCompile Include="Network\NetCheckPackets.cpp" />
+    <ClCompile Include="RFClientUI.cpp" />
     <ClCompile Include="RFClientApp.cpp" />
+    <ClCompile Include="SpriteMgr.cpp" />
+    <ClCompile Include="UIGlobal.cpp" />
     <ClCompile Include="WinMain.cpp" />
     <ClCompile Include="R3Engine\1stclass\*.cpp" />
     <ClCompile Include="R3Engine\2ndclass\*.cpp" />
@@ -138,5 +190,10 @@
     <ResourceCompile Include="R3Engine\winmain.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="CopyRfOnlineExeToBin" AfterTargets="Build">
+    <Copy SourceFiles="$(OutDir)$(TargetName)$(TargetExt)"
+          DestinationFiles="$(OutDir)$(TargetName).bin"
+          SkipUnchangedFiles="false" />
+  </Target>
   <ImportGroup Label="ExtensionTargets" />
 </Project>

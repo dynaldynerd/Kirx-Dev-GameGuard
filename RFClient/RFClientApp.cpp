@@ -1,3 +1,4 @@
+#include "Network/CNetworkMgr.h"
 #include "RFClientApp.h"
 
 #include <cmath>
@@ -6,6 +7,12 @@
 #include <cstdarg>
 #include <vector>
 
+#include "CGP_LogIn.h"
+#include "CGP_MainGame.h"
+#include "CGP_Title.h"
+#include "CGameProgress.h"
+#include "CPlayer.h"
+#include "UIGlobal.h"
 #include "R3Engine/1stclass/core.h"
 #include "R3Engine/1stclass/r3d3d8.h"
 #include "R3Engine/common/commonutil.h"
@@ -13,11 +20,12 @@
 #include "R3Engine/common/r3math.h"
 #include "R3Engine/2ndclass/r3enginekernel.h"
 #include "R3Engine/2ndclass/r3move.h"
+#include "R3Engine/2ndclass/r3sound.h"
+#include "R3Engine/2ndclass/r3text.h"
 #include "R3Engine/2ndclass/r3util.h"
 
 namespace
 {
-constexpr char kDefaultMapSelection[] = "NeutralB";
 constexpr float kMinViewAngleX = -89.0f;
 constexpr float kMaxViewAngleX = 89.0f;
 constexpr float kMinCameraDistance = 10.0f;
@@ -30,6 +38,15 @@ constexpr float kDefaultCameraDistance = 45.0f;
 constexpr float kMouseWheelDistanceRate = 0.07f;
 constexpr char kDebugCapturePath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.bmp";
 constexpr char kDebugCaptureLogPath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.log";
+constexpr DWORD kDefaultSetWorldIpXor = 0xCB9C4B3A;
+constexpr WORD kDefaultSetWorldPortXor = 0x4FB6;
+constexpr DWORD kDefaultSetAccountSerialXor = 0x6E65E0AF;
+constexpr WORD kDefaultSetZeroFieldValue = 0x4B3A;
+constexpr DWORD kDefaultSetBillingAccountSerialXor = 0xC89C183A;
+constexpr DWORD kDefaultSetBillingTypeXor = 0xC89C183A;
+constexpr DWORD kDefaultSetIsAdultXor = 0xD29C283B;
+constexpr WORD kDefaultSetLanguageIndexXor = 0x32D7;
+constexpr DWORD kDefaultSetWorldMasterKeyXor[KEY_NUM] = {0xCFCF22E6, 0x5BBCDE6F, 0xACDF5EDA, 0xBCCD1B37};
 
 float ClampFloat(float value, float minimum, float maximum)
 {
@@ -69,6 +86,36 @@ float NormalizeAngle360(float value)
 float GetMoveSpeed(BYTE pi_byMoveMode)
 {
   return (pi_byMoveMode == CMM_MOVE_RUN) ? kRunMoveSpeed : kWalkMoveSpeed;
+}
+
+bool IsShortcutModifierDown()
+{
+  return (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0 ||
+         (GetAsyncKeyState(VK_MENU) & 0x8000) != 0 ||
+         (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+}
+
+void HideWindowMenuBar(HWND pi_hWnd, DWORD pi_dwWindowStyle, int pi_nClientWidth, int pi_nClientHeight)
+{
+  if (!pi_hWnd || pi_nClientWidth <= 0 || pi_nClientHeight <= 0)
+  {
+    return;
+  }
+
+  if (GetMenu(pi_hWnd))
+  {
+    SetMenu(pi_hWnd, NULL);
+  }
+
+  RECT l_rcWindow = {0, 0, pi_nClientWidth, pi_nClientHeight};
+  AdjustWindowRect(&l_rcWindow, pi_dwWindowStyle, FALSE);
+  SetWindowPos(pi_hWnd,
+               NULL,
+               0,
+               0,
+               l_rcWindow.right - l_rcWindow.left,
+               l_rcWindow.bottom - l_rcWindow.top,
+               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
 
 bool GetMouseModeMoveRotY(bool pi_bMoveForward,
@@ -159,18 +206,22 @@ bool GetKeyboardModeMoveRotY(bool pi_bMoveForward,
   if (pi_bMoveForward && pi_bMoveLeft)
   {
     po_fMoveRotY = po_fFacingRotY - 45.0f;
+    po_fFacingRotY = NormalizeAngle360(po_fMoveRotY);
   }
   else if (pi_bMoveForward && pi_bMoveRight)
   {
     po_fMoveRotY = po_fFacingRotY + 45.0f;
+    po_fFacingRotY = NormalizeAngle360(po_fMoveRotY);
   }
   else if (pi_bMoveBackward && pi_bMoveLeft)
   {
     po_fMoveRotY = po_fFacingRotY - 135.0f;
+    po_fFacingRotY = NormalizeAngle360(po_fFacingRotY + 45.0f);
   }
   else if (pi_bMoveBackward && pi_bMoveRight)
   {
     po_fMoveRotY = po_fFacingRotY + 135.0f;
+    po_fFacingRotY = NormalizeAngle360(po_fFacingRotY - 45.0f);
   }
   else if (pi_bMoveForward)
   {
@@ -232,6 +283,39 @@ bool IsPathLike(const char *value)
          (strchr(value, '\\') != nullptr || strchr(value, '/') != nullptr || strstr(value, ".bsp") != nullptr);
 }
 
+MAP_INFO *FindMapInfoBySelection(CLand &pi_rLand, const char *pi_pMapSelection)
+{
+  if (!pi_pMapSelection || !pi_pMapSelection[0])
+  {
+    return NULL;
+  }
+
+  for (int i = 0; i < pi_rLand.GetMaxMapNum(); ++i)
+  {
+    MAP_INFO *l_pMapInfo = pi_rLand.GetMapInfo(static_cast<BYTE>(i));
+    if (!l_pMapInfo)
+    {
+      continue;
+    }
+
+    if (_stricmp(l_pMapInfo->pName, pi_pMapSelection) == 0)
+    {
+      return l_pMapInfo;
+    }
+
+    char l_szMapFileName[MAX_PATH];
+    strcpy_s(l_szMapFileName, sizeof(l_szMapFileName), l_pMapInfo->pFileName);
+    StripEXT(l_szMapFileName);
+    StripPath(l_szMapFileName);
+    if (_stricmp(l_szMapFileName, pi_pMapSelection) == 0)
+    {
+      return l_pMapInfo;
+    }
+  }
+
+  return NULL;
+}
+
 void CopyMapSelection(char *destination, size_t destinationSize, LPCSTR commandLine)
 {
   if (!destination || !destinationSize)
@@ -242,7 +326,6 @@ void CopyMapSelection(char *destination, size_t destinationSize, LPCSTR commandL
   destination[0] = '\0';
   if (!commandLine)
   {
-    strcpy_s(destination, destinationSize, kDefaultMapSelection);
     return;
   }
 
@@ -273,10 +356,6 @@ void CopyMapSelection(char *destination, size_t destinationSize, LPCSTR commandL
     strncpy_s(destination, destinationSize, commandLine, mapNameLength);
   }
 
-  if (!destination[0])
-  {
-    strcpy_s(destination, destinationSize, kDefaultMapSelection);
-  }
 }
 
 bool SaveSurfaceToBMP(const char *fileName, LPDIRECT3DSURFACE8 surface)
@@ -539,9 +618,24 @@ void AppendCaptureLog(const char *format, ...)
 #endif
 }
 
-CRFClientApp::CRFClientApp()
-  : m_isInitialized(false),
+CMainApp *g_pMainApp = NULL;
+
+CMainApp::CMainApp()
+  : m_pNetworkMgr(NULL),
+    m_pPlayer(NULL),
+    m_pGameProgress(NULL),
+    m_isInitialized(false),
     m_isMapLoaded(false),
+    m_bIsActive(FALSE),
+    m_fVersion(0.738f),
+    m_byGameProgressID(GPI_TITLE),
+    m_bCreatedAllObject(FALSE),
+    m_bLoadedAllData(FALSE),
+    m_bRequestQuitProgram(FALSE),
+    m_dwRequestQuitTime(0),
+    m_dwQuitWaitingTime(static_cast<DWORD>(-1)),
+    m_bIsQuit(FALSE),
+    m_bClientWindowVisible(TRUE),
     m_fViewAngleX(35.0f),
     m_fViewAngleY(225.0f),
     m_fPrevViewAngleX(35.0f),
@@ -556,6 +650,10 @@ CRFClientApp::CRFClientApp()
     m_pendingWheelDelta(0)
 {
   m_mapName[0] = '\0';
+  m_szSelectedMap[0] = '\0';
+  m_vecLoginLobbyCameraPos[0] = 0.0f;
+  m_vecLoginLobbyCameraPos[1] = 0.0f;
+  m_vecLoginLobbyCameraPos[2] = 0.0f;
   m_cameraTarget[0] = 0.0f;
   m_cameraTarget[1] = 0.0f;
   m_cameraTarget[2] = 0.0f;
@@ -565,16 +663,22 @@ CRFClientApp::CRFClientApp()
   m_spawnCameraTarget[0] = 0.0f;
   m_spawnCameraTarget[1] = 0.0f;
   m_spawnCameraTarget[2] = 0.0f;
-  m_camera.SetBspPtr(m_level.mBsp);
   m_strWindowTitle = const_cast<char *>("RF_Online");
+  g_pMainApp = this;
 }
 
-CRFClientApp::~CRFClientApp()
+CMainApp::~CMainApp()
 {
+#if defined(_DEBUG)
+  AppendCaptureLog("~CMainApp: begin");
+#endif
   Shutdown();
+#if defined(_DEBUG)
+  AppendCaptureLog("~CMainApp: end");
+#endif
 }
 
-bool CRFClientApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
+bool CMainApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
 {
   if (m_isInitialized)
   {
@@ -585,67 +689,901 @@ bool CRFClientApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
   AppendCaptureLog("Initialize: begin commandLine=%s", commandLine ? commandLine : "<null>");
 #endif
   InitR3Engine();
+  InitR3SoundSystem(".\\snd\\WaveList.spt");
+  _R3ENGINE_STATE *l_pState = GetR3State();
+
   if (FAILED(InitR3D3D(hInstance, 0)))
   {
 #if defined(_DEBUG)
     AppendCaptureLog("Initialize: InitR3D3D failed");
 #endif
+    ReleaseR3SoundSystem();
     ReleaseR3Engine();
     return false;
   }
 
-  if (!m_player.Initialize(GetD3dDevice()))
+  RECT l_rcClient = {};
+  int l_nClientWidth = 0;
+  int l_nClientHeight = 0;
+  if (m_hWnd && GetClientRect(m_hWnd, &l_rcClient))
+  {
+    l_nClientWidth = l_rcClient.right - l_rcClient.left;
+    l_nClientHeight = l_rcClient.bottom - l_rcClient.top;
+  }
+  else if (l_pState)
+  {
+    l_nClientWidth = static_cast<int>(l_pState->mScreenXsize);
+    l_nClientHeight = static_cast<int>(l_pState->mScreenYsize);
+  }
+
+  HideWindowMenuBar(m_hWnd, m_dwWindowStyle, l_nClientWidth, l_nClientHeight);
+  SetClientWindowVisible(FALSE);
+
+  CopyMapSelection(m_szSelectedMap, sizeof(m_szSelectedMap), commandLine);
+
+  if (!Create())
   {
 #if defined(_DEBUG)
-    AppendCaptureLog("Initialize: m_player.Initialize failed");
+    AppendCaptureLog("Initialize: Create failed");
 #endif
     ReleaseR3D3D();
+    ReleaseR3SoundSystem();
     ReleaseR3Engine();
     return false;
   }
 
-  if (!LoadMapSelection(commandLine))
-  {
-#if defined(_DEBUG)
-    AppendCaptureLog("Initialize: LoadMapSelection failed");
-#endif
-    ReleaseR3D3D();
-    ReleaseR3Engine();
-    return false;
-  }
+  const BOOL l_bLoadedAbuseFilter = _LoadAbuseFilter("./DataTable/cryp.dat");
+  const BOOL l_bLoadedAdvFilter = _LoadAdvFilter("./DataTable/advr.dat");
 
 #if defined(_DEBUG)
-  AppendCaptureLog("Initialize: success mapLoaded=%d", m_isMapLoaded ? 1 : 0);
+  AppendCaptureLog("Initialize: success progress=%u map=%s",
+                   static_cast<unsigned>(m_byGameProgressID),
+                   m_szSelectedMap[0] ? m_szSelectedMap : "<empty>");
+  AppendCaptureLog("Initialize: filter abuse=%d adv=%d",
+                   l_bLoadedAbuseFilter ? 1 : 0,
+                   l_bLoadedAdvFilter ? 1 : 0);
 #endif
   m_isInitialized = true;
   return true;
 }
 
-int CRFClientApp::Run()
+int CMainApp::Run()
 {
-  return CD3DApplication::Run();
+  BOOL l_bGotMsg = FALSE;
+  MSG l_sMsg;
+  ZeroMemory(&l_sMsg, sizeof(l_sMsg));
+#if defined(_DEBUG)
+  static bool s_loggedRunStart = false;
+  if (!s_loggedRunStart)
+  {
+    AppendCaptureLog("Run: begin visible=%d active=%d ready=%d", m_bClientWindowVisible ? 1 : 0, m_bIsActive ? 1 : 0, IsReady() ? 1 : 0);
+    s_loggedRunStart = true;
+  }
+#endif
+
+  PeekMessage(&l_sMsg, NULL, 0U, 0U, PM_NOREMOVE);
+
+  while (WM_QUIT != l_sMsg.message)
+  {
+  if (IsReady() && m_pNetworkMgr)
+  {
+      m_pNetworkMgr->OnLoop();
+  }
+
+    if (IsReady())
+    {
+      const BOOL l_bTickWhileHidden = !m_bClientWindowVisible || m_byGameProgressID != GPI_MAIN_GAME;
+      l_bGotMsg = (m_bIsActive || l_bTickWhileHidden)
+                    ? PeekMessage(&l_sMsg, NULL, 0U, 0U, PM_REMOVE)
+                    : GetMessage(&l_sMsg, NULL, 0U, 0U);
+    }
+    else
+    {
+      l_bGotMsg = GetMessage(&l_sMsg, NULL, 0U, 0U);
+    }
+
+    if (l_bGotMsg)
+    {
+      TranslateMessage(&l_sMsg);
+      DispatchMessage(&l_sMsg);
+    }
+    else if (IsReady())
+    {
+      const HRESULT l_hrPrepareLoop = PrepareLoop();
+#if defined(_DEBUG)
+      static bool s_loggedPrepareLoopFailure = false;
+      static bool s_loggedPrepareLoopSuccess = false;
+      if (SUCCEEDED(l_hrPrepareLoop))
+      {
+        if (!s_loggedPrepareLoopSuccess)
+        {
+          AppendCaptureLog("Run: PrepareLoop succeeded visible=%d active=%d", m_bClientWindowVisible ? 1 : 0, m_bIsActive ? 1 : 0);
+          s_loggedPrepareLoopSuccess = true;
+        }
+      }
+      else if (!s_loggedPrepareLoopFailure)
+      {
+        AppendCaptureLog("Run: PrepareLoop failed hr=0x%08X visible=%d active=%d", l_hrPrepareLoop, m_bClientWindowVisible ? 1 : 0, m_bIsActive ? 1 : 0);
+        s_loggedPrepareLoopFailure = true;
+      }
+#endif
+      if (S_OK == l_hrPrepareLoop)
+      {
+        GameMainLoop();
+        EndLoop();
+      }
+    }
+  }
+
+  return static_cast<int>(l_sMsg.wParam);
 }
 
-void CRFClientApp::Shutdown()
+void CMainApp::Shutdown()
 {
-  if (!m_isInitialized && !m_isMapLoaded)
+#if defined(_DEBUG)
+  AppendCaptureLog("Shutdown: begin initialized=%d mapLoaded=%d", m_isInitialized ? 1 : 0, m_isMapLoaded ? 1 : 0);
+#endif
+  if (!m_isInitialized)
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("Shutdown: skip");
+#endif
+    return;
+  }
+
+  Destroy();
+#if defined(_DEBUG)
+  AppendCaptureLog("Shutdown: release d3d");
+#endif
+  ReleaseR3D3D();
+#if defined(_DEBUG)
+  AppendCaptureLog("Shutdown: release engine");
+#endif
+  ReleaseR3Engine();
+  ReleaseR3SoundSystem();
+  m_isInitialized = false;
+  if (g_pMainApp == this)
+  {
+    g_pMainApp = NULL;
+  }
+#if defined(_DEBUG)
+  AppendCaptureLog("Shutdown: end");
+#endif
+}
+
+BOOL CMainApp::Create(void)
+{
+  if (m_bCreatedAllObject)
+  {
+    return FALSE;
+  }
+
+  if (!m_pNetworkMgr)
+  {
+    m_pNetworkMgr = new CNetworkMgr;
+  }
+
+  if (!m_pNetworkMgr->Create())
+  {
+    return FALSE;
+  }
+
+  if (!m_land.Create())
+  {
+    m_pNetworkMgr->Destroy();
+    return FALSE;
+  }
+
+  if (!m_CharacterMgr.Initialize(GetD3dDevice()))
+  {
+    m_land.Destroy();
+    m_pNetworkMgr->Destroy();
+    return FALSE;
+  }
+
+  if (!m_cCharDataMgr.Create() ||
+      !m_cItemDataMgr.Create())
+  {
+    m_CharacterMgr.Shutdown();
+    m_land.Destroy();
+    m_pNetworkMgr->Destroy();
+    return FALSE;
+  }
+
+  g_pCharDataMgr = &m_cCharDataMgr;
+  g_pItemDataMgr = &m_cItemDataMgr;
+  g_pCharResDataMgr = &m_cCharResDataMgr;
+
+  if (!m_cUI.Initialize())
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("Create: m_cUI.Initialize failed");
+#endif
+  }
+
+  if (!LoadData())
+  {
+    m_pNetworkMgr->Destroy();
+    return FALSE;
+  }
+
+  Create_GameProgress(m_byGameProgressID);
+
+  if (!GetDataFromLauncher())
+  {
+    RequestQuitProgram();
+  }
+
+  m_bCreatedAllObject = TRUE;
+  return TRUE;
+}
+
+BOOL CMainApp::Destroy(void)
+{
+  if (!m_bCreatedAllObject)
+  {
+    return FALSE;
+  }
+
+  if (m_pGameProgress)
+  {
+    m_pGameProgress->Destroy();
+    delete m_pGameProgress;
+    m_pGameProgress = NULL;
+  }
+
+  UnloadData();
+  m_cUI.Shutdown();
+  m_CharacterMgr.Shutdown();
+  m_pPlayer = NULL;
+  m_land.Destroy();
+  if (m_pNetworkMgr)
+  {
+    m_pNetworkMgr->Destroy();
+    delete m_pNetworkMgr;
+    m_pNetworkMgr = NULL;
+  }
+
+  m_cItemDataMgr.Destroy();
+  m_cCharDataMgr.Destroy();
+  m_cCharResDataMgr.UnloadData();
+
+  g_pItemDataMgr = NULL;
+  g_pCharDataMgr = NULL;
+  g_pCharResDataMgr = NULL;
+
+  m_bCreatedAllObject = FALSE;
+  return TRUE;
+}
+
+void CMainApp::Create_GameProgress(BYTE pi_byGameProgressID)
+{
+  if (m_pGameProgress)
+  {
+    m_pGameProgress->Destroy();
+    delete m_pGameProgress;
+    m_pGameProgress = NULL;
+  }
+
+  m_byGameProgressID = pi_byGameProgressID;
+  if (m_byGameProgressID == GPI_TITLE)
+  {
+    m_pGameProgress = new CGP_Title;
+  }
+  else if (m_byGameProgressID == GPI_LOGIN)
+  {
+    m_pGameProgress = new CGP_LogIn;
+  }
+  else if (m_byGameProgressID == GPI_MAIN_GAME)
+  {
+    m_pGameProgress = new CGP_MainGame;
+  }
+}
+
+BOOL CMainApp::LoadData(void)
+{
+  if (m_bLoadedAllData)
+  {
+    return TRUE;
+  }
+
+  if (!m_land.LoadData() ||
+      !m_cCharResDataMgr.LoadData() ||
+      !m_cCharDataMgr.LoadData() ||
+      !m_cItemDataMgr.LoadData())
+  {
+    return FALSE;
+  }
+
+  m_bLoadedAllData = TRUE;
+  return TRUE;
+}
+
+bool CMainApp::UnloadData(void)
+{
+  if (!m_bLoadedAllData)
+  {
+    return true;
+  }
+
+  m_cItemDataMgr.UnloadData();
+  m_cCharDataMgr.UnloadData();
+  m_cCharResDataMgr.UnloadData();
+  m_land.Destroy();
+  m_land.Create();
+
+  m_bLoadedAllData = FALSE;
+  return true;
+}
+
+BOOL CMainApp::GameMainLoop(void)
+{
+#if defined(_DEBUG)
+  static bool s_loggedGameMainLoopEntry = false;
+  if (!s_loggedGameMainLoopEntry)
+  {
+    AppendCaptureLog("GameMainLoop: first entry progress=%u created=%d loaded=%d visible=%d",
+                     static_cast<unsigned>(m_byGameProgressID),
+                     m_bCreatedAllObject ? 1 : 0,
+                     m_bLoadedAllData ? 1 : 0,
+                     m_bClientWindowVisible ? 1 : 0);
+    s_loggedGameMainLoopEntry = true;
+  }
+#endif
+  if (m_bIsQuit || !IsReadyToStart())
+  {
+    return FALSE;
+  }
+
+  R3CalculateTime();
+  if (m_bIsActive)
+  {
+    InputProcess();
+  }
+
+  if (m_pGameProgress)
+  {
+    if (!m_pGameProgress->IsCreated())
+    {
+#if defined(_DEBUG)
+      AppendCaptureLog("GameMainLoop: creating progress=%u", static_cast<unsigned>(m_byGameProgressID));
+#endif
+      if (!m_pGameProgress->Create())
+      {
+#if defined(_DEBUG)
+        AppendCaptureLog("GameMainLoop: progress create failed progress=%u", static_cast<unsigned>(m_byGameProgressID));
+#endif
+        Sleep(1);
+        return TRUE;
+      }
+#if defined(_DEBUG)
+      AppendCaptureLog("GameMainLoop: progress create succeeded progress=%u", static_cast<unsigned>(m_byGameProgressID));
+#endif
+    }
+
+    if (m_pGameProgress->MainLoop(m_bIsActive))
+    {
+      BYTE l_byNextProgressID = GPI_INVALID;
+      if (m_byGameProgressID == GPI_TITLE)
+      {
+        l_byNextProgressID = GPI_LOGIN;
+      }
+      else if (m_byGameProgressID == GPI_LOGIN)
+      {
+        l_byNextProgressID = GPI_MAIN_GAME;
+      }
+
+      if (l_byNextProgressID == GPI_INVALID)
+      {
+        m_bIsQuit = TRUE;
+        return FALSE;
+      }
+
+#if defined(_DEBUG)
+      AppendCaptureLog("GameMainLoop: progress transition %u -> %u",
+                       static_cast<unsigned>(m_byGameProgressID),
+                       static_cast<unsigned>(l_byNextProgressID));
+#endif
+      Create_GameProgress(l_byNextProgressID);
+    }
+  }
+
+  Sleep(1);
+  return TRUE;
+}
+
+BOOL CMainApp::IsReadyToStart(void)
+{
+  return m_bCreatedAllObject && m_bLoadedAllData;
+}
+
+BOOL CMainApp::GetDataFromLauncher(void)
+{
+  if (!m_pNetworkMgr)
+  {
+    return FALSE;
+  }
+
+  HANDLE l_hFileMap = CreateFileA(".\\System\\DefaultSet.tmp",
+                                  GENERIC_READ,
+                                  FILE_SHARE_READ,
+                                  NULL,
+                                  OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  NULL);
+  if (l_hFileMap == INVALID_HANDLE_VALUE)
+  {
+    m_pNetworkMgr->SetStatusText("GetDataFromLauncher: failed to open .\\System\\DefaultSet.tmp error=%lu", GetLastError());
+    return FALSE;
+  }
+
+  DWORD l_dwFileSize = GetFileSize(l_hFileMap, NULL);
+  if (l_dwFileSize == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+  {
+    CloseHandle(l_hFileMap);
+    m_pNetworkMgr->SetStatusText("GetDataFromLauncher: GetFileSize failed error=%lu", GetLastError());
+    return FALSE;
+  }
+
+  std::vector<BYTE> l_vecFileData(static_cast<size_t>(l_dwFileSize));
+  DWORD l_dwReadedSize = 0;
+  const BOOL l_bReadOk = ReadFile(l_hFileMap,
+                                  l_vecFileData.empty() ? NULL : l_vecFileData.data(),
+                                  l_dwFileSize,
+                                  &l_dwReadedSize,
+                                  NULL);
+  CloseHandle(l_hFileMap);
+
+  if (!l_bReadOk)
+  {
+    m_pNetworkMgr->SetStatusText("GetDataFromLauncher: read failed size=%lu", l_dwReadedSize);
+    return FALSE;
+  }
+
+  DWORD l_dwWorldIP = 0;
+  WORD l_wWorldPort = 0;
+  DWORD l_dwAccountSerial = 0;
+  DWORD l_dwBillingAccountSerial = 0;
+  DWORD l_dwBillingType = 0;
+  DWORD l_dwIsAdult = 0;
+  WORD l_wLanguageIndex = 0;
+  WORD l_wZeroFieldValue = 0;
+  DWORD l_dwWorldMasterKey[KEY_NUM]{};
+  char l_szID[64]{};
+  const char *l_pSetMode = "legacy";
+
+  if (l_dwReadedSize >= sizeof(_ENTER_WORLD_TEMP_DATA_PATRON))
+  {
+    _ENTER_WORLD_TEMP_DATA_PATRON l_sData;
+    ZeroMemory(&l_sData, sizeof(l_sData));
+    memcpy(&l_sData, l_vecFileData.data(), sizeof(l_sData));
+
+    l_sData.m_dwWorldIP ^= kDefaultSetWorldIpXor;
+    l_sData.m_wWorldPort ^= kDefaultSetWorldPortXor;
+    l_sData.m_dwAccountSerial ^= kDefaultSetAccountSerialXor;
+    l_sData.m_dwBillingAccountSerial ^= kDefaultSetBillingAccountSerialXor;
+    l_sData.m_dwBillingType ^= kDefaultSetBillingTypeXor;
+    l_sData.m_dwIsAdult ^= kDefaultSetIsAdultXor;
+    l_sData.m_wLanguageIndex ^= kDefaultSetLanguageIndexXor;
+    for (int i = 0; i < KEY_NUM; ++i)
+    {
+      l_sData.m_dwWorldMasterKey[i] ^= kDefaultSetWorldMasterKeyXor[i];
+    }
+
+    l_dwWorldIP = l_sData.m_dwWorldIP;
+    l_wWorldPort = l_sData.m_wWorldPort;
+    l_dwAccountSerial = l_sData.m_dwAccountSerial;
+    l_dwBillingAccountSerial = l_sData.m_dwBillingAccountSerial;
+    l_dwBillingType = l_sData.m_dwBillingType;
+    l_dwIsAdult = l_sData.m_dwIsAdult;
+    l_wLanguageIndex = l_sData.m_wLanguageIndex;
+    l_wZeroFieldValue = l_sData.m_wZeroFieldValue;
+    memcpy(l_dwWorldMasterKey, l_sData.m_dwWorldMasterKey, sizeof(l_dwWorldMasterKey));
+    memcpy(l_szID, l_sData.m_szID, sizeof(l_sData.m_szID));
+    l_szID[sizeof(l_sData.m_szID)] = '\0';
+    l_pSetMode = "patron";
+  }
+  else if (l_dwReadedSize >= sizeof(_ENTER_WORLD_TEMP_DATA))
+  {
+    _ENTER_WORLD_TEMP_DATA l_sData;
+    ZeroMemory(&l_sData, sizeof(l_sData));
+    memcpy(&l_sData, l_vecFileData.data(), sizeof(l_sData));
+
+    l_sData.m_dwWorldIP ^= kDefaultSetWorldIpXor;
+    l_sData.m_wWorldPort ^= kDefaultSetWorldPortXor;
+    l_sData.m_dwAccountSerial ^= kDefaultSetAccountSerialXor;
+    l_sData.m_dwBillingAccountSerial ^= kDefaultSetBillingAccountSerialXor;
+    l_sData.m_dwBillingType ^= kDefaultSetBillingTypeXor;
+    l_sData.m_dwIsAdult ^= kDefaultSetIsAdultXor;
+    l_sData.m_wLanguageIndex ^= kDefaultSetLanguageIndexXor;
+    for (int i = 0; i < KEY_NUM; ++i)
+    {
+      l_sData.m_dwWorldMasterKey[i] ^= kDefaultSetWorldMasterKeyXor[i];
+    }
+
+    l_dwWorldIP = l_sData.m_dwWorldIP;
+    l_wWorldPort = l_sData.m_wWorldPort;
+    l_dwAccountSerial = l_sData.m_dwAccountSerial;
+    l_dwBillingAccountSerial = l_sData.m_dwBillingAccountSerial;
+    l_dwBillingType = l_sData.m_dwBillingType;
+    l_dwIsAdult = l_sData.m_dwIsAdult;
+    l_wLanguageIndex = l_sData.m_wLanguageIndex;
+    l_wZeroFieldValue = l_sData.m_wZeroFieldValue;
+    memcpy(l_dwWorldMasterKey, l_sData.m_dwWorldMasterKey, sizeof(l_dwWorldMasterKey));
+    memcpy(l_szID, l_sData.m_szID, sizeof(l_sData.m_szID));
+    l_szID[sizeof(l_sData.m_szID)] = '\0';
+    l_pSetMode = "default";
+  }
+  else if (l_dwReadedSize >= sizeof(_ENTER_WORLD_TEMP_DATA_LEGACY))
+  {
+    _ENTER_WORLD_TEMP_DATA_LEGACY l_sData;
+    ZeroMemory(&l_sData, sizeof(l_sData));
+    memcpy(&l_sData, l_vecFileData.data(), sizeof(l_sData));
+
+    l_sData.m_dwWorldIP ^= kDefaultSetWorldIpXor;
+    l_sData.m_wWorldPort ^= kDefaultSetWorldPortXor;
+    l_sData.m_dwAccountSerial ^= kDefaultSetAccountSerialXor;
+    for (int i = 0; i < KEY_NUM; ++i)
+    {
+      l_sData.m_dwWorldMasterKey[i] ^= kDefaultSetWorldMasterKeyXor[i];
+    }
+
+    l_dwWorldIP = l_sData.m_dwWorldIP;
+    l_wWorldPort = l_sData.m_wWorldPort;
+    l_dwAccountSerial = l_sData.m_dwAccountSerial;
+    l_dwBillingAccountSerial = l_dwAccountSerial;
+    memcpy(l_dwWorldMasterKey, l_sData.m_dwWorldMasterKey, sizeof(l_dwWorldMasterKey));
+    memcpy(l_szID, l_sData.m_szID, sizeof(l_sData.m_szID));
+    l_szID[sizeof(l_sData.m_szID)] = '\0';
+  }
+  else
+  {
+    m_pNetworkMgr->SetStatusText("GetDataFromLauncher: unsupported DefaultSet.tmp size=%lu", l_dwReadedSize);
+    return FALSE;
+  }
+
+  m_pNetworkMgr->SetServerIP(GST_WORLD, l_dwWorldIP);
+  m_pNetworkMgr->SetServerPort(GST_WORLD, l_wWorldPort);
+  m_pNetworkMgr->SetAccountIndex(l_dwAccountSerial);
+  m_pNetworkMgr->SetWorldServerKey(l_dwWorldMasterKey);
+  m_pNetworkMgr->SetID(l_szID);
+
+  m_pNetworkMgr->SetHasLauncherData(TRUE);
+  m_pNetworkMgr->SetStatusText("DefaultSet.tmp loaded: mode=%s world=%s:%lu accountSerial=%lu billingSerial=%lu billingType=%lu adult=%lu lang=%u zero=0x%04X id=%s size=%lu",
+                               l_pSetMode,
+                               m_pNetworkMgr->GetAddressText(m_pNetworkMgr->GetServerIP(GST_WORLD)),
+                               m_pNetworkMgr->GetServerPort(GST_WORLD),
+                               m_pNetworkMgr->GetAccountIndex(),
+                               l_dwBillingAccountSerial,
+                               l_dwBillingType,
+                               l_dwIsAdult,
+                               static_cast<unsigned>(l_wLanguageIndex),
+                               static_cast<unsigned>(l_wZeroFieldValue),
+                               m_pNetworkMgr->GetID(),
+                               l_dwFileSize);
+  return TRUE;
+}
+
+BOOL CMainApp::InputProcess(void)
+{
+  if (m_bRequestQuitProgram)
+  {
+    PostMessageA(m_hWnd, WM_CLOSE, 0, 0);
+    m_bRequestQuitProgram = FALSE;
+  }
+
+  if ((GetKeyState(VK_MENU) & 0x8000) != 0 &&
+      ((GetAsyncKeyState(VK_Q) & 0xFFFF0000) == 0xFFFF0000))
+  {
+    RequestQuitProgram();
+  }
+
+  return TRUE;
+}
+
+BOOL CMainApp::RequestQuitProgram(DWORD, char *)
+{
+  m_bIsQuit = TRUE;
+  m_bRequestQuitProgram = FALSE;
+  if (m_hWnd)
+  {
+    PostMessageA(m_hWnd, WM_CLOSE, 0, 0);
+  }
+  return TRUE;
+}
+
+void CMainApp::SetClientWindowVisible(BOOL pi_bVisible)
+{
+  if (!m_hWnd)
+  {
+    m_bClientWindowVisible = pi_bVisible;
+    return;
+  }
+
+  const BOOL l_bVisible = pi_bVisible ? TRUE : FALSE;
+  if (m_bClientWindowVisible == l_bVisible)
   {
     return;
   }
 
-  if (m_isMapLoaded)
+  ShowWindow(m_hWnd, l_bVisible ? SW_SHOW : SW_HIDE);
+  if (l_bVisible)
   {
-    m_level.ReleaseLevel();
-    m_isMapLoaded = false;
+    UpdateWindow(m_hWnd);
   }
 
-  m_player.Shutdown();
-  ReleaseR3D3D();
-  ReleaseR3Engine();
-  m_isInitialized = false;
+  m_bClientWindowVisible = l_bVisible;
 }
 
-HRESULT CRFClientApp::FrameMove()
+HRESULT CMainApp::FrameMove()
+{
+  return S_OK;
+}
+
+HRESULT CMainApp::Render()
+{
+  return S_OK;
+}
+
+HRESULT CMainApp::RestoreDeviceObjects()
+{
+  R3LoadTextTexture();
+  return R3D3dWrapper::RestoreDeviceObjects();
+}
+
+HRESULT CMainApp::InvalidateDeviceObjects()
+{
+  R3ReleaseTextTexture();
+  return R3D3dWrapper::InvalidateDeviceObjects();
+}
+
+BOOL CMainApp::LoadMainGameData(void)
+{
+  if (m_isMapLoaded)
+  {
+    return TRUE;
+  }
+
+  if (!m_szSelectedMap[0])
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("LoadMainGameData: no startup map selection, waiting for original client flow");
+#endif
+    return TRUE;
+  }
+
+  const char *l_pMapSelection = m_szSelectedMap;
+  if (!LoadMap(l_pMapSelection))
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("LoadMainGameData: LoadMap failed selection=%s", l_pMapSelection);
+#endif
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+void CMainApp::UnloadMainGameData(void)
+{
+  m_pPlayer = NULL;
+  m_CharacterMgr.Clear();
+
+  if (m_isMapLoaded)
+  {
+    m_land.UnloadLevel();
+  }
+
+  m_isMapLoaded = false;
+  m_mapName[0] = '\0';
+  m_hasSpawnCameraTarget = false;
+  m_isRightMouseDragging = false;
+  m_pendingWheelDelta = 0;
+}
+
+BOOL CMainApp::LoadLoginLobbyData(void)
+{
+  static const char kLoginLobbyPath[] = ".\\map\\lobby\\lobby.BSP";
+  static const char kLoginLobbyCameraPath[] = ".\\map\\lobby\\lobby.cam";
+
+  if (m_isMapLoaded && _stricmp(m_mapName, "lobby") == 0)
+  {
+    return TRUE;
+  }
+
+  if (!LoadMap(kLoginLobbyPath))
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("LoadLoginLobbyData: LoadMap failed path=%s", kLoginLobbyPath);
+#endif
+    return FALSE;
+  }
+
+  // The opening scene is a lobby preview, not an in-world playable avatar.
+  m_pPlayer = NULL;
+  m_CharacterMgr.Clear();
+  m_cLoginLobbyAniCamera.ReleaseAniCamera();
+  if (IsExistFile(const_cast<char *>(kLoginLobbyCameraPath)))
+  {
+    m_cLoginLobbyAniCamera.LoadAniCamera(const_cast<char *>(kLoginLobbyCameraPath));
+    SetLoginLobbyOpeningCamera();
+  }
+  else
+  {
+    ResetCameraFromLoadedMap();
+  }
+
+  if (CLevel *l_pLevel = m_land.GetLevel())
+  {
+    if (m_cLoginLobbyAniCamera.IsLoadedAniCamera())
+    {
+      l_pLevel->SetCameraPos(m_vecLoginLobbyCameraPos);
+      l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+    }
+    else
+    {
+      l_pLevel->SetCameraPos(m_cameraPosition);
+      l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+    }
+  }
+
+  UpdateProjectionParameters();
+  return TRUE;
+}
+
+BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
+                                    DWORD pi_dwStartFrame,
+                                    DWORD pi_dwEndFrame,
+                                    DWORD pi_dwFlag)
+{
+  if (!pi_pCameraName || !pi_pCameraName[0] || !m_cLoginLobbyAniCamera.IsLoadedAniCamera())
+  {
+    return FALSE;
+  }
+
+  DWORD l_dwCameraIndex = m_cLoginLobbyAniCamera.GetCameraIndex(const_cast<char *>(pi_pCameraName));
+  if (l_dwCameraIndex == static_cast<DWORD>(-1))
+  {
+    return FALSE;
+  }
+
+  m_cLoginLobbyAniCamera.SetPrePlayCamera(l_dwCameraIndex, pi_dwStartFrame, pi_dwEndFrame, pi_dwFlag);
+
+  float l_matLobbyCamera[4][4];
+  if (m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f, FALSE))
+  {
+    R3SetCameraMatrix(m_vecLoginLobbyCameraPos, l_matLobbyCamera);
+  }
+
+  if (CLevel *l_pLevel = m_land.GetLevel())
+  {
+    l_pLevel->SetCameraPos(m_vecLoginLobbyCameraPos);
+    l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+  }
+
+  UpdateProjectionParameters();
+  return TRUE;
+}
+
+BOOL CMainApp::SetLoginLobbyOpeningCamera(void)
+{
+  if (PlayLoginLobbyCamera("c_ex01", 0, _CAM_PLAY_FULL_FRAME, _CAM_FLAG_LOOP))
+  {
+    return TRUE;
+  }
+
+  if (PlayLoginLobbyCamera("c_ex02", 0, _CAM_PLAY_FULL_FRAME, _CAM_FLAG_LOOP))
+  {
+    return TRUE;
+  }
+
+  if (PlayLoginLobbyCamera("c_01", 0, _CAM_PLAY_FULL_FRAME, _CAM_FLAG_LOOP))
+  {
+    return TRUE;
+  }
+
+  return PlayLoginLobbyCamera("c_05", 0, _CAM_PLAY_FULL_FRAME, _CAM_FLAG_LOOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterEntryCamera(BYTE pi_bySlotIndex)
+{
+  static const char *kCameraName[3] = { "c_01_01", "c_01_02", "c_01_03" };
+  static const DWORD kEndFrame[3] = { 45, 40, 40 };
+  const BYTE l_bySlotIndex = (pi_bySlotIndex > 2) ? 0 : pi_bySlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_bySlotIndex], 0, kEndFrame[l_bySlotIndex], _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterNextCamera(BYTE pi_byOldSlotIndex)
+{
+  static const char *kCameraName[3] = { "c_02_01", "c_02_02", "c_02_03" };
+  const BYTE l_byOldSlotIndex = (pi_byOldSlotIndex > 2) ? 0 : pi_byOldSlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_byOldSlotIndex], 0, 30, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterPrevCamera(BYTE pi_byOldSlotIndex)
+{
+  static const char *kCameraName[3] = { "c_02_03", "c_02_01", "c_02_02" };
+  const BYTE l_byOldSlotIndex = (pi_byOldSlotIndex > 2) ? 0 : pi_byOldSlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_byOldSlotIndex], 30, 0, _CAM_FLAG_FINAL_STOP);
+}
+
+void CMainApp::UnloadLoginLobbyData(void)
+{
+  if (!m_isMapLoaded)
+  {
+    return;
+  }
+
+  m_pPlayer = NULL;
+  m_CharacterMgr.Clear();
+  m_cLoginLobbyAniCamera.ReleaseAniCamera();
+  m_vecLoginLobbyCameraPos[0] = 0.0f;
+  m_vecLoginLobbyCameraPos[1] = 0.0f;
+  m_vecLoginLobbyCameraPos[2] = 0.0f;
+  m_land.UnloadLevel();
+  m_isMapLoaded = false;
+  m_mapName[0] = '\0';
+  m_hasSpawnCameraTarget = false;
+  m_isRightMouseDragging = false;
+  m_pendingWheelDelta = 0;
+}
+
+void CMainApp::FrameMoveLoginLobby(void)
+{
+  if (!m_isMapLoaded)
+  {
+    return;
+  }
+
+  if (CLevel *l_pLevel = m_land.GetLevel())
+  {
+    if (m_cLoginLobbyAniCamera.IsLoadedAniCamera())
+    {
+      float l_matLobbyCamera[4][4];
+      m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f);
+      R3SetCameraMatrix(m_vecLoginLobbyCameraPos, l_matLobbyCamera);
+      l_pLevel->SetCameraPos(m_vecLoginLobbyCameraPos);
+      l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+    }
+    else
+    {
+      m_fViewAngleY = NormalizeAngle360(m_fViewAngleY - (8.0f * R3GetLoopTime()));
+      ApplyCamera();
+      l_pLevel->SetCameraPos(m_cameraPosition);
+      l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+    }
+
+    l_pLevel->FrameMove();
+  }
+  UpdateProjectionParameters();
+}
+
+void CMainApp::RenderLoginLobby(void)
+{
+  if (!m_isMapLoaded)
+  {
+    return;
+  }
+
+  Vector3f l_vecRenderPos;
+  if (m_cLoginLobbyAniCamera.IsLoadedAniCamera())
+  {
+    l_vecRenderPos[0] = m_vecLoginLobbyCameraPos[0];
+    l_vecRenderPos[1] = m_vecLoginLobbyCameraPos[1];
+    l_vecRenderPos[2] = m_vecLoginLobbyCameraPos[2];
+  }
+  else
+  {
+    l_vecRenderPos[0] = m_cameraPosition[0];
+    l_vecRenderPos[1] = m_cameraPosition[1];
+    l_vecRenderPos[2] = m_cameraPosition[2];
+  }
+
+  m_land.Render(l_vecRenderPos);
+  m_land.RenderAlpha(l_vecRenderPos);
+}
+
+HRESULT CMainApp::FrameMoveMainGame()
 {
   R3CalculateTime();
 
@@ -657,13 +1595,17 @@ HRESULT CRFClientApp::FrameMove()
   UpdateCharacter();
   UpdateCamera();
   ApplyCamera();
-  m_player.FrameMove();
-  m_level.FrameMove();
+  m_CharacterMgr.FrameMove();
+  m_CharacterMgr.Animation();
+  if (CLevel *l_pLevel = m_land.GetLevel())
+  {
+    l_pLevel->FrameMove();
+  }
   UpdateProjectionParameters();
   return S_OK;
 }
 
-HRESULT CRFClientApp::Render()
+HRESULT CMainApp::RenderMainGame()
 {
   static bool s_loggedPlayerProjection = false;
 
@@ -675,16 +1617,13 @@ HRESULT CRFClientApp::Render()
   R3ClearFrameBuffer();
   if (m_isMapLoaded)
   {
-    m_level.SetCameraPos(m_cameraPosition);
-    m_level.SetViewMatrix(R3MoveGetViewMatrix());
-    m_level.DrawSkyBoxRender();
-    m_level.DrawMapRender();
-    m_level.DrawMapEntitiesRender();
-    if (m_player.IsLoaded() && m_level.mBsp)
+    CLevel *l_pLevel = m_land.GetLevel();
+    m_land.Render(m_cameraPosition);
+    if (m_pPlayer && m_pPlayer->IsLoaded() && l_pLevel && l_pLevel->mBsp)
     {
       float l_vecPlayerPos[3];
-      m_player.GetPosition(l_vecPlayerPos);
-      m_player.SetMapColor(m_level.mBsp->GetLightFromPoint(l_vecPlayerPos));
+      m_pPlayer->GetPosition(l_vecPlayerPos);
+      m_pPlayer->SetLightColorFromMap(l_pLevel->mBsp->GetLightFromPoint(l_vecPlayerPos));
 #if defined(_DEBUG)
       if (!s_loggedPlayerProjection)
       {
@@ -724,7 +1663,10 @@ HRESULT CRFClientApp::Render()
     }
     else
     {
-      m_player.SetMapColor(0xFFFFFFFF);
+      if (m_pPlayer)
+      {
+        m_pPlayer->SetLightColor(LIGHT_NORMAL_COLOR);
+      }
     }
 
     if (!DrawPlayerShadowRender())
@@ -732,8 +1674,9 @@ HRESULT CRFClientApp::Render()
       return S_OK;
     }
 
-    m_player.Render();
-    m_level.DrawMapAlphaRender(m_cameraPosition);
+    m_CharacterMgr.Render();
+    m_land.RenderAlpha(m_cameraPosition);
+    m_cUI.Render(m_land, m_pPlayer, m_bKeyboardMoveMode, m_fViewAngleY);
   }
 
   R3EndScene();
@@ -751,13 +1694,44 @@ HRESULT CRFClientApp::Render()
   return S_OK;
 }
 
-LRESULT CRFClientApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CMainApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch (message)
   {
+    case WM_ACTIVATEAPP:
+      m_bIsActive = wParam ? TRUE : FALSE;
+      break;
+
+    case WM_CLOSE:
+      m_bIsQuit = TRUE;
+      PostQuitMessage(0);
+      return 0;
+
+    default:
+      break;
+  }
+
+  if (m_pGameProgress)
+  {
+    const LRESULT l_nResult = m_pGameProgress->MsgProc(hWnd, message, wParam, lParam);
+    if (l_nResult == 0)
+    {
+      return 0;
+    }
+  }
+
+  return R3D3dWrapper::MsgProc(hWnd, message, wParam, lParam);
+}
+
+LRESULT CMainApp::MsgProcMainGame(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  switch (message)
+  {
+    case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
     {
       const bool l_bIsAutoRepeat = (lParam & 0x40000000) != 0;
+      const bool l_bShortcutAllowed = !IsShortcutModifierDown();
 
       if (wParam == VK_ESCAPE)
       {
@@ -777,7 +1751,7 @@ LRESULT CRFClientApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
       }
 
-      if (!l_bIsAutoRepeat && wParam == 'H')
+      if (l_bShortcutAllowed && !l_bIsAutoRepeat && wParam == 'H')
       {
         m_bKeyboardMoveMode = !m_bKeyboardMoveMode;
 #if defined(_DEBUG)
@@ -787,12 +1761,15 @@ LRESULT CRFClientApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
       }
 
-      if (!l_bIsAutoRepeat && wParam == VK_OEM_1)
+      if (l_bShortcutAllowed && !l_bIsAutoRepeat && wParam == VK_OEM_1)
       {
-        m_player.SetWalkMode(m_player.GetWalkMode() == CMM_MOVE_RUN ? CMM_MOVE_WALK : CMM_MOVE_RUN);
+        if (m_pPlayer)
+        {
+          m_pPlayer->SetWalkMode(m_pPlayer->GetWalkMode() == CMM_MOVE_RUN ? CMM_MOVE_WALK : CMM_MOVE_RUN);
+        }
 #if defined(_DEBUG)
         AppendCaptureLog("MsgProc: move mode=%s",
-                         m_player.GetWalkMode() == CMM_MOVE_RUN ? "run" : "walk");
+                         (!m_pPlayer || m_pPlayer->GetWalkMode() == CMM_MOVE_RUN) ? "run" : "walk");
 #endif
         return 0;
       }
@@ -814,28 +1791,39 @@ LRESULT CRFClientApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
   return R3D3dWrapper::MsgProc(hWnd, message, wParam, lParam);
 }
 
-bool CRFClientApp::LoadMapSelection(LPCSTR commandLine)
+bool CMainApp::LoadMapSelection(LPCSTR commandLine)
 {
   char selectedMap[MAX_PATH];
   CopyMapSelection(selectedMap, sizeof(selectedMap), commandLine);
   return LoadMap(selectedMap);
 }
 
-bool CRFClientApp::LoadMap(const char *mapSelection)
+bool CMainApp::LoadMap(const char *mapSelection)
 {
   if (!mapSelection || !mapSelection[0])
   {
     return false;
   }
 
-  char mapFilePath[MAX_PATH];
+  char mapFilePath[MAX_PATH] = {};
+  MAP_INFO *l_pMapInfo = NULL;
+  bool l_bLoadByMapIndex = false;
   if (IsPathLike(mapSelection))
   {
     strcpy_s(mapFilePath, sizeof(mapFilePath), mapSelection);
   }
   else
   {
-    sprintf_s(mapFilePath, sizeof(mapFilePath), ".\\Map\\%s\\%s.bsp", mapSelection, mapSelection);
+    l_pMapInfo = FindMapInfoBySelection(m_land, mapSelection);
+    if (l_pMapInfo)
+    {
+      strcpy_s(mapFilePath, sizeof(mapFilePath), l_pMapInfo->pFileName);
+      l_bLoadByMapIndex = true;
+    }
+    else
+    {
+      sprintf_s(mapFilePath, sizeof(mapFilePath), ".\\Map\\%s\\%s.bsp", mapSelection, mapSelection);
+    }
   }
 
   if (!IsExistFile(mapFilePath))
@@ -845,7 +1833,7 @@ bool CRFClientApp::LoadMap(const char *mapSelection)
 
   if (m_isMapLoaded)
   {
-    m_level.ReleaseLevel();
+    m_land.UnloadLevel();
     m_isMapLoaded = false;
   }
 
@@ -853,8 +1841,19 @@ bool CRFClientApp::LoadMap(const char *mapSelection)
   StripEXT(m_mapName);
   StripPath(m_mapName);
 
-  m_level.LoadLevel(mapFilePath);
-  if (!m_level.IsLoadedBsp())
+  bool l_bLoaded = false;
+  if (l_bLoadByMapIndex && l_pMapInfo)
+  {
+    m_land.SetMapIndex(l_pMapInfo->byIndex);
+    l_bLoaded = m_land.LoadLevel(l_pMapInfo->byIndex) != FALSE;
+  }
+  else
+  {
+    l_bLoaded = m_land.LoadLevel(mapFilePath) != FALSE;
+  }
+
+  CLevel *l_pLevel = m_land.GetLevel();
+  if (!l_bLoaded || !l_pLevel || !l_pLevel->IsLoadedBsp())
   {
 #if defined(_DEBUG)
     AppendCaptureLog("LoadMap: LoadLevel failed path=%s", mapFilePath);
@@ -863,7 +1862,7 @@ bool CRFClientApp::LoadMap(const char *mapSelection)
     return false;
   }
 
-  m_camera.SetBspPtr(m_level.mBsp);
+  m_camera.SetBspPtr(l_pLevel->mBsp);
   m_isMapLoaded = true;
 #if defined(_DEBUG)
   AppendCaptureLog("LoadMap: success path=%s", mapFilePath);
@@ -873,9 +1872,13 @@ bool CRFClientApp::LoadMap(const char *mapSelection)
   return true;
 }
 
-void CRFClientApp::ResetCharacterFromLoadedMap()
+void CMainApp::ResetCharacterFromLoadedMap()
 {
-  if (!m_isMapLoaded || !m_level.mBsp || !m_level.mBsp->mNode || m_level.mBsp->mNodeNum <= 1)
+  m_pPlayer = NULL;
+  m_CharacterMgr.Clear();
+
+  CLevel *l_pLevel = m_land.GetLevel();
+  if (!m_isMapLoaded || !l_pLevel || !l_pLevel->mBsp || !l_pLevel->mBsp->mNode || l_pLevel->mBsp->mNodeNum <= 1)
   {
     return;
   }
@@ -884,16 +1887,16 @@ void CRFClientApp::ResetCharacterFromLoadedMap()
   AppendCaptureLog("ResetCharacterFromLoadedMap: begin");
 #endif
 
-  const _BSP_NODE &worldNode = m_level.mBsp->mNode[1];
+  const _BSP_NODE &worldNode = l_pLevel->mBsp->mNode[1];
   float l_vecSpawnPos[3];
   float l_fFlatness = 0.0f;
-  if (!FindCharacterSpawnPos(m_level, worldNode, l_vecSpawnPos, l_fFlatness))
+  if (!FindCharacterSpawnPos(*l_pLevel, worldNode, l_vecSpawnPos, l_fFlatness))
   {
     l_vecSpawnPos[0] = (static_cast<float>(worldNode.bb_min[0]) + static_cast<float>(worldNode.bb_max[0])) * 0.5f;
     l_vecSpawnPos[2] = (static_cast<float>(worldNode.bb_min[2]) + static_cast<float>(worldNode.bb_max[2])) * 0.5f;
     l_vecSpawnPos[1] = static_cast<float>(worldNode.bb_max[1]);
 
-    const float l_fGroundHeight = m_level.GetFirstYpos(l_vecSpawnPos, 0);
+    const float l_fGroundHeight = l_pLevel->GetFirstYpos(l_vecSpawnPos, 0);
     if (IsValidGroundHeight(l_fGroundHeight))
     {
       l_vecSpawnPos[1] = l_fGroundHeight;
@@ -905,7 +1908,8 @@ void CRFClientApp::ResetCharacterFromLoadedMap()
   m_spawnCameraTarget[2] = l_vecSpawnPos[2];
   m_hasSpawnCameraTarget = true;
 
-  if (!m_player.LoadAccretia())
+  m_pPlayer = m_CharacterMgr.AddPlayer(0);
+  if (!m_pPlayer || !m_pPlayer->LoadAccretia())
   {
 #if defined(_DEBUG)
     AppendCaptureLog("ResetCharacterFromLoadedMap: LoadAccretia failed");
@@ -921,9 +1925,9 @@ void CRFClientApp::ResetCharacterFromLoadedMap()
   AppendCaptureLog("ResetCharacterFromLoadedMap: LoadAccretia succeeded");
 #endif
 
-  m_player.SetPosition(l_vecSpawnPos[0], l_vecSpawnPos[1], l_vecSpawnPos[2]);
-  m_player.SetWalkMode(CMM_MOVE_RUN);
-  m_player.SetRotY(180.0f);
+  m_pPlayer->SetPosition(l_vecSpawnPos[0], l_vecSpawnPos[1], l_vecSpawnPos[2]);
+  m_pPlayer->SetWalkMode(CMM_MOVE_RUN);
+  m_pPlayer->SetRotY(180.0f);
   m_bKeyboardMoveMode = false;
 #if defined(_DEBUG)
   AppendCaptureLog("ResetCharacterFromLoadedMap: player pos=(%.2f, %.2f, %.2f) flatness=%.2f",
@@ -934,14 +1938,15 @@ void CRFClientApp::ResetCharacterFromLoadedMap()
 #endif
 }
 
-void CRFClientApp::ResetCameraFromLoadedMap()
+void CMainApp::ResetCameraFromLoadedMap()
 {
-  if (!m_isMapLoaded || !m_level.mBsp || !m_level.mBsp->mNode || m_level.mBsp->mNodeNum <= 1)
+  CLevel *l_pLevel = m_land.GetLevel();
+  if (!m_isMapLoaded || !l_pLevel || !l_pLevel->mBsp || !l_pLevel->mBsp->mNode || l_pLevel->mBsp->mNodeNum <= 1)
   {
     return;
   }
 
-  const _BSP_NODE &worldNode = m_level.mBsp->mNode[1];
+  const _BSP_NODE &worldNode = l_pLevel->mBsp->mNode[1];
   const float minX = static_cast<float>(worldNode.bb_min[0]);
   const float minY = static_cast<float>(worldNode.bb_min[1]);
   const float minZ = static_cast<float>(worldNode.bb_min[2]);
@@ -965,13 +1970,13 @@ void CRFClientApp::ResetCameraFromLoadedMap()
   m_nPrevY = gMouse.y;
   m_pendingWheelDelta = 0;
 
-  if (m_player.IsLoaded())
+  if (m_pPlayer && m_pPlayer->IsLoaded())
   {
-    m_player.GetCameraTarget(m_cameraTarget);
+    m_pPlayer->GetCameraTarget(m_cameraTarget);
     m_fPointDist = ClampFloat(kDefaultCameraDistance, kMinCameraDistance, kMaxCameraDistance);
     m_fViewAngleX = 20.0f;
 
-    if (m_level.mBsp)
+    if (l_pLevel->mBsp)
     {
       const float l_afPitchCandidate[] = {20.0f, 28.0f, 35.0f};
       const float l_afYawOffset[] = {0.0f, 90.0f, -90.0f, 180.0f, 45.0f, -45.0f, 135.0f, -135.0f};
@@ -987,7 +1992,7 @@ void CRFClientApp::ResetCameraFromLoadedMap()
 
           Vector3f l_vecCameraPos;
           l_cameraCandidate.GetPos(l_vecCameraPos);
-          if (!m_level.mBsp->IsCollisionFace(m_cameraTarget, l_vecCameraPos))
+          if (!l_pLevel->mBsp->IsCollisionFace(m_cameraTarget, l_vecCameraPos))
           {
             m_fViewAngleX = l_afPitchCandidate[i];
             m_fViewAngleY += l_afYawOffset[j];
@@ -998,7 +2003,7 @@ void CRFClientApp::ResetCameraFromLoadedMap()
       }
     }
 
-    m_player.SetRotY(NormalizeAngle360(360.0f - m_fViewAngleY));
+    m_pPlayer->SetRotY(NormalizeAngle360(360.0f - m_fViewAngleY));
   }
   else
   {
@@ -1022,30 +2027,32 @@ void CRFClientApp::ResetCameraFromLoadedMap()
   m_camera.SetThPhDist(m_fViewAngleX, m_fViewAngleY, m_fPointDist);
   m_camera.MakeCameraAndViewMatrix();
   m_camera.GetPos(m_cameraPosition);
-  m_level.SetCameraPos(m_cameraPosition);
-  m_level.SetViewMatrix(R3MoveGetViewMatrix());
+  l_pLevel->SetCameraPos(m_cameraPosition);
+  l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
   UpdateProjectionParameters();
 }
 
-void CRFClientApp::UpdateCharacter()
+void CMainApp::UpdateCharacter()
 {
   const float loopTime = R3GetLoopTime();
-  if (!m_player.IsLoaded() || !m_level.mBsp)
+  CLevel *l_pLevel = m_land.GetLevel();
+  if (!m_pPlayer || !m_pPlayer->IsLoaded() || !l_pLevel || !l_pLevel->mBsp)
   {
     return;
   }
 
   Vector3f l_vecPlayerPos;
-  m_player.GetPosition(l_vecPlayerPos);
+  m_pPlayer->GetPosition(l_vecPlayerPos);
 
-  const BYTE l_byWalkMode = m_player.GetWalkMode();
-  const bool l_bMoveForward = m_bKeyboardMoveMode ? IsKeyDown('W') : IsKeyDown(VK_UP);
-  const bool l_bMoveBackward = m_bKeyboardMoveMode ? IsKeyDown('S') : IsKeyDown(VK_DOWN);
-  const bool l_bMoveLeft = m_bKeyboardMoveMode ? IsKeyDown('A') : IsKeyDown(VK_LEFT);
-  const bool l_bMoveRight = m_bKeyboardMoveMode ? IsKeyDown('D') : IsKeyDown(VK_RIGHT);
+  const BYTE l_byWalkMode = m_pPlayer->GetWalkMode();
+  const bool l_bAlphabeticShortcutAllowed = !IsShortcutModifierDown();
+  const bool l_bMoveForward = m_bKeyboardMoveMode ? (l_bAlphabeticShortcutAllowed && IsKeyDown('W')) : IsKeyDown(VK_UP);
+  const bool l_bMoveBackward = m_bKeyboardMoveMode ? (l_bAlphabeticShortcutAllowed && IsKeyDown('S')) : IsKeyDown(VK_DOWN);
+  const bool l_bMoveLeft = m_bKeyboardMoveMode ? (l_bAlphabeticShortcutAllowed && IsKeyDown('A')) : IsKeyDown(VK_LEFT);
+  const bool l_bMoveRight = m_bKeyboardMoveMode ? (l_bAlphabeticShortcutAllowed && IsKeyDown('D')) : IsKeyDown(VK_RIGHT);
 
-  float l_fMoveRotY = m_player.GetRotY();
-  float l_fFacingRotY = m_player.GetRotY();
+  float l_fMoveRotY = m_pPlayer->GetRotY();
+  float l_fFacingRotY = m_pPlayer->GetRotY();
   if (m_bKeyboardMoveMode)
   {
     if (!GetKeyboardModeMoveRotY(l_bMoveForward,
@@ -1056,7 +2063,7 @@ void CRFClientApp::UpdateCharacter()
                                  l_fFacingRotY,
                                  l_fMoveRotY))
     {
-      m_player.SetMoveMode(false, l_byWalkMode);
+      m_pPlayer->SetMoveMode(false, l_byWalkMode);
       return;
     }
   }
@@ -1067,7 +2074,7 @@ void CRFClientApp::UpdateCharacter()
                                  m_fViewAngleY,
                                  l_fMoveRotY))
   {
-    m_player.SetMoveMode(false, l_byWalkMode);
+    m_pPlayer->SetMoveMode(false, l_byWalkMode);
     return;
   }
 
@@ -1085,21 +2092,21 @@ void CRFClientApp::UpdateCharacter()
   l_vecTargetPos[2] = l_vecPlayerPos[2] + (cosf(AngleToPi(l_fMoveRotY)) * l_fMovementStep);
 
   Vector3f l_vecReachablePos;
-  if (!m_level.mBsp->CanYouGoThere(l_vecPlayerPos, l_vecTargetPos, &l_vecReachablePos))
+  if (!l_pLevel->mBsp->CanYouGoThere(l_vecPlayerPos, l_vecTargetPos, &l_vecReachablePos))
   {
     l_vecTargetPos[0] = l_vecReachablePos[0];
     l_vecTargetPos[2] = l_vecReachablePos[2];
   }
 
   float l_fResolvedY = l_vecPlayerPos[1];
-  if (m_level.GetNextYposForServerFar(l_vecPlayerPos, l_vecTargetPos, &l_fResolvedY) ||
-      m_level.GetNextYposFarProgress(l_vecPlayerPos, l_vecTargetPos, &l_fResolvedY))
+  if (l_pLevel->GetNextYposForServerFar(l_vecPlayerPos, l_vecTargetPos, &l_fResolvedY) ||
+      l_pLevel->GetNextYposFarProgress(l_vecPlayerPos, l_vecTargetPos, &l_fResolvedY))
   {
     l_vecTargetPos[1] = l_fResolvedY;
   }
   else
   {
-    const float l_fGroundHeight = m_level.GetFirstYpos(l_vecTargetPos, 0);
+    const float l_fGroundHeight = l_pLevel->GetFirstYpos(l_vecTargetPos, 0);
     if (IsValidGroundHeight(l_fGroundHeight))
     {
       l_vecTargetPos[1] = l_fGroundHeight;
@@ -1110,25 +2117,29 @@ void CRFClientApp::UpdateCharacter()
   const float l_fAppliedMoveZ = l_vecTargetPos[2] - l_vecPlayerPos[2];
   if ((l_fAppliedMoveX * l_fAppliedMoveX) + (l_fAppliedMoveZ * l_fAppliedMoveZ) <= 0.0001f)
   {
-    m_player.SetMoveMode(false, l_byWalkMode);
+    m_pPlayer->SetMoveMode(false, l_byWalkMode);
     return;
   }
 
-  m_player.SetPosition(l_vecTargetPos[0], l_vecTargetPos[1], l_vecTargetPos[2]);
-  m_player.SetRotY(m_bKeyboardMoveMode ? l_fFacingRotY : l_fMoveRotY);
-  m_player.SetMoveMode(true, l_byAppliedMoveMode);
+  m_pPlayer->SetPosition(l_vecTargetPos[0], l_vecTargetPos[1], l_vecTargetPos[2]);
+  m_pPlayer->SetRotY(m_bKeyboardMoveMode ? l_fFacingRotY : l_fMoveRotY);
+  m_pPlayer->SetMoveMode(true,
+                         l_byAppliedMoveMode,
+                         m_bKeyboardMoveMode,
+                         l_fFacingRotY,
+                         l_fMoveRotY);
 }
 
-void CRFClientApp::UpdateCamera()
+void CMainApp::UpdateCamera()
 {
   const float loopTime = R3GetLoopTime();
   const float rotationStep = 90.0f * loopTime;
   const float zoomStep = 25.0f * loopTime;
   const bool isRightMouseDown = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
 
-  if (m_player.IsLoaded())
+  if (m_pPlayer && m_pPlayer->IsLoaded())
   {
-    m_player.GetCameraTarget(m_cameraTarget);
+    m_pPlayer->GetCameraTarget(m_cameraTarget);
   }
 
   if (isRightMouseDown)
@@ -1163,11 +2174,12 @@ void CRFClientApp::UpdateCamera()
     m_nPrevY = gMouse.y;
   }
 
-  if (IsKeyDown('Q'))
+  const bool l_bAlphabeticShortcutAllowed = !IsShortcutModifierDown();
+  if (l_bAlphabeticShortcutAllowed && IsKeyDown('Q'))
   {
     m_fViewAngleY += rotationStep;
   }
-  if (IsKeyDown('E'))
+  if (l_bAlphabeticShortcutAllowed && IsKeyDown('E'))
   {
     m_fViewAngleY -= rotationStep;
   }
@@ -1217,27 +2229,28 @@ void CRFClientApp::UpdateCamera()
   m_fPointDist = ClampFloat(m_fPointDist, kMinCameraDistance, kMaxCameraDistance);
 }
 
-bool CRFClientApp::DrawPlayerShadowRender()
+bool CMainApp::DrawPlayerShadowRender()
 {
-  if (!m_player.IsLoaded() || !m_level.mBsp)
+  CLevel *l_pLevel = m_land.GetLevel();
+  if (!m_pPlayer || !m_pPlayer->IsLoaded() || !l_pLevel || !l_pLevel->mBsp)
   {
     return true;
   }
 
   float l_vecPlayerPos[3];
-  m_player.GetPosition(l_vecPlayerPos);
+  m_pPlayer->GetPosition(l_vecPlayerPos);
 
   float l_fScale = 1.0f;
   float l_fAddPos = 10.0f;
-  m_player.GetScaleAddPos(&l_fScale, &l_fAddPos);
+  m_pPlayer->GetScaleAddPos(&l_fScale, &l_fAddPos);
 
   R3EndScene();
   ShadowBeginScene();
   PrepareShadow(l_fScale, l_fAddPos);
-  m_player.CreateShadow();
+  m_pPlayer->CreateShadow();
   ShadowEndScene();
 
-  m_level.PrepareShadowRender(l_vecPlayerPos, GetShadowTexture(), 0.8f, 3, l_fScale, l_fAddPos);
+  l_pLevel->PrepareShadowRender(l_vecPlayerPos, GetShadowTexture(), 0.8f, 3, l_fScale, l_fAddPos);
   if (!R3BeginScene())
   {
     return false;
@@ -1254,24 +2267,25 @@ bool CRFClientApp::DrawPlayerShadowRender()
     }
   }
 
-  m_level.SetCameraPos(m_cameraPosition);
-  m_level.SetViewMatrix(R3MoveGetViewMatrix());
-  m_level.DrawShadowRender(l_vecPlayerPos);
+  l_pLevel->SetCameraPos(m_cameraPosition);
+  l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+  l_pLevel->DrawShadowRender(l_vecPlayerPos);
   return true;
 }
 
-void CRFClientApp::ApplyCamera()
+void CMainApp::ApplyCamera()
 {
   _R3ENGINE_STATE *state = GetR3State();
+  CLevel *l_pLevel = m_land.GetLevel();
   m_camera.SetPoint(m_cameraTarget[0], m_cameraTarget[1], m_cameraTarget[2]);
   m_camera.SetThPhDist(m_fViewAngleX, m_fViewAngleY, m_fPointDist);
   m_camera.MakeCameraAndViewMatrix();
   m_camera.GetPos(m_cameraPosition);
 
-  if (state && m_level.mBsp)
+  if (state && l_pLevel && l_pLevel->mBsp)
   {
     Vector3f l_vecAdjustedCameraPos;
-    if (m_level.mBsp->IsCollisionFace(m_cameraTarget, m_cameraPosition, &l_vecAdjustedCameraPos, 2.0f))
+    if (l_pLevel->mBsp->IsCollisionFace(m_cameraTarget, m_cameraPosition, &l_vecAdjustedCameraPos, 2.0f))
     {
       m_cameraPosition[0] = l_vecAdjustedCameraPos[0];
       m_cameraPosition[1] = l_vecAdjustedCameraPos[1];
@@ -1290,11 +2304,14 @@ void CRFClientApp::ApplyCamera()
     }
   }
 
-  m_level.SetCameraPos(m_cameraPosition);
-  m_level.SetViewMatrix(R3MoveGetViewMatrix());
+  if (l_pLevel)
+  {
+    l_pLevel->SetCameraPos(m_cameraPosition);
+    l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
+  }
 }
 
-void CRFClientApp::UpdateProjectionParameters()
+void CMainApp::UpdateProjectionParameters()
 {
   _R3ENGINE_STATE *state = GetR3State();
   if (!state || state->mScreenYsize <= 0.0f)
@@ -1316,7 +2333,7 @@ void CRFClientApp::UpdateProjectionParameters()
   MatrixMultiply(state->mMatViewProj.m, state->mMatProj.m, state->mMatView.m);
 }
 
-bool CRFClientApp::SaveDebugFrameCapture(const char *fileName)
+bool CMainApp::SaveDebugFrameCapture(const char *fileName)
 {
   if (!fileName || !GetD3dDevice())
   {
@@ -1403,7 +2420,7 @@ bool CRFClientApp::SaveDebugFrameCapture(const char *fileName)
   return saved;
 }
 
-bool CRFClientApp::IsKeyDown(int virtualKey)
+bool CMainApp::IsKeyDown(int virtualKey)
 {
   return virtualKey >= 0 && virtualKey < 256 && (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 }

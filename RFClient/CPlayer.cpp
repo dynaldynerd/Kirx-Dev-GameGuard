@@ -1,4 +1,4 @@
-#include "RFClientPlayer.h"
+#include "CPlayer.h"
 
 #include <cmath>
 #include <cstdarg>
@@ -10,7 +10,8 @@
 #include <ddraw.h>
 
 #include "AlphaMeshManager.h"
-#include "DataFile.h"
+#include "CCharacterMgr.h"
+#include "CResourceDataMgr.h"
 #include "R3Engine/common/commonutil.h"
 #include "R3Engine/2ndclass/r3util.h"
 
@@ -19,7 +20,6 @@
 namespace
 {
 constexpr char kDebugCaptureLogPath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.log";
-constexpr char kResourceFileName[] = ".\\DataTable\\Resource.edf";
 constexpr char kPlayerMeshRFSPath[] = ".\\Character\\Player\\Mesh\\";
 constexpr char kPlayerAniRFSPath[] = ".\\Character\\Player\\Ani\\";
 constexpr char kPlayerTexRFSPath[] = ".\\Character\\Player\\Tex\\";
@@ -29,6 +29,12 @@ constexpr char kLoosePlayerAniProbe[] = ".\\Character\\Player\\Ani\\ACCRETIA_PEA
 constexpr char kAccretiaStandAniName[] = "ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI";
 constexpr char kAccretiaWalkAniName[] = "ACCRETIA_PEACE_WALK_NONE_NONE_01_00.ANI";
 constexpr char kAccretiaRunAniName[] = "ACCRETIA_PEACE_RUN_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaBwWalkAniName[] = "ACCRETIA_PEACE_BWWALK_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaLfWalkAniName[] = "ACCRETIA_PEACE_LFWALK_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaRtWalkAniName[] = "ACCRETIA_PEACE_RTWALK_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaBwRunAniName[] = "ACCRETIA_PEACE_BWRUN_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaLfRunAniName[] = "ACCRETIA_PEACE_LFRUN_NONE_NONE_01_00.ANI";
+constexpr char kAccretiaRtRunAniName[] = "ACCRETIA_PEACE_RTRUN_NONE_NONE_01_00.ANI";
 constexpr size_t kObjectMeshTextureOffset = 0x304;
 constexpr size_t kObjectMeshStride = 0x430;
 
@@ -37,6 +43,21 @@ void AppendPlayerLog(const char *format, ...);
 #endif
 
 bool IsTextureFileNameLocal(const char *pi_pFileName);
+
+float NormalizeAngle360Local(float pi_fValue)
+{
+  while (pi_fValue >= 360.0f)
+  {
+    pi_fValue -= 360.0f;
+  }
+
+  while (pi_fValue < 0.0f)
+  {
+    pi_fValue += 360.0f;
+  }
+
+  return pi_fValue;
+}
 
 constexpr char kDefaultAccretiaMeshName[MAX_DEFAULT_PART][64] =
 {
@@ -804,101 +825,72 @@ void DumpCharacterObjectDebug(const char *pi_pLabel, CHARACTEROBJECT *pi_pCharac
 #endif
 }
 
-CRFClientPlayer::CRFClientPlayer()
-  : m_pCharIF(NULL),
-    m_pAnimationMgr(NULL),
-    m_pTextureMgr(NULL),
-    m_pBoneMgr(NULL),
-    m_pBodyPartMgr(NULL),
-    m_pBone(NULL),
-    m_pStandAni(NULL),
+CPlayer::CPlayer()
+  : m_pStandAni(NULL),
     m_pWalkAni(NULL),
     m_pRunAni(NULL),
+    m_pBwWalkAni(NULL),
+    m_pLfWalkAni(NULL),
+    m_pRtWalkAni(NULL),
+    m_pBwRunAni(NULL),
+    m_pLfRunAni(NULL),
+    m_pRtRunAni(NULL),
     m_pCurAni(NULL),
     m_bInitialized(false),
     m_bLoaded(false),
     m_bMountedRFS(false),
     m_bPreparedTextureCache(false),
     m_bUseBoneRender(false),
-    m_byWalkMode(CMM_MOVE_RUN),
-    m_dwMapColor(0xFFFFFFFF),
-    m_fBoneFrame(160.0f),
-    m_fRotY(180.0f)
+    m_byWalkMode(CMM_MOVE_RUN)
 {
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
-  ZeroMemory(m_vecPos, sizeof(m_vecPos));
-  m_vecBBoxMin[0] = -20.0f;
-  m_vecBBoxMin[1] = 0.0f;
-  m_vecBBoxMin[2] = -20.0f;
-  m_vecBBoxMax[0] = 20.0f;
-  m_vecBBoxMax[1] = 150.0f;
-  m_vecBBoxMax[2] = 20.0f;
   ZeroMemory(m_szBoneName, sizeof(m_szBoneName));
   ZeroMemory(m_szBBoxName, sizeof(m_szBBoxName));
   ZeroMemory(m_szAniName, sizeof(m_szAniName));
   ZeroMemory(m_szMeshName, sizeof(m_szMeshName));
+  SetObjectTypeID(CTI_PLAYER);
+  SetCharTypeID(CTI_PLAYER);
+  SetRotY(180.0f);
+  Enable(ROSF_RENDER_MESH | ROSF_RENDER_SHADOW);
 }
 
-CRFClientPlayer::~CRFClientPlayer()
+CPlayer::~CPlayer()
 {
   Shutdown();
 }
 
-bool CRFClientPlayer::Initialize(IDirect3DDevice8 *pi_pD3DDevice)
+bool CPlayer::Initialize(void)
 {
   if (m_bInitialized)
   {
     return true;
   }
 
-  if (!pi_pD3DDevice)
-  {
-    return false;
-  }
-
-  m_pCharIF = static_cast<ChInterface *>(::operator new(sizeof(ChInterface)));
-  ZeroMemory(m_pCharIF, sizeof(ChInterface));
-  m_pCharIF->InitCharacter(pi_pD3DDevice);
-  m_pCharIF->SetRender();
-
-  m_pAnimationMgr = static_cast<AnimationManager *>(::operator new(sizeof(AnimationManager)));
-  ZeroMemory(m_pAnimationMgr, sizeof(AnimationManager));
-  m_pAnimationMgr->Init();
-
-  m_pTextureMgr = static_cast<TextureManager *>(::operator new(sizeof(TextureManager)));
-  ZeroMemory(m_pTextureMgr, sizeof(TextureManager));
-  m_pTextureMgr->Init();
-  m_pTextureMgr->m_pD3DDevice = pi_pD3DDevice;
-
-  m_pBoneMgr = static_cast<CObjectManager *>(::operator new(sizeof(CObjectManager)));
-  ZeroMemory(m_pBoneMgr, sizeof(CObjectManager));
-
-  m_pCharIF->AddPartToMM("BODY");
-  m_pBodyPartMgr = m_pCharIF->GetPart("BODY");
-  if (!m_pTextureMgr || !m_pBoneMgr || !m_pBodyPartMgr)
-  {
-    return false;
-  }
-
-  m_bInitialized = true;
-  return true;
+  m_bInitialized = (CCharacterMgr::GetCharIF() != NULL) &&
+                   (CCharacterMgr::GetAnimationMgr() != NULL) &&
+                   (CCharacterMgr::GetTextureMgr() != NULL) &&
+                   (CCharacterMgr::GetBoneMgr(CTI_PLAYER) != NULL) &&
+                   (CCharacterMgr::GetMeshMgr(CTI_PLAYER) != NULL);
+  return m_bInitialized;
 }
 
-void CRFClientPlayer::Shutdown()
+void CPlayer::Shutdown()
 {
   m_bLoaded = false;
   m_pStandAni = NULL;
   m_pWalkAni = NULL;
   m_pRunAni = NULL;
+  m_pBwWalkAni = NULL;
+  m_pLfWalkAni = NULL;
+  m_pRtWalkAni = NULL;
+  m_pBwRunAni = NULL;
+  m_pLfRunAni = NULL;
+  m_pRtRunAni = NULL;
   m_pCurAni = NULL;
-  m_pBone = NULL;
-  m_pBoneMgr = NULL;
-  m_pTextureMgr = NULL;
-  m_pAnimationMgr = NULL;
-  m_pCharIF = NULL;
-  m_pBodyPartMgr = NULL;
+  SetBonePtr(NULL);
   m_bUseBoneRender = false;
-  m_fBoneFrame = 160.0f;
+  m_dwBoneFrame = 160;
+  m_dwOldBoneFrame = 0;
   m_byWalkMode = CMM_MOVE_RUN;
   m_bInitialized = false;
   m_bMountedRFS = false;
@@ -906,17 +898,19 @@ void CRFClientPlayer::Shutdown()
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
 }
 
-bool CRFClientPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
+bool CPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
 {
-  if (!pi_pAniName || !pi_pAniName[0] || !po_ppAnimation || !m_pCharIF || !m_pAnimationMgr)
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  AnimationManager *l_pAnimationMgr = CCharacterMgr::GetAnimationMgr();
+  if (!pi_pAniName || !pi_pAniName[0] || !po_ppAnimation || !l_pCharIF || !l_pAnimationMgr)
   {
     return false;
   }
 
-  ChAnimation *l_pAnimation = m_pCharIF->AddAnimationData(m_pAnimationMgr, pi_pAniName);
+  ChAnimation *l_pAnimation = l_pCharIF->AddAnimationData(l_pAnimationMgr, pi_pAniName);
   if (!l_pAnimation)
   {
-    l_pAnimation = m_pCharIF->GetAnimationData(m_pAnimationMgr, pi_pAniName);
+    l_pAnimation = l_pCharIF->GetAnimationData(l_pAnimationMgr, pi_pAniName);
   }
 
   if (!l_pAnimation)
@@ -957,9 +951,10 @@ bool CRFClientPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimat
   return true;
 }
 
-bool CRFClientPlayer::SetAnimation(ChAnimation *pi_pAnimation)
+bool CPlayer::SetAnimation(ChAnimation *pi_pAnimation)
 {
-  if (!pi_pAnimation || !m_pBone || !m_pCharIF)
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  if (!pi_pAnimation || !m_pBone || !l_pCharIF)
   {
     return false;
   }
@@ -969,7 +964,7 @@ bool CRFClientPlayer::SetAnimation(ChAnimation *pi_pAnimation)
     return true;
   }
 
-  if (!m_pCharIF->IsLoadAnimation(pi_pAnimation))
+  if (!l_pCharIF->IsLoadAnimation(pi_pAnimation))
   {
 #if defined(_DEBUG)
     AppendPlayerLog("SetAnimation: animation not loaded ani=%p", pi_pAnimation);
@@ -979,14 +974,15 @@ bool CRFClientPlayer::SetAnimation(ChAnimation *pi_pAnimation)
 
   __try
   {
-    m_pCharIF->AnimationReset(m_pBone);
-    m_pCharIF->MatchAnimationToMesh(pi_pAnimation, m_pBone);
-    m_fBoneFrame = 160.0f;
+    l_pCharIF->AnimationReset(m_pBone);
+    l_pCharIF->MatchAnimationToMesh(pi_pAnimation, m_pBone);
+    m_dwBoneFrame = 160;
+    m_dwOldBoneFrame = 0;
     m_pBone->m_Transition = FALSE;
     m_pBone->m_TransFrame = 0;
     m_pBone->m_TransTime = 0;
-    m_pBone->m_Frame = static_cast<DWORD>(m_fBoneFrame);
-    m_pCharIF->FrameMove(m_pBone);
+    m_pBone->m_Frame = m_dwBoneFrame;
+    l_pCharIF->FrameMove(m_pBone);
   }
   __except (EXCEPTION_EXECUTE_HANDLER)
   {
@@ -1006,12 +1002,12 @@ bool CRFClientPlayer::SetAnimation(ChAnimation *pi_pAnimation)
   return true;
 }
 
-bool CRFClientPlayer::LoadAccretia()
+bool CPlayer::LoadAccretia()
 {
 #if defined(_DEBUG)
   AppendPlayerLog("LoadAccretia: begin initialized=%d loaded=%d", m_bInitialized ? 1 : 0, m_bLoaded ? 1 : 0);
 #endif
-  if (!m_bInitialized)
+  if (!m_bInitialized && !Initialize())
   {
     return false;
   }
@@ -1032,6 +1028,13 @@ bool CRFClientPlayer::LoadAccretia()
   BONE_DATA l_stBoneData = {};
   MESH_DATA l_astMeshData[MAX_DEFAULT_PART] = {};
   ANI_DATA l_stAniData = {};
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  CObjectManager *l_pBoneMgr = CCharacterMgr::GetBoneMgr(CTI_PLAYER);
+  if (!l_pCharIF || !l_pBoneMgr || !CCharacterMgr::GetMeshMgr(CTI_PLAYER))
+  {
+    return false;
+  }
+
   if (!LoadResourceData(l_stBoneData, l_astMeshData, l_stAniData))
   {
 #if defined(_DEBUG)
@@ -1051,11 +1054,11 @@ bool CRFClientPlayer::LoadAccretia()
 #if defined(_DEBUG)
   AppendPlayerLog("LoadAccretia: before AddBone %s", m_szBoneName);
 #endif
-  m_pBone = NULL;
+  SetBonePtr(NULL);
   CHARACTEROBJECT *l_pStoredBone = NULL;
   __try
   {
-    CHARACTEROBJECT *l_pLoadedBone = m_pCharIF->LoadMeshData(m_pBoneMgr,
+    CHARACTEROBJECT *l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr,
                                                              m_szBoneName,
                                                              true,
                                                              NULL);
@@ -1069,7 +1072,7 @@ bool CRFClientPlayer::LoadAccretia()
 
   __try
   {
-    l_pStoredBone = m_pBoneMgr->GetCharacter(m_szBoneName);
+    l_pStoredBone = l_pBoneMgr->GetCharacter(m_szBoneName);
 #if defined(_DEBUG)
     AppendPlayerLog("LoadAccretia: bone mgr GetCharacter result=%p", l_pStoredBone);
 #endif
@@ -1081,7 +1084,7 @@ bool CRFClientPlayer::LoadAccretia()
 
   __try
   {
-    m_pBone = m_pCharIF->GetMeshData(m_pBoneMgr, m_szBoneName);
+    m_pBone = l_pCharIF->GetMeshData(l_pBoneMgr, m_szBoneName);
 #if defined(_DEBUG)
     AppendPlayerLog("LoadAccretia: GetMeshData(bone) result=%p", m_pBone);
 #endif
@@ -1096,8 +1099,8 @@ bool CRFClientPlayer::LoadAccretia()
     bool l_bBoneRealLoaded = false;
     __try
     {
-      l_bBoneRealLoaded = m_pCharIF->LoadRealData(l_pStoredBone,
-                                                  &m_pCharIF->m_TM,
+      l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pStoredBone,
+                                                  &l_pCharIF->m_TM,
                                                   true);
 #if defined(_DEBUG)
       AppendPlayerLog("LoadAccretia: fallback LoadRealData bone m_TM true result=%d",
@@ -1122,6 +1125,7 @@ bool CRFClientPlayer::LoadAccretia()
     AppendPlayerLog("LoadAccretia: GetBone failed %s", m_szBoneName);
 #endif
   }
+  SetBonePtr(m_pBone);
 #if defined(_DEBUG)
   AppendPlayerLog("LoadAccretia: after AddBone %p", m_pBone);
   if (m_pBone)
@@ -1141,7 +1145,7 @@ bool CRFClientPlayer::LoadAccretia()
 #if defined(_DEBUG)
   AppendPlayerLog("LoadAccretia: before ImportBoundBox %s", m_szBBoxName);
 #endif
-  if (!m_pCharIF->ImportBoundBox(m_szBBoxName, m_vecBBoxMin, m_vecBBoxMax) ||
+  if (!l_pCharIF->ImportBoundBox(m_szBBoxName, m_vecBBoxMin, m_vecBBoxMax) ||
       !IsValidBBoxHeight(m_vecBBoxMax[1] - m_vecBBoxMin[1]))
   {
     m_vecBBoxMin[0] = -20.0f;
@@ -1189,12 +1193,30 @@ bool CRFClientPlayer::LoadAccretia()
   sprintf_s(m_szAniName, sizeof(m_szAniName), "%s%s", l_stAniData.pPathName, l_stAniData.pFileName);
   char l_szWalkAniName[MAX_PATH];
   char l_szRunAniName[MAX_PATH];
+  char l_szBwWalkAniName[MAX_PATH];
+  char l_szLfWalkAniName[MAX_PATH];
+  char l_szRtWalkAniName[MAX_PATH];
+  char l_szBwRunAniName[MAX_PATH];
+  char l_szLfRunAniName[MAX_PATH];
+  char l_szRtRunAniName[MAX_PATH];
   sprintf_s(l_szWalkAniName, sizeof(l_szWalkAniName), "%s%s", l_stAniData.pPathName, kAccretiaWalkAniName);
   sprintf_s(l_szRunAniName, sizeof(l_szRunAniName), "%s%s", l_stAniData.pPathName, kAccretiaRunAniName);
+  sprintf_s(l_szBwWalkAniName, sizeof(l_szBwWalkAniName), "%s%s", l_stAniData.pPathName, kAccretiaBwWalkAniName);
+  sprintf_s(l_szLfWalkAniName, sizeof(l_szLfWalkAniName), "%s%s", l_stAniData.pPathName, kAccretiaLfWalkAniName);
+  sprintf_s(l_szRtWalkAniName, sizeof(l_szRtWalkAniName), "%s%s", l_stAniData.pPathName, kAccretiaRtWalkAniName);
+  sprintf_s(l_szBwRunAniName, sizeof(l_szBwRunAniName), "%s%s", l_stAniData.pPathName, kAccretiaBwRunAniName);
+  sprintf_s(l_szLfRunAniName, sizeof(l_szLfRunAniName), "%s%s", l_stAniData.pPathName, kAccretiaLfRunAniName);
+  sprintf_s(l_szRtRunAniName, sizeof(l_szRtRunAniName), "%s%s", l_stAniData.pPathName, kAccretiaRtRunAniName);
 
   if (!LoadAnimation(m_szAniName, &m_pStandAni) ||
       !LoadAnimation(l_szWalkAniName, &m_pWalkAni) ||
-      !LoadAnimation(l_szRunAniName, &m_pRunAni))
+      !LoadAnimation(l_szRunAniName, &m_pRunAni) ||
+      !LoadAnimation(l_szBwWalkAniName, &m_pBwWalkAni) ||
+      !LoadAnimation(l_szLfWalkAniName, &m_pLfWalkAni) ||
+      !LoadAnimation(l_szRtWalkAniName, &m_pRtWalkAni) ||
+      !LoadAnimation(l_szBwRunAniName, &m_pBwRunAni) ||
+      !LoadAnimation(l_szLfRunAniName, &m_pLfRunAni) ||
+      !LoadAnimation(l_szRtRunAniName, &m_pRtRunAni))
   {
     return false;
   }
@@ -1218,7 +1240,7 @@ bool CRFClientPlayer::LoadAccretia()
                       static_cast<unsigned>(i),
                       m_pMesh[i]);
 #endif
-      m_pCharIF->FrameMove(m_pMesh[i]);
+      l_pCharIF->FrameMove(m_pMesh[i]);
 #if defined(_DEBUG)
       AppendPlayerLog("LoadAccretia: after FrameMove mesh index=%u", static_cast<unsigned>(i));
 #endif
@@ -1232,11 +1254,22 @@ bool CRFClientPlayer::LoadAccretia()
   return true;
 }
 
-void CRFClientPlayer::FrameMove()
+void CPlayer::FrameMove()
+{
+  CCharacter::FrameMove();
+}
+
+BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
 {
   if (!m_bLoaded)
   {
-    return;
+    return FALSE;
+  }
+
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  if (!l_pCharIF)
+  {
+    return FALSE;
   }
 
   if (m_bUseBoneRender && m_pBone)
@@ -1245,19 +1278,23 @@ void CRFClientPlayer::FrameMove()
     {
       if (m_pBone->m_OMaxFrame > 160)
       {
-        m_fBoneFrame += (R3GetLoopTime() * 1000.0f) * 5.0f;
-        if (m_fBoneFrame >= static_cast<float>(m_pBone->m_OMaxFrame))
+        float l_fBoneFrame = static_cast<float>(m_dwBoneFrame);
+        l_fBoneFrame += (R3GetLoopTime() * 1000.0f) * 5.0f;
+        if (l_fBoneFrame >= static_cast<float>(m_pBone->m_OMaxFrame))
         {
-          m_fBoneFrame = 160.0f;
+          l_fBoneFrame = 160.0f;
         }
+        m_dwOldBoneFrame = m_dwBoneFrame;
+        m_dwBoneFrame = static_cast<DWORD>(l_fBoneFrame);
       }
       else
       {
-        m_fBoneFrame = 160.0f;
+        m_dwOldBoneFrame = m_dwBoneFrame;
+        m_dwBoneFrame = 160;
       }
 
-      m_pBone->m_Frame = static_cast<DWORD>(m_fBoneFrame);
-      m_pCharIF->FrameMove(m_pBone);
+      m_pBone->m_Frame = m_dwBoneFrame;
+      l_pCharIF->FrameMove(m_pBone);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -1272,12 +1309,18 @@ void CRFClientPlayer::FrameMove()
   {
     if (m_pMesh[i])
     {
-      m_pCharIF->FrameMove(m_pMesh[i]);
+      l_pCharIF->FrameMove(m_pMesh[i]);
     }
   }
+
+  return TRUE;
 }
 
-void CRFClientPlayer::SetMoveMode(bool pi_bMoving, BYTE pi_byMoveMode)
+void CPlayer::SetMoveMode(bool pi_bMoving,
+                          BYTE pi_byMoveMode,
+                          bool pi_bUseMoveAniDirection,
+                          float pi_fFacingRotY,
+                          float pi_fMoveRotY)
 {
   if (!m_bLoaded)
   {
@@ -1288,6 +1331,23 @@ void CRFClientPlayer::SetMoveMode(bool pi_bMoving, BYTE pi_byMoveMode)
   if (pi_bMoving)
   {
     l_pAnimation = (pi_byMoveMode == CMM_MOVE_RUN) ? m_pRunAni : m_pWalkAni;
+    if (pi_bUseMoveAniDirection)
+    {
+      const float l_fRelativeMoveRotY = NormalizeAngle360Local(pi_fMoveRotY - pi_fFacingRotY);
+      if (l_fRelativeMoveRotY >= 135.0f && l_fRelativeMoveRotY < 225.0f)
+      {
+        l_pAnimation = (pi_byMoveMode == CMM_MOVE_RUN) ? m_pBwRunAni : m_pBwWalkAni;
+      }
+      else if (l_fRelativeMoveRotY >= 225.0f && l_fRelativeMoveRotY < 315.0f)
+      {
+        l_pAnimation = (pi_byMoveMode == CMM_MOVE_RUN) ? m_pLfRunAni : m_pLfWalkAni;
+      }
+      else if (l_fRelativeMoveRotY >= 45.0f && l_fRelativeMoveRotY < 135.0f)
+      {
+        l_pAnimation = (pi_byMoveMode == CMM_MOVE_RUN) ? m_pRtRunAni : m_pRtWalkAni;
+      }
+    }
+
     if (!l_pAnimation)
     {
       l_pAnimation = m_pStandAni;
@@ -1305,7 +1365,7 @@ void CRFClientPlayer::SetMoveMode(bool pi_bMoving, BYTE pi_byMoveMode)
   }
 }
 
-void CRFClientPlayer::SetWalkMode(BYTE pi_byWalkMode)
+void CPlayer::SetWalkMode(BYTE pi_byWalkMode)
 {
   if (pi_byWalkMode != CMM_MOVE_WALK && pi_byWalkMode != CMM_MOVE_RUN)
   {
@@ -1315,18 +1375,21 @@ void CRFClientPlayer::SetWalkMode(BYTE pi_byWalkMode)
   m_byWalkMode = pi_byWalkMode;
 }
 
-void CRFClientPlayer::Render()
+BOOL CPlayer::Render()
 {
   if (!m_bLoaded)
   {
-    return;
+    return FALSE;
   }
 
-  D3DLIGHT8 l_d3dLight = {};
-  D3DMATERIAL8 l_d3dMaterial = {};
-  m_pCharIF->SetState();
-  GetMatLightFromColor(&l_d3dLight, &l_d3dMaterial, m_dwMapColor);
-  m_pCharIF->SetLight(l_d3dLight);
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  if (!l_pCharIF)
+  {
+    return FALSE;
+  }
+
+  l_pCharIF->SetState();
+  l_pCharIF->SetLight(m_d3dLight);
 
   for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
   {
@@ -1335,22 +1398,24 @@ void CRFClientPlayer::Render()
       continue;
     }
 
-    m_pCharIF->SetAlpha(m_pMesh[i], 1.0f);
-    m_pCharIF->SetMaterial(m_pMesh[i], l_d3dMaterial);
-    m_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_fRotY, 1.0f, 0.0f);
+    l_pCharIF->SetAlpha(m_pMesh[i], m_fAlphaDensity);
+    l_pCharIF->SetMaterial(m_pMesh[i], m_d3dMaterial);
+    l_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_vecRot[1], m_fScale, 0.0f);
   }
   g_AMeshManager.DrawAlpahMesh();
-  m_pCharIF->UnSetState();
+  l_pCharIF->UnSetState();
+  return TRUE;
 }
 
-void CRFClientPlayer::CreateShadow()
+void CPlayer::CreateShadow()
 {
-  if (!m_bLoaded || !m_pCharIF)
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  if (!m_bLoaded || !l_pCharIF)
   {
     return;
   }
 
-  m_pCharIF->SetState();
+  l_pCharIF->SetState();
   for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
   {
     if (!m_pMesh[i])
@@ -1358,110 +1423,22 @@ void CRFClientPlayer::CreateShadow()
       continue;
     }
 
-    m_pCharIF->DrawCharacterShadow(m_pMesh[i], m_vecPos, m_fRotY, 0.8f, 1.0f);
+    l_pCharIF->DrawCharacterShadow(m_pMesh[i], m_vecPos, m_vecRot[1], 0.8f * m_fAlphaDensity, m_fScale);
   }
-  m_pCharIF->UnSetState();
+  l_pCharIF->UnSetState();
 }
 
-void CRFClientPlayer::SetPosition(float pi_fX, float pi_fY, float pi_fZ)
-{
-  m_vecPos[0] = pi_fX;
-  m_vecPos[1] = pi_fY;
-  m_vecPos[2] = pi_fZ;
-}
-
-void CRFClientPlayer::GetPosition(float po_pfPos[3]) const
-{
-  CopyVector3(po_pfPos, m_vecPos);
-}
-
-void CRFClientPlayer::SetRotY(float pi_fRotY)
-{
-  m_fRotY = pi_fRotY;
-}
-
-void CRFClientPlayer::SetMapColor(DWORD pi_dwMapColor)
-{
-  m_dwMapColor = pi_dwMapColor;
-}
-
-BYTE CRFClientPlayer::GetWalkMode() const
+BYTE CPlayer::GetWalkMode() const
 {
   return m_byWalkMode;
 }
 
-float CRFClientPlayer::GetRotY() const
-{
-  return m_fRotY;
-}
-
-void CRFClientPlayer::GetCameraTarget(float po_pfTarget[3]) const
-{
-  po_pfTarget[0] = m_vecPos[0];
-  po_pfTarget[2] = m_vecPos[2];
-
-  const float l_fBBoxExtentY = m_vecBBoxMax[1] - m_vecBBoxMin[1];
-  const float l_fBBoxExtentZ = m_vecBBoxMax[2] - m_vecBBoxMin[2];
-  const float l_fBBoxExtent = (l_fBBoxExtentY > l_fBBoxExtentZ) ? l_fBBoxExtentY : l_fBBoxExtentZ;
-  if (IsValidBBoxHeight(l_fBBoxExtent))
-  {
-    po_pfTarget[1] = m_vecPos[1] + (l_fBBoxExtent * 0.5f);
-  }
-  else
-  {
-    po_pfTarget[1] = m_vecPos[1] + 75.0f;
-  }
-}
-
-float CRFClientPlayer::GetCameraExtent() const
-{
-  const float l_fBBoxExtentY = m_vecBBoxMax[1] - m_vecBBoxMin[1];
-  const float l_fBBoxExtentZ = m_vecBBoxMax[2] - m_vecBBoxMin[2];
-  const float l_fBBoxExtent = (l_fBBoxExtentY > l_fBBoxExtentZ) ? l_fBBoxExtentY : l_fBBoxExtentZ;
-  if (IsValidBBoxHeight(l_fBBoxExtent))
-  {
-    return l_fBBoxExtent;
-  }
-
-  return 75.0f;
-}
-
-void CRFClientPlayer::GetScaleAddPos(float *po_pfScale, float *po_pfAddPos) const
-{
-  const float l_fExtentX = m_vecBBoxMax[0] - m_vecBBoxMin[0];
-  const float l_fExtentY = m_vecBBoxMax[1] - m_vecBBoxMin[1];
-  const float l_fExtentZ = m_vecBBoxMax[2] - m_vecBBoxMin[2];
-  const float l_fHeight = (l_fExtentY > l_fExtentZ) ? l_fExtentY : l_fExtentZ;
-  const float l_fHalfWidth = ((l_fExtentX * 0.5f) > m_vecBBoxMax[0]) ? (l_fExtentX * 0.5f) : m_vecBBoxMax[0];
-
-  if (po_pfScale)
-  {
-    *po_pfScale = l_fHeight / 18.0f;
-    if (!std::isfinite(*po_pfScale) || *po_pfScale <= 0.0f)
-    {
-      *po_pfScale = 1.0f;
-    }
-  }
-
-  if (po_pfAddPos)
-  {
-    const float l_fDiff = (l_fHeight * 3.0f / 5.0f) > l_fHalfWidth
-                            ? (l_fHeight * 3.0f / 5.0f)
-                            : l_fHalfWidth;
-    *po_pfAddPos = (l_fDiff + l_fHalfWidth - l_fHalfWidth * 2.0f) / 2.0f;
-    if (!std::isfinite(*po_pfAddPos))
-    {
-      *po_pfAddPos = 10.0f;
-    }
-  }
-}
-
-bool CRFClientPlayer::IsLoaded() const
+bool CPlayer::IsLoaded() const
 {
   return m_bLoaded;
 }
 
-bool CRFClientPlayer::MountRFS()
+bool CPlayer::MountRFS()
 {
   if (m_bMountedRFS)
   {
@@ -1499,13 +1476,13 @@ bool CRFClientPlayer::MountRFS()
   return true;
 }
 
-bool CRFClientPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
+bool CPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
                                        MESH_DATA po_astMeshData[MAX_DEFAULT_PART],
                                        ANI_DATA &po_stAniData)
 {
-  CDataFile l_fileResData(const_cast<char *>(kResourceFileName));
-  CDataString *l_pSourceData = l_fileResData.GetSourceData();
-  if (!l_pSourceData || !l_pSourceData->GetString())
+  CCharResDataMgr *l_pCharResDataMgr = _GetCharResDataMgr();
+  CCharResData *l_pPlayerResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_PLAYER) : NULL;
+  if (!l_pPlayerResData)
   {
     return false;
   }
@@ -1514,25 +1491,22 @@ bool CRFClientPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
   bool l_abFoundMesh[MAX_DEFAULT_PART] = {false, false, false, false, false};
   bool l_bFoundAni = false;
 
-  DWORD l_dwBoneNum = 0;
-  l_pSourceData->Read(&l_dwBoneNum, sizeof(DWORD), 1);
-  for (DWORD i = 0; i < l_dwBoneNum; ++i)
+  if (BONE_DATA *l_pBoneData = l_pPlayerResData->GetBoneData(ID_DEFAULT_BONE_AC))
   {
-    BONE_DATA l_stBoneData = {};
-    l_pSourceData->Read(&l_stBoneData, sizeof(BONE_DATA), 1);
-    if (l_stBoneData.dwID == ID_DEFAULT_BONE_AC)
-    {
-      po_stBoneData = l_stBoneData;
-      l_bFoundBone = true;
-    }
+    po_stBoneData = *l_pBoneData;
+    l_bFoundBone = true;
   }
 
-  DWORD l_dwMeshNum = 0;
-  l_pSourceData->Read(&l_dwMeshNum, sizeof(DWORD), 1);
+  const DWORD l_dwMeshNum = l_pPlayerResData->GetTotalMeshNum();
   for (DWORD i = 0; i < l_dwMeshNum; ++i)
   {
-    MESH_DATA l_stMeshData = {};
-    l_pSourceData->Read(&l_stMeshData, sizeof(MESH_DATA), 1);
+    MESH_DATA *l_pMeshData = l_pPlayerResData->GetMeshDataByOrder(i);
+    if (!l_pMeshData)
+    {
+      continue;
+    }
+
+    const MESH_DATA &l_stMeshData = *l_pMeshData;
     if (l_stMeshData.dwBoneID != ID_DEFAULT_BONE_AC)
     {
       continue;
@@ -1548,12 +1522,16 @@ bool CRFClientPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
     }
   }
 
-  DWORD l_dwAniNum = 0;
-  l_pSourceData->Read(&l_dwAniNum, sizeof(DWORD), 1);
+  const DWORD l_dwAniNum = l_pPlayerResData->GetTotalAniNum();
   for (DWORD i = 0; i < l_dwAniNum; ++i)
   {
-    ANI_DATA l_stAniData = {};
-    l_pSourceData->Read(&l_stAniData, sizeof(ANI_DATA), 1);
+    ANI_DATA *l_pAniData = l_pPlayerResData->GetAniDataByOrder(i);
+    if (!l_pAniData)
+    {
+      continue;
+    }
+
+    const ANI_DATA &l_stAniData = *l_pAniData;
     if (_stricmp(l_stAniData.pFileName, kAccretiaStandAniName) == 0)
     {
       po_stAniData = l_stAniData;
@@ -1572,14 +1550,16 @@ bool CRFClientPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
   return l_bFoundBone && l_bFoundAni;
 }
 
-bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
+bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
 {
-  if (pi_dwPartType >= MAX_DEFAULT_PART || !m_pBodyPartMgr || !m_pBone)
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  CObjectManager *l_pBodyPartMgr = CCharacterMgr::GetMeshMgr(CTI_PLAYER);
+  if (pi_dwPartType >= MAX_DEFAULT_PART || !l_pCharIF || !l_pBodyPartMgr || !m_pBone)
   {
     return false;
   }
 
-  TextureManager *l_pRenderTextureMgr = m_pCharIF ? &m_pCharIF->m_TM : NULL;
+  TextureManager *l_pRenderTextureMgr = &l_pCharIF->m_TM;
   if (!l_pRenderTextureMgr)
   {
     return false;
@@ -1596,8 +1576,8 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
   CHARACTEROBJECT *l_pLoadedMesh = NULL;
   __try
   {
-    l_pLoadedMesh = m_pCharIF->LoadMeshData(l_pRenderTextureMgr,
-                                            m_pBodyPartMgr,
+    l_pLoadedMesh = l_pCharIF->LoadMeshData(l_pRenderTextureMgr,
+                                            l_pBodyPartMgr,
                                             m_szMeshName[pi_dwPartType],
                                             true,
                                             m_pBone);
@@ -1625,7 +1605,7 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
 #endif
   __try
   {
-    CHARACTEROBJECT *l_pStoredMesh = m_pCharIF->GetMeshData(m_pBodyPartMgr, m_szMeshName[pi_dwPartType]);
+    CHARACTEROBJECT *l_pStoredMesh = l_pCharIF->GetMeshData(l_pBodyPartMgr, m_szMeshName[pi_dwPartType]);
 #if defined(_DEBUG)
     AppendPlayerLog("LoadPart: GetMeshData index=%u result=%p",
                     static_cast<unsigned>(pi_dwPartType),
@@ -1658,7 +1638,7 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
     CHARACTEROBJECT *l_pStoredMesh = NULL;
     __try
     {
-      l_pStoredMesh = m_pBodyPartMgr->GetCharacter(m_szMeshName[pi_dwPartType]);
+      l_pStoredMesh = l_pBodyPartMgr->GetCharacter(m_szMeshName[pi_dwPartType]);
 #if defined(_DEBUG)
       AppendPlayerLog("LoadPart: raw GetCharacter index=%u result=%p",
                       static_cast<unsigned>(pi_dwPartType),
@@ -1679,7 +1659,7 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
       bool l_bMeshRealLoaded = false;
       __try
       {
-        l_bMeshRealLoaded = m_pCharIF->LoadRealData(l_pStoredMesh, l_pRenderTextureMgr, false);
+        l_bMeshRealLoaded = l_pCharIF->LoadRealData(l_pStoredMesh, l_pRenderTextureMgr, false);
 #if defined(_DEBUG)
         AppendPlayerLog("LoadPart: fallback LoadRealData extTM false index=%u result=%d",
                         static_cast<unsigned>(pi_dwPartType),
@@ -1700,7 +1680,7 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
       {
         __try
         {
-          l_bMeshRealLoaded = m_pCharIF->LoadRealData(l_pStoredMesh, l_pRenderTextureMgr, true);
+          l_bMeshRealLoaded = l_pCharIF->LoadRealData(l_pStoredMesh, l_pRenderTextureMgr, true);
 #if defined(_DEBUG)
           AppendPlayerLog("LoadPart: fallback LoadRealData extTM true index=%u result=%d",
                           static_cast<unsigned>(pi_dwPartType),
@@ -1729,13 +1709,13 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
   {
     __try
     {
-      EnsureMeshTexturesLoaded(m_pCharIF,
+      EnsureMeshTexturesLoaded(l_pCharIF,
                                l_pRenderTextureMgr,
                                m_pMesh[pi_dwPartType],
                                pi_stMeshData.pTexturePath);
-      m_pCharIF->MatchTextureToMesh(l_pRenderTextureMgr, m_pMesh[pi_dwPartType]);
-      m_pCharIF->RematchParent(m_pBone, m_pMesh[pi_dwPartType]);
-      m_pCharIF->AnimationReset(m_pMesh[pi_dwPartType]);
+      l_pCharIF->MatchTextureToMesh(l_pRenderTextureMgr, m_pMesh[pi_dwPartType]);
+      l_pCharIF->RematchParent(m_pBone, m_pMesh[pi_dwPartType]);
+      l_pCharIF->AnimationReset(m_pMesh[pi_dwPartType]);
 #if defined(_DEBUG)
       AppendPlayerLog("LoadPart: MatchTextureToMesh index=%u mesh=%p",
                       static_cast<unsigned>(pi_dwPartType),
@@ -1756,14 +1736,11 @@ bool CRFClientPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshDa
   return m_pMesh[pi_dwPartType] != NULL;
 }
 
-bool CRFClientPlayer::IsValidBBoxHeight(float pi_fHeight)
+bool CPlayer::LoadTexturePath(const char *pi_pTexturePath)
 {
-  return std::isfinite(pi_fHeight) && (pi_fHeight > 1.0f) && (pi_fHeight < 1000.0f);
-}
-
-bool CRFClientPlayer::LoadTexturePath(const char *pi_pTexturePath)
-{
-  if (!m_pCharIF || !pi_pTexturePath || !pi_pTexturePath[0])
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  TextureManager *l_pTextureMgr = CCharacterMgr::GetTextureMgr();
+  if (!l_pCharIF || !pi_pTexturePath || !pi_pTexturePath[0])
   {
     return false;
   }
@@ -1811,25 +1788,25 @@ bool CRFClientPlayer::LoadTexturePath(const char *pi_pTexturePath)
     }
 
     bool l_bRegistered = false;
-    if (m_pTextureMgr)
+    if (l_pTextureMgr)
     {
-      l_bRegistered = m_pTextureMgr->AddTexture(l_szManagerPath, l_stFindData.cFileName) || l_bRegistered;
+      l_bRegistered = l_pTextureMgr->AddTexture(l_szManagerPath, l_stFindData.cFileName) || l_bRegistered;
       if (!l_bRegistered)
       {
-        m_pCharIF->LoadTextureData(m_pTextureMgr,
+        l_pCharIF->LoadTextureData(l_pTextureMgr,
                                    const_cast<char *>(l_pTextureLoadPath),
                                    l_stFindData.cFileName);
-        l_bRegistered = m_pTextureMgr->GetTextureID(l_stFindData.cFileName) != 0 || l_bRegistered;
+        l_bRegistered = l_pTextureMgr->GetTextureID(l_stFindData.cFileName) != 0 || l_bRegistered;
       }
     }
 
-    l_bRegistered = m_pCharIF->m_TM.AddTexture(l_szManagerPath, l_stFindData.cFileName) || l_bRegistered;
-    if (m_pCharIF->m_TM.GetTextureID(l_stFindData.cFileName) == 0)
+    l_bRegistered = l_pCharIF->m_TM.AddTexture(l_szManagerPath, l_stFindData.cFileName) || l_bRegistered;
+    if (l_pCharIF->m_TM.GetTextureID(l_stFindData.cFileName) == 0)
     {
-      m_pCharIF->LoadTextureData(&m_pCharIF->m_TM,
+      l_pCharIF->LoadTextureData(&l_pCharIF->m_TM,
                                  const_cast<char *>(l_pTextureLoadPath),
                                  l_stFindData.cFileName);
-      l_bRegistered = m_pCharIF->m_TM.GetTextureID(l_stFindData.cFileName) != 0 || l_bRegistered;
+      l_bRegistered = l_pCharIF->m_TM.GetTextureID(l_stFindData.cFileName) != 0 || l_bRegistered;
     }
     if (l_bRegistered)
     {
@@ -1845,13 +1822,13 @@ bool CRFClientPlayer::LoadTexturePath(const char *pi_pTexturePath)
                   l_bFoundTextureFile ? 1 : 0,
                   static_cast<unsigned>(l_dwRegisteredCount),
                   l_szSampleFileName[0] ? l_szSampleFileName : "<none>",
-                  l_szSampleFileName[0] ? static_cast<unsigned>(m_pCharIF->m_TM.GetTextureID(l_szSampleFileName)) : 0,
-                  l_szSampleFileName[0] ? m_pCharIF->m_TM.GetTexture(l_szSampleFileName) : NULL);
+                  l_szSampleFileName[0] ? static_cast<unsigned>(l_pCharIF->m_TM.GetTextureID(l_szSampleFileName)) : 0,
+                  l_szSampleFileName[0] ? l_pCharIF->m_TM.GetTexture(l_szSampleFileName) : NULL);
 #endif
   return l_bFoundTextureFile;
 }
 
-bool CRFClientPlayer::IsTextureFileName(const char *pi_pFileName)
+bool CPlayer::IsTextureFileName(const char *pi_pFileName)
 {
   if (!pi_pFileName)
   {
