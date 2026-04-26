@@ -9,9 +9,8 @@
 - Binance ID : `1225316330`
 
 
-This repository contains the Account, Login, and World server projects plus shared libraries and tools.
-
 ## Solution
+This repository contains the Account, Login, and World server projects plus shared libraries and tools.
 `RFOnlineServer.sln` includes:
 - AccountServer (net9.0-windows WinForms, x64)
 - LoginServer (net9.0-windows WinForms, x64)
