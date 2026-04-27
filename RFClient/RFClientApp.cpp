@@ -1471,6 +1471,14 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
                                     DWORD pi_dwEndFrame,
                                     DWORD pi_dwFlag)
 {
+#if defined(_DEBUG)
+  AppendCaptureLog("PlayLoginLobbyCamera: begin name=%s start=%u end=%u flag=%u loaded=%d",
+                   pi_pCameraName ? pi_pCameraName : "(null)",
+                   static_cast<unsigned>(pi_dwStartFrame),
+                   static_cast<unsigned>(pi_dwEndFrame),
+                   static_cast<unsigned>(pi_dwFlag),
+                   m_cLoginLobbyAniCamera.IsLoadedAniCamera() ? 1 : 0);
+#endif
   if (!pi_pCameraName || !pi_pCameraName[0] || !m_cLoginLobbyAniCamera.IsLoadedAniCamera())
   {
     return FALSE;
@@ -1479,13 +1487,23 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
   DWORD l_dwCameraIndex = m_cLoginLobbyAniCamera.GetCameraIndex(const_cast<char *>(pi_pCameraName));
   if (l_dwCameraIndex == static_cast<DWORD>(-1))
   {
+#if defined(_DEBUG)
+    AppendCaptureLog("PlayLoginLobbyCamera: missing name=%s", pi_pCameraName);
+#endif
     return FALSE;
   }
 
+#if defined(_DEBUG)
+  AppendCaptureLog("PlayLoginLobbyCamera: SetPrePlayCamera index=%u",
+                   static_cast<unsigned>(l_dwCameraIndex));
+#endif
   m_cLoginLobbyAniCamera.SetPrePlayCamera(l_dwCameraIndex, pi_dwStartFrame, pi_dwEndFrame, pi_dwFlag);
   m_bLoginLobbyCameraAnimating = (pi_dwFlag == _CAM_FLAG_FINAL_STOP);
 
   float l_matLobbyCamera[4][4];
+#if defined(_DEBUG)
+  AppendCaptureLog("PlayLoginLobbyCamera: PlayAniCamera initial");
+#endif
   if (m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f, FALSE))
   {
     R3SetCameraMatrix(m_vecLoginLobbyCameraPos, l_matLobbyCamera);
@@ -1498,6 +1516,9 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
   }
 
   UpdateProjectionParameters();
+#if defined(_DEBUG)
+  AppendCaptureLog("PlayLoginLobbyCamera: end name=%s", pi_pCameraName);
+#endif
   return TRUE;
 }
 
@@ -1582,12 +1603,26 @@ void CMainApp::ClearLoginLobbyCharacterDummies(void)
 
 BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi_stRegedCharResult)
 {
+#if defined(_DEBUG)
+  AppendCaptureLog("BuildLoginLobbyCharacterDummies: begin charNum=%u",
+                   static_cast<unsigned>(pi_stRegedCharResult.byCharNum));
+#endif
   if (m_byGameProgressID != GPI_LOGIN)
   {
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: skipped progress=%u",
+                     static_cast<unsigned>(m_byGameProgressID));
+#endif
     return FALSE;
   }
 
+#if defined(_DEBUG)
+  AppendCaptureLog("BuildLoginLobbyCharacterDummies: clear begin");
+#endif
   ClearLoginLobbyCharacterDummies();
+#if defined(_DEBUG)
+  AppendCaptureLog("BuildLoginLobbyCharacterDummies: clear end");
+#endif
 
   BOOL l_bLoadedAnyCharacter = FALSE;
   const BYTE l_byCharNum = pi_stRegedCharResult.byCharNum > 3
@@ -1596,6 +1631,13 @@ BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi
   for (BYTE i = 0; i < l_byCharNum; ++i)
   {
     const _REGED_AVATOR_DB &l_sRegedAvatar = pi_stRegedCharResult.RegedList[i];
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: record=%u slot=%u race=%u base=0x%08X",
+                     static_cast<unsigned>(i),
+                     static_cast<unsigned>(l_sRegedAvatar.m_bySlotIndex),
+                     static_cast<unsigned>(l_sRegedAvatar.m_byRaceSexCode),
+                     static_cast<unsigned>(l_sRegedAvatar.m_dwBaseShape));
+#endif
     if (l_sRegedAvatar.m_bySlotIndex > 2)
     {
       continue;
@@ -1604,6 +1646,10 @@ BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi
     CPlayer *l_pPlayer = m_CharacterMgr.AddPlayer(l_sRegedAvatar.m_bySlotIndex);
     if (!l_pPlayer)
     {
+#if defined(_DEBUG)
+      AppendCaptureLog("BuildLoginLobbyCharacterDummies: AddPlayer failed slot=%u",
+                       static_cast<unsigned>(l_sRegedAvatar.m_bySlotIndex));
+#endif
       continue;
     }
 
@@ -1617,20 +1663,43 @@ BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi
     l_szAvatarName[sizeof(l_szAvatarName) - 1] = '\0';
     l_pPlayer->SetName(l_szAvatarName[0] ? l_szAvatarName : "Player");
 
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: LoadRegedAvatar begin slot=%u",
+                     static_cast<unsigned>(l_sRegedAvatar.m_bySlotIndex));
+#endif
     if (!l_pPlayer->LoadRegedAvatar(l_sRegedAvatar))
     {
+#if defined(_DEBUG)
+      AppendCaptureLog("BuildLoginLobbyCharacterDummies: LoadRegedAvatar failed slot=%u",
+                       static_cast<unsigned>(l_sRegedAvatar.m_bySlotIndex));
+#endif
       continue;
     }
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: LoadRegedAvatar end slot=%u",
+                     static_cast<unsigned>(l_sRegedAvatar.m_bySlotIndex));
+#endif
 
     const BYTE l_bySlotIndex = l_sRegedAvatar.m_bySlotIndex;
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: placement begin slot=%u",
+                     static_cast<unsigned>(l_bySlotIndex));
+#endif
     l_pPlayer->SetPosition(kLoginLobbyCharacterTopPos[l_bySlotIndex][0],
                            kLoginLobbyCharacterTopPos[l_bySlotIndex][1],
                            kLoginLobbyCharacterTopPos[l_bySlotIndex][2]);
     l_pPlayer->SetRotY(180.0f - (static_cast<float>(l_bySlotIndex) * 120.0f));
     l_pPlayer->SetLightColor(D3DCOLOR_XRGB(128, 128, 128));
+#if defined(_DEBUG)
+    AppendCaptureLog("BuildLoginLobbyCharacterDummies: placement end slot=%u",
+                     static_cast<unsigned>(l_bySlotIndex));
+#endif
     l_bLoadedAnyCharacter = TRUE;
   }
 
+#if defined(_DEBUG)
+  AppendCaptureLog("BuildLoginLobbyCharacterDummies: end loadedAny=%d", l_bLoadedAnyCharacter ? 1 : 0);
+#endif
   return l_bLoadedAnyCharacter;
 }
 
@@ -1641,6 +1710,16 @@ void CMainApp::FrameMoveLoginLobby(void)
     return;
   }
 
+#if defined(_DEBUG)
+  static DWORD s_dwFrameMoveTraceCount = 0;
+  const bool l_bTraceFrameMove = (s_dwFrameMoveTraceCount++ < 120);
+  if (l_bTraceFrameMove)
+  {
+    AppendCaptureLog("FrameMoveLoginLobby: begin cameraLoaded=%d animating=%d",
+                     m_cLoginLobbyAniCamera.IsLoadedAniCamera() ? 1 : 0,
+                     m_bLoginLobbyCameraAnimating ? 1 : 0);
+  }
+#endif
   if (CLevel *l_pLevel = m_land.GetLevel())
   {
     if (m_cLoginLobbyAniCamera.IsLoadedAniCamera())
@@ -1663,11 +1742,48 @@ void CMainApp::FrameMoveLoginLobby(void)
       l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
     }
 
+#if defined(_DEBUG)
+    if (l_bTraceFrameMove)
+    {
+      AppendCaptureLog("FrameMoveLoginLobby: level FrameMove begin");
+    }
+#endif
     l_pLevel->FrameMove();
+#if defined(_DEBUG)
+    if (l_bTraceFrameMove)
+    {
+      AppendCaptureLog("FrameMoveLoginLobby: level FrameMove end");
+    }
+#endif
   }
+#if defined(_DEBUG)
+  if (l_bTraceFrameMove)
+  {
+    AppendCaptureLog("FrameMoveLoginLobby: CharacterMgr FrameMove begin");
+  }
+#endif
   m_CharacterMgr.FrameMove();
+#if defined(_DEBUG)
+  if (l_bTraceFrameMove)
+  {
+    AppendCaptureLog("FrameMoveLoginLobby: CharacterMgr FrameMove end");
+    AppendCaptureLog("FrameMoveLoginLobby: CharacterMgr Animation begin");
+  }
+#endif
   m_CharacterMgr.Animation();
+#if defined(_DEBUG)
+  if (l_bTraceFrameMove)
+  {
+    AppendCaptureLog("FrameMoveLoginLobby: CharacterMgr Animation end");
+  }
+#endif
   UpdateProjectionParameters();
+#if defined(_DEBUG)
+  if (l_bTraceFrameMove)
+  {
+    AppendCaptureLog("FrameMoveLoginLobby: end");
+  }
+#endif
 }
 
 void CMainApp::RenderLoginLobby(void)
@@ -1691,9 +1807,37 @@ void CMainApp::RenderLoginLobby(void)
     l_vecRenderPos[2] = m_cameraPosition[2];
   }
 
+#if defined(_DEBUG)
+  static DWORD s_dwRenderTraceCount = 0;
+  const bool l_bTraceRender = (s_dwRenderTraceCount++ < 120);
+  if (l_bTraceRender)
+  {
+    AppendCaptureLog("RenderLoginLobby: land Render begin");
+  }
+#endif
   m_land.Render(l_vecRenderPos);
+#if defined(_DEBUG)
+  if (l_bTraceRender)
+  {
+    AppendCaptureLog("RenderLoginLobby: land Render end");
+    AppendCaptureLog("RenderLoginLobby: land RenderAlpha begin");
+  }
+#endif
   m_land.RenderAlpha(l_vecRenderPos);
+#if defined(_DEBUG)
+  if (l_bTraceRender)
+  {
+    AppendCaptureLog("RenderLoginLobby: land RenderAlpha end");
+    AppendCaptureLog("RenderLoginLobby: CharacterMgr Render begin");
+  }
+#endif
   m_CharacterMgr.Render();
+#if defined(_DEBUG)
+  if (l_bTraceRender)
+  {
+    AppendCaptureLog("RenderLoginLobby: CharacterMgr Render end");
+  }
+#endif
 }
 
 HRESULT CMainApp::FrameMoveMainGame()

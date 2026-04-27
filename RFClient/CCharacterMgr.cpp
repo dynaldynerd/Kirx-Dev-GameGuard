@@ -1,5 +1,6 @@
 #include "CCharacterMgr.h"
 
+#include "AlphaMeshManager.h"
 #include "CBaseNpc.h"
 #include "CCharacter.h"
 #include "CMonster.h"
@@ -245,6 +246,12 @@ BOOL CCharacterMgr::Animation(void)
 
 BOOL CCharacterMgr::Render(void)
 {
+  ChInterface *l_pCharIF = GetCharIF();
+  if (l_pCharIF)
+  {
+    l_pCharIF->SetState();
+  }
+
   for (int i = 0; i < MAX_CHAR_TYPE; ++i)
   {
     for (CHAR_LIST_ITER l_iter = m_listActive[i].begin(); l_iter != m_listActive[i].end(); ++l_iter)
@@ -254,6 +261,12 @@ BOOL CCharacterMgr::Render(void)
         (*l_iter)->Render();
       }
     }
+  }
+
+  if (l_pCharIF)
+  {
+    g_AMeshManager.DrawAlpahMesh();
+    l_pCharIF->UnSetState();
   }
 
   return TRUE;

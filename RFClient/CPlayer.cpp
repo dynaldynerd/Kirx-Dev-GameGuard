@@ -9,7 +9,6 @@
 #include <dbghelp.h>
 #include <ddraw.h>
 
-#include "AlphaMeshManager.h"
 #include "CCharacterMgr.h"
 #include "CItemDataMgr.h"
 #include "CResourceDataMgr.h"
@@ -1653,8 +1652,28 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
     return FALSE;
   }
 
+#if defined(_DEBUG)
+  static DWORD s_dwAnimationTraceCount = 0;
+  const bool l_bTraceAnimation = (s_dwAnimationTraceCount++ < 180);
+  if (l_bTraceAnimation)
+  {
+    AppendPlayerLog("Animation: begin player=%u bone=%p curAni=%p useBone=%d",
+                    static_cast<unsigned>(GetIndex()),
+                    m_pBone,
+                    m_pCurAni,
+                    m_bUseBoneRender ? 1 : 0);
+  }
+#endif
+
   if (!m_pCurAni && !m_bUseBoneRender)
   {
+#if defined(_DEBUG)
+    if (l_bTraceAnimation)
+    {
+      AppendPlayerLog("Animation: no current animation player=%u",
+                      static_cast<unsigned>(GetIndex()));
+    }
+#endif
     return TRUE;
   }
 
@@ -1680,7 +1699,22 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
       }
 
       m_pBone->m_Frame = m_dwBoneFrame;
+#if defined(_DEBUG)
+      if (l_bTraceAnimation)
+      {
+        AppendPlayerLog("Animation: bone FrameMove begin player=%u frame=%u",
+                        static_cast<unsigned>(GetIndex()),
+                        static_cast<unsigned>(m_dwBoneFrame));
+      }
+#endif
       l_pCharIF->FrameMove(m_pBone);
+#if defined(_DEBUG)
+      if (l_bTraceAnimation)
+      {
+        AppendPlayerLog("Animation: bone FrameMove end player=%u",
+                        static_cast<unsigned>(GetIndex()));
+      }
+#endif
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -1695,10 +1729,33 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
   {
     if (m_pMesh[i])
     {
+#if defined(_DEBUG)
+      if (l_bTraceAnimation)
+      {
+        AppendPlayerLog("Animation: mesh FrameMove begin player=%u part=%u mesh=%p",
+                        static_cast<unsigned>(GetIndex()),
+                        static_cast<unsigned>(i),
+                        m_pMesh[i]);
+      }
+#endif
       l_pCharIF->FrameMove(m_pMesh[i]);
+#if defined(_DEBUG)
+      if (l_bTraceAnimation)
+      {
+        AppendPlayerLog("Animation: mesh FrameMove end player=%u part=%u",
+                        static_cast<unsigned>(GetIndex()),
+                        static_cast<unsigned>(i));
+      }
+#endif
     }
   }
 
+#if defined(_DEBUG)
+  if (l_bTraceAnimation)
+  {
+    AppendPlayerLog("Animation: end player=%u", static_cast<unsigned>(GetIndex()));
+  }
+#endif
   return TRUE;
 }
 
@@ -1774,7 +1831,20 @@ BOOL CPlayer::Render()
     return FALSE;
   }
 
-  l_pCharIF->SetState();
+#if defined(_DEBUG)
+  static DWORD s_dwRenderTraceCount = 0;
+  const bool l_bTraceRender = (s_dwRenderTraceCount++ < 240);
+  if (l_bTraceRender)
+  {
+    AppendPlayerLog("Render: begin player=%u pos=(%.2f, %.2f, %.2f) rotY=%.2f",
+                    static_cast<unsigned>(GetIndex()),
+                    m_vecPos[0],
+                    m_vecPos[1],
+                    m_vecPos[2],
+                    m_vecRot[1]);
+  }
+#endif
+
   l_pCharIF->SetLight(m_d3dLight);
 
   for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
@@ -1786,10 +1856,31 @@ BOOL CPlayer::Render()
 
     l_pCharIF->SetAlpha(m_pMesh[i], m_fAlphaDensity);
     l_pCharIF->SetMaterial(m_pMesh[i], m_d3dMaterial);
+#if defined(_DEBUG)
+    if (l_bTraceRender)
+    {
+      AppendPlayerLog("Render: DrawCharacter begin player=%u part=%u mesh=%p",
+                      static_cast<unsigned>(GetIndex()),
+                      static_cast<unsigned>(i),
+                      m_pMesh[i]);
+    }
+#endif
     l_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_vecRot[1], m_fScale, 0.0f);
+#if defined(_DEBUG)
+    if (l_bTraceRender)
+    {
+      AppendPlayerLog("Render: DrawCharacter end player=%u part=%u",
+                      static_cast<unsigned>(GetIndex()),
+                      static_cast<unsigned>(i));
+    }
+#endif
   }
-  g_AMeshManager.DrawAlpahMesh();
-  l_pCharIF->UnSetState();
+#if defined(_DEBUG)
+  if (l_bTraceRender)
+  {
+    AppendPlayerLog("Render: end player=%u", static_cast<unsigned>(GetIndex()));
+  }
+#endif
   return TRUE;
 }
 

@@ -1,6 +1,5 @@
 #include "CBaseNpc.h"
 
-#include "AlphaMeshManager.h"
 #include "CCharacterMgr.h"
 
 CBaseNpc::CBaseNpc()
@@ -31,12 +30,9 @@ BOOL CBaseNpc::Render(void)
     return FALSE;
   }
 
-  l_pCharIF->SetState();
   l_pCharIF->SetAlpha(m_pMesh, m_fAlphaDensity);
   l_pCharIF->SetMaterial(m_pMesh, m_d3dMaterial);
   l_pCharIF->DrawCharacter(m_pMesh, m_vecPos, m_vecRot[1], m_fScale, 0.0f);
-  g_AMeshManager.DrawAlpahMesh();
-  l_pCharIF->UnSetState();
   return TRUE;
 }
 

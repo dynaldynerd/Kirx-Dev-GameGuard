@@ -757,15 +757,15 @@ void CGP_LogIn::EnsureCharacterSelection(void)
     m_bySelectedCharacterSlot = (l_byPreferredSlot == static_cast<BYTE>(0xFF)) ? 0 : l_byPreferredSlot;
   }
 
-  if (!m_bStartRequested || !IsUILockResolved())
-  {
-    return;
-  }
-
   if (!m_bCharacterDummiesLoaded && _GetMainApp())
   {
     _GetMainApp()->BuildLoginLobbyCharacterDummies(l_pNetworkMgr->GetRegedCharResult());
     m_bCharacterDummiesLoaded = true;
+  }
+
+  if (!m_bStartRequested || !IsUILockResolved())
+  {
+    return;
   }
 }
 
@@ -819,8 +819,6 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
     m_dwCharacterSelectionCloseTick = 0;
     m_bCharacterSelectionUIVisible = false;
     m_bCharacterSelectionUIClosing = false;
-    _GetMainApp()->ClearLoginLobbyCharacterDummies();
-    m_bCharacterDummiesLoaded = false;
     _GetMainApp()->SetLoginLobbyOpeningCamera();
   }
   else

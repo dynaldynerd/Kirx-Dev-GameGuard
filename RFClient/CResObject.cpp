@@ -66,9 +66,7 @@ BOOL CResObject::Render(void)
 
   if (IsEnable(ROSF_RENDER_BONE) && IsDisable(ROSF_CLIPPED) && m_pBone)
   {
-    l_pCharIF->SetState();
     l_pCharIF->DrawCharacter(m_pBone, m_vecPos, m_vecRot[1], m_fScale, 0.0f);
-    l_pCharIF->UnSetState();
   }
 
   return TRUE;
