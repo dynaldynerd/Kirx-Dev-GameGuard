@@ -1725,31 +1725,6 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
     }
   }
 
-  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
-  {
-    if (m_pMesh[i])
-    {
-#if defined(_DEBUG)
-      if (l_bTraceAnimation)
-      {
-        AppendPlayerLog("Animation: mesh FrameMove begin player=%u part=%u mesh=%p",
-                        static_cast<unsigned>(GetIndex()),
-                        static_cast<unsigned>(i),
-                        m_pMesh[i]);
-      }
-#endif
-      l_pCharIF->FrameMove(m_pMesh[i]);
-#if defined(_DEBUG)
-      if (l_bTraceAnimation)
-      {
-        AppendPlayerLog("Animation: mesh FrameMove end player=%u part=%u",
-                        static_cast<unsigned>(GetIndex()),
-                        static_cast<unsigned>(i));
-      }
-#endif
-    }
-  }
-
 #if defined(_DEBUG)
   if (l_bTraceAnimation)
   {
