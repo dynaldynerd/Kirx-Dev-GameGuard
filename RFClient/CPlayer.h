@@ -5,6 +5,8 @@
 #include "CCharacter.h"
 #include "ResourceData.h"
 
+struct _REGED_AVATOR_DB;
+
 enum
 {
   CDPT_FACE = 0,
@@ -12,7 +14,9 @@ enum
   CDPT_LOWER_PART = 2,
   CDPT_GLOVES = 3,
   CDPT_SHOES = 4,
-  MAX_DEFAULT_PART = 5
+  CDPT_HELMET = 5,
+  MAX_DEFAULT_PART = 6,
+  MAX_PLAYER_RENDER_PART = 10
 };
 
 #define CMM_MOVE_WALK 0
@@ -30,6 +34,7 @@ public:
   void Shutdown();
 
   bool LoadAccretia();
+  bool LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar);
   BOOL Animation(DWORD pi_dwAniFrame = static_cast<DWORD>(-1)) override;
   void FrameMove() override;
   BOOL Render() override;
@@ -52,10 +57,12 @@ private:
   bool SetAnimation(ChAnimation *pi_pAnimation);
   bool LoadTexturePath(const char *pi_pTexturePath);
   bool LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData);
+  bool LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_DATA &pi_stMeshData);
+  bool LoadBone(const BONE_DATA &pi_stBoneData);
   static bool IsTextureFileName(const char *pi_pFileName);
 
 private:
-  CHARACTEROBJECT *m_pMesh[MAX_DEFAULT_PART];
+  CHARACTEROBJECT *m_pMesh[MAX_PLAYER_RENDER_PART];
   ChAnimation *m_pStandAni;
   ChAnimation *m_pWalkAni;
   ChAnimation *m_pRunAni;
@@ -75,5 +82,6 @@ private:
   char m_szBoneName[MAX_PATH];
   char m_szBBoxName[MAX_PATH];
   char m_szAniName[MAX_PATH];
-  char m_szMeshName[MAX_DEFAULT_PART][MAX_PATH];
+  char m_szLastTextureLoadPath[MAX_PATH];
+  char m_szMeshName[MAX_PLAYER_RENDER_PART][MAX_PATH];
 };

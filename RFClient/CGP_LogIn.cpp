@@ -41,6 +41,7 @@ const DWORD kCharacterSelectInfoBoardColor = 0xC0FFFFFF;
 const DWORD kCharacterSelectButtonColor = 0xB0FFFFFF;
 const DWORD kCharacterSelectSpriteColor = 0xFFFFFFFF;
 const DWORD kCharacterSelectBoardMoveTime = 500;
+const DWORD kCharacterSelectBoardCloseTime = 300;
 const DWORD kCharacterSelectAniStopInterval = 2000;
 const float kCharacterSelectAniFPS = 10.0f;
 const BYTE kInvalidCharacterButton = 0xFF;
@@ -426,6 +427,10 @@ CGP_LogIn::CGP_LogIn()
     m_bLeftButtonReleased(false),
     m_dwStartRequestTick(0),
     m_dwCharacterSelectionOpenTick(0),
+    m_dwCharacterSelectionCloseTick(0),
+    m_bCharacterSelectionUIVisible(false),
+    m_bCharacterSelectionUIClosing(false),
+    m_bCharacterDummiesLoaded(false),
     m_bStartRequested(false),
     m_bCreditsMode(false),
     m_dwCreditsStartTick(0),
@@ -542,9 +547,13 @@ HRESULT CGP_LogIn::FrameMove(void)
   UpdateWorldServerFlow();
   EnsureCharacterSelection();
   UpdateDisplayedScreen();
+  UpdateCharacterSelectionUIState();
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
-    UpdateCharacterSelectionAnimation();
+    if (IsCharacterSelectionUIVisible())
+    {
+      UpdateCharacterSelectionAnimation();
+    }
   }
   return S_OK;
 }
@@ -573,7 +582,10 @@ HRESULT CGP_LogIn::Render(void)
 
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
-    RenderCharacterSelectionScreen();
+    if (IsCharacterSelectionUIVisible())
+    {
+      RenderCharacterSelectionScreen();
+    }
   }
   else if (m_byScreenMode == LOGIN_SCREEN_UI_LOCK)
   {
@@ -637,6 +649,10 @@ BOOL CGP_LogIn::LoadData(void)
   m_bLeftButtonReleased = false;
   m_dwStartRequestTick = 0;
   m_dwCharacterSelectionOpenTick = 0;
+  m_dwCharacterSelectionCloseTick = 0;
+  m_bCharacterSelectionUIVisible = false;
+  m_bCharacterSelectionUIClosing = false;
+  m_bCharacterDummiesLoaded = false;
   m_bStartRequested = false;
   m_bCreditsMode = false;
   m_dwCreditsStartTick = 0;
@@ -665,8 +681,10 @@ BOOL CGP_LogIn::UnloadData(void)
   ReleaseTitleLogoTexture();
   if (_GetMainApp())
   {
+    _GetMainApp()->ClearLoginLobbyCharacterDummies();
     _GetMainApp()->UnloadLoginLobbyData();
   }
+  m_bCharacterDummiesLoaded = false;
 
   m_bIsLoadedData = FALSE;
   return TRUE;
@@ -726,19 +744,29 @@ void CGP_LogIn::UpdateWorldServerFlow(void)
 void CGP_LogIn::EnsureCharacterSelection(void)
 {
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-  if (!l_pNetworkMgr || l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS)
+  if (!l_pNetworkMgr ||
+      !l_pNetworkMgr->HasRegedCharResult() ||
+      l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS)
   {
     return;
   }
 
-  const _reged_char_result_zone &l_sRegedCharResult = l_pNetworkMgr->GetRegedCharResult();
-  if (FindRegedAvatarBySlot(l_sRegedCharResult, m_bySelectedCharacterSlot))
+  if (m_bySelectedCharacterSlot > 2)
+  {
+    const BYTE l_byPreferredSlot = FindPreferredRegedAvatarSlot(l_pNetworkMgr);
+    m_bySelectedCharacterSlot = (l_byPreferredSlot == static_cast<BYTE>(0xFF)) ? 0 : l_byPreferredSlot;
+  }
+
+  if (!m_bCharacterDummiesLoaded && _GetMainApp())
+  {
+    _GetMainApp()->BuildLoginLobbyCharacterDummies(l_pNetworkMgr->GetRegedCharResult());
+    m_bCharacterDummiesLoaded = true;
+  }
+
+  if (!m_bStartRequested || !IsUILockResolved())
   {
     return;
   }
-
-  const BYTE l_byPreferredSlot = FindPreferredRegedAvatarSlot(l_pNetworkMgr);
-  m_bySelectedCharacterSlot = (l_byPreferredSlot == static_cast<BYTE>(0xFF)) ? 0 : l_byPreferredSlot;
 }
 
 void CGP_LogIn::UpdateDisplayedScreen(void)
@@ -773,7 +801,10 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
 
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
-    m_dwCharacterSelectionOpenTick = timeGetTime();
+    m_dwCharacterSelectionOpenTick = 0;
+    m_dwCharacterSelectionCloseTick = 0;
+    m_bCharacterSelectionUIVisible = false;
+    m_bCharacterSelectionUIClosing = false;
     m_byCharacterMenuHover = kInvalidCharacterButton;
     m_byCharacterMenuPressed = kInvalidCharacterButton;
     ResetCharacterSelectionAnimation();
@@ -784,7 +815,20 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
   }
   else if (m_byScreenMode == LOGIN_SCREEN_OPENING && _GetMainApp())
   {
+    m_dwCharacterSelectionOpenTick = 0;
+    m_dwCharacterSelectionCloseTick = 0;
+    m_bCharacterSelectionUIVisible = false;
+    m_bCharacterSelectionUIClosing = false;
+    _GetMainApp()->ClearLoginLobbyCharacterDummies();
+    m_bCharacterDummiesLoaded = false;
     _GetMainApp()->SetLoginLobbyOpeningCamera();
+  }
+  else
+  {
+    m_dwCharacterSelectionOpenTick = 0;
+    m_dwCharacterSelectionCloseTick = 0;
+    m_bCharacterSelectionUIVisible = false;
+    m_bCharacterSelectionUIClosing = false;
   }
 }
 
@@ -813,10 +857,6 @@ void CGP_LogIn::UpdateOpeningInput(void)
     {
       m_bStartRequested = false;
       m_byScreenMode = LOGIN_SCREEN_OPENING;
-    }
-    else if (_GetMainApp())
-    {
-      _GetMainApp()->RequestQuitProgram();
     }
 
     return;
@@ -869,27 +909,122 @@ void CGP_LogIn::UpdateCharacterSelectionInput(void)
     m_bySelectedCharacterSlot = 0;
   }
 
+  if (!IsCharacterSelectionUIInteractive())
+  {
+    m_byCharacterMenuHover = kInvalidCharacterButton;
+    m_byCharacterMenuPressed = kInvalidCharacterButton;
+    ClearOpeningMouseTransitions();
+    return;
+  }
+
   UpdateCharacterSelectionMouseInput();
 
   if (l_bEscapePressed)
   {
+    m_bStartRequested = false;
+    m_byScreenMode = LOGIN_SCREEN_OPENING;
+    m_dwCharacterSelectionOpenTick = 0;
+    m_dwCharacterSelectionCloseTick = 0;
+    m_bCharacterSelectionUIVisible = false;
+    m_bCharacterSelectionUIClosing = false;
     if (_GetMainApp())
     {
-      _GetMainApp()->RequestQuitProgram();
+      _GetMainApp()->ClearLoginLobbyCharacterDummies();
+      _GetMainApp()->SetLoginLobbyOpeningCamera();
     }
+    m_bCharacterDummiesLoaded = false;
   }
   else if (l_bLeftPressed)
   {
+    StartCharacterSelectionUIClose();
     MoveCharacterSelectionSlot(false);
   }
   else if (l_bRightPressed)
   {
+    StartCharacterSelectionUIClose();
     MoveCharacterSelectionSlot(true);
   }
   else if (l_bConfirmPressed)
   {
     SendSelectedCharacterRequest();
   }
+}
+
+void CGP_LogIn::UpdateCharacterSelectionUIState(void)
+{
+  if (m_byScreenMode != LOGIN_SCREEN_CHAR_SELECT)
+  {
+    return;
+  }
+
+  if (m_dwCharacterSelectionOpenTick &&
+      timeGetTime() - m_dwCharacterSelectionOpenTick >= kCharacterSelectBoardMoveTime)
+  {
+    m_dwCharacterSelectionOpenTick = 0;
+  }
+
+  if (m_bCharacterSelectionUIClosing && m_dwCharacterSelectionCloseTick)
+  {
+    if (timeGetTime() - m_dwCharacterSelectionCloseTick >= kCharacterSelectBoardCloseTime)
+    {
+      m_bCharacterSelectionUIClosing = false;
+      m_bCharacterSelectionUIVisible = false;
+      m_dwCharacterSelectionCloseTick = 0;
+    }
+    return;
+  }
+
+  if (!m_bCharacterSelectionUIVisible &&
+      (!_GetMainApp() || !_GetMainApp()->IsLoginLobbyCameraAnimating()))
+  {
+    StartCharacterSelectionUIOpen();
+  }
+}
+
+void CGP_LogIn::StartCharacterSelectionUIOpen(void)
+{
+  m_bCharacterSelectionUIVisible = true;
+  m_bCharacterSelectionUIClosing = false;
+  m_dwCharacterSelectionCloseTick = 0;
+  m_dwCharacterSelectionOpenTick = timeGetTime();
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ResetCharacterSelectionAnimation();
+}
+
+void CGP_LogIn::StartCharacterSelectionUIClose(void)
+{
+  if (!m_bCharacterSelectionUIVisible || m_bCharacterSelectionUIClosing)
+  {
+    return;
+  }
+
+  m_bCharacterSelectionUIClosing = true;
+  m_dwCharacterSelectionCloseTick = timeGetTime();
+  m_dwCharacterSelectionOpenTick = 0;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+}
+
+bool CGP_LogIn::IsCharacterSelectionUIVisible(void) const
+{
+  return m_bCharacterSelectionUIVisible;
+}
+
+bool CGP_LogIn::IsCharacterSelectionUIInteractive(void) const
+{
+  if (!m_bCharacterSelectionUIVisible || m_bCharacterSelectionUIClosing)
+  {
+    return false;
+  }
+
+  if (m_dwCharacterSelectionOpenTick &&
+      timeGetTime() - m_dwCharacterSelectionOpenTick < kCharacterSelectBoardMoveTime)
+  {
+    return false;
+  }
+
+  return !_GetMainApp() || !_GetMainApp()->IsLoginLobbyCameraAnimating();
 }
 
 bool CGP_LogIn::IsUILockResolved(void) const
@@ -1406,7 +1541,7 @@ bool CGP_LogIn::GetCharacterSelectionLayout(CHARACTER_SELECT_LAYOUT *po_pLayout)
 
 void CGP_LogIn::ApplyCharacterSelectionOpenAnimation(CHARACTER_SELECT_LAYOUT *pio_pLayout) const
 {
-  if (!pio_pLayout || !m_dwCharacterSelectionOpenTick)
+  if (!pio_pLayout)
   {
     return;
   }
@@ -1419,11 +1554,28 @@ void CGP_LogIn::ApplyCharacterSelectionOpenAnimation(CHARACTER_SELECT_LAYOUT *pi
     return;
   }
 
-  const DWORD l_dwElapsed = timeGetTime() - m_dwCharacterSelectionOpenTick;
   const int l_nUpperHeight = pio_pLayout->sUpperBoard.bottom - pio_pLayout->sUpperBoard.top;
   const int l_nLowerHeight = pio_pLayout->sLowerBoard.bottom - pio_pLayout->sLowerBoard.top;
-  const int l_nUpperTop = LerpInt(-l_nUpperHeight, pio_pLayout->sUpperBoard.top, l_dwElapsed, kCharacterSelectBoardMoveTime);
-  const int l_nLowerTop = LerpInt(l_nScreenY, pio_pLayout->sLowerBoard.top, l_dwElapsed, kCharacterSelectBoardMoveTime);
+  int l_nUpperTop = pio_pLayout->sUpperBoard.top;
+  int l_nLowerTop = pio_pLayout->sLowerBoard.top;
+
+  if (m_bCharacterSelectionUIClosing && m_dwCharacterSelectionCloseTick)
+  {
+    const DWORD l_dwElapsed = timeGetTime() - m_dwCharacterSelectionCloseTick;
+    l_nUpperTop = LerpInt(pio_pLayout->sUpperBoard.top, -l_nUpperHeight, l_dwElapsed, kCharacterSelectBoardCloseTime);
+    l_nLowerTop = LerpInt(pio_pLayout->sLowerBoard.top, l_nScreenY, l_dwElapsed, kCharacterSelectBoardCloseTime);
+  }
+  else if (m_dwCharacterSelectionOpenTick)
+  {
+    const DWORD l_dwElapsed = timeGetTime() - m_dwCharacterSelectionOpenTick;
+    l_nUpperTop = LerpInt(-l_nUpperHeight, pio_pLayout->sUpperBoard.top, l_dwElapsed, kCharacterSelectBoardMoveTime);
+    l_nLowerTop = LerpInt(l_nScreenY, pio_pLayout->sLowerBoard.top, l_dwElapsed, kCharacterSelectBoardMoveTime);
+  }
+  else
+  {
+    return;
+  }
+
   const int l_nUpperOffsetY = l_nUpperTop - pio_pLayout->sUpperBoard.top;
   const int l_nLowerOffsetY = l_nLowerTop - pio_pLayout->sLowerBoard.top;
 
@@ -1495,15 +1647,7 @@ void CGP_LogIn::UpdateCharacterSelectionMouseInput(void)
   }
 
   const _reged_char_result_zone &l_sRegedCharResult = l_pNetworkMgr->GetRegedCharResult();
-  const bool l_bHasSelectedCharacter = FindRegedAvatarBySlot(l_sRegedCharResult, m_bySelectedCharacterSlot) != NULL;
   BYTE l_byHoverButton = GetCharacterSelectionButtonAtPoint(m_nMouseX, m_nMouseY);
-
-  if ((l_byHoverButton == CHARACTER_SELECT_BUTTON_CREATE && l_bHasSelectedCharacter) ||
-      (l_byHoverButton == CHARACTER_SELECT_BUTTON_DELETE && !l_bHasSelectedCharacter) ||
-      (l_byHoverButton == CHARACTER_SELECT_BUTTON_CONNECT && !l_bHasSelectedCharacter))
-  {
-    l_byHoverButton = kInvalidCharacterButton;
-  }
 
   m_byCharacterMenuHover = l_byHoverButton;
 
@@ -1550,11 +1694,51 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
 {
   if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_PREV)
   {
+    StartCharacterSelectionUIClose();
     MoveCharacterSelectionSlot(false);
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_NEXT)
   {
+    StartCharacterSelectionUIClose();
     MoveCharacterSelectionSlot(true);
+  }
+  else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_CREATE)
+  {
+    CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+    if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
+    {
+      return;
+    }
+
+    if (FindRegedAvatarBySlot(l_pNetworkMgr->GetRegedCharResult(), m_bySelectedCharacterSlot))
+    {
+      MessageBoxA(NULL, "A character already exists in this slot.", "RF_Online", MB_OK | MB_ICONINFORMATION);
+      return;
+    }
+
+    MessageBoxA(NULL,
+                "Character creation flow is not implemented in RFClient yet.",
+                "RF_Online",
+                MB_OK | MB_ICONINFORMATION);
+  }
+  else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_DELETE)
+  {
+    CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+    if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
+    {
+      return;
+    }
+
+    if (!FindRegedAvatarBySlot(l_pNetworkMgr->GetRegedCharResult(), m_bySelectedCharacterSlot))
+    {
+      MessageBoxA(NULL, "There is no character in this slot.", "RF_Online", MB_OK | MB_ICONINFORMATION);
+      return;
+    }
+
+    MessageBoxA(NULL,
+                "Character deletion flow is not implemented in RFClient yet.",
+                "RF_Online",
+                MB_OK | MB_ICONINFORMATION);
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_CONNECT)
   {
@@ -1568,6 +1752,11 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
 
 void CGP_LogIn::MoveCharacterSelectionSlot(bool pi_bNext)
 {
+  if (_GetMainApp() && _GetMainApp()->IsLoginLobbyCameraAnimating())
+  {
+    return;
+  }
+
   const BYTE l_byOldSlotIndex = (m_bySelectedCharacterSlot > 2) ? 0 : m_bySelectedCharacterSlot;
   m_bySelectedCharacterSlot = pi_bNext
                                 ? static_cast<BYTE>((l_byOldSlotIndex >= 2) ? 0 : l_byOldSlotIndex + 1)
@@ -1602,6 +1791,7 @@ void CGP_LogIn::SendSelectedCharacterRequest(void)
   const _reged_char_result_zone &l_sRegedCharResult = l_pNetworkMgr->GetRegedCharResult();
   if (!FindRegedAvatarBySlot(l_sRegedCharResult, m_bySelectedCharacterSlot))
   {
+    MessageBoxA(NULL, "Please create a character first.", "RF_Online", MB_OK | MB_ICONINFORMATION);
     return;
   }
 
@@ -1844,7 +2034,6 @@ void CGP_LogIn::RenderCharacterSelectionScreen(void) const
                       static_cast<int>(m_sLowerBoardAnimation.fCurFrameNo),
                       kCharacterSelectSpriteColor);
 
-  const bool l_bHasSelectedCharacter = l_pSelectedAvatar != NULL;
   const bool l_bPrevPressed = m_byCharacterMenuPressed == CHARACTER_SELECT_BUTTON_PREV && m_bLeftButtonDown;
   const bool l_bNextPressed = m_byCharacterMenuPressed == CHARACTER_SELECT_BUTTON_NEXT && m_bLeftButtonDown;
   const bool l_bCreatePressed = m_byCharacterMenuPressed == CHARACTER_SELECT_BUTTON_CREATE && m_bLeftButtonDown;
@@ -1857,8 +2046,8 @@ void CGP_LogIn::RenderCharacterSelectionScreen(void) const
   const bool l_bDeleteHovered = m_byCharacterMenuHover == CHARACTER_SELECT_BUTTON_DELETE;
   const bool l_bExitHovered = m_byCharacterMenuHover == CHARACTER_SELECT_BUTTON_EXIT;
 
-  const DWORD l_dwCreateFrame = l_bHasSelectedCharacter ? 7 : (l_bCreatePressed ? 6 : (l_bCreateHovered ? 5 : 4));
-  const DWORD l_dwDeleteFrame = l_bHasSelectedCharacter ? (l_bDeletePressed ? 10 : (l_bDeleteHovered ? 9 : 8)) : 11;
+  const DWORD l_dwCreateFrame = l_bCreatePressed ? 6 : (l_bCreateHovered ? 5 : 4);
+  const DWORD l_dwDeleteFrame = l_bDeletePressed ? 10 : (l_bDeleteHovered ? 9 : 8);
   const DWORD l_dwPrevFrame = l_bPrevPressed ? 14 : (l_bPrevHovered ? 13 : 12);
   const DWORD l_dwNextFrame = l_bNextPressed ? 17 : (l_bNextHovered ? 16 : 15);
   const DWORD l_dwConnectFrame = l_bConnectPressed ? 19 : 18;

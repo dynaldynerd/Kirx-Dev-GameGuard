@@ -136,25 +136,18 @@ void StripFinalPath(char *name)
 	name[i+1]=NULL;
 }
 
-int GetFileSize(char *name)		//파일 사이즈를 알아낸다.
+int GetFileSize(char *name)		// get file size.
 {
 	int end,start;
-
 	FILE *fp = fopen(name,"rb");
 	if(fp==NULL)
 		return 0;
-	
-	start=ftell(fp);	//파일 사이즈를 알아낸다.
+	start=ftell(fp);	// get file size.
 	fseek(fp,0,SEEK_END);
 	end=ftell(fp);
 	fclose(fp);
-	
 	return (end-start);
-
 }
-
-
-
 int MaxFixFloatToInt(float su);
 int MinFixFloatToInt(float su);
 

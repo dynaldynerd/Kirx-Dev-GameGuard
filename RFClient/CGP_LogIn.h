@@ -86,6 +86,11 @@ private:
   void ClearOpeningMouseTransitions(void);
   void ActivateOpeningMenuItem(BYTE pi_byMenuIndex);
   bool GetCharacterSelectionLayout(CHARACTER_SELECT_LAYOUT *po_pLayout) const;
+  void UpdateCharacterSelectionUIState(void);
+  void StartCharacterSelectionUIOpen(void);
+  void StartCharacterSelectionUIClose(void);
+  bool IsCharacterSelectionUIVisible(void) const;
+  bool IsCharacterSelectionUIInteractive(void) const;
   void ApplyCharacterSelectionOpenAnimation(CHARACTER_SELECT_LAYOUT *pio_pLayout) const;
   BYTE GetCharacterSelectionButtonAtPoint(int pi_nX, int pi_nY) const;
   void UpdateCharacterSelectionMouseInput(void);
@@ -116,6 +121,10 @@ private:
   bool m_bLeftButtonReleased;
   DWORD m_dwStartRequestTick;
   DWORD m_dwCharacterSelectionOpenTick;
+  DWORD m_dwCharacterSelectionCloseTick;
+  bool m_bCharacterSelectionUIVisible;
+  bool m_bCharacterSelectionUIClosing;
+  bool m_bCharacterDummiesLoaded;
   bool m_bStartRequested;
   bool m_bCreditsMode;
   DWORD m_dwCreditsStartTick;

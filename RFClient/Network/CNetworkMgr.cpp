@@ -4,18 +4,56 @@
 #include <cstdio>
 #include <cstring>
 
+#pragma comment(lib, "bcrypt.lib")
+
 #include "RFClientApp.h"
 
 namespace
 {
 constexpr DWORD kWorldProtocolVer = 126455;
 constexpr char kClientVerCheckKey[] = "75a32d4a6daff548fcfcb40fea838a0d";
-constexpr char kDebugNetworkLogPath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientNetwork.log";
+constexpr char kDebugNetworkLogPath[] = ".\\RFClientNetwork.log";
 constexpr DWORD kSpeedHackAnswerDelayMs = 5000;
+constexpr DWORD kAopAesKeyWords = 6;
+constexpr DWORD kAopAesKeySize = kAopAesKeyWords * sizeof(DWORD);
+
+constexpr DWORD kAopServerEncKeyWords[kAopAesKeyWords] = {
+  0x3C8173A8, 0x5D43BEDF, 0x4A9BEE6B, 0x6E6A18E8, 0x3C68C2D2, 0xD74D98D6,
+};
+
+constexpr DWORD kAopClientEncKeyWords[kAopAesKeyWords] = {
+  0x3C8170D8, 0x5D43BE0F, 0x4E96E96B, 0x6E6A18E8, 0x0C38C2D2, 0xD74D9AD6,
+};
 
 int MinInt(int left, int right)
 {
   return left < right ? left : right;
+}
+
+WORD ReadWordLE(const char *pi_pBuffer)
+{
+  return static_cast<WORD>(static_cast<unsigned char>(pi_pBuffer[0]) |
+                           (static_cast<unsigned char>(pi_pBuffer[1]) << 8));
+}
+
+void WriteWordLE(char *po_pBuffer, WORD pi_wValue)
+{
+  po_pBuffer[0] = static_cast<char>(pi_wValue & 0xFF);
+  po_pBuffer[1] = static_cast<char>((pi_wValue >> 8) & 0xFF);
+}
+
+void AppendAopKeyBytes(std::vector<unsigned char> &po_vecKey, const DWORD *pi_pWords)
+{
+  po_vecKey.clear();
+  po_vecKey.reserve(kAopAesKeySize);
+  for (DWORD i = 0; i < kAopAesKeyWords; ++i)
+  {
+    const DWORD l_dwWord = pi_pWords[i];
+    po_vecKey.push_back(static_cast<unsigned char>((l_dwWord >> 24) & 0xFF));
+    po_vecKey.push_back(static_cast<unsigned char>((l_dwWord >> 16) & 0xFF));
+    po_vecKey.push_back(static_cast<unsigned char>((l_dwWord >> 8) & 0xFF));
+    po_vecKey.push_back(static_cast<unsigned char>(l_dwWord & 0xFF));
+  }
 }
 
 template <typename T>
@@ -111,7 +149,13 @@ CNetworkMgr::CNetworkMgr()
     m_bHasRegedCharResult(FALSE),
     m_bSentSelCharRequest(FALSE),
     m_bHasSelCharResult(FALSE),
-    m_bHasUILockInform(FALSE)
+    m_bHasUILockInform(FALSE),
+    m_bUseAopTransportCrypt(false),
+    m_bHasRetriedAopTransportCrypt(false),
+    m_hAopAesAlgorithm(NULL),
+    m_hAopClientEncryptKey(NULL),
+    m_hAopServerDecryptKey(NULL),
+    m_dwAopKeyObjectSize(0)
 {
   ZeroMemory(m_bIsConnectedToServer, sizeof(m_bIsConnectedToServer));
   ZeroMemory(m_dwServerIP, sizeof(m_dwServerIP));
@@ -161,6 +205,7 @@ BOOL CNetworkMgr::Destroy(void)
 
   CloseSocket();
   ResetConnectionState();
+  ShutdownAopTransportCrypt();
 
   if (m_bWSAStarted)
   {
@@ -281,7 +326,13 @@ BOOL CNetworkMgr::SendNetMessage(DWORD, BYTE *pi_pType, void *pi_pMsg, int pi_nS
     memcpy(l_vecSendBuffer.data() + MSG_HEADER_SIZE, pi_pMsg, pi_nSize);
   }
 
-  return SendBuffer(l_vecSendBuffer.data(), static_cast<int>(l_vecSendBuffer.size())) ? TRUE : FALSE;
+  std::vector<char> l_vecWirePacket;
+  if (!WrapOutgoingPacket(l_vecSendBuffer.data(), static_cast<int>(l_vecSendBuffer.size()), l_vecWirePacket))
+  {
+    return FALSE;
+  }
+
+  return SendBuffer(l_vecWirePacket.data(), static_cast<int>(l_vecWirePacket.size())) ? TRUE : FALSE;
 }
 
 BOOL CNetworkMgr::SystemMsg_EnterWorldRequest_zone(void)
@@ -659,6 +710,10 @@ void CNetworkMgr::PumpReceive(void)
     const int l_nRecv = recv(m_hSocket, l_szRecvBuffer, sizeof(l_szRecvBuffer), 0);
     if (l_nRecv == 0)
     {
+      if (!m_bUseAopTransportCrypt && m_bSentEnterWorldRequest && !m_bHasEnterWorldResult)
+      {
+        EnableAopTransportCryptRetry("world server closed after raw enter-world request");
+      }
       SetStatusText("World server closed the connection");
       CloseSocket();
       ResetConnectionState();
@@ -673,6 +728,10 @@ void CNetworkMgr::PumpReceive(void)
         break;
       }
 
+      if (!m_bUseAopTransportCrypt && m_bSentEnterWorldRequest && !m_bHasEnterWorldResult)
+      {
+        EnableAopTransportCryptRetry("recv failed before enter-world result");
+      }
       SetStatusText("recv failed error=%d", l_nError);
       CloseSocket();
       ResetConnectionState();
@@ -682,29 +741,21 @@ void CNetworkMgr::PumpReceive(void)
     m_vecRecvBuffer.insert(m_vecRecvBuffer.end(), l_szRecvBuffer, l_szRecvBuffer + l_nRecv);
   }
 
-  while (m_vecRecvBuffer.size() >= MSG_HEADER_SIZE)
+  while (true)
   {
     _MSG_HEADER l_sHeader;
-    memcpy(&l_sHeader, m_vecRecvBuffer.data(), MSG_HEADER_SIZE);
-
-    if (l_sHeader.m_wSize < MSG_HEADER_SIZE)
-    {
-      SetStatusText("Invalid packet size=%u", l_sHeader.m_wSize);
-      CloseSocket();
-      ResetConnectionState();
-      return;
-    }
-
-    if (m_vecRecvBuffer.size() < l_sHeader.m_wSize)
+    std::vector<char> l_vecPacketBuffer;
+    size_t l_nConsumedBytes = 0;
+    if (!TryPopIncomingPacket(l_sHeader, l_vecPacketBuffer, l_nConsumedBytes))
     {
       break;
     }
 
     const int l_nPayloadSize = static_cast<int>(l_sHeader.m_wSize) - MSG_HEADER_SIZE;
-    const char *l_pPayload = m_vecRecvBuffer.data() + MSG_HEADER_SIZE;
+    const char *l_pPayload = l_vecPacketBuffer.data() + MSG_HEADER_SIZE;
     ProcessPacket(l_sHeader, l_pPayload, l_nPayloadSize);
 
-    m_vecRecvBuffer.erase(m_vecRecvBuffer.begin(), m_vecRecvBuffer.begin() + l_sHeader.m_wSize);
+    m_vecRecvBuffer.erase(m_vecRecvBuffer.begin(), m_vecRecvBuffer.begin() + l_nConsumedBytes);
   }
 }
 
@@ -765,6 +816,335 @@ bool CNetworkMgr::SendBuffer(const char *pi_pBuffer, int pi_nSize)
     l_nSent += l_nSend;
   }
 
+  return true;
+}
+
+bool CNetworkMgr::EnsureAopTransportCrypt(void)
+{
+  if (m_hAopClientEncryptKey && m_hAopServerDecryptKey)
+  {
+    return true;
+  }
+
+  if (!m_hAopAesAlgorithm)
+  {
+    if (!BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&m_hAopAesAlgorithm,
+                                                    BCRYPT_AES_ALGORITHM,
+                                                    NULL,
+                                                    0)))
+    {
+      SetStatusText("BCryptOpenAlgorithmProvider failed for AOP transport crypt");
+      ShutdownAopTransportCrypt();
+      return false;
+    }
+
+    if (!BCRYPT_SUCCESS(BCryptSetProperty(m_hAopAesAlgorithm,
+                                          BCRYPT_CHAINING_MODE,
+                                          reinterpret_cast<PUCHAR>(const_cast<wchar_t *>(BCRYPT_CHAIN_MODE_ECB)),
+                                          static_cast<ULONG>((wcslen(BCRYPT_CHAIN_MODE_ECB) + 1) * sizeof(wchar_t)),
+                                          0)))
+    {
+      SetStatusText("BCryptSetProperty ECB failed for AOP transport crypt");
+      ShutdownAopTransportCrypt();
+      return false;
+    }
+
+    ULONG l_dwResultSize = 0;
+    if (!BCRYPT_SUCCESS(BCryptGetProperty(m_hAopAesAlgorithm,
+                                          BCRYPT_OBJECT_LENGTH,
+                                          reinterpret_cast<PUCHAR>(&m_dwAopKeyObjectSize),
+                                          sizeof(m_dwAopKeyObjectSize),
+                                          &l_dwResultSize,
+                                          0)))
+    {
+      SetStatusText("BCryptGetProperty object length failed for AOP transport crypt");
+      ShutdownAopTransportCrypt();
+      return false;
+    }
+  }
+
+  if (!m_dwAopKeyObjectSize)
+  {
+    SetStatusText("Invalid AOP transport key object size");
+    ShutdownAopTransportCrypt();
+    return false;
+  }
+
+  std::vector<unsigned char> l_vecClientKeyBytes;
+  AppendAopKeyBytes(l_vecClientKeyBytes, kAopClientEncKeyWords);
+  std::vector<unsigned char> l_vecServerKeyBytes;
+  AppendAopKeyBytes(l_vecServerKeyBytes, kAopServerEncKeyWords);
+
+  m_vecAopClientKeyObject.assign(m_dwAopKeyObjectSize, 0);
+  if (!BCRYPT_SUCCESS(BCryptGenerateSymmetricKey(m_hAopAesAlgorithm,
+                                                 &m_hAopClientEncryptKey,
+                                                 m_vecAopClientKeyObject.data(),
+                                                 static_cast<ULONG>(m_vecAopClientKeyObject.size()),
+                                                 l_vecClientKeyBytes.data(),
+                                                 static_cast<ULONG>(l_vecClientKeyBytes.size()),
+                                                 0)))
+  {
+    SetStatusText("BCryptGenerateSymmetricKey failed for AOP client encrypt key");
+    ShutdownAopTransportCrypt();
+    return false;
+  }
+
+  m_vecAopServerKeyObject.assign(m_dwAopKeyObjectSize, 0);
+  if (!BCRYPT_SUCCESS(BCryptGenerateSymmetricKey(m_hAopAesAlgorithm,
+                                                 &m_hAopServerDecryptKey,
+                                                 m_vecAopServerKeyObject.data(),
+                                                 static_cast<ULONG>(m_vecAopServerKeyObject.size()),
+                                                 l_vecServerKeyBytes.data(),
+                                                 static_cast<ULONG>(l_vecServerKeyBytes.size()),
+                                                 0)))
+  {
+    SetStatusText("BCryptGenerateSymmetricKey failed for AOP server decrypt key");
+    ShutdownAopTransportCrypt();
+    return false;
+  }
+
+  return true;
+}
+
+void CNetworkMgr::ShutdownAopTransportCrypt(void)
+{
+  if (m_hAopClientEncryptKey)
+  {
+    BCryptDestroyKey(m_hAopClientEncryptKey);
+    m_hAopClientEncryptKey = NULL;
+  }
+
+  if (m_hAopServerDecryptKey)
+  {
+    BCryptDestroyKey(m_hAopServerDecryptKey);
+    m_hAopServerDecryptKey = NULL;
+  }
+
+  if (m_hAopAesAlgorithm)
+  {
+    BCryptCloseAlgorithmProvider(m_hAopAesAlgorithm, 0);
+    m_hAopAesAlgorithm = NULL;
+  }
+
+  m_dwAopKeyObjectSize = 0;
+  m_vecAopClientKeyObject.clear();
+  m_vecAopServerKeyObject.clear();
+}
+
+void CNetworkMgr::EnableAopTransportCryptRetry(const char *pi_pReason)
+{
+  if (m_bUseAopTransportCrypt || m_bHasRetriedAopTransportCrypt)
+  {
+    return;
+  }
+
+  m_bUseAopTransportCrypt = true;
+  m_bHasRetriedAopTransportCrypt = true;
+  SetStatusText("Enabling AOP transport crypt retry: %s",
+                pi_pReason ? pi_pReason : "world line compatibility fallback");
+}
+
+bool CNetworkMgr::WrapOutgoingPacket(const char *pi_pPlainPacket,
+                                     int pi_nPlainSize,
+                                     std::vector<char> &po_vecWirePacket)
+{
+  po_vecWirePacket.clear();
+
+  if (!pi_pPlainPacket || pi_nPlainSize <= 0)
+  {
+    return false;
+  }
+
+  if (!m_bUseAopTransportCrypt)
+  {
+    po_vecWirePacket.assign(pi_pPlainPacket, pi_pPlainPacket + pi_nPlainSize);
+    return true;
+  }
+
+  if (!EnsureAopTransportCrypt())
+  {
+    return false;
+  }
+
+  const BYTE l_byPaddingSize = static_cast<BYTE>((16 - (pi_nPlainSize & 0xF)) & 0xF);
+  const int l_nCipherSize = pi_nPlainSize + l_byPaddingSize;
+  const WORD l_wWireSize = static_cast<WORD>(l_nCipherSize + 3);
+
+  po_vecWirePacket.assign(l_wWireSize, 0);
+  WriteWordLE(po_vecWirePacket.data(), l_wWireSize);
+  po_vecWirePacket[2] = static_cast<char>(l_byPaddingSize);
+  AppendNetworkLog("AOP transport crypt: wrapping outgoing packet");
+
+  unsigned char l_byVector[16] = {};
+  ULONG l_dwResultSize = 0;
+  const unsigned char *l_pInput = reinterpret_cast<const unsigned char *>(pi_pPlainPacket);
+  unsigned char *l_pOutput = reinterpret_cast<unsigned char *>(po_vecWirePacket.data() + 3);
+  int l_nRemaining = pi_nPlainSize;
+
+  while (l_nRemaining > 0)
+  {
+    unsigned char l_byBlock[16];
+    unsigned char l_byCipher[16];
+    const int l_nBlockSize = MinInt(l_nRemaining, 16);
+
+    for (int i = 0; i < l_nBlockSize; ++i)
+    {
+      l_byBlock[i] = static_cast<unsigned char>(l_byVector[i] ^ l_pInput[i]);
+    }
+    for (int i = l_nBlockSize; i < 16; ++i)
+    {
+      l_byBlock[i] = l_byVector[i];
+    }
+
+    if (!BCRYPT_SUCCESS(BCryptEncrypt(m_hAopClientEncryptKey,
+                                      l_byBlock,
+                                      sizeof(l_byBlock),
+                                      NULL,
+                                      NULL,
+                                      0,
+                                      l_byCipher,
+                                      sizeof(l_byCipher),
+                                      &l_dwResultSize,
+                                      0)) ||
+        l_dwResultSize != sizeof(l_byCipher))
+    {
+      SetStatusText("BCryptEncrypt failed for AOP transport packet");
+      return false;
+    }
+
+    memcpy(l_pOutput, l_byCipher, sizeof(l_byCipher));
+    memcpy(l_byVector, l_byCipher, sizeof(l_byVector));
+    l_pOutput += sizeof(l_byCipher);
+    l_pInput += l_nBlockSize;
+    l_nRemaining -= l_nBlockSize;
+  }
+
+  return true;
+}
+
+bool CNetworkMgr::TryPopIncomingPacket(_MSG_HEADER &po_sHeader,
+                                       std::vector<char> &po_vecPacketBuffer,
+                                       size_t &po_nConsumedBytes)
+{
+  po_nConsumedBytes = 0;
+  po_vecPacketBuffer.clear();
+
+  if (!m_bUseAopTransportCrypt)
+  {
+    if (m_vecRecvBuffer.size() < MSG_HEADER_SIZE)
+    {
+      return false;
+    }
+
+    memcpy(&po_sHeader, m_vecRecvBuffer.data(), MSG_HEADER_SIZE);
+    if (po_sHeader.m_wSize < MSG_HEADER_SIZE)
+    {
+      SetStatusText("Invalid packet size=%u", po_sHeader.m_wSize);
+      CloseSocket();
+      ResetConnectionState();
+      return false;
+    }
+
+    if (m_vecRecvBuffer.size() < po_sHeader.m_wSize)
+    {
+      return false;
+    }
+
+    po_vecPacketBuffer.assign(m_vecRecvBuffer.begin(), m_vecRecvBuffer.begin() + po_sHeader.m_wSize);
+    po_nConsumedBytes = po_sHeader.m_wSize;
+    return true;
+  }
+
+  if (m_vecRecvBuffer.size() < 3)
+  {
+    return false;
+  }
+
+  if (!EnsureAopTransportCrypt())
+  {
+    CloseSocket();
+    ResetConnectionState();
+    return false;
+  }
+
+  const WORD l_wWireSize = ReadWordLE(m_vecRecvBuffer.data());
+  const BYTE l_byPaddingSize = static_cast<BYTE>(m_vecRecvBuffer[2]);
+  if (l_wWireSize < 19 || (l_wWireSize - 3) % 16 != 0 || l_byPaddingSize > 15)
+  {
+    SetStatusText("Invalid AOP transport packet size=%u padding=%u",
+                  static_cast<unsigned>(l_wWireSize),
+                  static_cast<unsigned>(l_byPaddingSize));
+    CloseSocket();
+    ResetConnectionState();
+    return false;
+  }
+
+  if (m_vecRecvBuffer.size() < l_wWireSize)
+  {
+    return false;
+  }
+
+  const int l_nCipherSize = l_wWireSize - 3;
+  const int l_nPlainSize = l_nCipherSize - l_byPaddingSize;
+  if (l_nPlainSize < static_cast<int>(MSG_HEADER_SIZE))
+  {
+    SetStatusText("Invalid decrypted packet size=%d", l_nPlainSize);
+    CloseSocket();
+    ResetConnectionState();
+    return false;
+  }
+
+  po_vecPacketBuffer.assign(l_nPlainSize, 0);
+  unsigned char l_byVector[16] = {};
+  ULONG l_dwResultSize = 0;
+  const unsigned char *l_pInput = reinterpret_cast<const unsigned char *>(m_vecRecvBuffer.data() + 3);
+  unsigned char *l_pOutput = reinterpret_cast<unsigned char *>(po_vecPacketBuffer.data());
+
+  for (int l_nOffset = 0; l_nOffset < l_nCipherSize; l_nOffset += 16)
+  {
+    unsigned char l_byBlock[16];
+    unsigned char l_byPlainBlock[16];
+
+    if (!BCRYPT_SUCCESS(BCryptDecrypt(m_hAopServerDecryptKey,
+                                      const_cast<PUCHAR>(l_pInput + l_nOffset),
+                                      16,
+                                      NULL,
+                                      NULL,
+                                      0,
+                                      l_byBlock,
+                                      sizeof(l_byBlock),
+                                      &l_dwResultSize,
+                                      0)) ||
+        l_dwResultSize != sizeof(l_byBlock))
+    {
+      SetStatusText("BCryptDecrypt failed for AOP transport packet");
+      CloseSocket();
+      ResetConnectionState();
+      return false;
+    }
+
+    for (int i = 0; i < 16; ++i)
+    {
+      l_byPlainBlock[i] = static_cast<unsigned char>(l_byVector[i] ^ l_byBlock[i]);
+    }
+
+    const int l_nCopySize = MinInt(l_nPlainSize - l_nOffset, 16);
+    memcpy(l_pOutput + l_nOffset, l_byPlainBlock, l_nCopySize);
+    memcpy(l_byVector, l_pInput + l_nOffset, sizeof(l_byVector));
+  }
+
+  memcpy(&po_sHeader, po_vecPacketBuffer.data(), MSG_HEADER_SIZE);
+  if (po_sHeader.m_wSize != static_cast<WORD>(l_nPlainSize) || po_sHeader.m_wSize < MSG_HEADER_SIZE)
+  {
+    SetStatusText("Invalid decrypted packet size=%u plain=%d",
+                  po_sHeader.m_wSize,
+                  l_nPlainSize);
+    CloseSocket();
+    ResetConnectionState();
+    return false;
+  }
+
+  po_nConsumedBytes = l_wWireSize;
   return true;
 }
 

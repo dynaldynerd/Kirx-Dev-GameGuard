@@ -43,12 +43,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>D:\Private Files\playrf\RFOnline\</OutDir>
+    <OutDir>D:\Private Files\REPACK AOP FIX TIME\2_Client AOP\</OutDir>
     <IntDir>$(ProjectDir)build\$(Configuration)\</IntDir>
     <TargetName>RF_Online</TargetName>
     <TargetExt>.exe</TargetExt>
     <LocalDebuggerCommand>$(OutDir)$(TargetName)$(TargetExt)</LocalDebuggerCommand>
-    <LocalDebuggerWorkingDirectory>D:\Private Files\playrf\RFOnline\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\Private Files\REPACK AOP FIX TIME\2_Client AOP\</LocalDebuggerWorkingDirectory>
     <LocalDebuggerCommandArguments></LocalDebuggerCommandArguments>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>

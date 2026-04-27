@@ -31,7 +31,10 @@ BOOL CGameProgress::Destroy(void)
 
 BOOL CGameProgress::MainLoop(BOOL pi_bIsActive)
 {
-  InputProcess();
+  if (pi_bIsActive)
+  {
+    InputProcess();
+  }
   if (m_bExit)
   {
     return TRUE;

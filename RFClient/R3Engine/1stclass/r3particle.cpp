@@ -5,6 +5,7 @@
 #include "Jmalloc.h"
 #include "Procedural.h"
 #include "CommonUtil.h"
+#include "mergefile.h"
 #include "Core.h"
 #include <math.h>
 #include <stdio.h>
@@ -998,7 +999,7 @@ BOOL CParticle::LoadParticleSPT(char *name,DWORD option)
 	float temp_f;
 //	int i;
 
-	if(( fp =fopen(name,"rt"))==NULL) 
+	if(( fp =fopenMFM(name,"rt"))==NULL) 
 	{
 		Warning(name,"<-이 파일이없습니다.");
 		return FALSE;
@@ -1009,14 +1010,30 @@ BOOL CParticle::LoadParticleSPT(char *name,DWORD option)
 	BOOL is_par=FALSE;
 	mFlag=0;
 
+	if( fscanf(fp,"%s",hole)==EOF)	
+	{
+		Warning(name,"<-이파일은 파티클스크립트가 아닙니다.");
+		fclose(fp);
+		return FALSE;
+	}
     while(1)	//앞부분 스킵.
     {
-		if( fscanf(fp,"%s",hole)==EOF)	
-			break;
+        if (!strcmp(hole,"end"))
+		{
+			Warning(name,"<-이파일은 파티클스크립트가 아닙니다.");
+			fclose(fp);
+			return FALSE;
+		}
         if (!strcmp(hole,"[Particle]"))
 		{
 			is_par=TRUE;
 			break;
+		}
+		if( fscanf(fp,"%s",hole)==EOF)	
+		{
+			Warning(name,"<-이파일은 파티클스크립트가 아닙니다.");
+			fclose(fp);
+			return FALSE;
 		}
 	}
 	if( !is_par )
@@ -1044,6 +1061,8 @@ BOOL CParticle::LoadParticleSPT(char *name,DWORD option)
     while(1)
     {
 		if( fscanf(fp,"%s",hole)==EOF)	
+			break;
+		if( !strcmp(hole,"end"))
 			break;
 		strlwr(hole);
 		if( !strcmp(hole,"entity_file"))

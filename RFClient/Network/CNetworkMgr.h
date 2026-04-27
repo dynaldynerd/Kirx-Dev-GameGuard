@@ -4,6 +4,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 
+#include <bcrypt.h>
 #include <vector>
 
 #include "ClientZonePacket.h"
@@ -87,6 +88,15 @@ public:
   const char *GetAddressText(DWORD pi_dwAddress);
 
 private:
+  bool EnsureAopTransportCrypt(void);
+  void ShutdownAopTransportCrypt(void);
+  void EnableAopTransportCryptRetry(const char *pi_pReason);
+  bool WrapOutgoingPacket(const char *pi_pPlainPacket, int pi_nPlainSize, std::vector<char> &po_vecWirePacket);
+  bool TryPopIncomingPacket(_MSG_HEADER &po_sHeader,
+                            std::vector<char> &po_vecPacketBuffer,
+                            size_t &po_nConsumedBytes);
+
+private:
   void AcceptClientCheck(DWORD dwProID, DWORD dwClientIndex, DWORD dwSerial);
   void CloseClientCheck(DWORD dwProID, DWORD dwClientIndex, DWORD dwSerial);
 
@@ -137,6 +147,14 @@ private:
   _not_arranged_char_inform_zocl m_sNotArrangedCharInform;
   _uilock_inform_request_zocl m_sUILockInform;
   char m_szStatusText[256];
+  bool m_bUseAopTransportCrypt;
+  bool m_bHasRetriedAopTransportCrypt;
+  BCRYPT_ALG_HANDLE m_hAopAesAlgorithm;
+  BCRYPT_KEY_HANDLE m_hAopClientEncryptKey;
+  BCRYPT_KEY_HANDLE m_hAopServerDecryptKey;
+  DWORD m_dwAopKeyObjectSize;
+  std::vector<unsigned char> m_vecAopClientKeyObject;
+  std::vector<unsigned char> m_vecAopServerKeyObject;
 };
 
 extern CNetworkMgr *g_pNetworkMgr;

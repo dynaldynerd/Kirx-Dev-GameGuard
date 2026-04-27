@@ -2,6 +2,7 @@
 #include "Jerror.h"
 #include "Jmalloc.h"
 #include "CommonUtil.h"
+#include "mergefile.h"
 #include "R3D3d8.h"
 #include "R3Bsp.h"
 #include "R3Math.h"
@@ -1104,6 +1105,7 @@ void CBsp::LoadBsp(char *name)
 	mNowCFaceId=0;
 	mTotalAllocSize=0;
 	ResetTotalVertexBufferInfo();
+	mMapEntityMFM.ReleaseMergeFile();
 
 	fread(&mBSPHeader,sizeof(_BSP_FILE_HEADER),1,fp);
 
@@ -1337,6 +1339,9 @@ void CBsp::LoadBsp(char *name)
 //	size += mBSPHeader.CVertex.size;
 //	GetVertexNormal();
 
+	mMapEntityMFM.InitMergeFile(GetR3State()->EntityPath);
+	SetMergeFileManager(&mMapEntityMFM);
+
 	_R3ENGINE_STATE *r3_state=GetR3State();
 	mEnvID = r3_state->mEnvID;
 	if( mEnvID )
@@ -1452,6 +1457,8 @@ void CBsp::LoadEntities( _READ_MAP_ENTITIES_LIST *readMapEntitiesList)	//엔티티�
 
 	mTotalAllocSize += mEntityListNum*sizeof(CEntity);	//메모리 전체 용량계산.
 	mTotalAllocSize += mEntityListNum*sizeof(CParticle);	//메모리 전체 용량계산.
+
+	SetMergeFileManager(&mMapEntityMFM);
 
 	char name[256];
 	_R3ENGINE_STATE *r3_state=GetR3State();
@@ -1624,6 +1631,8 @@ void CBsp::ReleaseBsp()					//bsp파일 클리어...
 {
 	DWORD i;
 
+	mMapEntityMFM.ReleaseMergeFile();
+	SetMergeFileManager(NULL);
 	ReleaseSoundEntities();	//사운드 엔티티들을 릴리즈한다.
 	ReleaseEntities();	//엔티티들을 릴리즈한다.
 	if(mStaticAlloc)

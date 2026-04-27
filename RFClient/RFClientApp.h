@@ -15,6 +15,7 @@
 class CPlayer;
 class CGameProgress;
 class CNetworkMgr;
+struct _reged_char_result_zone;
 
 enum
 {
@@ -51,10 +52,13 @@ public:
   void UnloadMainGameData(void);
   BOOL LoadLoginLobbyData(void);
   void UnloadLoginLobbyData(void);
+  BOOL BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi_stRegedCharResult);
+  void ClearLoginLobbyCharacterDummies(void);
   BOOL SetLoginLobbyOpeningCamera(void);
   BOOL PlayLoginLobbyCharacterEntryCamera(BYTE pi_bySlotIndex);
   BOOL PlayLoginLobbyCharacterNextCamera(BYTE pi_byOldSlotIndex);
   BOOL PlayLoginLobbyCharacterPrevCamera(BYTE pi_byOldSlotIndex);
+  BOOL IsLoginLobbyCameraAnimating(void) const { return m_bLoginLobbyCameraAnimating; }
   void FrameMoveLoginLobby(void);
   void RenderLoginLobby(void);
   HRESULT FrameMoveMainGame(void);
@@ -122,6 +126,7 @@ private:
   char m_mapName[MAX_PATH];
   char m_szSelectedMap[MAX_PATH];
   CAniCamera m_cLoginLobbyAniCamera;
+  BOOL m_bLoginLobbyCameraAnimating;
   Vector3f m_vecLoginLobbyCameraPos;
   float m_cameraTarget[3];
   float m_cameraPosition[3];

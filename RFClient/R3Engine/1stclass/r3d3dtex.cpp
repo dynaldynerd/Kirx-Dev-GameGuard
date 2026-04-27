@@ -10,6 +10,7 @@
 #include "d3dutil.h"
 #include "dxutil.h"
 #include "CommonUtil.h"
+#include "mergefile.h"
 #include "R3d3d8.h"
 #include "R3lightmap.h"
 #include "R3d3dtex.h"
@@ -179,8 +180,8 @@ LPDIRECT3DTEXTURE8 R3LoadDDS(char *name,DWORD mipmap,DWORD max_tex_xl=2048,DWORD
 {
 	LPDIRECT3DTEXTURE8 lptexture=NULL;
 
-	int total_size = GetFileSize(name);		//파일 사이즈를 알아낸다.
-	FILE *fp = fopen(name,"rb");
+	int total_size = GetFileSizeAndMergeFile(name);		//파일 사이즈를 알아낸다.
+	FILE *fp = fopenMFM(name,"rb");
 	if( fp == NULL )
 		return NULL;
 
@@ -628,7 +629,7 @@ R3Texture *R3GetTexInfoR3T(char *name,DWORD flag)	//R3T텍스쳐 정보를 리턴한다.
 //	DWORD format;
 	int cnt;
 
-	FILE *fp = fopen(name,"rb");
+	FILE *fp = fopenMFM(name,"rb");
 	if(fp==NULL)
 	{
 		char buf[256];
@@ -1244,7 +1245,7 @@ void LoadR3T(R3Texture *tex)	//r3t파일의 경우
 
 	if( tex == NULL )
 		return;
-	FILE *fp = fopen(tex->mName,"rb");
+	FILE *fp = fopenMFM(tex->mName,"rb");
 	if( fp == NULL ) 
 	{
 		Warning(tex->mName,"<-이파일이 없슈");

@@ -439,7 +439,15 @@ void CR3Font::SetCache(char *strText,DWORD str_leng,DWORD x_index,DWORD y,DWORD 
 	for(i=0; i<str_leng; i++)
 		m_CacheString[y*mFontMaxStringLength+x+i]=strText[i];
 
-	ExtTextOut( m_hDC, 0, 0, ETO_OPAQUE, NULL, strText, str_leng, NULL );
+	if( m_pBitmapBits )
+		ZeroMemory( m_pBitmapBits, mMaxTextureXSize * FONT_HEIGHT * sizeof(DWORD) );
+
+	RECT rcText;
+	rcText.left = 0;
+	rcText.top = 0;
+	rcText.right = (LONG)mMaxTextureXSize;
+	rcText.bottom = FONT_HEIGHT;
+	ExtTextOut( m_hDC, 0, 0, ETO_OPAQUE, &rcText, strText, str_leng, NULL );
 
 	//--서페이스에 락 걸고 직접 픽셀값을 세팅한다.
 	D3DLOCKED_RECT d3dlr;

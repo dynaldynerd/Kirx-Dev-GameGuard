@@ -11,7 +11,9 @@
 
 #include "AlphaMeshManager.h"
 #include "CCharacterMgr.h"
+#include "CItemDataMgr.h"
 #include "CResourceDataMgr.h"
+#include "Network/REGED_AVATOR_DB.h"
 #include "R3Engine/common/commonutil.h"
 #include "R3Engine/2ndclass/r3util.h"
 
@@ -19,7 +21,7 @@
 
 namespace
 {
-constexpr char kDebugCaptureLogPath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.log";
+constexpr char kDebugCaptureLogPath[] = ".\\RFClientCapture.log";
 constexpr char kPlayerMeshRFSPath[] = ".\\Character\\Player\\Mesh\\";
 constexpr char kPlayerAniRFSPath[] = ".\\Character\\Player\\Ani\\";
 constexpr char kPlayerTexRFSPath[] = ".\\Character\\Player\\Tex\\";
@@ -37,12 +39,65 @@ constexpr char kAccretiaLfRunAniName[] = "ACCRETIA_PEACE_LFRUN_NONE_NONE_01_00.A
 constexpr char kAccretiaRtRunAniName[] = "ACCRETIA_PEACE_RTRUN_NONE_NONE_01_00.ANI";
 constexpr size_t kObjectMeshTextureOffset = 0x304;
 constexpr size_t kObjectMeshStride = 0x430;
+constexpr size_t kTextureManagerPathOffset = 0x1C;
+constexpr size_t kTextureManagerPathSize = 0x64;
+constexpr size_t kCharacterObjectTexturePathOffset = 0x114;
+constexpr size_t kCharacterObjectTexturePathSize = 0xFC;
+constexpr BYTE kBaseFixNum = 5;
+constexpr DWORD kDefaultMeshCategory = 0x050000;
+constexpr BYTE kServerBasePartToClientPart[kBaseFixNum] =
+{
+  CDPT_UPPER_PART,
+  CDPT_LOWER_PART,
+  CDPT_GLOVES,
+  CDPT_SHOES,
+  CDPT_HELMET
+};
+constexpr BYTE kServerBasePartToItemType[kBaseFixNum] =
+{
+  IEPT_UPPER_PART,
+  IEPT_LOWER_PART,
+  IEPT_GLOVES,
+  IEPT_SHOES,
+  IEPT_HELMET
+};
+constexpr BYTE kDefaultPartMeshCode[MAX_DEFAULT_PART] =
+{
+  1, // face
+  2, // upper
+  3, // lower
+  4, // gloves
+  5, // shoes
+  0  // helmet
+};
 
 #if defined(_DEBUG)
 void AppendPlayerLog(const char *format, ...);
 #endif
 
 bool IsTextureFileNameLocal(const char *pi_pFileName);
+
+void SetCharacterObjectTexturePath(CHARACTEROBJECT *pi_pCharacterObject, const char *pi_pTexturePath)
+{
+  if (!pi_pCharacterObject || !pi_pTexturePath)
+  {
+    return;
+  }
+
+  char *l_pTexturePath = reinterpret_cast<char *>(pi_pCharacterObject) + kCharacterObjectTexturePathOffset;
+  strncpy_s(l_pTexturePath, kCharacterObjectTexturePathSize, pi_pTexturePath, _TRUNCATE);
+}
+
+void SetTextureManagerPath(TextureManager *pi_pTextureManager, const char *pi_pTexturePath)
+{
+  if (!pi_pTextureManager || !pi_pTexturePath)
+  {
+    return;
+  }
+
+  char *l_pTexturePath = reinterpret_cast<char *>(pi_pTextureManager) + kTextureManagerPathOffset;
+  strncpy_s(l_pTexturePath, kTextureManagerPathSize, pi_pTexturePath, _TRUNCATE);
+}
 
 float NormalizeAngle360Local(float pi_fValue)
 {
@@ -65,8 +120,39 @@ constexpr char kDefaultAccretiaMeshName[MAX_DEFAULT_PART][64] =
   "ACCRETIA_ARMOR_UPPER_000.MSH",
   "ACCRETIA_ARMOR_LOWER_000.MSH",
   "ACCRETIA_ARMOR_GLOVES_000.MSH",
-  "ACCRETIA_ARMOR_SHOES_000.MSH"
+  "ACCRETIA_ARMOR_SHOES_000.MSH",
+  "ACCRETIA_ARMOR_HELMET_000.MSH"
 };
+
+DWORD MakePlayerMeshID(BYTE pi_byRaceSexCode, BYTE pi_byPartType, DWORD pi_dwVariant, bool pi_bDefaultMesh)
+{
+  if (pi_byPartType >= MAX_DEFAULT_PART)
+  {
+    return ID_INVALID;
+  }
+
+  return (static_cast<DWORD>(pi_byRaceSexCode) << 20) |
+         (pi_bDefaultMesh ? kDefaultMeshCategory : 0) |
+         (static_cast<DWORD>(kDefaultPartMeshCode[pi_byPartType]) << 8) |
+         (pi_dwVariant & 0xFF);
+}
+
+DWORD MakeDefaultItemDTIndex(BYTE pi_byRaceSexCode, DWORD pi_dwVariant)
+{
+  return (static_cast<DWORD>(pi_byRaceSexCode) * 16) + (pi_dwVariant & 0x0F);
+}
+
+DWORD ApplyPlayerRaceToItemMeshID(DWORD pi_dwMeshID, BYTE pi_byRaceSexCode)
+{
+  if (((pi_dwMeshID & 0x000F0000) == 0x00000000) &&
+      ((pi_dwMeshID & 0x0000FF00) != 0x00000700))
+  {
+    return (pi_dwMeshID & 0xFF0FFFFF) |
+           (static_cast<DWORD>(pi_byRaceSexCode) << 20);
+  }
+
+  return pi_dwMeshID;
+}
 
 typedef struct
 {
@@ -264,6 +350,16 @@ bool PrepareDecodedTextureFile(const char *pi_pSourceFileName, const char *pi_pC
   if (!l_pExt)
   {
     return false;
+  }
+
+  WIN32_FILE_ATTRIBUTE_DATA l_stSourceAttr;
+  WIN32_FILE_ATTRIBUTE_DATA l_stCacheAttr;
+  if (GetFileAttributesExA(pi_pSourceFileName, GetFileExInfoStandard, &l_stSourceAttr) &&
+      GetFileAttributesExA(pi_pCacheFileName, GetFileExInfoStandard, &l_stCacheAttr) &&
+      (l_stCacheAttr.nFileSizeHigh != 0 || l_stCacheAttr.nFileSizeLow != 0) &&
+      CompareFileTime(&l_stCacheAttr.ftLastWriteTime, &l_stSourceAttr.ftLastWriteTime) >= 0)
+  {
+    return true;
   }
 
   if (_stricmp(l_pExt, ".dds") == 0)
@@ -847,6 +943,7 @@ CPlayer::CPlayer()
   ZeroMemory(m_szBoneName, sizeof(m_szBoneName));
   ZeroMemory(m_szBBoxName, sizeof(m_szBBoxName));
   ZeroMemory(m_szAniName, sizeof(m_szAniName));
+  ZeroMemory(m_szLastTextureLoadPath, sizeof(m_szLastTextureLoadPath));
   ZeroMemory(m_szMeshName, sizeof(m_szMeshName));
   SetObjectTypeID(CTI_PLAYER);
   SetCharTypeID(CTI_PLAYER);
@@ -896,6 +993,7 @@ void CPlayer::Shutdown()
   m_bMountedRFS = false;
   m_bPreparedTextureCache = false;
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
+  ZeroMemory(m_szLastTextureLoadPath, sizeof(m_szLastTextureLoadPath));
 }
 
 bool CPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
@@ -999,6 +1097,69 @@ bool CPlayer::SetAnimation(ChAnimation *pi_pAnimation)
 #if defined(_DEBUG)
   AppendPlayerLog("SetAnimation: success ani=%p", pi_pAnimation);
 #endif
+  return true;
+}
+
+bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
+{
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  CObjectManager *l_pBoneMgr = CCharacterMgr::GetBoneMgr(CTI_PLAYER);
+  if (!l_pCharIF || !l_pBoneMgr)
+  {
+    return false;
+  }
+
+  sprintf_s(m_szBoneName, sizeof(m_szBoneName), "%s%s", pi_stBoneData.pPathName, pi_stBoneData.pFileName);
+  SetBonePtr(NULL);
+  CHARACTEROBJECT *l_pStoredBone = NULL;
+  __try
+  {
+    l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
+    l_pStoredBone = l_pBoneMgr->GetCharacter(m_szBoneName);
+    m_pBone = l_pCharIF->GetMeshData(l_pBoneMgr, m_szBoneName);
+  }
+  __except (LogPlayerException("LoadBone", GetExceptionInformation()))
+  {
+    l_pStoredBone = NULL;
+    m_pBone = NULL;
+  }
+
+  if (!m_pBone && l_pStoredBone)
+  {
+    bool l_bBoneRealLoaded = false;
+    __try
+    {
+      l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pStoredBone, &l_pCharIF->m_TM, true);
+    }
+    __except (LogPlayerException("LoadBone: LoadRealData", GetExceptionInformation()))
+    {
+      l_bBoneRealLoaded = false;
+    }
+
+    if (l_bBoneRealLoaded)
+    {
+      m_pBone = l_pStoredBone;
+    }
+  }
+
+  SetBonePtr(m_pBone);
+  if (!m_pBone)
+  {
+    return false;
+  }
+
+  sprintf_s(m_szBBoxName, sizeof(m_szBBoxName), "%s%s", pi_stBoneData.pPathName, pi_stBoneData.pBBoxName);
+  if (!l_pCharIF->ImportBoundBox(m_szBBoxName, m_vecBBoxMin, m_vecBBoxMax) ||
+      !IsValidBBoxHeight(m_vecBBoxMax[1] - m_vecBBoxMin[1]))
+  {
+    m_vecBBoxMin[0] = -20.0f;
+    m_vecBBoxMin[1] = 0.0f;
+    m_vecBBoxMin[2] = -20.0f;
+    m_vecBBoxMax[0] = 20.0f;
+    m_vecBBoxMax[1] = 150.0f;
+    m_vecBBoxMax[2] = 20.0f;
+  }
+
   return true;
 }
 
@@ -1165,7 +1326,7 @@ bool CPlayer::LoadAccretia()
                   m_vecBBoxMax[2]);
 #endif
 
-  for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
 #if defined(_DEBUG)
     AppendPlayerLog("LoadAccretia: before LoadPart index=%u mesh=%s%s",
@@ -1231,7 +1392,7 @@ bool CPlayer::LoadAccretia()
                   m_pCurAni);
 #endif
 
-  for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (m_pMesh[i])
     {
@@ -1252,6 +1413,168 @@ bool CPlayer::LoadAccretia()
   AppendPlayerLog("LoadAccretia: success");
 #endif
   return true;
+}
+
+bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
+{
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: begin slot=%u race=%u base=0x%08X",
+                  static_cast<unsigned>(pi_stRegedAvatar.m_bySlotIndex),
+                  static_cast<unsigned>(pi_stRegedAvatar.m_byRaceSexCode),
+                  pi_stRegedAvatar.m_dwBaseShape);
+#endif
+  Shutdown();
+  if (!m_bInitialized && !Initialize())
+  {
+    return false;
+  }
+
+  if (!MountRFS())
+  {
+    return false;
+  }
+
+  const BYTE l_byRaceSexCode = pi_stRegedAvatar.m_byRaceSexCode;
+  if (l_byRaceSexCode >= 5)
+  {
+    return false;
+  }
+
+  CCharResDataMgr *l_pCharResDataMgr = _GetCharResDataMgr();
+  CCharResData *l_pPlayerResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_PLAYER) : NULL;
+  if (!l_pPlayerResData)
+  {
+    return false;
+  }
+
+  BONE_DATA *l_pBoneData = l_pPlayerResData->GetBoneData(l_byRaceSexCode);
+  if (!l_pBoneData || !LoadBone(*l_pBoneData))
+  {
+    return false;
+  }
+
+  DWORD l_adwDefaultVariant[MAX_DEFAULT_PART] = {};
+  l_adwDefaultVariant[CDPT_FACE] = (pi_stRegedAvatar.m_dwBaseShape >> 20) & 0x0F;
+  for (BYTE i = 0; i < kBaseFixNum; ++i)
+  {
+    l_adwDefaultVariant[kServerBasePartToClientPart[i]] =
+      (pi_stRegedAvatar.m_dwBaseShape >> (i * 4)) & 0x0F;
+  }
+
+  bool l_bLoadedAnyPart = false;
+  CItemDataMgr *l_pItemDataMgr = _GetItemDataMgr();
+  for (BYTE i = 0; i < MAX_DEFAULT_PART; ++i)
+  {
+    BYTE l_byItemType = IEPT_FACE;
+    DWORD l_dwItemDTIndex = MakeDefaultItemDTIndex(l_byRaceSexCode, l_adwDefaultVariant[i]);
+    bool l_bUseEquippedMesh = false;
+
+    for (BYTE j = 0; j < kBaseFixNum; ++j)
+    {
+      if (kServerBasePartToClientPart[j] == i &&
+          pi_stRegedAvatar.m_EquipKey[j].zItemIndex != -1)
+      {
+        l_byItemType = kServerBasePartToItemType[j];
+        l_dwItemDTIndex = static_cast<DWORD>(pi_stRegedAvatar.m_EquipKey[j].zItemIndex);
+        l_bUseEquippedMesh = true;
+        break;
+      }
+    }
+
+    if (!l_bUseEquippedMesh && i != CDPT_FACE)
+    {
+      for (BYTE j = 0; j < kBaseFixNum; ++j)
+      {
+        if (kServerBasePartToClientPart[j] == i)
+        {
+          l_byItemType = kServerBasePartToItemType[j];
+          break;
+        }
+      }
+    }
+
+    DWORD l_dwMeshID = ID_INVALID;
+    if (l_pItemDataMgr)
+    {
+      l_dwMeshID = l_pItemDataMgr->GetClientMeshID(l_byItemType, l_dwItemDTIndex);
+      if (l_dwMeshID != ID_INVALID)
+      {
+        l_dwMeshID = ApplyPlayerRaceToItemMeshID(l_dwMeshID, l_byRaceSexCode);
+      }
+    }
+
+    if (l_dwMeshID == ID_INVALID)
+    {
+      l_dwMeshID = MakePlayerMeshID(l_byRaceSexCode,
+                                    i,
+                                    l_adwDefaultVariant[i],
+                                    !l_bUseEquippedMesh);
+    }
+
+    MESH_DATA *l_pMeshData = l_pPlayerResData->GetMeshData(l_dwMeshID);
+    if (!l_pMeshData && l_bUseEquippedMesh)
+    {
+      const DWORD l_dwFallbackMeshID =
+        MakePlayerMeshID(l_byRaceSexCode, i, l_adwDefaultVariant[i], true);
+      l_pMeshData = l_pPlayerResData->GetMeshData(l_dwFallbackMeshID);
+    }
+    if (!l_pMeshData && l_adwDefaultVariant[i] != 0)
+    {
+      const DWORD l_dwFallbackMeshID = MakePlayerMeshID(l_byRaceSexCode, i, 0, true);
+      l_pMeshData = l_pPlayerResData->GetMeshData(l_dwFallbackMeshID);
+    }
+
+    if (l_pMeshData && LoadPart(i, RLI_ITEM, *l_pMeshData))
+    {
+      l_bLoadedAnyPart = true;
+    }
+  }
+
+  static const char *kRaceStandAniName[5] =
+  {
+    "BELMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
+    "BELFEMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
+    "CORMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
+    "CORFEMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
+    "ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI"
+  };
+
+  const DWORD l_dwAniNum = l_pPlayerResData->GetTotalAniNum();
+  for (DWORD i = 0; i < l_dwAniNum; ++i)
+  {
+    ANI_DATA *l_pAniData = l_pPlayerResData->GetAniDataByOrder(i);
+    if (!l_pAniData || _stricmp(l_pAniData->pFileName, kRaceStandAniName[l_byRaceSexCode]) != 0)
+    {
+      continue;
+    }
+
+    sprintf_s(m_szAniName, sizeof(m_szAniName), "%s%s", l_pAniData->pPathName, l_pAniData->pFileName);
+    LoadAnimation(m_szAniName, &m_pStandAni);
+    break;
+  }
+
+  if (m_pStandAni)
+  {
+    m_bUseBoneRender = SetAnimation(m_pStandAni);
+  }
+
+  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
+  if (l_pCharIF)
+  {
+    for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
+    {
+      if (m_pMesh[i])
+      {
+        l_pCharIF->FrameMove(m_pMesh[i]);
+      }
+    }
+  }
+
+  m_bLoaded = l_bLoadedAnyPart;
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: result loaded=%d", m_bLoaded ? 1 : 0);
+#endif
+  return m_bLoaded;
 }
 
 void CPlayer::FrameMove()
@@ -1305,7 +1628,7 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
     }
   }
 
-  for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (m_pMesh[i])
     {
@@ -1391,7 +1714,7 @@ BOOL CPlayer::Render()
   l_pCharIF->SetState();
   l_pCharIF->SetLight(m_d3dLight);
 
-  for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (!m_pMesh[i])
     {
@@ -1416,7 +1739,7 @@ void CPlayer::CreateShadow()
   }
 
   l_pCharIF->SetState();
-  for (DWORD i = 0; i < MAX_DEFAULT_PART; ++i)
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (!m_pMesh[i])
     {
@@ -1488,7 +1811,7 @@ bool CPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
   }
 
   bool l_bFoundBone = false;
-  bool l_abFoundMesh[MAX_DEFAULT_PART] = {false, false, false, false, false};
+  bool l_abFoundMesh[MAX_DEFAULT_PART] = {false, false, false, false, false, false};
   bool l_bFoundAni = false;
 
   if (BONE_DATA *l_pBoneData = l_pPlayerResData->GetBoneData(ID_DEFAULT_BONE_AC))
@@ -1552,9 +1875,14 @@ bool CPlayer::LoadResourceData(BONE_DATA &po_stBoneData,
 
 bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
 {
+  return LoadPart(pi_dwPartType, RLI_PLAYER, pi_stMeshData);
+}
+
+bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_DATA &pi_stMeshData)
+{
   ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
-  CObjectManager *l_pBodyPartMgr = CCharacterMgr::GetMeshMgr(CTI_PLAYER);
-  if (pi_dwPartType >= MAX_DEFAULT_PART || !l_pCharIF || !l_pBodyPartMgr || !m_pBone)
+  CObjectManager *l_pBodyPartMgr = CCharacterMgr::GetMeshMgr(pi_byResourceList);
+  if (pi_dwPartType >= MAX_PLAYER_RENDER_PART || !l_pCharIF || !l_pBodyPartMgr || !m_pBone)
   {
     return false;
   }
@@ -1572,6 +1900,7 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
             pi_stMeshData.pFileName);
 
   LoadTexturePath(pi_stMeshData.pTexturePath);
+  SetTextureManagerPath(l_pRenderTextureMgr, pi_stMeshData.pTexturePath);
 
   CHARACTEROBJECT *l_pLoadedMesh = NULL;
   __try
@@ -1597,6 +1926,7 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
   }
 
   m_pMesh[pi_dwPartType] = l_pLoadedMesh;
+  SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
 #if defined(_DEBUG)
   if (pi_dwPartType == 0 && m_pMesh[pi_dwPartType])
   {
@@ -1614,6 +1944,7 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
     if (l_pStoredMesh)
     {
       m_pMesh[pi_dwPartType] = l_pStoredMesh;
+      SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
     }
   }
   __except (LogPlayerException("LoadPart: GetMeshData", GetExceptionInformation()))
@@ -1701,12 +2032,14 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData)
       if (l_bMeshRealLoaded)
       {
         m_pMesh[pi_dwPartType] = l_pStoredMesh;
+        SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
       }
     }
   }
 
   if (m_pMesh[pi_dwPartType])
   {
+    SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
     __try
     {
       EnsureMeshTexturesLoaded(l_pCharIF,
@@ -1755,6 +2088,12 @@ bool CPlayer::LoadTexturePath(const char *pi_pTexturePath)
   if (_stricmp(pi_pTexturePath, kPlayerTexRFSPath) == 0 && m_bPreparedTextureCache)
   {
     l_pTextureLoadPath = kDecodedPlayerTexCachePath;
+  }
+
+  if (m_szLastTextureLoadPath[0] &&
+      _stricmp(m_szLastTextureLoadPath, l_pTextureLoadPath) == 0)
+  {
+    return true;
   }
 
   char l_szManagerPath[MAX_PATH];
@@ -1815,6 +2154,10 @@ bool CPlayer::LoadTexturePath(const char *pi_pTexturePath)
   } while (FindNextFileA(l_hFind, &l_stFindData));
 
   FindClose(l_hFind);
+  if (l_bFoundTextureFile)
+  {
+    strcpy_s(m_szLastTextureLoadPath, sizeof(m_szLastTextureLoadPath), l_pTextureLoadPath);
+  }
 #if defined(_DEBUG)
   AppendPlayerLog("LoadTexturePath: path=%s loadPath=%s found=%d registered=%u sample=%s sampleId=%u sampleTex=%p",
                   pi_pTexturePath,

@@ -12,6 +12,7 @@
 #include "SoundEntity.h"
 #include "R3Particle.h"
 #include "CPathFinder.h"
+#include "mergefile.h"
 
 //#define EXPORT extern "C" _declspec (dllexport)
 
@@ -411,6 +412,8 @@ public:
 
 	//--마우스 클릭시 클릭되는 폴리곤...
 	int mPickPoly;	//-1일경우는 클릭이 안되었다..
+
+	CMergeFileManager mMapEntityMFM;
 private:
 	BYTE *mMatGroupCache;	//머터리얼 그룹이 작동되는 캐쉬
 	int mMatGroupCacheSize;	//머터리얼 그룹 캐쉬 사이즈 

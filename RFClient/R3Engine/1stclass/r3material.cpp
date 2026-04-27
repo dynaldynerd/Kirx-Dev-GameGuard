@@ -5,6 +5,7 @@
 #include "R3d3dtex.h"
 #include "core.h"
 #include "commonutil.h"
+#include "mergefile.h"
 #include <stdio.h>
 #include <assert.h>
 
@@ -262,7 +263,7 @@ static void LoadOneMaterial(char *name,_R3MATERIAL *material)
 
 	bool sub = false;
 
-	if( (fp = fopen(name,"rt")) == NULL )	
+	if( (fp = fopenMFM(name,"rt")) == NULL )	
 	{
 		Warning(name,"<-이파일이 없다.");
 		return;
@@ -372,7 +373,7 @@ static _R3MATERIAL* LoadIndependenceMaterial(char *matpath)	//스카이박스나 엔티�
 	strcpy(stTexturePath,matpath);
 	strcpy(name,matpath);
 	strcat(name,"MainMaterial.mst");
-	if( (fp = fopen(name,"rt")) == NULL )	
+	if( (fp = fopenMFM(name,"rt")) == NULL )	
 	{
 		Warning(name,"<-이파일이 없다.");
 		return NULL;
@@ -516,7 +517,7 @@ void LoadR3X(char *name)
 	memset(&ext_mat,0,sizeof(_EXT_MAT));
 
 	//--------해당 머터리얼 전체 헤더....
-	if( (fp = fopen(name,"rb")) == NULL) 
+	if( (fp = fopenMFM(name,"rb")) == NULL) 
 		return;
 	fread(&version,sizeof(DWORD),1,fp);
 	if( version != _R3X_VERSION )
@@ -596,7 +597,7 @@ _R3MATERIAL* LoadIndependenceR3M(char *name)	//안은 똑같다..
 	DWORD m_num;
 	float version;
 	
-	if( (fp = fopen(name,"rb")) == NULL) 
+	if( (fp = fopenMFM(name,"rb")) == NULL) 
 	{
 		Warning(name,"<-이 파일이 없습니다.");
 		return NULL;

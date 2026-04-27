@@ -4,6 +4,7 @@
 #include "jerror.h"
 #include "jmalloc.h"
 #include "commonutil.h"
+#include "mergefile.h"
 #include "R3material.h"
 #include "R3render.h"
 #include "R3math.h"
@@ -101,7 +102,7 @@ BOOL CEntity::LoadEntity(char *filename,DWORD option)
 	mMapColor = 0xff808080;
 	mStartTime=0;
 	mFlag=option;
-	FILE *fp = fopen(filename,"rb");
+	FILE *fp = fopenMFM(filename,"rb");
 	if( fp == NULL )
 	{
 
@@ -159,7 +160,7 @@ BOOL CEntity::LoadEntity(char *filename,DWORD option)
 	strcpy(r3m_path,filename);
 	StripEXT(r3m_path);
 	strcat(r3m_path,".r3m");
-	if( IsExistFile(r3m_path) )
+	if( IsExistFileAndMergeFile(r3m_path) )
 	{
 		mMat = LoadSubR3M(r3m_path);
 

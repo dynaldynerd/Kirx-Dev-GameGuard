@@ -23,6 +23,7 @@
 #include "R3Engine/2ndclass/r3sound.h"
 #include "R3Engine/2ndclass/r3text.h"
 #include "R3Engine/2ndclass/r3util.h"
+#include "R3Engine/resource.h"
 
 namespace
 {
@@ -36,8 +37,8 @@ constexpr float kWalkMoveSpeed = 220.0f;
 constexpr float kRunMoveSpeed = 550.0f;
 constexpr float kDefaultCameraDistance = 45.0f;
 constexpr float kMouseWheelDistanceRate = 0.07f;
-constexpr char kDebugCapturePath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.bmp";
-constexpr char kDebugCaptureLogPath[] = "D:\\Private Files\\playrf\\RFOnline\\RFClientCapture.log";
+constexpr char kDebugCapturePath[] = ".\\RFClientCapture.bmp";
+constexpr char kDebugCaptureLogPath[] = ".\\RFClientCapture.log";
 constexpr DWORD kDefaultSetWorldIpXor = 0xCB9C4B3A;
 constexpr WORD kDefaultSetWorldPortXor = 0x4FB6;
 constexpr DWORD kDefaultSetAccountSerialXor = 0x6E65E0AF;
@@ -47,6 +48,12 @@ constexpr DWORD kDefaultSetBillingTypeXor = 0xC89C183A;
 constexpr DWORD kDefaultSetIsAdultXor = 0xD29C283B;
 constexpr WORD kDefaultSetLanguageIndexXor = 0x32D7;
 constexpr DWORD kDefaultSetWorldMasterKeyXor[KEY_NUM] = {0xCFCF22E6, 0x5BBCDE6F, 0xACDF5EDA, 0xBCCD1B37};
+constexpr float kLoginLobbyCharacterTopPos[3][3] =
+{
+  {0.200f, 225.0f, -64.0f},
+  {56.0f, 225.0f, 30.0f},
+  {-56.0f, 225.0f, 30.0f}
+};
 
 float ClampFloat(float value, float minimum, float maximum)
 {
@@ -93,6 +100,25 @@ bool IsShortcutModifierDown()
   return (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0 ||
          (GetAsyncKeyState(VK_MENU) & 0x8000) != 0 ||
          (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+}
+
+bool IsKeyboardMessage(UINT pi_uMsg)
+{
+  return pi_uMsg == WM_KEYDOWN ||
+         pi_uMsg == WM_KEYUP ||
+         pi_uMsg == WM_SYSKEYDOWN ||
+         pi_uMsg == WM_SYSKEYUP ||
+         pi_uMsg == WM_CHAR ||
+         pi_uMsg == WM_SYSCHAR ||
+         pi_uMsg == WM_DEADCHAR ||
+         pi_uMsg == WM_SYSDEADCHAR;
+}
+
+bool IsAcceleratorExitCommand(UINT pi_uMsg, WPARAM pi_wParam)
+{
+  return pi_uMsg == WM_COMMAND &&
+         LOWORD(pi_wParam) == IDM_EXIT &&
+         HIWORD(pi_wParam) == 1;
 }
 
 void HideWindowMenuBar(HWND pi_hWnd, DWORD pi_dwWindowStyle, int pi_nClientWidth, int pi_nClientHeight)
@@ -636,6 +662,7 @@ CMainApp::CMainApp()
     m_dwQuitWaitingTime(static_cast<DWORD>(-1)),
     m_bIsQuit(FALSE),
     m_bClientWindowVisible(TRUE),
+    m_bLoginLobbyCameraAnimating(FALSE),
     m_fViewAngleX(35.0f),
     m_fViewAngleY(225.0f),
     m_fPrevViewAngleX(35.0f),
@@ -911,7 +938,9 @@ BOOL CMainApp::Create(void)
 
   if (!GetDataFromLauncher())
   {
-    RequestQuitProgram();
+#if defined(_DEBUG)
+    AppendCaptureLog("Create: launcher data missing; continuing without world bootstrap data");
+#endif
   }
 
   m_bCreatedAllObject = TRUE;
@@ -1266,6 +1295,11 @@ BOOL CMainApp::GetDataFromLauncher(void)
 
 BOOL CMainApp::InputProcess(void)
 {
+  if (!m_bIsActive)
+  {
+    return TRUE;
+  }
+
   if (m_bRequestQuitProgram)
   {
     PostMessageA(m_hWnd, WM_CLOSE, 0, 0);
@@ -1403,6 +1437,7 @@ BOOL CMainApp::LoadLoginLobbyData(void)
   m_pPlayer = NULL;
   m_CharacterMgr.Clear();
   m_cLoginLobbyAniCamera.ReleaseAniCamera();
+  m_bLoginLobbyCameraAnimating = FALSE;
   if (IsExistFile(const_cast<char *>(kLoginLobbyCameraPath)))
   {
     m_cLoginLobbyAniCamera.LoadAniCamera(const_cast<char *>(kLoginLobbyCameraPath));
@@ -1448,6 +1483,7 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
   }
 
   m_cLoginLobbyAniCamera.SetPrePlayCamera(l_dwCameraIndex, pi_dwStartFrame, pi_dwEndFrame, pi_dwFlag);
+  m_bLoginLobbyCameraAnimating = (pi_dwFlag == _CAM_FLAG_FINAL_STOP);
 
   float l_matLobbyCamera[4][4];
   if (m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f, FALSE))
@@ -1517,6 +1553,7 @@ void CMainApp::UnloadLoginLobbyData(void)
   m_pPlayer = NULL;
   m_CharacterMgr.Clear();
   m_cLoginLobbyAniCamera.ReleaseAniCamera();
+  m_bLoginLobbyCameraAnimating = FALSE;
   m_vecLoginLobbyCameraPos[0] = 0.0f;
   m_vecLoginLobbyCameraPos[1] = 0.0f;
   m_vecLoginLobbyCameraPos[2] = 0.0f;
@@ -1526,6 +1563,75 @@ void CMainApp::UnloadLoginLobbyData(void)
   m_hasSpawnCameraTarget = false;
   m_isRightMouseDragging = false;
   m_pendingWheelDelta = 0;
+}
+
+void CMainApp::ClearLoginLobbyCharacterDummies(void)
+{
+  if (m_byGameProgressID != GPI_LOGIN)
+  {
+    return;
+  }
+
+  if (m_pPlayer)
+  {
+    m_pPlayer = NULL;
+  }
+
+  m_CharacterMgr.Clear();
+}
+
+BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi_stRegedCharResult)
+{
+  if (m_byGameProgressID != GPI_LOGIN)
+  {
+    return FALSE;
+  }
+
+  ClearLoginLobbyCharacterDummies();
+
+  BOOL l_bLoadedAnyCharacter = FALSE;
+  const BYTE l_byCharNum = pi_stRegedCharResult.byCharNum > 3
+                             ? static_cast<BYTE>(3)
+                             : pi_stRegedCharResult.byCharNum;
+  for (BYTE i = 0; i < l_byCharNum; ++i)
+  {
+    const _REGED_AVATOR_DB &l_sRegedAvatar = pi_stRegedCharResult.RegedList[i];
+    if (l_sRegedAvatar.m_bySlotIndex > 2)
+    {
+      continue;
+    }
+
+    CPlayer *l_pPlayer = m_CharacterMgr.AddPlayer(l_sRegedAvatar.m_bySlotIndex);
+    if (!l_pPlayer)
+    {
+      continue;
+    }
+
+    char l_szAvatarName[MAX_NAME_LENGTH];
+    ZeroMemory(l_szAvatarName, sizeof(l_szAvatarName));
+    memcpy(l_szAvatarName,
+           l_sRegedAvatar.m_wszAvatorName,
+           sizeof(l_sRegedAvatar.m_wszAvatorName) < sizeof(l_szAvatarName)
+             ? sizeof(l_sRegedAvatar.m_wszAvatorName)
+             : sizeof(l_szAvatarName) - 1);
+    l_szAvatarName[sizeof(l_szAvatarName) - 1] = '\0';
+    l_pPlayer->SetName(l_szAvatarName[0] ? l_szAvatarName : "Player");
+
+    if (!l_pPlayer->LoadRegedAvatar(l_sRegedAvatar))
+    {
+      continue;
+    }
+
+    const BYTE l_bySlotIndex = l_sRegedAvatar.m_bySlotIndex;
+    l_pPlayer->SetPosition(kLoginLobbyCharacterTopPos[l_bySlotIndex][0],
+                           kLoginLobbyCharacterTopPos[l_bySlotIndex][1],
+                           kLoginLobbyCharacterTopPos[l_bySlotIndex][2]);
+    l_pPlayer->SetRotY(180.0f - (static_cast<float>(l_bySlotIndex) * 120.0f));
+    l_pPlayer->SetLightColor(D3DCOLOR_XRGB(128, 128, 128));
+    l_bLoadedAnyCharacter = TRUE;
+  }
+
+  return l_bLoadedAnyCharacter;
 }
 
 void CMainApp::FrameMoveLoginLobby(void)
@@ -1540,8 +1646,12 @@ void CMainApp::FrameMoveLoginLobby(void)
     if (m_cLoginLobbyAniCamera.IsLoadedAniCamera())
     {
       float l_matLobbyCamera[4][4];
-      m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f);
+      const BOOL l_bCameraPlaying = m_cLoginLobbyAniCamera.PlayAniCamera(l_matLobbyCamera, 1.0f);
       R3SetCameraMatrix(m_vecLoginLobbyCameraPos, l_matLobbyCamera);
+      if (!l_bCameraPlaying)
+      {
+        m_bLoginLobbyCameraAnimating = FALSE;
+      }
       l_pLevel->SetCameraPos(m_vecLoginLobbyCameraPos);
       l_pLevel->SetViewMatrix(R3MoveGetViewMatrix());
     }
@@ -1555,6 +1665,8 @@ void CMainApp::FrameMoveLoginLobby(void)
 
     l_pLevel->FrameMove();
   }
+  m_CharacterMgr.FrameMove();
+  m_CharacterMgr.Animation();
   UpdateProjectionParameters();
 }
 
@@ -1581,6 +1693,7 @@ void CMainApp::RenderLoginLobby(void)
 
   m_land.Render(l_vecRenderPos);
   m_land.RenderAlpha(l_vecRenderPos);
+  m_CharacterMgr.Render();
 }
 
 HRESULT CMainApp::FrameMoveMainGame()
@@ -1711,6 +1824,16 @@ LRESULT CMainApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       break;
   }
 
+  if (IsAcceleratorExitCommand(message, wParam))
+  {
+    return 0;
+  }
+
+  if (!m_bIsActive && IsKeyboardMessage(message))
+  {
+    return 0;
+  }
+
   if (m_pGameProgress)
   {
     const LRESULT l_nResult = m_pGameProgress->MsgProc(hWnd, message, wParam, lParam);
@@ -1735,7 +1858,6 @@ LRESULT CMainApp::MsgProcMainGame(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
       if (wParam == VK_ESCAPE)
       {
-        PostMessageA(hWnd, WM_CLOSE, 0, 0);
         return 0;
       }
 
@@ -1907,6 +2029,15 @@ void CMainApp::ResetCharacterFromLoadedMap()
   m_spawnCameraTarget[1] = l_vecSpawnPos[1] + 10.0f;
   m_spawnCameraTarget[2] = l_vecSpawnPos[2];
   m_hasSpawnCameraTarget = true;
+
+  if (m_byGameProgressID == GPI_LOGIN && _stricmp(m_mapName, "lobby") == 0)
+  {
+    m_bKeyboardMoveMode = false;
+#if defined(_DEBUG)
+    AppendCaptureLog("ResetCharacterFromLoadedMap: skip sample player for login lobby");
+#endif
+    return;
+  }
 
   m_pPlayer = m_CharacterMgr.AddPlayer(0);
   if (!m_pPlayer || !m_pPlayer->LoadAccretia())

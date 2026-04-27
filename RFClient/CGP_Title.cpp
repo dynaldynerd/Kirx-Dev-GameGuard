@@ -26,6 +26,7 @@ BOOL CGP_Title::Create(void)
     return FALSE;
   }
 
+  m_bExit = TRUE;
   m_bIsCreated = TRUE;
   return TRUE;
 }

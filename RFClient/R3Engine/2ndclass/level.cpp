@@ -19,6 +19,7 @@
 #include "R3Sound.h"
 #include "MultiLayer.h"
 #include "R3engineKernel.h"
+#include "mergefile.h"
 #include "RTMovie.h"
 #include <stdio.h>
 
@@ -80,6 +81,7 @@ void CLevel::ReleaseLevel()
 
 void CLevel::LoadLevel(char *name)
 {
+	SetMergeFileManager(NULL);
 	char buf[256];
 	char f_buf[256];
 	char real_bsp_name[256];
@@ -177,6 +179,7 @@ void CLevel::LoadLevel(char *name)
 	strcat(tempname,".ebp");
 	mBsp->LoadExtBsp(tempname);
 	mEntityTexMemSize+= GetNowTexMemSize();
+	SetMergeFileManager(NULL);
 
 	if( IsServerMode()== FALSE )	//서버모드가 아닐때..
 	{
@@ -215,6 +218,7 @@ void CLevel::LoadLevel(char *name)
 		StripEXT(tempname);
 		strcat(tempname,"EXT.spt");
 		//더미 정보를 로딩한다.
+		SetMergeFileManager(NULL);
 		mDummy.LoadExtDummy(tempname);
 	}
 	mIsLoadedBsp=TRUE;
