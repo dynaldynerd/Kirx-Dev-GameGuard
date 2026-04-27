@@ -72,7 +72,7 @@ volatile LONG g_shutdownLogoutPending[MAX_PLAYER]{};
 #ifdef CLIENTDEBUGCODE
 constexpr unsigned int kClientDebugAccountSerial = 2000000000u;
 
-void InitializeClientDebugWaitAccount(_WAIT_ENTER_ACCOUNT &waitData, unsigned int *masterKey)
+void InitializeClientDebugWaitAccount(_WAIT_ENTER_ACCOUNT &waitData)
 {
   std::memset(&waitData, 0, sizeof(waitData));
 
@@ -81,13 +81,8 @@ void InitializeClientDebugWaitAccount(_WAIT_ENTER_ACCOUNT &waitData, unsigned in
   globalId.dwIndex = 1;
   globalId.dwSerial = 1;
 
-  unsigned int acceptedKey[4]{};
-  if (masterKey)
-  {
-    std::memcpy(acceptedKey, masterKey, sizeof(acceptedKey));
-  }
-
-  waitData.SetData(kClientDebugAccountSerial, accountId, 4, 4, &globalId, acceptedKey, false);
+  unsigned int ignoredKey[4]{};
+  waitData.SetData(kClientDebugAccountSerial, accountId, 4, 4, &globalId, ignoredKey, false);
 
   char cms[7]{};
   _SYSTEMTIME endDate{};
@@ -2323,6 +2318,7 @@ bool CUserDB::Enter_Account(
 
 #ifdef CLIENTDEBUGCODE
   _WAIT_ENTER_ACCOUNT clientDebugWaitData;
+  bool clientDebugSyntheticWaitAccount = false;
 #endif
   _WAIT_ENTER_ACCOUNT *waitData = nullptr;
   for (int j = 0; j < MAX_PLAYER; ++j)
@@ -2331,12 +2327,17 @@ bool CUserDB::Enter_Account(
     if (entry->m_bLoad && entry->m_dwAccountSerial == dwAccountSerial)
     {
       bool keyMatch = true;
-      for (int k = 0; k < 4; ++k)
+#ifdef CLIENTDEBUGCODE
+      if (dwAccountSerial != kClientDebugAccountSerial)
+#endif
       {
-        if (entry->m_dwKey[k] != pdwMasterKey[k])
+        for (int k = 0; k < 4; ++k)
         {
-          keyMatch = false;
-          break;
+          if (entry->m_dwKey[k] != pdwMasterKey[k])
+          {
+            keyMatch = false;
+            break;
+          }
         }
       }
       if (keyMatch)
@@ -2351,8 +2352,9 @@ bool CUserDB::Enter_Account(
 #ifdef CLIENTDEBUGCODE
   if (!waitData && dwAccountSerial == kClientDebugAccountSerial)
   {
-    InitializeClientDebugWaitAccount(clientDebugWaitData, pdwMasterKey);
+    InitializeClientDebugWaitAccount(clientDebugWaitData);
     waitData = &clientDebugWaitData;
+    clientDebugSyntheticWaitAccount = true;
     g_Main.m_logSystemError.Write(
       "CLIENTDEBUGCODE Enter_Account: synthesized wait account for accountSerial=%u",
       dwAccountSerial);
@@ -2462,7 +2464,11 @@ bool CUserDB::Enter_Account(
     }
   }
 
-  if (!retCode)
+  if (!retCode
+#ifdef CLIENTDEBUGCODE
+      && !clientDebugSyntheticWaitAccount
+#endif
+  )
   {
     _enter_world_request_wrac request{};
     std::memcpy(&request, &m_gidGlobal, 8u);
