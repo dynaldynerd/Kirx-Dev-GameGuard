@@ -1973,32 +1973,16 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
     DumpCharacterObjectDebug("LoadPart: mesh0 after LoadMeshData", m_pMesh[pi_dwPartType]);
   }
 #endif
-  __try
-  {
-    CHARACTEROBJECT *l_pStoredMesh = l_pCharIF->GetMeshData(l_pBodyPartMgr, m_szMeshName[pi_dwPartType]);
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadPart: GetMeshData index=%u result=%p",
-                    static_cast<unsigned>(pi_dwPartType),
-                    l_pStoredMesh);
+  AppendPlayerLog("LoadPart: using LoadMeshData result index=%u mesh=%p",
+                  static_cast<unsigned>(pi_dwPartType),
+                  m_pMesh[pi_dwPartType]);
 #endif
-    if (l_pStoredMesh)
-    {
-      m_pMesh[pi_dwPartType] = l_pStoredMesh;
-      SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
-    }
-  }
-  __except (LogPlayerException("LoadPart: GetMeshData", GetExceptionInformation()))
-  {
-#if defined(_DEBUG)
-    AppendPlayerLog("LoadPart: GetMeshData failed index=%u",
-                    static_cast<unsigned>(pi_dwPartType));
-#endif
-  }
 
   if (!m_pMesh[pi_dwPartType])
   {
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadPart: GetMeshData failed index=%u mesh=%s",
+    AppendPlayerLog("LoadPart: LoadMeshData failed index=%u mesh=%s",
                     static_cast<unsigned>(pi_dwPartType),
                     m_szMeshName[pi_dwPartType]);
 #endif
@@ -2082,12 +2066,28 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
     SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
     __try
     {
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadPart: EnsureMeshTexturesLoaded begin index=%u",
+                      static_cast<unsigned>(pi_dwPartType));
+#endif
       EnsureMeshTexturesLoaded(l_pCharIF,
                                l_pRenderTextureMgr,
                                m_pMesh[pi_dwPartType],
                                pi_stMeshData.pTexturePath);
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadPart: MatchTextureToMesh begin index=%u",
+                      static_cast<unsigned>(pi_dwPartType));
+#endif
       l_pCharIF->MatchTextureToMesh(l_pRenderTextureMgr, m_pMesh[pi_dwPartType]);
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadPart: RematchParent begin index=%u",
+                      static_cast<unsigned>(pi_dwPartType));
+#endif
       l_pCharIF->RematchParent(m_pBone, m_pMesh[pi_dwPartType]);
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadPart: AnimationReset begin index=%u",
+                      static_cast<unsigned>(pi_dwPartType));
+#endif
       l_pCharIF->AnimationReset(m_pMesh[pi_dwPartType]);
 #if defined(_DEBUG)
       AppendPlayerLog("LoadPart: MatchTextureToMesh index=%u mesh=%p",
