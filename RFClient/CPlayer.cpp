@@ -1578,35 +1578,54 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
     "ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI"
   };
 
-  const DWORD l_dwAniNum = l_pPlayerResData->GetTotalAniNum();
-  for (DWORD i = 0; i < l_dwAniNum; ++i)
+  static const char *kRaceLobbyIdleAniName[5] =
   {
-    ANI_DATA *l_pAniData = l_pPlayerResData->GetAniDataByOrder(i);
-    if (!l_pAniData || _stricmp(l_pAniData->pFileName, kRaceStandAniName[l_byRaceSexCode]) != 0)
+    "BELMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
+    "BELFEMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
+    "CORMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
+    "CORFEMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
+    "ACCRETIA_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI"
+  };
+
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: parts loaded any=%d", l_bLoadedAnyPart ? 1 : 0);
+#endif
+
+  const char *l_apStandCandidates[2] =
+  {
+    kRaceStandAniName[l_byRaceSexCode],
+    kRaceLobbyIdleAniName[l_byRaceSexCode]
+  };
+
+  for (DWORD i = 0; i < 2 && !m_pStandAni; ++i)
+  {
+    char l_szAniCandidate[MAX_PATH];
+    sprintf_s(l_szAniCandidate,
+              sizeof(l_szAniCandidate),
+              ".\\CHARACTER\\PLAYER\\ANI\\%s",
+              l_apStandCandidates[i]);
+
+    if (!IsExistingFile(l_szAniCandidate))
     {
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadRegedAvatar: lobby ani missing %s", l_szAniCandidate);
+#endif
       continue;
     }
 
-    sprintf_s(m_szAniName, sizeof(m_szAniName), "%s%s", l_pAniData->pPathName, l_pAniData->pFileName);
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: lobby ani load begin %s", l_szAniCandidate);
+#endif
+    strcpy_s(m_szAniName, sizeof(m_szAniName), l_szAniCandidate);
     LoadAnimation(m_szAniName, &m_pStandAni);
-    break;
   }
 
   if (m_pStandAni)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: SetAnimation begin ani=%p", m_pStandAni);
+#endif
     m_bUseBoneRender = SetAnimation(m_pStandAni);
-  }
-
-  ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
-  if (l_pCharIF)
-  {
-    for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
-    {
-      if (m_pMesh[i])
-      {
-        l_pCharIF->FrameMove(m_pMesh[i]);
-      }
-    }
   }
 
   m_bLoaded = l_bLoadedAnyPart;
@@ -1632,6 +1651,11 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
   if (!l_pCharIF)
   {
     return FALSE;
+  }
+
+  if (!m_pCurAni && !m_bUseBoneRender)
+  {
+    return TRUE;
   }
 
   if (m_bUseBoneRender && m_pBone)
