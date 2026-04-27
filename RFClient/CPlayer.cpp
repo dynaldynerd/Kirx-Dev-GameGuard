@@ -442,7 +442,46 @@ void CopyVector3(float *po_pfDst, const float *pi_pfSrc)
 
 bool IsExistingFile(const char *path)
 {
-  return path && GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+  const DWORD l_dwAttributes = path ? GetFileAttributesA(path) : INVALID_FILE_ATTRIBUTES;
+  return l_dwAttributes != INVALID_FILE_ATTRIBUTES &&
+         (l_dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+bool HasLooseFileMatching(const char *pi_pPattern)
+{
+  if (!pi_pPattern || !pi_pPattern[0])
+  {
+    return false;
+  }
+
+  WIN32_FIND_DATAA l_sFindData;
+  HANDLE l_hFind = FindFirstFileA(pi_pPattern, &l_sFindData);
+  if (l_hFind == INVALID_HANDLE_VALUE)
+  {
+    return false;
+  }
+
+  bool l_bFound = false;
+  do
+  {
+    if ((l_sFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+    {
+      l_bFound = true;
+      break;
+    }
+  } while (FindNextFileA(l_hFind, &l_sFindData));
+
+  FindClose(l_hFind);
+  return l_bFound;
+}
+
+bool HasLoosePlayerResourceFiles(void)
+{
+  return HasLooseFileMatching(".\\Character\\Player\\Mesh\\*.msh") &&
+         HasLooseFileMatching(".\\Character\\Player\\Ani\\*.ANI") &&
+         (HasLooseFileMatching(".\\Character\\Player\\Tex\\*.dds") ||
+          HasLooseFileMatching(".\\Character\\Player\\Tex\\*.rft") ||
+          HasLooseFileMatching(".\\Character\\Player\\Tex\\*.RFT"));
 }
 
 bool IsTextureFileNameLocal(const char *pi_pFileName)
@@ -1768,7 +1807,8 @@ bool CPlayer::MountRFS()
     return true;
   }
 
-  if (IsExistingFile(kLoosePlayerMeshProbe) && IsExistingFile(kLoosePlayerAniProbe))
+  if ((IsExistingFile(kLoosePlayerMeshProbe) && IsExistingFile(kLoosePlayerAniProbe)) ||
+      HasLoosePlayerResourceFiles())
   {
 #if defined(_DEBUG)
     AppendPlayerLog("MountRFS: using loose player files");

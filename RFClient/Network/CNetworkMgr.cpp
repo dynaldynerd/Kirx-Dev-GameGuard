@@ -56,6 +56,20 @@ void AppendAopKeyBytes(std::vector<unsigned char> &po_vecKey, const DWORD *pi_pW
   }
 }
 
+bool IsExistingLocalFile(const char *pi_pPath)
+{
+  const DWORD l_dwAttributes = pi_pPath ? GetFileAttributesA(pi_pPath) : INVALID_FILE_ATTRIBUTES;
+  return l_dwAttributes != INVALID_FILE_ATTRIBUTES &&
+         (l_dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+bool IsAopClientRoot(void)
+{
+  return IsExistingLocalFile(".\\Character\\Player\\Tex\\AC_75_U_065.dds") ||
+         IsExistingLocalFile(".\\Character\\Player\\Tex\\BF_75_U_065.dds") ||
+         IsExistingLocalFile(".\\Character\\Player\\Tex\\CM_75_U_065.dds");
+}
+
 template <typename T>
 void CopyPacket(T &packet, const char *payload, int payloadSize)
 {
@@ -260,6 +274,19 @@ void CNetworkMgr::Connect(BYTE pi_byServerType)
 
   CloseSocket();
   ResetConnectionState();
+  if (IsAopClientRoot())
+  {
+    if (!m_bUseAopTransportCrypt)
+    {
+      SetStatusText("AOP transport crypt enabled from client root");
+    }
+    m_bUseAopTransportCrypt = true;
+    m_bHasRetriedAopTransportCrypt = true;
+  }
+  else if (!m_bHasRetriedAopTransportCrypt)
+  {
+    m_bUseAopTransportCrypt = false;
+  }
 
   m_hSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (m_hSocket == INVALID_SOCKET)
