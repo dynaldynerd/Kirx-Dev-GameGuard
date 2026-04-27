@@ -69,6 +69,38 @@ namespace
 // Non-IDA parity: track close-time logout completions separately from generic DB wait state.
 volatile LONG g_shutdownLogoutPending[MAX_PLAYER]{};
 
+#ifdef CLIENTDEBUGCODE
+constexpr unsigned int kClientDebugAccountSerial = 2000000000u;
+
+void InitializeClientDebugWaitAccount(_WAIT_ENTER_ACCOUNT &waitData, unsigned int *masterKey)
+{
+  std::memset(&waitData, 0, sizeof(waitData));
+
+  char accountId[13] = "!teste";
+  _GLBID globalId{};
+  globalId.dwIndex = 1;
+  globalId.dwSerial = 1;
+
+  unsigned int acceptedKey[4]{};
+  if (masterKey)
+  {
+    std::memcpy(acceptedKey, masterKey, sizeof(acceptedKey));
+  }
+
+  waitData.SetData(kClientDebugAccountSerial, accountId, 4, 4, &globalId, acceptedKey, false);
+
+  char cms[7]{};
+  _SYSTEMTIME endDate{};
+  endDate.wYear = 2099;
+  endDate.wMonth = 12;
+  endDate.wDay = 31;
+  waitData.SetBillingInfo(8, cms, 255, &endDate);
+  waitData.SetTransFlag(0);
+  waitData.SetAgeLimitFlag(false);
+  waitData.SetPcBangFlag(true);
+}
+#endif
+
 void BeginShutdownLogoutTracking(const CUserDB &user)
 {
   if (!g_Main.IsServerClosing())
@@ -2289,6 +2321,9 @@ bool CUserDB::Enter_Account(
     return false;
   }
 
+#ifdef CLIENTDEBUGCODE
+  _WAIT_ENTER_ACCOUNT clientDebugWaitData;
+#endif
   _WAIT_ENTER_ACCOUNT *waitData = nullptr;
   for (int j = 0; j < MAX_PLAYER; ++j)
   {
@@ -2312,6 +2347,17 @@ bool CUserDB::Enter_Account(
       }
     }
   }
+
+#ifdef CLIENTDEBUGCODE
+  if (!waitData && dwAccountSerial == kClientDebugAccountSerial)
+  {
+    InitializeClientDebugWaitAccount(clientDebugWaitData, pdwMasterKey);
+    waitData = &clientDebugWaitData;
+    g_Main.m_logSystemError.Write(
+      "CLIENTDEBUGCODE Enter_Account: synthesized wait account for accountSerial=%u",
+      dwAccountSerial);
+  }
+#endif
 
   if (!waitData)
   {
