@@ -65,6 +65,7 @@ public:
   BOOL LoadData(void);
   void UnloadData(void);
   BOOL IsLoaded(void) const;
+  DWORD GetRecordCount(BYTE pi_byItemType) const;
   const ITEM_CLIENT_RECORD *GetClientRecord(BYTE pi_byItemType, DWORD pi_dwDTIndex) const;
   DWORD GetClientMeshID(BYTE pi_byItemType, DWORD pi_dwDTIndex) const;
 

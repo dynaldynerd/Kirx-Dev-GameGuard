@@ -47,6 +47,7 @@ public:
   BOOL GetDataFromLauncher(void);
   void SetClientWindowVisible(BOOL pi_bVisible);
   BOOL IsClientWindowVisible(void) const { return m_bClientWindowVisible; }
+  BOOL IsOfflineRegedCharReplay(void) const { return m_bOfflineRegedCharReplay; }
 
   BOOL LoadMainGameData(void);
   void UnloadMainGameData(void);
@@ -82,6 +83,7 @@ protected:
   LRESULT MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) override;
 
 private:
+  bool ParseOfflineRegedCharReplay(LPCSTR commandLine);
   bool LoadMapSelection(LPCSTR commandLine);
   bool LoadMap(const char *mapSelection);
   BOOL PlayLoginLobbyCamera(const char *pi_pCameraName,
@@ -123,8 +125,10 @@ private:
   DWORD m_dwQuitWaitingTime;
   BOOL m_bIsQuit;
   BOOL m_bClientWindowVisible;
+  BOOL m_bOfflineRegedCharReplay;
   char m_mapName[MAX_PATH];
   char m_szSelectedMap[MAX_PATH];
+  char m_szOfflineRegedCharPath[MAX_PATH];
   CAniCamera m_cLoginLobbyAniCamera;
   BOOL m_bLoginLobbyCameraAnimating;
   Vector3f m_vecLoginLobbyCameraPos;

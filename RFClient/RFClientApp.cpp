@@ -384,6 +384,55 @@ void CopyMapSelection(char *destination, size_t destinationSize, LPCSTR commandL
 
 }
 
+bool ExtractCommandOptionValue(LPCSTR pi_pCommandLine,
+                               const char *pi_pOptionName,
+                               char *po_pValue,
+                               size_t pi_stValueSize)
+{
+  if (!pi_pCommandLine || !pi_pOptionName || !po_pValue || !pi_stValueSize)
+  {
+    return false;
+  }
+
+  po_pValue[0] = '\0';
+  const char *l_pOption = strstr(pi_pCommandLine, pi_pOptionName);
+  if (!l_pOption)
+  {
+    return false;
+  }
+
+  const char *l_pCursor = l_pOption + strlen(pi_pOptionName);
+  while (*l_pCursor == ' ' || *l_pCursor == '\t' || *l_pCursor == '=')
+  {
+    ++l_pCursor;
+  }
+
+  if (!*l_pCursor)
+  {
+    return true;
+  }
+
+  if (*l_pCursor == '\"')
+  {
+    ++l_pCursor;
+    const char *l_pEndQuote = strchr(l_pCursor, '\"');
+    const size_t l_stValueLength = l_pEndQuote
+                                     ? static_cast<size_t>(l_pEndQuote - l_pCursor)
+                                     : strlen(l_pCursor);
+    strncpy_s(po_pValue, pi_stValueSize, l_pCursor, l_stValueLength);
+    return true;
+  }
+
+  const char *l_pEnd = l_pCursor;
+  while (*l_pEnd && *l_pEnd != ' ' && *l_pEnd != '\t')
+  {
+    ++l_pEnd;
+  }
+
+  strncpy_s(po_pValue, pi_stValueSize, l_pCursor, static_cast<size_t>(l_pEnd - l_pCursor));
+  return true;
+}
+
 bool SaveSurfaceToBMP(const char *fileName, LPDIRECT3DSURFACE8 surface)
 {
   if (!fileName || !surface)
@@ -662,6 +711,7 @@ CMainApp::CMainApp()
     m_dwQuitWaitingTime(static_cast<DWORD>(-1)),
     m_bIsQuit(FALSE),
     m_bClientWindowVisible(TRUE),
+    m_bOfflineRegedCharReplay(FALSE),
     m_bLoginLobbyCameraAnimating(FALSE),
     m_fViewAngleX(35.0f),
     m_fViewAngleY(225.0f),
@@ -678,6 +728,7 @@ CMainApp::CMainApp()
 {
   m_mapName[0] = '\0';
   m_szSelectedMap[0] = '\0';
+  m_szOfflineRegedCharPath[0] = '\0';
   m_vecLoginLobbyCameraPos[0] = 0.0f;
   m_vecLoginLobbyCameraPos[1] = 0.0f;
   m_vecLoginLobbyCameraPos[2] = 0.0f;
@@ -746,7 +797,15 @@ bool CMainApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
   HideWindowMenuBar(m_hWnd, m_dwWindowStyle, l_nClientWidth, l_nClientHeight);
   SetClientWindowVisible(FALSE);
 
-  CopyMapSelection(m_szSelectedMap, sizeof(m_szSelectedMap), commandLine);
+  ParseOfflineRegedCharReplay(commandLine);
+  if (m_bOfflineRegedCharReplay)
+  {
+    m_szSelectedMap[0] = '\0';
+  }
+  else
+  {
+    CopyMapSelection(m_szSelectedMap, sizeof(m_szSelectedMap), commandLine);
+  }
 
   if (!Create())
   {
@@ -766,6 +825,10 @@ bool CMainApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
   AppendCaptureLog("Initialize: success progress=%u map=%s",
                    static_cast<unsigned>(m_byGameProgressID),
                    m_szSelectedMap[0] ? m_szSelectedMap : "<empty>");
+  if (m_bOfflineRegedCharReplay)
+  {
+    AppendCaptureLog("Initialize: offline reged char replay path=%s", m_szOfflineRegedCharPath);
+  }
   AppendCaptureLog("Initialize: filter abuse=%d adv=%d",
                    l_bLoadedAbuseFilter ? 1 : 0,
                    l_bLoadedAdvFilter ? 1 : 0);
@@ -936,7 +999,22 @@ BOOL CMainApp::Create(void)
 
   Create_GameProgress(m_byGameProgressID);
 
-  if (!GetDataFromLauncher())
+  if (m_bOfflineRegedCharReplay)
+  {
+    if (!m_pNetworkMgr->LoadRegedCharResultDump(m_szOfflineRegedCharPath))
+    {
+#if defined(_DEBUG)
+      AppendCaptureLog("Create: offline reged replay load failed path=%s", m_szOfflineRegedCharPath);
+#endif
+    }
+    else
+    {
+#if defined(_DEBUG)
+      AppendCaptureLog("Create: offline reged replay loaded path=%s", m_szOfflineRegedCharPath);
+#endif
+    }
+  }
+  else if (!GetDataFromLauncher())
   {
 #if defined(_DEBUG)
     AppendCaptureLog("Create: launcher data missing; continuing without world bootstrap data");
@@ -2055,6 +2133,40 @@ LRESULT CMainApp::MsgProcMainGame(HWND hWnd, UINT message, WPARAM wParam, LPARAM
   }
 
   return R3D3dWrapper::MsgProc(hWnd, message, wParam, lParam);
+}
+
+bool CMainApp::ParseOfflineRegedCharReplay(LPCSTR commandLine)
+{
+  m_bOfflineRegedCharReplay = FALSE;
+  m_szOfflineRegedCharPath[0] = '\0';
+
+  if (!commandLine || !commandLine[0])
+  {
+    return false;
+  }
+
+  char l_szReplayPath[MAX_PATH] = {};
+  if (!ExtractCommandOptionValue(commandLine,
+                                 "--offline-reged-char",
+                                 l_szReplayPath,
+                                 sizeof(l_szReplayPath)) &&
+      !ExtractCommandOptionValue(commandLine,
+                                 "-offline-reged-char",
+                                 l_szReplayPath,
+                                 sizeof(l_szReplayPath)))
+  {
+    return false;
+  }
+
+  if (!l_szReplayPath[0])
+  {
+    strcpy_s(l_szReplayPath, sizeof(l_szReplayPath), ".\\_reports\\reged_char_result_last.bin");
+  }
+
+  strcpy_s(m_szOfflineRegedCharPath, sizeof(m_szOfflineRegedCharPath), l_szReplayPath);
+  m_bOfflineRegedCharReplay = TRUE;
+  m_byGameProgressID = GPI_LOGIN;
+  return true;
 }
 
 bool CMainApp::LoadMapSelection(LPCSTR commandLine)

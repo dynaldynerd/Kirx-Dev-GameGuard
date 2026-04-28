@@ -6,6 +6,7 @@
 
 #pragma comment(lib, "bcrypt.lib")
 
+#include "CItemDataMgr.h"
 #include "RFClientApp.h"
 
 namespace
@@ -13,6 +14,10 @@ namespace
 constexpr DWORD kWorldProtocolVer = 126455;
 constexpr char kClientVerCheckKey[] = "75a32d4a6daff548fcfcb40fea838a0d";
 constexpr char kDebugNetworkLogPath[] = ".\\RFClientNetwork.log";
+constexpr char kPacketDumpDir[] = ".\\_reports";
+constexpr char kPacketTraceTextPath[] = ".\\_reports\\net_packets.log";
+constexpr char kRegedCharResultDumpPath[] = ".\\_reports\\reged_char_result_last.bin";
+constexpr char kRegedCharResultTextPath[] = ".\\_reports\\reged_char_result_last.txt";
 constexpr DWORD kSpeedHackAnswerDelayMs = 5000;
 constexpr DWORD kAopAesKeyWords = 6;
 constexpr DWORD kAopAesKeySize = kAopAesKeyWords * sizeof(DWORD);
@@ -106,6 +111,322 @@ void AppendNetworkLog(const char *text)
   WriteFile(outputFile, text, static_cast<DWORD>(strlen(text)), &bytesWritten, NULL);
   WriteFile(outputFile, "\r\n", 2, &bytesWritten, NULL);
   CloseHandle(outputFile);
+}
+
+void AppendTextLine(const char *pi_pPath, const char *pi_pText)
+{
+  if (!pi_pPath || !pi_pPath[0] || !pi_pText)
+  {
+    return;
+  }
+
+  HANDLE l_hFile = CreateFileA(pi_pPath,
+                               FILE_APPEND_DATA,
+                               FILE_SHARE_READ,
+                               NULL,
+                               OPEN_ALWAYS,
+                               FILE_ATTRIBUTE_NORMAL,
+                               NULL);
+  if (l_hFile == INVALID_HANDLE_VALUE)
+  {
+    return;
+  }
+
+  DWORD l_dwWritten = 0;
+  WriteFile(l_hFile, pi_pText, static_cast<DWORD>(strlen(pi_pText)), &l_dwWritten, NULL);
+  WriteFile(l_hFile, "\r\n", 2, &l_dwWritten, NULL);
+  CloseHandle(l_hFile);
+}
+
+void BuildHexPreview(const char *pi_pData, int pi_nSize, char *po_pText, int pi_nTextSize)
+{
+  if (!po_pText || pi_nTextSize <= 0)
+  {
+    return;
+  }
+
+  po_pText[0] = '\0';
+  if (!pi_pData || pi_nSize <= 0)
+  {
+    return;
+  }
+
+  const int l_nBytes = MinInt(pi_nSize, 24);
+  int l_nOffset = 0;
+  for (int i = 0; i < l_nBytes && l_nOffset < pi_nTextSize - 1; ++i)
+  {
+    const unsigned char l_byValue = static_cast<unsigned char>(pi_pData[i]);
+    const int l_nWritten = _snprintf_s(po_pText + l_nOffset,
+                                       pi_nTextSize - l_nOffset,
+                                       _TRUNCATE,
+                                       "%s%02X",
+                                       i ? " " : "",
+                                       static_cast<unsigned>(l_byValue));
+    if (l_nWritten <= 0)
+    {
+      break;
+    }
+
+    l_nOffset += l_nWritten;
+  }
+}
+
+void AppendPacketTrace(const char *pi_pDirection,
+                       const _MSG_HEADER &pi_sHeader,
+                       const char *pi_pPayload,
+                       int pi_nPayloadSize,
+                       bool pi_bAopCrypt)
+{
+  CreateDirectoryA(kPacketDumpDir, NULL);
+
+  char l_szPreview[96];
+  BuildHexPreview(pi_pPayload, pi_nPayloadSize, l_szPreview, sizeof(l_szPreview));
+
+  char l_szLine[512];
+  _snprintf_s(l_szLine,
+              sizeof(l_szLine),
+              _TRUNCATE,
+              "%lu %s type=%u:%u msgSize=%u payload=%d aopCrypt=%u preview=%s",
+              timeGetTime(),
+              pi_pDirection ? pi_pDirection : "?",
+              static_cast<unsigned>(pi_sHeader.m_byType[0]),
+              static_cast<unsigned>(pi_sHeader.m_byType[1]),
+              static_cast<unsigned>(pi_sHeader.m_wSize),
+              pi_nPayloadSize,
+              pi_bAopCrypt ? 1 : 0,
+              l_szPreview);
+  AppendTextLine(kPacketTraceTextPath, l_szLine);
+}
+
+bool WriteBinaryFile(const char *pi_pPath, const void *pi_pData, DWORD pi_dwSize)
+{
+  if (!pi_pPath || !pi_pPath[0] || (!pi_pData && pi_dwSize))
+  {
+    return false;
+  }
+
+  HANDLE l_hFile = CreateFileA(pi_pPath,
+                               GENERIC_WRITE,
+                               FILE_SHARE_READ,
+                               NULL,
+                               CREATE_ALWAYS,
+                               FILE_ATTRIBUTE_NORMAL,
+                               NULL);
+  if (l_hFile == INVALID_HANDLE_VALUE)
+  {
+    return false;
+  }
+
+  DWORD l_dwWritten = 0;
+  const BOOL l_bOk = WriteFile(l_hFile, pi_pData, pi_dwSize, &l_dwWritten, NULL);
+  CloseHandle(l_hFile);
+  return l_bOk && l_dwWritten == pi_dwSize;
+}
+
+bool ReadBinaryFile(const char *pi_pPath, std::vector<char> &po_vecData)
+{
+  po_vecData.clear();
+  if (!pi_pPath || !pi_pPath[0])
+  {
+    return false;
+  }
+
+  HANDLE l_hFile = CreateFileA(pi_pPath,
+                               GENERIC_READ,
+                               FILE_SHARE_READ,
+                               NULL,
+                               OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL,
+                               NULL);
+  if (l_hFile == INVALID_HANDLE_VALUE)
+  {
+    return false;
+  }
+
+  DWORD l_dwFileSize = GetFileSize(l_hFile, NULL);
+  if (l_dwFileSize == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+  {
+    CloseHandle(l_hFile);
+    return false;
+  }
+
+  po_vecData.resize(l_dwFileSize);
+  DWORD l_dwRead = 0;
+  const BOOL l_bOk = ReadFile(l_hFile,
+                              po_vecData.empty() ? NULL : po_vecData.data(),
+                              l_dwFileSize,
+                              &l_dwRead,
+                              NULL);
+  CloseHandle(l_hFile);
+  if (!l_bOk || l_dwRead != l_dwFileSize)
+  {
+    po_vecData.clear();
+    return false;
+  }
+
+  return true;
+}
+
+const char *GetRegedEquipTableName(BYTE pi_byRegedEquipIndex)
+{
+  static const char *kRegedEquipTableName[8] =
+  {
+    "Upper",
+    "Lower",
+    "Gauntlet",
+    "Shoe",
+    "Helmet",
+    "Shield",
+    "Weapon",
+    "Cloak",
+  };
+
+  return pi_byRegedEquipIndex < 8 ? kRegedEquipTableName[pi_byRegedEquipIndex] : "?";
+}
+
+BYTE GetRegedEquipClientItemType(BYTE pi_byRegedEquipIndex)
+{
+  static const BYTE kRegedEquipClientItemType[8] =
+  {
+    IEPT_UPPER_PART,
+    IEPT_LOWER_PART,
+    IEPT_GLOVES,
+    IEPT_SHOES,
+    IEPT_HELMET,
+    IEPT_SHIELD,
+    IEPT_WEAPON,
+    IEPT_CLOAK,
+  };
+
+  return pi_byRegedEquipIndex < 8 ? kRegedEquipClientItemType[pi_byRegedEquipIndex] : 0xFF;
+}
+
+void CopyRegedAvatarNameForLog(const _REGED_AVATOR_DB &pi_stAvatar,
+                               char *po_pBuffer,
+                               size_t pi_stBufferSize)
+{
+  if (!po_pBuffer || pi_stBufferSize == 0)
+  {
+    return;
+  }
+
+  ZeroMemory(po_pBuffer, pi_stBufferSize);
+  const size_t l_stCopySize =
+    sizeof(pi_stAvatar.m_wszAvatorName) < pi_stBufferSize - 1
+      ? sizeof(pi_stAvatar.m_wszAvatorName)
+      : pi_stBufferSize - 1;
+  memcpy(po_pBuffer, pi_stAvatar.m_wszAvatorName, l_stCopySize);
+  po_pBuffer[pi_stBufferSize - 1] = '\0';
+}
+
+void DumpRegedCharResultPayload(const char *pi_pPayload, int pi_nPayloadSize)
+{
+  if (!pi_pPayload || pi_nPayloadSize <= 0)
+  {
+    return;
+  }
+
+  CreateDirectoryA(kPacketDumpDir, NULL);
+  WriteBinaryFile(kRegedCharResultDumpPath,
+                  pi_pPayload,
+                  static_cast<DWORD>(pi_nPayloadSize));
+
+  _reged_char_result_zone l_sPacket;
+  CopyPacket(l_sPacket, pi_pPayload, pi_nPayloadSize);
+  HANDLE l_hTextFile = CreateFileA(kRegedCharResultTextPath,
+                                   GENERIC_WRITE,
+                                   FILE_SHARE_READ,
+                                   NULL,
+                                   CREATE_ALWAYS,
+                                   FILE_ATTRIBUTE_NORMAL,
+                                   NULL);
+  if (l_hTextFile != INVALID_HANDLE_VALUE)
+  {
+    DWORD l_dwWritten = 0;
+    char l_szText[1024];
+    _snprintf_s(l_szText,
+                sizeof(l_szText),
+                _TRUNCATE,
+                "reged_char_result_zone dump\npayloadSize=%d\nstructSize=%u\nret=%u\ncharNum=%u\nlock=%d,%d,%d\n",
+                pi_nPayloadSize,
+                static_cast<unsigned>(sizeof(_reged_char_result_zone)),
+                static_cast<unsigned>(l_sPacket.byRetCode),
+                static_cast<unsigned>(l_sPacket.byCharNum),
+                l_sPacket.iLockType[0],
+                l_sPacket.iLockType[1],
+                l_sPacket.iLockType[2]);
+    WriteFile(l_hTextFile, l_szText, static_cast<DWORD>(strlen(l_szText)), &l_dwWritten, NULL);
+
+    CItemDataMgr *l_pItemDataMgr = _GetItemDataMgr();
+    const bool l_bItemDataLoaded = l_pItemDataMgr && l_pItemDataMgr->IsLoaded();
+    _snprintf_s(l_szText,
+                sizeof(l_szText),
+                _TRUNCATE,
+                "itemDataLoaded=%u\n",
+                l_bItemDataLoaded ? 1 : 0);
+    WriteFile(l_hTextFile, l_szText, static_cast<DWORD>(strlen(l_szText)), &l_dwWritten, NULL);
+
+    const BYTE l_byCharNum = l_sPacket.byCharNum > 3 ? 3 : l_sPacket.byCharNum;
+    for (BYTE i = 0; i < l_byCharNum; ++i)
+    {
+      const _REGED_AVATOR_DB &l_sAvatar = l_sPacket.RegedList[i];
+      char l_szName[sizeof(l_sAvatar.m_wszAvatorName) + 1];
+      CopyRegedAvatarNameForLog(l_sAvatar, l_szName, sizeof(l_szName));
+
+      _snprintf_s(l_szText,
+                  sizeof(l_szText),
+                  _TRUNCATE,
+                  "\nrecord=%u name=%s slot=%u race=%u class=%s level=%u dalant=%lu gold=%lu base=0x%08lX lastConn=%lu\n",
+                  static_cast<unsigned>(i),
+                  l_szName,
+                  static_cast<unsigned>(l_sAvatar.m_bySlotIndex),
+                  static_cast<unsigned>(l_sAvatar.m_byRaceSexCode),
+                  l_sAvatar.m_szClassCode,
+                  static_cast<unsigned>(l_sAvatar.m_byLevel),
+                  l_sAvatar.m_dwDalant,
+                  l_sAvatar.m_dwGold,
+                  l_sAvatar.m_dwBaseShape,
+                  l_sAvatar.m_dwLastConnTime);
+      WriteFile(l_hTextFile, l_szText, static_cast<DWORD>(strlen(l_szText)), &l_dwWritten, NULL);
+
+      for (BYTE j = 0; j < 8; ++j)
+      {
+        const int l_nKey = static_cast<int>(l_sAvatar.m_EquipKey[j].zItemIndex);
+        const BYTE l_byItemType = GetRegedEquipClientItemType(j);
+        const ITEM_CLIENT_RECORD *l_pRecord =
+          (l_bItemDataLoaded && l_nKey >= 0)
+            ? l_pItemDataMgr->GetClientRecord(l_byItemType, static_cast<DWORD>(l_nKey))
+            : NULL;
+        _snprintf_s(l_szText,
+                    sizeof(l_szText),
+                    _TRUNCATE,
+                    "  ek%u table=%s clientType=%u key=%d eu=%u itemRecords=%lu mesh=0x%08lX icon=0x%08lX dtCode=0x%08lX\n",
+                    static_cast<unsigned>(j),
+                    GetRegedEquipTableName(j),
+                    static_cast<unsigned>(l_byItemType),
+                    l_nKey,
+                    static_cast<unsigned>(l_sAvatar.m_byEquipLv[j]),
+                    l_bItemDataLoaded ? l_pItemDataMgr->GetRecordCount(l_byItemType) : 0,
+                    l_pRecord ? l_pRecord->dwMeshID : static_cast<DWORD>(-1),
+                    l_pRecord ? l_pRecord->dwIconID : static_cast<DWORD>(-1),
+                    l_pRecord ? l_pRecord->dwDTCode : static_cast<DWORD>(-1));
+        WriteFile(l_hTextFile, l_szText, static_cast<DWORD>(strlen(l_szText)), &l_dwWritten, NULL);
+      }
+    }
+
+    CloseHandle(l_hTextFile);
+  }
+
+  char l_szLog[512];
+  _snprintf_s(l_szLog,
+              sizeof(l_szLog),
+              _TRUNCATE,
+              "Dumped reged_char_result_zone payload=%d path=%s ret=%u charNum=%u",
+              pi_nPayloadSize,
+              kRegedCharResultDumpPath,
+              static_cast<unsigned>(l_sPacket.byRetCode),
+              static_cast<unsigned>(l_sPacket.byCharNum));
+  AppendNetworkLog(l_szLog);
 }
 
 void AppendWorldEnterPacketLog(DWORD accountSerial,
@@ -353,6 +674,12 @@ BOOL CNetworkMgr::SendNetMessage(DWORD, BYTE *pi_pType, void *pi_pMsg, int pi_nS
     memcpy(l_vecSendBuffer.data() + MSG_HEADER_SIZE, pi_pMsg, pi_nSize);
   }
 
+  AppendPacketTrace("TX",
+                    l_sHeader,
+                    pi_nSize > 0 ? l_vecSendBuffer.data() + MSG_HEADER_SIZE : NULL,
+                    pi_nSize,
+                    m_bUseAopTransportCrypt);
+
   std::vector<char> l_vecWirePacket;
   if (!WrapOutgoingPacket(l_vecSendBuffer.data(), static_cast<int>(l_vecSendBuffer.size()), l_vecWirePacket))
   {
@@ -461,6 +788,7 @@ BOOL CNetworkMgr::SystemMsg_RegedCharRequest_zone(void)
 
 void CNetworkMgr::SystemMsg_RegedCharResult_zone(char *pi_pMsg, int pi_nPayloadSize)
 {
+  DumpRegedCharResultPayload(pi_pMsg, pi_nPayloadSize);
   CopyPacket(m_sRegedCharResult, pi_pMsg, pi_nPayloadSize);
 
   if (m_sRegedCharResult.byCharNum > 3u)
@@ -498,6 +826,35 @@ void CNetworkMgr::SystemMsg_RegedCharResult_zone(char *pi_pMsg, int pi_nPayloadS
                 m_dwLastestAvatarIndex == static_cast<DWORD>(-1)
                   ? -1L
                   : static_cast<long>(m_dwLastestAvatarIndex));
+}
+
+BOOL CNetworkMgr::LoadRegedCharResultDump(const char *pi_pPath)
+{
+  std::vector<char> l_vecPayload;
+  if (!ReadBinaryFile(pi_pPath, l_vecPayload))
+  {
+    SetStatusText("Offline replay failed: cannot read %s", pi_pPath ? pi_pPath : "(null)");
+    return FALSE;
+  }
+
+  if (l_vecPayload.size() < 14)
+  {
+    SetStatusText("Offline replay failed: reged payload too small size=%lu",
+                  static_cast<unsigned long>(l_vecPayload.size()));
+    return FALSE;
+  }
+
+  ResetConnectionState();
+  m_bHasLauncherData = FALSE;
+  m_bSentEnterWorldRequest = TRUE;
+  m_bHasEnterWorldResult = TRUE;
+  m_byResultOfEnterTheWorldServer = WORLD_ENTER_SUCCESS;
+  m_bSentRegedCharRequest = TRUE;
+  SystemMsg_RegedCharResult_zone(l_vecPayload.data(), static_cast<int>(l_vecPayload.size()));
+  SetStatusText("Offline replay loaded reged_char_result_zone path=%s size=%lu",
+                pi_pPath,
+                static_cast<unsigned long>(l_vecPayload.size()));
+  return TRUE;
 }
 
 BOOL CNetworkMgr::SystemMsg_SelCharRequest_zone(BYTE pi_byAvatarIndex)
@@ -780,6 +1137,7 @@ void CNetworkMgr::PumpReceive(void)
 
     const int l_nPayloadSize = static_cast<int>(l_sHeader.m_wSize) - MSG_HEADER_SIZE;
     const char *l_pPayload = l_vecPacketBuffer.data() + MSG_HEADER_SIZE;
+    AppendPacketTrace("RX", l_sHeader, l_pPayload, l_nPayloadSize, m_bUseAopTransportCrypt);
     ProcessPacket(l_sHeader, l_pPayload, l_nPayloadSize);
 
     m_vecRecvBuffer.erase(m_vecRecvBuffer.begin(), m_vecRecvBuffer.begin() + l_nConsumedBytes);

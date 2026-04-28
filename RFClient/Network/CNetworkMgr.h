@@ -31,6 +31,7 @@ public:
   void SystemMsg_EnterWorldResult_zone(char *pi_pMsg);
   BOOL SystemMsg_RegedCharRequest_zone(void);
   void SystemMsg_RegedCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
+  BOOL LoadRegedCharResultDump(const char *pi_pPath);
   BOOL SystemMsg_SelCharRequest_zone(BYTE pi_byAvatarIndex);
   void SystemMsg_SelCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL CheckMsg_CheckAnswer(void);

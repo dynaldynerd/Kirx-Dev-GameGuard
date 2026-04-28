@@ -15,12 +15,18 @@ enum
   CDPT_GLOVES = 3,
   CDPT_SHOES = 4,
   CDPT_HELMET = 5,
+  CEPT_WEAPON = 6,
+  CEPT_SHIELD = 7,
+  CEPT_CLOAK = 8,
+  CEPT_HAIR = 9,
   MAX_DEFAULT_PART = 6,
   MAX_PLAYER_RENDER_PART = 10
 };
 
 #define CMM_MOVE_WALK 0
 #define CMM_MOVE_RUN 1
+
+#define CAI_MOVE_STOP 0x10000000
 
 #define ID_DEFAULT_BONE_AC 4
 
@@ -59,10 +65,14 @@ private:
   bool LoadPart(DWORD pi_dwPartType, const MESH_DATA &pi_stMeshData);
   bool LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_DATA &pi_stMeshData);
   bool LoadBone(const BONE_DATA &pi_stBoneData);
+  BOOL SetVertexBlending(DWORD pi_dwPartIndex, CHARACTEROBJECT *pi_pMesh, BOOL pi_bForAnimation);
+  void ReleaseVertexBlendMatrices();
   static bool IsTextureFileName(const char *pi_pFileName);
 
 private:
   CHARACTEROBJECT *m_pMesh[MAX_PLAYER_RENDER_PART];
+  D3DXMATRIX *m_pMatResMat[MAX_PLAYER_RENDER_PART][2];
+  DWORD m_dwMaxResult[MAX_PLAYER_RENDER_PART];
   ChAnimation *m_pStandAni;
   ChAnimation *m_pWalkAni;
   ChAnimation *m_pRunAni;

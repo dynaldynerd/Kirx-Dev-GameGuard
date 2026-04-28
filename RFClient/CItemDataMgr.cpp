@@ -136,6 +136,16 @@ BOOL CItemDataMgr::IsLoaded(void) const
   return m_bLoaded;
 }
 
+DWORD CItemDataMgr::GetRecordCount(BYTE pi_byItemType) const
+{
+  if (pi_byItemType >= CLIENT_ITEM_SECTION_NUM)
+  {
+    return 0;
+  }
+
+  return static_cast<DWORD>(m_vecItemRecords[pi_byItemType].size());
+}
+
 BOOL CItemDataMgr::ParseItemData(void)
 {
   CDataString *l_pSourceData = m_cItemData.GetSourceData();

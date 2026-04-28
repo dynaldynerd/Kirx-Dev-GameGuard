@@ -24,7 +24,11 @@ constexpr char kDebugCaptureLogPath[] = ".\\RFClientCapture.log";
 constexpr char kPlayerMeshRFSPath[] = ".\\Character\\Player\\Mesh\\";
 constexpr char kPlayerAniRFSPath[] = ".\\Character\\Player\\Ani\\";
 constexpr char kPlayerTexRFSPath[] = ".\\Character\\Player\\Tex\\";
+constexpr char kPackedPlayerMeshCachePath[] = ".\\_RFClientRFSCache\\Character\\Player\\Mesh\\";
+constexpr char kPackedPlayerAniCachePath[] = ".\\_RFClientRFSCache\\Character\\Player\\Ani\\";
 constexpr char kDecodedPlayerTexCachePath[] = ".\\_RFClientTextureCache\\Character\\Player\\Tex\\";
+constexpr char kPackedResourceCacheRoot[] = ".\\_RFClientRFSCache\\";
+constexpr char kDecodedTextureCacheRoot[] = ".\\_RFClientTextureCache\\";
 constexpr char kLoosePlayerMeshProbe[] = ".\\Character\\Player\\Mesh\\ACCRETIA_ARMOR_FACE_003.msh";
 constexpr char kLoosePlayerAniProbe[] = ".\\Character\\Player\\Ani\\ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI";
 constexpr char kAccretiaStandAniName[] = "ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI";
@@ -38,27 +42,37 @@ constexpr char kAccretiaLfRunAniName[] = "ACCRETIA_PEACE_LFRUN_NONE_NONE_01_00.A
 constexpr char kAccretiaRtRunAniName[] = "ACCRETIA_PEACE_RTRUN_NONE_NONE_01_00.ANI";
 constexpr size_t kObjectMeshTextureOffset = 0x304;
 constexpr size_t kObjectMeshStride = 0x430;
+constexpr size_t kObjectMeshBlendNumOffset = 0x8C;
+constexpr size_t kObjectMeshBlendMatOffset = 0xA0;
+constexpr size_t kObjectMeshMatResultOffset = 0x1F0;
 constexpr size_t kTextureManagerPathOffset = 0x1C;
 constexpr size_t kTextureManagerPathSize = 0x64;
 constexpr size_t kCharacterObjectTexturePathOffset = 0x114;
 constexpr size_t kCharacterObjectTexturePathSize = 0xFC;
 constexpr BYTE kBaseFixNum = 5;
+constexpr BYTE kEquipFixNum = 8;
 constexpr DWORD kDefaultMeshCategory = 0x050000;
-constexpr BYTE kServerBasePartToClientPart[kBaseFixNum] =
+constexpr BYTE kServerEquipPartToClientPart[kEquipFixNum] =
 {
   CDPT_UPPER_PART,
   CDPT_LOWER_PART,
   CDPT_GLOVES,
   CDPT_SHOES,
-  CDPT_HELMET
+  CDPT_HELMET,
+  CEPT_SHIELD,
+  CEPT_WEAPON,
+  CEPT_CLOAK
 };
-constexpr BYTE kServerBasePartToItemType[kBaseFixNum] =
+constexpr BYTE kServerEquipPartToItemType[kEquipFixNum] =
 {
   IEPT_UPPER_PART,
   IEPT_LOWER_PART,
   IEPT_GLOVES,
   IEPT_SHOES,
-  IEPT_HELMET
+  IEPT_HELMET,
+  IEPT_SHIELD,
+  IEPT_WEAPON,
+  IEPT_CLOAK
 };
 constexpr BYTE kDefaultPartMeshCode[MAX_DEFAULT_PART] =
 {
@@ -69,12 +83,62 @@ constexpr BYTE kDefaultPartMeshCode[MAX_DEFAULT_PART] =
   5, // shoes
   0  // helmet
 };
+constexpr BYTE kPlayerAnimationRace[5][5] =
+{
+  {0x0A, 0x09, 0x05, 0x07, 0x00},
+  {0x0A, 0x09, 0x06, 0x07, 0x01},
+  {0x0A, 0x09, 0x05, 0x08, 0x02},
+  {0x0A, 0x09, 0x06, 0x08, 0x03},
+  {0x0A, 0x04, 0x04, 0x04, 0x04}
+};
+constexpr BYTE kPlayerAnimationCombatMode[2][2] =
+{
+  {0x02, 0x00},
+  {0x02, 0x01}
+};
+constexpr BYTE kPlayerAniStop = 0x06;
+constexpr BYTE kCombatModeCombat = 1;
 
 #if defined(_DEBUG)
 void AppendPlayerLog(const char *format, ...);
 #endif
 
 bool IsTextureFileNameLocal(const char *pi_pFileName);
+
+BYTE *GetObjectMeshBytes(ObjectMesh *pi_pObjectMesh)
+{
+  return reinterpret_cast<BYTE *>(pi_pObjectMesh);
+}
+
+D3DXMATRIX *GetObjectMeshMatResult(ObjectMesh *pi_pObjectMesh)
+{
+  if (!pi_pObjectMesh)
+  {
+    return NULL;
+  }
+
+  return reinterpret_cast<D3DXMATRIX *>(GetObjectMeshBytes(pi_pObjectMesh) + kObjectMeshMatResultOffset);
+}
+
+DWORD GetObjectMeshBlendNum(ObjectMesh *pi_pObjectMesh)
+{
+  if (!pi_pObjectMesh)
+  {
+    return 0;
+  }
+
+  return *reinterpret_cast<DWORD *>(GetObjectMeshBytes(pi_pObjectMesh) + kObjectMeshBlendNumOffset);
+}
+
+D3DXMATRIX *GetObjectMeshBlendMatrices(ObjectMesh *pi_pObjectMesh)
+{
+  if (!pi_pObjectMesh)
+  {
+    return NULL;
+  }
+
+  return *reinterpret_cast<D3DXMATRIX **>(GetObjectMeshBytes(pi_pObjectMesh) + kObjectMeshBlendMatOffset);
+}
 
 void SetCharacterObjectTexturePath(CHARACTEROBJECT *pi_pCharacterObject, const char *pi_pTexturePath)
 {
@@ -143,7 +207,10 @@ DWORD MakeDefaultItemDTIndex(BYTE pi_byRaceSexCode, DWORD pi_dwVariant)
 
 DWORD ApplyPlayerRaceToItemMeshID(DWORD pi_dwMeshID, BYTE pi_byRaceSexCode)
 {
-  if (((pi_dwMeshID & 0x000F0000) == 0x00000000) &&
+  const DWORD l_dwMeshKind = (pi_dwMeshID & 0x000F0000) >> 16;
+  const DWORD l_dwMeshRace = (pi_dwMeshID & 0x0FF00000) >> 20;
+  if (l_dwMeshKind == 0 &&
+      l_dwMeshRace != 10 &&
       ((pi_dwMeshID & 0x0000FF00) != 0x00000700))
   {
     return (pi_dwMeshID & 0xFF0FFFFF) |
@@ -225,13 +292,13 @@ void UnLockDDS(DWORD *buf)
   static const DWORD pass_word[32] =
   {
     0x764D802E, 0xF0D1F82E, 0x81863FBD, 0x3F3F2C58,
-    0x6F672E2E, 0x783F403F, 0xF6A5C0F1, 0x9F3BF6A5,
-    0xD73F20C1, 0xE9C1C8D7, 0xEFBD8685, 0xFBA13F56,
-    0x61868687, 0x4E3B214C, 0x97AE5778, 0x3F2E4A2E,
-    0x442E4C3F, 0xE8E95FC5, 0xBDBEECED, 0x2E6CF7BB,
-    0x3F2EE4F2, 0x9F973F3F, 0x76B921B3, 0x3F546576,
+    0x6F672E2E, 0x783F403F, 0xC0F13F3C, 0x9F3BF6A5,
+    0xD73F20C1, 0x85E9C1C8, 0x56EFBD86, 0x2EFBA13F,
+    0x4C618687, 0xB44E3B21, 0x97AE5778, 0x2E4A2E3F,
+    0x442E4C3F, 0xE85FC5CD, 0xBDEBECE9, 0x6CF7BBBE,
+    0x2EE4F22E, 0x9F973F3F, 0xB921B39D, 0x3F546576,
     0xF0C6F6E6, 0xB2E2DB79, 0xEB2E2E4B, 0xABCAD3D3,
-    0x9CEDC7EA, 0x48D0D9C7, 0x2E35FAB4, 0x9B6A2E2E
+    0x9CEDC7EA, 0x65D0D9C7, 0x35FAB448, 0x9B6A2E2E
   };
 
   for (DWORD i = 0; i < 32; ++i)
@@ -338,6 +405,10 @@ bool SaveBinaryFile(const char *pi_pFileName, const BYTE *pi_pBuffer, size_t pi_
   return l_stWriteSize == pi_stBufferSize;
 }
 
+bool IsTextureFileNameLocal(const char *pi_pFileName);
+bool HasRFSResourceFiles(const char *pi_pPath);
+bool ExtractRFSTexturesToCache(const char *pi_pRFSPath, const char *pi_pCachePath, DWORD *po_pPreparedCount);
+
 bool PrepareDecodedTextureFile(const char *pi_pSourceFileName, const char *pi_pCacheFileName)
 {
   if (!pi_pSourceFileName || !pi_pCacheFileName)
@@ -367,23 +438,19 @@ bool PrepareDecodedTextureFile(const char *pi_pSourceFileName, const char *pi_pC
            GetLastError() == ERROR_SUCCESS;
   }
 
-  if (_stricmp(l_pExt, ".rft") != 0)
+  if (_stricmp(l_pExt, ".rft") == 0)
   {
-    return false;
+    std::vector<BYTE> l_vecBuffer;
+    if (!LoadBinaryFile(pi_pSourceFileName, l_vecBuffer) ||
+        !DecodeDDSBuffer(l_vecBuffer.data(), static_cast<DWORD>(l_vecBuffer.size())))
+    {
+      return false;
+    }
+
+    return SaveBinaryFile(pi_pCacheFileName, l_vecBuffer.data(), l_vecBuffer.size());
   }
 
-  std::vector<BYTE> l_vecBuffer;
-  if (!LoadBinaryFile(pi_pSourceFileName, l_vecBuffer))
-  {
-    return false;
-  }
-
-  if (!DecodeDDSBuffer(l_vecBuffer.data(), static_cast<DWORD>(l_vecBuffer.size())))
-  {
-    return false;
-  }
-
-  return SaveBinaryFile(pi_pCacheFileName, l_vecBuffer.data(), l_vecBuffer.size());
+  return false;
 }
 
 bool BuildDecodedTextureCache(const char *pi_pTexturePath, const char *pi_pCacheTexturePath)
@@ -423,11 +490,18 @@ bool BuildDecodedTextureCache(const char *pi_pTexturePath, const char *pi_pCache
   } while (FindNextFileA(l_hFind, &l_stFindData));
 
   FindClose(l_hFind);
+  DWORD l_dwPackedPreparedCount = 0;
+  if (HasRFSResourceFiles(pi_pTexturePath) &&
+      ExtractRFSTexturesToCache(pi_pTexturePath, pi_pCacheTexturePath, &l_dwPackedPreparedCount))
+  {
+    l_dwPreparedCount += l_dwPackedPreparedCount;
+  }
 #if defined(_DEBUG)
-  AppendPlayerLog("BuildDecodedTextureCache: src=%s dst=%s prepared=%u",
+  AppendPlayerLog("BuildDecodedTextureCache: src=%s dst=%s prepared=%u packed=%u",
                   pi_pTexturePath,
                   pi_pCacheTexturePath,
-                  static_cast<unsigned>(l_dwPreparedCount));
+                  static_cast<unsigned>(l_dwPreparedCount),
+                  static_cast<unsigned>(l_dwPackedPreparedCount));
 #endif
   return l_dwPreparedCount != 0;
 }
@@ -444,6 +518,19 @@ bool IsExistingFile(const char *path)
   const DWORD l_dwAttributes = path ? GetFileAttributesA(path) : INVALID_FILE_ATTRIBUTES;
   return l_dwAttributes != INVALID_FILE_ATTRIBUTES &&
          (l_dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+bool IsExistingNonEmptyFile(const char *path)
+{
+  WIN32_FILE_ATTRIBUTE_DATA l_stFileData = {};
+  if (!path ||
+      !GetFileAttributesExA(path, GetFileExInfoStandard, &l_stFileData) ||
+      (l_stFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+  {
+    return false;
+  }
+
+  return l_stFileData.nFileSizeHigh != 0 || l_stFileData.nFileSizeLow != 0;
 }
 
 bool HasLooseFileMatching(const char *pi_pPattern)
@@ -483,6 +570,18 @@ bool HasLoosePlayerResourceFiles(void)
           HasLooseFileMatching(".\\Character\\Player\\Tex\\*.RFT"));
 }
 
+bool HasRFSResourceFiles(const char *pi_pPath)
+{
+  if (!pi_pPath || !pi_pPath[0])
+  {
+    return false;
+  }
+
+  char l_szPattern[MAX_PATH] = {0};
+  _snprintf_s(l_szPattern, _countof(l_szPattern), _TRUNCATE, "%s*.RFS", pi_pPath);
+  return HasLooseFileMatching(l_szPattern);
+}
+
 bool IsTextureFileNameLocal(const char *pi_pFileName)
 {
   if (!pi_pFileName)
@@ -499,44 +598,7 @@ bool IsTextureFileNameLocal(const char *pi_pFileName)
   return _stricmp(l_pExt, ".rft") == 0 || _stricmp(l_pExt, ".dds") == 0;
 }
 
-bool TryCopyCString(const char *pi_pSource, char *po_szBuffer, size_t pi_stBufferSize)
-{
-  if (!pi_pSource || !po_szBuffer || pi_stBufferSize < 2 ||
-      pi_pSource == reinterpret_cast<const char *>(-1))
-  {
-    return false;
-  }
-
-  __try
-  {
-    size_t l_stLength = 0;
-    while (l_stLength + 1 < pi_stBufferSize)
-    {
-      const unsigned char l_byChar = static_cast<unsigned char>(pi_pSource[l_stLength]);
-      if (l_byChar == '\0')
-      {
-        po_szBuffer[l_stLength] = '\0';
-        return l_stLength > 0;
-      }
-
-      if (l_byChar < 32 || l_byChar >= 127)
-      {
-        return false;
-      }
-
-      po_szBuffer[l_stLength] = static_cast<char>(l_byChar);
-      ++l_stLength;
-    }
-  }
-  __except (EXCEPTION_EXECUTE_HANDLER)
-  {
-    return false;
-  }
-
-  return false;
-}
-
-void CopyTextureFileName(const char *pi_pTextureName, char *po_szFileName, size_t pi_stFileNameSize)
+void CopyBaseFileNameLocal(const char *pi_pPath, char *po_szFileName, size_t pi_stFileNameSize)
 {
   if (!po_szFileName || pi_stFileNameSize == 0)
   {
@@ -544,14 +606,14 @@ void CopyTextureFileName(const char *pi_pTextureName, char *po_szFileName, size_
   }
 
   po_szFileName[0] = '\0';
-  if (!pi_pTextureName || !pi_pTextureName[0])
+  if (!pi_pPath || !pi_pPath[0])
   {
     return;
   }
 
-  const char *l_pFileName = pi_pTextureName;
-  const char *l_pSlash = strrchr(pi_pTextureName, '\\');
-  const char *l_pSlash2 = strrchr(pi_pTextureName, '/');
+  const char *l_pFileName = pi_pPath;
+  const char *l_pSlash = strrchr(pi_pPath, '\\');
+  const char *l_pSlash2 = strrchr(pi_pPath, '/');
   if (l_pSlash2 && (!l_pSlash || l_pSlash2 > l_pSlash))
   {
     l_pSlash = l_pSlash2;
@@ -565,149 +627,399 @@ void CopyTextureFileName(const char *pi_pTextureName, char *po_szFileName, size_
   strcpy_s(po_szFileName, pi_stFileNameSize, l_pFileName);
 }
 
-bool TryLoadTextureCandidate(ChInterface *pi_pCharIF,
-                             TextureManager *pi_pTextureManager,
-                             const char *pi_pTexturePath,
-                             const char *pi_pTextureFileName)
+void CopyDirectoryPathLocal(const char *pi_pPath, char *po_szDirectory, size_t pi_stDirectorySize)
 {
-  UNREFERENCED_PARAMETER(pi_pCharIF);
-
-  if (!pi_pCharIF || !pi_pTextureManager || !pi_pTexturePath || !pi_pTextureFileName || !pi_pTextureFileName[0])
-  {
-    return false;
-  }
-
-  char l_szFullPath[MAX_PATH];
-  sprintf_s(l_szFullPath, sizeof(l_szFullPath), "%s%s", pi_pTexturePath, pi_pTextureFileName);
-
-  if (pi_pTextureManager->GetTextureID(pi_pTextureFileName) != 0)
-  {
-    return true;
-  }
-
-  const char *l_apTexturePath[2] = {pi_pTexturePath, NULL};
-  if (_stricmp(pi_pTexturePath, kPlayerTexRFSPath) == 0)
-  {
-    l_apTexturePath[1] = kDecodedPlayerTexCachePath;
-  }
-
-  for (int l_nPathIndex = 0; l_nPathIndex < 2; ++l_nPathIndex)
-  {
-    if (!l_apTexturePath[l_nPathIndex])
-    {
-      continue;
-    }
-
-    char l_szManagerPath[MAX_PATH];
-    NormalizeTextureManagerPath(l_szManagerPath, sizeof(l_szManagerPath), l_apTexturePath[l_nPathIndex]);
-
-    char l_szCandidateFileName[MAX_PATH];
-    sprintf_s(l_szCandidateFileName, sizeof(l_szCandidateFileName), "%s\\%s", l_szManagerPath, pi_pTextureFileName);
-    if (!IsExistingFile(l_szCandidateFileName))
-    {
-      continue;
-    }
-
-    if (pi_pTextureManager->AddTexture(l_szManagerPath, pi_pTextureFileName))
-    {
-      return true;
-    }
-
-    pi_pCharIF->LoadTextureData(pi_pTextureManager,
-                                const_cast<char *>(l_apTexturePath[l_nPathIndex]),
-                                const_cast<char *>(pi_pTextureFileName));
-    if (pi_pTextureManager->GetTextureID(pi_pTextureFileName) != 0)
-    {
-      return true;
-    }
-  }
-
-  return pi_pTextureManager->GetTextureID(pi_pTextureFileName) != 0;
-}
-
-void EnsureMeshTexturesLoaded(ChInterface *pi_pCharIF,
-                              TextureManager *pi_pTextureManager,
-                              CHARACTEROBJECT *pi_pMesh,
-                              const char *pi_pTexturePath)
-{
-  if (!pi_pCharIF || !pi_pTextureManager || !pi_pMesh || !pi_pMesh->m_pMesh || !pi_pTexturePath || !pi_pTexturePath[0])
+  if (!po_szDirectory || pi_stDirectorySize == 0)
   {
     return;
   }
 
-  DWORD l_dwValidTextureRefCount = 0;
-  BYTE *l_pObjectMesh = reinterpret_cast<BYTE *>(pi_pMesh->m_pMesh);
-  for (DWORD l_dwObjectIndex = 0; l_dwObjectIndex < pi_pMesh->m_MaxObj; ++l_dwObjectIndex)
+  po_szDirectory[0] = '\0';
+  if (!pi_pPath || !pi_pPath[0])
   {
-    BYTE *l_pTextureInfo = l_pObjectMesh + kObjectMeshTextureOffset;
-    char *l_apTextureName[3] =
-    {
-      *reinterpret_cast<char **>(l_pTextureInfo + 0x04),
-      *reinterpret_cast<char **>(l_pTextureInfo + 0x0C),
-      *reinterpret_cast<char **>(l_pTextureInfo + 0x14)
-    };
-
-    for (int l_nTextureIndex = 0; l_nTextureIndex < 3; ++l_nTextureIndex)
-    {
-      char l_szTextureName[MAX_PATH];
-      if (!TryCopyCString(l_apTextureName[l_nTextureIndex],
-                          l_szTextureName,
-                          sizeof(l_szTextureName)))
-      {
-        continue;
-      }
-
-      ++l_dwValidTextureRefCount;
-
-      if (pi_pTextureManager->GetTextureID(l_szTextureName) != 0)
-      {
-        continue;
-      }
-
-      char l_szTextureFileName[MAX_PATH];
-      CopyTextureFileName(l_szTextureName, l_szTextureFileName, sizeof(l_szTextureFileName));
-      if (!l_szTextureFileName[0])
-      {
-        continue;
-      }
-
-      bool l_bLoaded = TryLoadTextureCandidate(pi_pCharIF,
-                                               pi_pTextureManager,
-                                               pi_pTexturePath,
-                                               l_szTextureFileName);
-
-      if (!l_bLoaded)
-      {
-        char *l_pExt = strrchr(l_szTextureFileName, '.');
-        if (l_pExt)
-        {
-          strcpy_s(l_pExt, sizeof(l_szTextureFileName) - static_cast<size_t>(l_pExt - l_szTextureFileName), ".RFT");
-          l_bLoaded = TryLoadTextureCandidate(pi_pCharIF,
-                                              pi_pTextureManager,
-                                              pi_pTexturePath,
-                                              l_szTextureFileName);
-        }
-      }
-
-#if defined(_DEBUG)
-      AppendPlayerLog("EnsureMeshTexturesLoaded: obj=%u texSlot=%d name=%s loaded=%d texId=%u",
-                      static_cast<unsigned>(l_dwObjectIndex),
-                      l_nTextureIndex,
-                      l_szTextureName,
-                      l_bLoaded ? 1 : 0,
-                      static_cast<unsigned>(pi_pTextureManager->GetTextureID(l_szTextureName)));
-#endif
-    }
-
-    l_pObjectMesh += kObjectMeshStride;
+    return;
   }
 
+  const char *l_pSlash = strrchr(pi_pPath, '\\');
+  const char *l_pSlash2 = strrchr(pi_pPath, '/');
+  if (l_pSlash2 && (!l_pSlash || l_pSlash2 > l_pSlash))
+  {
+    l_pSlash = l_pSlash2;
+  }
+
+  if (!l_pSlash)
+  {
+    return;
+  }
+
+  size_t l_stLength = static_cast<size_t>(l_pSlash - pi_pPath) + 1;
+  if (l_stLength >= pi_stDirectorySize)
+  {
+    l_stLength = pi_stDirectorySize - 1;
+  }
+
+  memcpy(po_szDirectory, pi_pPath, l_stLength);
+  po_szDirectory[l_stLength] = '\0';
+}
+
+const char *SkipLocalPathPrefix(const char *pi_pPath)
+{
+  if (!pi_pPath)
+  {
+    return "";
+  }
+
+  if (pi_pPath[0] == '.' && (pi_pPath[1] == '\\' || pi_pPath[1] == '/'))
+  {
+    return pi_pPath + 2;
+  }
+
+  return pi_pPath;
+}
+
+bool BuildCacheDirectoryForSourcePath(const char *pi_pSourcePath,
+                                      const char *pi_pCacheRoot,
+                                      char *po_szCachePath,
+                                      size_t pi_stCachePathSize)
+{
+  if (!pi_pSourcePath || !pi_pCacheRoot || !po_szCachePath || pi_stCachePathSize == 0)
+  {
+    return false;
+  }
+
+  const char *l_pRelativePath = SkipLocalPathPrefix(pi_pSourcePath);
+  if (!l_pRelativePath[0])
+  {
+    return false;
+  }
+
+  _snprintf_s(po_szCachePath,
+              pi_stCachePathSize,
+              _TRUNCATE,
+              "%s%s",
+              pi_pCacheRoot,
+              l_pRelativePath);
+  return EnsureDirectoryPath(po_szCachePath);
+}
+
+bool SavePackedTextureCacheFile(const char *pi_pFileName,
+                                const BYTE *pi_pBuffer,
+                                size_t pi_stBufferSize,
+                                const char *pi_pCacheFileName)
+{
+  if (!pi_pFileName || !pi_pBuffer || pi_stBufferSize == 0 || !pi_pCacheFileName)
+  {
+    return false;
+  }
+
+  const char *l_pExt = strrchr(pi_pFileName, '.');
+  if (!l_pExt || _stricmp(l_pExt, ".rft") != 0)
+  {
+    return SaveBinaryFile(pi_pCacheFileName, pi_pBuffer, pi_stBufferSize);
+  }
+
+  std::vector<BYTE> l_vecBuffer(pi_pBuffer, pi_pBuffer + pi_stBufferSize);
+  if (!DecodeDDSBuffer(l_vecBuffer.data(), static_cast<DWORD>(l_vecBuffer.size())))
+  {
+    return false;
+  }
+
+  return SaveBinaryFile(pi_pCacheFileName, l_vecBuffer.data(), l_vecBuffer.size());
+}
+
+bool ExtractRFSResourceToCache(const char *pi_pRFSPath,
+                               const char *pi_pCachePath,
+                               const char *pi_pRequestedFileName,
+                               char *po_szResolvedFileName,
+                               size_t pi_stResolvedFileNameSize,
+                               bool pi_bDecodeTexture)
+{
+  if (!pi_pRFSPath || !pi_pCachePath || !pi_pRequestedFileName ||
+      !po_szResolvedFileName || pi_stResolvedFileNameSize == 0)
+  {
+    return false;
+  }
+
+  po_szResolvedFileName[0] = '\0';
+  if (IsExistingNonEmptyFile(pi_pRequestedFileName))
+  {
+    strcpy_s(po_szResolvedFileName, pi_stResolvedFileNameSize, pi_pRequestedFileName);
+    return true;
+  }
+
+  char l_szBaseFileName[MAX_PATH];
+  CopyBaseFileNameLocal(pi_pRequestedFileName, l_szBaseFileName, sizeof(l_szBaseFileName));
+  if (!l_szBaseFileName[0] || !EnsureDirectoryPath(pi_pCachePath))
+  {
+    return false;
+  }
+
+  char l_szCacheFileName[MAX_PATH];
+  sprintf_s(l_szCacheFileName, sizeof(l_szCacheFileName), "%s%s", pi_pCachePath, l_szBaseFileName);
+  if (IsExistingNonEmptyFile(l_szCacheFileName))
+  {
+    strcpy_s(po_szResolvedFileName, pi_stResolvedFileNameSize, l_szCacheFileName);
+    return true;
+  }
+
+  char l_szRFSInfoFileName[MAX_PATH];
+  sprintf_s(l_szRFSInfoFileName, sizeof(l_szRFSInfoFileName), "%sRFSInfo.dat", pi_pRFSPath);
+
+  FILE *l_pRFSInfo = NULL;
+  if (fopen_s(&l_pRFSInfo, l_szRFSInfoFileName, "rb") != 0 || !l_pRFSInfo)
+  {
+    return false;
+  }
+
+  bool l_bExtracted = false;
+  char l_szRFSName[MAX_PATH];
+  while (!l_bExtracted && fscanf_s(l_pRFSInfo, "%259s", l_szRFSName, static_cast<unsigned>(_countof(l_szRFSName))) == 1)
+  {
+    char l_szRFSFileName[MAX_PATH];
+    sprintf_s(l_szRFSFileName, sizeof(l_szRFSFileName), "%s%s", pi_pRFSPath, l_szRFSName);
+
+    FILE *l_pRFSFile = NULL;
+    if (fopen_s(&l_pRFSFile, l_szRFSFileName, "rb") != 0 || !l_pRFSFile)
+    {
+      continue;
+    }
+
+    DWORD l_dwEntryCount = 0;
+    if (fread(&l_dwEntryCount, 1, sizeof(l_dwEntryCount), l_pRFSFile) != sizeof(l_dwEntryCount) ||
+        l_dwEntryCount > 100000)
+    {
+      fclose(l_pRFSFile);
+      continue;
+    }
+
+    for (DWORD i = 0; i < l_dwEntryCount; ++i)
+    {
+      char l_szEntryName[0x39] = {0};
+      DWORD l_dwOffset = 0;
+      DWORD l_dwSize = 0;
+      if (fread(l_szEntryName, 1, 0x38, l_pRFSFile) != 0x38 ||
+          fread(&l_dwOffset, 1, sizeof(l_dwOffset), l_pRFSFile) != sizeof(l_dwOffset) ||
+          fread(&l_dwSize, 1, sizeof(l_dwSize), l_pRFSFile) != sizeof(l_dwSize))
+      {
+        break;
+      }
+
+      if (_stricmp(l_szEntryName, l_szBaseFileName) != 0 || l_dwSize == 0)
+      {
+        continue;
+      }
+
+      const long l_nReturnPos = ftell(l_pRFSFile);
+      std::vector<BYTE> l_vecBuffer(l_dwSize);
+      if (fseek(l_pRFSFile, static_cast<long>(l_dwOffset), SEEK_SET) == 0 &&
+          fread(l_vecBuffer.data(), 1, l_vecBuffer.size(), l_pRFSFile) == l_vecBuffer.size() &&
+          (pi_bDecodeTexture
+             ? SavePackedTextureCacheFile(l_szEntryName, l_vecBuffer.data(), l_vecBuffer.size(), l_szCacheFileName)
+             : SaveBinaryFile(l_szCacheFileName, l_vecBuffer.data(), l_vecBuffer.size())))
+      {
+        strcpy_s(po_szResolvedFileName, pi_stResolvedFileNameSize, l_szCacheFileName);
+        l_bExtracted = true;
+      }
+
+      fseek(l_pRFSFile, l_nReturnPos, SEEK_SET);
+      break;
+    }
+
+    fclose(l_pRFSFile);
+  }
+
+  fclose(l_pRFSInfo);
+
 #if defined(_DEBUG)
-  AppendPlayerLog("EnsureMeshTexturesLoaded: mesh=%p maxObj=%u validRefs=%u",
-                  pi_pMesh,
-                  static_cast<unsigned>(pi_pMesh->m_MaxObj),
-                  static_cast<unsigned>(l_dwValidTextureRefCount));
+  AppendPlayerLog("ExtractRFSResourceToCache: request=%s result=%d resolved=%s",
+                  pi_pRequestedFileName,
+                  l_bExtracted ? 1 : 0,
+                  po_szResolvedFileName);
 #endif
+  return l_bExtracted;
+}
+
+bool ResolvePackedResourceFile(const char *pi_pFileName,
+                               char *po_szResolvedFileName,
+                               size_t pi_stResolvedFileNameSize,
+                               bool pi_bDecodeTexture)
+{
+  if (!pi_pFileName || !po_szResolvedFileName || pi_stResolvedFileNameSize == 0)
+  {
+    return false;
+  }
+
+  po_szResolvedFileName[0] = '\0';
+  if (IsExistingNonEmptyFile(pi_pFileName))
+  {
+    strcpy_s(po_szResolvedFileName, pi_stResolvedFileNameSize, pi_pFileName);
+    return true;
+  }
+
+  char l_szResourcePath[MAX_PATH];
+  CopyDirectoryPathLocal(pi_pFileName, l_szResourcePath, sizeof(l_szResourcePath));
+  if (!l_szResourcePath[0])
+  {
+    return false;
+  }
+
+  char l_szRFSInfoFileName[MAX_PATH];
+  sprintf_s(l_szRFSInfoFileName, sizeof(l_szRFSInfoFileName), "%sRFSInfo.dat", l_szResourcePath);
+  if (!IsExistingFile(l_szRFSInfoFileName))
+  {
+    return false;
+  }
+
+  char l_szCachePath[MAX_PATH];
+  if (!BuildCacheDirectoryForSourcePath(l_szResourcePath,
+                                        pi_bDecodeTexture ? kDecodedTextureCacheRoot : kPackedResourceCacheRoot,
+                                        l_szCachePath,
+                                        sizeof(l_szCachePath)))
+  {
+    return false;
+  }
+
+  return ExtractRFSResourceToCache(l_szResourcePath,
+                                   l_szCachePath,
+                                   pi_pFileName,
+                                   po_szResolvedFileName,
+                                   pi_stResolvedFileNameSize,
+                                   pi_bDecodeTexture);
+}
+
+bool ResolveTextureLoadPath(const char *pi_pTexturePath, char *po_szTextureLoadPath, size_t pi_stTextureLoadPathSize)
+{
+  if (!pi_pTexturePath || !po_szTextureLoadPath || pi_stTextureLoadPathSize == 0)
+  {
+    return false;
+  }
+
+  strcpy_s(po_szTextureLoadPath, pi_stTextureLoadPathSize, pi_pTexturePath);
+
+  char l_szRFSInfoFileName[MAX_PATH];
+  sprintf_s(l_szRFSInfoFileName, sizeof(l_szRFSInfoFileName), "%sRFSInfo.dat", pi_pTexturePath);
+  if (!IsExistingFile(l_szRFSInfoFileName))
+  {
+    return true;
+  }
+
+  char l_szCacheTexturePath[MAX_PATH];
+  if (!BuildCacheDirectoryForSourcePath(pi_pTexturePath,
+                                        kDecodedTextureCacheRoot,
+                                        l_szCacheTexturePath,
+                                        sizeof(l_szCacheTexturePath)))
+  {
+    return true;
+  }
+
+  if (BuildDecodedTextureCache(pi_pTexturePath, l_szCacheTexturePath))
+  {
+    strcpy_s(po_szTextureLoadPath, pi_stTextureLoadPathSize, l_szCacheTexturePath);
+  }
+
+  return true;
+}
+
+bool ExtractRFSTexturesToCache(const char *pi_pRFSPath, const char *pi_pCachePath, DWORD *po_pPreparedCount)
+{
+  if (!pi_pRFSPath || !pi_pCachePath || !EnsureDirectoryPath(pi_pCachePath))
+  {
+    return false;
+  }
+
+  DWORD l_dwPreparedCount = 0;
+  char l_szRFSInfoFileName[MAX_PATH];
+  sprintf_s(l_szRFSInfoFileName, sizeof(l_szRFSInfoFileName), "%sRFSInfo.dat", pi_pRFSPath);
+
+  FILE *l_pRFSInfo = NULL;
+  if (fopen_s(&l_pRFSInfo, l_szRFSInfoFileName, "rb") != 0 || !l_pRFSInfo)
+  {
+    return false;
+  }
+
+  char l_szRFSName[MAX_PATH];
+  while (fscanf_s(l_pRFSInfo, "%259s", l_szRFSName, static_cast<unsigned>(_countof(l_szRFSName))) == 1)
+  {
+    char l_szRFSFileName[MAX_PATH];
+    sprintf_s(l_szRFSFileName, sizeof(l_szRFSFileName), "%s%s", pi_pRFSPath, l_szRFSName);
+
+    FILE *l_pRFSFile = NULL;
+    if (fopen_s(&l_pRFSFile, l_szRFSFileName, "rb") != 0 || !l_pRFSFile)
+    {
+      continue;
+    }
+
+    DWORD l_dwEntryCount = 0;
+    if (fread(&l_dwEntryCount, 1, sizeof(l_dwEntryCount), l_pRFSFile) != sizeof(l_dwEntryCount) ||
+        l_dwEntryCount > 100000)
+    {
+      fclose(l_pRFSFile);
+      continue;
+    }
+
+    for (DWORD i = 0; i < l_dwEntryCount; ++i)
+    {
+      char l_szEntryName[0x39] = {0};
+      DWORD l_dwOffset = 0;
+      DWORD l_dwSize = 0;
+      if (fread(l_szEntryName, 1, 0x38, l_pRFSFile) != 0x38 ||
+          fread(&l_dwOffset, 1, sizeof(l_dwOffset), l_pRFSFile) != sizeof(l_dwOffset) ||
+          fread(&l_dwSize, 1, sizeof(l_dwSize), l_pRFSFile) != sizeof(l_dwSize))
+      {
+        break;
+      }
+
+      if (!IsTextureFileNameLocal(l_szEntryName) || l_dwSize == 0)
+      {
+        continue;
+      }
+
+      char l_szCacheFileName[MAX_PATH];
+      sprintf_s(l_szCacheFileName, sizeof(l_szCacheFileName), "%s%s", pi_pCachePath, l_szEntryName);
+      if (IsExistingNonEmptyFile(l_szCacheFileName))
+      {
+        ++l_dwPreparedCount;
+        continue;
+      }
+
+      const long l_nReturnPos = ftell(l_pRFSFile);
+      std::vector<BYTE> l_vecBuffer(l_dwSize);
+      if (fseek(l_pRFSFile, static_cast<long>(l_dwOffset), SEEK_SET) == 0 &&
+          fread(l_vecBuffer.data(), 1, l_vecBuffer.size(), l_pRFSFile) == l_vecBuffer.size() &&
+          SavePackedTextureCacheFile(l_szEntryName, l_vecBuffer.data(), l_vecBuffer.size(), l_szCacheFileName))
+      {
+        ++l_dwPreparedCount;
+      }
+      fseek(l_pRFSFile, l_nReturnPos, SEEK_SET);
+    }
+
+    fclose(l_pRFSFile);
+  }
+
+  fclose(l_pRFSInfo);
+  if (po_pPreparedCount)
+  {
+    *po_pPreparedCount = l_dwPreparedCount;
+  }
+  return l_dwPreparedCount != 0;
+}
+
+bool ResolvePlayerMeshResource(const char *pi_pFileName, char *po_szResolvedFileName, size_t pi_stResolvedFileNameSize)
+{
+  return ResolvePackedResourceFile(pi_pFileName,
+                                   po_szResolvedFileName,
+                                   pi_stResolvedFileNameSize,
+                                   false);
+}
+
+bool ResolvePlayerAniResource(const char *pi_pFileName, char *po_szResolvedFileName, size_t pi_stResolvedFileNameSize)
+{
+  return ExtractRFSResourceToCache(kPlayerAniRFSPath,
+                                   kPackedPlayerAniCachePath,
+                                   pi_pFileName,
+                                   po_szResolvedFileName,
+                                   pi_stResolvedFileNameSize,
+                                   false);
 }
 
 #if defined(_DEBUG)
@@ -978,6 +1290,8 @@ CPlayer::CPlayer()
     m_byWalkMode(CMM_MOVE_RUN)
 {
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
+  ZeroMemory(m_pMatResMat, sizeof(m_pMatResMat));
+  ZeroMemory(m_dwMaxResult, sizeof(m_dwMaxResult));
   ZeroMemory(m_szBoneName, sizeof(m_szBoneName));
   ZeroMemory(m_szBBoxName, sizeof(m_szBBoxName));
   ZeroMemory(m_szAniName, sizeof(m_szAniName));
@@ -1012,6 +1326,7 @@ bool CPlayer::Initialize(void)
 void CPlayer::Shutdown()
 {
   m_bLoaded = false;
+  ReleaseVertexBlendMatrices();
   m_pStandAni = NULL;
   m_pWalkAni = NULL;
   m_pRunAni = NULL;
@@ -1043,16 +1358,25 @@ bool CPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
     return false;
   }
 
-  ChAnimation *l_pAnimation = l_pCharIF->AddAnimationData(l_pAnimationMgr, pi_pAniName);
+  char l_szAniLoadName[MAX_PATH];
+  if (!ResolvePlayerAniResource(pi_pAniName, l_szAniLoadName, sizeof(l_szAniLoadName)))
+  {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadAnimation: resolve failed %s", pi_pAniName);
+#endif
+    return false;
+  }
+
+  ChAnimation *l_pAnimation = l_pCharIF->AddAnimationData(l_pAnimationMgr, l_szAniLoadName);
   if (!l_pAnimation)
   {
-    l_pAnimation = l_pCharIF->GetAnimationData(l_pAnimationMgr, pi_pAniName);
+    l_pAnimation = l_pCharIF->GetAnimationData(l_pAnimationMgr, l_szAniLoadName);
   }
 
   if (!l_pAnimation)
   {
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadAnimation: GetAnimationData failed %s", pi_pAniName);
+    AppendPlayerLog("LoadAnimation: GetAnimationData failed %s", l_szAniLoadName);
 #endif
     return false;
   }
@@ -1067,7 +1391,7 @@ bool CPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
 #if defined(_DEBUG)
     AppendPlayerLog("LoadAnimation: LoadRealAnimation raised exception code=0x%08X ani=%s",
                     GetExceptionCode(),
-                    pi_pAniName);
+                    l_szAniLoadName);
 #endif
     l_bLoaded = false;
   }
@@ -1075,16 +1399,109 @@ bool CPlayer::LoadAnimation(char *pi_pAniName, ChAnimation **po_ppAnimation)
   if (!l_bLoaded)
   {
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadAnimation: LoadRealAnimation failed %s", pi_pAniName);
+    AppendPlayerLog("LoadAnimation: LoadRealAnimation failed %s", l_szAniLoadName);
 #endif
     return false;
   }
 
   *po_ppAnimation = l_pAnimation;
 #if defined(_DEBUG)
-  AppendPlayerLog("LoadAnimation: success %s result=%p", pi_pAniName, l_pAnimation);
+  AppendPlayerLog("LoadAnimation: success %s result=%p", l_szAniLoadName, l_pAnimation);
 #endif
   return true;
+}
+
+void CPlayer::ReleaseVertexBlendMatrices()
+{
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
+  {
+    delete[] m_pMatResMat[i][0];
+    delete[] m_pMatResMat[i][1];
+    m_pMatResMat[i][0] = NULL;
+    m_pMatResMat[i][1] = NULL;
+    m_dwMaxResult[i] = 0;
+  }
+}
+
+BOOL CPlayer::SetVertexBlending(DWORD pi_dwPartIndex,
+                                CHARACTEROBJECT *pi_pMesh,
+                                BOOL pi_bForAnimation)
+{
+  if (pi_dwPartIndex >= MAX_PLAYER_RENDER_PART || !pi_pMesh || !pi_pMesh->m_pMesh)
+  {
+    return FALSE;
+  }
+
+  if (pi_bForAnimation && m_dwMaxResult[pi_dwPartIndex] < pi_pMesh->m_MaxObj)
+  {
+    D3DXMATRIX *l_pMatResult0 = new D3DXMATRIX[pi_pMesh->m_MaxObj];
+    D3DXMATRIX *l_pMatResult1 = new D3DXMATRIX[pi_pMesh->m_MaxObj];
+    ZeroMemory(l_pMatResult0, sizeof(D3DXMATRIX) * pi_pMesh->m_MaxObj);
+    ZeroMemory(l_pMatResult1, sizeof(D3DXMATRIX) * pi_pMesh->m_MaxObj);
+
+    delete[] m_pMatResMat[pi_dwPartIndex][0];
+    delete[] m_pMatResMat[pi_dwPartIndex][1];
+    m_pMatResMat[pi_dwPartIndex][0] = l_pMatResult0;
+    m_pMatResMat[pi_dwPartIndex][1] = l_pMatResult1;
+    m_dwMaxResult[pi_dwPartIndex] = pi_pMesh->m_MaxObj;
+  }
+
+  BYTE *l_pObjectMeshBytes = reinterpret_cast<BYTE *>(pi_pMesh->m_pMesh);
+  for (DWORD j = 0; j < pi_pMesh->m_MaxObj; ++j)
+  {
+    if (!pi_bForAnimation && j >= m_dwMaxResult[pi_dwPartIndex])
+    {
+      return FALSE;
+    }
+
+    ObjectMesh *l_pObjectMesh = reinterpret_cast<ObjectMesh *>(l_pObjectMeshBytes + (j * kObjectMeshStride));
+    const DWORD l_dwBlendNum = GetObjectMeshBlendNum(l_pObjectMesh);
+
+    if (l_dwBlendNum == 0)
+    {
+      D3DXMATRIX *l_pMatResult = GetObjectMeshMatResult(l_pObjectMesh);
+      if (!l_pMatResult || !m_pMatResMat[pi_dwPartIndex][0])
+      {
+        return FALSE;
+      }
+
+      if (pi_bForAnimation)
+      {
+        memcpy(&m_pMatResMat[pi_dwPartIndex][0][j], l_pMatResult, sizeof(D3DXMATRIX));
+      }
+      else
+      {
+        memcpy(l_pMatResult, &m_pMatResMat[pi_dwPartIndex][0][j], sizeof(D3DXMATRIX));
+      }
+    }
+    else
+    {
+      D3DXMATRIX *l_pBlendMatrices = GetObjectMeshBlendMatrices(l_pObjectMesh);
+      if (!l_pBlendMatrices)
+      {
+        return FALSE;
+      }
+
+      for (DWORD b = 0; b < l_dwBlendNum && b < 2; ++b)
+      {
+        if (!m_pMatResMat[pi_dwPartIndex][b])
+        {
+          return FALSE;
+        }
+
+        if (pi_bForAnimation)
+        {
+          memcpy(&m_pMatResMat[pi_dwPartIndex][b][j], &l_pBlendMatrices[b], sizeof(D3DXMATRIX));
+        }
+        else
+        {
+          memcpy(&l_pBlendMatrices[b], &m_pMatResMat[pi_dwPartIndex][b][j], sizeof(D3DXMATRIX));
+        }
+      }
+    }
+  }
+
+  return TRUE;
 }
 
 bool CPlayer::SetAnimation(ChAnimation *pi_pAnimation)
@@ -1148,6 +1565,11 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
   }
 
   sprintf_s(m_szBoneName, sizeof(m_szBoneName), "%s%s", pi_stBoneData.pPathName, pi_stBoneData.pFileName);
+  char l_szBoneLoadName[MAX_PATH];
+  if (ResolvePlayerMeshResource(m_szBoneName, l_szBoneLoadName, sizeof(l_szBoneLoadName)))
+  {
+    strcpy_s(m_szBoneName, sizeof(m_szBoneName), l_szBoneLoadName);
+  }
   SetBonePtr(NULL);
   CHARACTEROBJECT *l_pStoredBone = NULL;
   __try
@@ -1250,6 +1672,11 @@ bool CPlayer::LoadAccretia()
 #endif
 
   sprintf_s(m_szBoneName, sizeof(m_szBoneName), "%s%s", l_stBoneData.pPathName, l_stBoneData.pFileName);
+  char l_szBoneLoadName[MAX_PATH];
+  if (ResolvePlayerMeshResource(m_szBoneName, l_szBoneLoadName, sizeof(l_szBoneLoadName)))
+  {
+    strcpy_s(m_szBoneName, sizeof(m_szBoneName), l_szBoneLoadName);
+  }
 #if defined(_DEBUG)
   AppendPlayerLog("LoadAccretia: before AddBone %s", m_szBoneName);
 #endif
@@ -1480,6 +1907,7 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
 
   CCharResDataMgr *l_pCharResDataMgr = _GetCharResDataMgr();
   CCharResData *l_pPlayerResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_PLAYER) : NULL;
+  CCharResData *l_pItemResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_ITEM) : NULL;
   if (!l_pPlayerResData)
   {
     return false;
@@ -1495,24 +1923,39 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
   l_adwDefaultVariant[CDPT_FACE] = (pi_stRegedAvatar.m_dwBaseShape >> 20) & 0x0F;
   for (BYTE i = 0; i < kBaseFixNum; ++i)
   {
-    l_adwDefaultVariant[kServerBasePartToClientPart[i]] =
+    l_adwDefaultVariant[kServerEquipPartToClientPart[i]] =
       (pi_stRegedAvatar.m_dwBaseShape >> (i * 4)) & 0x0F;
   }
 
   bool l_bLoadedAnyPart = false;
   CItemDataMgr *l_pItemDataMgr = _GetItemDataMgr();
+  BYTE l_byWeaponAnimationType = 0xFF;
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: itemData loaded=%d",
+                  l_pItemDataMgr && l_pItemDataMgr->IsLoaded() ? 1 : 0);
+  for (BYTE i = 0; i < kEquipFixNum; ++i)
+  {
+    AppendPlayerLog("LoadRegedAvatar: equip slot=%u clientPart=%u itemType=%u key=%d lv=%u",
+                    static_cast<unsigned>(i),
+                    static_cast<unsigned>(kServerEquipPartToClientPart[i]),
+                    static_cast<unsigned>(kServerEquipPartToItemType[i]),
+                    static_cast<int>(pi_stRegedAvatar.m_EquipKey[i].zItemIndex),
+                    static_cast<unsigned>(pi_stRegedAvatar.m_byEquipLv[i]));
+  }
+#endif
   for (BYTE i = 0; i < MAX_DEFAULT_PART; ++i)
   {
     BYTE l_byItemType = IEPT_FACE;
     DWORD l_dwItemDTIndex = MakeDefaultItemDTIndex(l_byRaceSexCode, l_adwDefaultVariant[i]);
     bool l_bUseEquippedMesh = false;
+    DWORD l_dwRenderPart = i;
 
     for (BYTE j = 0; j < kBaseFixNum; ++j)
     {
-      if (kServerBasePartToClientPart[j] == i &&
+      if (kServerEquipPartToClientPart[j] == i &&
           pi_stRegedAvatar.m_EquipKey[j].zItemIndex != -1)
       {
-        l_byItemType = kServerBasePartToItemType[j];
+        l_byItemType = kServerEquipPartToItemType[j];
         l_dwItemDTIndex = static_cast<DWORD>(pi_stRegedAvatar.m_EquipKey[j].zItemIndex);
         l_bUseEquippedMesh = true;
         break;
@@ -1523,12 +1966,17 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
     {
       for (BYTE j = 0; j < kBaseFixNum; ++j)
       {
-        if (kServerBasePartToClientPart[j] == i)
+        if (kServerEquipPartToClientPart[j] == i)
         {
-          l_byItemType = kServerBasePartToItemType[j];
+          l_byItemType = kServerEquipPartToItemType[j];
           break;
         }
       }
+    }
+
+    if (i == CDPT_HELMET && !l_bUseEquippedMesh)
+    {
+      l_dwRenderPart = CEPT_HAIR;
     }
 
     DWORD l_dwMeshID = ID_INVALID;
@@ -1562,61 +2010,151 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
       l_pMeshData = l_pPlayerResData->GetMeshData(l_dwFallbackMeshID);
     }
 
-    if (l_pMeshData && LoadPart(i, RLI_ITEM, *l_pMeshData))
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: part src=%u render=%u itemType=%u dt=%u meshID=0x%08X equipped=%d mesh=%s%s",
+                    static_cast<unsigned>(i),
+                    static_cast<unsigned>(l_dwRenderPart),
+                    static_cast<unsigned>(l_byItemType),
+                    static_cast<unsigned>(l_dwItemDTIndex),
+                    static_cast<unsigned>(l_dwMeshID),
+                    l_bUseEquippedMesh ? 1 : 0,
+                    l_pMeshData ? l_pMeshData->pPathName : "<missing>",
+                    l_pMeshData ? l_pMeshData->pFileName : "");
+#endif
+    if (l_pMeshData && LoadPart(l_dwRenderPart, RLI_PLAYER, *l_pMeshData))
     {
       l_bLoadedAnyPart = true;
     }
   }
 
-  static const char *kRaceStandAniName[5] =
+  if (m_pMesh[CDPT_HELMET] && !m_pMesh[CEPT_HAIR])
   {
-    "BELMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
-    "BELFEMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
-    "CORMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
-    "CORFEMALE_PEACE_STAND_NONE_NONE_01_00.ANI",
-    "ACCRETIA_PEACE_STAND_NONE_NONE_01_00.ANI"
-  };
-
-  static const char *kRaceLobbyIdleAniName[5] =
-  {
-    "BELMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
-    "BELFEMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
-    "CORMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
-    "CORFEMALE_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI",
-    "ACCRETIA_COMMON_MOUNTIDLE_NONE_NONE_01_00.ANI"
-  };
-
+    const DWORD l_dwHairMeshID = MakePlayerMeshID(l_byRaceSexCode,
+                                                  CDPT_HELMET,
+                                                  l_adwDefaultVariant[CDPT_HELMET],
+                                                  true);
+    MESH_DATA *l_pHairMeshData = l_pPlayerResData->GetMeshData(l_dwHairMeshID);
 #if defined(_DEBUG)
-  AppendPlayerLog("LoadRegedAvatar: parts loaded any=%d", l_bLoadedAnyPart ? 1 : 0);
+    AppendPlayerLog("LoadRegedAvatar: hair under helmet dt=%u meshID=0x%08X mesh=%s%s",
+                    static_cast<unsigned>(MakeDefaultItemDTIndex(l_byRaceSexCode,
+                                                                 l_adwDefaultVariant[CDPT_HELMET])),
+                    static_cast<unsigned>(l_dwHairMeshID),
+                    l_pHairMeshData ? l_pHairMeshData->pPathName : "<missing>",
+                    l_pHairMeshData ? l_pHairMeshData->pFileName : "");
 #endif
+    if (l_pHairMeshData && LoadPart(CEPT_HAIR, RLI_ITEM, *l_pHairMeshData))
+    {
+      l_bLoadedAnyPart = true;
+    }
+  }
 
-  const char *l_apStandCandidates[2] =
+  for (BYTE i = kBaseFixNum; i < kEquipFixNum; ++i)
   {
-    kRaceStandAniName[l_byRaceSexCode],
-    kRaceLobbyIdleAniName[l_byRaceSexCode]
-  };
-
-  for (DWORD i = 0; i < 2 && !m_pStandAni; ++i)
-  {
-    char l_szAniCandidate[MAX_PATH];
-    sprintf_s(l_szAniCandidate,
-              sizeof(l_szAniCandidate),
-              ".\\CHARACTER\\PLAYER\\ANI\\%s",
-              l_apStandCandidates[i]);
-
-    if (!IsExistingFile(l_szAniCandidate))
+    if (pi_stRegedAvatar.m_EquipKey[i].zItemIndex == -1)
     {
 #if defined(_DEBUG)
-      AppendPlayerLog("LoadRegedAvatar: lobby ani missing %s", l_szAniCandidate);
+      AppendPlayerLog("LoadRegedAvatar: optional equip slot=%u clientPart=%u empty",
+                      static_cast<unsigned>(i),
+                      static_cast<unsigned>(kServerEquipPartToClientPart[i]));
 #endif
       continue;
     }
 
+    const BYTE l_byItemType = kServerEquipPartToItemType[i];
+    const DWORD l_dwRenderPart = kServerEquipPartToClientPart[i];
+    const DWORD l_dwItemDTIndex = static_cast<DWORD>(pi_stRegedAvatar.m_EquipKey[i].zItemIndex);
+
+    DWORD l_dwMeshID = ID_INVALID;
+    if (l_pItemDataMgr)
+    {
+      l_dwMeshID = l_pItemDataMgr->GetClientMeshID(l_byItemType, l_dwItemDTIndex);
+      if (l_dwMeshID != ID_INVALID)
+      {
+        l_dwMeshID = ApplyPlayerRaceToItemMeshID(l_dwMeshID, l_byRaceSexCode);
+      }
+    }
+
+    if (l_byItemType == IEPT_WEAPON && l_dwMeshID != ID_INVALID)
+    {
+      l_byWeaponAnimationType = static_cast<BYTE>((l_dwMeshID & 0x0000FF00) >> 8);
+    }
+
+    MESH_DATA *l_pMeshData = l_pPlayerResData->GetMeshData(l_dwMeshID);
+    if (l_pItemResData)
+    {
+      l_pMeshData = l_pItemResData->GetMeshData(l_dwMeshID);
+    }
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadRegedAvatar: lobby ani load begin %s", l_szAniCandidate);
+    AppendPlayerLog("LoadRegedAvatar: optional equip slot=%u render=%u itemType=%u dt=%u lv=%u meshID=0x%08X mesh=%s%s",
+                    static_cast<unsigned>(i),
+                    static_cast<unsigned>(l_dwRenderPart),
+                    static_cast<unsigned>(l_byItemType),
+                    static_cast<unsigned>(l_dwItemDTIndex),
+                    static_cast<unsigned>(pi_stRegedAvatar.m_byEquipLv[i]),
+                    static_cast<unsigned>(l_dwMeshID),
+                    l_pMeshData ? l_pMeshData->pPathName : "<missing>",
+                    l_pMeshData ? l_pMeshData->pFileName : "");
 #endif
-    strcpy_s(m_szAniName, sizeof(m_szAniName), l_szAniCandidate);
-    LoadAnimation(m_szAniName, &m_pStandAni);
+    if (l_pMeshData && LoadPart(l_dwRenderPart, RLI_ITEM, *l_pMeshData))
+    {
+      l_bLoadedAnyPart = true;
+    }
+  }
+
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: parts loaded any=%d weaponAniType=0x%02X",
+                  l_bLoadedAnyPart ? 1 : 0,
+                  static_cast<unsigned>(l_byWeaponAnimationType));
+#endif
+
+  const BYTE l_abyWeaponAnimationType[2] =
+  {
+    l_byWeaponAnimationType,
+    0xFF
+  };
+
+  for (BYTE i = 0; i < 5 && !m_pStandAni; ++i)
+  {
+    for (BYTE k = 0; k < 2 && !m_pStandAni; ++k)
+    {
+      for (BYTE j = 0; j < 2 && !m_pStandAni; ++j)
+      {
+        DWORD l_dwAnimationID = 0;
+        l_dwAnimationID |= static_cast<DWORD>(kPlayerAnimationRace[l_byRaceSexCode][i]) << 28;
+        l_dwAnimationID |= static_cast<DWORD>(kPlayerAnimationCombatMode[kCombatModeCombat][k]) << 24;
+        l_dwAnimationID |= static_cast<DWORD>(kPlayerAniStop) << 16;
+        l_dwAnimationID |= static_cast<DWORD>(l_abyWeaponAnimationType[j]) << 8;
+        l_dwAnimationID |= 0xF0;
+
+        ANI_DATA *l_pAniData = l_pPlayerResData->GetAniData(l_dwAnimationID);
+        if (!l_pAniData)
+        {
+#if defined(_DEBUG)
+          AppendPlayerLog("LoadRegedAvatar: combat stop ani missing id=0x%08X raceLoop=%u combatLoop=%u weaponType=0x%02X",
+                          static_cast<unsigned>(l_dwAnimationID),
+                          static_cast<unsigned>(i),
+                          static_cast<unsigned>(k),
+                          static_cast<unsigned>(l_abyWeaponAnimationType[j]));
+#endif
+          continue;
+        }
+
+        char l_szAniCandidate[MAX_PATH];
+        sprintf_s(l_szAniCandidate,
+                  sizeof(l_szAniCandidate),
+                  "%s%s",
+                  l_pAniData->pPathName,
+                  l_pAniData->pFileName);
+
+#if defined(_DEBUG)
+        AppendPlayerLog("LoadRegedAvatar: combat stop ani id=0x%08X file=%s",
+                        static_cast<unsigned>(l_dwAnimationID),
+                        l_szAniCandidate);
+#endif
+        strcpy_s(m_szAniName, sizeof(m_szAniName), l_szAniCandidate);
+        LoadAnimation(m_szAniName, &m_pStandAni);
+      }
+    }
   }
 
   if (m_pStandAni)
@@ -1628,6 +2166,8 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
   }
 
   m_bLoaded = l_bLoadedAnyPart;
+  SetAction(CAI_MOVE_STOP);
+  SetLightColor(D3DCOLOR_XRGB(128, 128, 128));
 #if defined(_DEBUG)
   AppendPlayerLog("LoadRegedAvatar: result loaded=%d", m_bLoaded ? 1 : 0);
 #endif
@@ -1715,6 +2255,44 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
                         static_cast<unsigned>(GetIndex()));
       }
 #endif
+
+      for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
+      {
+        if (!m_pMesh[i] || !m_pMesh[i]->m_Load || !m_pMesh[i]->m_pMesh)
+        {
+          continue;
+        }
+
+#if defined(_DEBUG)
+        if (l_bTraceAnimation)
+        {
+          AppendPlayerLog("Animation: mesh FrameMove begin player=%u part=%u mesh=%p",
+                          static_cast<unsigned>(GetIndex()),
+                          static_cast<unsigned>(i),
+                          m_pMesh[i]);
+        }
+#endif
+        l_pCharIF->RematchParent(m_pBone, m_pMesh[i]);
+        l_pCharIF->FrameMove(m_pMesh[i]);
+#if defined(_DEBUG)
+        if (l_bTraceAnimation)
+        {
+          AppendPlayerLog("Animation: mesh FrameMove end player=%u part=%u",
+                          static_cast<unsigned>(GetIndex()),
+                          static_cast<unsigned>(i));
+        }
+#endif
+
+        SetVertexBlending(i, m_pMesh[i], TRUE);
+#if defined(_DEBUG)
+        if (l_bTraceAnimation)
+        {
+          AppendPlayerLog("Animation: SetVertexBlending save end player=%u part=%u",
+                          static_cast<unsigned>(GetIndex()),
+                          static_cast<unsigned>(i));
+        }
+#endif
+      }
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -1822,6 +2400,21 @@ BOOL CPlayer::Render()
 
   l_pCharIF->SetLight(m_d3dLight);
 
+  static float s_fScroll = 0.0f;
+  static DWORD s_dwBaseTime = 0;
+  const DWORD l_dwCurTime = timeGetTime();
+  if (s_dwBaseTime == 0)
+  {
+    s_dwBaseTime = l_dwCurTime;
+  }
+  const float l_fDelta = static_cast<float>(l_dwCurTime - s_dwBaseTime) * 0.0005f;
+  s_dwBaseTime = l_dwCurTime;
+  s_fScroll += l_fDelta;
+  if (s_fScroll > 1.0f)
+  {
+    s_fScroll = 0.0f;
+  }
+
   for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (!m_pMesh[i])
@@ -1829,8 +2422,28 @@ BOOL CPlayer::Render()
       continue;
     }
 
-    l_pCharIF->SetAlpha(m_pMesh[i], m_fAlphaDensity);
+    const BOOL l_bRenderAlpha = IsEnable(ROSF_RENDER_ALPHA);
+    if (l_bRenderAlpha)
+    {
+      l_pCharIF->SetAlpha(m_pMesh[i], m_fAlphaDensity);
+    }
     l_pCharIF->SetMaterial(m_pMesh[i], m_d3dMaterial);
+    if (!SetVertexBlending(i, m_pMesh[i], FALSE))
+    {
+      if (l_bRenderAlpha)
+      {
+        l_pCharIF->SetAlpha(m_pMesh[i], 1.0f);
+      }
+#if defined(_DEBUG)
+      if (l_bTraceRender)
+      {
+        AppendPlayerLog("Render: SetVertexBlending restore failed player=%u part=%u",
+                        static_cast<unsigned>(GetIndex()),
+                        static_cast<unsigned>(i));
+      }
+#endif
+      continue;
+    }
 #if defined(_DEBUG)
     if (l_bTraceRender)
     {
@@ -1840,7 +2453,14 @@ BOOL CPlayer::Render()
                       m_pMesh[i]);
     }
 #endif
-    l_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_vecRot[1], m_fScale, 0.0f);
+    l_pCharIF->InitEffect(m_pMesh[i]);
+    const float l_fAlphaDensity = l_pCharIF->GetAlpha(m_pMesh[i]);
+    l_pCharIF->SetAlpha(m_pMesh[i], l_fAlphaDensity);
+    l_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_vecRot[1], m_fScale, s_fScroll);
+    if (l_bRenderAlpha)
+    {
+      l_pCharIF->SetAlpha(m_pMesh[i], 1.0f);
+    }
 #if defined(_DEBUG)
     if (l_bTraceRender)
     {
@@ -1875,6 +2495,11 @@ void CPlayer::CreateShadow()
       continue;
     }
 
+    if (!SetVertexBlending(i, m_pMesh[i], FALSE))
+    {
+      continue;
+    }
+
     l_pCharIF->DrawCharacterShadow(m_pMesh[i], m_vecPos, m_vecRot[1], 0.8f * m_fAlphaDensity, m_fScale);
   }
   l_pCharIF->UnSetState();
@@ -1897,31 +2522,45 @@ bool CPlayer::MountRFS()
     return true;
   }
 
-  if ((IsExistingFile(kLoosePlayerMeshProbe) && IsExistingFile(kLoosePlayerAniProbe)) ||
-      HasLoosePlayerResourceFiles())
-  {
-#if defined(_DEBUG)
-    AppendPlayerLog("MountRFS: using loose player files");
-#endif
-    m_bMountedRFS = true;
-#if defined(_DEBUG)
-    AppendPlayerLog("MountRFS: success");
-#endif
-    return true;
-  }
+  const bool l_bHasLooseFiles =
+    (IsExistingFile(kLoosePlayerMeshProbe) && IsExistingFile(kLoosePlayerAniProbe)) ||
+    HasLoosePlayerResourceFiles();
+  const bool l_bHasMeshRFS = HasRFSResourceFiles(kPlayerMeshRFSPath);
+  const bool l_bHasAniRFS = HasRFSResourceFiles(kPlayerAniRFSPath);
+  const bool l_bHasTexRFS = HasRFSResourceFiles(kPlayerTexRFSPath);
 
 #if defined(_DEBUG)
-  AppendPlayerLog("MountRFS: mesh");
+  AppendPlayerLog("MountRFS: loose=%d meshRFS=%d aniRFS=%d texRFS=%d",
+                  l_bHasLooseFiles ? 1 : 0,
+                  l_bHasMeshRFS ? 1 : 0,
+                  l_bHasAniRFS ? 1 : 0,
+                  l_bHasTexRFS ? 1 : 0);
 #endif
-  ReadRFSHeader(const_cast<char *>(kPlayerMeshRFSPath));
+  if (l_bHasMeshRFS)
+  {
 #if defined(_DEBUG)
-  AppendPlayerLog("MountRFS: ani");
+    AppendPlayerLog("MountRFS: mesh on-demand cache");
 #endif
-  ReadRFSHeader(const_cast<char *>(kPlayerAniRFSPath));
+  }
+  else if (!l_bHasLooseFiles)
+  {
 #if defined(_DEBUG)
-  AppendPlayerLog("MountRFS: tex");
+    AppendPlayerLog("MountRFS: missing mesh files");
 #endif
-  ReadRFSHeader(const_cast<char *>(kPlayerTexRFSPath));
+    return false;
+  }
+  if (l_bHasAniRFS)
+  {
+#if defined(_DEBUG)
+    AppendPlayerLog("MountRFS: ani on-demand cache");
+#endif
+  }
+  if (l_bHasTexRFS)
+  {
+#if defined(_DEBUG)
+    AppendPlayerLog("MountRFS: tex decoded cache");
+#endif
+  }
   m_bMountedRFS = true;
 #if defined(_DEBUG)
   AppendPlayerLog("MountRFS: success");
@@ -2028,15 +2667,31 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
             "%s%s",
             pi_stMeshData.pPathName,
             pi_stMeshData.pFileName);
+  char l_szMeshLoadName[MAX_PATH];
+  if (ResolvePackedResourceFile(m_szMeshName[pi_dwPartType],
+                                l_szMeshLoadName,
+                                sizeof(l_szMeshLoadName),
+                                false))
+  {
+    strcpy_s(m_szMeshName[pi_dwPartType],
+             sizeof(m_szMeshName[pi_dwPartType]),
+             l_szMeshLoadName);
+  }
 
-  LoadTexturePath(pi_stMeshData.pTexturePath);
-  SetTextureManagerPath(l_pRenderTextureMgr, pi_stMeshData.pTexturePath);
+  char l_szTextureLoadPath[MAX_PATH] = "";
+  if (!ResolveTextureLoadPath(pi_stMeshData.pTexturePath, l_szTextureLoadPath, sizeof(l_szTextureLoadPath)))
+  {
+    strcpy_s(l_szTextureLoadPath,
+             sizeof(l_szTextureLoadPath),
+             pi_stMeshData.pTexturePath ? pi_stMeshData.pTexturePath : "");
+  }
+  LoadTexturePath(l_szTextureLoadPath);
+  SetTextureManagerPath(l_pRenderTextureMgr, l_szTextureLoadPath);
 
   CHARACTEROBJECT *l_pLoadedMesh = NULL;
   __try
   {
-    l_pLoadedMesh = l_pCharIF->LoadMeshData(l_pRenderTextureMgr,
-                                            l_pBodyPartMgr,
+    l_pLoadedMesh = l_pCharIF->LoadMeshData(l_pBodyPartMgr,
                                             m_szMeshName[pi_dwPartType],
                                             true,
                                             m_pBone);
@@ -2056,7 +2711,7 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
   }
 
   m_pMesh[pi_dwPartType] = l_pLoadedMesh;
-  SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
+  SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], l_szTextureLoadPath);
 #if defined(_DEBUG)
   if (pi_dwPartType == 0 && m_pMesh[pi_dwPartType])
   {
@@ -2146,24 +2801,35 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
       if (l_bMeshRealLoaded)
       {
         m_pMesh[pi_dwPartType] = l_pStoredMesh;
-        SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
+        SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], l_szTextureLoadPath);
       }
     }
   }
 
   if (m_pMesh[pi_dwPartType])
   {
-    SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], pi_stMeshData.pTexturePath);
+    SetCharacterObjectTexturePath(m_pMesh[pi_dwPartType], l_szTextureLoadPath);
     __try
     {
 #if defined(_DEBUG)
-      AppendPlayerLog("LoadPart: EnsureMeshTexturesLoaded begin index=%u",
-                      static_cast<unsigned>(pi_dwPartType));
+      AppendPlayerLog("LoadPart: LoadRealData begin index=%u loaded=%u",
+                      static_cast<unsigned>(pi_dwPartType),
+                      static_cast<unsigned>(m_pMesh[pi_dwPartType]->m_Load));
 #endif
-      EnsureMeshTexturesLoaded(l_pCharIF,
-                               l_pRenderTextureMgr,
-                               m_pMesh[pi_dwPartType],
-                               pi_stMeshData.pTexturePath);
+      if (!m_pMesh[pi_dwPartType]->m_Load)
+      {
+        const bool l_bMeshRealLoaded = l_pCharIF->LoadRealData(m_pMesh[pi_dwPartType],
+                                                               l_pRenderTextureMgr,
+                                                               true);
+#if defined(_DEBUG)
+        AppendPlayerLog("LoadPart: LoadRealData end index=%u result=%d loaded=%u maxObj=%u pMesh=%p",
+                        static_cast<unsigned>(pi_dwPartType),
+                        l_bMeshRealLoaded ? 1 : 0,
+                        static_cast<unsigned>(m_pMesh[pi_dwPartType]->m_Load),
+                        static_cast<unsigned>(m_pMesh[pi_dwPartType]->m_MaxObj),
+                        m_pMesh[pi_dwPartType]->m_pMesh);
+#endif
+      }
 #if defined(_DEBUG)
       AppendPlayerLog("LoadPart: MatchTextureToMesh begin index=%u",
                       static_cast<unsigned>(pi_dwPartType));
