@@ -1233,14 +1233,14 @@ bool CGP_LogIn::IsStartupLoadingComplete(void) const
 
 bool CGP_LogIn::ShouldRenderLoadingScreen(void) const
 {
-  if (!IsStartupLoadingComplete())
-  {
-    return true;
-  }
-
   if (!m_bStartRequested)
   {
     return false;
+  }
+
+  if (!IsStartupLoadingComplete())
+  {
+    return true;
   }
 
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();

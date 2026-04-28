@@ -1,4 +1,5 @@
 #include "CGameProgress.h"
+#include "ChefEffect.h"
 #include "RFClientApp.h"
 
 CGameProgress::CGameProgress()
@@ -48,6 +49,7 @@ BOOL CGameProgress::MainLoop(BOOL pi_bIsActive)
     Render();
   }
 
+  ResetChefParticleCount();
   return FALSE;
 }
 

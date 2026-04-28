@@ -23,6 +23,15 @@ enum
   MAX_PLAYER_RENDER_PART = 10
 };
 
+struct PLAYER_PART_EFFECT
+{
+  BOOL bEnabled;
+  BOOL bApplied;
+  BYTE byItemType;
+  DWORD dwMeshID;
+  DWORD dwLevel;
+};
+
 #define CMM_MOVE_WALK 0
 #define CMM_MOVE_RUN 1
 
@@ -67,10 +76,17 @@ private:
   bool LoadBone(const BONE_DATA &pi_stBoneData);
   BOOL SetVertexBlending(DWORD pi_dwPartIndex, CHARACTEROBJECT *pi_pMesh, BOOL pi_bForAnimation);
   void ReleaseVertexBlendMatrices();
+  void ClearPartEffects(void);
+  void SetPartEffect(DWORD pi_dwPartType,
+                     BYTE pi_byItemType,
+                     DWORD pi_dwMeshID,
+                     DWORD pi_dwLevel,
+                     BOOL pi_bEnabled);
   static bool IsTextureFileName(const char *pi_pFileName);
 
 private:
   CHARACTEROBJECT *m_pMesh[MAX_PLAYER_RENDER_PART];
+  PLAYER_PART_EFFECT m_stPartEffect[MAX_PLAYER_RENDER_PART];
   D3DXMATRIX *m_pMatResMat[MAX_PLAYER_RENDER_PART][2];
   DWORD m_dwMaxResult[MAX_PLAYER_RENDER_PART];
   ChAnimation *m_pStandAni;

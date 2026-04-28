@@ -72,6 +72,9 @@
     <ClInclude Include="CCharacterMgr.h">
       <Filter>App</Filter>
     </ClInclude>
+    <ClInclude Include="ChefEffect.h">
+      <Filter>App</Filter>
+    </ClInclude>
     <ClInclude Include="RFClientApp.h">
       <Filter>App</Filter>
     </ClInclude>
@@ -183,6 +186,9 @@
       <Filter>App</Filter>
     </ClCompile>
     <ClCompile Include="CCharacterMgr.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="ChefEffect.cpp">
       <Filter>App</Filter>
     </ClCompile>
     <ClCompile Include="LegacyCrtCompat.cpp">

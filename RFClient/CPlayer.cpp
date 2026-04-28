@@ -10,6 +10,7 @@
 #include <ddraw.h>
 
 #include "CCharacterMgr.h"
+#include "ChefEffect.h"
 #include "CItemDataMgr.h"
 #include "CResourceDataMgr.h"
 #include "Network/REGED_AVATOR_DB.h"
@@ -98,6 +99,7 @@ constexpr BYTE kPlayerAnimationCombatMode[2][2] =
 };
 constexpr BYTE kPlayerAniStop = 0x06;
 constexpr BYTE kCombatModeCombat = 1;
+constexpr bool kEnableChefEquipmentEffects = true;
 
 #if defined(_DEBUG)
 void AppendPlayerLog(const char *format, ...);
@@ -506,6 +508,38 @@ bool BuildDecodedTextureCache(const char *pi_pTexturePath, const char *pi_pCache
   return l_dwPreparedCount != 0;
 }
 
+struct DECODED_TEXTURE_CACHE_RECORD
+{
+  char szTexturePath[MAX_PATH];
+  char szCacheTexturePath[MAX_PATH];
+  bool bPrepared;
+};
+
+bool BuildDecodedTextureCacheOnce(const char *pi_pTexturePath, const char *pi_pCacheTexturePath)
+{
+  if (!pi_pTexturePath || !pi_pCacheTexturePath)
+  {
+    return false;
+  }
+
+  static std::vector<DECODED_TEXTURE_CACHE_RECORD> s_vecPreparedCaches;
+  for (size_t i = 0; i < s_vecPreparedCaches.size(); ++i)
+  {
+    if (_stricmp(s_vecPreparedCaches[i].szTexturePath, pi_pTexturePath) == 0 &&
+        _stricmp(s_vecPreparedCaches[i].szCacheTexturePath, pi_pCacheTexturePath) == 0)
+    {
+      return s_vecPreparedCaches[i].bPrepared;
+    }
+  }
+
+  DECODED_TEXTURE_CACHE_RECORD l_sRecord = {};
+  strcpy_s(l_sRecord.szTexturePath, sizeof(l_sRecord.szTexturePath), pi_pTexturePath);
+  strcpy_s(l_sRecord.szCacheTexturePath, sizeof(l_sRecord.szCacheTexturePath), pi_pCacheTexturePath);
+  l_sRecord.bPrepared = BuildDecodedTextureCache(pi_pTexturePath, pi_pCacheTexturePath);
+  s_vecPreparedCaches.push_back(l_sRecord);
+  return l_sRecord.bPrepared;
+}
+
 void CopyVector3(float *po_pfDst, const float *pi_pfSrc)
 {
   po_pfDst[0] = pi_pfSrc[0];
@@ -912,7 +946,7 @@ bool ResolveTextureLoadPath(const char *pi_pTexturePath, char *po_szTextureLoadP
     return true;
   }
 
-  if (BuildDecodedTextureCache(pi_pTexturePath, l_szCacheTexturePath))
+  if (BuildDecodedTextureCacheOnce(pi_pTexturePath, l_szCacheTexturePath))
   {
     strcpy_s(po_szTextureLoadPath, pi_stTextureLoadPathSize, l_szCacheTexturePath);
   }
@@ -1290,6 +1324,7 @@ CPlayer::CPlayer()
     m_byWalkMode(CMM_MOVE_RUN)
 {
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
+  ClearPartEffects();
   ZeroMemory(m_pMatResMat, sizeof(m_pMatResMat));
   ZeroMemory(m_dwMaxResult, sizeof(m_dwMaxResult));
   ZeroMemory(m_szBoneName, sizeof(m_szBoneName));
@@ -1346,6 +1381,7 @@ void CPlayer::Shutdown()
   m_bMountedRFS = false;
   m_bPreparedTextureCache = false;
   ZeroMemory(m_pMesh, sizeof(m_pMesh));
+  ClearPartEffects();
   ZeroMemory(m_szLastTextureLoadPath, sizeof(m_szLastTextureLoadPath));
 }
 
@@ -1421,6 +1457,33 @@ void CPlayer::ReleaseVertexBlendMatrices()
     m_pMatResMat[i][1] = NULL;
     m_dwMaxResult[i] = 0;
   }
+}
+
+void CPlayer::ClearPartEffects(void)
+{
+  ZeroMemory(m_stPartEffect, sizeof(m_stPartEffect));
+  for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
+  {
+    m_stPartEffect[i].dwMeshID = ID_INVALID;
+  }
+}
+
+void CPlayer::SetPartEffect(DWORD pi_dwPartType,
+                            BYTE pi_byItemType,
+                            DWORD pi_dwMeshID,
+                            DWORD pi_dwLevel,
+                            BOOL pi_bEnabled)
+{
+  if (pi_dwPartType >= MAX_PLAYER_RENDER_PART)
+  {
+    return;
+  }
+
+  m_stPartEffect[pi_dwPartType].bEnabled = pi_bEnabled;
+  m_stPartEffect[pi_dwPartType].bApplied = FALSE;
+  m_stPartEffect[pi_dwPartType].byItemType = pi_byItemType;
+  m_stPartEffect[pi_dwPartType].dwMeshID = pi_dwMeshID;
+  m_stPartEffect[pi_dwPartType].dwLevel = pi_dwLevel;
 }
 
 BOOL CPlayer::SetVertexBlending(DWORD pi_dwPartIndex,
@@ -1899,6 +1962,11 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
     return false;
   }
 
+  if (kEnableChefEquipmentEffects)
+  {
+    InitializeChefEffectsOnce();
+  }
+
   const BYTE l_byRaceSexCode = pi_stRegedAvatar.m_byRaceSexCode;
   if (l_byRaceSexCode >= 5)
   {
@@ -1948,6 +2016,7 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
     BYTE l_byItemType = IEPT_FACE;
     DWORD l_dwItemDTIndex = MakeDefaultItemDTIndex(l_byRaceSexCode, l_adwDefaultVariant[i]);
     bool l_bUseEquippedMesh = false;
+    BYTE l_byEquipSlot = 0xFF;
     DWORD l_dwRenderPart = i;
 
     for (BYTE j = 0; j < kBaseFixNum; ++j)
@@ -1958,6 +2027,7 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
         l_byItemType = kServerEquipPartToItemType[j];
         l_dwItemDTIndex = static_cast<DWORD>(pi_stRegedAvatar.m_EquipKey[j].zItemIndex);
         l_bUseEquippedMesh = true;
+        l_byEquipSlot = j;
         break;
       }
     }
@@ -2023,6 +2093,15 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
 #endif
     if (l_pMeshData && LoadPart(l_dwRenderPart, RLI_PLAYER, *l_pMeshData))
     {
+      const DWORD l_dwEffectLevel =
+        (l_bUseEquippedMesh && l_byEquipSlot != 0xFF)
+          ? static_cast<DWORD>(pi_stRegedAvatar.m_byEquipLv[l_byEquipSlot])
+          : 0;
+      SetPartEffect(l_dwRenderPart,
+                    l_byItemType,
+                    l_dwMeshID,
+                    l_dwEffectLevel,
+                    l_bUseEquippedMesh ? TRUE : FALSE);
       l_bLoadedAnyPart = true;
     }
   }
@@ -2097,6 +2176,11 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
 #endif
     if (l_pMeshData && LoadPart(l_dwRenderPart, RLI_ITEM, *l_pMeshData))
     {
+      SetPartEffect(l_dwRenderPart,
+                    l_byItemType,
+                    l_dwMeshID,
+                    static_cast<DWORD>(pi_stRegedAvatar.m_byEquipLv[i]),
+                    TRUE);
       l_bLoadedAnyPart = true;
     }
   }
@@ -2415,6 +2499,8 @@ BOOL CPlayer::Render()
     s_fScroll = 0.0f;
   }
 
+  const bool l_bChefEffectsLoaded = kEnableChefEquipmentEffects && InitializeChefEffectsOnce();
+
   for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
   {
     if (!m_pMesh[i])
@@ -2453,9 +2539,31 @@ BOOL CPlayer::Render()
                       m_pMesh[i]);
     }
 #endif
+    const bool l_bUseChefEffect = m_stPartEffect[i].bEnabled && l_bChefEffectsLoaded;
     l_pCharIF->InitEffect(m_pMesh[i]);
     const float l_fAlphaDensity = l_pCharIF->GetAlpha(m_pMesh[i]);
     l_pCharIF->SetAlpha(m_pMesh[i], l_fAlphaDensity);
+    if (l_bUseChefEffect)
+    {
+      const BOOL l_bFirstChefApply = !m_stPartEffect[i].bApplied;
+      ApplyMeshEffect(m_pMesh[i],
+                      m_stPartEffect[i].dwMeshID,
+                      m_stPartEffect[i].dwLevel);
+#if defined(_DEBUG)
+      if (l_bFirstChefApply)
+      {
+        AppendPlayerLog("Render: ChefEffect applied player=%u part=%u meshID=0x%08X level=%u hasList=%d",
+                        static_cast<unsigned>(GetIndex()),
+                        static_cast<unsigned>(i),
+                        m_stPartEffect[i].dwMeshID,
+                        static_cast<unsigned>(m_stPartEffect[i].dwLevel),
+                        HasMeshEffect(m_pMesh[i],
+                                      m_stPartEffect[i].dwMeshID,
+                                      m_stPartEffect[i].dwLevel) ? 1 : 0);
+      }
+#endif
+      m_stPartEffect[i].bApplied = TRUE;
+    }
     l_pCharIF->DrawCharacter(m_pMesh[i], m_vecPos, m_vecRot[1], m_fScale, s_fScroll);
     if (l_bRenderAlpha)
     {
@@ -2469,6 +2577,30 @@ BOOL CPlayer::Render()
                       static_cast<unsigned>(i));
     }
 #endif
+  }
+
+  if (l_bChefEffectsLoaded)
+  {
+    const float l_fEffectAlpha = IsEnable(ROSF_RENDER_ALPHA) ? m_fAlphaDensity : 1.0f;
+    l_pCharIF->UnSetState();
+    for (DWORD i = 0; i < MAX_PLAYER_RENDER_PART; ++i)
+    {
+      if (!m_pMesh[i] || !m_stPartEffect[i].bEnabled)
+      {
+        continue;
+      }
+
+      if (!m_stPartEffect[i].bApplied)
+      {
+        continue;
+      }
+
+      DrawCharacterctEffect(m_pMesh[i],
+                            m_vecPos,
+                            m_vecRot[1],
+                            l_fEffectAlpha,
+                            m_fScale);
+    }
   }
 #if defined(_DEBUG)
   if (l_bTraceRender)
@@ -2876,7 +3008,7 @@ bool CPlayer::LoadTexturePath(const char *pi_pTexturePath)
 
   const char *l_pTextureLoadPath = pi_pTexturePath;
   if (_stricmp(pi_pTexturePath, kPlayerTexRFSPath) == 0 &&
-      (!m_bPreparedTextureCache && BuildDecodedTextureCache(pi_pTexturePath, kDecodedPlayerTexCachePath)))
+      (!m_bPreparedTextureCache && BuildDecodedTextureCacheOnce(pi_pTexturePath, kDecodedPlayerTexCachePath)))
   {
     m_bPreparedTextureCache = true;
   }
