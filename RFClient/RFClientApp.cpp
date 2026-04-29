@@ -55,7 +55,10 @@ constexpr float kLoginLobbyCharacterTopPos[3][3] =
   {-56.0f, 225.0f, 30.0f}
 };
 constexpr DWORD kLoginLobbyCreatePreviewIndex = 0xFFFFFF00;
-constexpr float kLoginLobbyCreatePreviewPos[3] = {1.0f, -155.0f, 29.0f};
+constexpr BYTE kLoginLobbyAccretiaRaceSexCode = 4;
+constexpr float kLoginLobbyCreatePreviewPos[3] = {1.0f, -158.0f, 33.0f};
+constexpr float kLoginLobbyCreatePreviewDefaultScale = 1.7f;
+constexpr float kLoginLobbyCreatePreviewAccretiaScale = 1.3f;
 
 float ClampFloat(float value, float minimum, float maximum)
 {
@@ -95,6 +98,13 @@ float NormalizeAngle360(float value)
 float GetMoveSpeed(BYTE pi_byMoveMode)
 {
   return (pi_byMoveMode == CMM_MOVE_RUN) ? kRunMoveSpeed : kWalkMoveSpeed;
+}
+
+float GetLoginLobbyCreatePreviewScale(BYTE pi_byRaceSexCode)
+{
+  return pi_byRaceSexCode == kLoginLobbyAccretiaRaceSexCode
+           ? kLoginLobbyCreatePreviewAccretiaScale
+           : kLoginLobbyCreatePreviewDefaultScale;
 }
 
 bool IsShortcutModifierDown()
@@ -1689,12 +1699,12 @@ BOOL CMainApp::PlayLoginLobbyCharacterCreateAttributeCancelCamera(void)
 
 BOOL CMainApp::PlayLoginLobbyCharacterCreateDetailCamera(void)
 {
-  return PlayLoginLobbyCamera("c_04_01_in", 0, 10, _CAM_FLAG_FINAL_STOP);
+  return PlayLoginLobbyCamera("c_06_01", 0, 10, _CAM_FLAG_FINAL_STOP);
 }
 
 BOOL CMainApp::PlayLoginLobbyCharacterCreateDetailCancelCamera(void)
 {
-  return PlayLoginLobbyCamera("c_04_01_in", 10, 0, _CAM_FLAG_FINAL_STOP);
+  return PlayLoginLobbyCamera("c_06_01", 10, 0, _CAM_FLAG_FINAL_STOP);
 }
 
 BOOL CMainApp::PlayLoginLobbyCharacterCreateCompleteCamera(BYTE pi_bySlotIndex)
@@ -1790,6 +1800,7 @@ BOOL CMainApp::BuildLoginLobbyCreatePreview(BYTE pi_byRaceSexCode,
                          kLoginLobbyCreatePreviewPos[1],
                          kLoginLobbyCreatePreviewPos[2]);
   l_pPlayer->SetRotY(m_fLoginLobbyCreatePreviewRotY);
+  l_pPlayer->SetScale(GetLoginLobbyCreatePreviewScale(pi_byRaceSexCode));
   l_pPlayer->SetLightColor(D3DCOLOR_XRGB(128, 128, 128));
   l_pPlayer->SetAction(CAI_MOVE_STOP);
   m_pLoginLobbyCreatePreview = l_pPlayer;

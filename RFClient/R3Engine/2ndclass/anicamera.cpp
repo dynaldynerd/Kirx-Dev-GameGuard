@@ -17,6 +17,7 @@ CAniCamera::~CAniCamera()
 }
 
 static float stMakedViewMatrix[4][4];
+static const float kAniCameraFovScale = 0.788f;
 /*
 static int stAniCameraState;
 
@@ -248,7 +249,7 @@ float *CAniCamera::GetMatrixAniCamera(float frame) //대략 카운트 역활...카운트에
 		mIsSetPerspect=1;
 
 		//카메라의 원근을 셋팅한다.//fov값을 설정 라디안..
-		SetFov(ani_camera->fov);
+		SetFov(ani_camera->fov * kAniCameraFovScale);
 	}
 	frame*=30.0f;	//초당 프래임..
 //	frame=0.0f;	//초당 프래임..
