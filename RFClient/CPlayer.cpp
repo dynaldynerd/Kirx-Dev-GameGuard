@@ -1620,10 +1620,22 @@ bool CPlayer::SetAnimation(ChAnimation *pi_pAnimation)
 
 bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
 {
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadBone: begin id=%u file=%s%s bbox=%s",
+                  static_cast<unsigned>(pi_stBoneData.dwID),
+                  pi_stBoneData.pPathName,
+                  pi_stBoneData.pFileName,
+                  pi_stBoneData.pBBoxName);
+#endif
   ChInterface *l_pCharIF = CCharacterMgr::GetCharIF();
   CObjectManager *l_pBoneMgr = CCharacterMgr::GetBoneMgr(CTI_PLAYER);
   if (!l_pCharIF || !l_pBoneMgr)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadBone: missing manager charIF=%p boneMgr=%p",
+                    l_pCharIF,
+                    l_pBoneMgr);
+#endif
     return false;
   }
 
@@ -1631,15 +1643,30 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
   char l_szBoneLoadName[MAX_PATH];
   if (ResolvePlayerMeshResource(m_szBoneName, l_szBoneLoadName, sizeof(l_szBoneLoadName)))
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadBone: resolved %s -> %s", m_szBoneName, l_szBoneLoadName);
+#endif
     strcpy_s(m_szBoneName, sizeof(m_szBoneName), l_szBoneLoadName);
   }
+#if defined(_DEBUG)
+  else
+  {
+    AppendPlayerLog("LoadBone: using direct file %s", m_szBoneName);
+  }
+#endif
   SetBonePtr(NULL);
   CHARACTEROBJECT *l_pStoredBone = NULL;
   __try
   {
-    l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
+    CHARACTEROBJECT *l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
     l_pStoredBone = l_pBoneMgr->GetCharacter(m_szBoneName);
     m_pBone = l_pCharIF->GetMeshData(l_pBoneMgr, m_szBoneName);
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadBone: LoadMeshData=%p GetCharacter=%p GetMeshData=%p",
+                    l_pLoadedBone,
+                    l_pStoredBone,
+                    m_pBone);
+#endif
   }
   __except (LogPlayerException("LoadBone", GetExceptionInformation()))
   {
@@ -1653,6 +1680,13 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
     __try
     {
       l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pStoredBone, &l_pCharIF->m_TM, true);
+#if defined(_DEBUG)
+      AppendPlayerLog("LoadBone: fallback LoadRealData result=%d loaded=%u maxObj=%u pMesh=%p",
+                      l_bBoneRealLoaded ? 1 : 0,
+                      static_cast<unsigned>(l_pStoredBone->m_Load),
+                      static_cast<unsigned>(l_pStoredBone->m_MaxObj),
+                      l_pStoredBone->m_pMesh);
+#endif
     }
     __except (LogPlayerException("LoadBone: LoadRealData", GetExceptionInformation()))
     {
@@ -1668,6 +1702,9 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
   SetBonePtr(m_pBone);
   if (!m_pBone)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadBone: failed %s", m_szBoneName);
+#endif
     return false;
   }
 
@@ -1683,6 +1720,16 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
     m_vecBBoxMax[2] = 20.0f;
   }
 
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadBone: success bone=%p bbox=(%.2f, %.2f, %.2f)-(%.2f, %.2f, %.2f)",
+                  m_pBone,
+                  m_vecBBoxMin[0],
+                  m_vecBBoxMin[1],
+                  m_vecBBoxMin[2],
+                  m_vecBBoxMax[0],
+                  m_vecBBoxMax[1],
+                  m_vecBBoxMax[2]);
+#endif
   return true;
 }
 
@@ -1970,20 +2017,54 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
   const BYTE l_byRaceSexCode = pi_stRegedAvatar.m_byRaceSexCode;
   if (l_byRaceSexCode >= 5)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: invalid race=%u",
+                    static_cast<unsigned>(l_byRaceSexCode));
+#endif
     return false;
   }
 
   CCharResDataMgr *l_pCharResDataMgr = _GetCharResDataMgr();
   CCharResData *l_pPlayerResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_PLAYER) : NULL;
   CCharResData *l_pItemResData = l_pCharResDataMgr ? l_pCharResDataMgr->GetResourceList(RLI_ITEM) : NULL;
+#if defined(_DEBUG)
+  AppendPlayerLog("LoadRegedAvatar: resMgr=%p loaded=%d playerRes=%p itemRes=%p player(b=%u m=%u a=%u) item(b=%u m=%u a=%u)",
+                  l_pCharResDataMgr,
+                  l_pCharResDataMgr && l_pCharResDataMgr->IsLoaded() ? 1 : 0,
+                  l_pPlayerResData,
+                  l_pItemResData,
+                  l_pPlayerResData ? static_cast<unsigned>(l_pPlayerResData->GetTotalBoneNum()) : 0,
+                  l_pPlayerResData ? static_cast<unsigned>(l_pPlayerResData->GetTotalMeshNum()) : 0,
+                  l_pPlayerResData ? static_cast<unsigned>(l_pPlayerResData->GetTotalAniNum()) : 0,
+                  l_pItemResData ? static_cast<unsigned>(l_pItemResData->GetTotalBoneNum()) : 0,
+                  l_pItemResData ? static_cast<unsigned>(l_pItemResData->GetTotalMeshNum()) : 0,
+                  l_pItemResData ? static_cast<unsigned>(l_pItemResData->GetTotalAniNum()) : 0);
+#endif
   if (!l_pPlayerResData)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: player resource list missing");
+#endif
     return false;
   }
 
   BONE_DATA *l_pBoneData = l_pPlayerResData->GetBoneData(l_byRaceSexCode);
-  if (!l_pBoneData || !LoadBone(*l_pBoneData))
+  if (!l_pBoneData)
   {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: bone data missing race=%u",
+                    static_cast<unsigned>(l_byRaceSexCode));
+#endif
+    return false;
+  }
+  if (!LoadBone(*l_pBoneData))
+  {
+#if defined(_DEBUG)
+    AppendPlayerLog("LoadRegedAvatar: LoadBone failed race=%u file=%s%s",
+                    static_cast<unsigned>(l_byRaceSexCode),
+                    l_pBoneData->pPathName,
+                    l_pBoneData->pFileName);
+#endif
     return false;
   }
 

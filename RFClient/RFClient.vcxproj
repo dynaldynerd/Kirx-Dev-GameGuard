@@ -77,7 +77,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>$(ProjectDir)..\ref\RF Online Old Sourcecode\RF Client Side\RF_Client\CharacterMR.lib;d3d8.lib;d3dx8.lib;ddraw.lib;dinput8.lib;dsound.lib;dxguid.lib;dxerr8.lib;winmm.lib;imm32.lib;version.lib;ws2_32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d8.lib;d3dx8.lib;ddraw.lib;dinput8.lib;dsound.lib;dxguid.lib;dxerr8.lib;winmm.lib;imm32.lib;version.lib;ws2_32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)third_party\directx8\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -107,7 +107,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>$(ProjectDir)..\ref\RF Online Old Sourcecode\RF Client Side\RF_Client\CharacterMR.lib;d3d8.lib;d3dx8.lib;ddraw.lib;dinput8.lib;dsound.lib;dxguid.lib;dxerr8.lib;winmm.lib;imm32.lib;version.lib;ws2_32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d8.lib;d3dx8.lib;ddraw.lib;dinput8.lib;dsound.lib;dxguid.lib;dxerr8.lib;winmm.lib;imm32.lib;version.lib;ws2_32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)third_party\directx8\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -130,6 +130,7 @@
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="CResObject.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="CharacterMR\*.h" />
     <ClInclude Include="DataFile.h" />
     <ClInclude Include="EdfFile.h" />
     <ClInclude Include="RFClientUI.h" />
@@ -168,6 +169,7 @@
     <ClCompile Include="CCharacter.cpp" />
     <ClCompile Include="CCharacterMgr.cpp" />
     <ClCompile Include="ChefEffect.cpp" />
+    <ClCompile Include="CharacterMR\*.cpp" />
     <ClCompile Include="CMonster.cpp" />
     <ClCompile Include="CObject.cpp" />
     <ClCompile Include="CPlayer.cpp" />

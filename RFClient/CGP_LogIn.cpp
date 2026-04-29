@@ -1027,23 +1027,7 @@ bool CGP_LogIn::IsCharacterSelectionUIInteractive(void) const
 
 bool CGP_LogIn::IsUILockResolved(void) const
 {
-  const CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-  if (!l_pNetworkMgr)
-  {
-    return true;
-  }
-
-  if (l_pNetworkMgr->GetAvatarGrade() > 0)
-  {
-    return true;
-  }
-
-  if (!l_pNetworkMgr->HasUILockInform())
-  {
-    return true;
-  }
-
-  return static_cast<unsigned __int8>(l_pNetworkMgr->GetUILockInform().byInformType) == 2u;
+  return true;
 }
 
 void CGP_LogIn::ReleaseTitleLogoTexture(void)

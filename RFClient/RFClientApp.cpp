@@ -713,6 +713,7 @@ CMainApp::CMainApp()
     m_bClientWindowVisible(TRUE),
     m_bOfflineRegedCharReplay(FALSE),
     m_bLoginLobbyCameraAnimating(FALSE),
+    m_bLoginLobbyRandomStartCamera(FALSE),
     m_fViewAngleX(35.0f),
     m_fViewAngleY(225.0f),
     m_fPrevViewAngleX(35.0f),
@@ -1602,6 +1603,8 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
 
 BOOL CMainApp::SetLoginLobbyOpeningCamera(void)
 {
+  m_bLoginLobbyRandomStartCamera = (GetTickCount() & 1) ? TRUE : FALSE;
+
   if (PlayLoginLobbyCamera("c_ex01", 0, _CAM_PLAY_FULL_FRAME, _CAM_FLAG_LOOP))
   {
     return TRUE;
@@ -1622,10 +1625,22 @@ BOOL CMainApp::SetLoginLobbyOpeningCamera(void)
 
 BOOL CMainApp::PlayLoginLobbyCharacterEntryCamera(BYTE pi_bySlotIndex)
 {
-  static const char *kCameraName[3] = { "c_01_01", "c_01_02", "c_01_03" };
-  static const DWORD kEndFrame[3] = { 45, 40, 40 };
+  static const char *kCameraName[2][3] =
+  {
+    { "c_01_01", "c_01_02", "c_01_03" },
+    { "c_05_01", "c_05_02", "c_05_03" }
+  };
+  static const DWORD kEndFrame[2][3] =
+  {
+    { 45, 40, 40 },
+    { 70, 70, 55 }
+  };
   const BYTE l_bySlotIndex = (pi_bySlotIndex > 2) ? 0 : pi_bySlotIndex;
-  return PlayLoginLobbyCamera(kCameraName[l_bySlotIndex], 0, kEndFrame[l_bySlotIndex], _CAM_FLAG_FINAL_STOP);
+  const BYTE l_byCameraFamily = m_bLoginLobbyRandomStartCamera ? 1 : 0;
+  return PlayLoginLobbyCamera(kCameraName[l_byCameraFamily][l_bySlotIndex],
+                              0,
+                              kEndFrame[l_byCameraFamily][l_bySlotIndex],
+                              _CAM_FLAG_FINAL_STOP);
 }
 
 BOOL CMainApp::PlayLoginLobbyCharacterNextCamera(BYTE pi_byOldSlotIndex)
@@ -1653,6 +1668,7 @@ void CMainApp::UnloadLoginLobbyData(void)
   m_CharacterMgr.Clear();
   m_cLoginLobbyAniCamera.ReleaseAniCamera();
   m_bLoginLobbyCameraAnimating = FALSE;
+  m_bLoginLobbyRandomStartCamera = FALSE;
   m_vecLoginLobbyCameraPos[0] = 0.0f;
   m_vecLoginLobbyCameraPos[1] = 0.0f;
   m_vecLoginLobbyCameraPos[2] = 0.0f;

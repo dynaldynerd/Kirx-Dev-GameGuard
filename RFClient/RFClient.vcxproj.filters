@@ -22,6 +22,9 @@
     <Filter Include="R3Engine\\extension">
       <UniqueIdentifier>{77B9799E-4A4C-4D7E-8BD1-21410CF97D3F}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CharacterMR">
+      <UniqueIdentifier>{5395D26A-A4EB-42F9-8A2F-9BB770D1AA35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CCharacterDataMgr.h">
@@ -74,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="ChefEffect.h">
       <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterMR\*.h">
+      <Filter>CharacterMR</Filter>
     </ClInclude>
     <ClInclude Include="RFClientApp.h">
       <Filter>App</Filter>
@@ -190,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="ChefEffect.cpp">
       <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterMR\*.cpp">
+      <Filter>CharacterMR</Filter>
     </ClCompile>
     <ClCompile Include="LegacyCrtCompat.cpp">
       <Filter>App</Filter>

@@ -7,41 +7,6 @@
 #include "Character.h"
 #include "R3Engine/1stclass/r3particle.h"
 
-class EffectFileList
-{
-public:
-  void LoadEffectFileList(char *pi_pFileName);
-};
-
-class EffectPatternList
-{
-public:
-  void LoadEffectPatternList(char *pi_pFileName);
-};
-
-class ItemEffectList
-{
-public:
-  void LoadItemListFile(char *pi_pFileName);
-};
-
-class EffectList
-{
-public:
-  void LoadEffectFileList(char *pi_pFileName);
-};
-
-class EffectObjectManager
-{
-public:
-  EffectObjectManager(void);
-  static void LoadEffect(char *pi_pFileName);
-  static int SetPartEffect(CHARACTEROBJECT *pi_pCharacterObject,
-                           char *pi_pFileName,
-                           int pi_nLevel);
-  static EffectObjectManager m_This;
-};
-
 struct CHEF_EFFECT_ATTACHMENT
 {
   DWORD m_ID;

@@ -80,8 +80,9 @@ void CCharResData::Destroy(void)
   Init();
 }
 
-BOOL CCharResData::LoadBoneDataList(CDataString *pi_pDataString)
+BOOL CCharResData::LoadBoneDataList(BYTE pi_byResFileType, CDataString *pi_pDataString)
 {
+  UNREFERENCED_PARAMETER(pi_byResFileType);
   delete[] m_listBone;
   m_listBone = NULL;
   m_dwBoneNum = 0;
@@ -92,8 +93,9 @@ BOOL CCharResData::LoadBoneDataList(CDataString *pi_pDataString)
                           sizeof(BONE_DATA));
 }
 
-BOOL CCharResData::LoadMeshDataList(CDataString *pi_pDataString)
+BOOL CCharResData::LoadMeshDataList(BYTE pi_byResFileType, CDataString *pi_pDataString)
 {
+  UNREFERENCED_PARAMETER(pi_byResFileType);
   delete[] m_listMesh;
   m_listMesh = NULL;
   m_dwMeshNum = 0;
@@ -104,8 +106,9 @@ BOOL CCharResData::LoadMeshDataList(CDataString *pi_pDataString)
                           sizeof(MESH_DATA));
 }
 
-BOOL CCharResData::LoadAniDataList(CDataString *pi_pDataString)
+BOOL CCharResData::LoadAniDataList(BYTE pi_byResFileType, CDataString *pi_pDataString)
 {
+  UNREFERENCED_PARAMETER(pi_byResFileType);
   delete[] m_listAni;
   m_listAni = NULL;
   m_dwAniNum = 0;
@@ -223,13 +226,16 @@ BOOL CCharResDataMgr::LoadData(void)
 
   for (int i = 0; i < MAX_RES_DATA_LIST; ++i)
   {
-    if (!m_listResData[i].LoadBoneDataList(l_pSourceData) ||
-        !m_listResData[i].LoadMeshDataList(l_pSourceData) ||
-        !m_listResData[i].LoadAniDataList(l_pSourceData))
+    m_listResData[i].LoadBoneDataList(static_cast<BYTE>(i), l_pSourceData);
+    if (i == RLI_PLAYER)
     {
-      UnloadData();
-      return FALSE;
+      m_listResData[i].LoadMeshDataList(RLI_ITEM, l_pSourceData);
     }
+    else
+    {
+      m_listResData[i].LoadMeshDataList(static_cast<BYTE>(i), l_pSourceData);
+    }
+    m_listResData[i].LoadAniDataList(static_cast<BYTE>(i), l_pSourceData);
   }
 
   m_bLoaded = TRUE;

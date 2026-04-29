@@ -28,9 +28,9 @@ public:
   void Init(void);
   void Destroy(void);
 
-  BOOL LoadBoneDataList(CDataString *pi_pDataString);
-  BOOL LoadMeshDataList(CDataString *pi_pDataString);
-  BOOL LoadAniDataList(CDataString *pi_pDataString);
+  BOOL LoadBoneDataList(BYTE pi_byResFileType, CDataString *pi_pDataString);
+  BOOL LoadMeshDataList(BYTE pi_byResFileType, CDataString *pi_pDataString);
+  BOOL LoadAniDataList(BYTE pi_byResFileType, CDataString *pi_pDataString);
 
   BONE_DATA *GetBoneData(DWORD pi_dwIndex);
   MESH_DATA *GetMeshData(DWORD pi_dwIndex);

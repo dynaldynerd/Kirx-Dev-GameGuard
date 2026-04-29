@@ -131,6 +131,7 @@ private:
   char m_szOfflineRegedCharPath[MAX_PATH];
   CAniCamera m_cLoginLobbyAniCamera;
   BOOL m_bLoginLobbyCameraAnimating;
+  BOOL m_bLoginLobbyRandomStartCamera;
   Vector3f m_vecLoginLobbyCameraPos;
   float m_cameraTarget[3];
   float m_cameraPosition[3];

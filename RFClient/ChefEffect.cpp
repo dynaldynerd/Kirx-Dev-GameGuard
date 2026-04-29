@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include <new>
 #include <vector>
 
 #include "CObject.h"
@@ -13,22 +12,6 @@
 #include "R3Engine/common/commonutil.h"
 #include "R3Engine/common/mergefile.h"
 #include "R3Engine/extension/effectcore.h"
-
-extern EffectFileList g_EffectFileList;
-extern EffectPatternList g_PatternList;
-extern ItemEffectList g_EffectItemList;
-extern EffectList g_EFFMonList;
-extern EffectList g_EFFUnitList;
-extern EffectList g_EFFNPCList;
-
-void SetMeshEffect(CHARACTEROBJECT *pi_pCharacterObject,
-                   DWORD pi_dwMeshID,
-                   DWORD pi_dwLevel,
-                   DWORD pi_dwRaceOverride);
-bool IsHaveMeshEffect(CHARACTEROBJECT *pi_pCharacterObject,
-                      DWORD pi_dwMeshID,
-                      DWORD pi_dwLevel,
-                      DWORD pi_dwRaceOverride);
 
 CParticleManager g_Particle;
 
@@ -281,91 +264,6 @@ void AssignTrimmedFileName(std::string &po_rFileName, const char *pi_pFileName)
   {
     po_rFileName.clear();
   }
-}
-
-bool EnsureEffectObjectManagerConstructed(void)
-{
-  static bool s_bAttempted = false;
-  static bool s_bConstructed = false;
-
-  if (s_bAttempted)
-  {
-    return s_bConstructed;
-  }
-  s_bAttempted = true;
-
-  __try
-  {
-    new (&EffectObjectManager::m_This) EffectObjectManager();
-  }
-  __except (EXCEPTION_EXECUTE_HANDLER)
-  {
-#if defined(_DEBUG)
-    AppendChefEffectLog("ChefEffect: EffectObjectManager ctor exception code=0x%08X",
-                        static_cast<unsigned>(GetExceptionCode()));
-#endif
-    s_bConstructed = false;
-    return false;
-  }
-
-  s_bConstructed = true;
-#if defined(_DEBUG)
-  AppendChefEffectLog("ChefEffect: EffectObjectManager constructed");
-#endif
-  return true;
-}
-
-bool TryLoadEffectObjectFile(char *pi_pFileName)
-{
-  if (!pi_pFileName || !pi_pFileName[0])
-  {
-    return false;
-  }
-
-  __try
-  {
-    EffectObjectManager::LoadEffect(pi_pFileName);
-  }
-  __except (EXCEPTION_EXECUTE_HANDLER)
-  {
-#if defined(_DEBUG)
-    AppendChefEffectLog("ChefEffect: LoadEffect exception code=0x%08X file=%s",
-                        static_cast<unsigned>(GetExceptionCode()),
-                        pi_pFileName);
-#endif
-    return false;
-  }
-
-  return true;
-}
-
-bool TrySetPartEffectObject(CHARACTEROBJECT *pi_pCharacterObject,
-                            char *pi_pFileName,
-                            int pi_nLevel)
-{
-  if (!pi_pCharacterObject || !pi_pFileName || !pi_pFileName[0])
-  {
-    return false;
-  }
-
-  __try
-  {
-    EffectObjectManager::SetPartEffect(pi_pCharacterObject,
-                                       pi_pFileName,
-                                       pi_nLevel);
-  }
-  __except (EXCEPTION_EXECUTE_HANDLER)
-  {
-#if defined(_DEBUG)
-    AppendChefEffectLog("ChefEffect: SetPartEffect exception code=0x%08X file=%s level=%d",
-                        static_cast<unsigned>(GetExceptionCode()),
-                        pi_pFileName,
-                        pi_nLevel);
-#endif
-    return false;
-  }
-
-  return true;
 }
 
 bool LoadLocalEffectFileList(char *pi_pFileName)
@@ -1031,36 +929,6 @@ void LoadChefParticleList(char *pi_pFileName)
 void LoadChefEntityList(char *pi_pFileName)
 {
   g_Particle.LoadEntityIni(pi_pFileName);
-}
-
-void LoadChefEffectFileList(char *pi_pFileName)
-{
-  g_EffectFileList.LoadEffectFileList(pi_pFileName);
-}
-
-void LoadChefPatternList(char *pi_pFileName)
-{
-  g_PatternList.LoadEffectPatternList(pi_pFileName);
-}
-
-void LoadChefItemEffectList(char *pi_pFileName)
-{
-  g_EffectItemList.LoadItemListFile(pi_pFileName);
-}
-
-void LoadChefMonsterEffectList(char *pi_pFileName)
-{
-  g_EFFMonList.LoadEffectFileList(pi_pFileName);
-}
-
-void LoadChefUnitEffectList(char *pi_pFileName)
-{
-  g_EFFUnitList.LoadEffectFileList(pi_pFileName);
-}
-
-void LoadChefNpcEffectList(char *pi_pFileName)
-{
-  g_EFFNPCList.LoadEffectFileList(pi_pFileName);
 }
 
 bool RunLoadStep(const char *pi_pLabel,
