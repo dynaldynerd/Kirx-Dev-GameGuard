@@ -177,6 +177,33 @@ CBaseNpc *CCharacterMgr::AddNpc(DWORD pi_dwIndex)
   return static_cast<CBaseNpc *>(AddCharacter(CTI_NPC, l_pNpc));
 }
 
+BOOL CCharacterMgr::RemoveCharacter(DWORD pi_dwCharTypeID, DWORD pi_dwIndex)
+{
+  if (pi_dwCharTypeID >= MAX_CHAR_TYPE)
+  {
+    return FALSE;
+  }
+
+  for (CHAR_LIST_ITER l_iter = m_listActive[pi_dwCharTypeID].begin();
+       l_iter != m_listActive[pi_dwCharTypeID].end();
+       ++l_iter)
+  {
+    if ((*l_iter) && (*l_iter)->IsEqualIndex(pi_dwIndex))
+    {
+      delete *l_iter;
+      m_listActive[pi_dwCharTypeID].erase(l_iter);
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+BOOL CCharacterMgr::RemovePlayer(DWORD pi_dwIndex)
+{
+  return RemoveCharacter(CTI_PLAYER, pi_dwIndex);
+}
+
 CCharacter *CCharacterMgr::GetCharacter(DWORD pi_dwCharTypeID, DWORD pi_dwIndex)
 {
   if (pi_dwCharTypeID >= MAX_CHAR_TYPE)

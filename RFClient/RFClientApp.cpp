@@ -54,6 +54,8 @@ constexpr float kLoginLobbyCharacterTopPos[3][3] =
   {56.0f, 225.0f, 30.0f},
   {-56.0f, 225.0f, 30.0f}
 };
+constexpr DWORD kLoginLobbyCreatePreviewIndex = 0xFFFFFF00;
+constexpr float kLoginLobbyCreatePreviewPos[3] = {1.0f, -155.0f, 29.0f};
 
 float ClampFloat(float value, float minimum, float maximum)
 {
@@ -698,6 +700,8 @@ CMainApp *g_pMainApp = NULL;
 CMainApp::CMainApp()
   : m_pNetworkMgr(NULL),
     m_pPlayer(NULL),
+    m_pLoginLobbyCreatePreview(NULL),
+    m_fLoginLobbyCreatePreviewRotY(0.0f),
     m_pGameProgress(NULL),
     m_isInitialized(false),
     m_isMapLoaded(false),
@@ -1657,6 +1661,49 @@ BOOL CMainApp::PlayLoginLobbyCharacterPrevCamera(BYTE pi_byOldSlotIndex)
   return PlayLoginLobbyCamera(kCameraName[l_byOldSlotIndex], 30, 0, _CAM_FLAG_FINAL_STOP);
 }
 
+BOOL CMainApp::PlayLoginLobbyCharacterCreateRaceCamera(BYTE pi_bySlotIndex)
+{
+  static const char *kCameraName[3] = { "c_02_01_01", "c_02_02_01", "c_02_03_01" };
+  static const DWORD kEndFrame[3] = { 40, 44, 44 };
+  const BYTE l_bySlotIndex = (pi_bySlotIndex > 2) ? 0 : pi_bySlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_bySlotIndex], 0, kEndFrame[l_bySlotIndex], _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateRaceCancelCamera(BYTE pi_bySlotIndex)
+{
+  static const char *kCameraName[3] = { "c_02_01_01", "c_02_02_01", "c_02_03_01" };
+  static const DWORD kEndFrame[3] = { 40, 44, 44 };
+  const BYTE l_bySlotIndex = (pi_bySlotIndex > 2) ? 0 : pi_bySlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_bySlotIndex], kEndFrame[l_bySlotIndex], 0, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateAttributeCamera(void)
+{
+  return PlayLoginLobbyCamera("c_03_01", 0, 70, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateAttributeCancelCamera(void)
+{
+  return PlayLoginLobbyCamera("c_03_01", 60, 0, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateDetailCamera(void)
+{
+  return PlayLoginLobbyCamera("c_04_01_in", 0, 10, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateDetailCancelCamera(void)
+{
+  return PlayLoginLobbyCamera("c_04_01_in", 10, 0, _CAM_FLAG_FINAL_STOP);
+}
+
+BOOL CMainApp::PlayLoginLobbyCharacterCreateCompleteCamera(BYTE pi_bySlotIndex)
+{
+  static const char *kCameraName[3] = { "c_04_03", "c_04_01", "c_04_02" };
+  const BYTE l_bySlotIndex = (pi_bySlotIndex > 2) ? 0 : pi_bySlotIndex;
+  return PlayLoginLobbyCamera(kCameraName[l_bySlotIndex], 0, 110, _CAM_FLAG_FINAL_STOP);
+}
+
 void CMainApp::UnloadLoginLobbyData(void)
 {
   if (!m_isMapLoaded)
@@ -1665,6 +1712,8 @@ void CMainApp::UnloadLoginLobbyData(void)
   }
 
   m_pPlayer = NULL;
+  m_pLoginLobbyCreatePreview = NULL;
+  m_fLoginLobbyCreatePreviewRotY = 0.0f;
   m_CharacterMgr.Clear();
   m_cLoginLobbyAniCamera.ReleaseAniCamera();
   m_bLoginLobbyCameraAnimating = FALSE;
@@ -1691,8 +1740,86 @@ void CMainApp::ClearLoginLobbyCharacterDummies(void)
   {
     m_pPlayer = NULL;
   }
+  m_pLoginLobbyCreatePreview = NULL;
+  m_fLoginLobbyCreatePreviewRotY = 0.0f;
 
   m_CharacterMgr.Clear();
+}
+
+BOOL CMainApp::BuildLoginLobbyCreatePreview(BYTE pi_byRaceSexCode,
+                                            const char *pi_pClassCode,
+                                            DWORD pi_dwBaseShape)
+{
+  if (m_byGameProgressID != GPI_LOGIN || pi_byRaceSexCode >= 5)
+  {
+    return FALSE;
+  }
+
+  m_CharacterMgr.RemovePlayer(kLoginLobbyCreatePreviewIndex);
+  m_pLoginLobbyCreatePreview = NULL;
+
+  CPlayer *l_pPlayer = m_CharacterMgr.AddPlayer(kLoginLobbyCreatePreviewIndex);
+  if (!l_pPlayer)
+  {
+    return FALSE;
+  }
+
+  _REGED_AVATOR_DB l_sPreviewAvatar;
+  l_sPreviewAvatar.Init();
+  strcpy_s(l_sPreviewAvatar.m_wszAvatorName,
+           sizeof(l_sPreviewAvatar.m_wszAvatorName),
+           "Preview");
+  l_sPreviewAvatar.m_byRaceSexCode = pi_byRaceSexCode;
+  l_sPreviewAvatar.m_bySlotIndex = 0;
+  strncpy_s(l_sPreviewAvatar.m_szClassCode,
+            sizeof(l_sPreviewAvatar.m_szClassCode),
+            pi_pClassCode ? pi_pClassCode : "",
+            _TRUNCATE);
+  l_sPreviewAvatar.m_byLevel = 1;
+  l_sPreviewAvatar.m_dwBaseShape = pi_dwBaseShape;
+
+  l_pPlayer->SetName("Preview");
+  if (!l_pPlayer->LoadCreatePreviewAvatar(l_sPreviewAvatar))
+  {
+    m_CharacterMgr.RemovePlayer(kLoginLobbyCreatePreviewIndex);
+    return FALSE;
+  }
+
+  m_fLoginLobbyCreatePreviewRotY = 0.0f;
+  l_pPlayer->SetPosition(kLoginLobbyCreatePreviewPos[0],
+                         kLoginLobbyCreatePreviewPos[1],
+                         kLoginLobbyCreatePreviewPos[2]);
+  l_pPlayer->SetRotY(m_fLoginLobbyCreatePreviewRotY);
+  l_pPlayer->SetLightColor(D3DCOLOR_XRGB(128, 128, 128));
+  l_pPlayer->SetAction(CAI_MOVE_STOP);
+  m_pLoginLobbyCreatePreview = l_pPlayer;
+  return TRUE;
+}
+
+void CMainApp::ClearLoginLobbyCreatePreview(void)
+{
+  m_CharacterMgr.RemovePlayer(kLoginLobbyCreatePreviewIndex);
+  m_pLoginLobbyCreatePreview = NULL;
+  m_fLoginLobbyCreatePreviewRotY = 0.0f;
+}
+
+void CMainApp::RotateLoginLobbyCreatePreview(float pi_fDeltaRotY)
+{
+  if (!m_pLoginLobbyCreatePreview)
+  {
+    return;
+  }
+
+  m_fLoginLobbyCreatePreviewRotY += pi_fDeltaRotY;
+  while (m_fLoginLobbyCreatePreviewRotY >= 360.0f)
+  {
+    m_fLoginLobbyCreatePreviewRotY -= 360.0f;
+  }
+  while (m_fLoginLobbyCreatePreviewRotY < 0.0f)
+  {
+    m_fLoginLobbyCreatePreviewRotY += 360.0f;
+  }
+  m_pLoginLobbyCreatePreview->SetRotY(m_fLoginLobbyCreatePreviewRotY);
 }
 
 BOOL CMainApp::BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi_stRegedCharResult)

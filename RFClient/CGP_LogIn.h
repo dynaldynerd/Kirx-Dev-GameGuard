@@ -40,6 +40,57 @@ struct CHARACTER_SELECT_LAYOUT
   RECT sExitButton;
 };
 
+struct CHARACTER_CREATE_RACE_LAYOUT
+{
+  RECT sUpperBoard;
+  RECT sUpperBase;
+  RECT sUpperBoardAni;
+  RECT sRaceButton[3];
+  RECT sRaceProfile;
+  RECT sLowerBoard;
+  RECT sLowerBase;
+  RECT sOkButton;
+  RECT sCancelButton;
+};
+
+struct CHARACTER_CREATE_ATTRIBUTE_LAYOUT
+{
+  RECT sPanel;
+  RECT sTitleBase;
+  RECT sLowerBase;
+  RECT sOkButton;
+  RECT sCancelButton;
+  RECT sAttributeButton[4];
+  RECT sDescText[2];
+  RECT sBasicPointText[3];
+  RECT sBasicPointBase[3];
+  RECT sBattleSkillText[6];
+  RECT sBattleSkillBase[6];
+  RECT sMakeSkillText[3];
+  RECT sMakeSkillBase[3];
+};
+
+struct CHARACTER_CREATE_DETAIL_LAYOUT
+{
+  RECT sPanel;
+  RECT sTitleBase;
+  RECT sLowerBase;
+  RECT sOkButton;
+  RECT sCancelButton;
+  RECT sSelectItem[7];
+  RECT sSelectLeftButton[7];
+  RECT sSelectRightButton[7];
+  RECT sNameInput;
+};
+
+struct CHARACTER_CREATE_ROTATE_LAYOUT
+{
+  RECT sLowerBoard;
+  RECT sLowerBase;
+  RECT sRotateLeftButton;
+  RECT sRotateRightButton;
+};
+
 class CGP_LogIn : public CGameProgress
 {
 public:
@@ -99,11 +150,40 @@ private:
   void ActivateCharacterSelectionButton(BYTE pi_byButtonIndex);
   void MoveCharacterSelectionSlot(bool pi_bNext);
   void SendSelectedCharacterRequest(void);
+  void EnterCharacterCreateScreen(void);
+  void LeaveCharacterCreateScreen(bool pi_bCreationCompleted = false);
+  void ResetCharacterCreateState(void);
+  void UpdateCharacterCreatePreview(void);
+  bool IsCharacterCreateScreen(void) const;
+  bool GetCharacterCreateRaceLayout(CHARACTER_CREATE_RACE_LAYOUT *po_pLayout) const;
+  bool GetCharacterCreateAttributeLayout(CHARACTER_CREATE_ATTRIBUTE_LAYOUT *po_pLayout) const;
+  bool GetCharacterCreateDetailLayout(CHARACTER_CREATE_DETAIL_LAYOUT *po_pLayout) const;
+  bool GetCharacterCreateRotateLayout(CHARACTER_CREATE_ROTATE_LAYOUT *po_pLayout) const;
+  BYTE GetCharacterCreateButtonAtPoint(int pi_nX, int pi_nY) const;
+  void UpdateCharacterCreateInput(void);
+  void UpdateCharacterCreateMouseInput(void);
+  void ActivateCharacterCreateButton(BYTE pi_byButtonIndex);
+  void ActivateCharacterCreateOk(void);
+  BYTE GetCreateRaceSexCode(void) const;
+  const char *GetCreateClassCode(void) const;
+  DWORD GetCreateBaseShape(void) const;
+  void AppendCreateCharacterInputChar(WPARAM pi_wParam);
+  void ShowLoginMessage(const char *pi_pMessage);
+  void HideLoginMessage(void);
+  bool IsLoginMessageVisible(void) const;
+  bool GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect) const;
+  void UpdateLoginMessageInput(void);
   void RenderStatusOverlay(void) const;
   void RenderOpeningScreen(void) const;
   void RenderCreditsRoll(void) const;
   void RenderUILockScreen(void) const;
   void RenderCharacterSelectionScreen(void) const;
+  void RenderCharacterCreateScreen(void) const;
+  void RenderCharacterCreateRaceScreen(void) const;
+  void RenderCharacterCreateAttributeScreen(void) const;
+  void RenderCharacterCreateDetailScreen(void) const;
+  void RenderCharacterCreateRotateControls(void) const;
+  void RenderLoginMessageBox(void) const;
 
 private:
   BYTE m_bySelectedCharacterSlot;
@@ -113,6 +193,13 @@ private:
   BYTE m_byMenuPressed;
   BYTE m_byCharacterMenuHover;
   BYTE m_byCharacterMenuPressed;
+  BYTE m_byCreateStep;
+  BYTE m_byCreateRaceSelection;
+  BYTE m_byCreateAttributeSelection;
+  BYTE m_byCreateSexSelection;
+  BYTE m_byCreateMenuHover;
+  BYTE m_byCreateMenuPressed;
+  BYTE m_abyCreatePartVariant[7];
   bool m_abVirtualKeyState[256];
   int m_nMouseX;
   int m_nMouseY;
@@ -127,8 +214,13 @@ private:
   bool m_bCharacterDummiesLoaded;
   bool m_bStartRequested;
   bool m_bCreditsMode;
+  bool m_bLoginMessageVisible;
+  bool m_bLoginMessageOkHover;
+  bool m_bLoginMessageOkPressed;
   DWORD m_dwCreditsStartTick;
   void *m_pTitleLogoTexture;
+  char m_szLoginMessage[128];
+  char m_szCreateCharacterName[17];
   CHARACTER_SELECT_ANIMATION m_sUpperBoardAnimation;
   CHARACTER_SELECT_ANIMATION m_sLowerBoardAnimation;
   CSpriteMgr m_cLoginSpriteMgr;

@@ -729,14 +729,8 @@ LRESULT CD3DApplication::MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             break;
 
         case WM_CONTEXTMENU:
-            // No context menus allowed in fullscreen mode
-            if( m_bWindowed == FALSE )
-                break;
+            return 0;
 
-            // Handle the app's context menu (via right mouse click)
-            TrackPopupMenuEx( GetSubMenu( LoadMenu( 0, MAKEINTRESOURCE(IDR_POPUP) ), 0 ),
-                              TPM_VERTICAL, LOWORD(lParam), HIWORD(lParam), hWnd, NULL );
-            break;
 
         case WM_NCHITTEST:
             // Prevent the user from selecting the menu in fullscreen mode

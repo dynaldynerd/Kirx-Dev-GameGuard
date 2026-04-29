@@ -55,10 +55,22 @@ public:
   void UnloadLoginLobbyData(void);
   BOOL BuildLoginLobbyCharacterDummies(const _reged_char_result_zone &pi_stRegedCharResult);
   void ClearLoginLobbyCharacterDummies(void);
+  BOOL BuildLoginLobbyCreatePreview(BYTE pi_byRaceSexCode,
+                                    const char *pi_pClassCode,
+                                    DWORD pi_dwBaseShape);
+  void ClearLoginLobbyCreatePreview(void);
+  void RotateLoginLobbyCreatePreview(float pi_fDeltaRotY);
   BOOL SetLoginLobbyOpeningCamera(void);
   BOOL PlayLoginLobbyCharacterEntryCamera(BYTE pi_bySlotIndex);
   BOOL PlayLoginLobbyCharacterNextCamera(BYTE pi_byOldSlotIndex);
   BOOL PlayLoginLobbyCharacterPrevCamera(BYTE pi_byOldSlotIndex);
+  BOOL PlayLoginLobbyCharacterCreateRaceCamera(BYTE pi_bySlotIndex);
+  BOOL PlayLoginLobbyCharacterCreateRaceCancelCamera(BYTE pi_bySlotIndex);
+  BOOL PlayLoginLobbyCharacterCreateAttributeCamera(void);
+  BOOL PlayLoginLobbyCharacterCreateAttributeCancelCamera(void);
+  BOOL PlayLoginLobbyCharacterCreateDetailCamera(void);
+  BOOL PlayLoginLobbyCharacterCreateDetailCancelCamera(void);
+  BOOL PlayLoginLobbyCharacterCreateCompleteCamera(BYTE pi_bySlotIndex);
   BOOL IsLoginLobbyCameraAnimating(void) const { return m_bLoginLobbyCameraAnimating; }
   void FrameMoveLoginLobby(void);
   void RenderLoginLobby(void);
@@ -112,6 +124,8 @@ private:
   CRFClientUI m_cUI;
   CGameProgress *m_pGameProgress;
   CPlayer *m_pPlayer;
+  CPlayer *m_pLoginLobbyCreatePreview;
+  float m_fLoginLobbyCreatePreviewRotY;
   R3Camera m_camera;
   bool m_isInitialized;
   bool m_isMapLoaded;

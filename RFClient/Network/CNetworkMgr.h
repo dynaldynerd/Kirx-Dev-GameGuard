@@ -32,6 +32,12 @@ public:
   BOOL SystemMsg_RegedCharRequest_zone(void);
   void SystemMsg_RegedCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL LoadRegedCharResultDump(const char *pi_pPath);
+  BOOL SystemMsg_AddCharRequest_zone(BYTE pi_byAvatarIndex,
+                                     const char *pi_pName,
+                                     BYTE pi_byRaceSexCode,
+                                     const char *pi_pClassCode,
+                                     DWORD pi_dwBaseShape);
+  void SystemMsg_AddCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL SystemMsg_SelCharRequest_zone(BYTE pi_byAvatarIndex);
   void SystemMsg_SelCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL CheckMsg_CheckAnswer(void);
@@ -74,9 +80,12 @@ public:
   BOOL HasEnterWorldResult(void) const { return m_bHasEnterWorldResult; }
   BOOL HasSentRegedCharRequest(void) const { return m_bSentRegedCharRequest; }
   BOOL HasRegedCharResult(void) const { return m_bHasRegedCharResult; }
+  BOOL HasSentAddCharRequest(void) const { return m_bSentAddCharRequest; }
+  BOOL HasAddCharResult(void) const { return m_bHasAddCharResult; }
   BOOL HasSentSelCharRequest(void) const { return m_bSentSelCharRequest; }
   BOOL HasSelCharResult(void) const { return m_bHasSelCharResult; }
   const _reged_char_result_zone &GetRegedCharResult(void) const { return m_sRegedCharResult; }
+  const _add_char_result_zone &GetAddCharResult(void) const { return m_sAddCharResult; }
   const _sel_char_result_zone &GetSelCharResult(void) const { return m_sSelCharResult; }
   const _not_arranged_char_inform_zocl &GetNotArrangedCharInform(void) const { return m_sNotArrangedCharInform; }
   BOOL HasUILockInform(void) const { return m_bHasUILockInform; }
@@ -138,12 +147,15 @@ private:
   BOOL m_bHasEnterWorldResult;
   BOOL m_bSentRegedCharRequest;
   BOOL m_bHasRegedCharResult;
+  BOOL m_bSentAddCharRequest;
+  BOOL m_bHasAddCharResult;
   BOOL m_bSentSelCharRequest;
   BOOL m_bHasSelCharResult;
   BOOL m_bHasUILockInform;
   sockaddr_in m_ServerAddr;
   std::vector<char> m_vecRecvBuffer;
   _reged_char_result_zone m_sRegedCharResult;
+  _add_char_result_zone m_sAddCharResult;
   _sel_char_result_zone m_sSelCharResult;
   _not_arranged_char_inform_zocl m_sNotArrangedCharInform;
   _uilock_inform_request_zocl m_sUILockInform;

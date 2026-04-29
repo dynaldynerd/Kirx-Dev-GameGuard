@@ -80,6 +80,7 @@ private:
 
 	DWORD mMaxTextureXSize,mMaxTextureYSize;
 	DWORD mFontMaxLines,mFontMaxStringLength;
+	DWORD m_dwFontCellWidth,m_dwFontCellHeight,m_dwFontBitmapHeight;
 	DWORD mDeleteLine;
 	BYTE *mMemPtr;		//대표메모리 얼로케이터.
 	DWORD *m_Start;	//시작점.
@@ -128,6 +129,8 @@ public:
 
 	void SetOutLineColor(DWORD color)	{	m_dwOutLineColor = color&0x00ffffff;		};
 	DWORD GetOutLineColor()			{	return m_dwOutLineColor;	};
+	DWORD GetTextWidth(const char *strText);
+	DWORD GetTextHeight() const { return m_dwFontCellHeight; }
 	
 	//--생성,소멸(현재는 9포인트 밖에 되지 않는다)
 	CR3Font();

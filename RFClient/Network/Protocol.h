@@ -11,6 +11,10 @@
 #define enter_world_result_zone 2
 #define reged_char_request_zone 8
 #define reged_char_result_zone 9
+#define add_char_request_zone 10
+#define add_char_result_zone 11
+#define del_char_request_zone 12
+#define del_char_result_zone 13
 #define sel_char_request_zone 14
 #define sel_char_result_zone 15
 #define server_notify_inform_zone 16

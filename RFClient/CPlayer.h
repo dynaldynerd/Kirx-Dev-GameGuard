@@ -50,6 +50,7 @@ public:
 
   bool LoadAccretia();
   bool LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar);
+  bool LoadCreatePreviewAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar);
   BOOL Animation(DWORD pi_dwAniFrame = static_cast<DWORD>(-1)) override;
   void FrameMove() override;
   BOOL Render() override;
@@ -64,6 +65,9 @@ public:
   bool IsLoaded() const;
 
 private:
+  bool LoadRegedAvatarInternal(const _REGED_AVATOR_DB &pi_stRegedAvatar,
+                               BYTE pi_byCombatMode,
+                               bool pi_bPreferModeSpecificAnimation);
   bool MountRFS();
   bool LoadResourceData(BONE_DATA &po_stBoneData,
                         MESH_DATA po_astMeshData[MAX_DEFAULT_PART],

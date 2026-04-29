@@ -19,6 +19,8 @@ void DrawR3Hangul(LONG x,LONG y,char *buf,DWORD color,DWORD flag=0);
 void DrawR3Hangul3D(float xyzw[4],char *buf,DWORD color,DWORD flag=0);
 
 void DrawR3Hangul(LONG x,LONG y,char *buf,DWORD color, float clipping[2][2], DWORD flag=0);
+int GetR3TextWidth(const char *buf);
+int GetR3TextHeight(void);
 
 //아웃라인및 쉐도우 컬러 지정..
 DWORD GetOutLineColor();

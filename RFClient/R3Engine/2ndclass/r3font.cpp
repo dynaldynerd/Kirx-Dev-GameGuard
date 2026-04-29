@@ -3,6 +3,7 @@
 #include "R3Font.h"
 #include "jerror.h"
 #include "jmalloc.h"
+#include "../../ClientDataPath.h"
 
 #define N_SAFE_RELEASE(p)      { if(p) { (p)->Release(); (p)=NULL; } }
 
@@ -21,6 +22,9 @@ CR3Font::CR3Font()
 	m_dwSavedStateBlock = 0L;
 	m_dwDrawTextStateBlock = 0L;
 	mMemPtr=0;
+	m_dwFontCellWidth = FONT_WIDTH;
+	m_dwFontCellHeight = FONT_HEIGHT;
+	m_dwFontBitmapHeight = FONT_HEIGHT;
 }
 
 CR3Font::~CR3Font()
@@ -31,6 +35,11 @@ void CR3Font::PrivateInit()
 {
 
 	m_dwOutLineColor=0;
+	m_dwFontCellWidth = FONT_WIDTH;
+	m_dwFontCellHeight = FONT_HEIGHT;
+	m_dwFontBitmapHeight = m_dwFontHeight * 3;
+	if( m_dwFontBitmapHeight < FONT_HEIGHT )
+		 m_dwFontBitmapHeight = FONT_HEIGHT;
 
 	m_hbmBitmap=0;;
 	m_hDC=0;
@@ -42,7 +51,7 @@ void CR3Font::PrivateInit()
 	ZeroMemory( &bmi.bmiHeader, sizeof(BITMAPINFOHEADER) );
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = (int)mMaxTextureXSize;//512
-	bmi.bmiHeader.biHeight = -12;//--9포인트는 12픽셀
+	bmi.bmiHeader.biHeight = -static_cast<LONG>(m_dwFontBitmapHeight);//--9포인트는 12픽셀
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bmi.bmiHeader.biBitCount = 32;
@@ -57,10 +66,16 @@ void CR3Font::PrivateInit()
 	}
 	SetMapMode( m_hDC, MM_TEXT );
 
+	const char *l_pLanguageFontName = GetClientLanguageFontName();
+	if( l_pLanguageFontName && l_pLanguageFontName[0] )
+		strcpy_s(m_strFontName, sizeof(m_strFontName), l_pLanguageFontName);
+	char l_szFontIni[MAX_PATH];
+	if( GetNationDataFileName("font.ini", l_szFontIni, sizeof(l_szFontIni)) )
+		GetPrivateProfileStringA("FONT", "NAME", m_strFontName, m_strFontName, sizeof(m_strFontName), l_szFontIni);
 	int nHeight = -(int)(MulDiv( m_dwFontHeight, (int)(GetDeviceCaps(m_hDC, LOGPIXELSY)*m_fTextScale), 72 ));
 	DWORD dwBold   = (m_dwFontFlags&D3DFONT_BOLD)   ? FW_BOLD : FW_NORMAL;
 	DWORD dwItalic = (m_dwFontFlags&D3DFONT_ITALIC) ? TRUE    : FALSE;
-	m_hFont = CreateFont( nHeight, 0, 0, 0, dwBold, dwItalic, FALSE, FALSE, DEFAULT_CHARSET
+	m_hFont = CreateFont( nHeight, 0, 0, 0, dwBold, dwItalic, FALSE, FALSE, GetClientLanguageFontCharSet()
 		, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, m_strFontName );
 	if( m_hFont == NULL )//--폰트생성안되면 그냥리턴
 		return;// E_FAIL;
@@ -69,6 +84,21 @@ void CR3Font::PrivateInit()
 	SetTextColor( m_hDC, RGB(255,255,255) );//--흰색
 	SetBkColor( m_hDC, 0x00000000 );//--까만색
 	SetTextAlign( m_hDC, TA_TOP );
+
+	SIZE l_sFontCellSize;
+	if( GetTextExtentPointA( m_hDC, "w", 1, &l_sFontCellSize ) )
+	{
+		if( l_sFontCellSize.cx > 0 )
+			 m_dwFontCellWidth = static_cast<DWORD>(l_sFontCellSize.cx);
+		if( l_sFontCellSize.cy > 0 )
+			 m_dwFontCellHeight = static_cast<DWORD>(l_sFontCellSize.cy);
+	}
+	if( m_dwFontCellWidth < FONT_WIDTH )
+		 m_dwFontCellWidth = FONT_WIDTH;
+	if( m_dwFontCellHeight < FONT_HEIGHT )
+		 m_dwFontCellHeight = FONT_HEIGHT;
+	mFontMaxLines = ((int)mMaxTextureYSize/(int)m_dwFontCellHeight);
+	mFontMaxStringLength = ((int)mMaxTextureXSize/(int)m_dwFontCellWidth);
 
 	MemAllocate();
 	ClearCache();
@@ -112,6 +142,19 @@ void CR3Font::MemFree()
 		Dfree(mMemPtr);
 		mMemPtr=0;
 	}
+}
+
+DWORD CR3Font::GetTextWidth(const char *strText)
+{
+	if( !strText || !strText[0] )
+		return 0;
+	if( m_hDC )
+	{
+		SIZE l_sTextSize;
+		if( GetTextExtentPointA( m_hDC, strText, static_cast<int>(strlen(strText)), &l_sTextSize ) )
+			return l_sTextSize.cx > 0 ? static_cast<DWORD>(l_sTextSize.cx) : 0;
+	}
+	return static_cast<DWORD>(strlen(strText)) * m_dwFontCellWidth;
 }
 
 void CR3Font::PrivateRelease()
@@ -440,22 +483,22 @@ void CR3Font::SetCache(char *strText,DWORD str_leng,DWORD x_index,DWORD y,DWORD 
 		m_CacheString[y*mFontMaxStringLength+x+i]=strText[i];
 
 	if( m_pBitmapBits )
-		ZeroMemory( m_pBitmapBits, mMaxTextureXSize * FONT_HEIGHT * sizeof(DWORD) );
+		ZeroMemory( m_pBitmapBits, mMaxTextureXSize * m_dwFontBitmapHeight * sizeof(DWORD) );
 
 	RECT rcText;
 	rcText.left = 0;
 	rcText.top = 0;
 	rcText.right = (LONG)mMaxTextureXSize;
-	rcText.bottom = FONT_HEIGHT;
+	rcText.bottom = static_cast<LONG>(m_dwFontBitmapHeight);
 	ExtTextOut( m_hDC, 0, 0, ETO_OPAQUE, &rcText, strText, str_leng, NULL );
 
 	//--서페이스에 락 걸고 직접 픽셀값을 세팅한다.
 	D3DLOCKED_RECT d3dlr;
 	RECT rcLock;
-	rcLock.left = x * 6;
-	rcLock.top = y * 12;
-	rcLock.right = (x + str_leng)*6;
-	rcLock.bottom = ( y+1 )*12;
+	rcLock.left = x * m_dwFontCellWidth;
+	rcLock.top = y * m_dwFontCellHeight;
+	rcLock.right = (x + str_leng) * m_dwFontCellWidth;
+	rcLock.bottom = ( y + 1 ) * m_dwFontCellHeight;
 	
 	//--락건다. rcLock영역 만큼. rcLock == NULL 이면 전체 영역
 	HRESULT tt= m_pTexture->LockRect( 0, &d3dlr, &rcLock, 0 );
@@ -467,10 +510,10 @@ void CR3Font::SetCache(char *strText,DWORD str_leng,DWORD x_index,DWORD y,DWORD 
 	WORD* pDst16;
 	BYTE bAlpha;//--4비트 알파
 
-	for( i=0; i < 12; i++ )
+	for( i=0; i < m_dwFontCellHeight; i++ )
 	{
 		pDst16 = (WORD*)pDstRow+0;//--다시 WORD*(2바이트)로 캐스팅
-		for( j=0; j < str_leng*6; j++ )
+		for( j=0; j < str_leng * m_dwFontCellWidth; j++ )
 		{
 			//--m_dwTexWidth로 해야한다. Bitmap크기가 m_dwTexWidth * 12이므로
 			bAlpha = (BYTE)((m_pBitmapBits[ mMaxTextureXSize * i + j ] & 0xff) >> 4);//--알파값이 4비트 이므로
@@ -510,10 +553,10 @@ HRESULT CR3Font::FillIt(FONT2DVERTEX *pm_Vertices,float xyzw[4], DWORD dwColor, 
 
 
 	float fDetCoord[4];
-	fDetCoord[0] = ((x*6.0f))/(float)mMaxTextureXSize;
-	fDetCoord[1] = ((y*12.0f))/(float)mMaxTextureYSize;
-	fDetCoord[2] = ((x+str_leng)*6.0f)/(float)mMaxTextureXSize;
-	fDetCoord[3] = ((y+1)*12.0f)/(float)mMaxTextureYSize;
+	fDetCoord[0] = (static_cast<float>(x * m_dwFontCellWidth))/(float)mMaxTextureXSize;
+	fDetCoord[1] = (static_cast<float>(y * m_dwFontCellHeight))/(float)mMaxTextureYSize;
+	fDetCoord[2] = (static_cast<float>((x + str_leng) * m_dwFontCellWidth))/(float)mMaxTextureXSize;
+	fDetCoord[3] = (static_cast<float>((y + 1) * m_dwFontCellHeight))/(float)mMaxTextureYSize;
 
 	float fStartX = xyzw[0];
 	

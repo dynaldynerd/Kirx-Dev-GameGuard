@@ -35,6 +35,22 @@ struct _reged_char_result_zone
   int size();
 };
 
+struct _add_char_result_zone
+{
+  unsigned __int8 byRetCode;
+  unsigned __int8 byAddSlotIndex;
+
+  int size() const;
+};
+
+struct _del_char_result_zone
+{
+  unsigned __int8 byRetCode;
+  unsigned __int8 bySlotIndex;
+
+  int size() const;
+};
+
 struct _sel_char_result_zone
 {
   unsigned __int8 byRetCode;
@@ -90,6 +106,16 @@ inline int _reged_char_result_zone::size()
   return static_cast<int>(221 - 69LL * (3 - byCharNum));
 }
 
+inline int _add_char_result_zone::size() const
+{
+  return sizeof(*this);
+}
+
+inline int _del_char_result_zone::size() const
+{
+  return sizeof(*this);
+}
+
 inline int _sel_char_result_zone::size() const
 {
   return 14;
@@ -98,5 +124,7 @@ inline int _sel_char_result_zone::size() const
 static_assert(sizeof(_alive_char_result_zocl) == 74, "_alive_char_result_zocl packing mismatch");
 static_assert(sizeof(_not_arranged_char_inform_zocl) == 3451, "_not_arranged_char_inform_zocl packing mismatch");
 static_assert(sizeof(_reged_char_result_zone) == 221, "_reged_char_result_zone packing mismatch");
+static_assert(sizeof(_add_char_result_zone) == 2, "_add_char_result_zone packing mismatch");
+static_assert(sizeof(_del_char_result_zone) == 2, "_del_char_result_zone packing mismatch");
 static_assert(sizeof(_sel_char_result_zone) == 14, "_sel_char_result_zone packing mismatch");
 static_assert(sizeof(_uilock_inform_request_zocl) == 4, "_uilock_inform_request_zocl packing mismatch");

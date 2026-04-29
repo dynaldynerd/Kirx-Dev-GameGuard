@@ -494,3 +494,13 @@ void SetOutLineColor(DWORD color)
 	stCR3Font.SetOutLineColor(color);
 }
 
+int GetR3TextWidth(const char *buf)
+{
+	return static_cast<int>(stCR3Font.GetTextWidth(buf));
+}
+
+int GetR3TextHeight(void)
+{
+	return static_cast<int>(stCR3Font.GetTextHeight());
+}
+

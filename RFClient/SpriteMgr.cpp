@@ -113,6 +113,12 @@ BOOL BuildSpriteFileName(WORD pi_wSpriteID, char *po_pFileName, size_t pi_nFileN
   }
 
   sprintf_s(po_pFileName, pi_nFileNameSize, ".\\SpriteImage\\Common\\%s", l_pBaseFileName);
+  if (IsExistingFile(po_pFileName))
+  {
+    return TRUE;
+  }
+
+  sprintf_s(po_pFileName, pi_nFileNameSize, ".\\SpriteImage\\%s", l_pBaseFileName);
   return IsExistingFile(po_pFileName);
 }
 }

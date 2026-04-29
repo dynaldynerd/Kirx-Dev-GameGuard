@@ -482,6 +482,8 @@ CNetworkMgr::CNetworkMgr()
     m_bHasEnterWorldResult(FALSE),
     m_bSentRegedCharRequest(FALSE),
     m_bHasRegedCharResult(FALSE),
+    m_bSentAddCharRequest(FALSE),
+    m_bHasAddCharResult(FALSE),
     m_bSentSelCharRequest(FALSE),
     m_bHasSelCharResult(FALSE),
     m_bHasUILockInform(FALSE),
@@ -501,6 +503,7 @@ CNetworkMgr::CNetworkMgr()
   ZeroMemory(m_pID, sizeof(m_pID));
   ZeroMemory(&m_ServerAddr, sizeof(m_ServerAddr));
   ZeroMemory(m_szStatusText, sizeof(m_szStatusText));
+  ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
   ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
   ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
 }
@@ -711,6 +714,8 @@ BOOL CNetworkMgr::SystemMsg_EnterWorldRequest_zone(void)
     m_byResultOfEnterTheWorldServer = WORLD_ENTER_NOT_RECIVED;
     m_bSentRegedCharRequest = FALSE;
     m_bHasRegedCharResult = FALSE;
+    m_bSentAddCharRequest = FALSE;
+    m_bHasAddCharResult = FALSE;
     m_bSentSelCharRequest = FALSE;
     m_bHasSelCharResult = FALSE;
     m_bHasUILockInform = FALSE;
@@ -722,6 +727,7 @@ BOOL CNetworkMgr::SystemMsg_EnterWorldRequest_zone(void)
     m_dwSelectedGold = 0;
     m_sRegedCharResult = _reged_char_result_zone();
     m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
+    ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
     ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
     ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
     SetStatusText("World enter request sent: account=%lu protocol=%lu full=%u",
@@ -772,10 +778,13 @@ BOOL CNetworkMgr::SystemMsg_RegedCharRequest_zone(void)
   {
     m_bSentRegedCharRequest = TRUE;
     m_bHasRegedCharResult = FALSE;
+    m_bSentAddCharRequest = FALSE;
+    m_bHasAddCharResult = FALSE;
     m_byResultOfUserInfo = USER_INFO_NOT_RECIVED;
     m_dwLastestAvatarIndex = static_cast<DWORD>(-1);
     m_sRegedCharResult = _reged_char_result_zone();
     m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
+    ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
     SetStatusText("Registered character request sent");
   }
   else
@@ -826,6 +835,66 @@ void CNetworkMgr::SystemMsg_RegedCharResult_zone(char *pi_pMsg, int pi_nPayloadS
                 m_dwLastestAvatarIndex == static_cast<DWORD>(-1)
                   ? -1L
                   : static_cast<long>(m_dwLastestAvatarIndex));
+}
+
+BOOL CNetworkMgr::SystemMsg_AddCharRequest_zone(BYTE pi_byAvatarIndex,
+                                                const char *pi_pName,
+                                                BYTE pi_byRaceSexCode,
+                                                const char *pi_pClassCode,
+                                                DWORD pi_dwBaseShape)
+{
+  if (!pi_pName || !pi_pName[0] || !pi_pClassCode || !pi_pClassCode[0])
+  {
+    SetStatusText("CNetworkMgr::SystemMsg_AddCharRequest_zone invalid request data");
+    return FALSE;
+  }
+
+  _add_char_request_zone l_sSend{};
+  l_sSend.bySlotIndex = pi_byAvatarIndex;
+  strncpy_s(l_sSend.szCharName, sizeof(l_sSend.szCharName), pi_pName, _TRUNCATE);
+  l_sSend.byRaceSexCode = pi_byRaceSexCode;
+  strncpy_s(l_sSend.szClassCode, sizeof(l_sSend.szClassCode), pi_pClassCode, _TRUNCATE);
+  l_sSend.dwBaseShape = pi_dwBaseShape;
+
+  BYTE l_byType[] = {system_msg, add_char_request_zone};
+  const BOOL l_bResult = SendNetMessage(NST_GAME_SERVER, l_byType, &l_sSend, sizeof(l_sSend));
+  if (l_bResult)
+  {
+    m_bSentAddCharRequest = TRUE;
+    m_bHasAddCharResult = FALSE;
+    ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+    SetStatusText("Character create request sent: slot=%u race=%u class=%s base=0x%08lX",
+                  static_cast<unsigned>(pi_byAvatarIndex),
+                  static_cast<unsigned>(pi_byRaceSexCode),
+                  l_sSend.szClassCode,
+                  static_cast<unsigned long>(pi_dwBaseShape));
+  }
+  else
+  {
+    SetStatusText("CNetworkMgr::SystemMsg_AddCharRequest_zone send failed");
+  }
+
+  return l_bResult;
+}
+
+void CNetworkMgr::SystemMsg_AddCharResult_zone(char *pi_pMsg, int pi_nPayloadSize)
+{
+  ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+  if (pi_pMsg && pi_nPayloadSize > 0)
+  {
+    memcpy(&m_sAddCharResult, pi_pMsg, MinInt(pi_nPayloadSize, static_cast<int>(sizeof(m_sAddCharResult))));
+  }
+
+  m_bHasAddCharResult = TRUE;
+  SetStatusText("Character create result: result=%u slot=%u",
+                static_cast<unsigned>(m_sAddCharResult.byRetCode),
+                static_cast<unsigned>(m_sAddCharResult.byAddSlotIndex));
+
+  if (m_sAddCharResult.byRetCode == 0)
+  {
+    m_bSentRegedCharRequest = FALSE;
+    m_bHasRegedCharResult = FALSE;
+  }
 }
 
 BOOL CNetworkMgr::LoadRegedCharResultDump(const char *pi_pPath)
@@ -1012,6 +1081,8 @@ void CNetworkMgr::ResetConnectionState(void)
   m_bHasEnterWorldResult = FALSE;
   m_bSentRegedCharRequest = FALSE;
   m_bHasRegedCharResult = FALSE;
+  m_bSentAddCharRequest = FALSE;
+  m_bHasAddCharResult = FALSE;
   m_bSentSelCharRequest = FALSE;
   m_bHasSelCharResult = FALSE;
   m_bHasUILockInform = FALSE;
@@ -1028,6 +1099,7 @@ void CNetworkMgr::ResetConnectionState(void)
   m_dwResponSpeedHackTime = 0;
   m_sRegedCharResult = _reged_char_result_zone();
   m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
+  ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
   ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
   ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
   m_vecRecvBuffer.clear();
@@ -1556,6 +1628,18 @@ bool CNetworkMgr::ProcessPacket(const _MSG_HEADER &pi_sHeader, const char *pi_pP
     }
 
     SetStatusText("reged_char_result_zone payload too small size=%d", pi_nPayloadSize);
+    return false;
+  }
+
+  if (pi_sHeader.m_byType[0] == system_msg && pi_sHeader.m_byType[1] == add_char_result_zone)
+  {
+    if (pi_nPayloadSize >= static_cast<int>(sizeof(_add_char_result_zone)))
+    {
+      SystemMsg_AddCharResult_zone(const_cast<char *>(pi_pPayload), pi_nPayloadSize);
+      return true;
+    }
+
+    SetStatusText("add_char_result_zone payload too small size=%d", pi_nPayloadSize);
     return false;
   }
 

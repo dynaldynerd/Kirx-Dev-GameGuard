@@ -98,7 +98,9 @@ constexpr BYTE kPlayerAnimationCombatMode[2][2] =
   {0x02, 0x01}
 };
 constexpr BYTE kPlayerAniStop = 0x06;
+constexpr BYTE kCombatModePeace = 0;
 constexpr BYTE kCombatModeCombat = 1;
+constexpr BYTE kCombatModeCount = 2;
 constexpr bool kEnableChefEquipmentEffects = true;
 
 #if defined(_DEBUG)
@@ -162,6 +164,46 @@ void SetTextureManagerPath(TextureManager *pi_pTextureManager, const char *pi_pT
 
   char *l_pTexturePath = reinterpret_cast<char *>(pi_pTextureManager) + kTextureManagerPathOffset;
   strncpy_s(l_pTexturePath, kTextureManagerPathSize, pi_pTexturePath, _TRUNCATE);
+}
+
+struct AppliedAnimationState
+{
+  CHARACTEROBJECT *pObject;
+  ChAnimation *pAnimation;
+};
+
+std::vector<AppliedAnimationState> g_vecAppliedAnimationState;
+
+ChAnimation *GetAppliedAnimation(CHARACTEROBJECT *pi_pCharacterObject)
+{
+  for (size_t i = 0; i < g_vecAppliedAnimationState.size(); ++i)
+  {
+    if (g_vecAppliedAnimationState[i].pObject == pi_pCharacterObject)
+    {
+      return g_vecAppliedAnimationState[i].pAnimation;
+    }
+  }
+  return NULL;
+}
+
+void SetAppliedAnimation(CHARACTEROBJECT *pi_pCharacterObject, ChAnimation *pi_pAnimation)
+{
+  if (!pi_pCharacterObject)
+  {
+    return;
+  }
+
+  for (size_t i = 0; i < g_vecAppliedAnimationState.size(); ++i)
+  {
+    if (g_vecAppliedAnimationState[i].pObject == pi_pCharacterObject)
+    {
+      g_vecAppliedAnimationState[i].pAnimation = pi_pAnimation;
+      return;
+    }
+  }
+
+  AppliedAnimationState l_stState = {pi_pCharacterObject, pi_pAnimation};
+  g_vecAppliedAnimationState.push_back(l_stState);
 }
 
 float NormalizeAngle360Local(float pi_fValue)
@@ -1592,6 +1634,7 @@ bool CPlayer::SetAnimation(ChAnimation *pi_pAnimation)
   {
     l_pCharIF->AnimationReset(m_pBone);
     l_pCharIF->MatchAnimationToMesh(pi_pAnimation, m_pBone);
+    SetAppliedAnimation(m_pBone, pi_pAnimation);
     m_dwBoneFrame = 160;
     m_dwOldBoneFrame = 0;
     m_pBone->m_Transition = FALSE;
@@ -1658,14 +1701,19 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
   CHARACTEROBJECT *l_pStoredBone = NULL;
   __try
   {
-    CHARACTEROBJECT *l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
-    l_pStoredBone = l_pLoadedBone;
-    if (l_pLoadedBone)
+    CHARACTEROBJECT *l_pLoadedBone = l_pBoneMgr->GetCharacter(pi_stBoneData.dwID);
+    if (!l_pLoadedBone)
     {
-      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pLoadedBone, &l_pCharIF->m_TM, true);
+      l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
+    }
+    l_pStoredBone = l_pLoadedBone;
+    if (l_pStoredBone)
+    {
+      l_pStoredBone->m_ID = pi_stBoneData.dwID;
+      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pStoredBone, &l_pCharIF->m_TM, true);
       if (l_bBoneRealLoaded)
       {
-        m_pBone = l_pLoadedBone;
+        m_pBone = l_pStoredBone;
       }
     }
 #if defined(_DEBUG)
@@ -1801,19 +1849,24 @@ bool CPlayer::LoadAccretia()
   CHARACTEROBJECT *l_pStoredBone = NULL;
   __try
   {
-    CHARACTEROBJECT *l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr,
-                                                             m_szBoneName,
-                                                             true,
-                                                             NULL);
-    l_pStoredBone = l_pLoadedBone;
-    if (l_pLoadedBone)
+    CHARACTEROBJECT *l_pLoadedBone = l_pBoneMgr->GetCharacter(l_stBoneData.dwID);
+    if (!l_pLoadedBone)
     {
-      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pLoadedBone,
+      l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr,
+                                              m_szBoneName,
+                                              true,
+                                              NULL);
+    }
+    l_pStoredBone = l_pLoadedBone;
+    if (l_pStoredBone)
+    {
+      l_pStoredBone->m_ID = l_stBoneData.dwID;
+      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pStoredBone,
                                                              &l_pCharIF->m_TM,
                                                              true);
       if (l_bBoneRealLoaded)
       {
-        m_pBone = l_pLoadedBone;
+        m_pBone = l_pStoredBone;
       }
     }
 #if defined(_DEBUG)
@@ -1988,11 +2041,27 @@ bool CPlayer::LoadAccretia()
 
 bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
 {
+  return LoadRegedAvatarInternal(pi_stRegedAvatar, kCombatModeCombat, false);
+}
+
+bool CPlayer::LoadCreatePreviewAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
+{
+  return LoadRegedAvatarInternal(pi_stRegedAvatar, kCombatModePeace, true);
+}
+
+bool CPlayer::LoadRegedAvatarInternal(const _REGED_AVATOR_DB &pi_stRegedAvatar,
+                                      BYTE pi_byCombatMode,
+                                      bool pi_bPreferModeSpecificAnimation)
+{
+  const BYTE l_byCombatMode =
+    pi_byCombatMode < kCombatModeCount ? pi_byCombatMode : kCombatModeCombat;
 #if defined(_DEBUG)
-  AppendPlayerLog("LoadRegedAvatar: begin slot=%u race=%u base=0x%08X",
+  AppendPlayerLog("LoadRegedAvatar: begin slot=%u race=%u base=0x%08X combatMode=%u preferSpecific=%d",
                   static_cast<unsigned>(pi_stRegedAvatar.m_bySlotIndex),
                   static_cast<unsigned>(pi_stRegedAvatar.m_byRaceSexCode),
-                  pi_stRegedAvatar.m_dwBaseShape);
+                  pi_stRegedAvatar.m_dwBaseShape,
+                  static_cast<unsigned>(l_byCombatMode),
+                  pi_bPreferModeSpecificAnimation ? 1 : 0);
 #endif
   Shutdown();
   if (!m_bInitialized && !Initialize())
@@ -2273,6 +2342,13 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
     l_byWeaponAnimationType,
     0xFF
   };
+  const BYTE l_abyCombatAnimationType[2] =
+  {
+    pi_bPreferModeSpecificAnimation ? kPlayerAnimationCombatMode[l_byCombatMode][1]
+                                    : kPlayerAnimationCombatMode[l_byCombatMode][0],
+    pi_bPreferModeSpecificAnimation ? kPlayerAnimationCombatMode[l_byCombatMode][0]
+                                    : kPlayerAnimationCombatMode[l_byCombatMode][1]
+  };
 
   for (BYTE i = 0; i < 5 && !m_pStandAni; ++i)
   {
@@ -2282,7 +2358,7 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
       {
         DWORD l_dwAnimationID = 0;
         l_dwAnimationID |= static_cast<DWORD>(kPlayerAnimationRace[l_byRaceSexCode][i]) << 28;
-        l_dwAnimationID |= static_cast<DWORD>(kPlayerAnimationCombatMode[kCombatModeCombat][k]) << 24;
+        l_dwAnimationID |= static_cast<DWORD>(l_abyCombatAnimationType[k]) << 24;
         l_dwAnimationID |= static_cast<DWORD>(kPlayerAniStop) << 16;
         l_dwAnimationID |= static_cast<DWORD>(l_abyWeaponAnimationType[j]) << 8;
         l_dwAnimationID |= 0xF0;
@@ -2291,10 +2367,11 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
         if (!l_pAniData)
         {
 #if defined(_DEBUG)
-          AppendPlayerLog("LoadRegedAvatar: combat stop ani missing id=0x%08X raceLoop=%u combatLoop=%u weaponType=0x%02X",
+          AppendPlayerLog("LoadRegedAvatar: stop ani missing id=0x%08X raceLoop=%u combatLoop=%u combatType=0x%02X weaponType=0x%02X",
                           static_cast<unsigned>(l_dwAnimationID),
                           static_cast<unsigned>(i),
                           static_cast<unsigned>(k),
+                          static_cast<unsigned>(l_abyCombatAnimationType[k]),
                           static_cast<unsigned>(l_abyWeaponAnimationType[j]));
 #endif
           continue;
@@ -2308,8 +2385,9 @@ bool CPlayer::LoadRegedAvatar(const _REGED_AVATOR_DB &pi_stRegedAvatar)
                   l_pAniData->pFileName);
 
 #if defined(_DEBUG)
-        AppendPlayerLog("LoadRegedAvatar: combat stop ani id=0x%08X file=%s",
+        AppendPlayerLog("LoadRegedAvatar: stop ani id=0x%08X combatType=0x%02X file=%s",
                         static_cast<unsigned>(l_dwAnimationID),
+                        static_cast<unsigned>(l_abyCombatAnimationType[k]),
                         l_szAniCandidate);
 #endif
         strcpy_s(m_szAniName, sizeof(m_szAniName), l_szAniCandidate);
@@ -2382,6 +2460,13 @@ BOOL CPlayer::Animation(DWORD /*pi_dwAniFrame*/)
   {
     __try
     {
+      if (m_pCurAni && GetAppliedAnimation(m_pBone) != m_pCurAni)
+      {
+        l_pCharIF->AnimationReset(m_pBone);
+        l_pCharIF->MatchAnimationToMesh(m_pCurAni, m_pBone);
+        SetAppliedAnimation(m_pBone, m_pCurAni);
+      }
+
       if (m_pBone->m_OMaxFrame > 160)
       {
         float l_fBoneFrame = static_cast<float>(m_dwBoneFrame);
@@ -2900,10 +2985,18 @@ bool CPlayer::LoadPart(DWORD pi_dwPartType, BYTE pi_byResourceList, const MESH_D
   CHARACTEROBJECT *l_pLoadedMesh = NULL;
   __try
   {
-    l_pLoadedMesh = l_pCharIF->LoadMeshData(l_pBodyPartMgr,
-                                            m_szMeshName[pi_dwPartType],
-                                            true,
-                                            m_pBone);
+    l_pLoadedMesh = l_pBodyPartMgr->GetCharacter(pi_stMeshData.dwID);
+    if (!l_pLoadedMesh)
+    {
+      l_pLoadedMesh = l_pCharIF->LoadMeshData(l_pBodyPartMgr,
+                                              m_szMeshName[pi_dwPartType],
+                                              true,
+                                              m_pBone);
+    }
+    if (l_pLoadedMesh)
+    {
+      l_pLoadedMesh->m_ID = pi_stMeshData.dwID;
+    }
 #if defined(_DEBUG)
     AppendPlayerLog("LoadPart: LoadMeshData index=%u result=%p",
                     static_cast<unsigned>(pi_dwPartType),

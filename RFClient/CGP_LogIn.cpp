@@ -12,6 +12,7 @@
 #include "R3Engine/2ndclass/2dsprite.h"
 #include "R3Engine/2ndclass/r3enginekernel.h"
 #include "R3Engine/2ndclass/r3text.h"
+#include "UIGlobal.h"
 
 namespace
 {
@@ -19,10 +20,28 @@ enum LOGIN_SCREEN_MODE
 {
   LOGIN_SCREEN_OPENING = 0,
   LOGIN_SCREEN_UI_LOCK = 1,
-  LOGIN_SCREEN_CHAR_SELECT = 2
+  LOGIN_SCREEN_CHAR_SELECT = 2,
+  LOGIN_SCREEN_CHAR_CREATE = 3
 };
 
 const int kFontWidth = 6;
+const int kMessageBoxTextMargin = 5;
+const int kMessageBoxColumnGap = 4;
+const int kMessageBoxMargin = 15;
+const int kMessageBoxOutlineMargin = 3;
+const int kMessageBoxOutlineSize = 1;
+const int kMessageBoxMinWidth = 200;
+const int kMessageBoxMinHeight = 100;
+const int kMessageBoxOkButtonWidth = 67;
+const int kMessageBoxOkButtonHeight = 21;
+const int kMessageBoxOkButtonRightMargin = 8;
+const int kMessageBoxOkButtonBottomMargin = 8;
+const DWORD kMessageBoxOutlineColor = 0xFF9593C1;
+const DWORD kMessageBoxPanelColor = 0xB0181818;
+const DWORD kMessageBoxOkButtonAction = 1;
+const DWORD kMessageBoxOkButtonNormalFrame = 0;
+const DWORD kMessageBoxOkButtonPressedFrame = 1;
+const DWORD kMessageBoxOkButtonHoverFrame = 2;
 const DWORD kOpeningMenuAction = 6;
 const DWORD kOpeningMenuPanelFrame = 0;
 const DWORD kOpeningMenuButtonNormalFrame = 1;
@@ -44,7 +63,52 @@ const DWORD kCharacterSelectBoardMoveTime = 500;
 const DWORD kCharacterSelectBoardCloseTime = 300;
 const DWORD kCharacterSelectAniStopInterval = 2000;
 const float kCharacterSelectAniFPS = 10.0f;
+const BYTE kCharacterCreateDefaultItemCount = 5;
 const BYTE kInvalidCharacterButton = 0xFF;
+const BYTE kInvalidCharacterCreateButton = 0xFF;
+const DWORD kCharacterCreateRaceAction = 3;
+const DWORD kCharacterCreateDetailAction = 4;
+
+enum CHARACTER_CREATE_STEP
+{
+  CHARACTER_CREATE_STEP_RACE = 0,
+  CHARACTER_CREATE_STEP_ATTRIBUTE = 1,
+  CHARACTER_CREATE_STEP_DETAIL = 2
+};
+
+enum CHARACTER_CREATE_BUTTON
+{
+  CHARACTER_CREATE_BUTTON_RACE_BELLATO = 0,
+  CHARACTER_CREATE_BUTTON_RACE_CORA = 1,
+  CHARACTER_CREATE_BUTTON_RACE_ACCRETIA = 2,
+  CHARACTER_CREATE_BUTTON_OK = 3,
+  CHARACTER_CREATE_BUTTON_CANCEL = 4,
+  CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE = 10,
+  CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE = 20,
+  CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE = 30,
+  CHARACTER_CREATE_BUTTON_ROTATE_LEFT = 40,
+  CHARACTER_CREATE_BUTTON_ROTATE_RIGHT = 41
+};
+
+enum CHARACTER_CREATE_SELECT_TYPE
+{
+  CHARACTER_CREATE_SELECT_SEX = 0,
+  CHARACTER_CREATE_SELECT_HAIR = 1,
+  CHARACTER_CREATE_SELECT_FACE = 2,
+  CHARACTER_CREATE_SELECT_COAT = 3,
+  CHARACTER_CREATE_SELECT_PANTS = 4,
+  CHARACTER_CREATE_SELECT_GLOVE = 5,
+  CHARACTER_CREATE_SELECT_SHOES = 6,
+  CHARACTER_CREATE_SELECT_COUNT = 7
+};
+
+enum CHARACTER_CREATE_ATTRIBUTE
+{
+  CHARACTER_CREATE_ATTRIBUTE_MELEE = 0,
+  CHARACTER_CREATE_ATTRIBUTE_MISSILE = 1,
+  CHARACTER_CREATE_ATTRIBUTE_FORCE = 2,
+  CHARACTER_CREATE_ATTRIBUTE_SPECIALIST = 3
+};
 
 enum CHARACTER_SELECT_BUTTON
 {
@@ -58,7 +122,13 @@ enum CHARACTER_SELECT_BUTTON
 
 void DrawLoginLine(int x, int y, const char *text, DWORD color)
 {
-  DrawR3Hangul(x, y, const_cast<char *>(text ? text : ""), color, R3_HAN_OUTLINE);
+  const char *l_pText = text ? text : "";
+  if (!l_pText[0])
+  {
+    return;
+  }
+
+  DrawR3Hangul(x, y, const_cast<char *>(l_pText), color, R3_HAN_OUTLINE);
 }
 
 void GetScreenSize(int *po_pScreenX, int *po_pScreenY)
@@ -135,7 +205,53 @@ int GetCenteredTextX(int pi_nCenterX, const char *pi_pText)
     return pi_nCenterX;
   }
 
-  return pi_nCenterX - static_cast<int>(strlen(pi_pText)) * kFontWidth / 2;
+  return pi_nCenterX - GetR3TextWidth(pi_pText) / 2;
+}
+
+void GetLoginMessageBoardSize(const char *pi_pMessage, int *po_pWidth, int *po_pHeight)
+{
+  int l_nMaxCharNum = 0;
+  int l_nLineNum = pi_pMessage && pi_pMessage[0] ? 1 : 0;
+  int l_nCurrentCharNum = 0;
+  if (pi_pMessage)
+  {
+    for (int i = 0; pi_pMessage[i] != '\0'; ++i)
+    {
+      if (pi_pMessage[i] == '\n')
+      {
+        if (l_nCurrentCharNum > l_nMaxCharNum)
+        {
+          l_nMaxCharNum = l_nCurrentCharNum;
+        }
+        l_nCurrentCharNum = 0;
+        ++l_nLineNum;
+      }
+      else
+      {
+        ++l_nCurrentCharNum;
+      }
+    }
+  }
+
+  if (l_nCurrentCharNum > l_nMaxCharNum)
+  {
+    l_nMaxCharNum = l_nCurrentCharNum;
+  }
+
+  if (l_nLineNum <= 0)
+  {
+    l_nLineNum = 1;
+  }
+
+  if (po_pWidth)
+  {
+    *po_pWidth = l_nMaxCharNum * kFontWidth + kMessageBoxTextMargin * 2;
+  }
+  if (po_pHeight)
+  {
+    *po_pHeight = l_nLineNum * (kFontHeight + kMessageBoxColumnGap) +
+                  kMessageBoxTextMargin * 2;
+  }
 }
 
 void DrawSpriteSheetCell(CSprite *pi_pSprite,
@@ -316,6 +432,34 @@ void DrawCenteredCharacterSelectButtonLabel(const RECT &pi_sButtonRect,
                 (pi_bHovered || pi_bPressed) ? kCharacterSelectButtonHoverTextColor : kCharacterSelectButtonTextColor);
 }
 
+void DrawCharacterSelectButtonLabelFixedColor(const RECT &pi_sButtonRect,
+                                              const char *pi_pText,
+                                              int pi_nOffsetX,
+                                              int pi_nOffsetY,
+                                              bool pi_bPressed,
+                                              DWORD pi_dwColor)
+{
+  const int l_nPressedOffset = pi_bPressed ? 1 : 0;
+  DrawLoginLine(pi_sButtonRect.left + pi_nOffsetX + l_nPressedOffset,
+                pi_sButtonRect.top + pi_nOffsetY + l_nPressedOffset,
+                pi_pText,
+                pi_dwColor);
+}
+
+void DrawCenteredCharacterSelectButtonLabelFixedColor(const RECT &pi_sButtonRect,
+                                                      const char *pi_pText,
+                                                      bool pi_bPressed,
+                                                      DWORD pi_dwColor)
+{
+  const int l_nButtonWidth = pi_sButtonRect.right - pi_sButtonRect.left;
+  const int l_nButtonHeight = pi_sButtonRect.bottom - pi_sButtonRect.top;
+  const int l_nPressedOffset = pi_bPressed ? 1 : 0;
+  DrawLoginLine(GetCenteredTextX(pi_sButtonRect.left + (l_nButtonWidth / 2), pi_pText) + l_nPressedOffset,
+                pi_sButtonRect.top + ((l_nButtonHeight - kFontHeight) / 2) + l_nPressedOffset,
+                pi_pText,
+                pi_dwColor);
+}
+
 void CopyCreditText(char *po_pTarget, size_t pi_nTargetSize, const char *pi_pSource)
 {
   if (!po_pTarget || !pi_nTargetSize)
@@ -342,6 +486,91 @@ void CopyCreditText(char *po_pTarget, size_t pi_nTargetSize, const char *pi_pSou
 DWORD GetCreditLineColor(int)
 {
   return 0xFFFFFFFF;
+}
+
+BYTE ClampCreateRaceSelection(BYTE pi_byRaceSelection)
+{
+  return pi_byRaceSelection < 3 ? pi_byRaceSelection : 0;
+}
+
+bool IsAccretiaCreateRace(BYTE pi_byRaceSelection)
+{
+  return ClampCreateRaceSelection(pi_byRaceSelection) == CHARACTER_CREATE_BUTTON_RACE_ACCRETIA;
+}
+
+BYTE GetNextCreateAttribute(BYTE pi_byAttribute, BYTE pi_byRaceSelection, bool pi_bForward)
+{
+  BYTE l_byAttribute = pi_byAttribute < 4 ? pi_byAttribute : 0;
+  for (int i = 0; i < 4; ++i)
+  {
+    l_byAttribute = pi_bForward
+                      ? static_cast<BYTE>((l_byAttribute + 1) % 4)
+                      : static_cast<BYTE>((l_byAttribute == 0) ? 3 : l_byAttribute - 1);
+    if (!IsAccretiaCreateRace(pi_byRaceSelection) ||
+        l_byAttribute != CHARACTER_CREATE_ATTRIBUTE_FORCE)
+    {
+      return l_byAttribute;
+    }
+  }
+
+  return CHARACTER_CREATE_ATTRIBUTE_MELEE;
+}
+
+const char *GetCreateRaceLabel(BYTE pi_byRaceSelection)
+{
+  static const char *kCreateRaceLabel[3] = { "BELLATO", "CORA", "ACCRETIA" };
+  return kCreateRaceLabel[ClampCreateRaceSelection(pi_byRaceSelection)];
+}
+
+const char *GetCreateAttributeLabel(BYTE pi_byAttribute)
+{
+  static const char *kCreateAttributeLabel[4] = { "Warrior", "Ranger", "Spiritualist", "Specialist" };
+  return pi_byAttribute < 4 ? kCreateAttributeLabel[pi_byAttribute] : "";
+}
+
+const char *GetCreateRaceBattleSkillLabel(BYTE pi_byRaceSelection)
+{
+  static const char *kRaceBattleSkillLabel[3] = { "MAU", "Summon", "Launcher" };
+  return kRaceBattleSkillLabel[ClampCreateRaceSelection(pi_byRaceSelection)];
+}
+
+void DrawGaugeBar(const RECT &pi_sBaseRect, float pi_fRate, DWORD pi_dwColor)
+{
+  if (pi_fRate < 0.0f)
+  {
+    pi_fRate = 0.0f;
+  }
+  else if (pi_fRate > 1.0f)
+  {
+    pi_fRate = 1.0f;
+  }
+
+  Draw2DRectangle(pi_sBaseRect.left,
+                  pi_sBaseRect.top,
+                  pi_sBaseRect.right,
+                  pi_sBaseRect.bottom,
+                  0xA0101620);
+  Draw2DRectangle(pi_sBaseRect.left,
+                  pi_sBaseRect.top,
+                  pi_sBaseRect.right,
+                  pi_sBaseRect.top + 1,
+                  0xC08EA8C8);
+  Draw2DRectangle(pi_sBaseRect.left,
+                  pi_sBaseRect.bottom - 1,
+                  pi_sBaseRect.right,
+                  pi_sBaseRect.bottom,
+                  0xC0203040);
+
+  const int l_nWidth = pi_sBaseRect.right - pi_sBaseRect.left - 2;
+  const int l_nFillWidth = static_cast<int>(static_cast<float>(l_nWidth) * pi_fRate);
+  if (l_nFillWidth > 0)
+  {
+    Draw2DRectangle(pi_sBaseRect.left + 1,
+                    pi_sBaseRect.top + 1,
+                    pi_sBaseRect.left + 1 + l_nFillWidth,
+                    pi_sBaseRect.bottom - 1,
+                    pi_dwColor);
+  }
 }
 
 bool LoadTextureFile(const char *pi_pPath, void **po_ppTexture)
@@ -420,6 +649,12 @@ CGP_LogIn::CGP_LogIn()
     m_byMenuPressed(kInvalidMenuIndex),
     m_byCharacterMenuHover(kInvalidCharacterButton),
     m_byCharacterMenuPressed(kInvalidCharacterButton),
+    m_byCreateStep(CHARACTER_CREATE_STEP_RACE),
+    m_byCreateRaceSelection(0),
+    m_byCreateAttributeSelection(CHARACTER_CREATE_ATTRIBUTE_MELEE),
+    m_byCreateSexSelection(0),
+    m_byCreateMenuHover(kInvalidCharacterCreateButton),
+    m_byCreateMenuPressed(kInvalidCharacterCreateButton),
     m_nMouseX(-1),
     m_nMouseY(-1),
     m_bLeftButtonDown(false),
@@ -433,10 +668,16 @@ CGP_LogIn::CGP_LogIn()
     m_bCharacterDummiesLoaded(false),
     m_bStartRequested(false),
     m_bCreditsMode(false),
+    m_bLoginMessageVisible(false),
+    m_bLoginMessageOkHover(false),
+    m_bLoginMessageOkPressed(false),
     m_dwCreditsStartTick(0),
     m_pTitleLogoTexture(NULL)
 {
   ZeroMemory(m_abVirtualKeyState, sizeof(m_abVirtualKeyState));
+  ZeroMemory(m_abyCreatePartVariant, sizeof(m_abyCreatePartVariant));
+  ZeroMemory(m_szLoginMessage, sizeof(m_szLoginMessage));
+  ZeroMemory(m_szCreateCharacterName, sizeof(m_szCreateCharacterName));
   ResetCharacterSelectionAnimation();
 }
 
@@ -528,6 +769,14 @@ LRESULT CGP_LogIn::MsgProc(HWND, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
   }
 
+  if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE &&
+      m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL &&
+      uMsg == WM_CHAR)
+  {
+    AppendCreateCharacterInputChar(wParam);
+    return 0;
+  }
+
   if ((uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) &&
       (wParam == VK_RETURN || wParam == VK_SPACE))
   {
@@ -547,6 +796,16 @@ HRESULT CGP_LogIn::FrameMove(void)
   UpdateWorldServerFlow();
   EnsureCharacterSelection();
   UpdateDisplayedScreen();
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE &&
+      l_pNetworkMgr &&
+      l_pNetworkMgr->HasAddCharResult() &&
+      l_pNetworkMgr->GetAddCharResult().byRetCode == 0)
+  {
+    m_bySelectedCharacterSlot = l_pNetworkMgr->GetAddCharResult().byAddSlotIndex;
+    m_bCharacterDummiesLoaded = false;
+    LeaveCharacterCreateScreen(true);
+  }
   UpdateCharacterSelectionUIState();
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
@@ -554,6 +813,11 @@ HRESULT CGP_LogIn::FrameMove(void)
     {
       UpdateCharacterSelectionAnimation();
     }
+  }
+  else if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE &&
+           m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    UpdateSpriteSheetAnimation(&m_sUpperBoardAnimation, 5);
   }
   return S_OK;
 }
@@ -587,6 +851,10 @@ HRESULT CGP_LogIn::Render(void)
       RenderCharacterSelectionScreen();
     }
   }
+  else if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE)
+  {
+    RenderCharacterCreateScreen();
+  }
   else if (m_byScreenMode == LOGIN_SCREEN_UI_LOCK)
   {
     RenderUILockScreen();
@@ -601,6 +869,7 @@ HRESULT CGP_LogIn::Render(void)
   }
 
   RenderStatusOverlay();
+  RenderLoginMessageBox();
   R3EndScene();
   return S_OK;
 }
@@ -615,9 +884,19 @@ BOOL CGP_LogIn::InputProcess(void)
     return TRUE;
   }
 
+  if (IsLoginMessageVisible())
+  {
+    UpdateLoginMessageInput();
+    return TRUE;
+  }
+
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
     UpdateCharacterSelectionInput();
+  }
+  else if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE)
+  {
+    UpdateCharacterCreateInput();
   }
   else
   {
@@ -642,6 +921,7 @@ BOOL CGP_LogIn::LoadData(void)
   m_byMenuPressed = kInvalidMenuIndex;
   m_byCharacterMenuHover = kInvalidCharacterButton;
   m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ResetCharacterCreateState();
   m_nMouseX = -1;
   m_nMouseY = -1;
   m_bLeftButtonDown = false;
@@ -789,7 +1069,16 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
     }
     else
     {
-      l_byNewScreenMode = IsUILockResolved() ? LOGIN_SCREEN_CHAR_SELECT : LOGIN_SCREEN_UI_LOCK;
+      if (IsUILockResolved())
+      {
+        l_byNewScreenMode = (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE)
+                              ? LOGIN_SCREEN_CHAR_CREATE
+                              : LOGIN_SCREEN_CHAR_SELECT;
+      }
+      else
+      {
+        l_byNewScreenMode = LOGIN_SCREEN_UI_LOCK;
+      }
     }
   }
 
@@ -812,6 +1101,15 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
     {
       _GetMainApp()->PlayLoginLobbyCharacterEntryCamera(m_bySelectedCharacterSlot);
     }
+  }
+  else if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE)
+  {
+    m_dwCharacterSelectionOpenTick = 0;
+    m_dwCharacterSelectionCloseTick = 0;
+    m_bCharacterSelectionUIVisible = false;
+    m_bCharacterSelectionUIClosing = false;
+    m_byCharacterMenuHover = kInvalidCharacterButton;
+    m_byCharacterMenuPressed = kInvalidCharacterButton;
   }
   else if (m_byScreenMode == LOGIN_SCREEN_OPENING && _GetMainApp())
   {
@@ -892,6 +1190,12 @@ void CGP_LogIn::UpdateCharacterSelectionInput(void)
   const BOOL l_bRightPressed = ConsumeKeyPress(VK_RIGHT);
   const BOOL l_bConfirmPressed = ConsumeKeyPress(VK_RETURN) || ConsumeKeyPress(VK_SPACE);
   const BOOL l_bEscapePressed = ConsumeKeyPress(VK_ESCAPE);
+
+  if (IsLoginMessageVisible())
+  {
+    UpdateLoginMessageInput();
+    return;
+  }
 
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
   if (!l_pNetworkMgr ||
@@ -1044,6 +1348,7 @@ void CGP_LogIn::ReleaseTitleLogoTexture(void)
 void CGP_LogIn::LoadLoginSprites(void)
 {
   m_cLoginSpriteMgr.Init();
+  m_cLoginSpriteMgr.LoadSprite(SP_ID_COMMON);
   m_cLoginSpriteMgr.LoadSprite(SP_ID_LOGIN);
   m_cLoginSpriteMgr.LoadSprite(SP_ID_LOADING);
 }
@@ -1141,7 +1446,9 @@ void CGP_LogIn::LoadCreditsFile(void)
 
 void CGP_LogIn::RenderTitleLogo(void) const
 {
-  if (!m_pTitleLogoTexture || m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
+  if (!m_pTitleLogoTexture ||
+      m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT ||
+      m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE)
   {
     return;
   }
@@ -1201,7 +1508,17 @@ void CGP_LogIn::RenderStatusOverlay(void) const
 bool CGP_LogIn::IsStartupLoadingComplete(void) const
 {
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-  if (!l_pNetworkMgr || !l_pNetworkMgr->HasLauncherData())
+  if (!l_pNetworkMgr)
+  {
+    return false;
+  }
+
+  if (l_pNetworkMgr->HasRegedCharResult())
+  {
+    return true;
+  }
+
+  if (!l_pNetworkMgr->HasLauncherData())
   {
     return false;
   }
@@ -1222,15 +1539,18 @@ bool CGP_LogIn::ShouldRenderLoadingScreen(void) const
     return false;
   }
 
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (l_pNetworkMgr && l_pNetworkMgr->HasRegedCharResult())
+  {
+    return false;
+  }
+
   if (!IsStartupLoadingComplete())
   {
     return true;
   }
 
-  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-  return !l_pNetworkMgr ||
-         !l_pNetworkMgr->HasRegedCharResult() ||
-         l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS;
+  return !l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult();
 }
 
 void CGP_LogIn::RenderLoadingScreen(void) const
@@ -1621,6 +1941,12 @@ BYTE CGP_LogIn::GetCharacterSelectionButtonAtPoint(int pi_nX, int pi_nY) const
 
 void CGP_LogIn::UpdateCharacterSelectionMouseInput(void)
 {
+  if (IsLoginMessageVisible())
+  {
+    UpdateLoginMessageInput();
+    return;
+  }
+
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
   if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
   {
@@ -1628,7 +1954,6 @@ void CGP_LogIn::UpdateCharacterSelectionMouseInput(void)
     return;
   }
 
-  const _reged_char_result_zone &l_sRegedCharResult = l_pNetworkMgr->GetRegedCharResult();
   BYTE l_byHoverButton = GetCharacterSelectionButtonAtPoint(m_nMouseX, m_nMouseY);
 
   m_byCharacterMenuHover = l_byHoverButton;
@@ -1694,14 +2019,11 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
 
     if (FindRegedAvatarBySlot(l_pNetworkMgr->GetRegedCharResult(), m_bySelectedCharacterSlot))
     {
-      MessageBoxA(NULL, "A character already exists in this slot.", "RF_Online", MB_OK | MB_ICONINFORMATION);
+      ShowLoginMessage("This character slot is full");
       return;
     }
 
-    MessageBoxA(NULL,
-                "Character creation flow is not implemented in RFClient yet.",
-                "RF_Online",
-                MB_OK | MB_ICONINFORMATION);
+    EnterCharacterCreateScreen();
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_DELETE)
   {
@@ -1713,14 +2035,11 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
 
     if (!FindRegedAvatarBySlot(l_pNetworkMgr->GetRegedCharResult(), m_bySelectedCharacterSlot))
     {
-      MessageBoxA(NULL, "There is no character in this slot.", "RF_Online", MB_OK | MB_ICONINFORMATION);
+      ShowLoginMessage("There is no character in this slot.");
       return;
     }
 
-    MessageBoxA(NULL,
-                "Character deletion flow is not implemented in RFClient yet.",
-                "RF_Online",
-                MB_OK | MB_ICONINFORMATION);
+    ShowLoginMessage("Character deletion flow is not implemented yet.");
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_CONNECT)
   {
@@ -1773,7 +2092,7 @@ void CGP_LogIn::SendSelectedCharacterRequest(void)
   const _reged_char_result_zone &l_sRegedCharResult = l_pNetworkMgr->GetRegedCharResult();
   if (!FindRegedAvatarBySlot(l_sRegedCharResult, m_bySelectedCharacterSlot))
   {
-    MessageBoxA(NULL, "Please create a character first.", "RF_Online", MB_OK | MB_ICONINFORMATION);
+    ShowLoginMessage("Please create a character first.");
     return;
   }
 
@@ -1781,6 +2100,922 @@ void CGP_LogIn::SendSelectedCharacterRequest(void)
   {
     l_pNetworkMgr->SystemMsg_SelCharRequest_zone(m_bySelectedCharacterSlot);
   }
+}
+
+void CGP_LogIn::EnterCharacterCreateScreen(void)
+{
+  ResetCharacterCreateState();
+  if (_GetMainApp())
+  {
+    _GetMainApp()->ClearLoginLobbyCreatePreview();
+  }
+  m_byScreenMode = LOGIN_SCREEN_CHAR_CREATE;
+  m_bCharacterSelectionUIVisible = false;
+  m_bCharacterSelectionUIClosing = false;
+  m_dwCharacterSelectionOpenTick = 0;
+  m_dwCharacterSelectionCloseTick = 0;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ResetCharacterSelectionAnimation();
+  if (_GetMainApp())
+  {
+    _GetMainApp()->PlayLoginLobbyCharacterCreateRaceCamera(m_bySelectedCharacterSlot);
+  }
+  ClearOpeningMouseTransitions();
+}
+
+void CGP_LogIn::LeaveCharacterCreateScreen(bool pi_bCreationCompleted)
+{
+  if (_GetMainApp())
+  {
+    _GetMainApp()->ClearLoginLobbyCreatePreview();
+  }
+  ResetCharacterCreateState();
+  m_byScreenMode = LOGIN_SCREEN_CHAR_SELECT;
+  m_bCharacterSelectionUIVisible = false;
+  m_bCharacterSelectionUIClosing = false;
+  m_dwCharacterSelectionOpenTick = 0;
+  m_dwCharacterSelectionCloseTick = 0;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ResetCharacterSelectionAnimation();
+  if (_GetMainApp())
+  {
+    if (pi_bCreationCompleted)
+    {
+      _GetMainApp()->PlayLoginLobbyCharacterCreateCompleteCamera(m_bySelectedCharacterSlot);
+    }
+    else
+    {
+      _GetMainApp()->PlayLoginLobbyCharacterCreateRaceCancelCamera(m_bySelectedCharacterSlot);
+    }
+  }
+  ClearOpeningMouseTransitions();
+}
+
+void CGP_LogIn::ResetCharacterCreateState(void)
+{
+  m_byCreateStep = CHARACTER_CREATE_STEP_RACE;
+  m_byCreateRaceSelection = CHARACTER_CREATE_BUTTON_RACE_BELLATO;
+  m_byCreateAttributeSelection = CHARACTER_CREATE_ATTRIBUTE_MELEE;
+  m_byCreateSexSelection = 0;
+  m_byCreateMenuHover = kInvalidCharacterCreateButton;
+  m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+  ZeroMemory(m_abyCreatePartVariant, sizeof(m_abyCreatePartVariant));
+  ZeroMemory(m_szCreateCharacterName, sizeof(m_szCreateCharacterName));
+}
+
+void CGP_LogIn::UpdateCharacterCreatePreview(void)
+{
+  if (!_GetMainApp())
+  {
+    return;
+  }
+
+  _GetMainApp()->BuildLoginLobbyCreatePreview(GetCreateRaceSexCode(),
+                                              GetCreateClassCode(),
+                                              GetCreateBaseShape());
+}
+
+bool CGP_LogIn::IsCharacterCreateScreen(void) const
+{
+  return m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE;
+}
+
+bool CGP_LogIn::GetCharacterCreateRaceLayout(CHARACTER_CREATE_RACE_LAYOUT *po_pLayout) const
+{
+  if (!po_pLayout)
+  {
+    return false;
+  }
+
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  const int l_nUpperBoardWidth = 464;
+  const int l_nUpperBoardHeight = 135;
+  const int l_nUpperBaseWidth = 456;
+  const int l_nUpperBaseHeight = 109;
+  const int l_nLowerBoardWidth = 520;
+  const int l_nLowerBoardHeight = 73;
+  const int l_nLowerBaseWidth = 467;
+  const int l_nLowerBaseHeight = 72;
+
+  SetRect(&po_pLayout->sUpperBoard,
+          (l_nScreenX - l_nUpperBoardWidth) / 2,
+          10,
+          (l_nScreenX - l_nUpperBoardWidth) / 2 + l_nUpperBoardWidth,
+          10 + l_nUpperBoardHeight);
+  SetRect(&po_pLayout->sUpperBase,
+          po_pLayout->sUpperBoard.left + ((l_nUpperBoardWidth - l_nUpperBaseWidth) / 2),
+          po_pLayout->sUpperBoard.top,
+          po_pLayout->sUpperBoard.left + ((l_nUpperBoardWidth - l_nUpperBaseWidth) / 2) + l_nUpperBaseWidth,
+          po_pLayout->sUpperBoard.top + l_nUpperBaseHeight);
+  SetRect(&po_pLayout->sUpperBoardAni,
+          po_pLayout->sUpperBase.left + 203,
+          po_pLayout->sUpperBase.top + 20,
+          po_pLayout->sUpperBase.left + 253,
+          po_pLayout->sUpperBase.top + 70);
+  for (int i = 0; i < 3; ++i)
+  {
+    SetRect(&po_pLayout->sRaceButton[i],
+            po_pLayout->sUpperBase.left + 2 + (155 * i),
+            po_pLayout->sUpperBase.top + 96,
+            po_pLayout->sUpperBase.left + 2 + (155 * i) + 143,
+            po_pLayout->sUpperBase.top + 134);
+  }
+
+  SetRect(&po_pLayout->sRaceProfile,
+          (l_nScreenX - 486) / 2,
+          (l_nScreenY - 309) / 2,
+          (l_nScreenX - 486) / 2 + 486,
+          (l_nScreenY - 309) / 2 + 309);
+  SetRect(&po_pLayout->sLowerBoard,
+          (l_nScreenX - l_nLowerBoardWidth) / 2,
+          l_nScreenY - l_nLowerBoardHeight - 10,
+          (l_nScreenX - l_nLowerBoardWidth) / 2 + l_nLowerBoardWidth,
+          l_nScreenY - 10);
+  SetRect(&po_pLayout->sLowerBase,
+          po_pLayout->sLowerBoard.left + ((l_nLowerBoardWidth - l_nLowerBaseWidth) / 2),
+          po_pLayout->sLowerBoard.top,
+          po_pLayout->sLowerBoard.left + ((l_nLowerBoardWidth - l_nLowerBaseWidth) / 2) + l_nLowerBaseWidth,
+          po_pLayout->sLowerBoard.top + l_nLowerBaseHeight);
+  SetRect(&po_pLayout->sOkButton,
+          po_pLayout->sLowerBoard.left,
+          po_pLayout->sLowerBoard.top + 18,
+          po_pLayout->sLowerBoard.left + 220,
+          po_pLayout->sLowerBoard.top + 54);
+  SetRect(&po_pLayout->sCancelButton,
+          po_pLayout->sLowerBoard.left + 305,
+          po_pLayout->sLowerBoard.top + 18,
+          po_pLayout->sLowerBoard.left + 525,
+          po_pLayout->sLowerBoard.top + 54);
+  return true;
+}
+
+bool CGP_LogIn::GetCharacterCreateAttributeLayout(CHARACTER_CREATE_ATTRIBUTE_LAYOUT *po_pLayout) const
+{
+  if (!po_pLayout)
+  {
+    return false;
+  }
+
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  const int l_nPanelWidth = 211;
+  const int l_nPanelHeight = 466;
+  const int l_nPanelLeft = l_nScreenX - l_nPanelWidth - 30;
+  const int l_nPanelTop = static_cast<int>(static_cast<float>(l_nScreenY - l_nPanelHeight) * 0.2f);
+  SetRect(&po_pLayout->sPanel,
+          l_nPanelLeft,
+          l_nPanelTop,
+          l_nPanelLeft + l_nPanelWidth,
+          l_nPanelTop + l_nPanelHeight);
+  SetRect(&po_pLayout->sTitleBase, l_nPanelLeft + 32, l_nPanelTop + 4, l_nPanelLeft + 178, l_nPanelTop + 30);
+  SetRect(&po_pLayout->sLowerBase, l_nPanelLeft + 81, l_nPanelTop + 428, l_nPanelLeft + 131, l_nPanelTop + 465);
+  SetRect(&po_pLayout->sOkButton, l_nPanelLeft + 16, l_nPanelTop + 432, l_nPanelLeft + 105, l_nPanelTop + 463);
+  SetRect(&po_pLayout->sCancelButton, l_nPanelLeft + 106, l_nPanelTop + 432, l_nPanelLeft + 195, l_nPanelTop + 463);
+
+  for (int i = 0; i < 4; ++i)
+  {
+    const int l_nButtonLeft = IsAccretiaCreateRace(m_byCreateRaceSelection)
+                                ? l_nPanelLeft + 51 + (38 * ((i > CHARACTER_CREATE_ATTRIBUTE_FORCE) ? i - 1 : i))
+                                : l_nPanelLeft + 33 + (38 * i);
+    SetRect(&po_pLayout->sAttributeButton[i],
+            l_nButtonLeft,
+            l_nPanelTop + 52,
+            l_nButtonLeft + 32,
+            l_nPanelTop + 84);
+  }
+
+  SetRect(&po_pLayout->sDescText[0], l_nPanelLeft + 15, l_nPanelTop + 98, l_nPanelLeft + 196, l_nPanelTop + 112);
+  SetRect(&po_pLayout->sDescText[1], l_nPanelLeft + 15, l_nPanelTop + 117, l_nPanelLeft + 196, l_nPanelTop + 131);
+
+  for (int i = 0; i < 3; ++i)
+  {
+    SetRect(&po_pLayout->sBasicPointText[i], l_nPanelLeft + 16, l_nPanelTop + 171 + (i * 15), l_nPanelLeft + 88, l_nPanelTop + 185 + (i * 15));
+    SetRect(&po_pLayout->sBasicPointBase[i], l_nPanelLeft + 90, l_nPanelTop + 174 + (i * 14), l_nPanelLeft + 196, l_nPanelTop + 182 + (i * 14));
+    SetRect(&po_pLayout->sMakeSkillText[i], l_nPanelLeft + 16, l_nPanelTop + 370 + (i * 15), l_nPanelLeft + 88, l_nPanelTop + 384 + (i * 15));
+    SetRect(&po_pLayout->sMakeSkillBase[i], l_nPanelLeft + 90, l_nPanelTop + 372 + (i * 14), l_nPanelLeft + 196, l_nPanelTop + 380 + (i * 14));
+  }
+
+  for (int i = 0; i < 6; ++i)
+  {
+    SetRect(&po_pLayout->sBattleSkillText[i], l_nPanelLeft + 16, l_nPanelTop + 250 + (i * 14), l_nPanelLeft + 88, l_nPanelTop + 264 + (i * 14));
+    SetRect(&po_pLayout->sBattleSkillBase[i], l_nPanelLeft + 90, l_nPanelTop + 252 + (i * 14), l_nPanelLeft + 196, l_nPanelTop + 260 + (i * 14));
+  }
+
+  return true;
+}
+
+bool CGP_LogIn::GetCharacterCreateDetailLayout(CHARACTER_CREATE_DETAIL_LAYOUT *po_pLayout) const
+{
+  if (!po_pLayout)
+  {
+    return false;
+  }
+
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  const int l_nPanelWidth = 178;
+  const int l_nPanelHeight = 326;
+  const int l_nPanelLeft = l_nScreenX - l_nPanelWidth - 30;
+  const int l_nPanelTop = static_cast<int>(static_cast<float>(l_nScreenY - l_nPanelHeight) * 0.38f);
+  SetRect(&po_pLayout->sPanel,
+          l_nPanelLeft,
+          l_nPanelTop,
+          l_nPanelLeft + l_nPanelWidth,
+          l_nPanelTop + l_nPanelHeight);
+  SetRect(&po_pLayout->sTitleBase, l_nPanelLeft + 16, l_nPanelTop + 4, l_nPanelLeft + 162, l_nPanelTop + 30);
+  SetRect(&po_pLayout->sLowerBase, l_nPanelLeft + 65, l_nPanelTop + 289, l_nPanelLeft + 115, l_nPanelTop + 326);
+  SetRect(&po_pLayout->sOkButton, l_nPanelLeft, l_nPanelTop + 295, l_nPanelLeft + 89, l_nPanelTop + 326);
+  SetRect(&po_pLayout->sCancelButton, l_nPanelLeft + 89, l_nPanelTop + 295, l_nPanelLeft + 178, l_nPanelTop + 326);
+  SetRect(&po_pLayout->sSelectItem[CHARACTER_CREATE_SELECT_SEX],
+          l_nPanelLeft + 53,
+          l_nPanelTop + 52,
+          l_nPanelLeft + 124,
+          l_nPanelTop + 69);
+  for (int i = 1; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
+  {
+    SetRect(&po_pLayout->sSelectItem[i],
+            l_nPanelLeft + 31,
+            l_nPanelTop + 94 + ((i - 1) * 22),
+            l_nPanelLeft + 102,
+            l_nPanelTop + 111 + ((i - 1) * 22));
+  }
+
+  for (int i = 0; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
+  {
+    const int l_nMidY = (po_pLayout->sSelectItem[i].top + po_pLayout->sSelectItem[i].bottom) / 2;
+    SetRect(&po_pLayout->sSelectLeftButton[i],
+            po_pLayout->sSelectItem[i].left - 22,
+            l_nMidY - 8,
+            po_pLayout->sSelectItem[i].left - 1,
+            l_nMidY + 9);
+    SetRect(&po_pLayout->sSelectRightButton[i],
+            po_pLayout->sSelectItem[i].right + 1,
+            l_nMidY - 8,
+            po_pLayout->sSelectItem[i].right + 22,
+            l_nMidY + 9);
+  }
+
+  SetRect(&po_pLayout->sNameInput, l_nPanelLeft + 38, l_nPanelTop + 257, l_nPanelLeft + 140, l_nPanelTop + 269);
+  return true;
+}
+
+bool CGP_LogIn::GetCharacterCreateRotateLayout(CHARACTER_CREATE_ROTATE_LAYOUT *po_pLayout) const
+{
+  if (!po_pLayout)
+  {
+    return false;
+  }
+
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  const int l_nLowerBoardWidth = 520;
+  const int l_nLowerBoardHeight = 73;
+  const int l_nLowerBaseWidth = 467;
+  const int l_nLowerBaseHeight = 72;
+  const int l_nLowerBoardLeft = (l_nScreenX - l_nLowerBoardWidth) / 2;
+  const int l_nLowerBoardTop = l_nScreenY - l_nLowerBoardHeight - 10;
+
+  SetRect(&po_pLayout->sLowerBoard,
+          l_nLowerBoardLeft,
+          l_nLowerBoardTop,
+          l_nLowerBoardLeft + l_nLowerBoardWidth,
+          l_nLowerBoardTop + l_nLowerBoardHeight);
+  SetRect(&po_pLayout->sLowerBase,
+          l_nLowerBoardLeft + ((l_nLowerBoardWidth - l_nLowerBaseWidth) / 2),
+          l_nLowerBoardTop,
+          l_nLowerBoardLeft + ((l_nLowerBoardWidth - l_nLowerBaseWidth) / 2) + l_nLowerBaseWidth,
+          l_nLowerBoardTop + l_nLowerBaseHeight);
+  SetRect(&po_pLayout->sRotateLeftButton,
+          l_nLowerBoardLeft,
+          l_nLowerBoardTop + 18,
+          l_nLowerBoardLeft + 220,
+          l_nLowerBoardTop + 54);
+  SetRect(&po_pLayout->sRotateRightButton,
+          l_nLowerBoardLeft + 305,
+          l_nLowerBoardTop + 18,
+          l_nLowerBoardLeft + 525,
+          l_nLowerBoardTop + 54);
+  return true;
+}
+
+BYTE CGP_LogIn::GetCharacterCreateButtonAtPoint(int pi_nX, int pi_nY) const
+{
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    CHARACTER_CREATE_RACE_LAYOUT l_sLayout;
+    if (!GetCharacterCreateRaceLayout(&l_sLayout))
+    {
+      return kInvalidCharacterCreateButton;
+    }
+
+    for (BYTE i = 0; i < 3; ++i)
+    {
+      if (IsPointInRect(l_sLayout.sRaceButton[i], pi_nX, pi_nY))
+      {
+        return i;
+      }
+    }
+    if (IsPointInRect(l_sLayout.sOkButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_OK;
+    }
+    if (IsPointInRect(l_sLayout.sCancelButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_CANCEL;
+    }
+  }
+  else if (m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+  {
+    CHARACTER_CREATE_ATTRIBUTE_LAYOUT l_sLayout;
+    if (!GetCharacterCreateAttributeLayout(&l_sLayout))
+    {
+      return kInvalidCharacterCreateButton;
+    }
+
+    for (BYTE i = 0; i < 4; ++i)
+    {
+      if (IsAccretiaCreateRace(m_byCreateRaceSelection) && i == CHARACTER_CREATE_ATTRIBUTE_FORCE)
+      {
+        continue;
+      }
+      if (IsPointInRect(l_sLayout.sAttributeButton[i], pi_nX, pi_nY))
+      {
+        return static_cast<BYTE>(CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE + i);
+      }
+    }
+    if (IsPointInRect(l_sLayout.sOkButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_OK;
+    }
+    if (IsPointInRect(l_sLayout.sCancelButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_CANCEL;
+    }
+  }
+  else if (m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
+  {
+    CHARACTER_CREATE_DETAIL_LAYOUT l_sLayout;
+    if (!GetCharacterCreateDetailLayout(&l_sLayout))
+    {
+      return kInvalidCharacterCreateButton;
+    }
+
+    CHARACTER_CREATE_ROTATE_LAYOUT l_sRotateLayout;
+    if (GetCharacterCreateRotateLayout(&l_sRotateLayout))
+    {
+      if (IsPointInRect(l_sRotateLayout.sRotateLeftButton, pi_nX, pi_nY))
+      {
+        return CHARACTER_CREATE_BUTTON_ROTATE_LEFT;
+      }
+      if (IsPointInRect(l_sRotateLayout.sRotateRightButton, pi_nX, pi_nY))
+      {
+        return CHARACTER_CREATE_BUTTON_ROTATE_RIGHT;
+      }
+    }
+
+    for (BYTE i = 0; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
+    {
+      if (IsAccretiaCreateRace(m_byCreateRaceSelection) && i == CHARACTER_CREATE_SELECT_SEX)
+      {
+        continue;
+      }
+      if (IsPointInRect(l_sLayout.sSelectLeftButton[i], pi_nX, pi_nY))
+      {
+        return static_cast<BYTE>(CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE + i);
+      }
+      if (IsPointInRect(l_sLayout.sSelectRightButton[i], pi_nX, pi_nY))
+      {
+        return static_cast<BYTE>(CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE + i);
+      }
+    }
+    if (IsPointInRect(l_sLayout.sOkButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_OK;
+    }
+    if (IsPointInRect(l_sLayout.sCancelButton, pi_nX, pi_nY))
+    {
+      return CHARACTER_CREATE_BUTTON_CANCEL;
+    }
+  }
+
+  return kInvalidCharacterCreateButton;
+}
+
+void CGP_LogIn::UpdateCharacterCreateInput(void)
+{
+  const BOOL l_bLeftPressed = ConsumeKeyPress(VK_LEFT);
+  const BOOL l_bRightPressed = ConsumeKeyPress(VK_RIGHT);
+  const BOOL l_bUpPressed = ConsumeKeyPress(VK_UP);
+  const BOOL l_bDownPressed = ConsumeKeyPress(VK_DOWN);
+  const BOOL l_bConfirmPressed = ConsumeKeyPress(VK_RETURN) || ConsumeKeyPress(VK_SPACE);
+  const BOOL l_bEscapePressed = ConsumeKeyPress(VK_ESCAPE);
+
+  if (!IsCharacterCreateScreen())
+  {
+    return;
+  }
+
+  if (IsLoginMessageVisible())
+  {
+    UpdateLoginMessageInput();
+    return;
+  }
+
+  if (_GetMainApp() && _GetMainApp()->IsLoginLobbyCameraAnimating())
+  {
+    m_byCreateMenuHover = kInvalidCharacterCreateButton;
+    m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+    ClearOpeningMouseTransitions();
+    return;
+  }
+
+  UpdateCharacterCreateMouseInput();
+
+  if (l_bEscapePressed)
+  {
+    ActivateCharacterCreateButton(CHARACTER_CREATE_BUTTON_CANCEL);
+    return;
+  }
+
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    if (l_bLeftPressed)
+    {
+      m_byCreateRaceSelection = static_cast<BYTE>((m_byCreateRaceSelection == 0) ? 2 : m_byCreateRaceSelection - 1);
+    }
+    else if (l_bRightPressed)
+    {
+      m_byCreateRaceSelection = static_cast<BYTE>((m_byCreateRaceSelection + 1) % 3);
+    }
+  }
+  else if (m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+  {
+    if (l_bLeftPressed || l_bUpPressed)
+    {
+      m_byCreateAttributeSelection = GetNextCreateAttribute(m_byCreateAttributeSelection, m_byCreateRaceSelection, false);
+    }
+    else if (l_bRightPressed || l_bDownPressed)
+    {
+      m_byCreateAttributeSelection = GetNextCreateAttribute(m_byCreateAttributeSelection, m_byCreateRaceSelection, true);
+    }
+  }
+  else if (m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
+  {
+    if (_GetMainApp() && m_bLeftButtonDown)
+    {
+      if (m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_ROTATE_LEFT)
+      {
+        _GetMainApp()->RotateLoginLobbyCreatePreview(1.0f);
+      }
+      else if (m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_ROTATE_RIGHT)
+      {
+        _GetMainApp()->RotateLoginLobbyCreatePreview(-1.0f);
+      }
+    }
+
+    if (l_bUpPressed || l_bDownPressed)
+    {
+      m_byCreateMenuHover = kInvalidCharacterCreateButton;
+    }
+    if (_GetMainApp() && l_bLeftPressed)
+    {
+      _GetMainApp()->RotateLoginLobbyCreatePreview(1.0f);
+    }
+    else if (_GetMainApp() && l_bRightPressed)
+    {
+      _GetMainApp()->RotateLoginLobbyCreatePreview(-1.0f);
+    }
+  }
+
+  if (l_bConfirmPressed)
+  {
+    ActivateCharacterCreateOk();
+  }
+}
+
+void CGP_LogIn::UpdateCharacterCreateMouseInput(void)
+{
+  BYTE l_byHoverButton = GetCharacterCreateButtonAtPoint(m_nMouseX, m_nMouseY);
+  m_byCreateMenuHover = l_byHoverButton;
+
+  if (m_bLeftButtonPressed)
+  {
+    m_byCreateMenuPressed = m_byCreateMenuHover;
+  }
+
+  if (m_bLeftButtonReleased)
+  {
+    const BYTE l_byPressedButton = m_byCreateMenuPressed;
+    m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+    if (l_byPressedButton != kInvalidCharacterCreateButton && l_byPressedButton == m_byCreateMenuHover)
+    {
+      ActivateCharacterCreateButton(l_byPressedButton);
+    }
+  }
+
+  if (!m_bLeftButtonDown)
+  {
+    m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+  }
+
+  ClearOpeningMouseTransitions();
+}
+
+void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
+{
+  if (pi_byButtonIndex <= CHARACTER_CREATE_BUTTON_RACE_ACCRETIA &&
+      m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    m_byCreateRaceSelection = pi_byButtonIndex;
+    if (IsAccretiaCreateRace(m_byCreateRaceSelection))
+    {
+      m_byCreateSexSelection = 0;
+      if (m_byCreateAttributeSelection == CHARACTER_CREATE_ATTRIBUTE_FORCE)
+      {
+        m_byCreateAttributeSelection = CHARACTER_CREATE_ATTRIBUTE_MELEE;
+      }
+    }
+    return;
+  }
+
+  if (pi_byButtonIndex >= CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE &&
+      pi_byButtonIndex < CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE + 4 &&
+      m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+  {
+    const BYTE l_byAttribute = static_cast<BYTE>(pi_byButtonIndex - CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE);
+    if (!IsAccretiaCreateRace(m_byCreateRaceSelection) ||
+        l_byAttribute != CHARACTER_CREATE_ATTRIBUTE_FORCE)
+    {
+      m_byCreateAttributeSelection = l_byAttribute;
+    }
+    return;
+  }
+
+  if (pi_byButtonIndex >= CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE &&
+      pi_byButtonIndex < CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE + CHARACTER_CREATE_SELECT_COUNT &&
+      m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
+  {
+    const BYTE l_byIndex = static_cast<BYTE>(pi_byButtonIndex - CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE);
+    if (l_byIndex == CHARACTER_CREATE_SELECT_SEX)
+    {
+      if (!IsAccretiaCreateRace(m_byCreateRaceSelection))
+      {
+        m_byCreateSexSelection = static_cast<BYTE>(m_byCreateSexSelection ? 0 : 1);
+      }
+    }
+    else
+    {
+      m_abyCreatePartVariant[l_byIndex] =
+        static_cast<BYTE>((m_abyCreatePartVariant[l_byIndex] == 0)
+                            ? kCharacterCreateDefaultItemCount - 1
+                            : m_abyCreatePartVariant[l_byIndex] - 1);
+    }
+    UpdateCharacterCreatePreview();
+    return;
+  }
+
+  if (pi_byButtonIndex >= CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE &&
+      pi_byButtonIndex < CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE + CHARACTER_CREATE_SELECT_COUNT &&
+      m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
+  {
+    const BYTE l_byIndex = static_cast<BYTE>(pi_byButtonIndex - CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE);
+    if (l_byIndex == CHARACTER_CREATE_SELECT_SEX)
+    {
+      if (!IsAccretiaCreateRace(m_byCreateRaceSelection))
+      {
+        m_byCreateSexSelection = static_cast<BYTE>(m_byCreateSexSelection ? 0 : 1);
+      }
+    }
+    else
+    {
+      m_abyCreatePartVariant[l_byIndex] =
+        static_cast<BYTE>((m_abyCreatePartVariant[l_byIndex] + 1) % kCharacterCreateDefaultItemCount);
+    }
+    UpdateCharacterCreatePreview();
+    return;
+  }
+
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL &&
+      (pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_LEFT ||
+       pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_RIGHT))
+  {
+    if (_GetMainApp())
+    {
+      _GetMainApp()->RotateLoginLobbyCreatePreview(pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_LEFT ? 1.0f : -1.0f);
+    }
+    return;
+  }
+
+  if (pi_byButtonIndex == CHARACTER_CREATE_BUTTON_CANCEL)
+  {
+    if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+    {
+      LeaveCharacterCreateScreen();
+    }
+    else if (m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+    {
+      m_byCreateStep = CHARACTER_CREATE_STEP_RACE;
+      m_byCreateMenuHover = kInvalidCharacterCreateButton;
+      m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+      if (_GetMainApp())
+      {
+        _GetMainApp()->ClearLoginLobbyCreatePreview();
+        _GetMainApp()->PlayLoginLobbyCharacterCreateAttributeCancelCamera();
+      }
+    }
+    else
+    {
+      m_byCreateStep = CHARACTER_CREATE_STEP_ATTRIBUTE;
+      m_byCreateMenuHover = kInvalidCharacterCreateButton;
+      m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+      if (_GetMainApp())
+      {
+        _GetMainApp()->ClearLoginLobbyCreatePreview();
+        _GetMainApp()->PlayLoginLobbyCharacterCreateDetailCancelCamera();
+      }
+    }
+    return;
+  }
+
+  if (pi_byButtonIndex == CHARACTER_CREATE_BUTTON_OK)
+  {
+    ActivateCharacterCreateOk();
+  }
+}
+
+void CGP_LogIn::ActivateCharacterCreateOk(void)
+{
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    m_byCreateStep = CHARACTER_CREATE_STEP_ATTRIBUTE;
+    m_byCreateAttributeSelection = CHARACTER_CREATE_ATTRIBUTE_MELEE;
+    m_byCreateMenuHover = kInvalidCharacterCreateButton;
+    m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+    if (_GetMainApp())
+    {
+      _GetMainApp()->ClearLoginLobbyCreatePreview();
+      _GetMainApp()->PlayLoginLobbyCharacterCreateAttributeCamera();
+    }
+    return;
+  }
+
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+  {
+    m_byCreateStep = CHARACTER_CREATE_STEP_DETAIL;
+    m_byCreateMenuHover = kInvalidCharacterCreateButton;
+    m_byCreateMenuPressed = kInvalidCharacterCreateButton;
+    if (_GetMainApp())
+    {
+      _GetMainApp()->PlayLoginLobbyCharacterCreateDetailCamera();
+    }
+    UpdateCharacterCreatePreview();
+    return;
+  }
+
+  if (m_szCreateCharacterName[0] == '\0' ||
+      strlen(m_szCreateCharacterName) > 16 ||
+      !_IsAvailableCharName(m_szCreateCharacterName, _GetNetworkMgr() ? _GetNetworkMgr()->GetAvatarGrade() : 0))
+  {
+    ShowLoginMessage("Please enter a valid character name.");
+    return;
+  }
+
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (l_pNetworkMgr && l_pNetworkMgr->HasSentAddCharRequest() && !l_pNetworkMgr->HasAddCharResult())
+  {
+    return;
+  }
+
+  if (!l_pNetworkMgr ||
+      !l_pNetworkMgr->SystemMsg_AddCharRequest_zone(m_bySelectedCharacterSlot,
+                                                    m_szCreateCharacterName,
+                                                    GetCreateRaceSexCode(),
+                                                    GetCreateClassCode(),
+                                                    GetCreateBaseShape()))
+  {
+    ShowLoginMessage("Character creation request failed.");
+  }
+}
+
+BYTE CGP_LogIn::GetCreateRaceSexCode(void) const
+{
+  switch (ClampCreateRaceSelection(m_byCreateRaceSelection))
+  {
+    case CHARACTER_CREATE_BUTTON_RACE_CORA:
+      return static_cast<BYTE>(m_byCreateSexSelection ? 3 : 2);
+
+    case CHARACTER_CREATE_BUTTON_RACE_ACCRETIA:
+      return 4;
+
+    case CHARACTER_CREATE_BUTTON_RACE_BELLATO:
+    default:
+      return static_cast<BYTE>(m_byCreateSexSelection ? 1 : 0);
+  }
+}
+
+const char *CGP_LogIn::GetCreateClassCode(void) const
+{
+  static const char *kClassCode[3][4] =
+  {
+    { "BWB0", "BRB0", "BFB0", "BSB0" },
+    { "CWB0", "CRB0", "CFB0", "CSB0" },
+    { "AWB0", "ARB0", "ASB0", "ASB0" }
+  };
+
+  const BYTE l_byRace = ClampCreateRaceSelection(m_byCreateRaceSelection);
+  BYTE l_byAttribute = m_byCreateAttributeSelection < 4 ? m_byCreateAttributeSelection : 0;
+  if (l_byRace == CHARACTER_CREATE_BUTTON_RACE_ACCRETIA &&
+      l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_FORCE)
+  {
+    l_byAttribute = CHARACTER_CREATE_ATTRIBUTE_MELEE;
+  }
+
+  return kClassCode[l_byRace][l_byAttribute];
+}
+
+DWORD CGP_LogIn::GetCreateBaseShape(void) const
+{
+  DWORD l_dwBaseShape = 0;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_COAT] & 0x0F) << 0;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_PANTS] & 0x0F) << 4;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_GLOVE] & 0x0F) << 8;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_SHOES] & 0x0F) << 12;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_HAIR] & 0x0F) << 16;
+  l_dwBaseShape |= static_cast<DWORD>(m_abyCreatePartVariant[CHARACTER_CREATE_SELECT_FACE] & 0x0F) << 20;
+  return l_dwBaseShape;
+}
+
+void CGP_LogIn::AppendCreateCharacterInputChar(WPARAM pi_wParam)
+{
+  const char l_chInput = static_cast<char>(pi_wParam & 0xFF);
+  const size_t l_stNameLen = strlen(m_szCreateCharacterName);
+  if (l_chInput == '\b')
+  {
+    if (l_stNameLen > 0)
+    {
+      m_szCreateCharacterName[l_stNameLen - 1] = '\0';
+    }
+    return;
+  }
+
+  if (l_chInput <= ' ' || l_chInput > '~' || l_stNameLen >= 16)
+  {
+    return;
+  }
+
+  m_szCreateCharacterName[l_stNameLen] = l_chInput;
+  m_szCreateCharacterName[l_stNameLen + 1] = '\0';
+}
+
+void CGP_LogIn::ShowLoginMessage(const char *pi_pMessage)
+{
+  strncpy_s(m_szLoginMessage,
+            sizeof(m_szLoginMessage),
+            pi_pMessage ? pi_pMessage : "",
+            _TRUNCATE);
+  m_bLoginMessageVisible = true;
+  m_bLoginMessageOkHover = false;
+  m_bLoginMessageOkPressed = false;
+  m_byMenuHover = kInvalidMenuIndex;
+  m_byMenuPressed = kInvalidMenuIndex;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ClearOpeningMouseTransitions();
+}
+
+void CGP_LogIn::HideLoginMessage(void)
+{
+  m_bLoginMessageVisible = false;
+  m_bLoginMessageOkHover = false;
+  m_bLoginMessageOkPressed = false;
+  m_szLoginMessage[0] = '\0';
+  ClearOpeningMouseTransitions();
+}
+
+bool CGP_LogIn::IsLoginMessageVisible(void) const
+{
+  return m_bLoginMessageVisible;
+}
+
+bool CGP_LogIn::GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect) const
+{
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  int l_nMsgBoardWidth = 0;
+  int l_nMsgBoardHeight = 0;
+  GetLoginMessageBoardSize(m_szLoginMessage, &l_nMsgBoardWidth, &l_nMsgBoardHeight);
+
+  int l_nBoxWidth = l_nMsgBoardWidth + kMessageBoxMargin * 2;
+  int l_nBoxHeight = l_nMsgBoardHeight + kMessageBoxMargin * 2 + kMessageBoxOkButtonHeight;
+  if (l_nBoxWidth < kMessageBoxMinWidth)
+  {
+    l_nBoxWidth = kMessageBoxMinWidth;
+  }
+  if (l_nBoxHeight < kMessageBoxMinHeight)
+  {
+    l_nBoxHeight = kMessageBoxMinHeight;
+  }
+
+  const int l_nBoxLeft = (l_nScreenX - l_nBoxWidth) / 2;
+  const int l_nBoxTop = (l_nScreenY - l_nBoxHeight) / 2;
+
+  if (po_pBoxRect)
+  {
+    SetRect(po_pBoxRect,
+            l_nBoxLeft,
+            l_nBoxTop,
+            l_nBoxLeft + l_nBoxWidth,
+            l_nBoxTop + l_nBoxHeight);
+  }
+
+  if (po_pOkButtonRect)
+  {
+    const int l_nOkButtonRight = l_nBoxLeft + l_nBoxWidth - kMessageBoxOkButtonRightMargin;
+    const int l_nOkButtonBottom = l_nBoxTop + l_nBoxHeight - kMessageBoxOkButtonBottomMargin;
+    SetRect(po_pOkButtonRect,
+            l_nOkButtonRight - kMessageBoxOkButtonWidth,
+            l_nOkButtonBottom - kMessageBoxOkButtonHeight,
+            l_nOkButtonRight,
+            l_nOkButtonBottom);
+  }
+
+  return true;
+}
+
+void CGP_LogIn::UpdateLoginMessageInput(void)
+{
+  RECT l_sBoxRect;
+  RECT l_sOkButtonRect;
+  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect))
+  {
+    HideLoginMessage();
+    return;
+  }
+
+  m_bLoginMessageOkHover = IsPointInRect(l_sOkButtonRect, m_nMouseX, m_nMouseY);
+
+  if (m_bLeftButtonPressed)
+  {
+    m_bLoginMessageOkPressed = m_bLoginMessageOkHover;
+  }
+
+  if (m_bLeftButtonReleased)
+  {
+    const bool l_bClose = m_bLoginMessageOkPressed && m_bLoginMessageOkHover;
+    m_bLoginMessageOkPressed = false;
+    if (l_bClose)
+    {
+      HideLoginMessage();
+      return;
+    }
+  }
+
+  if (ConsumeKeyPress(VK_RETURN) ||
+      ConsumeKeyPress(VK_SPACE) ||
+      ConsumeKeyPress(VK_ESCAPE))
+  {
+    HideLoginMessage();
+    return;
+  }
+
+  m_byMenuHover = kInvalidMenuIndex;
+  m_byMenuPressed = kInvalidMenuIndex;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  ClearOpeningMouseTransitions();
 }
 
 void CGP_LogIn::RenderOpeningScreen(void) const
@@ -2089,4 +3324,608 @@ void CGP_LogIn::RenderCharacterSelectionScreen(void) const
   DrawCharacterSelectButtonLabel(l_sLayout.sPrevButton, "Prev. Slot", 36, 10, l_bPrevHovered, l_bPrevPressed);
   DrawCharacterSelectButtonLabel(l_sLayout.sNextButton, "Next Slot", 26, 10, l_bNextHovered, l_bNextPressed);
   DrawCenteredCharacterSelectButtonLabel(l_sLayout.sExitButton, "End", l_bExitHovered, l_bExitPressed);
+}
+
+void CGP_LogIn::RenderCharacterCreateScreen(void) const
+{
+  if (_GetMainApp() && _GetMainApp()->IsLoginLobbyCameraAnimating())
+  {
+    return;
+  }
+
+  if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
+  {
+    RenderCharacterCreateRaceScreen();
+  }
+  else if (m_byCreateStep == CHARACTER_CREATE_STEP_ATTRIBUTE)
+  {
+    RenderCharacterCreateAttributeScreen();
+  }
+  else
+  {
+    RenderCharacterCreateDetailScreen();
+  }
+}
+
+void CGP_LogIn::RenderCharacterCreateRaceScreen(void) const
+{
+  CSprite *l_pLoginSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_LOGIN);
+  if (!l_pLoginSprite)
+  {
+    return;
+  }
+
+  CHARACTER_CREATE_RACE_LAYOUT l_sLayout;
+  if (!GetCharacterCreateRaceLayout(&l_sLayout))
+  {
+    return;
+  }
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  13 + ClampCreateRaceSelection(m_byCreateRaceSelection),
+                  l_sLayout.sRaceProfile.left,
+                  l_sLayout.sRaceProfile.top,
+                  l_sLayout.sRaceProfile.right - l_sLayout.sRaceProfile.left,
+                  l_sLayout.sRaceProfile.bottom - l_sLayout.sRaceProfile.top,
+                  0xD0FFFFFF);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  0,
+                  l_sLayout.sUpperBase.left,
+                  l_sLayout.sUpperBase.top,
+                  l_sLayout.sUpperBase.right - l_sLayout.sUpperBase.left,
+                  l_sLayout.sUpperBase.bottom - l_sLayout.sUpperBase.top,
+                  kCharacterSelectSpriteColor);
+  DrawSpriteSheetCell(l_pLoginSprite,
+                      kCharacterSelectAniAction,
+                      0,
+                      l_sLayout.sUpperBoardAni.left,
+                      l_sLayout.sUpperBoardAni.top,
+                      l_sLayout.sUpperBoardAni.right - l_sLayout.sUpperBoardAni.left,
+                      l_sLayout.sUpperBoardAni.bottom - l_sLayout.sUpperBoardAni.top,
+                      2,
+                      static_cast<int>(m_sUpperBoardAnimation.fCurFrameNo),
+                      kCharacterSelectSpriteColor);
+
+  for (BYTE i = 0; i < 3; ++i)
+  {
+    const bool l_bPressed = m_byCreateMenuPressed == i && m_bLeftButtonDown;
+    const bool l_bHovered = m_byCreateMenuHover == i;
+    const DWORD l_dwFrame = l_bPressed ? 3 : (l_bHovered ? 2 : 1);
+    DrawSpriteFrame(l_pLoginSprite,
+                    kCharacterCreateRaceAction,
+                    l_dwFrame,
+                    l_sLayout.sRaceButton[i].left,
+                    l_sLayout.sRaceButton[i].top,
+                    l_sLayout.sRaceButton[i].right - l_sLayout.sRaceButton[i].left,
+                    l_sLayout.sRaceButton[i].bottom - l_sLayout.sRaceButton[i].top,
+                    kCharacterSelectButtonColor);
+    DrawCenteredCharacterSelectButtonLabelFixedColor(l_sLayout.sRaceButton[i],
+                                                     GetCreateRaceLabel(i),
+                                                     l_bPressed,
+                                                     kCharacterSelectTextColor);
+  }
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  4,
+                  l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.top,
+                  l_sLayout.sLowerBase.right - l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.bottom - l_sLayout.sLowerBase.top,
+                  kCharacterSelectSpriteColor);
+
+  const bool l_bOkPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_OK && m_bLeftButtonDown;
+  const bool l_bCancelPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_CANCEL && m_bLeftButtonDown;
+  const bool l_bOkHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_OK;
+  const bool l_bCancelHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_CANCEL;
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  l_bOkPressed ? 7 : (l_bOkHovered ? 6 : 5),
+                  l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.top,
+                  l_sLayout.sOkButton.right - l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.bottom - l_sLayout.sOkButton.top,
+                  kCharacterSelectButtonColor);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  l_bCancelPressed ? 11 : (l_bCancelHovered ? 10 : 9),
+                  l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.top,
+                  l_sLayout.sCancelButton.right - l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.bottom - l_sLayout.sCancelButton.top,
+                  kCharacterSelectButtonColor);
+  DrawCharacterSelectButtonLabelFixedColor(l_sLayout.sOkButton,
+                                           "OK",
+                                           60,
+                                           12,
+                                           l_bOkPressed,
+                                           kCharacterSelectTextColor);
+  DrawCharacterSelectButtonLabelFixedColor(l_sLayout.sCancelButton,
+                                           "Cancel",
+                                           110,
+                                           12,
+                                           l_bCancelPressed,
+                                           kCharacterSelectTextColor);
+}
+
+void CGP_LogIn::RenderCharacterCreateAttributeScreen(void) const
+{
+  CSprite *l_pLoginSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_LOGIN);
+  if (!l_pLoginSprite)
+  {
+    return;
+  }
+
+  CHARACTER_CREATE_ATTRIBUTE_LAYOUT l_sLayout;
+  if (!GetCharacterCreateAttributeLayout(&l_sLayout))
+  {
+    return;
+  }
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  13,
+                  l_sLayout.sPanel.left,
+                  l_sLayout.sPanel.top,
+                  l_sLayout.sPanel.right - l_sLayout.sPanel.left,
+                  l_sLayout.sPanel.bottom - l_sLayout.sPanel.top,
+                  0xC0FFFFFF);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  0,
+                  l_sLayout.sTitleBase.left,
+                  l_sLayout.sTitleBase.top,
+                  l_sLayout.sTitleBase.right - l_sLayout.sTitleBase.left,
+                  l_sLayout.sTitleBase.bottom - l_sLayout.sTitleBase.top,
+                  0xC0FFFFFF);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  1,
+                  l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.top,
+                  l_sLayout.sLowerBase.right - l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.bottom - l_sLayout.sLowerBase.top,
+                  0xC0FFFFFF);
+
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sTitleBase.left + l_sLayout.sTitleBase.right) / 2, "Create"),
+                l_sLayout.sTitleBase.top + 7,
+                "Create",
+                0xFFD3D3D3);
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Class"),
+                l_sLayout.sPanel.top + 35,
+                "Class",
+                0xFFD3D3D3);
+
+  for (BYTE i = 0; i < 4; ++i)
+  {
+    if (IsAccretiaCreateRace(m_byCreateRaceSelection) && i == CHARACTER_CREATE_ATTRIBUTE_FORCE)
+    {
+      continue;
+    }
+
+    const bool l_bSelected = m_byCreateAttributeSelection == i;
+    const bool l_bPressed = m_byCreateMenuPressed == static_cast<BYTE>(CHARACTER_CREATE_BUTTON_ATTRIBUTE_BASE + i) &&
+                            m_bLeftButtonDown;
+    const DWORD l_dwFrame = l_bSelected ? (14 + i * 3 + 2) : (l_bPressed ? (14 + i * 3 + 1) : (14 + i * 3));
+    DrawSpriteFrame(l_pLoginSprite,
+                    kCharacterCreateDetailAction,
+                    l_dwFrame,
+                    l_sLayout.sAttributeButton[i].left,
+                    l_sLayout.sAttributeButton[i].top,
+                    l_sLayout.sAttributeButton[i].right - l_sLayout.sAttributeButton[i].left,
+                    l_sLayout.sAttributeButton[i].bottom - l_sLayout.sAttributeButton[i].top,
+                    0xFFFFFFFF);
+  }
+
+  const BYTE l_byAttribute = m_byCreateAttributeSelection < 4 ? m_byCreateAttributeSelection : 0;
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, GetCreateAttributeLabel(l_byAttribute)),
+                l_sLayout.sDescText[0].top,
+                GetCreateAttributeLabel(l_byAttribute),
+                0xFFB4DAE1);
+
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Status"),
+                l_sLayout.sPanel.top + 146,
+                "Status",
+                0xFFF4D8C0);
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Combat Abilities"),
+                l_sLayout.sPanel.top + 229,
+                "Combat Abilities",
+                0xFFF4D8C0);
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Craft Abilities"),
+                l_sLayout.sPanel.top + 348,
+                "Craft Abilities",
+                0xFFF4D8C0);
+
+  static const char *kBasicLabel[3] = { "HP", "FP", "SP" };
+  const char *kBattleLabel[6] =
+  {
+    "Melee",
+    "Ranged",
+    GetCreateRaceBattleSkillLabel(m_byCreateRaceSelection),
+    "Force",
+    "Shield",
+    "Defense"
+  };
+  static const char *kMakeLabel[3] = { "Weapons", "Armor", "Ammo" };
+  const float l_fBasicBase = 0.35f + (0.05f * ClampCreateRaceSelection(m_byCreateRaceSelection));
+  for (int i = 0; i < 3; ++i)
+  {
+    DrawLoginLine(l_sLayout.sBasicPointText[i].left, l_sLayout.sBasicPointText[i].top, kBasicLabel[i], 0xFFD3D3D3);
+    DrawGaugeBar(l_sLayout.sBasicPointBase[i], l_fBasicBase + (0.08f * i) + (0.04f * l_byAttribute), 0xFF4D9CE0);
+
+    DrawLoginLine(l_sLayout.sMakeSkillText[i].left, l_sLayout.sMakeSkillText[i].top, kMakeLabel[i], 0xFFD3D3D3);
+    DrawGaugeBar(l_sLayout.sMakeSkillBase[i],
+                 l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_SPECIALIST ? 0.82f - (0.08f * i) : 0.24f + (0.05f * i),
+                 0xFF8CBF5A);
+  }
+
+  for (int i = 0; i < 6; ++i)
+  {
+    DrawLoginLine(l_sLayout.sBattleSkillText[i].left, l_sLayout.sBattleSkillText[i].top, kBattleLabel[i], 0xFFD3D3D3);
+    float l_fRate = 0.25f + (0.04f * i);
+    if ((l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_MELEE && i == 0) ||
+        (l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_MISSILE && i == 1) ||
+        (l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_FORCE && i == 3))
+    {
+      l_fRate = 0.82f;
+    }
+    DrawGaugeBar(l_sLayout.sBattleSkillBase[i], l_fRate, 0xFFCF8050);
+  }
+
+  const bool l_bOkPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_OK && m_bLeftButtonDown;
+  const bool l_bCancelPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_CANCEL && m_bLeftButtonDown;
+  const bool l_bOkHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_OK;
+  const bool l_bCancelHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_CANCEL;
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  l_bOkPressed ? 4 : (l_bOkHovered ? 3 : 2),
+                  l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.top,
+                  l_sLayout.sOkButton.right - l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.bottom - l_sLayout.sOkButton.top,
+                  kCharacterSelectButtonColor);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  l_bCancelPressed ? 7 : (l_bCancelHovered ? 6 : 5),
+                  l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.top,
+                  l_sLayout.sCancelButton.right - l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.bottom - l_sLayout.sCancelButton.top,
+                  kCharacterSelectButtonColor);
+  DrawCenteredCharacterSelectButtonLabel(l_sLayout.sOkButton, "OK", l_bOkHovered, l_bOkPressed);
+  DrawCenteredCharacterSelectButtonLabel(l_sLayout.sCancelButton, "Cancel", l_bCancelHovered, l_bCancelPressed);
+}
+
+void CGP_LogIn::RenderCharacterCreateDetailScreen(void) const
+{
+  CSprite *l_pLoginSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_LOGIN);
+  if (!l_pLoginSprite)
+  {
+    return;
+  }
+
+  CHARACTER_CREATE_DETAIL_LAYOUT l_sLayout;
+  if (!GetCharacterCreateDetailLayout(&l_sLayout))
+  {
+    return;
+  }
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  8,
+                  l_sLayout.sPanel.left,
+                  l_sLayout.sPanel.top,
+                  l_sLayout.sPanel.right - l_sLayout.sPanel.left,
+                  l_sLayout.sPanel.bottom - l_sLayout.sPanel.top,
+                  0xC0FFFFFF);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  0,
+                  l_sLayout.sTitleBase.left,
+                  l_sLayout.sTitleBase.top,
+                  l_sLayout.sTitleBase.right - l_sLayout.sTitleBase.left,
+                  l_sLayout.sTitleBase.bottom - l_sLayout.sTitleBase.top,
+                  0xC0FFFFFF);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  1,
+                  l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.top,
+                  l_sLayout.sLowerBase.right - l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.bottom - l_sLayout.sLowerBase.top,
+                  0xC0FFFFFF);
+
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sTitleBase.left + l_sLayout.sTitleBase.right) / 2, "Create"),
+                l_sLayout.sTitleBase.top + 7,
+                "Create",
+                0xFFD3D3D3);
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Gender"),
+                l_sLayout.sPanel.top + 38,
+                "Gender",
+                0xFFD3D3D3);
+  DrawLoginLine(GetCenteredTextX((l_sLayout.sPanel.left + l_sLayout.sPanel.right) / 2, "Name"),
+                l_sLayout.sPanel.top + 241,
+                "Name",
+                0xFFD3D3D3);
+
+  static const char *kSelectLabel[CHARACTER_CREATE_SELECT_COUNT] =
+  {
+    "Sex",
+    "Hair",
+    "Face",
+    "Upper",
+    "Lower",
+    "Arms",
+    "Feet"
+  };
+
+  for (int i = 0; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
+  {
+    const bool l_bSexDisabled = IsAccretiaCreateRace(m_byCreateRaceSelection) &&
+                                i == CHARACTER_CREATE_SELECT_SEX;
+    char l_szValue[32];
+    if (i == CHARACTER_CREATE_SELECT_SEX)
+    {
+      sprintf_s(l_szValue,
+                sizeof(l_szValue),
+                "%s",
+                IsAccretiaCreateRace(m_byCreateRaceSelection)
+                  ? "A"
+                  : (m_byCreateSexSelection ? "F" : "M"));
+    }
+    else
+    {
+      sprintf_s(l_szValue, sizeof(l_szValue), "%s", kSelectLabel[i]);
+    }
+
+    DrawLoginLine(l_sLayout.sSelectItem[i].left,
+                  l_sLayout.sSelectItem[i].top + 2,
+                  l_szValue,
+                  l_bSexDisabled ? 0xFF808080 : 0xFFD3D3D3);
+
+    if (!l_bSexDisabled)
+    {
+      const BYTE l_byLeftButton = static_cast<BYTE>(CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE + i);
+      const BYTE l_byRightButton = static_cast<BYTE>(CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE + i);
+      const bool l_bLeftPressed = m_byCreateMenuPressed == l_byLeftButton && m_bLeftButtonDown;
+      const bool l_bRightPressed = m_byCreateMenuPressed == l_byRightButton && m_bLeftButtonDown;
+      DrawSpriteFrame(l_pLoginSprite,
+                      kCharacterCreateDetailAction,
+                      l_bLeftPressed ? 12 : 11,
+                      l_sLayout.sSelectLeftButton[i].left,
+                      l_sLayout.sSelectLeftButton[i].top,
+                      l_sLayout.sSelectLeftButton[i].right - l_sLayout.sSelectLeftButton[i].left,
+                      l_sLayout.sSelectLeftButton[i].bottom - l_sLayout.sSelectLeftButton[i].top,
+                      kCharacterSelectButtonColor);
+      DrawSpriteFrame(l_pLoginSprite,
+                      kCharacterCreateDetailAction,
+                      l_bRightPressed ? 10 : 9,
+                      l_sLayout.sSelectRightButton[i].left,
+                      l_sLayout.sSelectRightButton[i].top,
+                      l_sLayout.sSelectRightButton[i].right - l_sLayout.sSelectRightButton[i].left,
+                      l_sLayout.sSelectRightButton[i].bottom - l_sLayout.sSelectRightButton[i].top,
+                      kCharacterSelectButtonColor);
+    }
+  }
+
+  Draw2DRectangle(l_sLayout.sNameInput.left,
+                  l_sLayout.sNameInput.top,
+                  l_sLayout.sNameInput.right,
+                  l_sLayout.sNameInput.bottom,
+                  0xC0101010);
+  Draw2DRectangle(l_sLayout.sNameInput.left,
+                  l_sLayout.sNameInput.top,
+                  l_sLayout.sNameInput.right,
+                  l_sLayout.sNameInput.top + 1,
+                  0xC07FA9DC);
+  DrawLoginLine(l_sLayout.sNameInput.left + 4,
+                l_sLayout.sNameInput.top,
+                m_szCreateCharacterName,
+                0xFFFFFFFF);
+
+  const bool l_bOkPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_OK && m_bLeftButtonDown;
+  const bool l_bCancelPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_CANCEL && m_bLeftButtonDown;
+  const bool l_bOkHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_OK;
+  const bool l_bCancelHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_CANCEL;
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  l_bOkPressed ? 4 : (l_bOkHovered ? 3 : 2),
+                  l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.top,
+                  l_sLayout.sOkButton.right - l_sLayout.sOkButton.left,
+                  l_sLayout.sOkButton.bottom - l_sLayout.sOkButton.top,
+                  kCharacterSelectButtonColor);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateDetailAction,
+                  l_bCancelPressed ? 7 : (l_bCancelHovered ? 6 : 5),
+                  l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.top,
+                  l_sLayout.sCancelButton.right - l_sLayout.sCancelButton.left,
+                  l_sLayout.sCancelButton.bottom - l_sLayout.sCancelButton.top,
+                  kCharacterSelectButtonColor);
+  DrawCenteredCharacterSelectButtonLabel(l_sLayout.sOkButton, "OK", l_bOkHovered, l_bOkPressed);
+  DrawCenteredCharacterSelectButtonLabel(l_sLayout.sCancelButton, "Cancel", l_bCancelHovered, l_bCancelPressed);
+  RenderCharacterCreateRotateControls();
+}
+
+void CGP_LogIn::RenderCharacterCreateRotateControls(void) const
+{
+  CSprite *l_pLoginSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_LOGIN);
+  if (!l_pLoginSprite)
+  {
+    return;
+  }
+
+  CHARACTER_CREATE_ROTATE_LAYOUT l_sLayout;
+  if (!GetCharacterCreateRotateLayout(&l_sLayout))
+  {
+    return;
+  }
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  4,
+                  l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.top,
+                  l_sLayout.sLowerBase.right - l_sLayout.sLowerBase.left,
+                  l_sLayout.sLowerBase.bottom - l_sLayout.sLowerBase.top,
+                  kCharacterSelectSpriteColor);
+
+  const bool l_bLeftPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_ROTATE_LEFT && m_bLeftButtonDown;
+  const bool l_bRightPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_ROTATE_RIGHT && m_bLeftButtonDown;
+  const bool l_bLeftHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_ROTATE_LEFT;
+  const bool l_bRightHovered = m_byCreateMenuHover == CHARACTER_CREATE_BUTTON_ROTATE_RIGHT;
+
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  l_bLeftPressed ? 7 : (l_bLeftHovered ? 6 : 5),
+                  l_sLayout.sRotateLeftButton.left,
+                  l_sLayout.sRotateLeftButton.top,
+                  l_sLayout.sRotateLeftButton.right - l_sLayout.sRotateLeftButton.left,
+                  l_sLayout.sRotateLeftButton.bottom - l_sLayout.sRotateLeftButton.top,
+                  kCharacterSelectButtonColor);
+  DrawSpriteFrame(l_pLoginSprite,
+                  kCharacterCreateRaceAction,
+                  l_bRightPressed ? 11 : (l_bRightHovered ? 10 : 9),
+                  l_sLayout.sRotateRightButton.left,
+                  l_sLayout.sRotateRightButton.top,
+                  l_sLayout.sRotateRightButton.right - l_sLayout.sRotateRightButton.left,
+                  l_sLayout.sRotateRightButton.bottom - l_sLayout.sRotateRightButton.top,
+                  kCharacterSelectButtonColor);
+  DrawCharacterSelectButtonLabel(l_sLayout.sRotateLeftButton, "Rotate L", 60, 12, l_bLeftHovered, l_bLeftPressed);
+  DrawCharacterSelectButtonLabel(l_sLayout.sRotateRightButton, "Rotate R", 110, 12, l_bRightHovered, l_bRightPressed);
+}
+
+void CGP_LogIn::RenderLoginMessageBox(void) const
+{
+  if (!IsLoginMessageVisible())
+  {
+    return;
+  }
+
+  RECT l_sBoxRect;
+  RECT l_sOkButtonRect;
+  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect))
+  {
+    return;
+  }
+
+  CSprite *l_pUiSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_COMMON);
+  const bool l_bOkPressed = m_bLoginMessageOkPressed && m_bLeftButtonDown;
+  const int l_nBoxWidth = l_sBoxRect.right - l_sBoxRect.left;
+  const int l_nBoxHeight = l_sBoxRect.bottom - l_sBoxRect.top;
+
+  Draw2DRectangle(l_sBoxRect.left,
+                  l_sBoxRect.top,
+                  l_sBoxRect.right,
+                  l_sBoxRect.bottom,
+                  kMessageBoxPanelColor);
+
+  Draw2DRectangle(l_sBoxRect.left + kMessageBoxOutlineMargin,
+                  l_sBoxRect.top + kMessageBoxOutlineMargin,
+                  l_sBoxRect.right - kMessageBoxOutlineMargin,
+                  l_sBoxRect.top + kMessageBoxOutlineMargin + kMessageBoxOutlineSize,
+                  kMessageBoxOutlineColor);
+  Draw2DRectangle(l_sBoxRect.left + kMessageBoxOutlineMargin,
+                  l_sBoxRect.bottom - kMessageBoxOutlineMargin - kMessageBoxOutlineSize,
+                  l_sBoxRect.right - kMessageBoxOutlineMargin,
+                  l_sBoxRect.bottom - kMessageBoxOutlineMargin,
+                  kMessageBoxOutlineColor);
+  Draw2DRectangle(l_sBoxRect.left + kMessageBoxOutlineMargin,
+                  l_sBoxRect.top + kMessageBoxOutlineMargin,
+                  l_sBoxRect.left + kMessageBoxOutlineMargin + kMessageBoxOutlineSize,
+                  l_sBoxRect.bottom - kMessageBoxOutlineMargin,
+                  kMessageBoxOutlineColor);
+  Draw2DRectangle(l_sBoxRect.right - kMessageBoxOutlineMargin - kMessageBoxOutlineSize,
+                  l_sBoxRect.top + kMessageBoxOutlineMargin,
+                  l_sBoxRect.right - kMessageBoxOutlineMargin,
+                  l_sBoxRect.bottom - kMessageBoxOutlineMargin,
+                  kMessageBoxOutlineColor);
+
+  int l_nMsgBoardWidth = 0;
+  int l_nMsgBoardHeight = 0;
+  GetLoginMessageBoardSize(m_szLoginMessage, &l_nMsgBoardWidth, &l_nMsgBoardHeight);
+  const int l_nMsgLeft = l_sBoxRect.left + ((l_nBoxWidth - l_nMsgBoardWidth) / 2);
+  const int l_nMsgTop = l_sBoxRect.top + ((l_nBoxHeight - l_nMsgBoardHeight) / 2);
+
+  char l_szLine[128];
+  int l_nLineStart = 0;
+  int l_nLineIndex = 0;
+  for (int i = 0;; ++i)
+  {
+    if (m_szLoginMessage[i] != '\n' && m_szLoginMessage[i] != '\0')
+    {
+      continue;
+    }
+
+    const int l_nLineLen = i - l_nLineStart;
+    const int l_nCopyLen = l_nLineLen < static_cast<int>(sizeof(l_szLine) - 1)
+                             ? l_nLineLen
+                             : static_cast<int>(sizeof(l_szLine) - 1);
+    memcpy(l_szLine, m_szLoginMessage + l_nLineStart, l_nCopyLen);
+    l_szLine[l_nCopyLen] = '\0';
+    DrawLoginLine(l_nMsgLeft + kMessageBoxTextMargin,
+                  l_nMsgTop + kMessageBoxTextMargin + (l_nLineIndex * (kFontHeight + kMessageBoxColumnGap)),
+                  l_szLine,
+                  0xFFFFFFFF);
+    ++l_nLineIndex;
+
+    if (m_szLoginMessage[i] == '\0')
+    {
+      break;
+    }
+    l_nLineStart = i + 1;
+  }
+
+  const DWORD l_dwOkFrame = l_bOkPressed
+                              ? kMessageBoxOkButtonPressedFrame
+                              : (m_bLoginMessageOkHover
+                                   ? kMessageBoxOkButtonHoverFrame
+                                   : kMessageBoxOkButtonNormalFrame);
+  if (l_pUiSprite)
+  {
+    DrawSpriteFrame(l_pUiSprite,
+                    kMessageBoxOkButtonAction,
+                    l_dwOkFrame,
+                    l_sOkButtonRect.left,
+                    l_sOkButtonRect.top,
+                    l_sOkButtonRect.right - l_sOkButtonRect.left,
+                    l_sOkButtonRect.bottom - l_sOkButtonRect.top,
+                    0xFFFFFFFF);
+  }
+  else
+  {
+    Draw2DRectangle(l_sOkButtonRect.left,
+                    l_sOkButtonRect.top,
+                    l_sOkButtonRect.right,
+                    l_sOkButtonRect.bottom,
+                    l_bOkPressed ? 0xD0101820 : 0xC0202E38);
+    Draw2DRectangle(l_sOkButtonRect.left,
+                    l_sOkButtonRect.top,
+                    l_sOkButtonRect.right,
+                    l_sOkButtonRect.top + 1,
+                    m_bLoginMessageOkHover ? 0xF0D0E0F0 : 0xD08EA0AE);
+    Draw2DRectangle(l_sOkButtonRect.left,
+                    l_sOkButtonRect.bottom - 1,
+                    l_sOkButtonRect.right,
+                    l_sOkButtonRect.bottom,
+                    0xD0202830);
+    Draw2DRectangle(l_sOkButtonRect.left,
+                    l_sOkButtonRect.top,
+                    l_sOkButtonRect.left + 1,
+                    l_sOkButtonRect.bottom,
+                    m_bLoginMessageOkHover ? 0xF0D0E0F0 : 0xD08EA0AE);
+    Draw2DRectangle(l_sOkButtonRect.right - 1,
+                    l_sOkButtonRect.top,
+                    l_sOkButtonRect.right,
+                    l_sOkButtonRect.bottom,
+                    0xD0202830);
+  }
+
+  DrawLoginLine(GetCenteredTextX((l_sOkButtonRect.left + l_sOkButtonRect.right) / 2, "OK"),
+                l_sOkButtonRect.top + ((kMessageBoxOkButtonHeight - kFontHeight) / 2),
+                "OK",
+                0xFFFFFFFF);
 }

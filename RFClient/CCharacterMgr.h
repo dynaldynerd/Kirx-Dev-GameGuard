@@ -42,6 +42,8 @@ public:
   CPlayer *AddPlayer(DWORD pi_dwIndex);
   CMonster *AddMonster(DWORD pi_dwIndex);
   CBaseNpc *AddNpc(DWORD pi_dwIndex);
+  BOOL RemoveCharacter(DWORD pi_dwCharTypeID, DWORD pi_dwIndex);
+  BOOL RemovePlayer(DWORD pi_dwIndex);
 
   CCharacter *GetCharacter(DWORD pi_dwCharTypeID, DWORD pi_dwIndex);
   CPlayer *GetPlayer(DWORD pi_dwIndex);
