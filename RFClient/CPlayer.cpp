@@ -1659,10 +1659,17 @@ bool CPlayer::LoadBone(const BONE_DATA &pi_stBoneData)
   __try
   {
     CHARACTEROBJECT *l_pLoadedBone = l_pCharIF->LoadMeshData(l_pBoneMgr, m_szBoneName, true, NULL);
-    l_pStoredBone = l_pBoneMgr->GetCharacter(m_szBoneName);
-    m_pBone = l_pCharIF->GetMeshData(l_pBoneMgr, m_szBoneName);
+    l_pStoredBone = l_pLoadedBone;
+    if (l_pLoadedBone)
+    {
+      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pLoadedBone, &l_pCharIF->m_TM, true);
+      if (l_bBoneRealLoaded)
+      {
+        m_pBone = l_pLoadedBone;
+      }
+    }
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadBone: LoadMeshData=%p GetCharacter=%p GetMeshData=%p",
+    AppendPlayerLog("LoadBone: LoadMeshData=%p loadedBone=%p activeBone=%p",
                     l_pLoadedBone,
                     l_pStoredBone,
                     m_pBone);
@@ -1798,36 +1805,25 @@ bool CPlayer::LoadAccretia()
                                                              m_szBoneName,
                                                              true,
                                                              NULL);
+    l_pStoredBone = l_pLoadedBone;
+    if (l_pLoadedBone)
+    {
+      const bool l_bBoneRealLoaded = l_pCharIF->LoadRealData(l_pLoadedBone,
+                                                             &l_pCharIF->m_TM,
+                                                             true);
+      if (l_bBoneRealLoaded)
+      {
+        m_pBone = l_pLoadedBone;
+      }
+    }
 #if defined(_DEBUG)
-    AppendPlayerLog("LoadAccretia: LoadMeshData(bone,true) result=%p", l_pLoadedBone);
+    AppendPlayerLog("LoadAccretia: LoadMeshData(bone,true) result=%p active=%p",
+                    l_pLoadedBone,
+                    m_pBone);
 #endif
   }
   __except (LogPlayerException("LoadAccretia: LoadMeshData(bone,true)", GetExceptionInformation()))
   {
-  }
-
-  __try
-  {
-    l_pStoredBone = l_pBoneMgr->GetCharacter(m_szBoneName);
-#if defined(_DEBUG)
-    AppendPlayerLog("LoadAccretia: bone mgr GetCharacter result=%p", l_pStoredBone);
-#endif
-  }
-  __except (LogPlayerException("LoadAccretia: bone mgr GetCharacter", GetExceptionInformation()))
-  {
-    l_pStoredBone = NULL;
-  }
-
-  __try
-  {
-    m_pBone = l_pCharIF->GetMeshData(l_pBoneMgr, m_szBoneName);
-#if defined(_DEBUG)
-    AppendPlayerLog("LoadAccretia: GetMeshData(bone) result=%p", m_pBone);
-#endif
-  }
-  __except (LogPlayerException("LoadAccretia: GetMeshData(bone)", GetExceptionInformation()))
-  {
-    m_pBone = NULL;
   }
 
   if (!m_pBone && l_pStoredBone)
