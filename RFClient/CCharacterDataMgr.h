@@ -35,6 +35,17 @@ private:
   CEdfFile m_cNationQuestData;
   CEdfFile m_cNationMsgEventData;
   CEdfFile m_cNationEventShipData;
+  CEdfFile m_cNationLanguageData;
+  CEdfFile m_cNationMsgMonsterData;
+  CEdfFile m_cNationUIHelpData;
+  CEdfFile m_cNationPlayerData;
+  CEdfFile m_cNationExpData;
+  CEdfFile m_cNationGameData;
+  CEdfFile m_cNationHintData;
+  CEdfFile m_cNationPcRoomData;
+
+  CEdfFile m_cEventSoundData;
+  CEdfFile m_cSpecialStoreData;
 };
 
 extern CCharacterDataMgr *g_pCharDataMgr;

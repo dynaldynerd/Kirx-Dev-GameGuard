@@ -16,7 +16,7 @@
 #include <stdio.h>
 
 
-#ifdef	_SERVER_DEBUG_NO_SOUND	//서버 디버그의 경우 빈함수만을 호출한다.
+#if defined(_SERVER_DEBUG_NO_SOUND) || defined(RFCLIENT_NO_JPEG)	//서버 디버그의 경우 빈함수만을 호출한다.
 
 
 BYTE * JpegFileToRGB(char* fileName,			// path to image

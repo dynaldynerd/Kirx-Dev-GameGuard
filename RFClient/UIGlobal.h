@@ -9,3 +9,7 @@ BOOL _IsAbuseStr(char *pi_pStr);
 BOOL _IsAdvStr(char *pi_pStr);
 
 BOOL _IsAvailableCharName(char *pi_pName, BYTE pi_byUserDegree = 0);
+
+#define SND_ID_LOGIN_SELECT 273015
+#define SND_ID_LOGIN_OK     273016
+#define SND_ID_LOGIN_CANCEL 273017

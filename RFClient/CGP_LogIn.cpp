@@ -76,6 +76,11 @@ const BYTE kInvalidCharacterCreateButton = 0xFF;
 const DWORD kCharacterCreateRaceAction = 3;
 const DWORD kCharacterCreateDetailAction = 4;
 
+void PlayLoginUISound(DWORD pi_dwSoundID)
+{
+  PlayWave(pi_dwSoundID, 0, 1.0f, 0.0f);
+}
+
 enum CHARACTER_CREATE_STEP
 {
   CHARACTER_CREATE_STEP_RACE = 0,
@@ -735,6 +740,7 @@ CGP_LogIn::CGP_LogIn()
     m_bCharacterSelectionUIClosing(false),
     m_bCharacterDummiesLoaded(false),
     m_bWaitingCharacterListRefresh(false),
+    m_bStartupLoading(true),
     m_bStartRequested(false),
     m_bCreditsMode(false),
     m_byLoginMessageMode(LOGIN_MESSAGE_MODE_OK),
@@ -745,7 +751,8 @@ CGP_LogIn::CGP_LogIn()
     m_bLoginMessageCancelHover(false),
     m_bLoginMessageCancelPressed(false),
     m_dwCreditsStartTick(0),
-    m_pTitleLogoTexture(NULL)
+    m_pTitleLogoTexture(NULL),
+    m_bTitleMusicLoaded(false)
 {
   ZeroMemory(m_abVirtualKeyState, sizeof(m_abVirtualKeyState));
   ZeroMemory(m_abyCreatePartVariant, sizeof(m_abyCreatePartVariant));
@@ -870,6 +877,7 @@ HRESULT CGP_LogIn::FrameMove(void)
   UpdateCharacterCreateResult();
   UpdateCharacterDeleteResult();
   EnsureCharacterSelection();
+  UpdateStartupLoadingState();
   UpdateDisplayedScreen();
   UpdateCharacterSelectionUIState();
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
@@ -945,6 +953,7 @@ BOOL CGP_LogIn::InputProcess(void)
   UpdateCharacterCreateResult();
   UpdateCharacterDeleteResult();
   EnsureCharacterSelection();
+  UpdateStartupLoadingState();
   UpdateDisplayedScreen();
   if (ShouldRenderLoadingScreen())
   {
@@ -1001,6 +1010,7 @@ BOOL CGP_LogIn::LoadData(void)
   m_bCharacterSelectionUIClosing = false;
   m_bCharacterDummiesLoaded = false;
   m_bWaitingCharacterListRefresh = false;
+  m_bStartupLoading = true;
   m_bStartRequested = false;
   m_bCreditsMode = false;
   m_byLoginMessageMode = LOGIN_MESSAGE_MODE_OK;
@@ -1012,6 +1022,14 @@ BOOL CGP_LogIn::LoadData(void)
   ZeroMemory(m_abVirtualKeyState, sizeof(m_abVirtualKeyState));
   ResetCharacterSelectionAnimation();
   LoadLoginSprites();
+  if (!m_bTitleMusicLoaded)
+  {
+    m_bTitleMusicLoaded = m_cTitleMusic.LoadR3MP3(".\\Snd\\BGM\\Title.mp3") ? true : false;
+    if (m_bTitleMusicLoaded)
+    {
+      m_cTitleMusic.PlayR3MP3();
+    }
+  }
   PresentLoadingScreen();
 
   if (!_GetMainApp()->LoadLoginLobbyData())
@@ -1029,6 +1047,12 @@ BOOL CGP_LogIn::LoadData(void)
 BOOL CGP_LogIn::UnloadData(void)
 {
   StopCreditsRoll();
+  if (m_bTitleMusicLoaded)
+  {
+    m_cTitleMusic.StopR3MP3();
+    m_cTitleMusic.ReleaesR3MP3();
+    m_bTitleMusicLoaded = false;
+  }
   UnloadLoginSprites();
   ReleaseTitleLogoTexture();
   if (_GetMainApp())
@@ -1213,6 +1237,44 @@ void CGP_LogIn::EnsureCharacterSelection(void)
   if (!m_bStartRequested || !IsUILockResolved())
   {
     return;
+  }
+}
+
+void CGP_LogIn::UpdateStartupLoadingState(void)
+{
+  if (!m_bStartupLoading)
+  {
+    return;
+  }
+
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (!l_pNetworkMgr || !l_pNetworkMgr->HasLauncherData())
+  {
+    m_bStartupLoading = false;
+    return;
+  }
+
+  if (l_pNetworkMgr->HasEnterWorldResult() &&
+      l_pNetworkMgr->GetResultOfEnterTheWorldServer() != WORLD_ENTER_SUCCESS)
+  {
+    m_bStartupLoading = false;
+    return;
+  }
+
+  if (!l_pNetworkMgr->HasRegedCharResult())
+  {
+    return;
+  }
+
+  if (l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS)
+  {
+    m_bStartupLoading = false;
+    return;
+  }
+
+  if (m_bCharacterDummiesLoaded)
+  {
+    m_bStartupLoading = false;
   }
 }
 
@@ -1705,6 +1767,11 @@ bool CGP_LogIn::IsStartupLoadingComplete(void) const
 
 bool CGP_LogIn::ShouldRenderLoadingScreen(void) const
 {
+  if (m_bStartupLoading)
+  {
+    return true;
+  }
+
   if (!m_bStartRequested)
   {
     return false;
@@ -1868,6 +1935,7 @@ void CGP_LogIn::ActivateOpeningMenuItem(BYTE pi_byMenuIndex)
 {
   if (pi_byMenuIndex == 0)
   {
+    PlayLoginUISound(SND_ID_LOGIN_OK);
     m_bStartRequested = true;
     if (!m_dwStartRequestTick)
     {
@@ -1876,10 +1944,12 @@ void CGP_LogIn::ActivateOpeningMenuItem(BYTE pi_byMenuIndex)
   }
   else if (pi_byMenuIndex == 1)
   {
+    PlayLoginUISound(SND_ID_LOGIN_SELECT);
     StartCreditsRoll();
   }
   else if (pi_byMenuIndex == 2 && _GetMainApp())
   {
+    PlayLoginUISound(SND_ID_LOGIN_CANCEL);
     _GetMainApp()->RequestQuitProgram();
   }
 }
@@ -2187,6 +2257,7 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_CREATE)
   {
+    PlayLoginUISound(SND_ID_LOGIN_OK);
     CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
     if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
     {
@@ -2203,6 +2274,7 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_DELETE)
   {
+    PlayLoginUISound(SND_ID_LOGIN_CANCEL);
     CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
     if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
     {
@@ -2223,6 +2295,7 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_EXIT && _GetMainApp())
   {
+    PlayLoginUISound(SND_ID_LOGIN_CANCEL);
     _GetMainApp()->RequestQuitProgram();
   }
 }
@@ -2252,6 +2325,7 @@ void CGP_LogIn::MoveCharacterSelectionSlot(bool pi_bNext)
       _GetMainApp()->PlayLoginLobbyCharacterPrevCamera(l_byOldSlotIndex);
     }
   }
+  PlayLoginUISound(SND_ID_LOGIN_SELECT);
 }
 
 void CGP_LogIn::SendSelectedCharacterRequest(void)
@@ -2274,6 +2348,7 @@ void CGP_LogIn::SendSelectedCharacterRequest(void)
 
   if (!l_pNetworkMgr->HasSentSelCharRequest() || l_pNetworkMgr->HasSelCharResult())
   {
+    PlayLoginUISound(SND_ID_LOGIN_OK);
     l_pNetworkMgr->SystemMsg_SelCharRequest_zone(m_bySelectedCharacterSlot);
   }
 }
@@ -2858,6 +2933,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
   if (pi_byButtonIndex <= CHARACTER_CREATE_BUTTON_RACE_ACCRETIA &&
       m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
   {
+    PlayLoginUISound(SND_ID_LOGIN_SELECT);
     m_byCreateRaceSelection = pi_byButtonIndex;
     if (IsAccretiaCreateRace(m_byCreateRaceSelection))
     {
@@ -2878,6 +2954,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
     if (!IsAccretiaCreateRace(m_byCreateRaceSelection) ||
         l_byAttribute != CHARACTER_CREATE_ATTRIBUTE_FORCE)
     {
+      PlayLoginUISound(SND_ID_LOGIN_SELECT);
       m_byCreateAttributeSelection = l_byAttribute;
     }
     return;
@@ -2887,6 +2964,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
       pi_byButtonIndex < CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE + CHARACTER_CREATE_SELECT_COUNT &&
       m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
   {
+    PlayLoginUISound(SND_ID_LOGIN_SELECT);
     const BYTE l_byIndex = static_cast<BYTE>(pi_byButtonIndex - CHARACTER_CREATE_BUTTON_DETAIL_LEFT_BASE);
     if (l_byIndex == CHARACTER_CREATE_SELECT_SEX)
     {
@@ -2910,6 +2988,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
       pi_byButtonIndex < CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE + CHARACTER_CREATE_SELECT_COUNT &&
       m_byCreateStep == CHARACTER_CREATE_STEP_DETAIL)
   {
+    PlayLoginUISound(SND_ID_LOGIN_SELECT);
     const BYTE l_byIndex = static_cast<BYTE>(pi_byButtonIndex - CHARACTER_CREATE_BUTTON_DETAIL_RIGHT_BASE);
     if (l_byIndex == CHARACTER_CREATE_SELECT_SEX)
     {
@@ -2931,6 +3010,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
       (pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_LEFT ||
        pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_RIGHT))
   {
+    PlayLoginUISound(SND_ID_LOGIN_SELECT);
     if (_GetMainApp())
     {
       _GetMainApp()->RotateLoginLobbyCreatePreview(pi_byButtonIndex == CHARACTER_CREATE_BUTTON_ROTATE_LEFT ? 1.0f : -1.0f);
@@ -2940,6 +3020,7 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
 
   if (pi_byButtonIndex == CHARACTER_CREATE_BUTTON_CANCEL)
   {
+    PlayLoginUISound(SND_ID_LOGIN_CANCEL);
     if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
     {
       LeaveCharacterCreateScreen();
@@ -2977,6 +3058,8 @@ void CGP_LogIn::ActivateCharacterCreateButton(BYTE pi_byButtonIndex)
 
 void CGP_LogIn::ActivateCharacterCreateOk(void)
 {
+  PlayLoginUISound(SND_ID_LOGIN_OK);
+
   if (m_byCreateStep == CHARACTER_CREATE_STEP_RACE)
   {
     m_byCreateStep = CHARACTER_CREATE_STEP_ATTRIBUTE;
@@ -3128,6 +3211,8 @@ void CGP_LogIn::ShowDeleteCharacterConfirm(void)
 
 bool CGP_LogIn::ConfirmPendingCharacterDelete(void)
 {
+  PlayLoginUISound(SND_ID_LOGIN_OK);
+
   const BYTE l_byDeleteSlot = m_byPendingDeleteCharacterSlot;
   HideLoginMessage();
 
@@ -3296,12 +3381,14 @@ void CGP_LogIn::UpdateLoginMessageInput(void)
       }
       else
       {
+        PlayLoginUISound(SND_ID_LOGIN_OK);
         HideLoginMessage();
       }
       return;
     }
     if (l_bCancel)
     {
+      PlayLoginUISound(SND_ID_LOGIN_CANCEL);
       HideLoginMessage();
       return;
     }
@@ -3316,6 +3403,7 @@ void CGP_LogIn::UpdateLoginMessageInput(void)
     }
     else
     {
+      PlayLoginUISound(SND_ID_LOGIN_OK);
       HideLoginMessage();
     }
     return;
@@ -3324,6 +3412,7 @@ void CGP_LogIn::UpdateLoginMessageInput(void)
   if ((l_bHasCancelButton && (ConsumeKeyPress(VK_ESCAPE) || ConsumeKeyPress('N'))) ||
       (!l_bHasCancelButton && ConsumeKeyPress(VK_ESCAPE)))
   {
+    PlayLoginUISound(SND_ID_LOGIN_CANCEL);
     HideLoginMessage();
     return;
   }

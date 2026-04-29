@@ -7,6 +7,8 @@
 #include <cstdarg>
 #include <vector>
 
+#include <mmsystem.h>
+
 #include "CGP_LogIn.h"
 #include "CGP_MainGame.h"
 #include "CGP_Title.h"
@@ -59,6 +61,17 @@ constexpr BYTE kLoginLobbyAccretiaRaceSexCode = 4;
 constexpr float kLoginLobbyCreatePreviewPos[3] = {1.0f, -158.0f, 33.0f};
 constexpr float kLoginLobbyCreatePreviewDefaultScale = 1.7f;
 constexpr float kLoginLobbyCreatePreviewAccretiaScale = 1.3f;
+constexpr DWORD kLoginCameraStartWave = 32001;
+constexpr DWORD kLoginCameraEndWave = 32003;
+
+struct STARTUP_VIDEO_ENTRY
+{
+  char szFileName[MAX_PATH];
+  int nX;
+  int nY;
+  int nWidth;
+  int nHeight;
+};
 
 float ClampFloat(float value, float minimum, float maximum)
 {
@@ -131,6 +144,306 @@ bool IsAcceleratorExitCommand(UINT pi_uMsg, WPARAM pi_wParam)
   return pi_uMsg == WM_COMMAND &&
          LOWORD(pi_wParam) == IDM_EXIT &&
          HIWORD(pi_wParam) == 1;
+}
+
+bool IsExistingFileA(const char *pi_pFileName)
+{
+  if (!pi_pFileName || !pi_pFileName[0])
+  {
+    return false;
+  }
+
+  const DWORD l_dwAttributes = GetFileAttributesA(pi_pFileName);
+  return l_dwAttributes != INVALID_FILE_ATTRIBUTES &&
+         (l_dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+void GetStartupScreenSize(int *po_pScreenX, int *po_pScreenY)
+{
+  if (po_pScreenX)
+  {
+    *po_pScreenX = 0;
+  }
+
+  if (po_pScreenY)
+  {
+    *po_pScreenY = 0;
+  }
+
+  _R3ENGINE_STATE *l_pState = GetR3State();
+  if (!l_pState)
+  {
+    return;
+  }
+
+  if (po_pScreenX)
+  {
+    *po_pScreenX = static_cast<int>(l_pState->mScreenXsize);
+  }
+
+  if (po_pScreenY)
+  {
+    *po_pScreenY = static_cast<int>(l_pState->mScreenYsize);
+  }
+}
+
+void TrimProfileValue(char *pio_pValue)
+{
+  if (!pio_pValue)
+  {
+    return;
+  }
+
+  char *l_pBegin = pio_pValue;
+  while (*l_pBegin == ' ' || *l_pBegin == '\t' || *l_pBegin == '\"')
+  {
+    ++l_pBegin;
+  }
+
+  if (l_pBegin != pio_pValue)
+  {
+    memmove(pio_pValue, l_pBegin, strlen(l_pBegin) + 1);
+  }
+
+  size_t l_nLength = strlen(pio_pValue);
+  while (l_nLength > 0)
+  {
+    char &l_chValue = pio_pValue[l_nLength - 1];
+    if (l_chValue != ' ' && l_chValue != '\t' && l_chValue != '\"' &&
+        l_chValue != '\r' && l_chValue != '\n')
+    {
+      break;
+    }
+
+    l_chValue = '\0';
+    --l_nLength;
+  }
+}
+
+bool ReadProfileStringAny(const char *pi_pFileName,
+                          const char *pi_pSection,
+                          const char *const *pi_ppKeys,
+                          char *po_pValue,
+                          size_t pi_nValueSize)
+{
+  if (!pi_pFileName || !pi_pSection || !pi_ppKeys || !po_pValue || pi_nValueSize == 0)
+  {
+    return false;
+  }
+
+  po_pValue[0] = '\0';
+  for (int i = 0; pi_ppKeys[i]; ++i)
+  {
+    char l_szValue[MAX_PATH];
+    l_szValue[0] = '\0';
+    const DWORD l_dwLength = GetPrivateProfileStringA(pi_pSection,
+                                                      pi_ppKeys[i],
+                                                      "",
+                                                      l_szValue,
+                                                      sizeof(l_szValue),
+                                                      pi_pFileName);
+    TrimProfileValue(l_szValue);
+    if (l_dwLength > 0 && l_szValue[0])
+    {
+      strcpy_s(po_pValue, pi_nValueSize, l_szValue);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+int ReadProfileIntAny(const char *pi_pFileName,
+                      const char *pi_pSection,
+                      const char *const *pi_ppKeys,
+                      int pi_nDefaultValue)
+{
+  char l_szValue[64];
+  if (!ReadProfileStringAny(pi_pFileName, pi_pSection, pi_ppKeys, l_szValue, sizeof(l_szValue)))
+  {
+    return pi_nDefaultValue;
+  }
+
+  return atoi(l_szValue);
+}
+
+int ReadStartupVideoCount(const char *pi_pFileName)
+{
+  static const char *const kSections[] =
+  {
+    "VIDEO",
+    "Video",
+    "RF_AVI",
+    "AVI",
+    "INFO",
+    NULL
+  };
+
+  static const char *const kKeys[] =
+  {
+    "MAX_VIDEO_NEMBER",
+    "MAX_VIDEO_NUMBER",
+    "MAX_VIDEO",
+    "COUNT",
+    NULL
+  };
+
+  for (int i = 0; kSections[i]; ++i)
+  {
+    const int l_nCount = ReadProfileIntAny(pi_pFileName, kSections[i], kKeys, 0);
+    if (l_nCount > 0)
+    {
+      return l_nCount;
+    }
+  }
+
+  return 1;
+}
+
+int ReadStartupVideoCoord(const char *pi_pFileName,
+                          const char *pi_pSection,
+                          const char *const *pi_ppKeys,
+                          int pi_nParentSize,
+                          int pi_nVideoSize,
+                          int pi_nDefaultValue)
+{
+  char l_szValue[64];
+  if (!ReadProfileStringAny(pi_pFileName, pi_pSection, pi_ppKeys, l_szValue, sizeof(l_szValue)))
+  {
+    return pi_nDefaultValue;
+  }
+
+  if (_stricmp(l_szValue, "POS_CENTER") == 0)
+  {
+    return (pi_nParentSize - pi_nVideoSize) / 2;
+  }
+
+  if (_stricmp(l_szValue, "POS_LEFT") == 0 || _stricmp(l_szValue, "POS_TOP") == 0)
+  {
+    return 0;
+  }
+
+  if (_stricmp(l_szValue, "POS_RIGHT") == 0 || _stricmp(l_szValue, "POS_BOTTOM") == 0)
+  {
+    return pi_nParentSize - pi_nVideoSize;
+  }
+
+  return atoi(l_szValue);
+}
+
+bool ResolveStartupVideoPath(char *pio_pFileName, size_t pi_nFileNameSize)
+{
+  if (!pio_pFileName || !pio_pFileName[0] || pi_nFileNameSize == 0)
+  {
+    return false;
+  }
+
+  if (IsExistingFileA(pio_pFileName))
+  {
+    return true;
+  }
+
+  if (strchr(pio_pFileName, '\\') || strchr(pio_pFileName, '/') || strchr(pio_pFileName, ':'))
+  {
+    return false;
+  }
+
+  char l_szBgmPath[MAX_PATH];
+  sprintf_s(l_szBgmPath, sizeof(l_szBgmPath), ".\\Snd\\BGM\\%s", pio_pFileName);
+  if (!IsExistingFileA(l_szBgmPath))
+  {
+    return false;
+  }
+
+  strcpy_s(pio_pFileName, pi_nFileNameSize, l_szBgmPath);
+  return true;
+}
+
+bool LoadStartupVideoEntry(STARTUP_VIDEO_ENTRY *po_pEntry)
+{
+  static const char kVideoConfigFileName[] = ".\\RF_AVI.dat";
+  static const char *const kFileKeys[] = {"FILE_NAME", "FILENAME", "AVI_FILE", "AVI", "FILE", "NAME", NULL};
+  static const char *const kWidthKeys[] = {"WIDTH", "VIDEO_WIDTH", "SIZE_X", "X_SIZE", "CX", NULL};
+  static const char *const kHeightKeys[] = {"HEIGHT", "VIDEO_HEIGHT", "SIZE_Y", "Y_SIZE", "CY", NULL};
+  static const char *const kXKeys[] = {"POS_X", "X", "LEFT", NULL};
+  static const char *const kYKeys[] = {"POS_Y", "Y", "TOP", NULL};
+
+  if (!po_pEntry || !IsExistingFileA(kVideoConfigFileName))
+  {
+    return false;
+  }
+
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetStartupScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return false;
+  }
+
+  const int l_nVideoCount = ReadStartupVideoCount(kVideoConfigFileName);
+  for (int i = 0; i < l_nVideoCount; ++i)
+  {
+    char l_szSection[32];
+    sprintf_s(l_szSection, sizeof(l_szSection), "VIDEO_NUM_%d", i);
+
+    STARTUP_VIDEO_ENTRY l_sEntry = {};
+    if (!ReadProfileStringAny(kVideoConfigFileName,
+                              l_szSection,
+                              kFileKeys,
+                              l_sEntry.szFileName,
+                              sizeof(l_sEntry.szFileName)))
+    {
+      continue;
+    }
+
+    if (!ResolveStartupVideoPath(l_sEntry.szFileName, sizeof(l_sEntry.szFileName)))
+    {
+      continue;
+    }
+
+    l_sEntry.nWidth = ReadProfileIntAny(kVideoConfigFileName, l_szSection, kWidthKeys, l_nScreenX);
+    l_sEntry.nHeight = ReadProfileIntAny(kVideoConfigFileName, l_szSection, kHeightKeys, l_nScreenY);
+    if (l_sEntry.nWidth <= 0 || l_sEntry.nHeight <= 0)
+    {
+      continue;
+    }
+
+    l_sEntry.nX = ReadStartupVideoCoord(kVideoConfigFileName,
+                                        l_szSection,
+                                        kXKeys,
+                                        l_nScreenX,
+                                        l_sEntry.nWidth,
+                                        (l_nScreenX - l_sEntry.nWidth) / 2);
+    l_sEntry.nY = ReadStartupVideoCoord(kVideoConfigFileName,
+                                        l_szSection,
+                                        kYKeys,
+                                        l_nScreenY,
+                                        l_sEntry.nHeight,
+                                        (l_nScreenY - l_sEntry.nHeight) / 2);
+    *po_pEntry = l_sEntry;
+    return true;
+  }
+
+  return false;
+}
+
+void DrawStartupSpriteFrame(CSprite *pi_pSprite,
+                            DWORD pi_dwActionNo,
+                            DWORD pi_dwFrameNo,
+                            int pi_nX,
+                            int pi_nY,
+                            int pi_nWidth,
+                            int pi_nHeight)
+{
+  if (!pi_pSprite)
+  {
+    return;
+  }
+
+  pi_pSprite->SetAction(pi_dwActionNo);
+  pi_pSprite->SetFrame(pi_dwFrameNo);
+  pi_pSprite->DrawSprite(pi_nX, pi_nY, pi_nX + pi_nWidth, pi_nY + pi_nHeight);
 }
 
 void HideWindowMenuBar(HWND pi_hWnd, DWORD pi_dwWindowStyle, int pi_nClientWidth, int pi_nClientHeight)
@@ -783,6 +1096,7 @@ bool CMainApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
 #endif
   InitR3Engine();
   InitR3SoundSystem(".\\snd\\WaveList.spt");
+  LoadBGMList("./Snd/BGMList.spt");
   _R3ENGINE_STATE *l_pState = GetR3State();
 
   if (FAILED(InitR3D3D(hInstance, 0)))
@@ -810,7 +1124,10 @@ bool CMainApp::Initialize(HINSTANCE hInstance, LPCSTR commandLine)
   }
 
   HideWindowMenuBar(m_hWnd, m_dwWindowStyle, l_nClientWidth, l_nClientHeight);
-  SetClientWindowVisible(FALSE);
+  m_bClientWindowVisible = FALSE;
+  SetClientWindowVisible(TRUE);
+  TryPlayStartupVideo();
+  PresentStartupLoadingScreen();
 
   ParseOfflineRegedCharReplay(commandLine);
   if (m_bOfflineRegedCharReplay)
@@ -1109,10 +1426,10 @@ BOOL CMainApp::LoadData(void)
     return TRUE;
   }
 
-  if (!m_land.LoadData() ||
+  if (!m_cItemDataMgr.LoadData() ||
       !m_cCharResDataMgr.LoadData() ||
       !m_cCharDataMgr.LoadData() ||
-      !m_cItemDataMgr.LoadData())
+      !m_land.LoadData())
   {
     return FALSE;
   }
@@ -1442,6 +1759,85 @@ void CMainApp::SetClientWindowVisible(BOOL pi_bVisible)
   m_bClientWindowVisible = l_bVisible;
 }
 
+BOOL CMainApp::TryPlayStartupVideo(void)
+{
+  STARTUP_VIDEO_ENTRY l_sVideoEntry = {};
+  if (!m_hWnd || !LoadStartupVideoEntry(&l_sVideoEntry))
+  {
+    return FALSE;
+  }
+
+  char l_szCommand[MAX_PATH + 160];
+  mciSendStringA("close rfstartupvideo", NULL, 0, NULL);
+
+  sprintf_s(l_szCommand,
+            sizeof(l_szCommand),
+            "open \"%s\" type mpegvideo alias rfstartupvideo parent %u style child",
+            l_sVideoEntry.szFileName,
+            static_cast<unsigned>(reinterpret_cast<UINT_PTR>(m_hWnd)));
+  MCIERROR l_dwError = mciSendStringA(l_szCommand, NULL, 0, NULL);
+  if (l_dwError != 0)
+  {
+    sprintf_s(l_szCommand,
+              sizeof(l_szCommand),
+              "open \"%s\" alias rfstartupvideo parent %u style child",
+              l_sVideoEntry.szFileName,
+              static_cast<unsigned>(reinterpret_cast<UINT_PTR>(m_hWnd)));
+    l_dwError = mciSendStringA(l_szCommand, NULL, 0, NULL);
+  }
+
+  if (l_dwError != 0)
+  {
+#if defined(_DEBUG)
+    AppendCaptureLog("TryPlayStartupVideo: open failed file=%s err=%u",
+                     l_sVideoEntry.szFileName,
+                     static_cast<unsigned>(l_dwError));
+#endif
+    mciSendStringA("close rfstartupvideo", NULL, 0, NULL);
+    return FALSE;
+  }
+
+  sprintf_s(l_szCommand,
+            sizeof(l_szCommand),
+            "put rfstartupvideo window at %d %d %d %d",
+            l_sVideoEntry.nX,
+            l_sVideoEntry.nY,
+            l_sVideoEntry.nWidth,
+            l_sVideoEntry.nHeight);
+  mciSendStringA(l_szCommand, NULL, 0, NULL);
+  mciSendStringA("play rfstartupvideo wait", NULL, 0, m_hWnd);
+  mciSendStringA("close rfstartupvideo", NULL, 0, NULL);
+  return TRUE;
+}
+
+void CMainApp::PresentStartupLoadingScreen(void)
+{
+  int l_nScreenX = 0;
+  int l_nScreenY = 0;
+  GetStartupScreenSize(&l_nScreenX, &l_nScreenY);
+  if (l_nScreenX <= 0 || l_nScreenY <= 0)
+  {
+    return;
+  }
+
+  CSpriteMgr l_cSpriteMgr;
+  l_cSpriteMgr.Init();
+  l_cSpriteMgr.LoadSprite(SP_ID_LOADING);
+
+  if (!R3BeginScene())
+  {
+    return;
+  }
+
+  R3ClearFrameBuffer();
+  DrawStartupSpriteFrame(l_cSpriteMgr.GetSprite(SP_ID_LOADING), 0, 0, 0, 0, l_nScreenX, l_nScreenY);
+  R3EndScene();
+  if (GetD3dDevice())
+  {
+    GetD3dDevice()->Present(NULL, NULL, NULL, NULL);
+  }
+}
+
 HRESULT CMainApp::FrameMove()
 {
   return S_OK;
@@ -1592,6 +1988,7 @@ BOOL CMainApp::PlayLoginLobbyCamera(const char *pi_pCameraName,
 #endif
   m_cLoginLobbyAniCamera.SetPrePlayCamera(l_dwCameraIndex, pi_dwStartFrame, pi_dwEndFrame, pi_dwFlag);
   m_bLoginLobbyCameraAnimating = (pi_dwFlag == _CAM_FLAG_FINAL_STOP);
+  PlayWave(kLoginCameraStartWave, 0, 1.0f, 0.0f);
 
   float l_matLobbyCamera[4][4];
 #if defined(_DEBUG)
@@ -1961,6 +2358,10 @@ void CMainApp::FrameMoveLoginLobby(void)
       R3SetCameraMatrix(m_vecLoginLobbyCameraPos, l_matLobbyCamera);
       if (!l_bCameraPlaying)
       {
+        if (m_bLoginLobbyCameraAnimating)
+        {
+          PlayWave(kLoginCameraEndWave, 0, 1.0f, 0.0f);
+        }
         m_bLoginLobbyCameraAnimating = FALSE;
       }
       l_pLevel->SetCameraPos(m_vecLoginLobbyCameraPos);

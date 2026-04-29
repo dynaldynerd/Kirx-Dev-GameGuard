@@ -69,6 +69,128 @@ void CopyVector3f(Vector3f &po_vecDestination, const float *pi_pSource)
   po_vecDestination[1] = pi_pSource[1];
   po_vecDestination[2] = pi_pSource[2];
 }
+
+BOOL ReadMapOverlayString(CDataString *pi_pSourceData,
+                          char *po_pDestination,
+                          size_t pi_nDestinationSize,
+                          DWORD pi_dwReadSize)
+{
+  if (!po_pDestination || !pi_nDestinationSize)
+  {
+    return FALSE;
+  }
+
+  ZeroMemory(po_pDestination, pi_nDestinationSize);
+  if (pi_dwReadSize == 0)
+  {
+    return TRUE;
+  }
+
+  std::vector<char> l_vecBuffer(pi_dwReadSize);
+  if (!ReadSourceData(pi_pSourceData,
+                      &l_vecBuffer[0],
+                      1,
+                      static_cast<int>(pi_dwReadSize)))
+  {
+    return FALSE;
+  }
+
+  CopyBufferString(po_pDestination,
+                   pi_nDestinationSize,
+                   &l_vecBuffer[0],
+                   l_vecBuffer.size());
+  return TRUE;
+}
+
+BOOL LoadMapOverlayData(CDataString *pi_pMapSourceData,
+                        CDataString *pi_pNationMapSourceData,
+                        std::vector<MAP_OVERLAY_INFO> &po_vecOverlayData)
+{
+  po_vecOverlayData.clear();
+
+  DWORD l_dwOverlayNum = 0;
+  DWORD l_dwNationOverlayNum = 0;
+  if (!ReadSourceData(pi_pMapSourceData, &l_dwOverlayNum, sizeof(l_dwOverlayNum)) ||
+      !ReadSourceData(pi_pNationMapSourceData, &l_dwNationOverlayNum, sizeof(l_dwNationOverlayNum)))
+  {
+    return FALSE;
+  }
+
+  po_vecOverlayData.reserve(l_dwOverlayNum);
+  for (DWORD i = 0; i < l_dwOverlayNum; ++i)
+  {
+    MAP_OVERLAY_INFO l_stOverlayInfo;
+    l_stOverlayInfo.dwHeight = 0;
+    l_stOverlayInfo.dwWidth = 0;
+    ZeroMemory(l_stOverlayInfo.pMapName, sizeof(l_stOverlayInfo.pMapName));
+
+    DWORD l_dwMapNameSize = 0;
+    if (!ReadSourceData(pi_pMapSourceData, &l_stOverlayInfo.dwWidth, sizeof(l_stOverlayInfo.dwWidth)) ||
+        !ReadSourceData(pi_pMapSourceData, &l_stOverlayInfo.dwHeight, sizeof(l_stOverlayInfo.dwHeight)) ||
+        !ReadSourceData(pi_pMapSourceData, &l_dwMapNameSize, sizeof(l_dwMapNameSize)) ||
+        !ReadMapOverlayString(pi_pMapSourceData,
+                              l_stOverlayInfo.pMapName,
+                              sizeof(l_stOverlayInfo.pMapName),
+                              l_dwMapNameSize))
+    {
+      return FALSE;
+    }
+
+    DWORD l_dwPointNum = 0;
+    if (!ReadSourceData(pi_pMapSourceData, &l_dwPointNum, sizeof(l_dwPointNum)))
+    {
+      return FALSE;
+    }
+
+    l_stOverlayInfo.vecPoint.resize(l_dwPointNum);
+    for (DWORD j = 0; j < l_dwPointNum; ++j)
+    {
+      MAP_OVERLAY_POINT &l_stPoint = l_stOverlayInfo.vecPoint[j];
+      ZeroMemory(&l_stPoint, sizeof(l_stPoint));
+
+      if (!ReadSourceData(pi_pMapSourceData, &l_stPoint.dwColor, sizeof(l_stPoint.dwColor)) ||
+          !ReadSourceData(pi_pMapSourceData, &l_stPoint.dwX, sizeof(l_stPoint.dwX)) ||
+          !ReadSourceData(pi_pMapSourceData, &l_stPoint.dwY, sizeof(l_stPoint.dwY)) ||
+          !ReadSourceData(pi_pMapSourceData, &l_stPoint.dwUnknown, sizeof(l_stPoint.dwUnknown)))
+      {
+        return FALSE;
+      }
+      l_stPoint.dwColor |= 0xFF000000;
+
+      DWORD l_dwPointNameSize = 0;
+      if (!ReadSourceData(pi_pNationMapSourceData, &l_dwPointNameSize, sizeof(l_dwPointNameSize)) ||
+          !ReadMapOverlayString(pi_pNationMapSourceData,
+                                l_stPoint.pName,
+                                sizeof(l_stPoint.pName),
+                                l_dwPointNameSize))
+      {
+        return FALSE;
+      }
+    }
+
+    DWORD l_dwRawDataSize = 0;
+    if (!ReadSourceData(pi_pMapSourceData, &l_dwRawDataSize, sizeof(l_dwRawDataSize)))
+    {
+      return FALSE;
+    }
+
+    if (l_dwRawDataSize > 0)
+    {
+      l_stOverlayInfo.vecRawData.resize(l_dwRawDataSize);
+      if (!ReadSourceData(pi_pMapSourceData,
+                          &l_stOverlayInfo.vecRawData[0],
+                          static_cast<int>(l_dwRawDataSize)))
+      {
+        return FALSE;
+      }
+    }
+
+    po_vecOverlayData.push_back(l_stOverlayInfo);
+  }
+
+  UNREFERENCED_PARAMETER(l_dwNationOverlayNum);
+  return TRUE;
+}
 } // namespace
 
 CLand::CLand()
@@ -531,6 +653,17 @@ BOOL CLand::LoadData(void)
     }
   }
 
+  if (!LoadMapOverlayData(l_pMapSourceData,
+                          l_pNationMapSourceData,
+                          m_vecMapOverlayData) ||
+      !LoadMapOverlayData(l_pMapSourceData,
+                          l_pNationMapSourceData,
+                          m_vecWorldMapOverlayData))
+  {
+    ReleaseData();
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -550,6 +683,8 @@ void CLand::ReleaseData(void)
   m_byMaxMapNum = 0;
   m_byMapIndex = 0xFF;
   m_byPortalIndex = 0xFF;
+  m_vecMapOverlayData.clear();
+  m_vecWorldMapOverlayData.clear();
 }
 
 void CLand::ReleaseMapInfo(MAP_INFO *pi_pMapInfo)

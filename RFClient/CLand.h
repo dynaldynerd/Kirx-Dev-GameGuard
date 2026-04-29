@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <windows.h>
 
 #include "R3Engine/2ndclass/level.h"
@@ -168,6 +170,24 @@ struct MAP_INFO
   _TheRest TheRest;
 };
 
+struct MAP_OVERLAY_POINT
+{
+  char pName[64];
+  DWORD dwColor;
+  DWORD dwX;
+  DWORD dwY;
+  DWORD dwUnknown;
+};
+
+struct MAP_OVERLAY_INFO
+{
+  DWORD dwHeight;
+  DWORD dwWidth;
+  char pMapName[32];
+  std::vector<MAP_OVERLAY_POINT> vecPoint;
+  std::vector<BYTE> vecRawData;
+};
+
 class CLand;
 
 extern CLand *g_pLand;
@@ -181,6 +201,8 @@ class CLand
 private:
   CLevel *m_pLevel;
   MAP_INFO *m_pMapInfo;
+  std::vector<MAP_OVERLAY_INFO> m_vecMapOverlayData;
+  std::vector<MAP_OVERLAY_INFO> m_vecWorldMapOverlayData;
   DWORD m_byMaxMapNum;
   BYTE m_byMapIndex;
   BYTE m_byPortalIndex;

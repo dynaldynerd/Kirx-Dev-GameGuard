@@ -4,6 +4,7 @@
 
 #include "CGameProgress.h"
 #include "SpriteMgr.h"
+#include "R3Engine/2ndclass/r3sound.h"
 
 struct TITLE_CREDIT_LINE
 {
@@ -119,6 +120,7 @@ private:
   void UpdateCharacterDeleteResult(void);
   bool RequestRegisteredCharacterRefresh(void);
   void EnsureCharacterSelection(void);
+  void UpdateStartupLoadingState(void);
   void UpdateDisplayedScreen(void);
   void UpdateOpeningInput(void);
   void UpdateCharacterSelectionInput(void);
@@ -218,6 +220,7 @@ private:
   bool m_bCharacterSelectionUIClosing;
   bool m_bCharacterDummiesLoaded;
   bool m_bWaitingCharacterListRefresh;
+  bool m_bStartupLoading;
   bool m_bStartRequested;
   bool m_bCreditsMode;
   BYTE m_byLoginMessageMode;
@@ -229,6 +232,8 @@ private:
   bool m_bLoginMessageCancelPressed;
   DWORD m_dwCreditsStartTick;
   void *m_pTitleLogoTexture;
+  CPlayMP3 m_cTitleMusic;
+  bool m_bTitleMusicLoaded;
   char m_szLoginMessage[128];
   char m_szCreateCharacterName[17];
   CHARACTER_SELECT_ANIMATION m_sUpperBoardAnimation;

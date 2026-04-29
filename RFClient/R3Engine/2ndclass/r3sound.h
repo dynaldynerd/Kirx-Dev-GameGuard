@@ -7,6 +7,10 @@ void ReleaseR3SoundSystem();
 
 void LoadWaveList(char *name);	//효과음 관련리스트 기본적으로 사운드초기화및 릴리즈때 해준다....
 void ReleaseWaveList();		//
+void LoadBGMList(char *name);
+void ReleaseBGMList();
+BOOL IsExistFromBGMSpt(DWORD id);
+char *GetFilenameFromBGMSpt(DWORD id);
 
 
 //전체 볼륨에 관한 API

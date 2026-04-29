@@ -14,6 +14,10 @@ BOOL InitR3SoundSystem(char *wav_spt_name){ return 1; }		//웨이브스크립트 이름을
 void ReleaseR3SoundSystem(){}
 void LoadWaveList(char *name){}	//효과음 관련리스트 기본적으로 사운드초기화및 릴리즈때 해준다....
 void ReleaseWaveList(){}		//
+void LoadBGMList(char *name){}
+void ReleaseBGMList(){}
+BOOL IsExistFromBGMSpt(DWORD id){return 1;}
+char *GetFilenameFromBGMSpt(DWORD id){return NULL;}
 
 BOOL SetGlobalWavVolume(float vol){ return 1; }	//0-1까지..	웨이브 전체볼륨.
 float GetGlobalWavVolume(){ return 1.0f; }	//0-1까지..	웨이브 전체볼륨.
@@ -252,6 +256,7 @@ void ReleaseR3SoundSystem()
 #ifndef	NO_WAVE_PLAY
 	ReleaseWaveList();
 #endif
+	ReleaseBGMList();
 
 	if (stDigital)
 	{
@@ -397,6 +402,111 @@ static DWORD ConvertHexa(char *hole)
 }
 
 
+typedef struct{
+	char name[59];
+	DWORD id;
+}_BGM_LIST;
+
+static _BGM_LIST *stBGMList=NULL;
+static int stMaxBGMNum;
+static int stBGMNum;
+
+void ReleaseBGMList()
+{
+	if( stBGMList )
+		Dfree(stBGMList);
+	stBGMList=NULL;
+	stBGMNum=0;
+	stMaxBGMNum=0;
+}
+
+void LoadBGMList(char *name)
+{
+	if( name==NULL )
+		return;
+
+	ReleaseBGMList();
+
+	FILE *fp;
+	if(( fp =fopen(name,"rt"))==NULL)
+	{
+		Warning(name,"<- File not found\n");
+		return;
+	}
+
+	stMaxBGMNum=256;
+	stBGMList=(_BGM_LIST * )Dmalloc( sizeof(_BGM_LIST)*stMaxBGMNum );
+	memset(stBGMList,0,sizeof(_BGM_LIST)*stMaxBGMNum );
+
+	char hole[256];
+	while(1)
+	{
+		if( fscanf(fp,"%255s",hole)==EOF)
+		{
+			fclose(fp);
+			return;
+		}
+		if (!strcmp(hole,"[BGMList]"))
+			break;
+	}
+
+	stBGMNum=0;
+	while( fscanf(fp,"%255s",hole)!=EOF )
+	{
+		DWORD id = atoi(hole);
+		if( id == 0 )
+		{
+			id = ConvertHexa(hole);
+			if( id == 0 )
+				continue;
+		}
+
+		if( fscanf(fp,"%255s",hole)==EOF )
+			break;
+		strlwr(hole);
+		if( strlen(hole) > 58 )
+		{
+			Warning(hole,"<- BGM path too long. Keep it below 58 characters.");
+			continue;
+		}
+
+		stBGMList[stBGMNum].id=id;
+		strcpy(stBGMList[stBGMNum].name,hole);
+		stBGMNum++;
+		if( stBGMNum >= stMaxBGMNum )
+		{
+			stBGMList = (_BGM_LIST *)ReAlloc(stBGMList,
+				sizeof(_BGM_LIST)*stMaxBGMNum,
+				sizeof(_BGM_LIST)*(stMaxBGMNum+64));
+			memset(stBGMList+stMaxBGMNum,0,sizeof(_BGM_LIST)*64 );
+			stMaxBGMNum+=64;
+		}
+	}
+	fclose(fp);
+}
+
+static DWORD GetRealBGMID(DWORD id)
+{
+	for(int i=0; i<stBGMNum; i++)
+	{
+		if(stBGMList[i].id == id )
+			return i;
+	}
+	return -1;
+}
+
+BOOL IsExistFromBGMSpt(DWORD id)
+{
+	return GetRealBGMID(id) != (DWORD)-1;
+}
+
+char *GetFilenameFromBGMSpt(DWORD id)
+{
+	DWORD real_id = GetRealBGMID(id);
+	if( real_id == (DWORD)-1 )
+		return NULL;
+	return stBGMList[real_id].name;
+}
 void LoadWaveList(char *name)
 {
 	if( name==NULL )

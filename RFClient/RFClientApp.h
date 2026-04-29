@@ -111,6 +111,8 @@ private:
   bool DrawPlayerShadowRender();
   void ApplyCamera();
   void UpdateProjectionParameters();
+  BOOL TryPlayStartupVideo(void);
+  void PresentStartupLoadingScreen(void);
   bool SaveDebugFrameCapture(const char *fileName);
   static bool IsKeyDown(int virtualKey);
 
