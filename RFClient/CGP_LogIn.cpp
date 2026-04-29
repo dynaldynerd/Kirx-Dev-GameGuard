@@ -573,6 +573,57 @@ void DrawGaugeBar(const RECT &pi_sBaseRect, float pi_fRate, DWORD pi_dwColor)
   }
 }
 
+void DrawCreateAttributeGaugeBar(CSprite *pi_pSprite,
+                                 const RECT &pi_sBaseRect,
+                                 float pi_fRate,
+                                 DWORD pi_dwGaugeFrame)
+{
+  if (!pi_pSprite)
+  {
+    return;
+  }
+
+  if (pi_fRate < 0.0f)
+  {
+    pi_fRate = 0.0f;
+  }
+  else if (pi_fRate > 1.0f)
+  {
+    pi_fRate = 1.0f;
+  }
+
+  DrawSpriteFrame(pi_pSprite,
+                  kCharacterCreateDetailAction,
+                  26,
+                  pi_sBaseRect.left,
+                  pi_sBaseRect.top,
+                  pi_sBaseRect.right - pi_sBaseRect.left,
+                  pi_sBaseRect.bottom - pi_sBaseRect.top,
+                  0xFFFFFFFF);
+
+  const int l_nFillWidth = static_cast<int>(
+    static_cast<float>(pi_sBaseRect.right - pi_sBaseRect.left - 2) * pi_fRate);
+  if (l_nFillWidth <= 0)
+  {
+    return;
+  }
+
+  float l_afUV[2][2];
+  l_afUV[0][0] = 0.0f;
+  l_afUV[0][1] = pi_fRate;
+  l_afUV[1][0] = 0.0f;
+  l_afUV[1][1] = 1.0f;
+
+  pi_pSprite->SetAction(kCharacterCreateDetailAction);
+  pi_pSprite->SetFrame(pi_dwGaugeFrame);
+  pi_pSprite->DrawSpriteUV(pi_sBaseRect.left + 1,
+                           pi_sBaseRect.top + 1,
+                           l_afUV,
+                           pi_sBaseRect.left + 1 + l_nFillWidth,
+                           pi_sBaseRect.bottom - 1,
+                           0xFFFFFFFF);
+}
+
 bool LoadTextureFile(const char *pi_pPath, void **po_ppTexture)
 {
   if (!pi_pPath || !pi_pPath[0] || !po_ppTexture || !GetD3dDevice())
@@ -3553,12 +3604,16 @@ void CGP_LogIn::RenderCharacterCreateAttributeScreen(void) const
   for (int i = 0; i < 3; ++i)
   {
     DrawLoginLine(l_sLayout.sBasicPointText[i].left, l_sLayout.sBasicPointText[i].top, kBasicLabel[i], 0xFFD3D3D3);
-    DrawGaugeBar(l_sLayout.sBasicPointBase[i], l_fBasicBase + (0.08f * i) + (0.04f * l_byAttribute), 0xFF4D9CE0);
+    DrawCreateAttributeGaugeBar(l_pLoginSprite,
+                                l_sLayout.sBasicPointBase[i],
+                                l_fBasicBase + (0.08f * i) + (0.04f * l_byAttribute),
+                                27 + i);
 
     DrawLoginLine(l_sLayout.sMakeSkillText[i].left, l_sLayout.sMakeSkillText[i].top, kMakeLabel[i], 0xFFD3D3D3);
-    DrawGaugeBar(l_sLayout.sMakeSkillBase[i],
-                 l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_SPECIALIST ? 0.82f - (0.08f * i) : 0.24f + (0.05f * i),
-                 0xFF8CBF5A);
+    DrawCreateAttributeGaugeBar(l_pLoginSprite,
+                                l_sLayout.sMakeSkillBase[i],
+                                l_byAttribute == CHARACTER_CREATE_ATTRIBUTE_SPECIALIST ? 0.82f - (0.08f * i) : 0.24f + (0.05f * i),
+                                30);
   }
 
   for (int i = 0; i < 6; ++i)
@@ -3571,7 +3626,7 @@ void CGP_LogIn::RenderCharacterCreateAttributeScreen(void) const
     {
       l_fRate = 0.82f;
     }
-    DrawGaugeBar(l_sLayout.sBattleSkillBase[i], l_fRate, 0xFFCF8050);
+    DrawCreateAttributeGaugeBar(l_pLoginSprite, l_sLayout.sBattleSkillBase[i], l_fRate, 30);
   }
 
   const bool l_bOkPressed = m_byCreateMenuPressed == CHARACTER_CREATE_BUTTON_OK && m_bLeftButtonDown;
