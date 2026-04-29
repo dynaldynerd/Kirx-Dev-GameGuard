@@ -208,6 +208,16 @@ int GetCenteredTextX(int pi_nCenterX, const char *pi_pText)
   return pi_nCenterX - GetR3TextWidth(pi_pText) / 2;
 }
 
+void DrawCenteredLoginLineInRect(const RECT &pi_sRect, const char *pi_pText, DWORD pi_dwColor)
+{
+  const int l_nWidth = pi_sRect.right - pi_sRect.left;
+  const int l_nHeight = pi_sRect.bottom - pi_sRect.top;
+  DrawLoginLine(GetCenteredTextX(pi_sRect.left + (l_nWidth / 2), pi_pText),
+                pi_sRect.top + ((l_nHeight - kFontHeight) / 2),
+                pi_pText,
+                pi_dwColor);
+}
+
 void GetLoginMessageBoardSize(const char *pi_pMessage, int *po_pWidth, int *po_pHeight)
 {
   int l_nMaxCharNum = 0;
@@ -2281,11 +2291,22 @@ bool CGP_LogIn::GetCharacterCreateRaceLayout(CHARACTER_CREATE_RACE_LAYOUT *po_pL
             po_pLayout->sUpperBase.top + 134);
   }
 
+  int l_nRaceProfileWidth = 486;
+  int l_nRaceProfileHeight = 309;
+  CSprite *l_pLoginSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_LOGIN);
+  if (l_pLoginSprite)
+  {
+    const DWORD l_dwRaceProfileFrame = 13 + ClampCreateRaceSelection(m_byCreateRaceSelection);
+    l_nRaceProfileWidth = static_cast<int>(
+      l_pLoginSprite->GetSpriteOrgXL(kCharacterCreateRaceAction, l_dwRaceProfileFrame));
+    l_nRaceProfileHeight = static_cast<int>(
+      l_pLoginSprite->GetSpriteOrgYL(kCharacterCreateRaceAction, l_dwRaceProfileFrame));
+  }
   SetRect(&po_pLayout->sRaceProfile,
-          (l_nScreenX - 486) / 2,
-          (l_nScreenY - 309) / 2,
-          (l_nScreenX - 486) / 2 + 486,
-          (l_nScreenY - 309) / 2 + 309);
+          (l_nScreenX - l_nRaceProfileWidth) / 2,
+          (l_nScreenY - l_nRaceProfileHeight) / 2,
+          (l_nScreenX - l_nRaceProfileWidth) / 2 + l_nRaceProfileWidth,
+          (l_nScreenY - l_nRaceProfileHeight) / 2 + l_nRaceProfileHeight);
   SetRect(&po_pLayout->sLowerBoard,
           (l_nScreenX - l_nLowerBoardWidth) / 2,
           l_nScreenY - l_nLowerBoardHeight - 10,
@@ -2398,33 +2419,51 @@ bool CGP_LogIn::GetCharacterCreateDetailLayout(CHARACTER_CREATE_DETAIL_LAYOUT *p
   SetRect(&po_pLayout->sLowerBase, l_nPanelLeft + 65, l_nPanelTop + 289, l_nPanelLeft + 115, l_nPanelTop + 326);
   SetRect(&po_pLayout->sOkButton, l_nPanelLeft, l_nPanelTop + 295, l_nPanelLeft + 89, l_nPanelTop + 326);
   SetRect(&po_pLayout->sCancelButton, l_nPanelLeft + 89, l_nPanelTop + 295, l_nPanelLeft + 178, l_nPanelTop + 326);
+
+  const int l_nSelectButtonWidth = 21;
+  const int l_nSelectButtonHeight = 17;
+  const int l_nSelectBoardHeight = 12;
+  const int l_nSelectBoardTopOffset = (l_nSelectButtonHeight - l_nSelectBoardHeight) / 2;
+  const int l_nSelectBoardWidth = 71;
+  const int l_nSexSelectBoardWidth = 29;
+
+  const int l_nSexSelectLeft = l_nPanelLeft + 53;
+  const int l_nSexSelectTop = l_nPanelTop + 52;
+  SetRect(&po_pLayout->sSelectLeftButton[CHARACTER_CREATE_SELECT_SEX],
+          l_nSexSelectLeft,
+          l_nSexSelectTop,
+          l_nSexSelectLeft + l_nSelectButtonWidth,
+          l_nSexSelectTop + l_nSelectButtonHeight);
   SetRect(&po_pLayout->sSelectItem[CHARACTER_CREATE_SELECT_SEX],
-          l_nPanelLeft + 53,
-          l_nPanelTop + 52,
-          l_nPanelLeft + 124,
-          l_nPanelTop + 69);
+          l_nSexSelectLeft + l_nSelectButtonWidth,
+          l_nSexSelectTop + l_nSelectBoardTopOffset,
+          l_nSexSelectLeft + l_nSelectButtonWidth + l_nSexSelectBoardWidth,
+          l_nSexSelectTop + l_nSelectBoardTopOffset + l_nSelectBoardHeight);
+  SetRect(&po_pLayout->sSelectRightButton[CHARACTER_CREATE_SELECT_SEX],
+          po_pLayout->sSelectItem[CHARACTER_CREATE_SELECT_SEX].right,
+          l_nSexSelectTop,
+          po_pLayout->sSelectItem[CHARACTER_CREATE_SELECT_SEX].right + l_nSelectButtonWidth,
+          l_nSexSelectTop + l_nSelectButtonHeight);
+
   for (int i = 1; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
   {
-    SetRect(&po_pLayout->sSelectItem[i],
-            l_nPanelLeft + 31,
-            l_nPanelTop + 94 + ((i - 1) * 22),
-            l_nPanelLeft + 102,
-            l_nPanelTop + 111 + ((i - 1) * 22));
-  }
-
-  for (int i = 0; i < CHARACTER_CREATE_SELECT_COUNT; ++i)
-  {
-    const int l_nMidY = (po_pLayout->sSelectItem[i].top + po_pLayout->sSelectItem[i].bottom) / 2;
+    const int l_nSelectLeft = l_nPanelLeft + 31;
+    const int l_nSelectTop = l_nPanelTop + 94 + ((i - 1) * 22);
     SetRect(&po_pLayout->sSelectLeftButton[i],
-            po_pLayout->sSelectItem[i].left - 22,
-            l_nMidY - 8,
-            po_pLayout->sSelectItem[i].left - 1,
-            l_nMidY + 9);
+            l_nSelectLeft,
+            l_nSelectTop,
+            l_nSelectLeft + l_nSelectButtonWidth,
+            l_nSelectTop + l_nSelectButtonHeight);
+    SetRect(&po_pLayout->sSelectItem[i],
+            l_nSelectLeft + l_nSelectButtonWidth,
+            l_nSelectTop + l_nSelectBoardTopOffset,
+            l_nSelectLeft + l_nSelectButtonWidth + l_nSelectBoardWidth,
+            l_nSelectTop + l_nSelectBoardTopOffset + l_nSelectBoardHeight);
     SetRect(&po_pLayout->sSelectRightButton[i],
-            po_pLayout->sSelectItem[i].right + 1,
-            l_nMidY - 8,
-            po_pLayout->sSelectItem[i].right + 22,
-            l_nMidY + 9);
+            po_pLayout->sSelectItem[i].right,
+            l_nSelectTop,
+            po_pLayout->sSelectItem[i].right + l_nSelectButtonWidth,
+            l_nSelectTop + l_nSelectButtonHeight);
   }
 
   SetRect(&po_pLayout->sNameInput, l_nPanelLeft + 38, l_nPanelTop + 257, l_nPanelLeft + 140, l_nPanelTop + 269);
@@ -3735,10 +3774,9 @@ void CGP_LogIn::RenderCharacterCreateDetailScreen(void) const
       sprintf_s(l_szValue, sizeof(l_szValue), "%s", kSelectLabel[i]);
     }
 
-    DrawLoginLine(l_sLayout.sSelectItem[i].left,
-                  l_sLayout.sSelectItem[i].top + 2,
-                  l_szValue,
-                  l_bSexDisabled ? 0xFF808080 : 0xFFD3D3D3);
+    DrawCenteredLoginLineInRect(l_sLayout.sSelectItem[i],
+                                l_szValue,
+                                l_bSexDisabled ? 0xFF808080 : 0xFFD3D3D3);
 
     if (!l_bSexDisabled)
     {
