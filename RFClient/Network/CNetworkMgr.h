@@ -38,6 +38,8 @@ public:
                                      const char *pi_pClassCode,
                                      DWORD pi_dwBaseShape);
   void SystemMsg_AddCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
+  BOOL SystemMsg_DelCharRequest_zone(BYTE pi_byAvatarIndex);
+  void SystemMsg_DelCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL SystemMsg_SelCharRequest_zone(BYTE pi_byAvatarIndex);
   void SystemMsg_SelCharResult_zone(char *pi_pMsg, int pi_nPayloadSize);
   BOOL CheckMsg_CheckAnswer(void);
@@ -82,10 +84,13 @@ public:
   BOOL HasRegedCharResult(void) const { return m_bHasRegedCharResult; }
   BOOL HasSentAddCharRequest(void) const { return m_bSentAddCharRequest; }
   BOOL HasAddCharResult(void) const { return m_bHasAddCharResult; }
+  BOOL HasSentDelCharRequest(void) const { return m_bSentDelCharRequest; }
+  BOOL HasDelCharResult(void) const { return m_bHasDelCharResult; }
   BOOL HasSentSelCharRequest(void) const { return m_bSentSelCharRequest; }
   BOOL HasSelCharResult(void) const { return m_bHasSelCharResult; }
   const _reged_char_result_zone &GetRegedCharResult(void) const { return m_sRegedCharResult; }
   const _add_char_result_zone &GetAddCharResult(void) const { return m_sAddCharResult; }
+  const _del_char_result_zone &GetDelCharResult(void) const { return m_sDelCharResult; }
   const _sel_char_result_zone &GetSelCharResult(void) const { return m_sSelCharResult; }
   const _not_arranged_char_inform_zocl &GetNotArrangedCharInform(void) const { return m_sNotArrangedCharInform; }
   BOOL HasUILockInform(void) const { return m_bHasUILockInform; }
@@ -94,6 +99,8 @@ public:
   DWORD GetSelectedGold(void) const { return m_dwSelectedGold; }
   const char *GetStatusText(void) const { return m_szStatusText; }
 
+  void ClearAddCharResult(void);
+  void ClearDelCharResult(void);
   void SetStatusText(const char *pi_pFormat, ...);
   const char *GetAddressText(DWORD pi_dwAddress);
 
@@ -149,6 +156,8 @@ private:
   BOOL m_bHasRegedCharResult;
   BOOL m_bSentAddCharRequest;
   BOOL m_bHasAddCharResult;
+  BOOL m_bSentDelCharRequest;
+  BOOL m_bHasDelCharResult;
   BOOL m_bSentSelCharRequest;
   BOOL m_bHasSelCharResult;
   BOOL m_bHasUILockInform;
@@ -156,6 +165,7 @@ private:
   std::vector<char> m_vecRecvBuffer;
   _reged_char_result_zone m_sRegedCharResult;
   _add_char_result_zone m_sAddCharResult;
+  _del_char_result_zone m_sDelCharResult;
   _sel_char_result_zone m_sSelCharResult;
   _not_arranged_char_inform_zocl m_sNotArrangedCharInform;
   _uilock_inform_request_zocl m_sUILockInform;

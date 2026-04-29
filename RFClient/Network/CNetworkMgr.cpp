@@ -484,6 +484,8 @@ CNetworkMgr::CNetworkMgr()
     m_bHasRegedCharResult(FALSE),
     m_bSentAddCharRequest(FALSE),
     m_bHasAddCharResult(FALSE),
+    m_bSentDelCharRequest(FALSE),
+    m_bHasDelCharResult(FALSE),
     m_bSentSelCharRequest(FALSE),
     m_bHasSelCharResult(FALSE),
     m_bHasUILockInform(FALSE),
@@ -504,6 +506,7 @@ CNetworkMgr::CNetworkMgr()
   ZeroMemory(&m_ServerAddr, sizeof(m_ServerAddr));
   ZeroMemory(m_szStatusText, sizeof(m_szStatusText));
   ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+  ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
   ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
   ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
 }
@@ -716,6 +719,8 @@ BOOL CNetworkMgr::SystemMsg_EnterWorldRequest_zone(void)
     m_bHasRegedCharResult = FALSE;
     m_bSentAddCharRequest = FALSE;
     m_bHasAddCharResult = FALSE;
+    m_bSentDelCharRequest = FALSE;
+    m_bHasDelCharResult = FALSE;
     m_bSentSelCharRequest = FALSE;
     m_bHasSelCharResult = FALSE;
     m_bHasUILockInform = FALSE;
@@ -728,6 +733,7 @@ BOOL CNetworkMgr::SystemMsg_EnterWorldRequest_zone(void)
     m_sRegedCharResult = _reged_char_result_zone();
     m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
     ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+    ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
     ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
     ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
     SetStatusText("World enter request sent: account=%lu protocol=%lu full=%u",
@@ -780,11 +786,14 @@ BOOL CNetworkMgr::SystemMsg_RegedCharRequest_zone(void)
     m_bHasRegedCharResult = FALSE;
     m_bSentAddCharRequest = FALSE;
     m_bHasAddCharResult = FALSE;
+    m_bSentDelCharRequest = FALSE;
+    m_bHasDelCharResult = FALSE;
     m_byResultOfUserInfo = USER_INFO_NOT_RECIVED;
     m_dwLastestAvatarIndex = static_cast<DWORD>(-1);
     m_sRegedCharResult = _reged_char_result_zone();
     m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
     ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+    ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
     SetStatusText("Registered character request sent");
   }
   else
@@ -889,12 +898,42 @@ void CNetworkMgr::SystemMsg_AddCharResult_zone(char *pi_pMsg, int pi_nPayloadSiz
   SetStatusText("Character create result: result=%u slot=%u",
                 static_cast<unsigned>(m_sAddCharResult.byRetCode),
                 static_cast<unsigned>(m_sAddCharResult.byAddSlotIndex));
+}
 
-  if (m_sAddCharResult.byRetCode == 0)
+BOOL CNetworkMgr::SystemMsg_DelCharRequest_zone(BYTE pi_byAvatarIndex)
+{
+  _del_char_request_zone l_sSend{};
+  l_sSend.bySlotIndex = pi_byAvatarIndex;
+
+  BYTE l_byType[] = {system_msg, del_char_request_zone};
+  const BOOL l_bResult = SendNetMessage(NST_GAME_SERVER, l_byType, &l_sSend, sizeof(l_sSend));
+  if (l_bResult)
   {
-    m_bSentRegedCharRequest = FALSE;
-    m_bHasRegedCharResult = FALSE;
+    m_bSentDelCharRequest = TRUE;
+    m_bHasDelCharResult = FALSE;
+    ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
+    SetStatusText("Character delete request sent: slot=%u", static_cast<unsigned>(pi_byAvatarIndex));
   }
+  else
+  {
+    SetStatusText("CNetworkMgr::SystemMsg_DelCharRequest_zone send failed");
+  }
+
+  return l_bResult;
+}
+
+void CNetworkMgr::SystemMsg_DelCharResult_zone(char *pi_pMsg, int pi_nPayloadSize)
+{
+  ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
+  if (pi_pMsg && pi_nPayloadSize > 0)
+  {
+    memcpy(&m_sDelCharResult, pi_pMsg, MinInt(pi_nPayloadSize, static_cast<int>(sizeof(m_sDelCharResult))));
+  }
+
+  m_bHasDelCharResult = TRUE;
+  SetStatusText("Character delete result: result=%u slot=%u",
+                static_cast<unsigned>(m_sDelCharResult.byRetCode),
+                static_cast<unsigned>(m_sDelCharResult.bySlotIndex));
 }
 
 BOOL CNetworkMgr::LoadRegedCharResultDump(const char *pi_pPath)
@@ -1024,6 +1063,20 @@ void CNetworkMgr::SetWorldServerKey(DWORD *pi_pKey)
   memcpy(m_dwWorldServerKey, pi_pKey, sizeof(m_dwWorldServerKey));
 }
 
+void CNetworkMgr::ClearAddCharResult(void)
+{
+  m_bSentAddCharRequest = FALSE;
+  m_bHasAddCharResult = FALSE;
+  ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+}
+
+void CNetworkMgr::ClearDelCharResult(void)
+{
+  m_bSentDelCharRequest = FALSE;
+  m_bHasDelCharResult = FALSE;
+  ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
+}
+
 void CNetworkMgr::SetStatusText(const char *pi_pFormat, ...)
 {
   if (!pi_pFormat)
@@ -1083,6 +1136,8 @@ void CNetworkMgr::ResetConnectionState(void)
   m_bHasRegedCharResult = FALSE;
   m_bSentAddCharRequest = FALSE;
   m_bHasAddCharResult = FALSE;
+  m_bSentDelCharRequest = FALSE;
+  m_bHasDelCharResult = FALSE;
   m_bSentSelCharRequest = FALSE;
   m_bHasSelCharResult = FALSE;
   m_bHasUILockInform = FALSE;
@@ -1100,6 +1155,7 @@ void CNetworkMgr::ResetConnectionState(void)
   m_sRegedCharResult = _reged_char_result_zone();
   m_sNotArrangedCharInform = _not_arranged_char_inform_zocl();
   ZeroMemory(&m_sAddCharResult, sizeof(m_sAddCharResult));
+  ZeroMemory(&m_sDelCharResult, sizeof(m_sDelCharResult));
   ZeroMemory(&m_sSelCharResult, sizeof(m_sSelCharResult));
   ZeroMemory(&m_sUILockInform, sizeof(m_sUILockInform));
   m_vecRecvBuffer.clear();
@@ -1640,6 +1696,18 @@ bool CNetworkMgr::ProcessPacket(const _MSG_HEADER &pi_sHeader, const char *pi_pP
     }
 
     SetStatusText("add_char_result_zone payload too small size=%d", pi_nPayloadSize);
+    return false;
+  }
+
+  if (pi_sHeader.m_byType[0] == system_msg && pi_sHeader.m_byType[1] == del_char_result_zone)
+  {
+    if (pi_nPayloadSize >= static_cast<int>(sizeof(_del_char_result_zone)))
+    {
+      SystemMsg_DelCharResult_zone(const_cast<char *>(pi_pPayload), pi_nPayloadSize);
+      return true;
+    }
+
+    SetStatusText("del_char_result_zone payload too small size=%d", pi_nPayloadSize);
     return false;
   }
 

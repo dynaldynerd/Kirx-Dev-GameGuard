@@ -115,6 +115,9 @@ protected:
 private:
   BOOL ConsumeKeyPress(int pi_nVirtualKey);
   void UpdateWorldServerFlow(void);
+  void UpdateCharacterCreateResult(void);
+  void UpdateCharacterDeleteResult(void);
+  bool RequestRegisteredCharacterRefresh(void);
   void EnsureCharacterSelection(void);
   void UpdateDisplayedScreen(void);
   void UpdateOpeningInput(void);
@@ -169,9 +172,11 @@ private:
   DWORD GetCreateBaseShape(void) const;
   void AppendCreateCharacterInputChar(WPARAM pi_wParam);
   void ShowLoginMessage(const char *pi_pMessage);
+  void ShowDeleteCharacterConfirm(void);
+  bool ConfirmPendingCharacterDelete(void);
   void HideLoginMessage(void);
   bool IsLoginMessageVisible(void) const;
-  bool GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect) const;
+  bool GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect, RECT *po_pCancelButtonRect = NULL) const;
   void UpdateLoginMessageInput(void);
   void RenderStatusOverlay(void) const;
   void RenderOpeningScreen(void) const;
@@ -212,11 +217,16 @@ private:
   bool m_bCharacterSelectionUIVisible;
   bool m_bCharacterSelectionUIClosing;
   bool m_bCharacterDummiesLoaded;
+  bool m_bWaitingCharacterListRefresh;
   bool m_bStartRequested;
   bool m_bCreditsMode;
+  BYTE m_byLoginMessageMode;
+  BYTE m_byPendingDeleteCharacterSlot;
   bool m_bLoginMessageVisible;
   bool m_bLoginMessageOkHover;
   bool m_bLoginMessageOkPressed;
+  bool m_bLoginMessageCancelHover;
+  bool m_bLoginMessageCancelPressed;
   DWORD m_dwCreditsStartTick;
   void *m_pTitleLogoTexture;
   char m_szLoginMessage[128];

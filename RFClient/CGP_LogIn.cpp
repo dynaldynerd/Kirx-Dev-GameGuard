@@ -24,6 +24,12 @@ enum LOGIN_SCREEN_MODE
   LOGIN_SCREEN_CHAR_CREATE = 3
 };
 
+enum LOGIN_MESSAGE_MODE
+{
+  LOGIN_MESSAGE_MODE_OK = 0,
+  LOGIN_MESSAGE_MODE_DELETE_CONFIRM = 1
+};
+
 const int kFontWidth = 6;
 const int kMessageBoxTextMargin = 5;
 const int kMessageBoxColumnGap = 4;
@@ -34,6 +40,7 @@ const int kMessageBoxMinWidth = 200;
 const int kMessageBoxMinHeight = 100;
 const int kMessageBoxOkButtonWidth = 67;
 const int kMessageBoxOkButtonHeight = 21;
+const int kMessageBoxButtonGap = 10;
 const int kMessageBoxOkButtonRightMargin = 8;
 const int kMessageBoxOkButtonBottomMargin = 8;
 const DWORD kMessageBoxOutlineColor = 0xFF9593C1;
@@ -727,11 +734,16 @@ CGP_LogIn::CGP_LogIn()
     m_bCharacterSelectionUIVisible(false),
     m_bCharacterSelectionUIClosing(false),
     m_bCharacterDummiesLoaded(false),
+    m_bWaitingCharacterListRefresh(false),
     m_bStartRequested(false),
     m_bCreditsMode(false),
+    m_byLoginMessageMode(LOGIN_MESSAGE_MODE_OK),
+    m_byPendingDeleteCharacterSlot(0xFF),
     m_bLoginMessageVisible(false),
     m_bLoginMessageOkHover(false),
     m_bLoginMessageOkPressed(false),
+    m_bLoginMessageCancelHover(false),
+    m_bLoginMessageCancelPressed(false),
     m_dwCreditsStartTick(0),
     m_pTitleLogoTexture(NULL)
 {
@@ -855,18 +867,10 @@ HRESULT CGP_LogIn::FrameMove(void)
   }
 
   UpdateWorldServerFlow();
+  UpdateCharacterCreateResult();
+  UpdateCharacterDeleteResult();
   EnsureCharacterSelection();
   UpdateDisplayedScreen();
-  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-  if (m_byScreenMode == LOGIN_SCREEN_CHAR_CREATE &&
-      l_pNetworkMgr &&
-      l_pNetworkMgr->HasAddCharResult() &&
-      l_pNetworkMgr->GetAddCharResult().byRetCode == 0)
-  {
-    m_bySelectedCharacterSlot = l_pNetworkMgr->GetAddCharResult().byAddSlotIndex;
-    m_bCharacterDummiesLoaded = false;
-    LeaveCharacterCreateScreen(true);
-  }
   UpdateCharacterSelectionUIState();
   if (m_byScreenMode == LOGIN_SCREEN_CHAR_SELECT)
   {
@@ -938,6 +942,8 @@ HRESULT CGP_LogIn::Render(void)
 BOOL CGP_LogIn::InputProcess(void)
 {
   UpdateWorldServerFlow();
+  UpdateCharacterCreateResult();
+  UpdateCharacterDeleteResult();
   EnsureCharacterSelection();
   UpdateDisplayedScreen();
   if (ShouldRenderLoadingScreen())
@@ -994,8 +1000,13 @@ BOOL CGP_LogIn::LoadData(void)
   m_bCharacterSelectionUIVisible = false;
   m_bCharacterSelectionUIClosing = false;
   m_bCharacterDummiesLoaded = false;
+  m_bWaitingCharacterListRefresh = false;
   m_bStartRequested = false;
   m_bCreditsMode = false;
+  m_byLoginMessageMode = LOGIN_MESSAGE_MODE_OK;
+  m_byPendingDeleteCharacterSlot = 0xFF;
+  m_bLoginMessageCancelHover = false;
+  m_bLoginMessageCancelPressed = false;
   m_dwCreditsStartTick = 0;
   m_vecTitleCredits.clear();
   ZeroMemory(m_abVirtualKeyState, sizeof(m_abVirtualKeyState));
@@ -1026,6 +1037,7 @@ BOOL CGP_LogIn::UnloadData(void)
     _GetMainApp()->UnloadLoginLobbyData();
   }
   m_bCharacterDummiesLoaded = false;
+  m_bWaitingCharacterListRefresh = false;
 
   m_bIsLoadedData = FALSE;
   return TRUE;
@@ -1082,6 +1094,94 @@ void CGP_LogIn::UpdateWorldServerFlow(void)
   }
 }
 
+void CGP_LogIn::UpdateCharacterCreateResult(void)
+{
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (!l_pNetworkMgr || !l_pNetworkMgr->HasAddCharResult())
+  {
+    return;
+  }
+
+  const _add_char_result_zone l_sResult = l_pNetworkMgr->GetAddCharResult();
+  l_pNetworkMgr->ClearAddCharResult();
+
+  if (l_sResult.byRetCode == CHAR_CREATE_SUCCESS)
+  {
+    if (l_sResult.byAddSlotIndex <= 2)
+    {
+      m_bySelectedCharacterSlot = l_sResult.byAddSlotIndex;
+    }
+
+    m_bCharacterDummiesLoaded = false;
+    LeaveCharacterCreateScreen(true);
+    RequestRegisteredCharacterRefresh();
+    ShowLoginMessage("Character has been created successfully.");
+    return;
+  }
+
+  if (l_sResult.byRetCode == CHAR_CREATE_INVALID_NAME)
+  {
+    ShowLoginMessage("Please enter a valid character name.");
+  }
+  else
+  {
+    ShowLoginMessage("Character creation failed.");
+  }
+}
+
+void CGP_LogIn::UpdateCharacterDeleteResult(void)
+{
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (!l_pNetworkMgr || !l_pNetworkMgr->HasDelCharResult())
+  {
+    return;
+  }
+
+  const _del_char_result_zone l_sResult = l_pNetworkMgr->GetDelCharResult();
+  l_pNetworkMgr->ClearDelCharResult();
+
+  if (l_sResult.byRetCode == CHAR_DELETE_SUCCESS)
+  {
+    if (l_sResult.bySlotIndex <= 2)
+    {
+      m_bySelectedCharacterSlot = l_sResult.bySlotIndex;
+    }
+
+    m_bCharacterDummiesLoaded = false;
+    if (_GetMainApp())
+    {
+      _GetMainApp()->ClearLoginLobbyCharacterDummies();
+    }
+    RequestRegisteredCharacterRefresh();
+    ShowLoginMessage("Character deleted.");
+    return;
+  }
+
+  ShowLoginMessage("Character deletion failed.");
+}
+
+bool CGP_LogIn::RequestRegisteredCharacterRefresh(void)
+{
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (!l_pNetworkMgr)
+  {
+    m_bWaitingCharacterListRefresh = false;
+    return false;
+  }
+
+  m_bWaitingCharacterListRefresh = true;
+  m_bCharacterDummiesLoaded = false;
+  m_byCharacterMenuHover = kInvalidCharacterButton;
+  m_byCharacterMenuPressed = kInvalidCharacterButton;
+  if (!l_pNetworkMgr->SystemMsg_RegedCharRequest_zone())
+  {
+    m_bWaitingCharacterListRefresh = false;
+    return false;
+  }
+
+  return true;
+}
+
 void CGP_LogIn::EnsureCharacterSelection(void)
 {
   CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
@@ -1090,6 +1190,12 @@ void CGP_LogIn::EnsureCharacterSelection(void)
       l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS)
   {
     return;
+  }
+
+  if (m_bWaitingCharacterListRefresh)
+  {
+    m_bWaitingCharacterListRefresh = false;
+    m_bCharacterDummiesLoaded = false;
   }
 
   if (m_bySelectedCharacterSlot > 2)
@@ -1122,7 +1228,11 @@ void CGP_LogIn::UpdateDisplayedScreen(void)
   else
   {
     CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
-    if (!l_pNetworkMgr ||
+    if (m_bWaitingCharacterListRefresh)
+    {
+      l_byNewScreenMode = LOGIN_SCREEN_CHAR_SELECT;
+    }
+    else if (!l_pNetworkMgr ||
         !l_pNetworkMgr->HasRegedCharResult() ||
         l_pNetworkMgr->GetResultOfUserInfo() != USER_INFO_SUCCESS)
     {
@@ -1596,6 +1706,11 @@ bool CGP_LogIn::IsStartupLoadingComplete(void) const
 bool CGP_LogIn::ShouldRenderLoadingScreen(void) const
 {
   if (!m_bStartRequested)
+  {
+    return false;
+  }
+
+  if (m_bWaitingCharacterListRefresh)
   {
     return false;
   }
@@ -2100,7 +2215,7 @@ void CGP_LogIn::ActivateCharacterSelectionButton(BYTE pi_byButtonIndex)
       return;
     }
 
-    ShowLoginMessage("Character deletion flow is not implemented yet.");
+    ShowDeleteCharacterConfirm();
   }
   else if (pi_byButtonIndex == CHARACTER_SELECT_BUTTON_CONNECT)
   {
@@ -2993,6 +3108,10 @@ void CGP_LogIn::ShowLoginMessage(const char *pi_pMessage)
   m_bLoginMessageVisible = true;
   m_bLoginMessageOkHover = false;
   m_bLoginMessageOkPressed = false;
+  m_bLoginMessageCancelHover = false;
+  m_bLoginMessageCancelPressed = false;
+  m_byLoginMessageMode = LOGIN_MESSAGE_MODE_OK;
+  m_byPendingDeleteCharacterSlot = 0xFF;
   m_byMenuHover = kInvalidMenuIndex;
   m_byMenuPressed = kInvalidMenuIndex;
   m_byCharacterMenuHover = kInvalidCharacterButton;
@@ -3000,11 +3119,59 @@ void CGP_LogIn::ShowLoginMessage(const char *pi_pMessage)
   ClearOpeningMouseTransitions();
 }
 
+void CGP_LogIn::ShowDeleteCharacterConfirm(void)
+{
+  ShowLoginMessage("Are you sure you want to delete this character?");
+  m_byLoginMessageMode = LOGIN_MESSAGE_MODE_DELETE_CONFIRM;
+  m_byPendingDeleteCharacterSlot = (m_bySelectedCharacterSlot <= 2) ? m_bySelectedCharacterSlot : static_cast<BYTE>(0xFF);
+}
+
+bool CGP_LogIn::ConfirmPendingCharacterDelete(void)
+{
+  const BYTE l_byDeleteSlot = m_byPendingDeleteCharacterSlot;
+  HideLoginMessage();
+
+  if (l_byDeleteSlot > 2)
+  {
+    return false;
+  }
+
+  CNetworkMgr *l_pNetworkMgr = _GetNetworkMgr();
+  if (!l_pNetworkMgr || !l_pNetworkMgr->HasRegedCharResult())
+  {
+    return false;
+  }
+
+  if (!FindRegedAvatarBySlot(l_pNetworkMgr->GetRegedCharResult(), l_byDeleteSlot))
+  {
+    ShowLoginMessage("There is no character in this slot.");
+    return false;
+  }
+
+  if (l_pNetworkMgr->HasSentDelCharRequest() && !l_pNetworkMgr->HasDelCharResult())
+  {
+    return false;
+  }
+
+  m_bySelectedCharacterSlot = l_byDeleteSlot;
+  if (!l_pNetworkMgr->SystemMsg_DelCharRequest_zone(l_byDeleteSlot))
+  {
+    ShowLoginMessage("Character deletion request failed.");
+    return false;
+  }
+
+  return true;
+}
+
 void CGP_LogIn::HideLoginMessage(void)
 {
   m_bLoginMessageVisible = false;
   m_bLoginMessageOkHover = false;
   m_bLoginMessageOkPressed = false;
+  m_bLoginMessageCancelHover = false;
+  m_bLoginMessageCancelPressed = false;
+  m_byLoginMessageMode = LOGIN_MESSAGE_MODE_OK;
+  m_byPendingDeleteCharacterSlot = 0xFF;
   m_szLoginMessage[0] = '\0';
   ClearOpeningMouseTransitions();
 }
@@ -3014,7 +3181,7 @@ bool CGP_LogIn::IsLoginMessageVisible(void) const
   return m_bLoginMessageVisible;
 }
 
-bool CGP_LogIn::GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect) const
+bool CGP_LogIn::GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect, RECT *po_pCancelButtonRect) const
 {
   int l_nScreenX = 0;
   int l_nScreenY = 0;
@@ -3030,9 +3197,17 @@ bool CGP_LogIn::GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect)
 
   int l_nBoxWidth = l_nMsgBoardWidth + kMessageBoxMargin * 2;
   int l_nBoxHeight = l_nMsgBoardHeight + kMessageBoxMargin * 2 + kMessageBoxOkButtonHeight;
+  const bool l_bHasCancelButton = m_byLoginMessageMode == LOGIN_MESSAGE_MODE_DELETE_CONFIRM;
+  const int l_nButtonAreaWidth = l_bHasCancelButton
+                                   ? (kMessageBoxOkButtonWidth * 2) + kMessageBoxButtonGap + (kMessageBoxOkButtonRightMargin * 2)
+                                   : kMessageBoxOkButtonWidth + (kMessageBoxOkButtonRightMargin * 2);
   if (l_nBoxWidth < kMessageBoxMinWidth)
   {
     l_nBoxWidth = kMessageBoxMinWidth;
+  }
+  if (l_nBoxWidth < l_nButtonAreaWidth)
+  {
+    l_nBoxWidth = l_nButtonAreaWidth;
   }
   if (l_nBoxHeight < kMessageBoxMinHeight)
   {
@@ -3053,13 +3228,33 @@ bool CGP_LogIn::GetLoginMessageLayout(RECT *po_pBoxRect, RECT *po_pOkButtonRect)
 
   if (po_pOkButtonRect)
   {
-    const int l_nOkButtonRight = l_nBoxLeft + l_nBoxWidth - kMessageBoxOkButtonRightMargin;
+    const int l_nOkButtonRight = l_bHasCancelButton
+                                   ? l_nBoxLeft + l_nBoxWidth - kMessageBoxOkButtonRightMargin - kMessageBoxOkButtonWidth - kMessageBoxButtonGap
+                                   : l_nBoxLeft + l_nBoxWidth - kMessageBoxOkButtonRightMargin;
     const int l_nOkButtonBottom = l_nBoxTop + l_nBoxHeight - kMessageBoxOkButtonBottomMargin;
     SetRect(po_pOkButtonRect,
             l_nOkButtonRight - kMessageBoxOkButtonWidth,
             l_nOkButtonBottom - kMessageBoxOkButtonHeight,
             l_nOkButtonRight,
             l_nOkButtonBottom);
+  }
+
+  if (po_pCancelButtonRect)
+  {
+    if (l_bHasCancelButton)
+    {
+      const int l_nCancelButtonRight = l_nBoxLeft + l_nBoxWidth - kMessageBoxOkButtonRightMargin;
+      const int l_nCancelButtonBottom = l_nBoxTop + l_nBoxHeight - kMessageBoxOkButtonBottomMargin;
+      SetRect(po_pCancelButtonRect,
+              l_nCancelButtonRight - kMessageBoxOkButtonWidth,
+              l_nCancelButtonBottom - kMessageBoxOkButtonHeight,
+              l_nCancelButtonRight,
+              l_nCancelButtonBottom);
+    }
+    else
+    {
+      SetRect(po_pCancelButtonRect, 0, 0, 0, 0);
+    }
   }
 
   return true;
@@ -3069,24 +3264,43 @@ void CGP_LogIn::UpdateLoginMessageInput(void)
 {
   RECT l_sBoxRect;
   RECT l_sOkButtonRect;
-  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect))
+  RECT l_sCancelButtonRect;
+  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect, &l_sCancelButtonRect))
   {
     HideLoginMessage();
     return;
   }
 
+  const bool l_bHasCancelButton = m_byLoginMessageMode == LOGIN_MESSAGE_MODE_DELETE_CONFIRM;
   m_bLoginMessageOkHover = IsPointInRect(l_sOkButtonRect, m_nMouseX, m_nMouseY);
+  m_bLoginMessageCancelHover = l_bHasCancelButton &&
+                               IsPointInRect(l_sCancelButtonRect, m_nMouseX, m_nMouseY);
 
   if (m_bLeftButtonPressed)
   {
     m_bLoginMessageOkPressed = m_bLoginMessageOkHover;
+    m_bLoginMessageCancelPressed = m_bLoginMessageCancelHover;
   }
 
   if (m_bLeftButtonReleased)
   {
-    const bool l_bClose = m_bLoginMessageOkPressed && m_bLoginMessageOkHover;
+    const bool l_bOk = m_bLoginMessageOkPressed && m_bLoginMessageOkHover;
+    const bool l_bCancel = m_bLoginMessageCancelPressed && m_bLoginMessageCancelHover;
     m_bLoginMessageOkPressed = false;
-    if (l_bClose)
+    m_bLoginMessageCancelPressed = false;
+    if (l_bOk)
+    {
+      if (l_bHasCancelButton)
+      {
+        ConfirmPendingCharacterDelete();
+      }
+      else
+      {
+        HideLoginMessage();
+      }
+      return;
+    }
+    if (l_bCancel)
     {
       HideLoginMessage();
       return;
@@ -3094,10 +3308,29 @@ void CGP_LogIn::UpdateLoginMessageInput(void)
   }
 
   if (ConsumeKeyPress(VK_RETURN) ||
-      ConsumeKeyPress(VK_SPACE) ||
-      ConsumeKeyPress(VK_ESCAPE))
+      ConsumeKeyPress(VK_SPACE))
+  {
+    if (l_bHasCancelButton)
+    {
+      ConfirmPendingCharacterDelete();
+    }
+    else
+    {
+      HideLoginMessage();
+    }
+    return;
+  }
+
+  if ((l_bHasCancelButton && (ConsumeKeyPress(VK_ESCAPE) || ConsumeKeyPress('N'))) ||
+      (!l_bHasCancelButton && ConsumeKeyPress(VK_ESCAPE)))
   {
     HideLoginMessage();
+    return;
+  }
+
+  if (l_bHasCancelButton && ConsumeKeyPress('Y'))
+  {
+    ConfirmPendingCharacterDelete();
     return;
   }
 
@@ -3900,13 +4133,16 @@ void CGP_LogIn::RenderLoginMessageBox(void) const
 
   RECT l_sBoxRect;
   RECT l_sOkButtonRect;
-  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect))
+  RECT l_sCancelButtonRect;
+  if (!GetLoginMessageLayout(&l_sBoxRect, &l_sOkButtonRect, &l_sCancelButtonRect))
   {
     return;
   }
 
   CSprite *l_pUiSprite = m_cLoginSpriteMgr.GetSprite(SP_ID_COMMON);
+  const bool l_bHasCancelButton = m_byLoginMessageMode == LOGIN_MESSAGE_MODE_DELETE_CONFIRM;
   const bool l_bOkPressed = m_bLoginMessageOkPressed && m_bLeftButtonDown;
+  const bool l_bCancelPressed = m_bLoginMessageCancelPressed && m_bLeftButtonDown;
   const int l_nBoxWidth = l_sBoxRect.right - l_sBoxRect.left;
   const int l_nBoxHeight = l_sBoxRect.bottom - l_sBoxRect.top;
 
@@ -3977,6 +4213,11 @@ void CGP_LogIn::RenderLoginMessageBox(void) const
                               : (m_bLoginMessageOkHover
                                    ? kMessageBoxOkButtonHoverFrame
                                    : kMessageBoxOkButtonNormalFrame);
+  const DWORD l_dwCancelFrame = l_bCancelPressed
+                                  ? kMessageBoxOkButtonPressedFrame
+                                  : (m_bLoginMessageCancelHover
+                                       ? kMessageBoxOkButtonHoverFrame
+                                       : kMessageBoxOkButtonNormalFrame);
   if (l_pUiSprite)
   {
     DrawSpriteFrame(l_pUiSprite,
@@ -3987,6 +4228,17 @@ void CGP_LogIn::RenderLoginMessageBox(void) const
                     l_sOkButtonRect.right - l_sOkButtonRect.left,
                     l_sOkButtonRect.bottom - l_sOkButtonRect.top,
                     0xFFFFFFFF);
+    if (l_bHasCancelButton)
+    {
+      DrawSpriteFrame(l_pUiSprite,
+                      kMessageBoxOkButtonAction,
+                      l_dwCancelFrame,
+                      l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.top,
+                      l_sCancelButtonRect.right - l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.bottom - l_sCancelButtonRect.top,
+                      0xFFFFFFFF);
+    }
   }
   else
   {
@@ -4015,10 +4267,45 @@ void CGP_LogIn::RenderLoginMessageBox(void) const
                     l_sOkButtonRect.right,
                     l_sOkButtonRect.bottom,
                     0xD0202830);
+    if (l_bHasCancelButton)
+    {
+      Draw2DRectangle(l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.top,
+                      l_sCancelButtonRect.right,
+                      l_sCancelButtonRect.bottom,
+                      l_bCancelPressed ? 0xD0101820 : 0xC0202E38);
+      Draw2DRectangle(l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.top,
+                      l_sCancelButtonRect.right,
+                      l_sCancelButtonRect.top + 1,
+                      m_bLoginMessageCancelHover ? 0xF0D0E0F0 : 0xD08EA0AE);
+      Draw2DRectangle(l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.bottom - 1,
+                      l_sCancelButtonRect.right,
+                      l_sCancelButtonRect.bottom,
+                      0xD0202830);
+      Draw2DRectangle(l_sCancelButtonRect.left,
+                      l_sCancelButtonRect.top,
+                      l_sCancelButtonRect.left + 1,
+                      l_sCancelButtonRect.bottom,
+                      m_bLoginMessageCancelHover ? 0xF0D0E0F0 : 0xD08EA0AE);
+      Draw2DRectangle(l_sCancelButtonRect.right - 1,
+                      l_sCancelButtonRect.top,
+                      l_sCancelButtonRect.right,
+                      l_sCancelButtonRect.bottom,
+                      0xD0202830);
+    }
   }
 
   DrawLoginLine(GetCenteredTextX((l_sOkButtonRect.left + l_sOkButtonRect.right) / 2, "OK"),
                 l_sOkButtonRect.top + ((kMessageBoxOkButtonHeight - kFontHeight) / 2),
                 "OK",
                 0xFFFFFFFF);
+  if (l_bHasCancelButton)
+  {
+    DrawLoginLine(GetCenteredTextX((l_sCancelButtonRect.left + l_sCancelButtonRect.right) / 2, "Cancel"),
+                  l_sCancelButtonRect.top + ((kMessageBoxOkButtonHeight - kFontHeight) / 2),
+                  "Cancel",
+                  0xFFFFFFFF);
+  }
 }
