@@ -3721,6 +3721,7 @@ bool CNetworkEX::SetItemCheckRequest(unsigned int n, char *pBuf)
 {
   UNREFERENCED_PARAMETER(n);
   UNREFERENCED_PARAMETER(pBuf);
+  g_Player[n].SendMsg_SetItemCheckResult(7u, 0, 0);
   return true;
 }
 
