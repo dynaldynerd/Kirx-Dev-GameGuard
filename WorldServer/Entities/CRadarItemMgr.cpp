@@ -311,11 +311,6 @@ void CRadarItemMgr::ResetUpdate()
 
 unsigned int CRadarItemMgr::CalcDelay()
 {
-  if (!m_bUse)
-  {
-    return 0;
-  }
-
   const unsigned int now = timeGetTime();
   const unsigned int endTick = m_dwDelayTime + m_dwStartTime;
   if (!endTick)
