@@ -4784,33 +4784,6 @@ bool CPlayer::Emb_DelStorage(
     SendMsg_DeleteStorageInform(byStorageCode, pkItem->m_wSerial);
   }
 
-  if (byStorageCode == 1 && pkItem->m_byTableCode == 6)
-  {
-    m_byCommunionStep = 0;
-  }
-
-  if (byStorageCode == 2)
-  {
-    int communionIndex = 0;
-    for (int index = 0; index < 7; ++index)
-    {
-      const _STORAGE_LIST::_db_con *embellish = &m_Param.m_dbEmbellish.m_pStorageList[index];
-      if (!embellish->m_bLoad || embellish->m_byTableCode != 10)
-      {
-        continue;
-      }
-
-      const _BulletItem_fld *record =
-        static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(embellish->m_wItemIndex));
-      if (record && std::strcmp(record->m_strBulletType, "Q") == 0)
-      {
-        communionIndex = index + 1;
-      }
-    }
-
-    m_bCommunionEffectAnimus = communionIndex != 0;
-  }
-
   if (byStorageCode == 1 || byStorageCode == 2)
   {
     // Yorozuya parity: refresh set-item state immediately after equip or embellish changes.
