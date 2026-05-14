@@ -1664,7 +1664,7 @@ char CPlayer::Init(_object_id *pID)
   m_bSFDelayNotCheck = false;
   m_tmrEffectStartTime.BeginTimer(3600000);
   m_tmrEffectEndTime.BeginTimer(60000);
-  // Yorozuya fix (non-IDA parity): periodic set-item refresh.
+  // Yorozuya fix (non-IDA parity): periodic fallback reconciliation for set-item effects.
   m_tmrSetItemUpdate.BeginTimer(10000);
   m_kMoveDelayChecker.Init(10);
   m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
@@ -4618,6 +4618,7 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
 
   if (byStorageCode == 1 || byStorageCode == 2)
   {
+    // Yorozuya parity: refresh set-item state immediately after equip or embellish changes.
     UpdateActiveSetItemEffects();
   }
 
@@ -4778,14 +4779,42 @@ bool CPlayer::Emb_DelStorage(
     }
   }
 
-  if (byStorageCode == 1 || byStorageCode == 2)
-  {
-    UpdateActiveSetItemEffects();
-  }
-
   if (bDelete)
   {
     SendMsg_DeleteStorageInform(byStorageCode, pkItem->m_wSerial);
+  }
+
+  if (byStorageCode == 1 && pkItem->m_byTableCode == 6)
+  {
+    m_byCommunionStep = 0;
+  }
+
+  if (byStorageCode == 2)
+  {
+    int communionIndex = 0;
+    for (int index = 0; index < 7; ++index)
+    {
+      const _STORAGE_LIST::_db_con *embellish = &m_Param.m_dbEmbellish.m_pStorageList[index];
+      if (!embellish->m_bLoad || embellish->m_byTableCode != 10)
+      {
+        continue;
+      }
+
+      const _BulletItem_fld *record =
+        static_cast<_BulletItem_fld *>(g_Main.m_tblItemData[10].GetRecord(embellish->m_wItemIndex));
+      if (record && std::strcmp(record->m_strBulletType, "Q") == 0)
+      {
+        communionIndex = index + 1;
+      }
+    }
+
+    m_bCommunionEffectAnimus = communionIndex != 0;
+  }
+
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    // Yorozuya parity: refresh set-item state immediately after equip or embellish changes.
+    UpdateActiveSetItemEffects();
   }
   return true;
 }
@@ -13900,6 +13929,10 @@ void CPlayer::pc_NewPosStart()
     {
       CreateComplete();
     }
+
+    // Yorozuya parity: initialize active set-item effects as soon as the player finishes
+    // entering the world instead of waiting for the periodic fallback timer.
+    UpdateActiveSetItemEffects();
 
     if (GetCurSecNum() != static_cast<unsigned int>(-1))
     {
@@ -26357,8 +26390,9 @@ for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
 
 void CPlayer::UpdateActiveSetItemEffects()
 {
-  // Yorozuya fix implementation (non-IDA): reconcile active set-item effects
-  // from the current equip and embellish state after storage changes.
+  // Yorozuya-style server authority: reconcile active set-item effects from the
+  // current equip and embellish state. This is triggered immediately on equip
+  // changes, with the player loop timer kept only as a fallback repair pass.
   if (!m_pUserDB)
   {
     return;
