@@ -1673,7 +1673,7 @@ char CPlayer::Init(_object_id *pID)
   m_byUnitEffectDefenseStep = 0;
   m_tmrEffectStartTime.BeginTimer(3600000);
   m_tmrEffectEndTime.BeginTimer(60000);
-  // Yorozuya fix (non-IDA parity): periodic set-item refresh.
+  // Yorozuya fix (non-IDA parity): periodic fallback reconciliation for set-item effects.
   m_tmrSetItemUpdate.BeginTimer(10000);
   m_kMoveDelayChecker.Init(10);
   m_MoveHackInfo.m_dwLastMoveTime = GetLoopTime();
@@ -4779,6 +4779,12 @@ _STORAGE_LIST::_db_con *CPlayer::Emb_AddStorage(
     m_Param.m_dbExtTrunk.m_byItemSlotRace[storageIndex] = raceCode;
   }
 
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    // Yorozuya parity: refresh set-item state immediately after equip or embellish changes.
+    UpdateActiveSetItemEffects();
+  }
+
   return pkItem;
 }
 
@@ -4966,6 +4972,13 @@ bool CPlayer::Emb_DelStorage(
 
     m_bCommunionEffectAnimus = communionIndex != 0;
   }
+
+  if (byStorageCode == 1 || byStorageCode == 2)
+  {
+    // Yorozuya parity: refresh set-item state immediately after equip or embellish changes.
+    UpdateActiveSetItemEffects();
+  }
+
   return true;
 }
 
@@ -15327,6 +15340,10 @@ void CPlayer::pc_NewPosStart()
     {
       CreateComplete();
     }
+
+    // Yorozuya parity: initialize active set-item effects as soon as the player finishes
+    // entering the world instead of waiting for the periodic fallback timer.
+    UpdateActiveSetItemEffects();
 
     if (GetCurSecNum() != static_cast<unsigned int>(-1))
     {
@@ -27986,8 +28003,9 @@ for (unsigned __int8 idx = 0; idx < bySetEffectNum; ++idx)
 
 void CPlayer::UpdateActiveSetItemEffects()
 {
-  // Yorozuya fix implementation (non-IDA): reconcile active set-item effects
-  // from the current equip and embellish state after storage changes.
+  // Yorozuya-style server authority: reconcile active set-item effects from the
+  // current equip and embellish state. This is triggered immediately on equip
+  // changes, with the player loop timer kept only as a fallback repair pass.
   if (!m_pUserDB)
   {
     return;
