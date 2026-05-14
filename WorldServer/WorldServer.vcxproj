@@ -31,7 +31,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -41,7 +41,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -52,7 +52,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <OutDir>D:\RF Server\Server\Zone Server\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
     <LocalDebuggerWorkingDirectory>D:\RF Server\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
