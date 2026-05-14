@@ -1,3 +1,5 @@
+# do not use main branch, use AOP415 or base2232 because main branch is currently had GM login bypass, which I use for testing client, which make someone could login GM account without username/password
+
 # RF Online Server
 
 ## 💖 Support this project
