@@ -3,6 +3,7 @@
 #include "DatabaseSetupDlg.h"
 
 #include <cstdlib>
+#include <cstring>
 
 namespace
 {
@@ -14,6 +15,7 @@ constexpr char kDefaultUserId[] = "sa";
 constexpr char kDefaultAccountAddress[] = "127.0.0.1";
 constexpr char kDefaultAccountPort[] = "29000";
 constexpr char kDefaultGatePort[] = "27780";
+constexpr char kDefaultPortMode[] = "0";
 constexpr char kInstalledSection[] = "System";
 constexpr char kInstalledKey[] = "installed";
 constexpr char kAutoStartKey[] = "autostart";
@@ -557,6 +559,15 @@ bool CDatabaseSetupDlg::SaveSettings()
   const CStringA accountPortA(m_accountPort);
   const CStringA gateIpA(m_gateIp);
   const CStringA gatePortA(m_gatePort);
+  char portModeBuffer[16]{};
+  ReadIniString(
+    worldInfoIniPath,
+    "System",
+    "PortMode",
+    kDefaultPortMode,
+    portModeBuffer,
+    static_cast<DWORD>(sizeof(portModeBuffer)));
+  const char *portModeValue = (std::strcmp(portModeBuffer, "1") == 0) ? "1" : kDefaultPortMode;
   const char *worldTrustedConnectionValue = m_worldTrustedConnection ? "1" : "0";
   const char *billingTrustedConnectionValue = m_billingTrustedConnection ? "1" : "0";
   char autoStartValue[16]{};
@@ -567,6 +578,9 @@ bool CDatabaseSetupDlg::SaveSettings()
     "0",
     autoStartValue,
     static_cast<DWORD>(sizeof(autoStartValue)));
+  const BOOL gateIpWriteResult = gateIpA.IsEmpty()
+                                   ? WritePrivateProfileStringA("System", "GateIP", nullptr, worldInfoIniPath)
+                                   : WritePrivateProfileStringA("System", "GateIP", gateIpA, worldInfoIniPath);
 
   return WritePrivateProfileStringA(kInstalledSection, kInstalledKey, "1", settingsIniPath) != FALSE
       && WritePrivateProfileStringA(kInstalledSection, kAutoStartKey, autoStartValue, settingsIniPath) != FALSE
@@ -580,8 +594,9 @@ bool CDatabaseSetupDlg::SaveSettings()
       && WritePrivateProfileStringA("Billing", "PWD", billingPasswordA, settingsIniPath) != FALSE
       && WritePrivateProfileStringA("System", "AccountAddress", accountAddressA, worldInfoIniPath) != FALSE
       && WritePrivateProfileStringA("System", "AccountPort", accountPortA, worldInfoIniPath) != FALSE
-      && WritePrivateProfileStringA("System", "GateIP", gateIpA, worldInfoIniPath) != FALSE
-      && WritePrivateProfileStringA("System", "GatePort", gatePortA, worldInfoIniPath) != FALSE;
+      && gateIpWriteResult != FALSE
+      && WritePrivateProfileStringA("System", "GatePort", gatePortA, worldInfoIniPath) != FALSE
+      && WritePrivateProfileStringA("System", "PortMode", portModeValue, worldInfoIniPath) != FALSE;
 }
 
 void CDatabaseSetupDlg::UpdateCredentialControls()

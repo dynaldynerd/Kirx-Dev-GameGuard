@@ -32,6 +32,7 @@ struct _SOCK_TYPE_PARAM
   unsigned __int8 m_byProtocolID;
   int m_bServer;
   unsigned __int16 m_wPort;
+  unsigned __int8 m_byPortMode;
   unsigned __int16 m_wSocketMaxNum;
   int m_bAcceptIPCheck;
   unsigned int m_dwIPCheckTerm;

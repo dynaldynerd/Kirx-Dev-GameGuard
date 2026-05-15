@@ -167,6 +167,8 @@ constexpr char kWorldInfoIniPath[] = "..\\WorldInfo\\WorldInfo.ini";
 constexpr char kWorldSystemIniPath[] = ".\\Initialize\\WorldSystem.ini";
 constexpr unsigned __int16 kDefaultAccountPort = 29000;
 constexpr unsigned __int16 kDefaultGatePort = 27780;
+constexpr unsigned __int8 kPortModeIncremental = 0;
+constexpr unsigned __int8 kPortModeStatic = 1;
 
 bool TryParseConfiguredPort(const char *text, unsigned __int16 *port)
 {
@@ -222,6 +224,31 @@ bool ReadConfiguredIpv4Address(const char *iniPath, const char *section, const c
   }
 
   *address = parsedAddress.s_addr;
+  return true;
+}
+
+bool ReadConfiguredPortMode(
+  const char *iniPath,
+  const char *section,
+  const char *key,
+  unsigned __int8 *portMode)
+{
+  if (portMode == nullptr)
+  {
+    return false;
+  }
+
+  char valueBuffer[16]{};
+  GetPrivateProfileStringA(section, key, "0", valueBuffer, static_cast<DWORD>(sizeof(valueBuffer)), iniPath);
+
+  char *end = nullptr;
+  const unsigned long parsed = std::strtoul(valueBuffer, &end, 10);
+  if (end == valueBuffer || *end != '\0' || parsed > kPortModeStatic)
+  {
+    return false;
+  }
+
+  *portMode = static_cast<unsigned __int8>(parsed);
   return true;
 }
 
@@ -386,6 +413,7 @@ CMainThread::CMainThread()
   std::memset(m_dwStartNPCQuestCnt, 0, sizeof(m_dwStartNPCQuestCnt));
   m_bReleaseServiceMode = false;
   m_bExcuteService = true;
+  m_byPortMode = kPortModeIncremental;
 }
 
 CMainThread::~CMainThread()
@@ -2332,6 +2360,23 @@ int CMainThread::LoadWorldInfoINI()
   if (!ReadConfiguredPort(kWorldInfoIniPath, "System", "GatePort", kDefaultGatePort, &m_wGatePort))
   {
     return -8;
+  }
+
+  if (!ReadConfiguredPortMode(kWorldInfoIniPath, "System", "PortMode", &m_byPortMode))
+  {
+    char portMode[16]{};
+    GetPrivateProfileStringA(
+      "System",
+      "PortMode",
+      "0",
+      portMode,
+      static_cast<DWORD>(sizeof(portMode)),
+      kWorldInfoIniPath);
+    MyMessageBox(
+      "CMainThread::LoadWorldInfoINI()",
+      "WorldInfo.ini\r\n[System]\r\nPortMode = %s Invalid!!",
+      portMode);
+    return -9;
   }
 
   GetPrivateProfileStringA(
@@ -4320,6 +4365,7 @@ bool CMainThread::NetworkInit()
   }
   params[0].m_bSendSafe = true;
   strcpy_s(params[0].m_szModuleName, sizeof(params[0].m_szModuleName), "ClientLine");
+  params[0].m_byPortMode = m_byPortMode;
 
   params[1].m_bServer = 0;
   params[1].m_bAnSyncConnect = 1;
@@ -4363,6 +4409,14 @@ bool CMainThread::NetworkInit()
   if (!g_Network.SetNetSystem(4, params, systemName, logPath))
   {
     return false;
+  }
+  if (m_byPortMode == kPortModeIncremental && g_Network.m_Process[0].m_Type.m_wPort != m_wGatePort)
+  {
+    m_logLoadingError.Write(
+      "ClientLine port %u is already in use. Switching to %u because PortMode=0.",
+      m_wGatePort,
+      g_Network.m_Process[0].m_Type.m_wPort);
+    m_wGatePort = g_Network.m_Process[0].m_Type.m_wPort;
   }
   g_Network.SetCryptUsage(0, true);
   AddPassablePacket();
