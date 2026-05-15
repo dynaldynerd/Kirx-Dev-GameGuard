@@ -167,6 +167,8 @@ constexpr char kWorldInfoIniPath[] = "..\\WorldInfo\\WorldInfo.ini";
 constexpr char kWorldSystemIniPath[] = ".\\Initialize\\WorldSystem.ini";
 constexpr unsigned __int16 kDefaultAccountPort = 29000;
 constexpr unsigned __int16 kDefaultGatePort = 27780;
+constexpr unsigned __int8 kPortModeIncremental = 0;
+constexpr unsigned __int8 kPortModeStatic = 1;
 
 bool TryParseConfiguredPort(const char *text, unsigned __int16 *port)
 {
@@ -225,6 +227,30 @@ bool ReadConfiguredIpv4Address(const char *iniPath, const char *section, const c
   return true;
 }
 
+bool ReadConfiguredPortMode(
+  const char *iniPath,
+  const char *section,
+  const char *key,
+  unsigned __int8 *portMode)
+{
+  if (portMode == nullptr)
+  {
+    return false;
+  }
+
+  char valueBuffer[16]{};
+  GetPrivateProfileStringA(section, key, "0", valueBuffer, static_cast<DWORD>(sizeof(valueBuffer)), iniPath);
+
+  char *end = nullptr;
+  const unsigned long parsed = std::strtoul(valueBuffer, &end, 10);
+  if (end == valueBuffer || *end != '\0' || parsed > kPortModeStatic)
+  {
+    return false;
+  }
+
+  *portMode = static_cast<unsigned __int8>(parsed);
+  return true;
+}
 bool ReadGateIpv4Address(unsigned int *address)
 {
   if (address == nullptr)
@@ -386,6 +412,10 @@ CMainThread::CMainThread()
   std::memset(m_dwStartNPCQuestCnt, 0, sizeof(m_dwStartNPCQuestCnt));
   m_bReleaseServiceMode = false;
   m_bExcuteService = true;
+  m_dwGateIP = 0;
+  m_wAccountPort = kDefaultAccountPort;
+  m_wGatePort = kDefaultGatePort;
+  m_byPortMode = kPortModeIncremental;
 }
 
 CMainThread::~CMainThread()
@@ -2299,13 +2329,31 @@ int CMainThread::LoadINI()
 
 int CMainThread::LoadWorldSystemINI()
 {
+  char returnedString[128]{};
+  GetPrivateProfileStringA(
+    "System",
+    "AccountAddress",
+    "X",
+    returnedString,
+    static_cast<DWORD>(sizeof(returnedString)),
+    kWorldSystemIniPath);
+  if (strcmp(returnedString, "X") == 0)
+  {
+    return -1;
+  }
+  IN_ADDR addr{};
+  if (InetPtonA(AF_INET, returnedString, &addr) != 1)
+  {
+    return -1;
+  }
+  m_dwAccountIP = addr.s_addr;
   GetPrivateProfileStringA(
     "VersionCheck",
     "Ver_CheckKey",
     "X",
     ms_szClientVerCheck,
     static_cast<DWORD>(sizeof(ms_szClientVerCheck)),
-    ".\\Initialize\\WorldSystem.ini");
+    kWorldSystemIniPath);
   return 0;
 }
 
@@ -2313,10 +2361,7 @@ int CMainThread::LoadWorldInfoINI()
 {
   if (!ReadConfiguredIpv4Address(kWorldInfoIniPath, "System", "AccountAddress", &m_dwAccountIP))
   {
-    if (!ReadConfiguredIpv4Address(kWorldSystemIniPath, "System", "AccountAddress", &m_dwAccountIP))
-    {
-      return -5;
-    }
+    (void)ReadConfiguredIpv4Address(kWorldSystemIniPath, "System", "AccountAddress", &m_dwAccountIP);
   }
 
   if (!ReadConfiguredPort(kWorldInfoIniPath, "System", "AccountPort", kDefaultAccountPort, &m_wAccountPort))
@@ -2334,6 +2379,22 @@ int CMainThread::LoadWorldInfoINI()
     return -8;
   }
 
+  if (!ReadConfiguredPortMode(kWorldInfoIniPath, "System", "PortMode", &m_byPortMode))
+  {
+    char portMode[16]{};
+    GetPrivateProfileStringA(
+      "System",
+      "PortMode",
+      "0",
+      portMode,
+      static_cast<DWORD>(sizeof(portMode)),
+      kWorldInfoIniPath);
+    MyMessageBox(
+      "CMainThread::LoadWorldInfoINI()",
+      "WorldInfo.ini\r\n[System]\r\nPortMode = %s Invalid!!",
+      portMode);
+    return -9;
+  }
   GetPrivateProfileStringA(
     "System",
     "WorldName",
@@ -4304,6 +4365,7 @@ bool CMainThread::NetworkInit()
   params[0].m_byRecvSleepTime = 10;
   params[0].m_bySendSleepTime = 2;
   params[0].m_wPort = m_wGatePort;
+  params[0].m_byPortMode = m_byPortMode;
   params[0].m_bSpeedHackCheck = 1;
   params[0].m_bOddMsgWriteLog = 1;
   params[0].m_dwSocketRecycleTerm = 30000;
@@ -4363,6 +4425,14 @@ bool CMainThread::NetworkInit()
   if (!g_Network.SetNetSystem(4, params, systemName, logPath))
   {
     return false;
+  }
+  if (m_byPortMode == kPortModeIncremental && g_Network.m_Process[0].m_Type.m_wPort != m_wGatePort)
+  {
+    m_logLoadingError.Write(
+      "ClientLine port %u is already in use. Switching to %u because PortMode=0.",
+      m_wGatePort,
+      g_Network.m_Process[0].m_Type.m_wPort);
+    m_wGatePort = g_Network.m_Process[0].m_Type.m_wPort;
   }
   g_Network.SetCryptUsage(0, true);
   AddPassablePacket();
