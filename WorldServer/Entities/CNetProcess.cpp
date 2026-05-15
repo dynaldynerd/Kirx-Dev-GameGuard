@@ -147,6 +147,7 @@ _SOCK_TYPE_PARAM::_SOCK_TYPE_PARAM()
   this->m_bServer = 0;
   this->m_bAcceptIPCheck = 0;
   this->m_byProtocolID = 0;
+  this->m_byPortMode = 1;
   this->m_wSocketMaxNum = 1;
   this->m_dwIPCheckTerm = 120000;
   this->m_dwSocketRecycleTerm = 0;
@@ -568,6 +569,8 @@ bool CNetSocket::SetSocket(_SOCK_TYPE_PARAM *pType, char *pszErrMsg)
 
 bool CNetSocket::InitAcceptSocket(char *pszErrMsg)
 {
+  constexpr unsigned __int8 kPortModeIncremental = 0;
+
   if (m_SockType.m_byProtocolID)
   {
     if (m_SockType.m_byProtocolID == 1)
@@ -600,16 +603,29 @@ bool CNetSocket::InitAcceptSocket(char *pszErrMsg)
     nameLen = 16;
   }
 
-  sockaddr name{};
-  name.sa_family = 2;
-  *reinterpret_cast<unsigned __int16 *>(name.sa_data) = htons(m_SockType.m_wPort);
-  *reinterpret_cast<unsigned int *>(&name.sa_data[2]) = htonl(0);
-
-  if (bind(m_sAccept, &name, nameLen) == -1)
+  sockaddr_in name{};
+  name.sin_family = AF_INET;
+  name.sin_addr.S_un.S_addr = htonl(0);
+  unsigned __int16 bindPort = m_SockType.m_wPort;
+  while (true)
   {
+    name.sin_port = htons(bindPort);
+    if (bind(m_sAccept, reinterpret_cast<sockaddr *>(&name), nameLen) != SOCKET_ERROR)
+    {
+      m_SockType.m_wPort = bindPort;
+      break;
+    }
+
     const int errorCode = WSAGetLastError();
-    wsprintfA(pszErrMsg, "bind() Failure => %d", errorCode);
-    return false;
+    if (m_SockType.m_byPortMode != kPortModeIncremental
+        || errorCode != WSAEADDRINUSE
+        || bindPort == 65535u)
+    {
+      wsprintfA(pszErrMsg, "bind() Failure => %d", errorCode);
+      return false;
+    }
+
+    ++bindPort;
   }
 
   if (listen(m_sAccept, 5) == -1)
@@ -1221,6 +1237,7 @@ bool CNetProcess::SetProcess(int nIndex, _NET_TYPE_PARAM *pType, CNetWorking *pN
     m_LogFile[2].Write("m_NetSocket.SetSocket. fail : %s", pszErrMsg);
     return false;
   }
+  m_Type.m_wPort = m_NetSocket.GetSocketType()->m_wPort;
 
   const unsigned int socketCount = m_Type.m_wSocketMaxNum;
   m_pRecvBuffer = AllocateVector<_NET_BUFFER>(socketCount);
