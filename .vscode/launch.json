@@ -5,10 +5,10 @@
             "name": "Debug WorldServer (Debug|x64)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "D:\\RFServer\\Server\\Zone Server\\RF_Bin\\WorldServer.exe",
+            "program": "D:\\RF Server\\Server\\Zone Server\\RF_Bin\\WorldServer.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "D:\\RFServer\\Server\\Zone Server\\RF_Bin",
+            "cwd": "D:\\RF Server\\Server\\Zone Server\\RF_Bin",
             "environment": [],
             "console": "integratedTerminal",
             "preLaunchTask": "Build WorldServer Debug x64"
