@@ -2368,7 +2368,7 @@ bool CUserDB::Enter_Account(
   }
 
   bool valid = true;
-  if (!waitData->m_byUserDgr && dwProtocolVer != 126455)
+  if (!waitData->m_byUserDgr && dwProtocolVer != 100644)
   {
     g_Main.m_logSystemError.Write(
       "%s.. Enter_Account : if(dwProtocolVer != __PROTOCOL_VER)",
