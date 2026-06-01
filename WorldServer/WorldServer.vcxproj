@@ -57,9 +57,9 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
-    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ShipDebug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -67,9 +67,9 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
-    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -78,9 +78,9 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <OutDir>D:\RFServer\Server\Zone Server\RF_Bin\</OutDir>
+    <OutDir>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
-    <LocalDebuggerWorkingDirectory>D:\RFServer\Server\Zone Server\RF_Bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\Private Files\REPACK AOP FIX TIME\1_Server AOP\Zoneserver\RF_Bin\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
