@@ -1221,10 +1221,13 @@ int GetItemTableCode(const char *psItemCode)
   if (strcmp(prefix, "ih") == 0) return 4;
   if (strcmp(prefix, "id") == 0) return 5;
   if (strcmp(prefix, "iw") == 0) return 6;
+  if (strcmp(prefix, "ik") == 0) return 7;
+  if (strcmp(prefix, "ii") == 0) return 8;
+  if (strcmp(prefix, "ia") == 0) return 9;
+  if (strcmp(prefix, "ib") == 0) return 10;
   if (strcmp(prefix, "im") == 0) return 11;
   if (strcmp(prefix, "ie") == 0) return 12;
   if (strcmp(prefix, "ip") == 0) return 13;
-  if (strcmp(prefix, "ib") == 0) return 10;
   if (strcmp(prefix, "if") == 0) return 14;
   if (strcmp(prefix, "ic") == 0) return 15;
   if (strcmp(prefix, "it") == 0) return 16;
@@ -1232,9 +1235,6 @@ int GetItemTableCode(const char *psItemCode)
   if (strcmp(prefix, "ir") == 0) return 18;
   if (strcmp(prefix, "in") == 0) return 19;
   if (strcmp(prefix, "iy") == 0) return 20;
-  if (strcmp(prefix, "ik") == 0) return 7;
-  if (strcmp(prefix, "ii") == 0) return 8;
-  if (strcmp(prefix, "ia") == 0) return 9;
   if (strcmp(prefix, "iz") == 0) return 21;
   if (strcmp(prefix, "iq") == 0) return 22;
   if (strcmp(prefix, "ix") == 0) return 23;
