@@ -1247,7 +1247,7 @@ int GetItemTableCode(const char *psItemCode)
   if (strcmp(prefix, "re") == 0) return 30;
   if (strcmp(prefix, "bx") == 0) return 31;
   if (strcmp(prefix, "fi") == 0) return 32;
-  if (strcmp(prefix, "un") == 0) return 33;
+  if (strcmp(prefix, "um") == 0) return 33;
   if (strcmp(prefix, "rd") == 0) return 34;
   if (strcmp(prefix, "lk") == 0) return 35;
   if (strcmp(prefix, "cu") == 0) return 36;
