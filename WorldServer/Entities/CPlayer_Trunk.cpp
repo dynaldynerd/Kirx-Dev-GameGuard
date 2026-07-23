@@ -32,6 +32,9 @@
 #include "CPotionMgr.h"
 #include "guild_honor_set_request_clzo.h"
 #include "CMgrGuildHistory.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "CMgrAvatorItemHistory.h"
 #include "CPostSystemManager.h"
 #include "CPartyPlayer.h"
@@ -323,6 +326,10 @@ void CPlayer::pc_TrunkEstRequest(char *pwszPassword, unsigned __int8 byHintIndex
 
 void CPlayer::pc_TrunkDownloadRequest(char *pwszPassword)
 {
+  // ---- Protection System: Anti-Dupe trunk lock ----
+  if (!AntiDupe::Instance().TryLockTransaction(m_dwSerial, TransactionType::TRUNK))
+      return;
+
   unsigned __int8 byRetCode = 0;
 
   if (!IsBeNearStore(this, 10))

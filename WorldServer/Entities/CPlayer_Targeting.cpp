@@ -49,6 +49,7 @@
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
+#include "../Protection/ProtectionSystem.h"
 #include "TicketItem_fld.h"
 #include "darkhole_create_setdata.h"
 #include "ENTER_DUNGEON_NEW_POS.h"
@@ -2501,6 +2502,16 @@ void CPlayer::pc_MoveToOwnStoneMapRequest()
   CMapData *intoMap = nullptr;
   _portal_dummy *portalDummy = nullptr;
 
+  // ---- Protection System: Teleport cooldown/validation ----
+  if (ProtectionSystem::Instance().IsInitialized())
+  {
+    if (!CombatIntegrity::Instance().CanPlayerTeleport(this))
+    {
+      this->SendMsg_MoveToOwnStoneMapResult(2u, 0, pos);
+      return;
+    }
+  }
+
   if (this->m_byStoneMapMoveInfo == 1)
   {
     if (this->GetCurSecNum() == static_cast<unsigned int>(-1) || this->m_bMapLoading)
@@ -2737,6 +2748,17 @@ void CPlayer::pc_GestureRequest(unsigned __int8 byGestureType)
 
 void CPlayer::pc_ProposeVoteRequest(unsigned __int8 byLimGrade, char *pwszCont)
 {
+  // ---- Protection System: Sanitize vote content ----
+  if (ProtectionSystem::Instance().IsInitialized() && pwszCont)
+  {
+    if (!InputSanitizer::Instance().SanitizeSQL(pwszCont, 512))
+    {
+      AntiCheat::Instance().AddScore(m_dwSerial, 30, "vote_sqli");
+      this->SendMsg_ProposeVoteResult(static_cast<char>(7));
+      return;
+    }
+  }
+
   unsigned __int8 result = 0;
   int raceCode = 0;
   if (!g_Main.IsReleaseServiceMode()

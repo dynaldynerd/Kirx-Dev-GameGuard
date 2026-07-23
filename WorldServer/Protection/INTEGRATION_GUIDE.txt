@@ -1,0 +1,506 @@
+================================================================================
+ PROTECTION SYSTEM - INTEGRATION GUIDE
+ For RF-Online WorldServer Source Code
+================================================================================
+
+OVERVIEW:
+This Protection System recreates the fixes from 6.23_Guard 2 (SnooperGS)
+directly into the WorldServer C++ source code. No external DLL needed.
+
+FILES:
+  Protection/
+    ProtectConfig.h/.cpp    - INI config reader
+    AntiHack.h/.cpp         - Speed/Wall/Fly/Invis hack detection
+    AntiDupe.h/.cpp         - Trade/Trunk/Post/UMT dupe protection
+    GameFixes.h/.cpp        - All game logic fixes
+    ProtectionSystem.h/.cpp - Main manager (ties everything together)
+    Configs/                - Default config files (copy to server folder)
+
+================================================================================
+ STEP 1: ADD FILES TO PROJECT
+================================================================================
+
+Add all .h and .cpp files from the Protection/ folder to your
+WorldServer.vcxproj. Make sure the include path allows:
+  #include "Protection/ProtectionSystem.h"
+
+If using Visual Studio, right-click project -> Add -> Existing Item.
+
+================================================================================
+ STEP 2: INITIALIZE ON SERVER START
+================================================================================
+
+File: Entities/CMainThread.cpp
+Function: CMainThread initialization (after database/map loading)
+
+Add:
+  #include "Protection/ProtectionSystem.h"
+
+In the init function (after maps and tables are loaded):
+  // Initialize Protection System
+  char configPath[260];
+  sprintf(configPath, "%s\\PROTECT\\Configs", GetServerPath());
+  ProtectionSystem::Instance().Initialize(configPath);
+
+================================================================================
+ STEP 3: HOOK PLAYER ENTER/LEAVE WORLD
+================================================================================
+
+File: Entities/CMainThread.cpp or wherever player enter_world is handled
+
+On player entering world (after character data is loaded):
+  ProtectionSystem::Instance().OnPlayerEnterWorld(pPlayer);
+
+On player disconnecting / leaving world:
+  ProtectionSystem::Instance().OnPlayerLeaveWorld(pPlayer);
+
+================================================================================
+ STEP 4: HOOK MOVEMENT PACKETS
+================================================================================
+
+File: Entities/CNetworkEX.cpp or CPlayer movement handler
+Function: Where object_server_pos_request_clzo is processed
+
+Before updating player position:
+  if (!AntiHack::Instance().ValidateMovement(pPlayer, newX, newY, newZ))
+  {
+      // Teleport player back to last valid position
+      pPlayer->SendMsg_MoveError(ERR_SPEED_HACK);
+      return;
+  }
+
+================================================================================
+ STEP 5: HOOK ATTACK PACKETS
+================================================================================
+
+File: Entities/CPlayerAttack.cpp or CPlayer_Combat.cpp
+Function: Where attack packets are processed
+
+Before processing attack:
+  float targetX = pTarget->m_fPosX;
+  float targetY = pTarget->m_fPosY;
+  float targetZ = pTarget->m_fPosZ;
+  if (!AntiHack::Instance().ValidateAttackRange(pPlayer, targetX, targetY, targetZ))
+  {
+      // Reject long distance attack
+      return;
+  }
+
+For skills/debuffs:
+  if (!AntiHack::Instance().ValidateSkillRange(pPlayer, targetX, targetY, targetZ))
+  {
+      return;
+  }
+
+================================================================================
+ STEP 6: HOOK TRADE SYSTEM
+================================================================================
+
+File: Entities/CPlayer_Trade.cpp
+
+On trade request (dtrade_ask_request_clzo):
+  if (!AntiDupe::Instance().TryLockTransaction(pPlayer->m_dwSerial, TransactionType::TRADE))
+  {
+      pPlayer->SendMsg_GuildManageResult(ERR_BUSY);
+      return;
+  }
+
+On trade complete/cancel:
+  AntiDupe::Instance().UnlockTransaction(pPlayer->m_dwSerial, TransactionType::TRADE);
+
+================================================================================
+ STEP 7: HOOK TRUNK (STORAGE) SYSTEM
+================================================================================
+
+File: Entities/CPlayer_Trunk.cpp
+
+On trunk open (trunk_download_request_clzo):
+  if (!AntiDupe::Instance().TryLockTransaction(pPlayer->m_dwSerial, TransactionType::TRUNK))
+      return;
+
+On trunk swap (trunk_io_swap_request_clzo):
+  if (!AntiDupe::Instance().ValidateTrunkSwap(pPlayer, srcSerial, dstSerial))
+      return;
+
+On trunk close:
+  AntiDupe::Instance().UnlockTransaction(pPlayer->m_dwSerial, TransactionType::TRUNK);
+
+================================================================================
+ STEP 8: HOOK POST/MAIL SYSTEM
+================================================================================
+
+File: Entities/CPlayer_Post.cpp
+
+Before sending mail:
+  if (!GameFixes::Instance().IsPostMailEnabled())
+  {
+      // Post system disabled
+      return;
+  }
+  if (!AntiDupe::Instance().TryLockTransaction(pPlayer->m_dwSerial, TransactionType::POST))
+      return;
+
+After mail sent:
+  AntiDupe::Instance().UnlockTransaction(pPlayer->m_dwSerial, TransactionType::POST);
+
+================================================================================
+ STEP 9: HOOK UNMANNED TRADER (AUCTION)
+================================================================================
+
+File: Entities/CUnmannedTraderController.cpp
+
+On buy request (unmannedtrader_buy_item_request_clzo):
+  if (!AntiDupe::Instance().ValidateUMTBuy(pPlayer->m_dwSerial, buyCount))
+      return;
+  if (!AntiDupe::Instance().TryLockTransaction(pPlayer->m_dwSerial, TransactionType::UNMANNED_TRADER))
+      return;
+
+On buy complete:
+  AntiDupe::Instance().UnlockTransaction(pPlayer->m_dwSerial, TransactionType::UNMANNED_TRADER);
+
+================================================================================
+ STEP 10: HOOK CHARACTER CREATION
+================================================================================
+
+File: Where add_char_request_clzo is processed
+
+  // Validate character name (SQL injection fix + format)
+  if (!GameFixes::Instance().ValidateCharacterName(charName))
+  {
+      // Send error: invalid name
+      return;
+  }
+
+  // One race per account check
+  if (!GameFixes::Instance().CanCreateCharacter(accountId, raceCode))
+  {
+      // Send error: race conflict
+      return;
+  }
+
+================================================================================
+ STEP 11: HOOK TELEPORT
+================================================================================
+
+File: Where teleport packets are processed
+
+  if (!GameFixes::Instance().CanTeleport(pPlayer, pPlayer->IsBattleMode()))
+      return;
+
+For GM teleport to HQ:
+  if (!GameFixes::Instance().CanUseFreeTPToHQ(pPlayer))
+      return;
+
+================================================================================
+ STEP 12: HOOK GUILD LEAVE (CW BUFF FIX)
+================================================================================
+
+File: Entities/CPlayer_Guild.cpp
+
+On guild leave/kick:
+  GameFixes::Instance().OnPlayerLeaveGuild(pPlayer);
+
+================================================================================
+ STEP 13: HOOK RESPAWN (BUFF FIX)
+================================================================================
+
+File: Where player respawn is handled
+
+After respawn position is set:
+  GameFixes::Instance().OnPlayerRespawn(pPlayer);
+
+================================================================================
+ STEP 14: HOOK ITEM USE (RACE CHECK)
+================================================================================
+
+File: Where use_item packets are processed
+
+  if (!GameFixes::Instance().CanUseItem(pPlayer, itemRaceCode))
+  {
+      // Block item usage
+      return;
+  }
+
+================================================================================
+ STEP 15: HOOK TOWER BUILD
+================================================================================
+
+File: Where make_tower_request_clzo is processed
+
+  if (!GameFixes::Instance().CanBuildTower(pPlayer, towerLevel, mapIndex))
+      return;
+
+  if (!GameFixes::Instance().CanCollectTower(pPlayer, towerX, towerY, towerZ))
+      return;
+
+================================================================================
+ STEP 16: HOOK VOTE SYSTEM
+================================================================================
+
+File: Entities/CVoteSystem.cpp or Entities/Voter.cpp
+
+  if (!GameFixes::Instance().CanVote(accountId))
+  {
+      // Already voted
+      return;
+  }
+  GameFixes::Instance().RecordVote(accountId);
+
+================================================================================
+ STEP 17: HOOK POTION USE (DUAL EFFECT FIX)
+================================================================================
+
+File: Entities/CPotionMgr.cpp
+
+Before applying potion effect:
+  if (!GameFixes::Instance().CanUsePotionEffect(pPlayer, effectType))
+      return;
+
+================================================================================
+ STEP 18: HOOK COMBINE UI (>5 RESULTS FIX)
+================================================================================
+
+File: Entities/CPlayer_ItemCombine.cpp
+
+Before sending combine results:
+  if (!GameFixes::Instance().ValidateCombineResults(resultCount))
+  {
+      // Truncate or reject
+      resultCount = 5;
+  }
+
+================================================================================
+ STEP 19: GM RELOAD COMMAND
+================================================================================
+
+Add a new GM command to reload configs at runtime:
+
+  // In cheat command handler:
+  if (strcmp(command, "reload_protect") == 0)
+  {
+      ProtectionSystem::Instance().ReloadConfigs();
+      pPlayer->SendChatMsg("Protection configs reloaded");
+  }
+
+================================================================================
+ STEP 20: HOOK MAIN THREAD TICK (ANTI-CHEAT + PACKET RATE)
+================================================================================
+
+File: Entities/CMainThread.cpp
+Function: Main thread tick/update loop
+
+Add to the main game loop (runs every frame/tick):
+  ProtectionSystem::Instance().OnTick();
+
+================================================================================
+ STEP 21: HOOK PACKET RECEIVE (PACKET FLOOD DETECTION)
+================================================================================
+
+File: Entities/CNetworkEX.cpp or main packet dispatch
+Function: Where incoming packets are dispatched
+
+Before processing any packet from a player:
+  #include "Protection/AntiCheat.h"
+
+  if (!AntiCheat::Instance().OnPacketReceived(pPlayer->m_dwSerial))
+  {
+      // Packet flood detected - drop packet
+      // Check if we should kick
+      auto action = AntiCheat::Instance().EvaluatePlayer(pPlayer->m_dwSerial);
+      if (action == AntiCheat::ACTION_KICK || action == AntiCheat::ACTION_BAN)
+          pPlayer->Disconnect();
+      return;
+  }
+
+================================================================================
+ STEP 22: HOOK HWID REGISTRATION (LOGIN)
+================================================================================
+
+File: Where client sends HWID (login/handshake packet)
+
+On receiving HWID from client:
+  #include "Protection/AntiCheat.h"
+
+  // Check if HWID is blocked
+  if (AntiCheat::Instance().IsHWIDBlocked(hwid))
+  {
+      // Reject connection
+      pPlayer->SendMsg_LoginResult(ERR_HWID_BLOCKED);
+      pPlayer->Disconnect();
+      return;
+  }
+
+  // Register HWID for tracking
+  AntiCheat::Instance().RegisterHWID(pPlayer->m_dwSerial, hwid);
+
+================================================================================
+ STEP 23: HOOK SQL INPUT SANITIZATION
+================================================================================
+
+File: ALL packet handlers that accept string input from client
+      (character name, guild name, chat, mail, etc.)
+
+  #include "Protection/InputSanitizer.h"
+
+Character creation (add_char_request_clzo):
+  if (!InputSanitizer::Instance().ValidateName(charName, 0))
+  {
+      // Invalid name or SQL injection attempt
+      return;
+  }
+
+Guild creation:
+  if (!InputSanitizer::Instance().ValidateGuildName(guildName))
+      return;
+
+Chat messages:
+  std::string safeMsg = InputSanitizer::Instance().SanitizeChat(rawMessage);
+
+Any string going into SQL query:
+  std::string safeStr = InputSanitizer::Instance().SanitizeForSQL(userInput);
+  // OR better: use parameterized queries
+
+================================================================================
+ STEP 24: HOOK ITEM INTEGRITY (PREMIUM / SET ITEM / ORE)
+================================================================================
+
+File: Entities/CPlayer_ItemCombine.cpp, CPlayer_Mining.cpp,
+      wherever premium items and set effects are handled
+
+  #include "Protection/ItemIntegrity.h"
+
+Premium item use:
+  if (!ItemIntegrity::Instance().ValidatePremiumItem(pPlayer, itemSerial, itemCode))
+      return;
+
+Cash item use:
+  if (!ItemIntegrity::Instance().ValidateCashItemUse(pPlayer, itemSerial))
+      return;
+
+Set item effect application (CSetItemEffect):
+  if (!ItemIntegrity::Instance().ValidateSetItemEffect(pPlayer, setId, setNum, effectNum))
+      return;
+
+Ore mining result (CPlayer_Mining.cpp):
+  if (!ItemIntegrity::Instance().ValidateOreGrade(pPlayer, oreIndex, oreLevel))
+  {
+      // Force valid ore instead
+      return;
+  }
+
+Ore cutting/processing:
+  if (!ItemIntegrity::Instance().ValidateOreCutting(pPlayer, resultGrade))
+      return;
+
+Embellish (socket gem):
+  if (!ItemIntegrity::Instance().ValidateEmbellishData(pPlayer, storageIndex, slot))
+      return;
+
+================================================================================
+ STEP 25: HOOK COMBAT INTEGRITY (UNIT/TOWER/TRAP/TELEPORT)
+================================================================================
+
+File: Entities/CPlayer_Unit.cpp, tower/trap handlers, teleport handlers
+
+  #include "Protection/CombatIntegrity.h"
+
+Unit (MAU) delivery:
+  if (!CombatIntegrity::Instance().ValidateUnitDelivery(pPlayer, x, y, z))
+      return;
+
+Tower creation (make_tower_request_clzo):
+  if (!CombatIntegrity::Instance().ValidateTowerCreate(
+      pPlayer, posX, posY, posZ, mapIndex, isMapLoading))
+      return;
+
+Trap creation:
+  if (!CombatIntegrity::Instance().ValidateTrapCreate(
+      pPlayer, posX, posY, posZ, mapIndex, isMapLoading))
+      return;
+
+Teleport (enhanced - includes chip war check):
+  if (!CombatIntegrity::Instance().CanPlayerTeleport(
+      pPlayer, pPlayer->IsBattleMode(), isChipWar))
+      return;
+
+Attack range by weapon type:
+  CombatIntegrity::WeaponType wt = CombatIntegrity::MELEE; // set from weapon data
+  if (!CombatIntegrity::Instance().ValidateCombatRange(
+      pPlayer, targetX, targetY, targetZ, wt))
+      return;
+
+Position integrity (movement handler):
+  if (!CombatIntegrity::Instance().CheckPositionIntegrity(pPlayer, newX, newY, newZ))
+  {
+      // Warp player back
+      return;
+  }
+
+================================================================================
+ STEP 26: WIRE CHEAT SCORING TO ALL MODULES
+================================================================================
+
+Whenever a validation fails in any module, add cheat score:
+
+  // Example in movement handler:
+  if (!AntiHack::Instance().ValidateMovement(pPlayer, x, y, z))
+  {
+      AntiCheat::Instance().AddScore(pPlayer->m_dwSerial, 20, "speed_hack");
+      auto action = AntiCheat::Instance().EvaluatePlayer(pPlayer->m_dwSerial);
+      if (action == AntiCheat::ACTION_KICK) pPlayer->Disconnect();
+      if (action == AntiCheat::ACTION_BAN)  { /* ban account */ }
+      return;
+  }
+
+Suggested point values:
+  Speed hack:       20 pts
+  Fly hack:         25 pts
+  Wall hack:        15 pts
+  Invis hack:       30 pts
+  Item dupe:        50 pts
+  SQL injection:    100 pts (immediate ban)
+  Packet flood:     5 pts (per second over limit)
+  Ore hack:         20 pts
+  Set item hack:    25 pts
+  Premium item:     30 pts
+  Invalid position: 10 pts
+
+================================================================================
+ NOTES
+================================================================================
+
+1. All fixes use CPlayer fields like m_dwSerial, m_fPosX, m_fPosY, m_fPosZ,
+   m_nLevel, m_byRace, m_byGMGrade. Verify these field names match your
+   WorldServer version. The RF-Online source in this repo uses these names.
+
+2. Some fixes have placeholder comments (marked "Integration:") where you
+   need to call specific WorldServer functions. This is because the exact
+   function signatures vary between server versions.
+
+3. Config files go in: <ServerPath>/PROTECT/Configs/
+   Copy the defaults from Protection/Configs/ folder.
+
+4. Log files are created in the server's working directory:
+   - Protection_System.log
+   - Protection_AntiHack.log
+   - Protection_AntiDupe.log
+   - Protection_GameFixes.log
+   - Protection_InputSanitizer.log
+   - Protection_ItemIntegrity.log
+   - Protection_CombatIntegrity.log
+   - Protection_AntiCheat.log
+
+5. The system is designed to be non-destructive: if initialization fails
+   or configs are missing, it uses safe defaults. No crash risk.
+
+6. Thread safety: All modules use std::mutex for thread-safe access.
+   The WorldServer is multi-threaded (network threads + main thread).
+
+7. Total modules: 7
+   - AntiHack       (6.23_Guard 2): speed/wall/fly/invis hack
+   - AntiDupe       (6.23_Guard 2): trade/trunk/post/UMT dupe
+   - GameFixes      (6.23_Guard 2): tower/guild/vote/potion/combine fixes
+   - InputSanitizer (NEW): SQL injection, buffer overflow, name validation
+   - ItemIntegrity  (NEW): premium item, set item effect, ore grade, embellish
+   - CombatIntegrity(NEW): unit/tower/trap WH/FH, teleport, combat range
+   - AntiCheat      (NEW): cheat scoring, packet rate limit, HWID block

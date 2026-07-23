@@ -13,6 +13,9 @@
 #include "CItemStore.h"
 #include "CNetworkEX.h"
 #include "StoreList_fld.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "CActionPointSystemMgr.h"
 #include "CItemStoreManager.h"
 #include "CMapItemStoreList.h"
@@ -556,10 +559,21 @@ void CPlayer::pc_DTradeCancleRequest()
   tradeDst->m_pmTrd.Init();
   this->SendMsg_DTradeCancleResult(static_cast<unsigned __int8>(differentTradeState));
   tradeDst->SendMsg_DTradeCancleInform();
+
+  // ---- Protection System: Unlock trade transactions ----
+  AntiDupe::Instance().UnlockTransaction(m_dwSerial, TransactionType::TRADE);
+  if (tradeDst)
+      AntiDupe::Instance().UnlockTransaction(tradeDst->m_dwSerial, TransactionType::TRADE);
 }
 
 void CPlayer::pc_DTradeAskRequest(unsigned __int16 wDstIndex)
 {
+  // ---- Protection System: Anti-Dupe trade lock ----
+  if (!AntiDupe::Instance().TryLockTransaction(m_dwSerial, TransactionType::TRADE))
+  {
+      return; // already in transaction
+  }
+
   unsigned __int8 result = 0;
   CPlayer *dst = &g_Player[wDstIndex];
 

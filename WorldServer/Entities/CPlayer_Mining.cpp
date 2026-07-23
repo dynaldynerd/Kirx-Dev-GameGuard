@@ -107,6 +107,9 @@
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
 
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
+
 #include <ctime>
 #include <mmsystem.h>
 #include <cstdlib>
@@ -299,6 +302,18 @@ void CPlayer::pc_MineComplete()
       if (!isGoldenBoxItem)
       {
         targetOreIndex = static_cast<unsigned __int8>(m_bySelectOreIndex + rand() % 3);
+      }
+
+      // ---- Protection System: Validate Ore Grade (prevent +4 ore hack) ----
+      {
+          _OreItem_fld *oreCheck = reinterpret_cast<_OreItem_fld *>(
+              g_Main.m_tblItemData[17].GetRecord(targetOreIndex));
+          if (oreCheck && !ItemIntegrity::Instance().ValidateOreGrade(
+              this, targetOreIndex, oreCheck->m_nOre_Level))
+          {
+              AntiCheat::Instance().AddScore(m_dwSerial, 20, "ore_hack");
+              resultCode = 9;
+          }
       }
 
       const int targetRecordIndex = targetOreIndex;

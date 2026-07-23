@@ -175,6 +175,9 @@
 #include "GlobalObjects.h"
 #include "cStaticMember_Player.h"
 
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
+
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -3541,6 +3544,20 @@ void CPlayer::pc_MoveNext(unsigned __int8 byMoveType, float *pfCur, float *pfTar
     SendMsg_AlterSPInform();
   }
 
+  // ---- Protection System: Validate Movement (speed/fly/wall hack) ----
+  if (!AntiHack::Instance().ValidateMovement(this, pfCur[0], pfCur[1], pfCur[2]))
+  {
+      AntiCheat::Instance().AddScore(m_dwSerial, 20, "speed_hack");
+      auto cheatAction = AntiCheat::Instance().EvaluatePlayer(m_dwSerial);
+      if (cheatAction >= AntiCheat::ACTION_KICK)
+      {
+          g_Network.Close(0, m_ObjID.m_wIndex, false, "Protection: speed/fly hack");
+          return;
+      }
+      SendMsg_MoveError(11);
+      return;
+  }
+
   m_byMoveType = byMoveType;
   m_byMoveDirect = byDirect;
   std::memcpy(m_fOldPos, m_fCurPos, sizeof(m_fOldPos));
@@ -5369,6 +5386,9 @@ void CPlayer::SendMsg_DTradeCloseInform(char byCloseCode)
 
 void CPlayer::NetClose(bool bMoveOutLobby)
 {
+  // ---- Protection System: Player Leave World ----
+  ProtectionSystem::Instance().OnPlayerLeaveWorld(this);
+
   if (m_byPatriarchAppointPropose != 255)
   {
     char responseData = 1;
@@ -16225,6 +16245,9 @@ void CPlayer::CreateComplete()
   }
 
   this->m_bCreateComplete = 1;
+
+  // ---- Protection System: Player Enter World ----
+  ProtectionSystem::Instance().OnPlayerEnterWorld(this);
   CheckUnitCutTime();
   if (this->m_Param.IsClassChangeableLv())
   {

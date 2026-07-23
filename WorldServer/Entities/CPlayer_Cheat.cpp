@@ -28,6 +28,9 @@
 #include "CMoneySupplyMgr.h"
 #include "CLogFile.h"
 #include "CItemStore.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "CItemStoreManager.h"
 #include "CMapItemStoreList.h"
 #include "StoreList_fld.h"
@@ -2730,5 +2733,16 @@ char loot_item(CPlayer *pOwner, char *pszItemCode, int nNum, char *pszUpTalCode,
         return 0;
     }
     return 1;
+}
+
+// ---- Protection System: GM Reload Command ----
+// Call this from cheat command handler: dev_reload_protect(pPlayer)
+bool CPlayer::dev_reload_protect()
+{
+    if (m_byUserDgr < 3) // require GM grade 3+
+        return false;
+
+    ProtectionSystem::Instance().ReloadConfigs();
+    return true;
 }
 

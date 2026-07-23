@@ -106,6 +106,9 @@
 #include "NetCheckPackets.h"
 #include "GlobalObjectDefs.h"
 
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
+
 #include <ctime>
 #include <mmsystem.h>
 #include <cstdlib>
@@ -591,6 +594,9 @@ void CPlayer::Guild_Self_Leave_Complete(_DB_QRY_SYN_DATA *pData)
     player->UpdateVisualVer(cashChangeState);
     player->SendMsg_GuildJoinOtherInform();
     player->SetLastAttBuff(0);
+
+    // ---- Protection System: Remove CW buffs on guild leave ----
+    GameFixes::Instance().OnPlayerLeaveGuild(player);
     CGuild::s_MgrHistory.leave_member(
       player->m_Param.GetCharNameA(),
       player->m_dwObjSerial,

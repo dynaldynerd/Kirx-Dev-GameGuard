@@ -32,6 +32,9 @@
 #include "qry_case_unmandtrader_time_out_cancelitem.h"
 #include "qry_case_unmandtrader_update_reprice.h"
 #include "qry_case_unmandtrader_updateitemstate.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "unmannedtrader_page_info.h"
 #include "unmannedtrader_buy_item_info.h"
 #include "unmannedtrader_buy_item_result_zocl.h"
@@ -167,6 +170,16 @@ void CUnmannedTraderController::CancelRegist(unsigned __int16 wInx, _a_trade_cle
 
 void CUnmannedTraderController::Buy(unsigned __int16 wInx, _unmannedtrader_buy_item_request_clzo *pRequest)
 {
+  // ---- Protection System: Anti-Dupe UMT buy lock (max 1 item) ----
+  CPlayer *pBuyer = &g_Player[wInx];
+  if (pBuyer && pBuyer->m_bLive)
+  {
+      if (!AntiDupe::Instance().ValidateUMTBuy(pBuyer->m_dwSerial, 1))
+          return;
+      if (!AntiDupe::Instance().TryLockTransaction(pBuyer->m_dwSerial, TransactionType::UNMANNED_TRADER))
+          return;
+  }
+
   CUnmannedTraderUserInfoTable *userInfoTable = CUnmannedTraderUserInfoTable::Instance();
   userInfoTable->Buy(wInx, 0, pRequest);
 }

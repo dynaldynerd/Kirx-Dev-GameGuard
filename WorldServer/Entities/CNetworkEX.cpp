@@ -62,6 +62,9 @@
 #include "qry_case_select_timelimit_info.h"
 #include "StoreList_fld.h"
 
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
+
 namespace
 {
 unsigned __int8 sbyCcrFgBlock[2] = {102, 5};
@@ -660,6 +663,24 @@ bool CNetworkEX::ClientLineAnalysis(unsigned int n, _MSG_HEADER *pMsgHeader, cha
   if (n >= MAX_PLAYER)
   {
     return false;
+  }
+
+  // ---- Protection System: Packet Flood Detection ----
+  if (ProtectionSystem::Instance().IsInitialized())
+  {
+      CPlayer *pFloodPlayer = &g_Player[n];
+      if (pFloodPlayer->m_bLive && pFloodPlayer->m_dwSerial)
+      {
+          if (!AntiCheat::Instance().OnPacketReceived(pFloodPlayer->m_dwSerial))
+          {
+              auto action = AntiCheat::Instance().EvaluatePlayer(pFloodPlayer->m_dwSerial);
+              if (action >= AntiCheat::ACTION_KICK)
+              {
+                  Close(0, static_cast<unsigned __int16>(n), false, "Protection: packet flood");
+              }
+              return true; // drop packet
+          }
+      }
   }
 
 #if 0 // packet log trace disabled (debug only)
@@ -3972,6 +3993,14 @@ bool CNetworkEX::AddCharRequest(unsigned int n, char *pBuf)
   char charName[17]{};
   std::memcpy(charName, request->wszCharName, 16);
   charName[16] = '\0';
+
+  // ---- Protection System: Character Name Validation (SQL injection + format) ----
+  if (!InputSanitizer::Instance().ValidateName(charName, 0))
+  {
+      m_LogFile.Write("Protection: Invalid char name '%s' from account %s",
+          charName, g_UserDB[n].m_szAccountID);
+      return true; // silently reject
+  }
 
   if (std::strlen(charName) <= 16)
   {

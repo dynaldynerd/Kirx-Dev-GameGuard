@@ -98,6 +98,9 @@ bool _TRADE_DB_BASE::_LIST::IsEmpty()
 #include "CandidateMgr.h"
 #include "CSUItemSystem.h"
 #include "CDarkHoleDungeonQuest.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "CCryptor.h"
 #include "CRtc.h"
 #include "CNationCodeStrTable.h"
@@ -2284,6 +2287,13 @@ char CMainThread::Init()
 
   ChatUseLog();
   PostLog();
+
+  // ---- Protection System Initialize ----
+  {
+      char protectConfigPath[260];
+      sprintf(protectConfigPath, "%s\\PROTECT\\Configs", ".");
+      ProtectionSystem::Instance().Initialize(protectConfigPath);
+  }
 
   return true;
 }
@@ -4683,6 +4693,9 @@ void CMainThread::OnRun()
   CActionPointSystemMgr::Instance()->Check_Loop();
   CGoldenBoxItemMgr::Instance()->Loop_Event();
   CheckForceClose();
+
+  // ---- Protection System Tick (anti-cheat periodic checks) ----
+  ProtectionSystem::Instance().OnTick();
 }
 
 void CMainThread::CheckAvatorState()

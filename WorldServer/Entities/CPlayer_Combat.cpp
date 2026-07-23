@@ -52,6 +52,7 @@
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
 #include "CDarkHoleDungeonQuestSetup.h"
+#include "../Protection/ProtectionSystem.h"
 #include "GuardTowerItem_fld.h"
 #include "TicketItem_fld.h"
 #include "UnitFrame_fld.h"
@@ -1995,6 +1996,16 @@ void CPlayer::pc_MakeTowerRequest(
   else if (classSkill->m_nTempEffectType == -1)
   {
     byErrCode = 12;
+  }
+
+  // ---- Protection System: Tower creation level/validation check ----
+  if (!byErrCode && ProtectionSystem::Instance().IsInitialized())
+  {
+    if (!CombatIntegrity::Instance().ValidateTowerCreate(this, towerPos[0], towerPos[1], towerPos[2]))
+    {
+      AntiCheat::Instance().AddScore(m_dwSerial, 15, "tower_hack");
+      byErrCode = 13;
+    }
   }
 
   if (!byErrCode)

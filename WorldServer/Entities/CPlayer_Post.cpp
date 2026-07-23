@@ -47,6 +47,9 @@
 #include "CDarkHole.h"
 #include "CDarkHoleChannel.h"
 #include "CDarkHoleDungeonQuest.h"
+
+// ---- Protection System ----
+#include "../Protection/ProtectionSystem.h"
 #include "CDarkHoleDungeonQuestSetup.h"
 #include "TicketItem_fld.h"
 #include "darkhole_create_setdata.h"
@@ -349,6 +352,10 @@ void CPlayer::pc_PostDeleteRequest(unsigned int dwIndex)
 
 void CPlayer::pc_PostItemGoldRequest(unsigned int dwIndex)
 {
+  // ---- Protection System: Anti-Dupe post lock ----
+  if (!AntiDupe::Instance().TryLockTransaction(m_dwSerial, TransactionType::POST))
+      return;
+
   CPostData *post = m_Param.m_PostStorage.GetPostDataFromInx(dwIndex);
   if (!post)
   {
