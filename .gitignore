@@ -57,3 +57,8 @@ temp_upgrade_arrays.txt
 tmp_batch2_ida.txt
 build_after_ticket_fix.log
 _msbuild_sln_x64_diag.log
+
+# Build artifacts / package restore output (too large for git)
+packages/
+*.pch
+*.pdb
